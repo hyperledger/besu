@@ -19,7 +19,6 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -36,7 +35,6 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
   private final boolean extraDataWithRoundInformationOnly;
 
   public QbftBlockCreatorFactory(
-      final GasLimitCalculator gasLimitCalculator,
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
@@ -46,7 +44,6 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
       final BftExtraDataCodec bftExtraDataCodec,
       final boolean extraDataWithRoundInformationOnly) {
     super(
-        gasLimitCalculator,
         pendingTransactions,
         protocolContext,
         protocolSchedule,

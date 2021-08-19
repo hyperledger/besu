@@ -147,7 +147,6 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         qbftConfig.getValidatorContractAddress().isPresent();
     final BftBlockCreatorFactory blockCreatorFactory =
         new QbftBlockCreatorFactory(
-            gasLimitCalculator,
             transactionPool.getPendingTransactions(),
             protocolContext,
             protocolSchedule,
