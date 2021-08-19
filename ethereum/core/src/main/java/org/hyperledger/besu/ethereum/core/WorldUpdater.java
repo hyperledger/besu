@@ -100,7 +100,7 @@ public interface WorldUpdater extends MutableWorldView {
    * @return the account {@code address}, or {@code null} if the account does not exist.
    */
   default EvmAccount getSenderAccount(final MessageFrame frame) {
-    return getAccount(frame.getSenderAddress());
+    return getOrCreate(frame.getSenderAddress());
   }
 
   /**
