@@ -256,7 +256,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             transactionGasCalculator,
-            FeeMarket.london(),
+            FeeMarket.london(0L),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.values()),
@@ -348,7 +348,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator eip1559Validator =
         new MainnetTransactionValidator(
             transactionGasCalculator,
-            FeeMarket.london(),
+            FeeMarket.london(0L),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
@@ -379,7 +379,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             transactionGasCalculator,
-            FeeMarket.london(),
+            FeeMarket.london(0L),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
@@ -401,7 +401,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             transactionGasCalculator,
-            FeeMarket.london(),
+            FeeMarket.london(0L),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
@@ -426,7 +426,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             transactionGasCalculator,
-            FeeMarket.london(),
+            FeeMarket.london(0L),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),

@@ -22,11 +22,11 @@ import org.hyperledger.besu.ethereum.core.Transaction;
  * Provides various gas cost lookups and calculations used during transaction processing outside the
  * EVM.
  *
- * <p>The {@code GasCalculator} is meant to encapsulate all {@link Gas}-related calculations not
- * needed during EVM execution or caused by EVM execution. EVM Relevant or caused gas calculations
- * live in the {@link org.hyperledger.besu.ethereum.vm.GasCalculator}. Current calculations revolve
- * around block encoding of transactions, account creation, how much refund to apply, and private
- * transaction gas reservations.
+ * <p>The {@code TransactionGasCalculator} is meant to encapsulate all {@link Gas}-related
+ * calculations not needed during EVM execution or caused by EVM execution. EVM Relevant or caused
+ * gas calculations live in the {@link org.hyperledger.besu.ethereum.vm.GasCalculator}. Current
+ * calculations revolve around block encoding of transactions, account creation, how much refund to
+ * apply, and private transaction gas reservations.
  */
 public interface TransactionGasCalculator {
 
