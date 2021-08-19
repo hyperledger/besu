@@ -27,8 +27,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockProcessor;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockProcessorBuilder;
@@ -139,7 +138,8 @@ public abstract class MainnetProtocolSpecs {
                     new PrivateTransactionValidator(Optional.empty())))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.create())
-        .ommerHeaderValidatorBuilder(MainnetBlockHeaderValidator.createOmmerValidator())
+        .ommerHeaderValidatorBuilder(
+            MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator())
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
         .blockReward(FRONTIER_BLOCK_REWARD)
@@ -461,11 +461,10 @@ public abstract class MainnetProtocolSpecs {
       final boolean quorumCompatibilityMode) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
-    final BaseFeeMarket londonFeeMarket = FeeMarket.london();
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final long londonForkBlockNumber =
         genesisConfigOptions.getEIP1559BlockNumber().orElse(Long.MAX_VALUE);
-    final EIP1559 eip1559 = new EIP1559(londonForkBlockNumber);
+    final BaseFeeMarket londonFeeMarket = FeeMarket.london(londonForkBlockNumber);
     return berlinDefinition(
             chainId,
             configContractSizeLimit,
@@ -513,12 +512,12 @@ public abstract class MainnetProtocolSpecs {
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.london(gasCalculator, chainId.orElse(BigInteger.ZERO)))
-        .eip1559(Optional.of(eip1559))
         .feeMarket(londonFeeMarket)
         .difficultyCalculator(MainnetDifficultyCalculators.LONDON)
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
+        .blockHeaderValidatorBuilder(
+            MainnetBlockHeaderValidator.createBaseFeeMarketValidator(londonFeeMarket))
         .ommerHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559))
+            MainnetBlockHeaderValidator.createBaseFeeMarketOmmerValidator(londonFeeMarket))
         .name(LONDON_FORK_NAME);
   }
 

@@ -109,7 +109,6 @@ public class EthGetTransactionReceiptTest {
           null,
           GasLimitCalculator.constant(),
           FeeMarket.legacy(),
-          Optional.empty(),
           null,
           Optional.of(PoWHasher.ETHASH_LIGHT));
   private final ProtocolSpec statusTransactionTypeSpec =
@@ -135,7 +134,6 @@ public class EthGetTransactionReceiptTest {
           null,
           GasLimitCalculator.constant(),
           FeeMarket.legacy(),
-          Optional.empty(),
           null,
           Optional.of(PoWHasher.ETHASH_LIGHT));
 
