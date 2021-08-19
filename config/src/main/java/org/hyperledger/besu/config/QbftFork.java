@@ -18,27 +18,29 @@ package org.hyperledger.besu.config;
 import java.util.Arrays;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class QbftFork extends BftFork {
 
-  public enum VALIDATOR_MODE {
+  public enum VALIDATOR_SELECTION_MODE {
     BLOCKHEADER,
     CONTRACT
   }
 
-  private static final String VALIDATOR_MODE_KEY = "validatorselectionmode";
-  private static final String VALIDATOR_CONTRACT_ADDRESS_KEY = "validatorcontractaddress";
+  public static final String VALIDATOR_SELECTION_MODE_KEY = "validatorselectionmode";
+  public static final String VALIDATOR_CONTRACT_ADDRESS_KEY = "validatorcontractaddress";
 
+  @JsonCreator
   public QbftFork(final ObjectNode forkConfigRoot) {
     super(forkConfigRoot);
   }
 
-  public Optional<VALIDATOR_MODE> getValidatorSelectionMode() {
-    final Optional<String> mode = JsonUtil.getString(forkConfigRoot, VALIDATOR_MODE_KEY);
+  public Optional<VALIDATOR_SELECTION_MODE> getValidatorSelectionMode() {
+    final Optional<String> mode = JsonUtil.getString(forkConfigRoot, VALIDATOR_SELECTION_MODE_KEY);
     return mode.flatMap(
         m ->
-            Arrays.stream(VALIDATOR_MODE.values())
+            Arrays.stream(VALIDATOR_SELECTION_MODE.values())
                 .filter(v -> v.name().equalsIgnoreCase(m))
                 .findFirst());
   }

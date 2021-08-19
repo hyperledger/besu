@@ -27,10 +27,10 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class BftFork {
 
-  private static final String FORK_BLOCK_KEY = "block";
-  private static final String VALIDATORS_KEY = "validators";
-  private static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
-  private static final String BLOCK_REWARD_KEY = "blockreward";
+  public static final String FORK_BLOCK_KEY = "block";
+  public static final String VALIDATORS_KEY = "validators";
+  public static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
+  public static final String BLOCK_REWARD_KEY = "blockreward";
 
   protected final ObjectNode forkConfigRoot;
 

@@ -15,9 +15,13 @@
 package org.hyperledger.besu.consensus.qbft.validator;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE.CONTRACT;
 import static org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController.GET_VALIDATORS;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.BftFork;
+import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -28,7 +32,9 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -42,16 +48,18 @@ import org.web3j.abi.datatypes.DynamicArray;
 import org.web3j.abi.datatypes.Function;
 
 public class ValidatorContractControllerTest {
-  public static final String GET_VALIDATORS_FUNCTION_RESULT =
+  private static final String GET_VALIDATORS_FUNCTION_RESULT =
       "00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000eac51e3fe1afc9894f0dfeab8ceb471899b932df";
-  public static final Address VALIDATOR_ADDRESS =
+  private static final Address VALIDATOR_ADDRESS =
       Address.fromHexString("0xeac51e3fe1afc9894f0dfeab8ceb471899b932df");
-  final Address CONTRACT_ADDRESS = Address.fromHexString("1");
+  private static final Address CONTRACT_ADDRESS = Address.fromHexString("1");
 
   private final TransactionSimulator transactionSimulator =
       Mockito.mock(TransactionSimulator.class);
   private final Transaction transaction = Mockito.mock(Transaction.class);
   private CallParameter callParameter;
+  private QbftFork genesisFork;
+  private QbftForksSchedule qbftForksSchedule;
 
   @Before
   public void setup() {
@@ -62,6 +70,17 @@ public class ValidatorContractControllerTest {
             List.of(new TypeReference<DynamicArray<org.web3j.abi.datatypes.Address>>() {}));
     final Bytes payload = Bytes.fromHexString(FunctionEncoder.encode(getValidatorsFunction));
     callParameter = new CallParameter(null, CONTRACT_ADDRESS, -1, null, null, payload);
+    genesisFork =
+        new QbftFork(
+            JsonUtil.objectNodeFromMap(
+                Map.of(
+                    BftFork.FORK_BLOCK_KEY,
+                    0,
+                    QbftFork.VALIDATOR_SELECTION_MODE_KEY,
+                    CONTRACT,
+                    QbftFork.VALIDATOR_CONTRACT_ADDRESS_KEY,
+                    CONTRACT_ADDRESS.toHexString())));
+    qbftForksSchedule = new QbftForksSchedule(genesisFork, Collections.emptyList());
   }
 
   @Test
@@ -79,7 +98,7 @@ public class ValidatorContractControllerTest {
     when(transactionSimulator.process(callParameter, 1)).thenReturn(Optional.of(result));
 
     final ValidatorContractController validatorContractController =
-        new ValidatorContractController(CONTRACT_ADDRESS, transactionSimulator);
+        new ValidatorContractController(transactionSimulator, qbftForksSchedule);
     final Collection<Address> validators = validatorContractController.getValidators(1);
     assertThat(validators).containsExactly(VALIDATOR_ADDRESS);
   }
@@ -95,7 +114,7 @@ public class ValidatorContractControllerTest {
     when(transactionSimulator.process(callParameter, 1)).thenReturn(Optional.of(result));
 
     final ValidatorContractController validatorContractController =
-        new ValidatorContractController(CONTRACT_ADDRESS, transactionSimulator);
+        new ValidatorContractController(transactionSimulator, qbftForksSchedule);
     Assertions.assertThatThrownBy(() -> validatorContractController.getValidators(1))
         .hasMessage("Failed validator smart contract call");
   }
@@ -114,7 +133,7 @@ public class ValidatorContractControllerTest {
     when(transactionSimulator.process(callParameter, 1)).thenReturn(Optional.of(result));
 
     final ValidatorContractController validatorContractController =
-        new ValidatorContractController(CONTRACT_ADDRESS, transactionSimulator);
+        new ValidatorContractController(transactionSimulator, qbftForksSchedule);
     Assertions.assertThatThrownBy(() -> validatorContractController.getValidators(1))
         .hasMessage("Failed validator smart contract call");
   }
@@ -124,7 +143,7 @@ public class ValidatorContractControllerTest {
     when(transactionSimulator.process(callParameter, 1)).thenReturn(Optional.empty());
 
     final ValidatorContractController validatorContractController =
-        new ValidatorContractController(CONTRACT_ADDRESS, transactionSimulator);
+        new ValidatorContractController(transactionSimulator, qbftForksSchedule);
     Assertions.assertThatThrownBy(() -> validatorContractController.getValidators(1))
         .hasMessage("Failed validator smart contract call");
   }

@@ -32,7 +32,7 @@ public class BlockValidatorProvider implements ValidatorProvider {
   private final VoteProvider voteProvider;
   private final BlockInterface blockInterface;
 
-  public static ValidatorProvider forkingValidatorProvider(
+  public static BlockValidatorProvider forkingValidatorProvider(
       final Blockchain blockchain,
       final EpochManager epochManager,
       final BlockInterface blockInterface,
@@ -41,7 +41,7 @@ public class BlockValidatorProvider implements ValidatorProvider {
         blockchain, epochManager, blockInterface, Optional.of(bftValidatorOverrides));
   }
 
-  public static ValidatorProvider nonForkingValidatorProvider(
+  public static BlockValidatorProvider nonForkingValidatorProvider(
       final Blockchain blockchain,
       final EpochManager epochManager,
       final BlockInterface blockInterface) {

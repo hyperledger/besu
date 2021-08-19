@@ -15,13 +15,14 @@
 
 package org.hyperledger.besu.consensus.qbft.validator;
 
-import static org.hyperledger.besu.config.QbftFork.VALIDATOR_MODE.BLOCKHEADER;
-import static org.hyperledger.besu.config.QbftFork.VALIDATOR_MODE.CONTRACT;
+import static org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE.BLOCKHEADER;
+import static org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE.CONTRACT;
 
 import org.hyperledger.besu.config.QbftFork;
-import org.hyperledger.besu.config.QbftFork.VALIDATOR_MODE;
+import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
+import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -35,55 +36,59 @@ public class ForkingValidatorProvider implements ValidatorProvider {
 
   private final Blockchain blockchain;
   private final QbftForksSchedule forksSchedule;
-  private final ValidatorProviderFactory validatorProviderFactory;
-  private final ValidatorProvider initialValidatorProvider;
+  private final BlockValidatorProvider blockValidatorProvider;
+  private final TransactionValidatorProvider transactionValidatorProvider;
 
   public ForkingValidatorProvider(
       final Blockchain blockchain,
       final QbftForksSchedule forksSchedule,
-      final ValidatorProviderFactory validatorProviderFactory,
-      final ValidatorProvider initialValidatorProvider) {
+      final BlockValidatorProvider blockValidatorProvider,
+      final TransactionValidatorProvider transactionValidatorProvider) {
     this.blockchain = blockchain;
     this.forksSchedule = forksSchedule;
-    this.validatorProviderFactory = validatorProviderFactory;
-    this.initialValidatorProvider = initialValidatorProvider;
+    this.blockValidatorProvider = blockValidatorProvider;
+    this.transactionValidatorProvider = transactionValidatorProvider;
   }
 
   @Override
   public Collection<Address> getValidatorsAtHead() {
     final BlockHeader header = blockchain.getChainHeadHeader();
-    return getValidators(header, ValidatorProvider::getValidatorsAtHead);
+    return getValidators(header.getNumber(), ValidatorProvider::getValidatorsAtHead);
   }
 
   @Override
   public Collection<Address> getValidatorsAfterBlock(final BlockHeader header) {
-    return getValidators(header, p -> p.getValidatorsAfterBlock(header));
+    return getValidators(header.getNumber(), p -> p.getValidatorsAfterBlock(header));
   }
 
   @Override
   public Collection<Address> getValidatorsForBlock(final BlockHeader header) {
-    return getValidators(header, p -> p.getValidatorsForBlock(header));
+    return getValidators(header.getNumber(), p -> p.getValidatorsForBlock(header));
   }
 
   @Override
   public Optional<VoteProvider> getVoteProvider() {
-    return resolveValidatorProvider(blockchain.getChainHeadHeader()).getVoteProvider();
+    return resolveValidatorProvider(blockchain.getChainHeadHeader().getNumber()).getVoteProvider();
   }
 
   private Collection<Address> getValidators(
-      final BlockHeader header,
-      final Function<ValidatorProvider, Collection<Address>> getValidators) {
-    final Optional<QbftFork> fork = forksSchedule.getByBlockNumber(header.getNumber());
-    final ValidatorProvider validatorProvider = resolveValidatorProvider(header);
+      final long block, final Function<ValidatorProvider, Collection<Address>> getValidators) {
+    final Optional<QbftFork> fork = forksSchedule.getByBlockNumber(block);
+    final ValidatorProvider validatorProvider = resolveValidatorProvider(block);
 
     if (fork.isPresent() && fork.get().getValidatorSelectionMode().isPresent()) {
-      final VALIDATOR_MODE validatorSelectionMode = fork.get().getValidatorSelectionMode().get();
+      final VALIDATOR_SELECTION_MODE validatorSelectionMode =
+          fork.get().getValidatorSelectionMode().get();
+
+      // when moving to a block validator the first block needs to be initialised or created with
+      // the previous block state otherwise we would have no validators
       if (validatorSelectionMode.equals(BLOCKHEADER)) {
-        if (header.getNumber() == fork.get().getForkBlock()) {
-          final long prevBlockNumber = header.getNumber() == 0 ? 0 : header.getNumber() - 1L;
+        if (block == fork.get().getForkBlock()) {
+          final long prevBlockNumber = block == 0 ? 0 : block - 1L;
           final Optional<BlockHeader> prevBlockHeader = blockchain.getBlockHeader(prevBlockNumber);
           if (prevBlockHeader.isPresent()) {
-            return getValidatorsForBlock(prevBlockHeader.get());
+            return resolveValidatorProvider(prevBlockNumber)
+                .getValidatorsForBlock(prevBlockHeader.get());
           }
         }
         return getValidators.apply(validatorProvider);
@@ -93,20 +98,22 @@ public class ForkingValidatorProvider implements ValidatorProvider {
     return getValidators.apply(validatorProvider);
   }
 
-  private ValidatorProvider resolveValidatorProvider(final BlockHeader header) {
-    final Optional<QbftFork> fork = forksSchedule.getByBlockNumber(header.getNumber());
+  private ValidatorProvider resolveValidatorProvider(final long block) {
+    final Optional<QbftFork> fork = forksSchedule.getByBlockNumber(block);
     if (fork.isPresent() && fork.get().getValidatorSelectionMode().isPresent()) {
-      final VALIDATOR_MODE validatorSelectionMode = fork.get().getValidatorSelectionMode().get();
+      final VALIDATOR_SELECTION_MODE validatorSelectionMode =
+          fork.get().getValidatorSelectionMode().get();
       if (validatorSelectionMode.equals(BLOCKHEADER)) {
-        return validatorProviderFactory.createBlockValidatorProvider();
-      } else if (validatorSelectionMode.equals(CONTRACT)
+        return blockValidatorProvider;
+      }
+      if (validatorSelectionMode.equals(CONTRACT)
           && fork.get().getValidatorContractAddress().isPresent()) {
-        final Address contractAddress =
-            Address.fromHexString(fork.get().getValidatorContractAddress().get());
-        return validatorProviderFactory.createTransactionValidatorProvider(contractAddress);
+        return transactionValidatorProvider;
+      } else if (block != 0) { // if no contract address then resolve using previous block
+        return resolveValidatorProvider(block - 1L);
       }
     }
 
-    return initialValidatorProvider;
+    throw new IllegalStateException("Unknown qbft validator selection mode");
   }
 }

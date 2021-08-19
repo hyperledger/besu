@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.validator;
 
+import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -35,14 +36,14 @@ import org.web3j.abi.datatypes.Type;
 public class ValidatorContractController {
   public static final String GET_VALIDATORS = "getValidators";
   public static final String CONTRACT_ERROR_MSG = "Failed validator smart contract call";
-  private final Address contractAddress;
   private final TransactionSimulator transactionSimulator;
+  private final QbftForksSchedule forksSchedule;
   private final Function getValidatorsFunction;
 
   public ValidatorContractController(
-      final Address contractAddress, final TransactionSimulator transactionSimulator) {
-    this.contractAddress = contractAddress;
+      final TransactionSimulator transactionSimulator, final QbftForksSchedule forksSchedule) {
     this.transactionSimulator = transactionSimulator;
+    this.forksSchedule = forksSchedule;
 
     try {
       this.getValidatorsFunction =
@@ -74,9 +75,21 @@ public class ValidatorContractController {
   private Optional<TransactionSimulatorResult> callFunction(
       final long blockNumber, final Function function) {
     final Bytes payload = Bytes.fromHexString(FunctionEncoder.encode(function));
+    final Address contractAddress = resolveContractAddress(blockNumber);
     final CallParameter callParams =
         new CallParameter(null, contractAddress, -1, null, null, payload);
     return transactionSimulator.process(callParams, blockNumber);
+  }
+
+  private Address resolveContractAddress(final long blockNumber) {
+    return forksSchedule
+        .getByBlockNumber(blockNumber)
+        .flatMap(QbftFork::getValidatorContractAddress)
+        .map(Address::fromHexString)
+        .orElseThrow(
+            () ->
+                new RuntimeException(
+                    "Error resolving smart contract address unable to make validator contract call"));
   }
 
   @SuppressWarnings("rawtypes")

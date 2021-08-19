@@ -28,7 +28,8 @@ public class QbftForksSchedule {
   private final NavigableSet<QbftFork> qbftForks =
       new TreeSet<>(Comparator.comparing(QbftFork::getForkBlock).reversed());
 
-  public QbftForksSchedule(final List<QbftFork> forks) {
+  public QbftForksSchedule(final QbftFork genesisFork, final List<QbftFork> forks) {
+    qbftForks.add(genesisFork);
     qbftForks.addAll(forks);
   }
 
