@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.powHasher;
 
 import org.hyperledger.besu.config.PowAlgorithm;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -172,7 +171,6 @@ public class ClassicProtocolSpecs {
                     messageCallProcessor,
                     true,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION,
                     FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
         .name("Atlantis");

@@ -46,24 +46,6 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
 
   private final List<ContractValidationRule> contractValidationRules;
 
-  private final int accountVersion;
-
-  public MainnetContractCreationProcessor(
-      final TransactionGasCalculator transactionGasCalculator,
-      final EVM evm,
-      final boolean requireCodeDepositToSucceed,
-      final List<ContractValidationRule> contractValidationRules,
-      final long initialContractNonce,
-      final Collection<Address> forceCommitAddresses,
-      final int accountVersion) {
-    super(evm, forceCommitAddresses);
-    this.transactionGasCalculator = transactionGasCalculator;
-    this.requireCodeDepositToSucceed = requireCodeDepositToSucceed;
-    this.contractValidationRules = contractValidationRules;
-    this.initialContractNonce = initialContractNonce;
-    this.accountVersion = accountVersion;
-  }
-
   public MainnetContractCreationProcessor(
       final TransactionGasCalculator transactionGasCalculator,
       final EVM evm,
@@ -71,14 +53,11 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
       final List<ContractValidationRule> contractValidationRules,
       final long initialContractNonce,
       final Collection<Address> forceCommitAddresses) {
-    this(
-        transactionGasCalculator,
-        evm,
-        requireCodeDepositToSucceed,
-        contractValidationRules,
-        initialContractNonce,
-        forceCommitAddresses,
-        Account.DEFAULT_VERSION);
+    super(evm, forceCommitAddresses);
+    this.transactionGasCalculator = transactionGasCalculator;
+    this.requireCodeDepositToSucceed = requireCodeDepositToSucceed;
+    this.contractValidationRules = contractValidationRules;
+    this.initialContractNonce = initialContractNonce;
   }
 
   public MainnetContractCreationProcessor(
@@ -93,8 +72,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
         requireCodeDepositToSucceed,
         contractValidationRules,
         initialContractNonce,
-        ImmutableSet.of(),
-        Account.DEFAULT_VERSION);
+        ImmutableSet.of());
   }
 
   private static boolean accountExists(final Account account) {
@@ -163,7 +141,6 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
         final MutableAccount contract =
             frame.getWorldState().getOrCreate(frame.getContractAddress()).getMutable();
         contract.setCode(contractCode);
-        contract.setVersion(accountVersion);
         LOG.trace(
             "Successful creation of contract {} with code of size {} (Gas remaining: {})",
             frame.getContractAddress(),

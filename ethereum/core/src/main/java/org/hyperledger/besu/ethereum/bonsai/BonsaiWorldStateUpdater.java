@@ -105,7 +105,6 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
             balance,
             Hash.EMPTY_TRIE_HASH,
             Hash.EMPTY,
-            Account.DEFAULT_VERSION,
             true);
     bonsaiValue.setUpdated(newAccount);
     return new WrappedEvmAccount(track(new UpdateTrackingAccount<>(newAccount)));
@@ -375,8 +374,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                   oldValue.getNonce(),
                   oldValue.getBalance(),
                   oldValue.getStorageRoot(),
-                  oldValue.getCodeHash(),
-                  oldValue.getVersion());
+                  oldValue.getCodeHash());
       final BonsaiAccount newValue = bonsaiValue.getUpdated();
       final StateTrieAccountValue newAccount =
           newValue == null
@@ -385,8 +383,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                   newValue.getNonce(),
                   newValue.getBalance(),
                   newValue.getStorageRoot(),
-                  newValue.getCodeHash(),
-                  newValue.getVersion());
+                  newValue.getCodeHash());
       layer.addAccountChange(updatedAccount.getKey(), oldAccount, newAccount);
     }
 

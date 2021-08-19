@@ -18,7 +18,6 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -125,7 +124,6 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     false,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION,
                     FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
         .privateTransactionProcessorBuilder(
@@ -141,7 +139,6 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     false,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION,
                     new PrivateTransactionValidator(Optional.empty())))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.create())
@@ -309,7 +306,6 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION,
                     FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
         .name("SpuriousDragon");
@@ -347,7 +343,6 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     false,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION,
                     privateTransactionValidator))
         .name("Byzantium");
   }
@@ -514,7 +509,6 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION,
                     londonFeeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         .contractCreationProcessorBuilder(

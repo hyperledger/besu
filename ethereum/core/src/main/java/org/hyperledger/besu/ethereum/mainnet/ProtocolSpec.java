@@ -101,6 +101,7 @@ public class ProtocolSpec {
    * @param miningBeneficiaryCalculator determines to whom mining proceeds are paid
    * @param precompileContractRegistry all the pre-compiled contracts added
    * @param skipZeroBlockRewards should rewards be skipped if it is zero
+   * @param gasCalculator the gas calculator to use.
    * @param transactionGasCalculator the transaction gas calculator to use.
    * @param gasLimitCalculator the gas limit calculator to use.
    * @param feeMarket an {@link Optional} wrapping {@link FeeMarket} class if appropriate.
