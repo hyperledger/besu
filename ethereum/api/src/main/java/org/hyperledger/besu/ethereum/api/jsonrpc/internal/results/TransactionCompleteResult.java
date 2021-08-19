@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -97,11 +98,14 @@ public class TransactionCompleteResult implements TransactionResult {
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());
     this.maxPriorityFeePerGas =
-        tx.getTransaction().getMaxPriorityFeePerGas().map(q -> q.toShortHexString()).orElse(null);
+        tx.getTransaction().getMaxPriorityFeePerGas().map(Wei::toShortHexString).orElse(null);
     this.maxFeePerGas =
-        tx.getTransaction().getMaxFeePerGas().map(q -> q.toShortHexString()).orElse(null);
-
-    this.gasPrice = Quantity.create(transaction.getEffectivePriorityFeePerGas(tx.getBaseFee()));
+        tx.getTransaction().getMaxFeePerGas().map(Wei::toShortHexString).orElse(null);
+    this.gasPrice =
+        Quantity.create(
+            transaction
+                .getGasPrice()
+                .orElse(Wei.of(transaction.getEffectivePriorityFeePerGas(tx.getBaseFee()))));
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());

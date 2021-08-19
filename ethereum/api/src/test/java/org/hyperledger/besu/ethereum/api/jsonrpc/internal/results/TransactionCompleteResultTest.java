@@ -78,7 +78,7 @@ public class TransactionCompleteResultTest {
     assertThat(tcr.getMaxPriorityFeePerGas()).isNull();
     assertThat(tcr.getGasPrice()).isNotEmpty();
     assertThat(tcr.getGasPrice())
-        .isEqualTo(Quantity.create(transaction.getGasPrice().orElseThrow().subtract(7L)));
+        .isEqualTo(Quantity.create(transaction.getGasPrice().orElseThrow()));
   }
 
   @Test

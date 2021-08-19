@@ -149,7 +149,6 @@ public class JsonRpcResponseUtils {
       final String blockHash,
       final String blockNumber,
       final Long baseFee,
-      final String chainId,
       final String fromAddress,
       final String gas,
       final String gasPrice,
@@ -178,7 +177,6 @@ public class JsonRpcResponseUtils {
     when(transaction.getPayload()).thenReturn(bytes(input));
     when(transaction.getValue()).thenReturn(wei(value));
     when(transaction.getGasLimit()).thenReturn(unsignedLong(gas));
-    when(transaction.getChainId()).thenReturn(Optional.ofNullable(bigInteger(chainId)));
     when(transaction.getPublicKey()).thenReturn(Optional.ofNullable(publicKey));
     when(transaction.getSignature())
         .thenReturn(

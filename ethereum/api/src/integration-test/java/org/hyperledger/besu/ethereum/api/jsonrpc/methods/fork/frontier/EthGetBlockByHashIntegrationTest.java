@@ -111,6 +111,7 @@ public class EthGetBlockByHashIntegrationTest {
     expectedResult.put(JsonRpcResponseKey.EXTRA_DATA, "0x");
     expectedResult.put(JsonRpcResponseKey.SIZE, "0x96a");
     expectedResult.put(JsonRpcResponseKey.GAS_LIMIT, "0x2fefd8");
+    expectedResult.put(JsonRpcResponseKey.GAS_PRICE, "0x1");
     expectedResult.put(JsonRpcResponseKey.GAS_USED, "0x78674");
     expectedResult.put(JsonRpcResponseKey.TIMESTAMP, "0x561bc2e0");
     expectedResult.put(
@@ -125,7 +126,6 @@ public class EthGetBlockByHashIntegrationTest {
                 TransactionType.FRONTIER,
                 "0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9",
                 "0x1",
-                null,
                 null,
                 "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
                 "0x2fefd8",
