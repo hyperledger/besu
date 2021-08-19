@@ -60,14 +60,12 @@ public class EthProtocol implements SubProtocol {
 
   private static final List<Integer> eth65Messages =
       Stream.concat(
-              eth62Messages.stream(),
+              eth63Messages.stream(),
               Stream.of(
                   EthPV65.NEW_POOLED_TRANSACTION_HASHES,
                   EthPV65.GET_POOLED_TRANSACTIONS,
                   EthPV65.POOLED_TRANSACTIONS))
           .collect(toUnmodifiableList());
-
-  private static final List<Integer> eth66Messages = eth65Messages;
 
   public static boolean requestIdCompatible(final int code) {
     return Set.of(
@@ -115,9 +113,8 @@ public class EthProtocol implements SubProtocol {
       case EthVersion.V64:
         return eth63Messages.contains(code);
       case EthVersion.V65:
-        return eth65Messages.contains(code);
       case EthVersion.V66:
-        return eth66Messages.contains(code);
+        return eth65Messages.contains(code);
       default:
         return false;
     }
