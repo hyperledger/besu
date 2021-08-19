@@ -18,7 +18,6 @@ package org.hyperledger.besu.evmtool;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -245,7 +244,6 @@ public class EvmToolCommand implements Runnable {
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new BlockHashLookup(blockHeader, component.getBlockchain()))
-                .contractAccountVersion(Account.DEFAULT_VERSION)
                 .build());
 
         final MainnetMessageCallProcessor mcp =
@@ -286,7 +284,7 @@ public class EvmToolCommand implements Runnable {
 
             final Gas intrinsicGasCost =
                 protocolSpec
-                    .getGasCalculator()
+                    .getTransactionGasCalculator()
                     .transactionIntrinsicGasCostAndAccessedState(tx)
                     .getGas();
             final Gas evmGas = gas.minus(messageFrame.getRemainingGas());

@@ -95,11 +95,6 @@ public interface WorldState extends WorldView {
     }
 
     @Override
-    public int getVersion() {
-      return accountState.getVersion();
-    }
-
-    @Override
     public UInt256 getStorageValue(final UInt256 key) {
       return accountState.getStorageValue(key);
     }

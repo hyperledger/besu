@@ -35,13 +35,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHi
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -65,7 +63,7 @@ public class EthFeeHistoryTest {
   @Test
   public void params() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     // should fail because no required params given
     assertThatThrownBy(this::feeHistoryRequest).isInstanceOf(InvalidJsonRpcParameters.class);
@@ -83,7 +81,7 @@ public class EthFeeHistoryTest {
   @Test
   public void allFieldsPresentForLatestBlock() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(eq(11L))).thenReturn(londonSpec);
     assertThat(
             ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest", new double[] {100.0}))
@@ -101,7 +99,7 @@ public class EthFeeHistoryTest {
   @Test
   public void cantGetBlockHigherThanChainHead() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     assertThat(((JsonRpcErrorResponse) feeHistoryRequest(2, "11", new double[] {100.0})).getError())
         .isEqualTo(JsonRpcError.INVALID_PARAMS);
@@ -110,7 +108,7 @@ public class EthFeeHistoryTest {
   @Test
   public void blockCountBounds() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest(0, "latest", new double[] {100.0}))
@@ -125,7 +123,7 @@ public class EthFeeHistoryTest {
   @Test
   public void doesntGoPastChainHeadWithHighBlockCount() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     final FeeHistory.FeeHistoryResult result =
         (ImmutableFeeHistoryResult)
@@ -139,19 +137,19 @@ public class EthFeeHistoryTest {
   @Test
   public void correctlyHandlesForkBlock() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(11)));
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(11));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     final FeeHistory.FeeHistoryResult result =
         (FeeHistory.FeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest")).getResult();
     assertThat(Long.decode(result.getBaseFeePerGas().get(1)))
-        .isEqualTo(FeeMarket.london().getInitialBasefee());
+        .isEqualTo(FeeMarket.london(11).getInitialBasefee());
   }
 
   @Test
   public void allZeroPercentilesForZeroBlock() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     final BlockDataGenerator.BlockOptions blockOptions = BlockDataGenerator.BlockOptions.create();
     blockOptions.hasTransactions(false);

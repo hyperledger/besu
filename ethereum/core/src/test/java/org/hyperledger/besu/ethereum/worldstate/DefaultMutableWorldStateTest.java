@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.worldstate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldState;
 
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -579,11 +578,9 @@ public class DefaultMutableWorldStateTest {
     final MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
     account.setCode(Bytes.of(1, 2, 3));
-    account.setVersion(Account.DEFAULT_VERSION);
     account.setCode(Bytes.of(3, 2, 1));
     updater.commit();
     assertThat(worldState.get(ADDRESS).getCode()).isEqualTo(Bytes.of(3, 2, 1));
-    assertThat(worldState.get(ADDRESS).getVersion()).isEqualTo(Account.DEFAULT_VERSION);
     assertThat(worldState.rootHash())
         .isEqualTo(
             Hash.fromHexString(

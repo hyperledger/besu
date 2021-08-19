@@ -21,7 +21,6 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -143,6 +142,6 @@ public class PrivacyTest {
         .getProtocolSchedule()
         .getByBlockNumber(1)
         .getPrecompileContractRegistry()
-        .get(defaultPrivacy, Account.DEFAULT_VERSION);
+        .get(defaultPrivacy);
   }
 }
