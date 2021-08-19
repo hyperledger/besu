@@ -32,7 +32,7 @@ public class NativeLibraryOptions {
       names = {"--Xaltbn128-native-enabled"},
       description =
           "Per default a native library is used for altbn128."
-          + "If the Java implementation should be used instead, the parameter of this option has to be set to false",
+              + "If the Java implementation should be used instead, the parameter of this option has to be set to false",
       arity = "1")
   private final Boolean nativeAltbn128 = Boolean.TRUE;
 
