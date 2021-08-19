@@ -19,6 +19,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
+import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
@@ -283,8 +284,11 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
 
-    final QbftFork genesisFork =
-        new QbftFork(JsonUtil.objectNodeFromMap(configOptions.getQbftConfigOptions().asMap()));
+    final VALIDATOR_SELECTION_MODE validatorSelectionMode =
+        qbftConfig.getValidatorContractAddress().isPresent()
+            ? VALIDATOR_SELECTION_MODE.CONTRACT
+            : VALIDATOR_SELECTION_MODE.BLOCKHEADER;
+    final QbftFork genesisFork = createGenesisFork(configOptions, validatorSelectionMode);
     final QbftForksSchedule forksSchedule = new QbftForksSchedule(genesisFork, qbftForks);
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
@@ -305,6 +309,16 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     } else {
       return new BftContext(validatorProvider, epochManager, bftBlockInterface().get());
     }
+  }
+
+  private QbftFork createGenesisFork(
+      final GenesisConfigOptions configOptions,
+      final VALIDATOR_SELECTION_MODE validatorSelectionMode) {
+    final Map<String, Object> genesisForkValues =
+        new HashMap<>(configOptions.getQbftConfigOptions().asMap());
+    genesisForkValues.put(BftFork.FORK_BLOCK_KEY, 0);
+    genesisForkValues.put(QbftFork.VALIDATOR_SELECTION_MODE_KEY, validatorSelectionMode);
+    return new QbftFork(JsonUtil.objectNodeFromMap(genesisForkValues));
   }
 
   private BftValidatorOverrides convertBftForks(final List<QbftFork> bftForks) {
