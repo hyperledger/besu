@@ -233,7 +233,8 @@ public class TransactionSimulator {
     // This means a potential over-estimate of gas, but the tx, if sent with this gas, will not
     // fail.
     if (GoQuorumOptions.goQuorumCompatibilityMode && value.isZero()) {
-      Gas privateGasEstimateAndState = protocolSpec.getGasCalculator().getMaximumPmtCost();
+      Gas privateGasEstimateAndState =
+          protocolSpec.getTransactionGasCalculator().getMaximumPmtCost();
       if (privateGasEstimateAndState.toLong() > result.getEstimateGasUsedByTransaction()) {
         // modify the result to have the larger estimate
         TransactionProcessingResult resultPmt =

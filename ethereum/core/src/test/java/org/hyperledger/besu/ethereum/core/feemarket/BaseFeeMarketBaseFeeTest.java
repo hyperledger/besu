@@ -12,10 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.fees;
+package org.hyperledger.besu.ethereum.core.feemarket;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -32,22 +35,22 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class EIP1559BaseFeeTest {
+public class BaseFeeMarketBaseFeeTest {
 
-  private final EIP1559 eip1559 = new EIP1559(0);
+  private final BaseFeeMarket baseFeeMarket = FeeMarket.london(0);
 
   @Parameters
   public static Collection<Object[]> data() {
     try {
       final List<Object[]> data = new ArrayList<>();
       final String testFilePath = "basefee-test.json";
-      final URL testFileUrl = EIP1559BaseFeeTest.class.getResource(testFilePath);
+      final URL testFileUrl = BaseFeeMarketBaseFeeTest.class.getResource(testFilePath);
       checkState(testFileUrl != null, "Cannot find test file " + testFilePath);
       final String testSuiteJson = Resources.toString(testFileUrl, Charsets.UTF_8);
       final ObjectMapper objectMapper = new ObjectMapper();
-      final Eip1559BaseFeeTestCase[] testCases =
-          objectMapper.readValue(testSuiteJson, Eip1559BaseFeeTestCase[].class);
-      for (final Eip1559BaseFeeTestCase testCase : testCases) {
+      final BaseFeeMarketBaseFeeTestCase[] testCases =
+          objectMapper.readValue(testSuiteJson, BaseFeeMarketBaseFeeTestCase[].class);
+      for (final BaseFeeMarketBaseFeeTestCase testCase : testCases) {
         data.add(
             new Object[] {
               testCase.parentBaseFee,
@@ -67,7 +70,7 @@ public class EIP1559BaseFeeTest {
   private final long parentTargetGasUsed;
   private final long expectedBaseFee;
 
-  public EIP1559BaseFeeTest(
+  public BaseFeeMarketBaseFeeTest(
       final long parentBaseFee,
       final long parentGasUsed,
       final long parentTargetGasUsed,
@@ -81,20 +84,20 @@ public class EIP1559BaseFeeTest {
   @Test
   @Ignore("Need to have spec frozen to define correct values")
   public void assertThatBaseFeeIsCorrect() {
-    assertThat(eip1559.computeBaseFee(0L, parentBaseFee, parentGasUsed, parentTargetGasUsed))
+    assertThat(baseFeeMarket.computeBaseFee(0L, parentBaseFee, parentGasUsed, parentTargetGasUsed))
         .isEqualTo(expectedBaseFee);
   }
 
-  private static class Eip1559BaseFeeTestCase {
+  private static class BaseFeeMarketBaseFeeTestCase {
 
     private long parentBaseFee;
     private long parentGasUsed;
     private long parentTargetGasUsed;
     private long expectedBaseFee;
 
-    public Eip1559BaseFeeTestCase() {}
+    public BaseFeeMarketBaseFeeTestCase() {}
 
-    public Eip1559BaseFeeTestCase(
+    public BaseFeeMarketBaseFeeTestCase(
         final long parentBaseFee,
         final long parentGasUsed,
         final long parentTargetGasUsed,
