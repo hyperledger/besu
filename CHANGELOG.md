@@ -9,6 +9,7 @@
 - Support for mining ommers [#2576](https://github.com/hyperledger/besu/pull/2576)
 - Updated onchain permissioning to validate permissions on transaction submission [\#2595](https://github.com/hyperledger/besu/pull/2595)
 - Removed deprecated CLI option `--privacy-precompiled-address` [#2605](https://github.com/hyperledger/besu/pull/2605)
+- Removed code supporting EIP-1702. [#2657](https://github.com/hyperledger/besu/pull/2657)
 - Added Labelled gauges for metrics [#2646](https://github.com/hyperledger/besu/pull/2646)
 
 ### Bug Fixes
