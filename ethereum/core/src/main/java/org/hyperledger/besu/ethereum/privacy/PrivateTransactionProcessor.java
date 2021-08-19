@@ -28,12 +28,12 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
@@ -50,8 +50,7 @@ public class PrivateTransactionProcessor {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  @SuppressWarnings("unused")
-  private final GasCalculator gasCalculator;
+  private final TransactionGasCalculator transactionGasCalculator;
 
   @SuppressWarnings("unused")
   private final MainnetTransactionValidator transactionValidator;
@@ -68,14 +67,14 @@ public class PrivateTransactionProcessor {
   private final boolean clearEmptyAccounts;
 
   public PrivateTransactionProcessor(
-      final GasCalculator gasCalculator,
+      final TransactionGasCalculator transactionGasCalculator,
       final MainnetTransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final int maxStackSize,
       final PrivateTransactionValidator privateTransactionValidator) {
-    this.gasCalculator = gasCalculator;
+    this.transactionGasCalculator = transactionGasCalculator;
     this.transactionValidator = transactionValidator;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
@@ -233,7 +232,7 @@ public class PrivateTransactionProcessor {
     final Gas maxRefundAllowance =
         Gas.of(transaction.getGasLimit())
             .minus(gasRemaining)
-            .dividedBy(gasCalculator.getMaxRefundQuotient());
+            .dividedBy(transactionGasCalculator.getMaxRefundQuotient());
     final Gas refundAllowance = maxRefundAllowance.min(gasRefund);
     return gasRemaining.plus(refundAllowance);
   }
