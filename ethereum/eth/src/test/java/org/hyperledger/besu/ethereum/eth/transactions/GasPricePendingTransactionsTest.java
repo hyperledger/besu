@@ -42,6 +42,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -121,6 +123,37 @@ public class GasPricePendingTransactionsTest {
   }
 
   @Test
+  public void shouldDropOldestTransactionWhenLimitExceeded() {
+    final Transaction oldestTransaction =
+        new TransactionTestFixture()
+            .value(Wei.of(1L))
+            .nonce(0L)
+            .createTransaction(SIGNATURE_ALGORITHM.get().generateKeyPair());
+    transactions.addRemoteTransaction(oldestTransaction);
+    for (int i = 1; i < MAX_TRANSACTIONS; i++) {
+      final Transaction newerTransaction =
+          new TransactionTestFixture()
+              .value(Wei.of(1L))
+              .nonce(0L)
+              .createTransaction(SIGNATURE_ALGORITHM.get().generateKeyPair());
+      transactions.addRemoteTransaction(newerTransaction);
+    }
+    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isZero();
+
+    final Transaction lastTransaction =
+        new TransactionTestFixture()
+            .value(Wei.of(1L))
+            .nonce(MAX_TRANSACTIONS + 1)
+            .createTransaction(SIGNATURE_ALGORITHM.get().generateKeyPair());
+
+    transactions.addRemoteTransaction(lastTransaction);
+    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
+    assertTransactionNotPending(oldestTransaction);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
+  }
+
+  @Test
   public void shouldHandleMaximumTransactionLimitCorrectlyWhenSameTransactionAddedMultipleTimes() {
     transactions.addRemoteTransaction(createTransaction(0));
     transactions.addRemoteTransaction(createTransaction(0));
@@ -145,6 +178,33 @@ public class GasPricePendingTransactionsTest {
     }
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionPending(localTransaction);
+  }
+
+  @Test
+  public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
+    transactions.subscribeDroppedTransactions(
+        transaction -> assertThat(transaction.getGasPrice().get().toLong()).isLessThan(100));
+    final List<Transaction> lowGasPriceTransactions =
+        IntStream.range(0, MAX_TRANSACTIONS)
+            .mapToObj(
+                i ->
+                    transactionWithNonceSenderAndGasPrice(
+                        i + 1, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10 + i))
+            .collect(Collectors.toUnmodifiableList());
+
+    // Fill the pool
+    lowGasPriceTransactions.forEach(transactions::addRemoteTransaction);
+
+    // This should kick the oldest tx with the low gas price out, namely the first one we added
+    final Transaction highGasPriceTransaction =
+        transactionWithNonceSenderAndGasPrice(
+            MAX_TRANSACTIONS + 10, SIGNATURE_ALGORITHM.get().generateKeyPair(), 100);
+    transactions.addRemoteTransaction(highGasPriceTransaction);
+    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
+
+    assertTransactionPending(highGasPriceTransaction);
+    assertTransactionNotPending(lowGasPriceTransactions.get(0));
+    lowGasPriceTransactions.stream().skip(1).forEach(this::assertTransactionPending);
   }
 
   @Test
