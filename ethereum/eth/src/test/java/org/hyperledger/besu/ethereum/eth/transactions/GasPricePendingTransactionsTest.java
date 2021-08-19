@@ -42,15 +42,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
-public class FrontierPendingTransactionsTest {
+public class GasPricePendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final int MAX_TRANSACTION_HASHES = 5;
@@ -73,7 +71,7 @@ public class FrontierPendingTransactionsTest {
           MAX_TRANSACTION_HASHES,
           TestClock.fixed(),
           metricsSystem,
-          FrontierPendingTransactionsTest::mockBlockHeader,
+          GasPricePendingTransactionsTest::mockBlockHeader,
           TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
@@ -123,22 +121,6 @@ public class FrontierPendingTransactionsTest {
   }
 
   @Test
-  public void shouldDropOldestTransactionWhenLimitExceeded() {
-    final Transaction oldestTransaction = createTransaction(0);
-    transactions.addRemoteTransaction(oldestTransaction);
-    for (int i = 1; i < MAX_TRANSACTIONS; i++) {
-      transactions.addRemoteTransaction(createTransaction(i));
-    }
-    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isZero();
-
-    transactions.addRemoteTransaction(createTransaction(MAX_TRANSACTIONS + 1));
-    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    assertTransactionNotPending(oldestTransaction);
-    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
-  }
-
-  @Test
   public void shouldHandleMaximumTransactionLimitCorrectlyWhenSameTransactionAddedMultipleTimes() {
     transactions.addRemoteTransaction(createTransaction(0));
     transactions.addRemoteTransaction(createTransaction(0));
@@ -166,36 +148,17 @@ public class FrontierPendingTransactionsTest {
   }
 
   @Test
-  public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
-    final List<Transaction> lowGasPriceTransactions =
-        IntStream.range(0, MAX_TRANSACTIONS)
-            .mapToObj(i -> transactionWithNonceSenderAndGasPrice(i + 1, KEYS1, 10))
-            .collect(Collectors.toUnmodifiableList());
-
-    // Fill the pool
-    lowGasPriceTransactions.forEach(transactions::addRemoteTransaction);
-
-    // This should kick the oldest tx with the low gas price out, namely the first one we added
-    final Transaction highGasPriceTransaction =
-        transactionWithNonceSenderAndGasPrice(MAX_TRANSACTIONS + 1, KEYS1, 100);
-    transactions.addRemoteTransaction(highGasPriceTransaction);
-    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-
-    assertTransactionPending(highGasPriceTransaction);
-    assertTransactionNotPending(lowGasPriceTransactions.get(0));
-    lowGasPriceTransactions.stream().skip(1).forEach(this::assertTransactionPending);
-  }
-
-  @Test
   public void shouldStartDroppingLocalTransactionsWhenPoolIsFullOfLocalTransactions() {
-    final Transaction firstLocalTransaction = createTransaction(0);
-    transactions.addLocalTransaction(firstLocalTransaction);
 
-    for (int i = 1; i <= MAX_TRANSACTIONS; i++) {
+    for (int i = 0; i < MAX_TRANSACTIONS; i++) {
       transactions.addLocalTransaction(createTransaction(i));
     }
+
+    final Transaction lastLocalTransaction = createTransaction(5);
+    transactions.addLocalTransaction(lastLocalTransaction);
+
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    assertTransactionNotPending(firstLocalTransaction);
+    assertTransactionNotPending(lastLocalTransaction);
   }
 
   @Test
@@ -694,7 +657,7 @@ public class FrontierPendingTransactionsTest {
     addLocalTransactions(6, 10);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
-        .hasValue(7);
+        .hasValue(6);
   }
 
   @Test

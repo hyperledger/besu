@@ -50,7 +50,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
-public class LondonPendingTransactionsTest {
+public class BaseFeePendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final int MAX_TRANSACTION_HASHES = 5;
@@ -73,7 +73,7 @@ public class LondonPendingTransactionsTest {
           MAX_TRANSACTION_HASHES,
           TestClock.fixed(),
           metricsSystem,
-          LondonPendingTransactionsTest::mockBlockHeader,
+          BaseFeePendingTransactionsTest::mockBlockHeader,
           TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
@@ -620,7 +620,7 @@ public class LondonPendingTransactionsTest {
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            LondonPendingTransactionsTest::mockBlockHeader,
+            BaseFeePendingTransactionsTest::mockBlockHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     transactions.addRemoteTransaction(transaction1);
@@ -644,7 +644,7 @@ public class LondonPendingTransactionsTest {
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            LondonPendingTransactionsTest::mockBlockHeader,
+            BaseFeePendingTransactionsTest::mockBlockHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -664,7 +664,7 @@ public class LondonPendingTransactionsTest {
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            LondonPendingTransactionsTest::mockBlockHeader,
+            BaseFeePendingTransactionsTest::mockBlockHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
