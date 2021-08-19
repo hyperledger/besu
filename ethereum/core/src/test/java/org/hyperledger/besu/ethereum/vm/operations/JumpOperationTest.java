@@ -74,8 +74,8 @@ public class JumpOperationTest {
     worldStateUpdater.commit();
 
     final OperationRegistry registry = new OperationRegistry();
-    registry.put(new JumpOperation(gasCalculator), 0);
-    registry.put(new JumpDestOperation(gasCalculator), 0);
+    registry.put(new JumpOperation(gasCalculator));
+    registry.put(new JumpDestOperation(gasCalculator));
     evm = new EVM(registry, gasCalculator);
   }
 

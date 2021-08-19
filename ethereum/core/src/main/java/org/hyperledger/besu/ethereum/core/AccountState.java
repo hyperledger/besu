@@ -91,13 +91,6 @@ public interface AccountState {
   }
 
   /**
-   * The version of the EVM bytecode associated with this account.
-   *
-   * @return the version of the account code. Default is zero.
-   */
-  int getVersion();
-
-  /**
    * Retrieves a value in the account storage given its key.
    *
    * @param key the key to retrieve in the account storage.

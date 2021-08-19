@@ -27,50 +27,22 @@ import org.junit.Test;
 public class StateTrieAccountValueTest {
 
   @Test
-  public void roundTripMainNetAccountValueVersionZero() {
+  public void roundTripMainNetAccountValue() {
     final long nonce = 0;
     final Wei balance = Wei.ZERO;
     // Have the storageRoot and codeHash as different values to ensure the encode / decode
     // doesn't cross the values over.
     final Hash storageRoot = Hash.EMPTY_TRIE_HASH;
     final Hash codeHash = Hash.EMPTY_LIST_HASH;
-    final int version = 0;
 
-    roundTripMainNetAccountValue(nonce, balance, storageRoot, codeHash, version);
-  }
-
-  @Test
-  public void roundTripMainNetAccountValueVersionNotZero() {
-    final long nonce = 0;
-    final Wei balance = Wei.ZERO;
-    final Hash storageRoot = Hash.EMPTY_TRIE_HASH;
-    final Hash codeHash = Hash.EMPTY_LIST_HASH;
-    final int version = 1;
-
-    roundTripMainNetAccountValue(nonce, balance, storageRoot, codeHash, version);
-  }
-
-  @Test
-  public void roundTripMainNetAccountValueMax() {
-    final long nonce = (Long.MAX_VALUE >> 1);
-    final Wei balance =
-        Wei.fromHexString("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
-    final Hash storageRoot = Hash.EMPTY_TRIE_HASH;
-    final Hash codeHash = Hash.EMPTY_LIST_HASH;
-    final int version = Integer.MAX_VALUE;
-
-    roundTripMainNetAccountValue(nonce, balance, storageRoot, codeHash, version);
+    roundTripMainNetAccountValue(nonce, balance, storageRoot, codeHash);
   }
 
   private void roundTripMainNetAccountValue(
-      final long nonce,
-      final Wei balance,
-      final Hash storageRoot,
-      final Hash codeHash,
-      final int version) {
+      final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
 
     StateTrieAccountValue accountValue =
-        new StateTrieAccountValue(nonce, balance, storageRoot, codeHash, version);
+        new StateTrieAccountValue(nonce, balance, storageRoot, codeHash);
     Bytes encoded = RLP.encode(accountValue::writeTo);
     final RLPInput in = RLP.input(encoded);
     StateTrieAccountValue roundTripAccountValue = StateTrieAccountValue.readFrom(in);
@@ -79,6 +51,5 @@ public class StateTrieAccountValueTest {
     assertThat(balance).isEqualTo(roundTripAccountValue.getBalance());
     assertThat(storageRoot).isEqualTo(roundTripAccountValue.getStorageRoot());
     assertThat(codeHash).isEqualTo(roundTripAccountValue.getCodeHash());
-    assertThat(version).isEqualTo(roundTripAccountValue.getVersion());
   }
 }
