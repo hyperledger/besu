@@ -83,8 +83,8 @@ public class ForkingValidatorProvider implements ValidatorProvider {
       // when moving to a block validator the first block needs to be initialised or created with
       // the previous block state otherwise we would have no validators
       if (validatorSelectionMode.equals(BLOCKHEADER)) {
-        if (block == fork.get().getForkBlock()) {
-          final long prevBlockNumber = block == 0 ? 0 : block - 1L;
+        if (block > 0 && block == fork.get().getForkBlock()) {
+          final long prevBlockNumber = block - 1L;
           final Optional<BlockHeader> prevBlockHeader = blockchain.getBlockHeader(prevBlockNumber);
           if (prevBlockHeader.isPresent()) {
             return resolveValidatorProvider(prevBlockNumber)
@@ -109,7 +109,7 @@ public class ForkingValidatorProvider implements ValidatorProvider {
       if (validatorSelectionMode.equals(CONTRACT)
           && fork.get().getValidatorContractAddress().isPresent()) {
         return transactionValidatorProvider;
-      } else if (block != 0) { // if no contract address then resolve using previous block
+      } else if (block > 0) { // if no contract address then resolve using previous block
         return resolveValidatorProvider(block - 1L);
       }
     }
