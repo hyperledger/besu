@@ -31,11 +31,13 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
@@ -175,6 +177,21 @@ public class OpenTelemetryMetricsSystemTest {
 
     assertThat(localMetricSystem.streamObservations())
         .containsExactlyInAnyOrder(new Observation(RPC, "myValue", 7.0, emptyList()));
+  }
+
+  @Test
+  public void shouldCreateLabelledGauge() {
+    LabelledGauge labelledGauge =
+        metricsSystem.createLabelledGauge(RPC, "gaugeName", "help", "a", "b");
+    labelledGauge.labels(() -> 1.0, "a1", "b1");
+    labelledGauge.labels(() -> 11.0, "a2", "b2");
+    labelledGauge.labels(() -> 21.0, "a3", "b3");
+
+    assertThat(metricsSystem.streamObservations())
+        .containsExactlyInAnyOrder(
+            new Observation(RPC, "gaugeName", 1.0, List.of("a1", "b1")),
+            new Observation(RPC, "gaugeName", 11.0, List.of("a2", "b2")),
+            new Observation(RPC, "gaugeName", 21.0, List.of("a3", "b3")));
   }
 
   @Test
