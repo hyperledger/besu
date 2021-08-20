@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
@@ -31,6 +30,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -56,9 +57,9 @@ public class CliqueProtocolSchedule {
 
     final EpochManager epochManager = new EpochManager(cliqueConfig.getEpochLength());
 
-    final Optional<EIP1559> eip1559 =
+    final Optional<BaseFeeMarket> feeMarket =
         config.getEIP1559BlockNumber().isPresent()
-            ? Optional.of(new EIP1559(config.getEIP1559BlockNumber().orElse(0)))
+            ? Optional.of(new LondonFeeMarket(config.getEIP1559BlockNumber().orElse(0)))
             : Optional.empty();
 
     return new ProtocolScheduleBuilder(
@@ -72,7 +73,7 @@ public class CliqueProtocolSchedule {
                         cliqueConfig.getBlockPeriodSeconds(),
                         localNodeAddress,
                         builder,
-                        eip1559,
+                        feeMarket,
                         privacyParameters.getGoQuorumPrivacyParameters().isPresent())),
             privacyParameters,
             isRevertReasonEnabled,
@@ -92,14 +93,14 @@ public class CliqueProtocolSchedule {
       final long secondsBetweenBlocks,
       final Address localNodeAddress,
       final ProtocolSpecBuilder specBuilder,
-      final Optional<EIP1559> eip1559,
+      final Optional<BaseFeeMarket> baseFeeMarket,
       final boolean goQuorumMode) {
 
     return specBuilder
         .blockHeaderValidatorBuilder(
-            getBlockHeaderValidator(epochManager, secondsBetweenBlocks, eip1559))
+            getBlockHeaderValidator(epochManager, secondsBetweenBlocks, baseFeeMarket))
         .ommerHeaderValidatorBuilder(
-            getBlockHeaderValidator(epochManager, secondsBetweenBlocks, eip1559))
+            getBlockHeaderValidator(epochManager, secondsBetweenBlocks, baseFeeMarket))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)
@@ -113,8 +114,8 @@ public class CliqueProtocolSchedule {
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(
       final EpochManager epochManager,
       final long secondsBetweenBlocks,
-      final Optional<EIP1559> eip1559) {
+      final Optional<BaseFeeMarket> baseFeeMarket) {
     return BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator(
-        secondsBetweenBlocks, epochManager, eip1559);
+        secondsBetweenBlocks, epochManager, baseFeeMarket);
   }
 }

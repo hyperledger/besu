@@ -45,11 +45,11 @@ public class BftBlockCreatorFactory {
   private final PendingTransactions pendingTransactions;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
-  private final BftExtraDataCodec bftExtraDataCodec;
+  protected final BftExtraDataCodec bftExtraDataCodec;
   private final Address localAddress;
   final Address miningBeneficiary;
 
-  private volatile Bytes vanityData;
+  protected volatile Bytes vanityData;
   private volatile Wei minTransactionGasPrice;
   private volatile Double minBlockOccupancyRatio;
   private volatile Optional<AtomicLong> targetGasLimit;

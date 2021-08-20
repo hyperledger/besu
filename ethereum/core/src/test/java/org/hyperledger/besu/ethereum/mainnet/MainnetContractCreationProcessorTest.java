@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.ethereum.vm.EVM;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
@@ -38,7 +37,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MainnetContractCreationProcessorTest {
 
-  @Mock GasCalculator gasCalculator;
+  @Mock TransactionGasCalculator transactionGasCalculator;
   @Mock EVM evm;
 
   private MainnetContractCreationProcessor processor;
@@ -47,7 +46,7 @@ public class MainnetContractCreationProcessorTest {
   public void shouldThrowAnExceptionWhenCodeContractFormatInvalid() {
     processor =
         new MainnetContractCreationProcessor(
-            gasCalculator,
+            transactionGasCalculator,
             evm,
             true,
             Collections.singletonList(PrefixCodeRule.of()),
@@ -58,7 +57,7 @@ public class MainnetContractCreationProcessorTest {
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(Gas.of(100));
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(Gas.of(10));
+    when(transactionGasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(Gas.of(10));
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
   }
@@ -67,7 +66,7 @@ public class MainnetContractCreationProcessorTest {
   public void shouldNotThrowAnExceptionWhenCodeContractIsValid() {
     processor =
         new MainnetContractCreationProcessor(
-            gasCalculator,
+            transactionGasCalculator,
             evm,
             true,
             Collections.singletonList(PrefixCodeRule.of()),
@@ -78,7 +77,7 @@ public class MainnetContractCreationProcessorTest {
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(Gas.of(100));
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(Gas.of(10));
+    when(transactionGasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(Gas.of(10));
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -87,13 +86,18 @@ public class MainnetContractCreationProcessorTest {
   public void shouldNotThrowAnExceptionWhenPrefixCodeRuleNotAdded() {
     processor =
         new MainnetContractCreationProcessor(
-            gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
+            transactionGasCalculator,
+            evm,
+            true,
+            Collections.emptyList(),
+            1,
+            Collections.emptyList());
     final Bytes contractCode = Bytes.fromHexString("0F01010101010101");
     MessageFrame messageFrame = new MessageFrameTestFixture().build();
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(Gas.of(100));
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(Gas.of(10));
+    when(transactionGasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(Gas.of(10));
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }

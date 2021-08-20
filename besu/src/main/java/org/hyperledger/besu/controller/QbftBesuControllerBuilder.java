@@ -47,6 +47,7 @@ import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidator
 import org.hyperledger.besu.consensus.qbft.QbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
+import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.QbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftContext;
@@ -147,15 +148,18 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final BftExecutors bftExecutors = BftExecutors.create(metricsSystem);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
+    final boolean createExtraDataWithRoundInformationOnly =
+        qbftConfig.getValidatorContractAddress().isPresent();
     final BftBlockCreatorFactory blockCreatorFactory =
-        new BftBlockCreatorFactory(
+        new QbftBlockCreatorFactory(
             transactionPool.getPendingTransactions(),
             protocolContext,
             protocolSchedule,
             miningParameters,
             localAddress,
             qbftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
-            bftExtraDataCodec().get());
+            bftExtraDataCodec().get(),
+            createExtraDataWithRoundInformationOnly);
 
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
@@ -251,11 +255,15 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
+    final QbftBlockHeaderValidationRulesetFactory qbftBlockHeaderValidationRulesetFactory =
+        new QbftBlockHeaderValidationRulesetFactory(
+            qbftConfig.getValidatorContractAddress().isPresent());
+
     return BftProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled,
-        QbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
+        qbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
         bftExtraDataCodec().get());
   }
 
