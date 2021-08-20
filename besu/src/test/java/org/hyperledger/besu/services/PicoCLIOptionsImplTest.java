@@ -17,6 +17,8 @@ package org.hyperledger.besu.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import java.util.Map;
+
 import org.junit.Before;
 import org.junit.Test;
 import picocli.CommandLine;
@@ -31,6 +33,9 @@ public class PicoCLIOptionsImplTest {
 
     @Option(names = "--existing")
     String existingOption = "defaultexisting";
+
+    @Option(names = "--existing-int")
+    int existingIntOption = 42;
   }
 
   static final class MixinOptions {
@@ -78,5 +83,22 @@ public class PicoCLIOptionsImplTest {
   public void testNotExistantOptionsFail() {
     assertThatExceptionOfType(UnmatchedArgumentException.class)
         .isThrownBy(() -> commandLine.parseArgs("--does-not-exist", "1"));
+  }
+
+  @Test
+  public void getArgsReturnsValuesSetOnCommandLine() {
+    commandLine.parseArgs("--existing", "1", "--plugin-Test1-mixin", "2", "--existing-int", "100");
+    Map<String, Object> args = serviceImpl.getArgs();
+    assertThat(args.get("--existing")).isEqualTo("1");
+    assertThat(args.get("--existing-int")).isEqualTo(100);
+    assertThat(args.get("--plugin-Test1-mixin")).isEqualTo("2");
+  }
+
+  @Test
+  public void getArgsReturnsDefaultValues() {
+    Map<String, Object> args = serviceImpl.getArgs();
+    assertThat(args.get("--existing")).isEqualTo("defaultexisting");
+    assertThat(args.get("--existing-int")).isEqualTo(42);
+    assertThat(args.get("--plugin-Test1-mixin")).isEqualTo("defaultmixin");
   }
 }

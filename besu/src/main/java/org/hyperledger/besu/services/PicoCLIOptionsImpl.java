@@ -16,6 +16,9 @@ package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
@@ -53,5 +56,11 @@ public class PicoCLIOptionsImpl implements PicoCLIOptions {
     } else {
       commandLine.getCommandSpec().addMixin("Plugin " + namespace, mixin);
     }
+  }
+
+  @Override
+  public Map<String, Object> getArgs() {
+    return commandLine.getCommandSpec().options().stream()
+        .collect(Collectors.toMap(OptionSpec::longestName, CommandLine.Model.ArgSpec::getValue));
   }
 }

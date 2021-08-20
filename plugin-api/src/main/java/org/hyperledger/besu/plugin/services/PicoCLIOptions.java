@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import java.util.Map;
+
 /**
  * A service that plugins can use to add CLI options and commands to the BesuCommand. The PicoCLI
  * library annotations will be inspected and the object will be passed into a
@@ -36,4 +38,6 @@ public interface PicoCLIOptions extends BesuService {
    *     of this object to extract the CLI options.
    */
   void addPicoCLIOptions(String namespace, Object optionObject);
+
+  Map<String, Object> getArgs();
 }
