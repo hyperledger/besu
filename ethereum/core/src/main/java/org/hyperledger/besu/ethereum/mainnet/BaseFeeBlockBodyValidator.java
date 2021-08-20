@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,7 +47,8 @@ public class BaseFeeBlockBodyValidator extends MainnetBlockBodyValidator {
         && validateTransactionGasPrice(block);
   }
 
-  private boolean validateTransactionGasPrice(final Block block) {
+  @VisibleForTesting
+  boolean validateTransactionGasPrice(final Block block) {
 
     final BlockBody body = block.getBody();
     final List<Transaction> transactions = body.getTransactions();
