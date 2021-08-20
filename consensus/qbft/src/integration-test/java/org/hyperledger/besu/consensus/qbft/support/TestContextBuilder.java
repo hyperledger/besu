@@ -187,6 +187,7 @@ public class TestContextBuilder {
   private boolean useGossip = false;
   private Optional<String> genesisFile = Optional.empty();
   private List<NodeParams> nodeParams = Collections.emptyList();
+  private List<QbftFork> qbftForks = Collections.emptyList();
 
   public TestContextBuilder clock(final Clock clock) {
     this.clock = clock;
@@ -226,6 +227,11 @@ public class TestContextBuilder {
 
   public TestContextBuilder useValidatorContract(final boolean useValidatorContract) {
     this.useValidatorContract = useValidatorContract;
+    return this;
+  }
+
+  public TestContextBuilder qbftForks(final List<QbftFork> qbftForks) {
+    this.qbftForks = qbftForks;
     return this;
   }
 
@@ -287,7 +293,8 @@ public class TestContextBuilder {
             bftEventQueue,
             gossiper,
             synchronizerUpdater,
-            useValidatorContract);
+            useValidatorContract,
+            qbftForks);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
     // NOTE: the remotePeers needs to be ordered based on Address (as this is used to determine
@@ -364,7 +371,8 @@ public class TestContextBuilder {
       final BftEventQueue bftEventQueue,
       final Gossiper gossiper,
       final SynchronizerUpdater synchronizerUpdater,
-      final boolean useValidatorContract) {
+      final boolean useValidatorContract,
+      final List<QbftFork> qbftForks) {
 
     final MiningParameters miningParams =
         new MiningParameters.Builder()
@@ -396,8 +404,7 @@ public class TestContextBuilder {
         new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule);
 
     final QbftFork genesisFork = createGenesisFork(useValidatorContract);
-    final QbftForksSchedule forksSchedule =
-        new QbftForksSchedule(genesisFork, Collections.emptyList());
+    final QbftForksSchedule forksSchedule = new QbftForksSchedule(genesisFork, qbftForks);
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
             blockChain, epochManager, blockInterface, validatorOverrides);
