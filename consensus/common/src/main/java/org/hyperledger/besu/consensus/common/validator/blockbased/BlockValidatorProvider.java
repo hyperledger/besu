@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.validator.blockbased;
 
+import java.util.stream.Collectors;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
@@ -80,7 +81,7 @@ public class BlockValidatorProvider implements ValidatorProvider {
 
   @Override
   public Collection<Address> getValidatorsForBlock(final BlockHeader header) {
-    return blockInterface.validatorsInBlock(header);
+    return blockInterface.validatorsInBlock(header).stream().sorted().collect(Collectors.toList());
   }
 
   @Override
