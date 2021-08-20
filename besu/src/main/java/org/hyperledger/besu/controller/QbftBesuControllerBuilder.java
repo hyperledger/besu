@@ -148,8 +148,6 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final BftExecutors bftExecutors = BftExecutors.create(metricsSystem);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
-    final boolean createExtraDataWithRoundInformationOnly =
-        qbftConfig.getValidatorContractAddress().isPresent();
     final BftBlockCreatorFactory blockCreatorFactory =
         new QbftBlockCreatorFactory(
             transactionPool.getPendingTransactions(),
@@ -159,7 +157,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             localAddress,
             qbftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
             bftExtraDataCodec().get(),
-            createExtraDataWithRoundInformationOnly);
+            isContractValidatorSelectionMode(qbftConfig));
 
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
@@ -256,8 +254,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     final QbftBlockHeaderValidationRulesetFactory qbftBlockHeaderValidationRulesetFactory =
-        new QbftBlockHeaderValidationRulesetFactory(
-            qbftConfig.getValidatorContractAddress().isPresent());
+        new QbftBlockHeaderValidationRulesetFactory(isContractValidatorSelectionMode(qbftConfig));
 
     return BftProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
@@ -292,7 +289,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
 
     final VALIDATOR_SELECTION_MODE validatorSelectionMode =
-        qbftConfig.getValidatorContractAddress().isPresent()
+        isContractValidatorSelectionMode(qbftConfig)
             ? VALIDATOR_SELECTION_MODE.CONTRACT
             : VALIDATOR_SELECTION_MODE.BLOCKHEADER;
     final QbftFork genesisFork = createGenesisFork(configOptions, validatorSelectionMode);
@@ -343,6 +340,10 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     }
 
     return new BftValidatorOverrides(result);
+  }
+
+  private boolean isContractValidatorSelectionMode(final QbftConfigOptions qbftConfig) {
+    return qbftConfig.getValidatorContractAddress().isPresent();
   }
 
   private static MinedBlockObserver blockLogger(
