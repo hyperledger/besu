@@ -67,6 +67,6 @@ public class OpenTelemetryGauge implements LabelledGauge {
   }
 
   private void updater(final AsynchronousInstrument.DoubleResult doubleResult) {
-    observationsMap.forEach((k, v) -> doubleResult.observe(v.getAsDouble(), k));
+    observationsMap.forEach((labels, valueSupplier) -> doubleResult.observe(valueSupplier.getAsDouble(), labels));
   }
 }
