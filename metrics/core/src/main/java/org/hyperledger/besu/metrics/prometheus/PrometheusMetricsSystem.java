@@ -18,6 +18,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -139,6 +140,21 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       final Collector collector = new CurrentValueCollector(metricName, help, valueSupplier);
       addCollectorUnchecked(category, collector);
     }
+  }
+
+  @Override
+  public LabelledGauge createLabelledGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    final String metricName = convertToPrometheusName(category, name);
+    if (isCategoryEnabled(category)) {
+      final PrometheusGauge gauge = new PrometheusGauge(metricName, help, List.of(labelNames));
+      addCollectorUnchecked(category, gauge);
+      return gauge;
+    }
+    return NoOpMetricsSystem.getLabelledGauge(labelNames.length);
   }
 
   public void addCollector(
