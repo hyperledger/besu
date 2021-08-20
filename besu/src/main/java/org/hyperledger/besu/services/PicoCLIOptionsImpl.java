@@ -59,8 +59,14 @@ public class PicoCLIOptionsImpl implements PicoCLIOptions {
   }
 
   @Override
-  public Map<String, Object> getArgs() {
+  public <T> T getCommandLineArg(final Class<T> clazz, final String arg) {
+    return clazz.cast(getCommandLineArgs().get(arg));
+  }
+
+  @Override
+  public Map<String, Object> getCommandLineArgs() {
     return commandLine.getCommandSpec().options().stream()
+        .filter(x -> x.longestName() != null && x.getValue() != null)
         .collect(Collectors.toMap(OptionSpec::longestName, CommandLine.Model.ArgSpec::getValue));
   }
 }

@@ -39,5 +39,7 @@ public interface PicoCLIOptions extends BesuService {
    */
   void addPicoCLIOptions(String namespace, Object optionObject);
 
-  Map<String, Object> getArgs();
+  <T> T getCommandLineArg(Class<T> clazz, String arg);
+
+  Map<String, Object> getCommandLineArgs();
 }
