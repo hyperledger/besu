@@ -16,9 +16,15 @@ package org.hyperledger.besu.crypto;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class SignatureAlgorithmFactoryTest {
+
+  @Before
+  public void setUp() {
+    SignatureAlgorithmFactory.resetInstance();
+  }
 
   @Test
   public void shouldReturnSECP256K1InstanceByDefault() {
