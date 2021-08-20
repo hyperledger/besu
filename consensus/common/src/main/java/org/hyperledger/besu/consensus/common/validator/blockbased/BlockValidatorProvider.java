@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.common.validator.blockbased;
 
-import java.util.stream.Collectors;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
@@ -26,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class BlockValidatorProvider implements ValidatorProvider {
 
