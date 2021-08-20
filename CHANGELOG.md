@@ -10,6 +10,8 @@
 - Updated onchain permissioning to validate permissions on transaction submission [\#2595](https://github.com/hyperledger/besu/pull/2595)
 - Removed deprecated CLI option `--privacy-precompiled-address` [#2605](https://github.com/hyperledger/besu/pull/2605)
 - Removed code supporting EIP-1702. [#2657](https://github.com/hyperledger/besu/pull/2657)
+- A native library was added for the alternative signature algorithm secp256r1, which will be used by default [#2630](https://github.com/hyperledger/besu/pull/2630)
+- The command line option --Xsecp-native-enabled was added as an alias for --Xsecp256k1-native-enabled [#2630](https://github.com/hyperledger/besu/pull/2630)
 - Added Labelled gauges for metrics [#2646](https://github.com/hyperledger/besu/pull/2646)
 
 ### Bug Fixes

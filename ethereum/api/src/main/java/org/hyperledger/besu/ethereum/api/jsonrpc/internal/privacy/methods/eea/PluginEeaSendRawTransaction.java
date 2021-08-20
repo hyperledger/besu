@@ -18,12 +18,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Privac
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.TransactionGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.util.NonceProvider;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Optional;
@@ -34,7 +34,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
-  private final GasCalculator gasCalculator;
+  private final TransactionGasCalculator transactionGasCalculator;
 
   public PluginEeaSendRawTransaction(
       final TransactionPool transactionPool,
@@ -42,11 +42,11 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final NonceProvider publicNonceProvider,
       final PrivacyController privacyController,
-      final GasCalculator gasCalculator) {
+      final TransactionGasCalculator transactionGasCalculator) {
     super(transactionPool, privacyIdProvider, privateMarkerTransactionFactory, publicNonceProvider);
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
-    this.gasCalculator = gasCalculator;
+    this.transactionGasCalculator = transactionGasCalculator;
   }
 
   @Override
@@ -81,7 +81,7 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
     // choose the highest of the two options
     return Math.max(
         privateTransaction.getGasLimit(),
-        gasCalculator
+        transactionGasCalculator
             .transactionIntrinsicGasCostAndAccessedState(
                 new Transaction.Builder()
                     .to(Address.PLUGIN_PRIVACY)
