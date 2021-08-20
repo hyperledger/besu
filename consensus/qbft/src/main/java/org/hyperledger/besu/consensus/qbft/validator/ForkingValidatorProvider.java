@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Function;
 
-// TODO-jf use this in the integration tests
 public class ForkingValidatorProvider implements ValidatorProvider {
 
   private final Blockchain blockchain;
