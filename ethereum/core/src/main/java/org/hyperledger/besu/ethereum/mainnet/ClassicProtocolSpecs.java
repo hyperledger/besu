@@ -20,7 +20,7 @@ import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -56,9 +56,9 @@ public class ClassicProtocolSpecs {
             contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorBuilder(
-            gasCalculator ->
+            transactionGasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, true, chainId, quorumCompatibilityMode))
+                    transactionGasCalculator, true, chainId, quorumCompatibilityMode))
         .name("ClassicTangerineWhistle");
   }
 
@@ -115,9 +115,9 @@ public class ClassicProtocolSpecs {
             quorumCompatibilityMode)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorBuilder(
-            gasCalculator ->
+            transactionGasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, true, chainId, quorumCompatibilityMode))
+                    transactionGasCalculator, true, chainId, quorumCompatibilityMode))
         .name("DefuseDifficultyBomb");
   }
 
@@ -150,20 +150,22 @@ public class ClassicProtocolSpecs {
                 ? ClassicProtocolSpecs::byzantiumTransactionReceiptFactoryWithReasonEnabled
                 : ClassicProtocolSpecs::byzantiumTransactionReceiptFactory)
         .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
+            (transactionGasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    gasCalculator,
+                    transactionGasCalculator,
                     evm,
                     true,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     1))
         .transactionProcessorBuilder(
             (gasCalculator,
+                transactionGasCalculator,
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
+                    transactionGasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
@@ -232,10 +234,10 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             quorumCompatibilityMode)
         .blockHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createBlockHeaderValidator(
+            MainnetBlockHeaderValidator.createLegacyBlockHeaderValidator(
                 new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
         .ommerHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createOmmerValidator(
+            MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
                 new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
         .name("Thanos");
   }
@@ -275,10 +277,10 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             quorumCompatibilityMode)
         .blockHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createBlockHeaderValidator(
+            MainnetBlockHeaderValidator.createLegacyBlockHeaderValidator(
                 new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.KECCAK256)))
         .ommerHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createOmmerValidator(
+            MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
                 new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.KECCAK256)))
         .powHasher(powHasher(PowAlgorithm.KECCAK256))
         .name("ecip1049");
@@ -300,9 +302,9 @@ public class ClassicProtocolSpecs {
             quorumCompatibilityMode)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
-            gasCalculator ->
+            transactionGasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator,
+                    transactionGasCalculator,
                     true,
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),

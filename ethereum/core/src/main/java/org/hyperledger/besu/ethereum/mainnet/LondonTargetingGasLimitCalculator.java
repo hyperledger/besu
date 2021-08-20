@@ -14,10 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_CONSTANT_ADMUSTMENT_INCREMENT;
-import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_GAS_LIMIT;
-import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MIN_GAS_LIMIT;
-
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 
 import org.apache.logging.log4j.LogManager;

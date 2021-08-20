@@ -12,16 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.ethereum.core.feemarket;
 
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Wei;
 
-public class HomesteadGasCalculator extends FrontierGasCalculator {
+import java.util.Optional;
 
-  private static final Gas TX_CREATE_EXTRA = Gas.of(32_000L);
+@FunctionalInterface
+public interface CoinbaseFeePriceCalculator {
+  Wei price(Gas coinbaseFee, Wei transactionGasPrice, Optional<Long> baseFee);
 
-  @Override
-  protected Gas txCreateExtraGasCost() {
-    return TX_CREATE_EXTRA;
+  static CoinbaseFeePriceCalculator frontier() {
+    return (coinbaseFee, transactionGasPrice, baseFee) -> coinbaseFee.priceFor(transactionGasPrice);
+  }
+
+  static CoinbaseFeePriceCalculator eip1559() {
+    return (coinbaseFee, transactionGasPrice, baseFee) -> {
+      return coinbaseFee.priceFor(transactionGasPrice.subtract(Wei.of(baseFee.orElseThrow())));
+    };
   }
 }

@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTran
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -254,8 +253,7 @@ public class TransactionPool implements BlockAddedObserver {
     }
     if (transaction.getType().equals(TransactionType.EIP1559)) {
       final long blknum = chainHeadBlockHeader.getNumber();
-      ProtocolSpec spec = protocolSchedule.getByBlockNumber(blknum);
-      if (!spec.getEip1559().map(eip1559 -> eip1559.isEIP1559(blknum)).orElse(false)) {
+      if (!protocolSchedule.getByBlockNumber(blknum).getFeeMarket().implementsBaseFee()) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
             "EIP-1559 transaction are not allowed yet");
