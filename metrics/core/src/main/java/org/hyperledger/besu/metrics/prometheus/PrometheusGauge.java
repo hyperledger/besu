@@ -56,7 +56,8 @@ public class PrometheusGauge extends Collector implements LabelledGauge {
     observationsMap.forEach(
         (labels, valueSupplier) ->
             samples.add(
-                new MetricFamilySamples.Sample(metricName, labelNames, labels, valueSupplier.getAsDouble())));
+                new MetricFamilySamples.Sample(
+                    metricName, labelNames, labels, valueSupplier.getAsDouble())));
     return List.of(new MetricFamilySamples(metricName, Type.GAUGE, help, samples));
   }
 }
