@@ -96,7 +96,7 @@ public class EnodeURLImpl implements EnodeURL {
   public static EnodeURL fromURI(final URI uri, final EnodeDnsConfiguration enodeDnsConfiguration) {
     checkArgument(uri != null, "URI cannot be null");
     checkStringArgumentNotEmpty(uri.getScheme(), "Missing 'enode' scheme.");
-    checkStringArgumentNotEmpty(uri.getHost(), "Missing or invalid ip address.");
+    checkStringArgumentNotEmpty(uri.getHost(), "Missing or invalid host or ip address.");
     checkStringArgumentNotEmpty(uri.getUserInfo(), "Missing node ID.");
 
     checkArgument(

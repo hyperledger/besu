@@ -238,7 +238,7 @@ public class EnodeURLImplTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Missing or invalid ip address.");
+        .hasMessageContaining("Missing or invalid host or ip address.");
   }
 
   @Test
@@ -248,7 +248,7 @@ public class EnodeURLImplTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Missing or invalid ip address.");
+        .hasMessageContaining("Missing or invalid host or ip address.");
   }
 
   @Test
