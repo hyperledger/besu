@@ -23,14 +23,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
 
 import com.google.common.base.Preconditions;
-import io.opentelemetry.api.metrics.AsynchronousInstrument;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.api.metrics.Meter;
-import io.opentelemetry.api.metrics.common.Labels;
-import io.opentelemetry.api.metrics.common.LabelsBuilder;
+import io.opentelemetry.api.metrics.ObservableDoubleMeasurement;
 
 public class OpenTelemetryGauge implements LabelledGauge {
   private final List<String> labelNames;
-  private final Map<Labels, DoubleSupplier> observationsMap = new ConcurrentHashMap<>();
+  private final Map<Attributes, DoubleSupplier> observationsMap = new ConcurrentHashMap<>();
 
   public OpenTelemetryGauge(
       final String metricName,
@@ -39,11 +39,7 @@ public class OpenTelemetryGauge implements LabelledGauge {
       final List<String> labelNames) {
     this.labelNames = labelNames;
 
-    meter
-        .doubleValueObserverBuilder(metricName)
-        .setDescription(help)
-        .setUpdater(this::updater)
-        .build();
+    meter.gaugeBuilder(metricName).setDescription(help).buildWithCallback(this::updater);
   }
 
   @Override
@@ -51,23 +47,23 @@ public class OpenTelemetryGauge implements LabelledGauge {
     Preconditions.checkArgument(
         labelValues.length == labelNames.size(),
         "label values and label names need the same number of elements");
-    final Labels labels = getLabels(labelValues);
+    final Attributes labels = getLabels(labelValues);
     if (observationsMap.putIfAbsent(labels, valueSupplier) != null) {
       throw new IllegalStateException(
           "Already registered a gauge with labels " + Arrays.toString(labelValues));
     }
   }
 
-  private Labels getLabels(final String... labelValues) {
-    final LabelsBuilder labelsBuilder = Labels.builder();
+  private Attributes getLabels(final String... labelValues) {
+    final AttributesBuilder labelsBuilder = Attributes.builder();
     for (int i = 0; i < labelNames.size(); i++) {
       labelsBuilder.put(labelNames.get(i), labelValues[i]);
     }
     return labelsBuilder.build();
   }
 
-  private void updater(final AsynchronousInstrument.DoubleResult doubleResult) {
+  private void updater(final ObservableDoubleMeasurement measurement) {
     observationsMap.forEach(
-        (labels, valueSupplier) -> doubleResult.observe(valueSupplier.getAsDouble(), labels));
+        (labels, valueSupplier) -> measurement.observe(valueSupplier.getAsDouble(), labels));
   }
 }
