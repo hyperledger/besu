@@ -319,6 +319,34 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
                   String.valueOf(
                       permissioningConfiguration.getNodeSmartContractInterfaceVersion()));
             });
+
+    node.getPkiKeyStoreConfiguration()
+        .ifPresent(
+            pkiConfig -> {
+              params.add("--Xpki-block-creation-enabled");
+
+              params.add("--Xpki-block-creation-keystore-certificate-alias");
+              params.add(pkiConfig.getCertificateAlias());
+
+              params.add("--Xpki-block-creation-keystore-type");
+              params.add(pkiConfig.getKeyStoreType());
+
+              params.add("--Xpki-block-creation-keystore-file");
+              params.add(pkiConfig.getKeyStorePath().toAbsolutePath().toString());
+
+              params.add("--Xpki-block-creation-keystore-password-file");
+              params.add(pkiConfig.getKeyStorePasswordPath().toAbsolutePath().toString());
+
+              params.add("--Xpki-block-creation-truststore-type");
+              params.add(pkiConfig.getTrustStoreType());
+
+              params.add("--Xpki-block-creation-truststore-file");
+              params.add(pkiConfig.getTrustStorePath().toAbsolutePath().toString());
+
+              params.add("--Xpki-block-creation-truststore-password-file");
+              params.add(pkiConfig.getTrustStorePasswordPath().toAbsolutePath().toString());
+            });
+
     params.addAll(node.getExtraCLIOptions());
 
     params.add("--key-value-storage");
