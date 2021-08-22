@@ -81,8 +81,8 @@ public class NodeSmartContractV2PermissioningController
     return InetAddresses.isUriInetAddress(enodeHost) || InetAddresses.isInetAddress(enodeHost);
   }
 
-  private EnodeURL dnsToIp(final EnodeURL enodeURL) {
-    return EnodeURLImpl.builder().configureFromEnode(enodeURL).build();
+  private EnodeURL dnsToIp(final EnodeURL enodeUrl) {
+    return EnodeURLImpl.builder().configureFromEnode(enodeUrl).build();
   }
 
   private EnodeURL ipToDNS(final EnodeURL enodeURL) {
