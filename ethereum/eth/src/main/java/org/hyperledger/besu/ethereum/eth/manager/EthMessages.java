@@ -43,23 +43,9 @@ public class EthMessages {
             listeners -> listeners.forEach(messageCallback -> messageCallback.exec(ethMessage)));
 
     return Optional.ofNullable(messageResponseConstructorsByCode.get(code))
-        .flatMap(
-            messageResponseConstructor -> {
-              try {
-                return Optional.of(messageResponseConstructor.response(ethMessage.getData()));
-              } catch (final RLPException e) {
-                LOG.debug(
-                    "Received malformed message {} , disconnecting: {}",
-                    ethMessage.getData().getData(),
-                    ethMessage.getPeer(),
-                    e);
-
-                ethMessage
-                    .getPeer()
-                    .disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
-                return Optional.empty();
-              }
-            });
+        .map(
+            messageResponseConstructor ->
+                messageResponseConstructor.response(ethMessage.getData()));
   }
 
   public void subscribe(final int messageCode, final MessageCallback callback) {

@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNot
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -233,68 +234,75 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     final MessageData messageData = message.getData();
     final int code = messageData.getCode();
     LOG.trace("Process message {}, {}", cap, code);
-    final EthPeer peer = ethPeers.peer(message.getConnection());
-    if (peer == null) {
+    final EthPeer ethPeer = ethPeers.peer(message.getConnection());
+    if (ethPeer == null) {
       LOG.debug(
           "Ignoring message received from unknown peer connection: " + message.getConnection());
       return;
     }
 
     if (messageData.getSize() > 10 * 1_000_000 /*10MB*/) {
-      LOG.debug("Received message over 10MB. Disconnecting from {}", peer);
-      peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      LOG.debug("Received message over 10MB. Disconnecting from {}", ethPeer);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
 
     // Handle STATUS processing
     if (code == EthPV62.STATUS) {
-      handleStatusMessage(peer, messageData);
+      handleStatusMessage(ethPeer, messageData);
       return;
-    } else if (!peer.statusHasBeenReceived()) {
+    } else if (!ethPeer.statusHasBeenReceived()) {
       // Peers are required to send status messages before any other message type
       LOG.debug(
           "{} requires a Status ({}) message to be sent first.  Instead, received message {}.  Disconnecting from {}.",
           this.getClass().getSimpleName(),
           EthPV62.STATUS,
           code,
-          peer);
-      peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+          ethPeer);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
 
-    final EthMessage ethMessage = new EthMessage(peer, messageData);
+    final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
 
-    if (!peer.validateReceivedMessage(ethMessage)) {
-      LOG.debug("Unsolicited message received from, disconnecting: {}", peer);
-      peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+    if (!ethPeer.validateReceivedMessage(ethMessage)) {
+      LOG.debug("Unsolicited message received from, disconnecting: {}", ethPeer);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
 
     // This will handle responses
-    ethPeers.dispatchMessage(peer, ethMessage);
+    ethPeers.dispatchMessage(ethPeer, ethMessage);
 
     // This will handle requests
     final Optional<MessageData> maybeResponseData;
-    if (cap.getVersion() >= 66 && EthProtocol.requestIdCompatible(code)) {
-      final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
-          RequestId.unwrapMessageData(ethMessage.getData());
-      maybeResponseData =
-          ethMessages
-              .dispatch(new EthMessage(ethMessage.getPeer(), requestIdAndEthMessage.getValue()))
-              .map(
-                  responseData ->
-                      RequestId.wrapMessageData(requestIdAndEthMessage.getKey(), responseData));
-    } else {
-      maybeResponseData = ethMessages.dispatch(ethMessage);
+    try {
+      if (cap.getVersion() >= 66 && EthProtocol.requestIdCompatible(code)) {
+        final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
+            RequestId.unwrapMessageData(ethMessage.getData());
+        maybeResponseData =
+            ethMessages
+                .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()))
+                .map(
+                    responseData ->
+                        RequestId.wrapMessageData(requestIdAndEthMessage.getKey(), responseData));
+      } else {
+        maybeResponseData = ethMessages.dispatch(ethMessage);
+      }
+      maybeResponseData.ifPresent(
+          responseData -> {
+            try {
+              ethPeer.send(responseData);
+            } catch (final PeerNotConnected __) {
+              // Peer disconnected before we could respond - nothing to do
+            }
+          });
+    } catch (final RLPException e) {
+      LOG.debug(
+          "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);
+
+      ethMessage.getPeer().disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
     }
-    maybeResponseData.ifPresent(
-        responseData -> {
-          try {
-            ethMessage.getPeer().send(responseData);
-          } catch (final PeerNotConnected __) {
-            // Peer disconnected before we could respond - nothing to do
-          }
-        });
   }
 
   @Override
