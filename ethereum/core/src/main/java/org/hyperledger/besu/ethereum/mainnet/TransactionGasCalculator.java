@@ -40,14 +40,6 @@ public interface TransactionGasCalculator {
   GasAndAccessedState transactionIntrinsicGasCostAndAccessedState(Transaction transaction);
 
   /**
-   * Returns the cost for a {@link AbstractMessageProcessor} to deposit the code in storage
-   *
-   * @param codeSize The size of the code in bytes
-   * @return the code deposit cost
-   */
-  Gas codeDepositGasCost(int codeSize);
-
-  /**
    * A measure of the maximum amount of refunded gas a transaction will be credited with.
    *
    * @return the quotient of the equation `txGasCost / refundQuotient`.

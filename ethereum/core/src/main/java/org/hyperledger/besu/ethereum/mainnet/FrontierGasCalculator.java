@@ -101,6 +101,8 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final Gas SELF_DESTRUCT_REFUND_AMOUNT = Gas.of(24_000L);
 
+  private static final Gas CODE_DEPOSIT_BYTE_COST = Gas.of(200L);
+
   @Override
   public Gas idPrecompiledContractGasCost(final Bytes input) {
     return ID_PRECOMPILED_WORD_GAS_COST
@@ -416,5 +418,10 @@ public class FrontierGasCalculator implements GasCalculator {
     final Gas base = len.times(len).dividedBy(512);
 
     return MEMORY_WORD_GAS_COST.times(len).plus(base);
+  }
+
+  @Override
+  public Gas codeDepositGasCost(final int codeSize) {
+    return CODE_DEPOSIT_BYTE_COST.times(codeSize);
   }
 }

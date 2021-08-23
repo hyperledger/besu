@@ -54,8 +54,7 @@ public class ProtocolSpecBuilder {
   private BlockHeaderValidator.Builder blockHeaderValidatorBuilder;
   private BlockHeaderValidator.Builder ommerHeaderValidatorBuilder;
   private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
-  private BiFunction<TransactionGasCalculator, EVM, AbstractMessageProcessor>
-      contractCreationProcessorBuilder;
+  private BiFunction<GasCalculator, EVM, AbstractMessageProcessor> contractCreationProcessorBuilder;
   private Function<PrecompiledContractConfiguration, PrecompileContractRegistry>
       precompileContractRegistryBuilder;
   private BiFunction<EVM, PrecompileContractRegistry, AbstractMessageProcessor>
@@ -146,7 +145,7 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder contractCreationProcessorBuilder(
-      final BiFunction<TransactionGasCalculator, EVM, AbstractMessageProcessor>
+      final BiFunction<GasCalculator, EVM, AbstractMessageProcessor>
           contractCreationProcessorBuilder) {
     this.contractCreationProcessorBuilder = contractCreationProcessorBuilder;
     return this;
@@ -276,7 +275,7 @@ public class ProtocolSpecBuilder {
     final MainnetTransactionValidator transactionValidator =
         transactionValidatorBuilder.apply(transactionGasCalculator);
     final AbstractMessageProcessor contractCreationProcessor =
-        contractCreationProcessorBuilder.apply(transactionGasCalculator, evm);
+        contractCreationProcessorBuilder.apply(gasCalculator, evm);
     final PrecompileContractRegistry precompileContractRegistry =
         precompileContractRegistryBuilder.apply(precompiledContractConfiguration);
     final AbstractMessageProcessor messageCallProcessor =

@@ -98,9 +98,9 @@ public abstract class MainnetProtocolSpecs {
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::frontier)
         .messageCallProcessorBuilder(MainnetMessageCallProcessor::new)
         .contractCreationProcessorBuilder(
-            (transactionGasCalculator, evm) ->
+            (gasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    transactionGasCalculator,
+                    gasCalculator,
                     evm,
                     false,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
@@ -202,9 +202,9 @@ public abstract class MainnetProtocolSpecs {
         .transactionGasCalculator(new HomesteadTransactionGasCalculator())
         .evmBuilder(MainnetEvmRegistries::homestead)
         .contractCreationProcessorBuilder(
-            (transactionGasCalculator, evm) ->
+            (gasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    transactionGasCalculator,
+                    gasCalculator,
                     evm,
                     true,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
@@ -280,9 +280,9 @@ public abstract class MainnetProtocolSpecs {
                     precompileContractRegistry,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .contractCreationProcessorBuilder(
-            (transactionGasCalculator, evm) ->
+            (gasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    transactionGasCalculator,
+                    gasCalculator,
                     evm,
                     true,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
@@ -403,9 +403,9 @@ public abstract class MainnetProtocolSpecs {
                 MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .contractCreationProcessorBuilder(
-            (transactionGasCalculator, evm) ->
+            (gasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    transactionGasCalculator,
+                    gasCalculator,
                     evm,
                     true,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
@@ -511,9 +511,9 @@ public abstract class MainnetProtocolSpecs {
                     londonFeeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         .contractCreationProcessorBuilder(
-            (transactionGasCalculator, evm) ->
+            (gasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    transactionGasCalculator,
+                    gasCalculator,
                     evm,
                     true,
                     List.of(MaxCodeSizeRule.of(contractSizeLimit), PrefixCodeRule.of()),

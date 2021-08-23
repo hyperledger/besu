@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.ECRECPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.IDPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.RIPEMD160PrecompiledContract;
@@ -409,4 +410,12 @@ public interface GasCalculator {
   default Gas modExpGasCost(final Bytes input) {
     return Gas.ZERO;
   }
+
+  /**
+   * Returns the cost for a {@link AbstractMessageProcessor} to deposit the code in storage
+   *
+   * @param codeSize The size of the code in bytes
+   * @return the code deposit cost
+   */
+  Gas codeDepositGasCost(int codeSize);
 }

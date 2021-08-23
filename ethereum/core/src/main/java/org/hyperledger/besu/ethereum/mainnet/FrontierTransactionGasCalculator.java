@@ -30,8 +30,6 @@ public class FrontierTransactionGasCalculator implements TransactionGasCalculato
 
   private static final Gas TX_CREATE_EXTRA_COST = Gas.of(0L);
 
-  private static final Gas CODE_DEPOSIT_BYTE_COST = Gas.of(200L);
-
   @Override
   public GasAndAccessedState transactionIntrinsicGasCostAndAccessedState(
       final Transaction transaction) {
@@ -63,11 +61,6 @@ public class FrontierTransactionGasCalculator implements TransactionGasCalculato
    */
   protected Gas txCreateExtraGasCost() {
     return TX_CREATE_EXTRA_COST;
-  }
-
-  @Override
-  public Gas codeDepositGasCost(final int codeSize) {
-    return CODE_DEPOSIT_BYTE_COST.times(codeSize);
   }
 
   @Override

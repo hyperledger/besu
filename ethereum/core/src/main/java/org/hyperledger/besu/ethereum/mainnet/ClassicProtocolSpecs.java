@@ -150,9 +150,9 @@ public class ClassicProtocolSpecs {
                 ? ClassicProtocolSpecs::byzantiumTransactionReceiptFactoryWithReasonEnabled
                 : ClassicProtocolSpecs::byzantiumTransactionReceiptFactory)
         .contractCreationProcessorBuilder(
-            (transactionGasCalculator, evm) ->
+            (gasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    transactionGasCalculator,
+                    gasCalculator,
                     evm,
                     true,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
