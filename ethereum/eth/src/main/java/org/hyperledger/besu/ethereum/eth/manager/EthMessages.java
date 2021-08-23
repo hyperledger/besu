@@ -15,8 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
-import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
