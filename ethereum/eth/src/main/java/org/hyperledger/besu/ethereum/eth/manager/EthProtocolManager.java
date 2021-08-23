@@ -275,7 +275,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     ethPeers.dispatchMessage(ethPeer, ethMessage);
 
     // This will handle requests
-    final Optional<MessageData> maybeResponseData;
+    Optional<MessageData> maybeResponseData = Optional.empty();
     try {
       if (cap.getVersion() >= 66 && EthProtocol.requestIdCompatible(code)) {
         final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
@@ -289,20 +289,20 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       } else {
         maybeResponseData = ethMessages.dispatch(ethMessage);
       }
-      maybeResponseData.ifPresent(
-          responseData -> {
-            try {
-              ethPeer.send(responseData);
-            } catch (final PeerNotConnected __) {
-              // Peer disconnected before we could respond - nothing to do
-            }
-          });
     } catch (final RLPException e) {
       LOG.debug(
           "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);
 
       ethPeer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
     }
+    maybeResponseData.ifPresent(
+        responseData -> {
+          try {
+            ethPeer.send(responseData);
+          } catch (final PeerNotConnected __) {
+            // Peer disconnected before we could respond - nothing to do
+          }
+        });
   }
 
   @Override
