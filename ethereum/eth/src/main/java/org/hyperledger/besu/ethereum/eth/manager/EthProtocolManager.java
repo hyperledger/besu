@@ -301,7 +301,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       LOG.debug(
           "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);
 
-      ethMessage.getPeer().disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+      ethPeer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
     }
   }
 
