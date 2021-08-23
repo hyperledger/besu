@@ -53,6 +53,8 @@ public class MainnetTransactionProcessor {
 
   protected final GasCalculator gasCalculator;
 
+  protected final TransactionGasCalculator transactionGasCalculator;
+
   protected final MainnetTransactionValidator transactionValidator;
 
   private final AbstractMessageProcessor contractCreationProcessor;
@@ -218,6 +220,7 @@ public class MainnetTransactionProcessor {
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
+      final TransactionGasCalculator transacitonGasCalculator,
       final MainnetTransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
@@ -226,6 +229,7 @@ public class MainnetTransactionProcessor {
       final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
     this.gasCalculator = gasCalculator;
+    this.transactionGasCalculator = transacitonGasCalculator;
     this.transactionValidator = transactionValidator;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
@@ -290,7 +294,7 @@ public class MainnetTransactionProcessor {
           sender.getBalance());
 
       final GasAndAccessedState gasAndAccessedState =
-          gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction);
+          transactionGasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction);
       final Gas intrinsicGas = gasAndAccessedState.getGas();
       final Gas gasAvailable = Gas.of(transaction.getGasLimit()).minus(intrinsicGas);
       LOG.trace(
@@ -467,7 +471,7 @@ public class MainnetTransactionProcessor {
     final Gas maxRefundAllowance =
         Gas.of(transaction.getGasLimit())
             .minus(gasRemaining)
-            .dividedBy(gasCalculator.getMaxRefundQuotient());
+            .dividedBy(transactionGasCalculator.getMaxRefundQuotient());
     final Gas refundAllowance = maxRefundAllowance.min(gasRefund);
     return gasRemaining.plus(refundAllowance);
   }

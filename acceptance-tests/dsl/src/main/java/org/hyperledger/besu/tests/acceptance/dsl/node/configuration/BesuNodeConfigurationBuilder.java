@@ -71,8 +71,8 @@ public class BesuNodeConfigurationBuilder {
   private boolean bootnodeEligible = true;
   private boolean revertReasonEnabled = false;
   private NetworkName network = null;
-  private boolean secp256K1Native = false;
-  private boolean altbn128Native = false;
+  private boolean secp256K1Native = true;
+  private boolean altbn128Native = true;
   private final List<String> plugins = new ArrayList<>();
   private final List<String> extraCLIOptions = new ArrayList<>();
   private List<String> staticNodes = new ArrayList<>();
@@ -371,12 +371,12 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder secp256k1Native() {
+  public BesuNodeConfigurationBuilder secp256k1Java() {
     this.secp256K1Native = true;
     return this;
   }
 
-  public BesuNodeConfigurationBuilder altbn128() {
+  public BesuNodeConfigurationBuilder altbn128Java() {
     this.altbn128Native = true;
     return this;
   }

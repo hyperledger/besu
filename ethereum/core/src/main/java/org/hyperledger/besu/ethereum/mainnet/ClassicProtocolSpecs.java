@@ -56,9 +56,9 @@ public class ClassicProtocolSpecs {
             contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorBuilder(
-            gasCalculator ->
+            transactionGasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, true, chainId, quorumCompatibilityMode))
+                    transactionGasCalculator, true, chainId, quorumCompatibilityMode))
         .name("ClassicTangerineWhistle");
   }
 
@@ -115,9 +115,9 @@ public class ClassicProtocolSpecs {
             quorumCompatibilityMode)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorBuilder(
-            gasCalculator ->
+            transactionGasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, true, chainId, quorumCompatibilityMode))
+                    transactionGasCalculator, true, chainId, quorumCompatibilityMode))
         .name("DefuseDifficultyBomb");
   }
 
@@ -150,20 +150,22 @@ public class ClassicProtocolSpecs {
                 ? ClassicProtocolSpecs::byzantiumTransactionReceiptFactoryWithReasonEnabled
                 : ClassicProtocolSpecs::byzantiumTransactionReceiptFactory)
         .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
+            (transactionGasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    gasCalculator,
+                    transactionGasCalculator,
                     evm,
                     true,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     1))
         .transactionProcessorBuilder(
             (gasCalculator,
+                transactionGasCalculator,
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
+                    transactionGasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
@@ -300,9 +302,9 @@ public class ClassicProtocolSpecs {
             quorumCompatibilityMode)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
-            gasCalculator ->
+            transactionGasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator,
+                    transactionGasCalculator,
                     true,
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),

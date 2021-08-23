@@ -12,16 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.plugin.services.metrics;
 
-import org.hyperledger.besu.ethereum.core.Gas;
+import java.util.function.DoubleSupplier;
 
-public class HomesteadGasCalculator extends FrontierGasCalculator {
-
-  private static final Gas TX_CREATE_EXTRA = Gas.of(32_000L);
-
-  @Override
-  protected Gas txCreateExtraGasCost() {
-    return TX_CREATE_EXTRA;
-  }
+public interface LabelledGauge {
+  void labels(final DoubleSupplier valueSupplier, final String... labelValues);
 }
