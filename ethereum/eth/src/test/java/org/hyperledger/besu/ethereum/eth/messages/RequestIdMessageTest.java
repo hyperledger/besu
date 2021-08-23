@@ -22,7 +22,7 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
-import static org.hyperledger.besu.ethereum.eth.manager.RequestId.wrapRequestId;
+import static org.hyperledger.besu.ethereum.eth.manager.RequestId.wrapMessageData;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -63,7 +63,7 @@ public class RequestIdMessageTest {
     final var testJson = parseTestFile("GetBlockHeadersPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
-        wrapRequestId(
+        wrapMessageData(
                 BigInteger.valueOf(1111),
                 GetBlockHeadersMessage.create(
                     Hash.fromHexString(
@@ -80,7 +80,7 @@ public class RequestIdMessageTest {
     final var testJson = parseTestFile("GetBlockHeadersPacket66-1.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
-        wrapRequestId(BigInteger.valueOf(1111), GetBlockHeadersMessage.create(9999, 5, 5, false))
+        wrapMessageData(BigInteger.valueOf(1111), GetBlockHeadersMessage.create(9999, 5, 5, false))
             .getData();
     assertThat(actual).isEqualTo(expected);
   }
@@ -90,7 +90,7 @@ public class RequestIdMessageTest {
     final var testJson = parseTestFile("BlockHeadersPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
-        wrapRequestId(
+        wrapMessageData(
                 BigInteger.valueOf(1111),
                 BlockHeadersMessage.create(
                     Arrays.asList(
@@ -106,7 +106,7 @@ public class RequestIdMessageTest {
     final var testJson = parseTestFile("GetBlockBodiesPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
-        wrapRequestId(
+        wrapMessageData(
                 BigInteger.valueOf(1111),
                 GetBlockBodiesMessage.create(
                     Stream.of(
@@ -123,7 +123,7 @@ public class RequestIdMessageTest {
     final var testJson = parseTestFile("BlockBodiesPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
-        wrapRequestId(
+        wrapMessageData(
                 BigInteger.valueOf(1111),
                 BlockBodiesMessage.create(
                     Arrays.asList(
@@ -138,7 +138,7 @@ public class RequestIdMessageTest {
     final var testJson = parseTestFile("GetNodeDataPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
-        wrapRequestId(
+        wrapMessageData(
                 BigInteger.valueOf(1111),
                 GetNodeDataMessage.create(
                     Stream.of(
@@ -155,7 +155,7 @@ public class RequestIdMessageTest {
     final var testJson = parseTestFile("NodeDataPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
-        wrapRequestId(
+        wrapMessageData(
                 BigInteger.valueOf(1111),
                 NodeDataMessage.create(
                     Stream.of("0xdeadc0de", "0xfeedbeef")
@@ -170,7 +170,7 @@ public class RequestIdMessageTest {
     final var testJson = parseTestFile("GetReceiptsPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
-        wrapRequestId(
+        wrapMessageData(
                 BigInteger.valueOf(1111),
                 GetReceiptsMessage.create(
                     Stream.of(
@@ -187,7 +187,7 @@ public class RequestIdMessageTest {
     final var testJson = parseTestFile("ReceiptsPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
-        wrapRequestId(
+        wrapMessageData(
                 BigInteger.valueOf(1111),
                 ReceiptsMessage.create(
                     singletonList(
@@ -223,7 +223,7 @@ public class RequestIdMessageTest {
     final var testJson = parseTestFile("GetPooledTransactionsPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
-        wrapRequestId(
+        wrapMessageData(
                 BigInteger.valueOf(1111),
                 GetPooledTransactionsMessage.create(
                     Stream.of(
@@ -240,7 +240,7 @@ public class RequestIdMessageTest {
     final var testJson = parseTestFile("PooledTransactionsPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
-        wrapRequestId(
+        wrapMessageData(
                 BigInteger.valueOf(1111),
                 PooledTransactionsMessage.create(
                     Arrays.asList(

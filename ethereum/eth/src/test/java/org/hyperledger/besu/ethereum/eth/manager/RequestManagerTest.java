@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.manager.RequestId.unwrapRequestId;
+import static org.hyperledger.besu.ethereum.eth.manager.RequestId.unwrapMessageData;
 
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -290,7 +290,7 @@ public class RequestManagerTest {
     assertThat(response)
         .isEqualTo(
             (supportsRequestId
-                ? unwrapRequestId(mockMessage.getData()).getValue()
+                ? unwrapMessageData(mockMessage.getData()).getValue()
                 : mockMessage.getData()));
   }
 

@@ -25,7 +25,7 @@ import java.util.AbstractMap;
 import java.util.Map;
 
 public class RequestId {
-  public static MessageData wrapRequestId(
+  public static MessageData wrapMessageData(
       final BigInteger requestId, final MessageData messageData) {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     rlpOutput.startList();
@@ -35,7 +35,7 @@ public class RequestId {
     return new RawMessage(messageData.getCode(), rlpOutput.encoded());
   }
 
-  static Map.Entry<BigInteger, MessageData> unwrapRequestId(final MessageData messageData) {
+  static Map.Entry<BigInteger, MessageData> unwrapMessageData(final MessageData messageData) {
     final RLPInput messageDataRLP = RLP.input(messageData.getData());
     messageDataRLP.enterList();
     final BigInteger requestId = messageDataRLP.readBigIntegerScalar();
