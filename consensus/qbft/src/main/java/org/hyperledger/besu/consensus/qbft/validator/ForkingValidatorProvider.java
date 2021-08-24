@@ -72,7 +72,7 @@ public class ForkingValidatorProvider implements ValidatorProvider {
 
   private Collection<Address> getValidators(
       final long block, final Function<ValidatorProvider, Collection<Address>> getValidators) {
-    final Optional<QbftFork> fork = forksSchedule.getByBlockNumber(block);
+    final Optional<QbftFork> fork = forksSchedule.getForkWithValidatorSelectionMode(block);
     final ValidatorProvider validatorProvider = resolveValidatorProvider(block);
 
     if (fork.isPresent() && fork.get().getValidatorSelectionMode().isPresent()) {
@@ -98,7 +98,7 @@ public class ForkingValidatorProvider implements ValidatorProvider {
   }
 
   private ValidatorProvider resolveValidatorProvider(final long block) {
-    final Optional<QbftFork> fork = forksSchedule.getByBlockNumber(block);
+    final Optional<QbftFork> fork = forksSchedule.getForkWithValidatorSelectionMode(block);
     if (fork.isPresent() && fork.get().getValidatorSelectionMode().isPresent()) {
       final VALIDATOR_SELECTION_MODE validatorSelectionMode =
           fork.get().getValidatorSelectionMode().get();

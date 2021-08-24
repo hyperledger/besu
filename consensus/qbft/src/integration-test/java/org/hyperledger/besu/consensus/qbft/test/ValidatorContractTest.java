@@ -24,6 +24,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.support.TestContextBuilder;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -80,6 +81,7 @@ public class ValidatorContractTest {
 
   @Test
   public void migratesFromBlockToValidatorContract() {
+    final QbftExtraDataCodec extraDataCodec = new QbftExtraDataCodec();
     final List<QbftFork> qbftForks =
         List.of(createContractFork(1, TestContextBuilder.VALIDATOR_CONTRACT_ADDRESS));
     final TestContext context =
@@ -109,8 +111,14 @@ public class ValidatorContractTest {
     final ValidatorProvider validatorProvider = context.getValidatorProvider();
     final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
     final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
+    assertThat(extraDataCodec.decode(genesisBlock).getValidators()).containsExactly(NODE_ADDRESS);
+
+    // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
+    assertThat(extraDataCodec.decode(block1).getValidators()).isEmpty();
+    assertThat(extraDataCodec.decode(block1).getVote()).isEmpty();
   }
 
   // TODO-jf remove this duplication

@@ -33,9 +33,9 @@ public class QbftForksSchedule {
     qbftForks.addAll(forks);
   }
 
-  public Optional<QbftFork> getByBlockNumber(final long blockNumber) {
+  public Optional<QbftFork> getForkWithValidatorSelectionMode(final long blockNumber) {
     for (final QbftFork f : qbftForks) {
-      if (blockNumber >= f.getForkBlock()) {
+      if (blockNumber >= f.getForkBlock() && f.getValidatorSelectionMode().isPresent()) {
         return Optional.of(f);
       }
     }

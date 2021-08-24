@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
@@ -34,7 +35,6 @@ import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
@@ -57,6 +57,7 @@ import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidator
 import org.hyperledger.besu.consensus.qbft.QbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
+import org.hyperledger.besu.consensus.qbft.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
@@ -103,6 +104,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -382,12 +384,22 @@ public class TestContextBuilder {
             .enabled(true)
             .build();
 
+    // TODO-jf this seems hacky, is there a better way
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
+    final Map<String, Object> qbftConfigValues = new HashMap<>();
+    if (useValidatorContract) {
+      qbftConfigValues.put("validatorcontractaddress", VALIDATOR_CONTRACT_ADDRESS.toHexString());
+    }
+
     genesisConfigOptions.byzantiumBlock(0);
+    genesisConfigOptions.qbftConfigOptions(
+        new QbftConfigOptions(JsonUtil.objectNodeFromMap(qbftConfigValues)));
+    genesisConfigOptions.transitions(new TestTransitions(qbftForks));
+
     final QbftBlockHeaderValidationRulesetFactory qbftBlockHeaderValidationRulesetFactory =
-        new QbftBlockHeaderValidationRulesetFactory(useValidatorContract);
+        new QbftBlockHeaderValidationRulesetFactory();
     final ProtocolSchedule protocolSchedule =
-        BftProtocolSchedule.create(
+        QbftProtocolSchedule.create(
             genesisConfigOptions,
             qbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
             BFT_EXTRA_DATA_ENCODER);
@@ -441,7 +453,7 @@ public class TestContextBuilder {
             localAddress,
             localAddress,
             BFT_EXTRA_DATA_ENCODER,
-            useValidatorContract);
+            forksSchedule);
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockChain, blockInterface, true, validatorProvider);

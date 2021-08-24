@@ -27,7 +27,6 @@ import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
@@ -47,6 +46,7 @@ import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidator
 import org.hyperledger.besu.consensus.qbft.QbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
+import org.hyperledger.besu.consensus.qbft.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.QbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
@@ -96,6 +96,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
   private QbftConfigOptions qbftConfig;
+  private QbftForksSchedule qbftForksSchedule;
   private ValidatorPeers peers;
 
   @Override
@@ -114,6 +115,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected void prepForBuild() {
     qbftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getQbftConfigOptions();
     bftEventQueue = new BftEventQueue(qbftConfig.getMessageQueueLimit());
+    qbftForksSchedule = createQbftForksSchedule(genesisConfig.getConfigOptions(), qbftConfig);
   }
 
   @Override
@@ -157,7 +159,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             localAddress,
             qbftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
             bftExtraDataCodec().get(),
-            isContractValidatorSelectionMode(qbftConfig));
+            qbftForksSchedule);
 
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
@@ -254,9 +256,9 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     final QbftBlockHeaderValidationRulesetFactory qbftBlockHeaderValidationRulesetFactory =
-        new QbftBlockHeaderValidationRulesetFactory(isContractValidatorSelectionMode(qbftConfig));
+        new QbftBlockHeaderValidationRulesetFactory();
 
-    return BftProtocolSchedule.create(
+    return QbftProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled,
@@ -278,31 +280,22 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    final GenesisConfigOptions configOptions =
-        genesisConfig.getConfigOptions(genesisConfigOverrides);
-    final QbftConfigOptions qbftConfig = configOptions.getQbftConfigOptions();
     final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength());
 
-    final List<QbftFork> qbftForks = configOptions.getTransitions().getQbftForks();
-    final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
+    final BftValidatorOverrides validatorOverrides =
+        convertBftForks(genesisConfig.getConfigOptions().getTransitions().getQbftForks());
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
 
-    final VALIDATOR_SELECTION_MODE validatorSelectionMode =
-        isContractValidatorSelectionMode(qbftConfig)
-            ? VALIDATOR_SELECTION_MODE.CONTRACT
-            : VALIDATOR_SELECTION_MODE.BLOCKHEADER;
-    final QbftFork genesisFork = createGenesisFork(configOptions, validatorSelectionMode);
-    final QbftForksSchedule forksSchedule = new QbftForksSchedule(genesisFork, qbftForks);
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
             blockchain, epochManager, bftBlockInterface().get(), validatorOverrides);
     final TransactionValidatorProvider transactionValidatorProvider =
         new TransactionValidatorProvider(
-            blockchain, new ValidatorContractController(transactionSimulator, forksSchedule));
+            blockchain, new ValidatorContractController(transactionSimulator, qbftForksSchedule));
     final ValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
-            blockchain, forksSchedule, blockValidatorProvider, transactionValidatorProvider);
+            blockchain, qbftForksSchedule, blockValidatorProvider, transactionValidatorProvider);
 
     if (pkiBlockCreationConfiguration.isPresent()) {
       return new PkiQbftContext(
@@ -313,6 +306,17 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     } else {
       return new BftContext(validatorProvider, epochManager, bftBlockInterface().get());
     }
+  }
+
+  private QbftForksSchedule createQbftForksSchedule(
+      final GenesisConfigOptions configOptions, final QbftConfigOptions qbftConfig) {
+    final VALIDATOR_SELECTION_MODE validatorSelectionMode =
+        isContractValidatorSelectionMode(qbftConfig)
+            ? VALIDATOR_SELECTION_MODE.CONTRACT
+            : VALIDATOR_SELECTION_MODE.BLOCKHEADER;
+    final QbftFork genesisFork = createGenesisFork(configOptions, validatorSelectionMode);
+    return new QbftForksSchedule(
+        genesisFork, genesisConfig.getConfigOptions().getTransitions().getQbftForks());
   }
 
   private QbftFork createGenesisFork(

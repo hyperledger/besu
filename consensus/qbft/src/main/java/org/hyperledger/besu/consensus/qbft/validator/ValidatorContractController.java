@@ -83,7 +83,7 @@ public class ValidatorContractController {
 
   private Address resolveContractAddress(final long blockNumber) {
     return forksSchedule
-        .getByBlockNumber(blockNumber)
+        .getForkWithValidatorSelectionMode(blockNumber)
         .flatMap(QbftFork::getValidatorContractAddress)
         .map(Address::fromHexString)
         .orElseThrow(

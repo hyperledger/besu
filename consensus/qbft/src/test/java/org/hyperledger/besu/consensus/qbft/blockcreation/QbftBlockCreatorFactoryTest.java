@@ -40,6 +40,7 @@ public class QbftBlockCreatorFactoryTest {
     final MiningParameters miningParams = mock(MiningParameters.class);
     when(miningParams.getExtraData()).thenReturn(Bytes.wrap("Qbft tests".getBytes(UTF_8)));
 
+    // TODO-jf fix test
     qbftBlockCreatorFactory =
         new QbftBlockCreatorFactory(
             mock(PendingTransactions.class),
@@ -49,7 +50,7 @@ public class QbftBlockCreatorFactoryTest {
             mock(Address.class),
             mock(Address.class),
             extraDataCodec,
-            true); // extraDataWithRoundInformationOnly
+            null); // extraDataWithRoundInformationOnly
   }
 
   @Test

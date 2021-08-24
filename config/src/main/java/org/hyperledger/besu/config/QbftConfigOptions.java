@@ -24,7 +24,7 @@ public class QbftConfigOptions extends BftConfigOptions {
   public static final QbftConfigOptions DEFAULT =
       new QbftConfigOptions(JsonUtil.createEmptyObjectNode());
 
-  QbftConfigOptions(final ObjectNode bftConfigRoot) {
+  public QbftConfigOptions(final ObjectNode bftConfigRoot) {
     super(bftConfigRoot);
   }
 
