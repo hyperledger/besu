@@ -20,15 +20,10 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -42,7 +37,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   private static final int MAX_OMMERS = 2;
 
   private static final int MAX_GENERATION = 6;
-  private final ProtocolSchedule protocolSchedule;
+  protected final ProtocolSchedule protocolSchedule;
 
   public MainnetBlockBodyValidator(final ProtocolSchedule protocolSchedule) {
     this.protocolSchedule = protocolSchedule;
@@ -101,10 +96,6 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     }
 
     if (!validateEthHash(context, block, ommerValidationMode)) {
-      return false;
-    }
-
-    if (!validateTransactionGasPrice(block)) {
       return false;
     }
 
@@ -261,37 +252,5 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       previous = ancestor;
     }
     return false;
-  }
-
-  private boolean validateTransactionGasPrice(final Block block) {
-
-    return Optional.of(
-            protocolSchedule.getByBlockNumber(block.getHeader().getNumber()).getFeeMarket())
-        .filter(FeeMarket::implementsBaseFee)
-        .map(
-            baseFeeMarket -> {
-              final BlockBody body = block.getBody();
-              final List<Transaction> transactions = body.getTransactions();
-              final TransactionPriceCalculator transactionPriceCalculator =
-                  protocolSchedule
-                      .getByBlockNumber(block.getHeader().getNumber())
-                      .getFeeMarket()
-                      .getTransactionPriceCalculator();
-
-              for (final Transaction transaction : transactions) {
-                final Optional<Long> baseFee = block.getHeader().getBaseFee();
-                final Wei price = transactionPriceCalculator.price(transaction, baseFee);
-                if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
-                  LOG.warn(
-                      "Invalid block: transaction gas price {} must be greater than base fee {}",
-                      price.toString(),
-                      baseFee.orElseThrow());
-                  return false;
-                }
-              }
-              return true;
-            })
-        // not a baseFeeMarket, no need to validate transaction gasPrices:
-        .orElse(Boolean.TRUE);
   }
 }

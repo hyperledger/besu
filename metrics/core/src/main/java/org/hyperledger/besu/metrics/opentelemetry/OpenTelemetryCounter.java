@@ -17,12 +17,10 @@ package org.hyperledger.besu.metrics.opentelemetry;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.api.metrics.BoundLongCounter;
 import io.opentelemetry.api.metrics.LongCounter;
-import io.opentelemetry.api.metrics.common.Labels;
 
 public class OpenTelemetryCounter implements LabelledMetric<Counter> {
 
@@ -36,12 +34,11 @@ public class OpenTelemetryCounter implements LabelledMetric<Counter> {
 
   @Override
   public Counter labels(final String... labelValues) {
-    List<String> labelKeysAndValues = new ArrayList<>();
+    final AttributesBuilder builder = Attributes.builder();
     for (int i = 0; i < labelNames.length; i++) {
-      labelKeysAndValues.add(labelNames[i]);
-      labelKeysAndValues.add(labelValues[i]);
+      builder.put(labelNames[i], labelValues[i]);
     }
-    final Labels labels = Labels.of(labelKeysAndValues.toArray(new String[] {}));
+    final Attributes labels = builder.build();
     BoundLongCounter boundLongCounter = counter.bind(labels);
     return new OpenTelemetryCounter.UnlabelledCounter(boundLongCounter);
   }

@@ -528,6 +528,7 @@ public abstract class MainnetProtocolSpecs {
             MainnetBlockHeaderValidator.createBaseFeeMarketValidator(londonFeeMarket))
         .ommerHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createBaseFeeMarketOmmerValidator(londonFeeMarket))
+        .blockBodyValidatorBuilder(BaseFeeBlockBodyValidator::new)
         .name(LONDON_FORK_NAME);
   }
 
