@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.operations;
 
-// import org.hyperledger.besu.ethereum.core.MutableAccount;
+// import org.hyperledger.besu.evm.MutableAccount;
 
 import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.Code;

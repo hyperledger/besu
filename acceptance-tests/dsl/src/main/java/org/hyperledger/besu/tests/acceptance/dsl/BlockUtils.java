@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl;
 
-import static org.hyperledger.besu.ethereum.core.Hash.fromHexString;
+import static org.hyperledger.besu.evm.Hash.fromHexString;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;

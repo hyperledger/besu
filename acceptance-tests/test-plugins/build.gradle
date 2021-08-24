@@ -5,6 +5,7 @@ dependencies {
   implementation project(':ethereum:core')
   implementation project(':crypto')
   implementation project(':ethereum:rlp')
+  implementation project(':evm')
   implementation 'com.google.auto.service:auto-service'
   implementation 'info.picocli:picocli'
   implementation 'org.apache.logging.log4j:log4j-api'

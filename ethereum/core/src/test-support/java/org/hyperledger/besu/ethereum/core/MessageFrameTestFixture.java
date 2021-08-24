@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import static org.hyperledger.besu.evm.MessageFrame.DEFAULT_MAX_STACK_SIZE;
+
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.MutableWorldState;
 import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.WorldUpdater;
@@ -32,7 +32,8 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 
-import static org.hyperledger.besu.evm.MessageFrame.DEFAULT_MAX_STACK_SIZE;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class MessageFrameTestFixture {
 

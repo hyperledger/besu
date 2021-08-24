@@ -34,7 +34,7 @@ public class Create2Operation extends AbstractCreateOperation {
   }
 
   @Override
-  protected Address targetContractAddress(final MessageFrame frame) {
+  public Address targetContractAddress(final MessageFrame frame) {
     final Address sender = frame.getRecipientAddress();
     final UInt256 offset = frame.getStackItem(1);
     final UInt256 length = frame.getStackItem(2);

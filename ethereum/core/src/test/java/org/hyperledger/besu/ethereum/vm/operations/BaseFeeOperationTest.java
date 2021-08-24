@@ -21,13 +21,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.mainnet.BerlinGasCalculator;
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.Operation;
-import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
+import org.hyperledger.besu.evm.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.GasCalculator;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.Operation;
+import org.hyperledger.besu.evm.Operation.OperationResult;
+import org.hyperledger.besu.evm.operations.BaseFeeOperation;
 
 import java.util.Optional;
 

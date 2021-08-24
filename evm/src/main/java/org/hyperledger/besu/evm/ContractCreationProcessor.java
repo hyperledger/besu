@@ -103,7 +103,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
   }
 
   @Override
-  protected void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
+  public void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
     final Bytes contractCode = frame.getOutputData();
 
     final Gas depositFee = gasCalculator.codeDepositGasCost(contractCode.size());

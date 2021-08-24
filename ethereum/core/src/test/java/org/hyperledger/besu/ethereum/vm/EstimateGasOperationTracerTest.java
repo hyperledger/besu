@@ -17,11 +17,13 @@ package org.hyperledger.besu.ethereum.vm;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
-import org.hyperledger.besu.ethereum.vm.OperationTracer.ExecuteOperation;
-import org.hyperledger.besu.ethereum.vm.operations.CallCodeOperation;
-import org.hyperledger.besu.ethereum.vm.operations.SStoreOperation;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.GasCalculator;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.OperationTracer.ExecuteOperation;
+import org.hyperledger.besu.evm.operations.CallCodeOperation;
+import org.hyperledger.besu.evm.operations.SStoreOperation;
 
 import org.junit.Before;
 import org.junit.Test;

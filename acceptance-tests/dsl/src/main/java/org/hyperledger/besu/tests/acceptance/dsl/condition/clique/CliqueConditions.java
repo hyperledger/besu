@@ -15,7 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.dsl.condition.clique;
 
 import static java.util.Collections.emptyList;
-import static org.hyperledger.besu.ethereum.core.Hash.fromHexString;
+import static org.hyperledger.besu.evm.Hash.fromHexString;
 import static org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueTransactions.LATEST;
 
 import org.hyperledger.besu.config.CliqueConfigOptions;

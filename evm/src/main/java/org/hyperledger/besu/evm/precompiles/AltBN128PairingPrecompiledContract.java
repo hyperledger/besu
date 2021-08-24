@@ -39,7 +39,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
 
   static final Bytes FALSE =
       Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000000");
-  static final Bytes TRUE =
+  public static final Bytes TRUE =
       Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
 
   private final Gas pairingGasCost;

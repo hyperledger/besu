@@ -123,7 +123,7 @@ public class EVM {
   }
 
   @VisibleForTesting
-  Operation operationAtOffset(final Code code, final int offset) {
+  public Operation operationAtOffset(final Code code, final int offset) {
     final Bytes bytecode = code.getBytes();
     // If the length of the program code is shorter than the required offset, halt execution.
     if (offset >= bytecode.size()) {

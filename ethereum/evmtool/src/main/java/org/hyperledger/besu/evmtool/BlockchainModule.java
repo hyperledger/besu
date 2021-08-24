@@ -21,15 +21,15 @@ import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.MutableWorldView;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.MutableWorldState;
+import org.hyperledger.besu.evm.MutableWorldView;
+import org.hyperledger.besu.evm.WorldUpdater;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 
@@ -64,9 +64,10 @@ public class BlockchainModule {
       final MutableWorldState mutableWorldState =
           new DefaultMutableWorldState(worldStateStorage, worldStatePreimageStorage);
       genesisState.writeStateTo(mutableWorldState);
-      return mutableWorldState;
+      return (MutableWorldView) mutableWorldState;
     } else {
-      return new DefaultMutableWorldState(stateRoot, worldStateStorage, worldStatePreimageStorage);
+      return (MutableWorldView)
+          new DefaultMutableWorldState(stateRoot, worldStateStorage, worldStatePreimageStorage);
     }
   }
 

@@ -18,10 +18,10 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
-import org.hyperledger.besu.ethereum.mainnet.PrecompileContractRegistry;
-import org.hyperledger.besu.ethereum.mainnet.PrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.PrecompiledContractConfiguration;
 import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.PrecompileContractRegistry;
+import org.hyperledger.besu.evm.PrecompiledContract;
 
 import java.util.function.Function;
 

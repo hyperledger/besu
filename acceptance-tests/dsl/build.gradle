@@ -17,6 +17,7 @@ dependencies {
   implementation project(':ethereum:permissioning')
   implementation project(':ethereum:rlp')
   implementation project(':metrics:core')
+  implementation project(':evm')
   implementation project(':plugin-api')
   implementation project(':plugins:rocksdb')
   implementation project(':services:kvstore')

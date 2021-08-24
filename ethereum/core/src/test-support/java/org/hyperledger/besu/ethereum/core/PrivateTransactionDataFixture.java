@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -26,6 +28,9 @@ import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -81,17 +86,16 @@ public class PrivateTransactionDataFixture {
       Address.fromHexString("0x0bac79b78b9866ef11c989ad21a7fcf15f7a18d7");
 
   public static Transaction privateMarkerTransaction() {
-    return privateMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, Address.DEFAULT_PRIVACY);
+    return privateMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, DEFAULT_PRIVACY);
   }
 
   public static Transaction privateMarkerTransactionOnChain() {
-    return privateMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, Address.ONCHAIN_PRIVACY);
+    return privateMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, ONCHAIN_PRIVACY);
   }
 
   public static Transaction privateMarkerTransactionOnChainAdd() {
     return privateMarkerTransaction(
-        Bytes.concatenate(VALID_BASE64_ENCLAVE_KEY, VALID_BASE64_ENCLAVE_KEY),
-        Address.ONCHAIN_PRIVACY);
+        Bytes.concatenate(VALID_BASE64_ENCLAVE_KEY, VALID_BASE64_ENCLAVE_KEY), ONCHAIN_PRIVACY);
   }
 
   private static Transaction privateMarkerTransaction(

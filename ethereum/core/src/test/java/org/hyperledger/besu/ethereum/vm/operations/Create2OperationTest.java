@@ -19,19 +19,19 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
 import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.MutableAccount;
+import org.hyperledger.besu.evm.Operation.OperationResult;
 import org.hyperledger.besu.evm.Wei;
+import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.evm.operations.Create2Operation;
 
 import java.util.ArrayDeque;
 
@@ -146,13 +146,12 @@ public class Create2OperationTest {
             .address(Address.fromHexString(sender))
             .blockHashLookup(mock(BlockHashLookup.class))
             .blockHeader(mock(ProcessableBlockHeader.class))
-            .blockchain(mock(Blockchain.class))
             .gasPrice(Wei.ZERO)
             .messageFrameStack(new ArrayDeque<>())
             .miningBeneficiary(Address.ZERO)
             .originator(Address.ZERO)
             .initialGas(Gas.of(100000))
-            .worldState(worldUpdater)
+            .worldUpdater(worldUpdater)
             .build();
     messageFrame.pushStackItem(UInt256.fromHexString(salt));
     messageFrame.pushStackItem(memoryLength);

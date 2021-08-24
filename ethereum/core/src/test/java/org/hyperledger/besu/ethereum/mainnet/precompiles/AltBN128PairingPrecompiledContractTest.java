@@ -16,9 +16,10 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.GasCalculator;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.precompiles.AltBN128PairingPrecompiledContract;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;

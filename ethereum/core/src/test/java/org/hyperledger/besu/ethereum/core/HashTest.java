@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.evm.Hash;
+
 import org.junit.Test;
 
 public class HashTest {

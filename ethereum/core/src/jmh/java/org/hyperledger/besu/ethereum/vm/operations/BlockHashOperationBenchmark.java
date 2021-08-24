@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.PetersburgGasCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.operations.BlockHashOperation;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -65,7 +67,10 @@ public class BlockHashOperationBenchmark {
     final MessageFrame cleanFrame =
         operationBenchmarkHelper
             .createMessageFrameBuilder()
-            .blockHashLookup(new BlockHashLookup(frame.getBlockHeader(), frame.getBlockchain()))
+            .blockHashLookup(
+                new BlockHashLookup(
+                    (ProcessableBlockHeader) frame.getBlockHeader(),
+                    operationBenchmarkHelper.getBlockchain()))
             .build();
     cleanFrame.pushStackItem(UInt256.valueOf(blockNumber));
     operation.execute(cleanFrame, null);

@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.services;
 
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
+import static java.util.stream.Collectors.toUnmodifiableList;
+
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -35,7 +35,8 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static java.util.stream.Collectors.toUnmodifiableList;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BesuEventsImpl implements BesuEvents {
   private final Blockchain blockchain;

@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.WorldState;
 
 import java.util.function.Supplier;
 

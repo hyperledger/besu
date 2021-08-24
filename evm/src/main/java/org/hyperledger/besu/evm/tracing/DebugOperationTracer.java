@@ -32,7 +32,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 // import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
-// import org.hyperledger.besu.ethereum.core.WorldUpdater;
+// import org.hyperledger.besu.evm.WorldUpdater;
 // import org.hyperledger.besu.ethereum.debug.TraceFrame;
 // import org.hyperledger.besu.ethereum.debug.TraceOptions;
 

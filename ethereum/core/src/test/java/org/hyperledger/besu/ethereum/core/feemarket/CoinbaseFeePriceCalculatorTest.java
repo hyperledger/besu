@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.core.feemarket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.Wei;
 
 import java.util.Arrays;

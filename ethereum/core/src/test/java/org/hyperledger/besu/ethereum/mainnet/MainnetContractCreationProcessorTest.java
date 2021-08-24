@@ -15,17 +15,18 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.vm.MessageFrame.State.COMPLETED_SUCCESS;
-import static org.hyperledger.besu.ethereum.vm.MessageFrame.State.EXCEPTIONAL_HALT;
+import static org.hyperledger.besu.evm.MessageFrame.State.COMPLETED_SUCCESS;
+import static org.hyperledger.besu.evm.MessageFrame.State.EXCEPTIONAL_HALT;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
-import org.hyperledger.besu.ethereum.mainnet.contractvalidation.PrefixCodeRule;
-import org.hyperledger.besu.ethereum.vm.EVM;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.evm.ContractCreationProcessor;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.GasCalculator;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.OperationTracer;
+import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 
 import java.util.Collections;
 
@@ -41,12 +42,12 @@ public class MainnetContractCreationProcessorTest {
   @Mock GasCalculator gasCalculator;
   @Mock EVM evm;
 
-  private MainnetContractCreationProcessor processor;
+  private ContractCreationProcessor processor;
 
   @Test
   public void shouldThrowAnExceptionWhenCodeContractFormatInvalid() {
     processor =
-        new MainnetContractCreationProcessor(
+        new ContractCreationProcessor(
             gasCalculator,
             evm,
             true,
@@ -66,7 +67,7 @@ public class MainnetContractCreationProcessorTest {
   @Test
   public void shouldNotThrowAnExceptionWhenCodeContractIsValid() {
     processor =
-        new MainnetContractCreationProcessor(
+        new ContractCreationProcessor(
             gasCalculator,
             evm,
             true,
@@ -86,7 +87,7 @@ public class MainnetContractCreationProcessorTest {
   @Test
   public void shouldNotThrowAnExceptionWhenPrefixCodeRuleNotAdded() {
     processor =
-        new MainnetContractCreationProcessor(
+        new ContractCreationProcessor(
             gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
     final Bytes contractCode = Bytes.fromHexString("0F01010101010101");
     MessageFrame messageFrame = new MessageFrameTestFixture().build();

@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Hash;
+
 import java.util.HashMap;
 import java.util.Map;
 

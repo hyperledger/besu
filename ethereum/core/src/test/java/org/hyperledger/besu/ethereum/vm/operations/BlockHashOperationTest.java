@@ -25,8 +25,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.FrontierGasCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.operations.BlockHashOperation;
 
 import com.google.common.base.Strings;

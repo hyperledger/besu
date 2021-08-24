@@ -45,7 +45,7 @@ public class TestPrivacyGroupGenesisProvider implements PrivacyGroupGenesisProvi
             new PrivacyGenesisAccount() {
               @Override
               public Address getAddress() {
-                return org.hyperledger.besu.ethereum.core.Address.fromHexString(
+                return org.hyperledger.besu.evm.Address.fromHexString(
                     "0x1000000000000000000000000000000000000001");
               }
 

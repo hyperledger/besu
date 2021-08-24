@@ -16,9 +16,9 @@
 package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.Wei;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
