@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.evm.Hash;
 
 import java.util.List;
 

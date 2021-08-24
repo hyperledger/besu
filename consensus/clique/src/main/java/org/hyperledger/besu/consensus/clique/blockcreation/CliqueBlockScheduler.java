@@ -16,8 +16,8 @@ package org.hyperledger.besu.consensus.clique.blockcreation;
 
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.evm.Address;
 
 import java.time.Clock;
 import java.util.Collection;

@@ -14,18 +14,18 @@
  */
 package org.hyperledger.besu.services;
 
-import static java.util.stream.Collectors.toUnmodifiableList;
-
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.evm.LogTopic;
 import org.hyperledger.besu.plugin.data.AddedBlockContext;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -35,8 +35,7 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 import java.util.List;
 import java.util.function.Supplier;
 
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 public class BesuEventsImpl implements BesuEvents {
   private final Blockchain blockchain;
@@ -137,9 +136,9 @@ public class BesuEventsImpl implements BesuEvents {
       final List<Address> addresses,
       final List<List<Bytes32>> topics,
       final LogListener logListener) {
-    final List<org.hyperledger.besu.ethereum.core.Address> besuAddresses =
+    final List<org.hyperledger.besu.evm.Address> besuAddresses =
         addresses.stream()
-            .map(org.hyperledger.besu.ethereum.core.Address::fromPlugin)
+            .map(org.hyperledger.besu.evm.Address::fromPlugin)
             .collect(toUnmodifiableList());
     final List<List<LogTopic>> besuTopics =
         topics.stream()

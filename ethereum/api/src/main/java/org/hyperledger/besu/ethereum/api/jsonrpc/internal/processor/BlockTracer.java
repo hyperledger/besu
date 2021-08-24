@@ -17,12 +17,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater;
 import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater.StackedUpdater;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.WorldUpdater;
 
 import java.util.List;
 import java.util.Optional;

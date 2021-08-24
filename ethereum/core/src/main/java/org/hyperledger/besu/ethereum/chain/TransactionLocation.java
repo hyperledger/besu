@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.evm.Hash;
 
 import java.util.Objects;
 

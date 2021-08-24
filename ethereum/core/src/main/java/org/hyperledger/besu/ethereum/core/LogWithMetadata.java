@@ -17,6 +17,10 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.Log;
+import org.hyperledger.besu.evm.LogTopic;
 
 import java.util.ArrayList;
 import java.util.List;

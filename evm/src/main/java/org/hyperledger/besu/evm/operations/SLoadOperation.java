@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.operations;
 
 import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.EVMAccountState;
 import org.hyperledger.besu.evm.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.GasCalculator;
@@ -50,16 +49,16 @@ public class SLoadOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      final Address address = frame.getRecipientAddress();
-      final EVMAccountState accountState = frame.getWorldState().getAccountState(address);
+      final var account = frame.getWorldUpdater().get(frame.getRecipientAddress());
+      final Address address = account.getAddress();
       final Bytes32 key = frame.popStackItem();
       final boolean slotIsWarm = frame.warmUpStorage(address, key);
       final Optional<Gas> optionalCost = slotIsWarm ? warmCost : coldCost;
-      if (frame.getRemainingGas().compareTo(optionalCost.orElse(Gas.ZERO)) < 0) {
+      if (frame.getRemainingGas().compareTo(optionalCost.get()) < 0) {
         return new OperationResult(
             optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
-        frame.pushStackItem(accountState.get(UInt256.fromBytes(key)).orElse(UInt256.ZERO));
+        frame.pushStackItem(account.getStorageValue(UInt256.fromBytes(key)));
 
         return slotIsWarm ? warmSuccess : coldSuccess;
       }

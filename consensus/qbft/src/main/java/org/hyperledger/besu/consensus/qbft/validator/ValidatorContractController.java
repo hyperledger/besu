@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.consensus.qbft.validator;
 
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.evm.Address;
 
 import java.util.Collection;
 import java.util.List;

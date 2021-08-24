@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.operations.SStoreOperation;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.OperationTracer;
+import org.hyperledger.besu.evm.operations.SStoreOperation;
 
 public class EstimateGasOperationTracer implements OperationTracer {
 

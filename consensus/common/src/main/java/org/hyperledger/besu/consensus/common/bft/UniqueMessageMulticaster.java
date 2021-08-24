@@ -15,8 +15,8 @@
 package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.evm.Address;
 
 import java.util.Collection;
 import java.util.Collections;

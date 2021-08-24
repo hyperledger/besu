@@ -53,6 +53,6 @@ public class PoaQueryServiceImpl implements PoaQueryService, PoAMetricsService {
 
   @Override
   public Address getLocalSignerAddress() {
-    return org.hyperledger.besu.ethereum.core.Address.extract(nodeKey.getPublicKey());
+    return org.hyperledger.besu.evm.Address.extract(nodeKey.getPublicKey());
   }
 }

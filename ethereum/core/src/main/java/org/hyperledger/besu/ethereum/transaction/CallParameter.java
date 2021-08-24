@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Wei;
 
 import java.util.Objects;
 import java.util.Optional;

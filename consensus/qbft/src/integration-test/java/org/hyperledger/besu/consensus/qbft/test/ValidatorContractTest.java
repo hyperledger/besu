@@ -23,8 +23,8 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.support.TestContextBuilder;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.evm.Address;
 
 import java.time.Clock;
 import java.time.Instant;

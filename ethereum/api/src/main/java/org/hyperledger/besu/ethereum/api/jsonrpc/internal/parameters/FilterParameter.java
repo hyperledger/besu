@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import static java.util.Collections.emptyList;
 
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogTopic;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.LogTopic;
 
 import java.util.List;
 import java.util.Objects;

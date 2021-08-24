@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.evm.Gas;
 
 import org.apache.tuweni.bytes.Bytes;
 

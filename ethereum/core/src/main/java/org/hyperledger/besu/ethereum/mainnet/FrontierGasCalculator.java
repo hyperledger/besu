@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.Words;
-import org.hyperledger.besu.ethereum.vm.operations.ExpOperation;
+import org.hyperledger.besu.evm.Account;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.GasCalculator;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.Wei;
+import org.hyperledger.besu.evm.Words;
+import org.hyperledger.besu.evm.operations.ExpOperation;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -93,11 +93,11 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final Gas SLOAD_OPERATION_GAS_COST = Gas.of(50);
 
-  private static final Gas STORAGE_SET_GAS_COST = Gas.of(20_000L);
+  public static final Gas STORAGE_SET_GAS_COST = Gas.of(20_000L);
 
-  private static final Gas STORAGE_RESET_GAS_COST = Gas.of(5_000L);
+  public static final Gas STORAGE_RESET_GAS_COST = Gas.of(5_000L);
 
-  private static final Gas STORAGE_RESET_REFUND_AMOUNT = Gas.of(15_000L);
+  public static final Gas STORAGE_RESET_REFUND_AMOUNT = Gas.of(15_000L);
 
   private static final Gas SELF_DESTRUCT_REFUND_AMOUNT = Gas.of(24_000L);
 

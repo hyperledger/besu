@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionResult;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.evm.Hash;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.util.EnumMap;

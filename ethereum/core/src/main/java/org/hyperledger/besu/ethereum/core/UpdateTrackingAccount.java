@@ -18,6 +18,14 @@ package org.hyperledger.besu.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.evm.Account;
+import org.hyperledger.besu.evm.AccountStorageEntry;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.EvmAccount;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.MutableAccount;
+import org.hyperledger.besu.evm.Wei;
+
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -216,11 +224,12 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
     final NavigableMap<Bytes32, AccountStorageEntry> entries;
-    if (account != null) {
-      entries = account.storageEntriesFrom(startKeyHash, limit);
+    if (account instanceof UpdateTrackingAccount) {
+      entries = ((UpdateTrackingAccount<A>) account).storageEntriesFrom(startKeyHash, limit);
     } else {
       entries = new TreeMap<>();
     }

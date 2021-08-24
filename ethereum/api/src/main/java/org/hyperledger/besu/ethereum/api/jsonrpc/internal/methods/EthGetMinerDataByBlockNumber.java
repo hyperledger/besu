@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.MinerDataResul
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.Hash;
 
 public class EthGetMinerDataByBlockNumber extends AbstractBlockParameterMethod {
   private final ProtocolSchedule protocolSchedule;

@@ -22,7 +22,6 @@ import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.GasCalculator;
 import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.Wei;
-import org.hyperledger.besu.plugin.data.Account;
 
 import java.util.Optional;
 
@@ -174,14 +173,14 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       frame.clearReturnData();
 
       final Address to = to(frame);
-      final Account contract = frame.getWorldState().getAccount(to);
+      final var contract = frame.getWorldUpdater().getAccount(to);
       if (contract == null) {
         // FIXME new halt reason
         return new OperationResult(
             optionalCost, Optional.of(ExceptionalHaltReason.INVALID_OPERATION));
       }
 
-      final Account account = frame.getWorldState().getAccount(frame.getRecipientAddress());
+      final var account = frame.getWorldUpdater().getAccount(frame.getRecipientAddress());
       final var balance =
           account == null ? Wei.ZERO : Wei.wrap(account.getBalance().getAsBytes32());
       // If the call is sending more value than the account has or the message frame is to deep
@@ -201,7 +200,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
           MessageFrame.builder()
               .type(MessageFrame.Type.MESSAGE_CALL)
               .messageFrameStack(frame.getMessageFrameStack())
-              .worldState(frame.getWorldState().createNestedWorldState())
+              .worldUpdater(frame.getWorldUpdater().updater())
               .initialGas(gasAvailableForChildCall(frame))
               .address(address(frame))
               .originator(frame.getOriginatorAddress())
@@ -211,7 +210,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
               .sender(sender(frame))
               .value(value(frame))
               .apparentValue(apparentValue(frame))
-              .code(new Code(frame.getWorldState().getCode(to)))
+              .code(new Code(contract != null ? contract.getCode() : Bytes.EMPTY))
               .blockHeader(frame.getBlockHeader())
               .depth(frame.getMessageStackDepth() + 1)
               .isStatic(isStatic(frame))

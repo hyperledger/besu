@@ -20,7 +20,7 @@ import static org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.Cliqu
 
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.blockchain.ExpectBlockNotCreated;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.clique.ExpectNonceVote.CLIQUE_NONCE_VOTE;

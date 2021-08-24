@@ -18,7 +18,6 @@ import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.GasCalculator;
 import org.hyperledger.besu.evm.MessageFrame;
-import org.hyperledger.besu.plugin.data.Account;
 
 public class CreateOperation extends AbstractCreateOperation {
 
@@ -33,7 +32,7 @@ public class CreateOperation extends AbstractCreateOperation {
 
   @Override
   protected Address targetContractAddress(final MessageFrame frame) {
-    final Account sender = frame.getWorldState().getAccount(frame.getRecipientAddress());
+    final var sender = frame.getWorldUpdater().getAccount(frame.getRecipientAddress());
     // Decrement nonce by 1 to normalize the effect of transaction execution
     final Address address =
         Address.contractAddress(frame.getRecipientAddress(), sender.getNonce() - 1L);

@@ -19,9 +19,9 @@ import static org.apache.tuweni.units.bigints.UInt256.ZERO;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.evm.Account;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.GasCalculator;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;

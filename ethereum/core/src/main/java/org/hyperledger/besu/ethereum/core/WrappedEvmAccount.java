@@ -14,6 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.evm.AccountStorageEntry;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.EvmAccount;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.MutableAccount;
+import org.hyperledger.besu.evm.Wei;
+
 import java.util.NavigableMap;
 
 import org.apache.tuweni.bytes.Bytes;

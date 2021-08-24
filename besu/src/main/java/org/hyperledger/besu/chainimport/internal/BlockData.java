@@ -14,24 +14,23 @@
  */
 package org.hyperledger.besu.chainimport.internal;
 
-import org.hyperledger.besu.chainimport.internal.TransactionData.NonceProvider;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.WorldState;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.chainimport.internal.TransactionData.NonceProvider;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.evm.Account;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.WorldState;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 @JsonIgnoreProperties("comment")
 public class BlockData {

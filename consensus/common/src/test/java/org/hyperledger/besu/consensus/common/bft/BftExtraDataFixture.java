@@ -18,9 +18,9 @@ import static java.util.Collections.emptyList;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECPSignature;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Hash;
 
 import java.util.List;
 import java.util.Optional;

@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.evm.WorldView;
+
 public interface MutableWorldView extends WorldView {
 
   /**

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.json;
 
-import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.evm.Gas;
 
 import java.io.IOException;
 

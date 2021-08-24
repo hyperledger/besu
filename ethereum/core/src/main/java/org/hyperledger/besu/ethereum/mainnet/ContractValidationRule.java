@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.evm.MessageFrame;
 
 @FunctionalInterface
 public interface ContractValidationRule {

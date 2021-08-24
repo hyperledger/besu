@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.operations;
 
 import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmAccount;
 import org.hyperledger.besu.evm.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.GasCalculator;
@@ -23,7 +24,6 @@ import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.Words;
 import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
-import org.hyperledger.besu.plugin.data.Account;
 
 import java.util.Optional;
 
@@ -52,7 +52,7 @@ public class BalanceOperation extends AbstractOperation {
         return new OperationResult(
             optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
-        final Account account = frame.getWorldState().getAccount(address);
+        final EvmAccount account = frame.getWorldUpdater().getAccount(address);
         frame.pushStackItem(
             account == null
                 ? UInt256.ZERO

@@ -15,10 +15,10 @@
 package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.evm.Hash;
 
 import java.util.Collections;
 import java.util.List;

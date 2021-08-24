@@ -16,10 +16,14 @@
 
 package org.hyperledger.besu.ethereum.vm;
 
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
+import org.hyperledger.besu.evm.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.Operation;
+import org.hyperledger.besu.evm.Operation.OperationResult;
+import org.hyperledger.besu.evm.OperationTracer;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;

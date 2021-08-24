@@ -15,8 +15,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.BigIntegerModularExponentiationPrecompiledContract;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.precompiles.BigIntegerModularExponentiationPrecompiledContract;
 
 import java.math.BigInteger;
 

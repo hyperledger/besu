@@ -16,28 +16,24 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.AccountState;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
-import org.hyperledger.besu.plugin.data.Hash;
+import org.hyperledger.besu.evm.AbstractMessageProcessor;
+import org.hyperledger.besu.evm.Account;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.OperationTracer;
+import org.hyperledger.besu.evm.Wei;
+import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -86,12 +82,10 @@ public class PrivateTransactionProcessor {
     this.privateTransactionValidator = privateTransactionValidator;
   }
 
-  @SuppressWarnings("unused")
   public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
       final WorldUpdater publicWorldState,
       final WorldUpdater privateWorldState,
-      final ProcessableBlockHeader blockHeader,
+      final BlockHeader blockHeader,
       final Hash pmtHash,
       final PrivateTransaction transaction,
       final Address miningBeneficiary,
@@ -102,8 +96,8 @@ public class PrivateTransactionProcessor {
       LOG.trace("Starting private execution of {}", transaction);
 
       final Address senderAddress = transaction.getSender();
-      final EvmAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
-      final MutableAccount sender =
+      final var maybePrivateSender = privateWorldState.getAccount(senderAddress);
+      final var sender =
           maybePrivateSender != null
               ? maybePrivateSender.getMutable()
               : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO).getMutable();
@@ -128,8 +122,7 @@ public class PrivateTransactionProcessor {
           MessageFrame.builder()
               .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
-              .blockchain(blockchain)
-              .worldState(mutablePrivateWorldStateUpdater)
+              .worldUpdater(mutablePrivateWorldStateUpdater)
               .initialGas(Gas.MAX_VALUE)
               .originator(senderAddress)
               .gasPrice(transaction.getGasPrice())
@@ -172,7 +165,7 @@ public class PrivateTransactionProcessor {
                 .address(to)
                 .contract(to)
                 .inputData(transaction.getPayload())
-                .code(new Code(maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY)))
+                .code(new Code(maybeContract.map(Account::getCode).orElse(Bytes.EMPTY)))
                 .build();
       }
 

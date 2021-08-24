@@ -18,10 +18,10 @@ import static org.apache.tuweni.bytes.Bytes.wrap;
 
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.evm.Address;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;

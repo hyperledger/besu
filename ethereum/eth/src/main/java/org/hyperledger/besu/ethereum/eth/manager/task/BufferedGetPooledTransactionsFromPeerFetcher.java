@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionsMessageProcessor;
+import org.hyperledger.besu.evm.Hash;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
 
@@ -44,6 +45,17 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Files;
 
 public class PrivacyParameters {
+
+  // Last address that can be generated for a pre-compiled contract
+  public static final Integer PRIVACY = Byte.MAX_VALUE - 1;
+  public static final Address DEFAULT_PRIVACY = Address.precompiled(PRIVACY);
+  public static final Address ONCHAIN_PRIVACY = Address.precompiled(PRIVACY - 1);
+
+  // Onchain privacy management contracts (injected in private state)
+  public static final Address ONCHAIN_PRIVACY_PROXY = Address.precompiled(PRIVACY - 2);
+  public static final Address DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT = Address.precompiled(PRIVACY - 3);
+
+  public static final Address PLUGIN_PRIVACY = Address.precompiled(PRIVACY - 4);
 
   public static final URI DEFAULT_ENCLAVE_URL = URI.create("http://localhost:8888");
   public static final PrivacyParameters DEFAULT = new PrivacyParameters();
@@ -67,11 +79,11 @@ public class PrivacyParameters {
 
   public Address getPrivacyAddress() {
     if (isPrivacyPluginEnabled()) {
-      return Address.PLUGIN_PRIVACY;
+      return PLUGIN_PRIVACY;
     } else if (isOnchainPrivacyGroupsEnabled()) {
-      return Address.ONCHAIN_PRIVACY;
+      return ONCHAIN_PRIVACY;
     } else {
-      return Address.DEFAULT_PRIVACY;
+      return DEFAULT_PRIVACY;
     }
   }
 

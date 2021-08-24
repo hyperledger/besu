@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
-import static org.hyperledger.besu.ethereum.core.Hash.fromPlugin;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
+import static org.hyperledger.besu.evm.Hash.fromPlugin;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -25,13 +26,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -45,10 +40,15 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.GasCalculator;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.MutableWorldState;
+import org.hyperledger.besu.evm.OperationTracer;
+import org.hyperledger.besu.evm.Wei;
+import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.besu.util.Subscribers;
@@ -160,7 +160,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
     LOG.debug("Processing private transaction {} in privacy group {}", pmtHash, privacyGroupId);
 
-    final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
+    final BlockHeader currentBlockHeader = messageFrame.getBlockHeader();
 
     final PrivateMetadataUpdater privateMetadataUpdater =
         messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER);
@@ -179,8 +179,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         privacyGroupId,
         currentBlockHeader.getNumber());
 
-    final WorldUpdater publicWorldState = messageFrame.getWorldState();
-    final Blockchain blockchain = messageFrame.getBlockchain();
+    final WorldUpdater publicWorldState = messageFrame.getWorldUpdater();
 
     if (!canExecute(
         messageFrame,
@@ -189,7 +188,6 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         versionedPrivateTransaction.getVersion(),
         publicWorldState,
         privacyGroupId,
-        blockchain,
         disposablePrivateState,
         privateWorldStateUpdater,
         privateFrom)) {
@@ -241,12 +239,11 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
   boolean canExecute(
       final MessageFrame messageFrame,
-      final ProcessableBlockHeader currentBlockHeader,
+      final BlockHeader currentBlockHeader,
       final PrivateTransaction privateTransaction,
       final Bytes32 version,
       final WorldUpdater publicWorldState,
       final Bytes32 privacyGroupId,
-      final Blockchain blockchain,
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater,
       final Bytes privateFrom) {
@@ -263,7 +260,6 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
             currentBlockHeader,
             publicWorldState,
             privacyGroupId,
-            blockchain,
             disposablePrivateState,
             privateWorldStateUpdater);
 
@@ -289,7 +285,6 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         version,
         publicWorldState,
         privacyGroupId,
-        blockchain,
         disposablePrivateState,
         privateWorldStateUpdater)) {
       LOG.debug(
@@ -306,7 +301,6 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         messageFrame,
         currentBlockHeader,
         publicWorldState,
-        blockchain,
         disposablePrivateState,
         privateWorldStateUpdater)) {
       LOG.debug(
@@ -327,9 +321,8 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final Bytes privateFrom,
       final Bytes32 privacyGroupId,
       final MessageFrame messageFrame,
-      final ProcessableBlockHeader currentBlockHeader,
+      final BlockHeader currentBlockHeader,
       final WorldUpdater publicWorldState,
-      final Blockchain blockchain,
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater) {
     final TransactionProcessingResult result =
@@ -338,7 +331,6 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
             currentBlockHeader,
             publicWorldState,
             privacyGroupId,
-            blockchain,
             disposablePrivateState,
             privateWorldStateUpdater,
             OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE);
@@ -390,10 +382,9 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
   protected boolean isContractLocked(
       final MessageFrame messageFrame,
-      final ProcessableBlockHeader currentBlockHeader,
+      final BlockHeader currentBlockHeader,
       final WorldUpdater publicWorldState,
       final Bytes32 privacyGroupId,
-      final Blockchain blockchain,
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater) {
     final TransactionProcessingResult result =
@@ -402,7 +393,6 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
             currentBlockHeader,
             publicWorldState,
             privacyGroupId,
-            blockchain,
             disposablePrivateState,
             privateWorldStateUpdater,
             OnChainGroupManagement.CAN_EXECUTE_METHOD_SIGNATURE);
@@ -411,10 +401,9 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
   protected TransactionProcessingResult simulateTransaction(
       final MessageFrame messageFrame,
-      final ProcessableBlockHeader currentBlockHeader,
+      final BlockHeader currentBlockHeader,
       final WorldUpdater publicWorldState,
       final Bytes32 privacyGroupId,
-      final Blockchain currentBlockchain,
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater,
       final Bytes methodSignature) {
@@ -427,7 +416,6 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     final WorldUpdater updater = localMutableState.updater();
 
     return privateTransactionProcessor.processTransaction(
-        currentBlockchain,
         publicWorldState,
         updater,
         currentBlockHeader,
@@ -441,11 +429,10 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
   protected boolean onChainPrivacyGroupVersionMatches(
       final MessageFrame messageFrame,
-      final ProcessableBlockHeader currentBlockHeader,
+      final BlockHeader currentBlockHeader,
       final Bytes32 version,
       final WorldUpdater publicWorldState,
       final Bytes32 privacyGroupId,
-      final Blockchain currentBlockchain,
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater) {
     // We need the "version" of the group for every single transaction but we don't want this
@@ -458,7 +445,6 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
             currentBlockHeader,
             publicWorldState,
             privacyGroupId,
-            currentBlockchain,
             disposablePrivateState,
             privateWorldStateUpdater,
             OnChainGroupManagement.GET_VERSION_METHOD_SIGNATURE);
@@ -489,7 +475,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
                 : 0)
         .gasPrice(Wei.of(1000))
         .gasLimit(3000000)
-        .to(Address.ONCHAIN_PRIVACY_PROXY)
+        .to(ONCHAIN_PRIVACY_PROXY)
         .sender(Address.ZERO)
         .value(Wei.ZERO)
         .payload(payload)

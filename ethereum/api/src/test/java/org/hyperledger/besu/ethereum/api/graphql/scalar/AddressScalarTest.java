@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.graphql.scalar;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.graphql.internal.Scalars;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.evm.Address;
 
 import graphql.language.StringValue;
 import graphql.schema.CoercingParseLiteralException;

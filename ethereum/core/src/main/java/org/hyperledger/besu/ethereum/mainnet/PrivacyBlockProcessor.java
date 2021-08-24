@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
+
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRehydration;
@@ -33,6 +32,8 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.MutableWorldState;
 
 import java.util.Base64;
 import java.util.Collections;
@@ -160,7 +161,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
 
   private boolean onChainAddToGroupPrivateMarkerTransactions(final Transaction t) {
     return t.getTo().isPresent()
-        && t.getTo().equals(Optional.of(Address.ONCHAIN_PRIVACY))
+        && t.getTo().equals(Optional.of(ONCHAIN_PRIVACY))
         && t.getPayload().size() == 64;
   }
 

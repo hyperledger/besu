@@ -22,8 +22,6 @@ import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;
 import org.hyperledger.besu.plugin.data.BlockHeader;
-import org.hyperledger.besu.plugin.data.Hash;
-import org.hyperledger.besu.plugin.data.Log;
 import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.util.ArrayList;
@@ -187,7 +185,7 @@ public class MessageFrame {
   public static final int DEFAULT_MAX_STACK_SIZE = 1024;
 
   // Global data fields.
-  private final EVMWorldState worldState;
+  private final WorldUpdater worldUpdater;
 
   // Metadata fields.
   private final Type type;
@@ -195,7 +193,7 @@ public class MessageFrame {
 
   // Machine state fields.
   private Gas gasRemaining;
-  private final Function<Long, org.hyperledger.besu.plugin.data.Hash> blockHashLookup;
+  private final Function<Long, Hash> blockHashLookup;
   private final int maxStackSize;
   private int pc;
   private final Memory memory;
@@ -246,7 +244,7 @@ public class MessageFrame {
   private MessageFrame(
       final Type type,
       final Deque<MessageFrame> messageFrameStack,
-      final EVMWorldState worldState,
+      final WorldUpdater worldUpdater,
       final Gas initialGas,
       final Address recipient,
       final Address originator,
@@ -263,7 +261,7 @@ public class MessageFrame {
       final boolean isStatic,
       final Consumer<MessageFrame> completer,
       final Address miningBeneficiary,
-      final Function<Long, org.hyperledger.besu.plugin.data.Hash> blockHashLookup,
+      final Function<Long, Hash> blockHashLookup,
       final Map<String, Object> contextVariables,
       final Optional<Bytes> revertReason,
       final int maxStackSize,
@@ -271,7 +269,7 @@ public class MessageFrame {
       final Multimap<Address, Bytes32> accessListWarmStorage) {
     this.type = type;
     this.messageFrameStack = messageFrameStack;
-    this.worldState = worldState;
+    this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
     this.blockHashLookup = blockHashLookup;
     this.maxStackSize = maxStackSize;
@@ -831,8 +829,8 @@ public class MessageFrame {
    *
    * @return the world state
    */
-  public EVMWorldState getWorldState() {
-    return worldState;
+  public WorldUpdater getWorldUpdater() {
+    return worldUpdater;
   }
 
   /**
@@ -992,7 +990,7 @@ public class MessageFrame {
     return miningBeneficiary;
   }
 
-  public Function<Long, org.hyperledger.besu.plugin.data.Hash> getBlockHashLookup() {
+  public Function<Long, Hash> getBlockHashLookup() {
     return blockHashLookup;
   }
 
@@ -1034,11 +1032,11 @@ public class MessageFrame {
     return contractAccountVersion;
   }
 
-  Optional<MemoryEntry> getMaybeUpdatedMemory() {
+  public Optional<MemoryEntry> getMaybeUpdatedMemory() {
     return maybeUpdatedMemory;
   }
 
-  Optional<MemoryEntry> getMaybeUpdatedStorage() {
+  public Optional<MemoryEntry> getMaybeUpdatedStorage() {
     return maybeUpdatedStorage;
   }
 
@@ -1051,7 +1049,7 @@ public class MessageFrame {
 
     private Type type;
     private Deque<MessageFrame> messageFrameStack;
-    private EVMWorldState worldState;
+    private WorldUpdater worldUpdater;
     private Gas initialGas;
     private Address address;
     private Address originator;
@@ -1085,8 +1083,8 @@ public class MessageFrame {
       return this;
     }
 
-    public Builder worldState(final EVMWorldState worldState) {
-      this.worldState = worldState;
+    public Builder worldUpdater(final WorldUpdater worldUpdater) {
+      this.worldUpdater = worldUpdater;
       return this;
     }
 
@@ -1176,8 +1174,7 @@ public class MessageFrame {
       return this;
     }
 
-    public Builder blockHashLookup(
-        final Function<Long, org.hyperledger.besu.plugin.data.Hash> blockHashLookup) {
+    public Builder blockHashLookup(final Function<Long, Hash> blockHashLookup) {
       this.blockHashLookup = blockHashLookup;
       return this;
     }
@@ -1205,7 +1202,7 @@ public class MessageFrame {
     private void validate() {
       checkState(type != null, "Missing message frame type");
       checkState(messageFrameStack != null, "Missing message frame message frame stack");
-      checkState(worldState != null, "Missing message frame world state");
+      checkState(worldUpdater != null, "Missing message frame world updater");
       checkState(initialGas != null, "Missing message frame initial getGasRemaining");
       checkState(address != null, "Missing message frame recipient");
       checkState(originator != null, "Missing message frame originator");
@@ -1230,7 +1227,7 @@ public class MessageFrame {
       return new MessageFrame(
           type,
           messageFrameStack,
-          worldState,
+          worldUpdater,
           initialGas,
           address,
           originator,

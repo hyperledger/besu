@@ -16,14 +16,13 @@ package org.hyperledger.besu.evm.operations;
 
 import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.EVMWorldState;
 import org.hyperledger.besu.evm.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.GasCalculator;
 import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.MutableAccount;
 import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.Words;
-import org.hyperledger.besu.plugin.data.Account;
 
 import java.util.Optional;
 
@@ -38,10 +37,8 @@ public class SelfDestructOperation extends AbstractOperation {
     final Address recipientAddress = Words.toAddress(frame.popStackItem());
 
     // because of weird EIP150/158 reasons we care about a null account so we can't merge this.
-    EVMWorldState evmWorldState = frame.getWorldState();
-    final Account recipientNullable = evmWorldState.getAccount(recipientAddress);
-    final Wei inheritance =
-        Wei.wrap(evmWorldState.getAccount(frame.getRecipientAddress()).getBalance().getAsBytes32());
+    final var recipientNullable = frame.getWorldUpdater().get(recipientAddress);
+    final Wei inheritance = frame.getWorldUpdater().get(frame.getRecipientAddress()).getBalance();
 
     final boolean accountIsWarm =
         frame.warmUpAddress(recipientAddress) || gasCalculator().isPrecompile(recipientAddress);
@@ -60,30 +57,21 @@ public class SelfDestructOperation extends AbstractOperation {
     }
 
     final Address address = frame.getRecipientAddress();
-    final Account account = evmWorldState.getAccount(address);
+    final MutableAccount account = frame.getWorldUpdater().getAccount(address).getMutable();
 
     frame.addSelfDestruct(address);
 
-    final Optional<Account> maybeRecipient = evmWorldState.getOrCreateAccount(recipientAddress);
-
-    if (maybeRecipient.isEmpty()) {
-      // FIXME a better halt reason
-      return new OperationResult(
-          optionalCost, Optional.of(ExceptionalHaltReason.INVALID_OPERATION));
-    }
-    final Account recipient = maybeRecipient.get();
+    final MutableAccount recipient =
+        frame.getWorldUpdater().getOrCreate(recipientAddress).getMutable();
 
     if (!account.getAddress().equals(recipient.getAddress())) {
-      evmWorldState.updateAccountBalance(
-          Address.fromPlugin(recipient.getAddress()),
-          Wei.fromQuantity(recipient.getBalance()).add(Wei.fromQuantity(account.getBalance())));
+      recipient.incrementBalance(account.getBalance());
     }
 
     // add refund in message frame
-    frame.addRefund(
-        Address.fromPlugin(recipient.getAddress()), Wei.fromQuantity(account.getBalance()));
+    frame.addRefund(recipient.getAddress(), account.getBalance());
 
-    evmWorldState.updateAccountBalance(Address.fromPlugin(account.getAddress()), Wei.ZERO);
+    account.setBalance(Wei.ZERO);
 
     frame.setState(MessageFrame.State.CODE_SUCCESS);
     return new OperationResult(optionalCost, Optional.empty());

@@ -20,7 +20,7 @@ import static org.web3j.utils.Restriction.RESTRICTED;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;

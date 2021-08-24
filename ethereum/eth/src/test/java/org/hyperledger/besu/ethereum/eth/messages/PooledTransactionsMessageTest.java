@@ -19,8 +19,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
+import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Arrays;

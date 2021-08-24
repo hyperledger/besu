@@ -14,12 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static org.hyperledger.besu.ethereum.vm.MessageFrame.DEFAULT_MAX_STACK_SIZE;
-
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.MutableWorldState;
+import org.hyperledger.besu.evm.Wei;
+import org.hyperledger.besu.evm.WorldUpdater;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -27,8 +32,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import static org.hyperledger.besu.evm.MessageFrame.DEFAULT_MAX_STACK_SIZE;
 
 public class MessageFrameTestFixture {
 
@@ -158,8 +162,7 @@ public class MessageFrameTestFixture {
         MessageFrame.builder()
             .type(type)
             .messageFrameStack(messageFrameStack)
-            .blockchain(blockchain)
-            .worldState(worldState.orElseGet(this::createDefaultWorldState))
+            .worldUpdater(worldState.orElseGet(this::createDefaultWorldState))
             .initialGas(initialGas)
             .address(address)
             .originator(originator)

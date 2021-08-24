@@ -26,7 +26,6 @@ import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class ExtCodeSizeOperation extends AbstractOperation {
@@ -52,9 +51,9 @@ public class ExtCodeSizeOperation extends AbstractOperation {
         return new OperationResult(
             optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
-        final Bytes accountCode = frame.getWorldState().getCode(address);
+        final var account = frame.getWorldUpdater().get(address);
         frame.pushStackItem(
-            accountCode == null ? UInt256.ZERO : UInt256.valueOf(accountCode.size()));
+            account == null ? UInt256.ZERO : UInt256.valueOf(account.getCode().size()));
         return new OperationResult(optionalCost, Optional.empty());
       }
     } catch (final UnderflowException ufe) {

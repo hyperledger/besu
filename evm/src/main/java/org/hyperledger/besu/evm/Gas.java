@@ -20,7 +20,6 @@ import javax.annotation.concurrent.Immutable;
 import com.google.common.primitives.Longs;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.apache.tuweni.units.ethereum.Wei;
 
 /** A particular quantity of Gas as used by the Ethereum VM. */
 @Immutable

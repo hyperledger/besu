@@ -23,9 +23,9 @@ import org.hyperledger.besu.evm.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.GasCalculator;
 import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.MutableAccount;
 import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.Words;
-import org.hyperledger.besu.plugin.data.Account;
 
 import java.util.Optional;
 
@@ -76,12 +76,11 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       final Wei value = Wei.wrap(frame.getStackItem(0));
 
       final Address address = frame.getRecipientAddress();
-      final Account account = frame.getWorldState().getAccount(address);
+      final MutableAccount account = frame.getWorldUpdater().getAccount(address).getMutable();
 
       frame.clearReturnData();
 
-      if (value.compareTo(Wei.fromQuantity(account.getBalance())) > 0
-          || frame.getMessageStackDepth() >= 1024) {
+      if (value.compareTo(account.getBalance()) > 0 || frame.getMessageStackDepth() >= 1024) {
         fail(frame);
       } else {
         spawnChildMessage(frame);
@@ -109,9 +108,9 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.decrementRemainingGas(cost);
 
     final Address address = frame.getRecipientAddress();
-    final Account account = frame.getWorldState().getAccount(address);
+    final MutableAccount account = frame.getWorldUpdater().getAccount(address).getMutable();
 
-    frame.getWorldState().updateAccountNonce(address, account.getNonce() + 1);
+    account.incrementNonce();
 
     final Wei value = Wei.wrap(frame.getStackItem(0));
     final UInt256 inputOffset = frame.getStackItem(1);
@@ -127,7 +126,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
             .messageFrameStack(frame.getMessageFrameStack())
-            .worldState(frame.getWorldState().createNestedWorldState())
+            .worldUpdater(frame.getWorldUpdater().updater())
             .initialGas(childGasStipend)
             .address(contractAddress)
             .originator(frame.getOriginatorAddress())

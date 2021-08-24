@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.evm.Hash;
+
 /**
  * An interface for calculating pars of a {@link BlockHeader} which vary based on the consensus
  * mechanism.

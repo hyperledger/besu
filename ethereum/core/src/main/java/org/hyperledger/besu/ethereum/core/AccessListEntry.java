@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.core.json.AccessListEntryDeserializer;
 import org.hyperledger.besu.ethereum.core.json.AccessListEntrySerializer;
+import org.hyperledger.besu.evm.Address;
 
 import java.util.List;
 

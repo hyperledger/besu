@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import static org.hyperledger.besu.ethereum.core.Hash.ZERO;
+import static org.hyperledger.besu.evm.Hash.ZERO;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.vm.operations.BlockHashOperation;
-import org.hyperledger.besu.plugin.data.Hash;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.operations.BlockHashOperation;
 
 import java.util.HashMap;
 import java.util.Map;

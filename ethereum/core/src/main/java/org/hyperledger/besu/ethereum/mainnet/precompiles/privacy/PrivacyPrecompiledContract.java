@@ -14,24 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
-import static org.hyperledger.besu.ethereum.core.Hash.fromPlugin;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
+import static org.hyperledger.besu.evm.Hash.fromPlugin;
 
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
+import org.hyperledger.besu.enclave.EnclaveConfigurationException;
 import org.hyperledger.besu.enclave.EnclaveIOException;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -41,10 +36,15 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.GasCalculator;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.MutableWorldState;
+import org.hyperledger.besu.evm.OperationTracer;
+import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.evm.precompiles.AbstractPrecompiledContract;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.Hash;
 
 import java.util.Base64;
@@ -238,8 +238,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final WorldUpdater privateWorldStateUpdater) {
 
     return privateTransactionProcessor.processTransaction(
-        messageFrame.getBlockchain(),
-        messageFrame.getWorldState(),
+        messageFrame.getWorldUpdater(),
         privateWorldStateUpdater,
         messageFrame.getBlockHeader(),
         messageFrame.getContextVariable(KEY_TRANSACTION_HASH),
@@ -277,7 +276,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
   boolean isMining(final MessageFrame messageFrame) {
     boolean isMining = false;
-    final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
+    final BlockHeader currentBlockHeader = messageFrame.getBlockHeader();
     if (!BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())) {
       if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
         throw new IllegalArgumentException(
@@ -288,5 +287,27 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       }
     }
     return isMining;
+  }
+
+  protected boolean privateFromMatchesSenderKey(
+      final Bytes transactionPrivateFrom, final String payloadSenderKey) {
+    if (payloadSenderKey == null) {
+      LOG.warn(
+          "Missing sender key from Orion response. Upgrade Orion to 1.6 to enforce privateFrom check.");
+      throw new EnclaveConfigurationException(
+          "Incompatible Orion version. Orion version must be 1.6.0 or greater.");
+    }
+
+    if (transactionPrivateFrom == null || transactionPrivateFrom.isEmpty()) {
+      LOG.warn("Private transaction is missing privateFrom");
+      return false;
+    }
+
+    if (!payloadSenderKey.equals(transactionPrivateFrom.toBase64String())) {
+      LOG.warn("Private transaction privateFrom doesn't match payload sender key");
+      return false;
+    }
+
+    return true;
   }
 }

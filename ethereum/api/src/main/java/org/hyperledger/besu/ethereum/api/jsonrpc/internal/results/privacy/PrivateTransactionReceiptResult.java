@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptLogResult;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.Log;
 
 import java.util.ArrayList;
 import java.util.List;

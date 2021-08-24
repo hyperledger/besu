@@ -18,10 +18,10 @@ import static java.util.Collections.newSetFromMap;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.cache.ImmutablePendingBlock;
 import org.hyperledger.besu.ethereum.eth.sync.state.cache.PendingBlockCache;
+import org.hyperledger.besu.evm.Hash;
 
 import java.util.Collections;
 import java.util.Comparator;

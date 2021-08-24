@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.eth;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.ForkId;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.evm.Hash;
 
 import java.util.ArrayList;
 import java.util.List;

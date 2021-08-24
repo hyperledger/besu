@@ -19,7 +19,6 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.GasCalculator;
 import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.Operation;
-import org.hyperledger.besu.plugin.data.Account;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -33,7 +32,7 @@ public class SelfBalanceOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final Address accountAddress = frame.getRecipientAddress();
-    final Account account = frame.getWorldState().getAccount(accountAddress);
+    final var account = frame.getWorldUpdater().getAccount(accountAddress);
     frame.pushStackItem(
         account == null ? UInt256.ZERO : UInt256.fromBytes(account.getBalance().getAsBytes32()));
 

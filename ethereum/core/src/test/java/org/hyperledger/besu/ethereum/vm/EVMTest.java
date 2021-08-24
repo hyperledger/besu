@@ -19,7 +19,7 @@ import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.mainnet.FrontierGasCalculator;
-import org.hyperledger.besu.ethereum.vm.operations.StopOperation;
+import org.hyperledger.besu.evm.operations.StopOperation;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;

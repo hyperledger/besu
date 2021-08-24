@@ -32,6 +32,15 @@ public interface EVMAccountState {
   Optional<UInt256> get(UInt256 key);
 
   /**
+   * Accesses and retrieves the contract value mapped to the specified key, as it existed at the
+   * beginning of the transaction
+   *
+   * @param key The key for the value.
+   * @return {@link Optional} {@link UInt256} value mapped to the key if it exists; otherwise empty
+   */
+  Optional<UInt256> getOriginal(UInt256 key);
+
+  /**
    * Updates the value mapped to the specified key, creating the mapping if one does not already
    * exist
    *

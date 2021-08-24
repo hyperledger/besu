@@ -14,29 +14,34 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128AddPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128MulPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128PairingPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.BLAKE2BFPrecompileContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12G1AddPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12G1MulPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12G1MultiExpPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12G2AddPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12G2MulPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12G2MultiExpPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12MapFp2ToG2PrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12MapFpToG1PrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.BLS12PairingPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.BigIntegerModularExponentiationPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.ECRECPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.IDPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.RIPEMD160PrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.SHA256PrecompiledContract;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
+
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.GasCalculator;
+import org.hyperledger.besu.evm.PrecompileContractRegistry;
+import org.hyperledger.besu.evm.precompiles.AltBN128AddPrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.AltBN128MulPrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.AltBN128PairingPrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.BLAKE2BFPrecompileContract;
+import org.hyperledger.besu.evm.precompiles.BLS12G1AddPrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.BLS12G1MulPrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.BLS12G1MultiExpPrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.BLS12G2AddPrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.BLS12G2MulPrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.BLS12G2MultiExpPrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.BLS12MapFp2ToG2PrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.BLS12MapFpToG1PrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.BLS12PairingPrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.BigIntegerModularExponentiationPrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.ECRECPrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.IDPrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.RIPEMD160PrecompiledContract;
+import org.hyperledger.besu.evm.precompiles.SHA256PrecompiledContract;
 
 /** Provides the various precompiled contracts used on mainnet hard forks. */
 public abstract class MainnetPrecompiledContractRegistries {
@@ -124,7 +129,7 @@ public abstract class MainnetPrecompiledContractRegistries {
 
     if (precompiledContractConfiguration.getPrivacyParameters().isPrivacyPluginEnabled()) {
       registry.put(
-          Address.PLUGIN_PRIVACY,
+          PLUGIN_PRIVACY,
           new PrivacyPluginPrecompiledContract(
               precompiledContractConfiguration.getGasCalculator(),
               precompiledContractConfiguration.getPrivacyParameters()));
@@ -132,13 +137,13 @@ public abstract class MainnetPrecompiledContractRegistries {
         .getPrivacyParameters()
         .isOnchainPrivacyGroupsEnabled()) {
       registry.put(
-          Address.ONCHAIN_PRIVACY,
+          ONCHAIN_PRIVACY,
           new OnChainPrivacyPrecompiledContract(
               precompiledContractConfiguration.getGasCalculator(),
               precompiledContractConfiguration.getPrivacyParameters()));
     } else {
       registry.put(
-          Address.DEFAULT_PRIVACY,
+          DEFAULT_PRIVACY,
           new PrivacyPrecompiledContract(
               precompiledContractConfiguration.getGasCalculator(),
               precompiledContractConfiguration.getPrivacyParameters(),

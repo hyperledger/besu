@@ -19,7 +19,6 @@ import static java.util.Arrays.asList;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
@@ -29,6 +28,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PongPacketData;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.evm.Hash;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 

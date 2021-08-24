@@ -18,29 +18,31 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockProcessor;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockProcessorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
-import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
-import org.hyperledger.besu.ethereum.mainnet.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.ContractCreationProcessor;
+import org.hyperledger.besu.evm.MessageCallProcessor;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.MutableAccount;
+import org.hyperledger.besu.evm.MutableWorldState;
+import org.hyperledger.besu.evm.Wei;
+import org.hyperledger.besu.evm.WorldState;
+import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
+import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.io.IOException;
@@ -96,10 +98,10 @@ public abstract class MainnetProtocolSpecs {
         .gasLimitCalculator(new FrontierTargetingGasLimitCalculator())
         .evmBuilder(MainnetEvmRegistries::frontier)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::frontier)
-        .messageCallProcessorBuilder(MainnetMessageCallProcessor::new)
+        .messageCallProcessorBuilder(MessageCallProcessor::new)
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
-                new MainnetContractCreationProcessor(
+                new ContractCreationProcessor(
                     gasCalculator,
                     evm,
                     false,
@@ -203,7 +205,7 @@ public abstract class MainnetProtocolSpecs {
         .evmBuilder(MainnetEvmRegistries::homestead)
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
-                new MainnetContractCreationProcessor(
+                new ContractCreationProcessor(
                     gasCalculator,
                     evm,
                     true,
@@ -275,13 +277,13 @@ public abstract class MainnetProtocolSpecs {
         .skipZeroBlockRewards(true)
         .messageCallProcessorBuilder(
             (evm, precompileContractRegistry) ->
-                new MainnetMessageCallProcessor(
+                new MessageCallProcessor(
                     evm,
                     precompileContractRegistry,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
-                new MainnetContractCreationProcessor(
+                new ContractCreationProcessor(
                     gasCalculator,
                     evm,
                     true,
@@ -404,7 +406,7 @@ public abstract class MainnetProtocolSpecs {
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
-                new MainnetContractCreationProcessor(
+                new ContractCreationProcessor(
                     gasCalculator,
                     evm,
                     true,
@@ -512,7 +514,7 @@ public abstract class MainnetProtocolSpecs {
                     CoinbaseFeePriceCalculator.eip1559()))
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
-                new MainnetContractCreationProcessor(
+                new ContractCreationProcessor(
                     gasCalculator,
                     evm,
                     true,

@@ -23,8 +23,8 @@ import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.AddressSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.ExportSubCommand;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.evm.Address;
 
 import java.io.BufferedWriter;
 import java.io.File;

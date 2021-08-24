@@ -24,12 +24,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStorageRa
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.evm.Account;
+import org.hyperledger.besu.evm.AccountStorageEntry;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.WorldState;
 
 import java.util.Collections;
 import java.util.NavigableMap;

@@ -14,6 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.evm.Account;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.EvmAccount;
+import org.hyperledger.besu.evm.MutableAccount;
+import org.hyperledger.besu.evm.Wei;
+import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.evm.WorldView;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

@@ -15,10 +15,10 @@
 package org.hyperledger.besu.consensus.common.bft.network;
 
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.evm.Address;
 
 import java.util.Collection;
 import java.util.Collections;

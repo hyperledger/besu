@@ -94,7 +94,6 @@ public class Code {
       validJumpDestinations = new BitSet(getSize());
       evm.forEachOperation(
           this,
-          frame.getContractAccountVersion(),
           (final Operation op, final Integer offset) -> {
             if (op.getOpcode() == JumpDestOperation.OPCODE) {
               validJumpDestinations.set(offset);

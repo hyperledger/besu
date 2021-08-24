@@ -16,19 +16,19 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.evm.AccountStorageEntry;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.EvmAccount;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.MutableAccount;
+import org.hyperledger.besu.evm.Wei;
 
 import java.util.HashMap;
 import java.util.Map;

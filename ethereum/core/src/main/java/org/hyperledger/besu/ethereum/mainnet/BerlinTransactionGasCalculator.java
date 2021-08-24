@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static java.util.Collections.emptyList;
 
 import org.hyperledger.besu.ethereum.core.AccessListEntry;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Gas;
 
 import java.util.HashSet;
 import java.util.List;

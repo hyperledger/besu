@@ -23,7 +23,6 @@ import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.Words;
 import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
-import org.hyperledger.besu.plugin.data.Account;
 
 import java.util.Optional;
 
@@ -52,7 +51,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
         return new OperationResult(
             optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
-        final Account account = frame.getWorldState().getAccount(address);
+        final var account = frame.getWorldUpdater().getAccount(address);
         if (account == null || account.isEmpty()) {
           frame.pushStackItem(UInt256.ZERO);
         } else {

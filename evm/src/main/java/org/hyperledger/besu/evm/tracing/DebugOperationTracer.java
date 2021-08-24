@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.tracing;
 
 import org.hyperledger.besu.evm.Address;
-import org.hyperledger.besu.evm.EVMWorldState;
 import org.hyperledger.besu.evm.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.MessageFrame;
@@ -23,6 +22,7 @@ import org.hyperledger.besu.evm.Operation;
 import org.hyperledger.besu.evm.Operation.OperationResult;
 import org.hyperledger.besu.evm.OperationTracer;
 import org.hyperledger.besu.evm.Wei;
+import org.hyperledger.besu.evm.WorldUpdater;
 
 import java.util.Map;
 import java.util.Optional;
@@ -58,7 +58,7 @@ public class DebugOperationTracer implements OperationTracer {
     final Gas gasRemaining = frame.getRemainingGas();
     final Bytes inputData = frame.getInputData();
     final Optional<Bytes32[]> stack = captureStack(frame);
-    final EVMWorldState worldUpdater = frame.getWorldState();
+    final WorldUpdater worldUpdater = frame.getWorldUpdater();
     final Optional<Bytes32[]> stackPostExecution;
     final OperationResult operationResult = executeOperation.execute();
     final Bytes outputData = frame.getOutputData();
@@ -120,7 +120,7 @@ public class DebugOperationTracer implements OperationTracer {
     //              Optional.empty(),
     //              Optional.empty(),
     //              Optional.empty(),
-    //              frame.getWorldState(),
+    //              frame.getWorldUpdater(),
     //              Optional.empty(),
     //              Optional.ofNullable(frame.getRefunds()),
     //              Optional.ofNullable(frame.getCode()),
@@ -167,7 +167,7 @@ public class DebugOperationTracer implements OperationTracer {
     //                    Optional.empty(),
     //                    Optional.empty(),
     //                    Optional.empty(),
-    //                    frame.getWorldState(),
+    //                    frame.getWorldUpdater(),
     //                    Optional.empty(),
     //                    Optional.ofNullable(frame.getRefunds()),
     //                    Optional.ofNullable(frame.getCode()),

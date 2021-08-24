@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
@@ -25,11 +26,8 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
@@ -41,6 +39,9 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.Wei;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -362,7 +363,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
 
   private CallParameter buildCallParams(final Bytes methodCall) {
     return new CallParameter(
-        Address.ZERO, Address.ONCHAIN_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
+        Address.ZERO, ONCHAIN_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
   }
 
   private List<PrivateTransactionMetadata> buildTransactionMetadataList(
@@ -430,7 +431,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
   @Override
   public boolean isGroupAdditionTransaction(final PrivateTransaction privateTransaction) {
     return privateTransaction.getTo().isPresent()
-        && privateTransaction.getTo().get().equals(Address.ONCHAIN_PRIVACY_PROXY)
+        && privateTransaction.getTo().get().equals(ONCHAIN_PRIVACY_PROXY)
         && privateTransaction
             .getPayload()
             .toHexString()

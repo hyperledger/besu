@@ -43,15 +43,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionCom
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionHashResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionResult;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;

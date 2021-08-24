@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.evm.Hash;
+
 import java.util.List;
 import java.util.Objects;
 

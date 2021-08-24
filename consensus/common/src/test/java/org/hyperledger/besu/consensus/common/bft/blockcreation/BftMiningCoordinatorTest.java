@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.evm.Wei;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;

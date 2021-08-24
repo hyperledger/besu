@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
+import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.Optional;

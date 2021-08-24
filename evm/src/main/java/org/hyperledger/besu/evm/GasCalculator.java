@@ -32,7 +32,6 @@ import org.hyperledger.besu.evm.precompiles.ECRECPrecompiledContract;
 import org.hyperledger.besu.evm.precompiles.IDPrecompiledContract;
 import org.hyperledger.besu.evm.precompiles.RIPEMD160PrecompiledContract;
 import org.hyperledger.besu.evm.precompiles.SHA256PrecompiledContract;
-import org.hyperledger.besu.plugin.data.Account;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;

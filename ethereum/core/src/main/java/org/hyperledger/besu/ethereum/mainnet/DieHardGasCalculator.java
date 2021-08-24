@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.evm.Gas;
 
 public class DieHardGasCalculator extends TangerineWhistleGasCalculator {
   private static final Gas EXP_OPERATION_BYTE_GAS_COST = Gas.of(50L);

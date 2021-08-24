@@ -14,23 +14,28 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.mainnet.MainnetMessageCallProcessor;
-import org.hyperledger.besu.ethereum.mainnet.PrecompileContractRegistry;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.MessageCallProcessor;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.MutableAccount;
+import org.hyperledger.besu.evm.MutableWorldState;
+import org.hyperledger.besu.evm.OperationTracer;
+import org.hyperledger.besu.evm.PrecompileContractRegistry;
+import org.hyperledger.besu.evm.Wei;
+import org.hyperledger.besu.evm.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.function.Consumer;
-
-import org.apache.tuweni.bytes.Bytes;
 
 public class TestCodeExecutor {
 
@@ -49,8 +54,8 @@ public class TestCodeExecutor {
         createInitialWorldState(accountSetup, fixture.getStateArchive());
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
 
-    final MainnetMessageCallProcessor messageCallProcessor =
-        new MainnetMessageCallProcessor(protocolSpec.getEvm(), new PrecompileContractRegistry());
+    final MessageCallProcessor messageCallProcessor =
+        new MessageCallProcessor(protocolSpec.getEvm(), new PrecompileContractRegistry());
 
     final Transaction transaction =
         Transaction.builder()

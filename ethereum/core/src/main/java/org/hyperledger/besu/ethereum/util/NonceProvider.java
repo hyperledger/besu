@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.util;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.evm.Address;
 
 @FunctionalInterface
 public interface NonceProvider {

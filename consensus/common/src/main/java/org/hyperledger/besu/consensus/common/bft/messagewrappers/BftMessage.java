@@ -21,9 +21,9 @@ import org.hyperledger.besu.consensus.common.bft.payload.RoundSpecific;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.evm.Address;
 
 import java.util.Objects;
 import java.util.StringJoiner;

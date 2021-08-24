@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.evm.Hash;
 
 import java.util.Optional;
 

@@ -20,28 +20,28 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSA
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.AccountState;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
+import org.hyperledger.besu.evm.AbstractMessageProcessor;
+import org.hyperledger.besu.evm.Account;
+import org.hyperledger.besu.evm.AccountState;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.EvmAccount;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.GasCalculator;
+import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.OperationTracer;
+import org.hyperledger.besu.evm.Wei;
+import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -93,7 +93,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
+      final BlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
@@ -132,7 +132,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
+      final BlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
@@ -168,7 +168,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
+      final BlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
@@ -204,7 +204,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
+      final BlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
@@ -248,7 +248,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
+      final BlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
@@ -280,7 +280,7 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
-      final MutableAccount senderMutableAccount = sender.getMutable();
+      final var senderMutableAccount = sender.getMutable();
       final long previousNonce = senderMutableAccount.incrementNonce();
       final Wei transactionGasPrice =
           feeMarket.getTransactionPriceCalculator().price(transaction, blockHeader.getBaseFee());
@@ -324,8 +324,7 @@ public class MainnetTransactionProcessor {
           MessageFrame.builder()
               .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
-              .blockchain(blockchain)
-              .worldState(worldUpdater.updater())
+              .worldUpdater(worldUpdater.updater())
               .initialGas(gasAvailable)
               .originator(senderAddress)
               .gasPrice(transactionGasPrice)
@@ -398,7 +397,7 @@ public class MainnetTransactionProcessor {
 
       if (!worldState.getClass().equals(GoQuorumMutablePrivateWorldStateUpdater.class)) {
         // if this is not a private GoQuorum transaction we have to update the coinbase
-        final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
+        final var coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
         final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
         if (blockHeader.getBaseFee().isPresent()) {
           final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());

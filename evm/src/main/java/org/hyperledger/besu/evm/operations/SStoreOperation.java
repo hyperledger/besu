@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.GasCalculator;
 import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.MutableAccount;
 
 import java.util.Optional;
 
@@ -51,13 +52,13 @@ public class SStoreOperation extends AbstractOperation {
     final UInt256 key = frame.popStackItem();
     final UInt256 value = frame.popStackItem();
 
-    Address address = frame.getRecipientAddress();
-    final var account = frame.getWorldState().getAccount(address);
-    final var accountState = frame.getWorldState().getAccountState(address);
+    final MutableAccount account =
+        frame.getWorldUpdater().getAccount(frame.getRecipientAddress()).getMutable();
     if (account == null) {
       return ILLEGAL_STATE_CHANGE;
     }
 
+    final Address address = account.getAddress();
     final boolean slotIsWarm = frame.warmUpStorage(address, key);
     final Gas cost =
         gasCalculator()
@@ -79,7 +80,7 @@ public class SStoreOperation extends AbstractOperation {
     // Increment the refund counter.
     frame.incrementGasRefund(gasCalculator().calculateStorageRefundAmount(account, key, value));
 
-    accountState.put(key, value);
+    account.setStorageValue(key, value);
     frame.storageWasUpdated(key, value);
     return new OperationResult(optionalCost, Optional.empty());
   }

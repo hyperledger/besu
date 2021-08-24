@@ -17,14 +17,14 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.evm.Account;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.evm.MutableWorldState;
+import org.hyperledger.besu.evm.WorldState;
+import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -180,7 +180,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
                   if (!results.containsKey(entry.getKey())) {
                     final UInt256 value = entry.getValue().getUpdated();
                     // yes, store the nulls.  If it was deleted it should stay deleted
-                    results.put(entry.getKey(), value == null ? null : value);
+                    results.put(entry.getKey(), value);
                   }
                 });
       }

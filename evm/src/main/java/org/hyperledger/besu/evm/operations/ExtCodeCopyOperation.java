@@ -55,7 +55,8 @@ public class ExtCodeCopyOperation extends AbstractOperation {
       return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
-    final Bytes code = frame.getWorldState().getCode(address);
+    final var account = frame.getWorldUpdater().get(address);
+    final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
 
     frame.writeMemory(memOffset, sourceOffset, numBytes, code);
     return new OperationResult(optionalCost, Optional.empty());

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.evm.Hash;
 
 import java.util.List;
 import java.util.Objects;

@@ -22,7 +22,6 @@ import org.hyperledger.besu.evm.GasCalculator;
 import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.Words;
-import org.hyperledger.besu.plugin.data.Account;
 
 import java.util.Optional;
 
@@ -101,7 +100,7 @@ public class CallOperation extends AbstractCallOperation {
     final UInt256 inputDataLength = inputDataLength(frame);
     final UInt256 outputDataOffset = outputDataOffset(frame);
     final UInt256 outputDataLength = outputDataLength(frame);
-    final Account recipient = frame.getWorldState().getAccount(address(frame));
+    final var recipient = frame.getWorldUpdater().getAccount(address(frame));
 
     return gasCalculator()
         .callOperationGasCost(

@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.evm.Account;
+import org.hyperledger.besu.evm.Gas;
 
 import org.apache.tuweni.units.bigints.UInt256;
 

@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.evm.Hash;
 
 import java.util.List;
 import java.util.Objects;

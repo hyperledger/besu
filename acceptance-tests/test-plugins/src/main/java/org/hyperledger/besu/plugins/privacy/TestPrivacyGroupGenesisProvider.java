@@ -15,7 +15,7 @@
  */
 package org.hyperledger.besu.plugins.privacy;
 
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 import org.hyperledger.besu.plugin.data.PrivacyGenesisAccount;

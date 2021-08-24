@@ -20,8 +20,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.ForkId;
+import org.hyperledger.besu.evm.Hash;
 
 import java.util.Arrays;
 import java.util.List;

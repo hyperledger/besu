@@ -43,6 +43,7 @@ dependencies {
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
+  implementation project(':evm')
   implementation project(':ethereum:p2p')
   implementation project(':plugin-api')
 

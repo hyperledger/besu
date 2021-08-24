@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.evm.Hash;
 
 import org.apache.tuweni.bytes.Bytes;
 

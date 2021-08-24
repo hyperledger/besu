@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.time.Instant.now;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.BufferedGetPooledTransactionsFromPeerFetcher;
@@ -25,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMess
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.evm.Hash;
 import org.hyperledger.besu.metrics.RunnableCounter;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
