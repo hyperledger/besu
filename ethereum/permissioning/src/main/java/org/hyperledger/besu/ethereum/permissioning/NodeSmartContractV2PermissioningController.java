@@ -56,17 +56,7 @@ public class NodeSmartContractV2PermissioningController
   }
 
   private boolean isPermitted(final EnodeURL enode) {
-    return checkProvidedURL(enode) || checkAlternateURL(enode);
-  }
-
-  private boolean checkProvidedURL(final EnodeURL enode) {
-    return getCallResult(enode);
-  }
-
-  private boolean checkAlternateURL(final EnodeURL enode) {
-    return isEnodeHostIPAddress(enode.toURI().getHost())
-        ? getCallResult(ipToDNS(enode))
-        : getCallResult(dnsToIp(enode));
+    return getCallResult(enode) || (boolean) getCallResult(ipToDNS(enode));
   }
 
   @NotNull
@@ -75,14 +65,6 @@ public class NodeSmartContractV2PermissioningController
         .processAtHead(buildCallParameters(createPayload(enode)))
         .map(this::parseResult)
         .orElse(false);
-  }
-
-  private boolean isEnodeHostIPAddress(final String enodeHost) {
-    return InetAddresses.isUriInetAddress(enodeHost) || InetAddresses.isInetAddress(enodeHost);
-  }
-
-  private EnodeURL dnsToIp(final EnodeURL enodeUrl) {
-    return EnodeURLImpl.builder().configureFromEnode(enodeUrl).build();
   }
 
   private EnodeURL ipToDNS(final EnodeURL enodeURL) {

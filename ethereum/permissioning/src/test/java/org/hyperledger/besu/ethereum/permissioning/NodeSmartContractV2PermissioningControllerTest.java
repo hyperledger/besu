@@ -26,7 +26,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -193,47 +192,6 @@ public class NodeSmartContractV2PermissioningControllerTest {
 
     boolean isPermitted =
         permissioningController.checkSmartContractRules(SOURCE_ENODE_IPV4, DESTINATION_ENODE_IPV4);
-    assertThat(isPermitted).isTrue();
-
-    verify(transactionSimulator, times(4)).processAtHead(any());
-  }
-
-  @Test
-  public void expectedPayloadWhenCheckingPermissioningWithAlternateIP() {
-    final EnodeDnsConfiguration enodeDnsConfiguration = mock(EnodeDnsConfiguration.class);
-    when(enodeDnsConfiguration.dnsEnabled()).thenReturn(true);
-    when(enodeDnsConfiguration.updateEnabled()).thenReturn(true);
-    final EnodeURL sourceEnodeDns =
-        EnodeURLImpl.fromString(
-            "enode://fcbe9f83218487b3c0b50878193880e6c25cfd86708c0a0bf0ca91f0ce633746a892fe240afa5b9a880b8bca48e8a22704ef937fdda2d7cc63e4d41ed1b417ae@localhost:30303",
-            enodeDnsConfiguration);
-    final EnodeURL destinationEnodeDns =
-        EnodeURLImpl.fromString(
-            "enode://3548c87b9920ff16aa4bdcf01c85f25117a29ae1574d759bad48cc9463d8e9f7c3c1d1e9fb0d28e73898951f90e02714abb770fd6d22e90371882a45658800e9@localhost:40404",
-            enodeDnsConfiguration);
-
-    final TransactionSimulatorResult txSimulatorResultFalse =
-        transactionSimulatorResult(
-            NodeSmartContractV2PermissioningController.FALSE_RESPONSE, ValidationResult.valid());
-
-    final TransactionSimulatorResult txSimulatorResultTrue =
-        transactionSimulatorResult(
-            NodeSmartContractV2PermissioningController.TRUE_RESPONSE, ValidationResult.valid());
-
-    when(transactionSimulator.processAtHead(eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP))))
-        .thenReturn(Optional.of(txSimulatorResultTrue));
-    when(transactionSimulator.processAtHead(eq(callParams(DESTINATION_ENODE_EXPECTED_PAYLOAD_IP))))
-        .thenReturn(Optional.of(txSimulatorResultTrue));
-
-    when(transactionSimulator.processAtHead(
-            eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_ALTERNATE_DNS))))
-        .thenReturn(Optional.of(txSimulatorResultFalse));
-    when(transactionSimulator.processAtHead(
-            eq(callParams(DESTINATION_ENODE_EXPECTED_PAYLOAD_ALTERNATE_DNS))))
-        .thenReturn(Optional.of(txSimulatorResultFalse));
-
-    boolean isPermitted =
-        permissioningController.checkSmartContractRules(sourceEnodeDns, destinationEnodeDns);
     assertThat(isPermitted).isTrue();
 
     verify(transactionSimulator, times(4)).processAtHead(any());
