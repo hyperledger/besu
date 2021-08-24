@@ -25,8 +25,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class EthMessages {
-  private static final Logger LOG = LogManager.getLogger();
-
   private final Map<Integer, Subscribers<MessageCallback>> listenersByCode =
       new ConcurrentHashMap<>();
   private final Map<Integer, MessageResponseConstructor> messageResponseConstructorsByCode =
