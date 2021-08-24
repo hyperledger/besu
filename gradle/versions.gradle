@@ -126,9 +126,10 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.3.4'
 
+    // Not updating bls12-381 because of https://github.com/hyperledger/besu/issues/2668
     dependency 'org.hyperledger.besu:bls12-381:0.3.0'
-    dependency 'org.hyperledger.besu:secp256k1:0.4.1'
-    dependency 'org.hyperledger.besu:secp256r1:0.4.1'
+    dependency 'org.hyperledger.besu:secp256k1:0.4.2'
+    dependency 'org.hyperledger.besu:secp256r1:0.4.2'
 
     dependency 'org.immutables:value-annotations:2.8.8'
     dependency 'org.immutables:value:2.8.8'
