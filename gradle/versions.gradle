@@ -61,14 +61,14 @@ dependencyManagement {
     dependency 'io.netty:netty-tcnative-boringssl-static:2.0.40.Final'
     dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.66.Final', classifier: 'linux-x86_64'
 
-    dependency 'io.opentelemetry:opentelemetry-api:1.2.0'
-    dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.2.0-alpha'
-    dependency 'io.opentelemetry:opentelemetry-exporter-otlp:1.2.0'
-    dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.2.0'
-    dependency 'io.opentelemetry:opentelemetry-proto:1.2.0-alpha'
-    dependency 'io.opentelemetry:opentelemetry-sdk-trace:1.2.0'
-    dependency 'io.opentelemetry:opentelemetry-sdk:1.2.0'
-    dependency 'io.opentelemetry:opentelemetry-semconv:1.2.0-alpha'
+    dependency 'io.opentelemetry:opentelemetry-api:1.5.0'
+    dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.5.0-alpha'
+    dependency 'io.opentelemetry:opentelemetry-exporter-otlp:1.5.0'
+    dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.5.0'
+    dependency 'io.opentelemetry:opentelemetry-proto:1.5.0-alpha'
+    dependency 'io.opentelemetry:opentelemetry-sdk-trace:1.5.0'
+    dependency 'io.opentelemetry:opentelemetry-sdk:1.5.0'
+    dependency 'io.opentelemetry:opentelemetry-semconv:1.5.0-alpha'
 
     dependency 'io.opentracing.contrib:opentracing-okhttp3:3.0.0'
     dependency 'io.opentracing:opentracing-api:0.33.0'
@@ -126,9 +126,10 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.3.4'
 
+    // Not updating bls12-381 because of https://github.com/hyperledger/besu/issues/2668
     dependency 'org.hyperledger.besu:bls12-381:0.3.0'
-    dependency 'org.hyperledger.besu:secp256k1:0.4.1'
-    dependency 'org.hyperledger.besu:secp256r1:0.4.1'
+    dependency 'org.hyperledger.besu:secp256k1:0.4.2'
+    dependency 'org.hyperledger.besu:secp256r1:0.4.2'
 
     dependency 'org.immutables:value-annotations:2.8.8'
     dependency 'org.immutables:value:2.8.8'
