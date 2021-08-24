@@ -39,6 +39,7 @@ public class QbftBlockHeaderValidationRulesetFactory {
    * part of the BlockChain (i.e. not proposed blocks, which do not contain commit seals)
    *
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
+   * @param useValidatorContract whether validator selection is using a validator contract
    * @return BlockHeaderValidator configured for assessing bft block headers
    */
   public BlockHeaderValidator.Builder blockHeaderValidator(
