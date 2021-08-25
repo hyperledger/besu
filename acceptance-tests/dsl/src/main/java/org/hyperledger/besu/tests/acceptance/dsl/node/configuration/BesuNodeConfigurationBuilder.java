@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
@@ -80,6 +81,7 @@ public class BesuNodeConfigurationBuilder {
   private Optional<PrivacyParameters> privacyParameters = Optional.empty();
   private List<String> runCommand = new ArrayList<>();
   private Optional<KeyPair> keyPair = Optional.empty();
+  private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -349,6 +351,13 @@ public class BesuNodeConfigurationBuilder {
     return tempFile.toPath();
   }
 
+  public BesuNodeConfigurationBuilder pkiBlockCreationEnabled(
+      final PkiKeyStoreConfiguration pkiKeyStoreConfiguration) {
+    this.pkiKeyStoreConfiguration = Optional.of(pkiKeyStoreConfiguration);
+
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder discoveryEnabled(final boolean discoveryEnabled) {
     this.discoveryEnabled = discoveryEnabled;
     return this;
@@ -433,6 +442,7 @@ public class BesuNodeConfigurationBuilder {
         isDnsEnabled,
         privacyParameters,
         runCommand,
-        keyPair);
+        keyPair,
+        pkiKeyStoreConfiguration);
   }
 }
