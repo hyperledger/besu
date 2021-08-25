@@ -33,5 +33,5 @@ public interface WorldView {
    */
   Account get(Address address);
 
-  public Optional<Code> getContract(final Account account);
+  Optional<Code> getContract(final Account account);
 }

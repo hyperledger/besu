@@ -61,20 +61,30 @@ public class DefaultMutableWorldState implements MutableWorldState {
   private final Map<Address, Bytes> updatedAccountCode = new HashMap<>();
   private final Map<Bytes32, UInt256> newStorageKeyPreimages = new HashMap<>();
   private final Map<Bytes32, Address> newAccountKeyPreimages = new HashMap<>();
-  private final CodeCache codeCache = new CodeCache();
+  private final CodeCache codeCache;
 
   public DefaultMutableWorldState(
       final WorldStateStorage storage, final WorldStatePreimageStorage preimageStorage) {
-    this(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, storage, preimageStorage);
+    this(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, storage, preimageStorage, new CodeCache());
   }
 
   public DefaultMutableWorldState(
       final Bytes32 rootHash,
       final WorldStateStorage worldStateStorage,
       final WorldStatePreimageStorage preimageStorage) {
+
+    this(rootHash, worldStateStorage, preimageStorage, new CodeCache());
+  }
+
+  public DefaultMutableWorldState(
+      final Bytes32 rootHash,
+      final WorldStateStorage worldStateStorage,
+      final WorldStatePreimageStorage preimageStorage,
+      final CodeCache cache) {
     this.worldStateStorage = worldStateStorage;
     this.accountStateTrie = newAccountStateTrie(rootHash);
     this.preimageStorage = preimageStorage;
+    this.codeCache = cache;
   }
 
   public DefaultMutableWorldState(final WorldState worldState) {
@@ -89,6 +99,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
     this.worldStateStorage = other.worldStateStorage;
     this.preimageStorage = other.preimageStorage;
     this.accountStateTrie = newAccountStateTrie(other.accountStateTrie.getRootHash());
+    this.codeCache = new CodeCache();
   }
 
   private MerklePatriciaTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
@@ -116,7 +127,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   @Override
   public MutableWorldState copy() {
-    return new DefaultMutableWorldState(rootHash(), worldStateStorage, preimageStorage);
+    return new DefaultMutableWorldState(
+        rootHash(), worldStateStorage, preimageStorage, new CodeCache());
   }
 
   @Override
@@ -149,7 +161,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   @Override
   public WorldUpdater updater() {
-    return new Updater(this);
+    return new Updater(this, this.codeCache);
   }
 
   @Override
@@ -351,8 +363,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
   protected static class Updater
       extends AbstractWorldUpdater<DefaultMutableWorldState, WorldStateAccount> {
 
-    protected Updater(final DefaultMutableWorldState world) {
-      super(world);
+    protected Updater(final DefaultMutableWorldState world, final CodeCache cache) {
+      super(world, cache);
     }
 
     @Override

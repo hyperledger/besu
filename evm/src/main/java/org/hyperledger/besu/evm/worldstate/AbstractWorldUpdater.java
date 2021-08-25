@@ -43,10 +43,16 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new HashMap<>();
   protected Set<Address> deletedAccounts = new HashSet<>();
-  protected final CodeCache codeCache = new CodeCache();
+  protected final CodeCache codeCache;
+
+  protected AbstractWorldUpdater(final W world, final CodeCache cache) {
+    this.world = world;
+    this.codeCache = cache;
+  }
 
   protected AbstractWorldUpdater(final W world) {
     this.world = world;
+    this.codeCache = new CodeCache();
   }
 
   protected abstract A getForMutation(Address address);
