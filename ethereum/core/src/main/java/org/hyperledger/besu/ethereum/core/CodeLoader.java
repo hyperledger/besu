@@ -21,7 +21,7 @@ import com.google.common.cache.CacheLoader;
 
 public class CodeLoader extends CacheLoader<Account, Code> {
   @Override
-  public Code load(final Account key) throws Exception {
+  public Code load(final Account key) throws RuntimeException {
     if (!key.hasCode()) {
       throw new IllegalArgumentException("account " + key + " has no executable code");
     }

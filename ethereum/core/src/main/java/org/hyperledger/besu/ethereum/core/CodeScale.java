@@ -20,6 +20,9 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import com.google.common.cache.Weigher;
 
 public class CodeScale implements Weigher<Account, Code> {
+  public static final long DEFAULT_WEIGHT =
+      1024 * 25 * 10000; // TODO: make configurable, this is 10k full size contracts
+
   @Override
   public int weigh(final Account key, final Code value) {
     return value.getSize();

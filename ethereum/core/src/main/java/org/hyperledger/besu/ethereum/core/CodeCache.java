@@ -33,16 +33,17 @@ public class CodeCache implements LoadingCache<Account, Code> {
 
   private final LoadingCache<Account, Code> cache;
 
-  public CodeCache(final long maxWeight) {
+  public CodeCache(final long maxWeight, final CodeLoader loader) {
     this.cache =
-        CacheBuilder.newBuilder()
-            .maximumWeight(maxWeight)
-            .weigher(new CodeScale())
-            .build(new CodeLoader());
+        CacheBuilder.newBuilder().maximumWeight(maxWeight).weigher(new CodeScale()).build(loader);
   }
 
   public CodeCache() {
-    this(1024L * 1024L);
+    this(CodeScale.DEFAULT_WEIGHT, new CodeLoader());
+  }
+
+  public CodeCache(final CodeLoader loader) {
+    this(CodeScale.DEFAULT_WEIGHT, loader);
   }
 
   public Optional<Code> getContract(final Account account) {

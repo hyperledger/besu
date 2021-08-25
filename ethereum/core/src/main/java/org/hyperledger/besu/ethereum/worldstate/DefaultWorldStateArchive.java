@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.worldstate;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.CodeCache;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
@@ -72,7 +73,9 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
     if (!worldStateStorage.isWorldStateAvailable(rootHash, blockHash)) {
       return Optional.empty();
     }
-    return Optional.of(new DefaultMutableWorldState(rootHash, worldStateStorage, preimageStorage));
+    return Optional.of(
+        new DefaultMutableWorldState(
+            rootHash, worldStateStorage, preimageStorage, new CodeCache()));
   }
 
   @Override
