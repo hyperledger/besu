@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider.KeyStoreWrapperProvider;
@@ -48,14 +50,17 @@ public class PkiBlockCreationConfigurationProviderTest {
         .thenReturn(trustStoreWrapper);
 
     final PkiKeyStoreConfiguration pkiKeyStoreConfiguration =
-        new PkiKeyStoreConfiguration.Builder()
-            .withKeyStorePath(Path.of("/tmp/keystore"))
-            .withKeyStorePasswordSupplier(() -> "pwd")
-            .withTrustStorePath(Path.of("/tmp/truststore"))
-            .withTrustStorePasswordSupplier(() -> "pwd")
-            .withCertificateAlias("anAlias")
-            .withCrlFilePath(Path.of("/tmp/crl"))
-            .build();
+        spy(
+            new PkiKeyStoreConfiguration.Builder()
+                .withKeyStorePath(Path.of("/tmp/keystore"))
+                .withKeyStorePasswordPath(Path.of("/tmp/password"))
+                .withTrustStorePath(Path.of("/tmp/truststore"))
+                .withTrustStorePasswordPath(Path.of("/tmp/password"))
+                .withCertificateAlias("anAlias")
+                .withCrlFilePath(Path.of("/tmp/crl"))
+                .build());
+    doReturn("pwd").when(pkiKeyStoreConfiguration).getKeyStorePassword();
+    doReturn("pwd").when(pkiKeyStoreConfiguration).getTrustStorePassword();
 
     final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider =
         new PkiBlockCreationConfigurationProvider(keyStoreWrapperProvider);
