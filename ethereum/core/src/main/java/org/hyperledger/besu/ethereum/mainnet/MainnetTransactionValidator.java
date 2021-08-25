@@ -18,6 +18,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -168,10 +169,12 @@ public class MainnetTransactionValidator {
       final TransactionValidationParams validationParams) {
     Wei senderBalance = Account.DEFAULT_BALANCE;
     long senderNonce = Account.DEFAULT_NONCE;
+    Hash codeHash = Hash.EMPTY;
 
     if (sender != null) {
       senderBalance = sender.getBalance();
       senderNonce = sender.getNonce();
+      if (sender.getCodeHash() != null) codeHash = sender.getCodeHash();
     }
 
     if (transaction.getUpfrontCost().compareTo(senderBalance) > 0) {
@@ -196,6 +199,14 @@ public class MainnetTransactionValidator {
           String.format(
               "transaction nonce %s does not match sender account nonce %s.",
               transaction.getNonce(), senderNonce));
+    }
+
+    if (!codeHash.equals(Hash.EMPTY)) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
+          String.format(
+              "Sender %s has deployed code and so is not authorized to send transactions",
+              transaction.getSender()));
     }
 
     if (!isSenderAllowed(transaction, validationParams)) {
