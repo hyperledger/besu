@@ -20,6 +20,7 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
@@ -163,6 +164,10 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .isRevertReasonEnabled(node.isRevertReasonEnabled())
             .storageProvider(storageProvider)
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .pkiBlockCreationConfiguration(
+                node.getPkiKeyStoreConfiguration()
+                    .map(
+                        (pkiConfig) -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
             .build();
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
