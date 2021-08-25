@@ -19,13 +19,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.QbftFork;
+import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.validator.QbftForksSchedule;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+
+import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -40,7 +47,25 @@ public class QbftBlockCreatorFactoryTest {
     final MiningParameters miningParams = mock(MiningParameters.class);
     when(miningParams.getExtraData()).thenReturn(Bytes.wrap("Qbft tests".getBytes(UTF_8)));
 
-    // TODO-jf fix test
+    final QbftFork genesisFork =
+        new QbftFork(
+            0,
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.of(VALIDATOR_SELECTION_MODE.BLOCKHEADER),
+            Optional.empty());
+    final QbftFork contractFork =
+        new QbftFork(
+            2,
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.of(VALIDATOR_SELECTION_MODE.CONTRACT),
+            Optional.empty());
+    final QbftForksSchedule qbftForksSchedule =
+        new QbftForksSchedule(genesisFork, List.of(contractFork));
+
     qbftBlockCreatorFactory =
         new QbftBlockCreatorFactory(
             mock(PendingTransactions.class),
@@ -50,12 +75,15 @@ public class QbftBlockCreatorFactoryTest {
             mock(Address.class),
             mock(Address.class),
             extraDataCodec,
-            null); // extraDataWithRoundInformationOnly
+            qbftForksSchedule);
   }
 
   @Test
-  public void extraDataWithoutValidatorsAndVoteIsCreated() {
-    final Bytes encodedExtraData = qbftBlockCreatorFactory.createExtraData(3, null);
+  public void contractValidatorModeCreatesExtraDataWithoutValidatorsAndVote() {
+    final BlockHeader parentHeader = mock(BlockHeader.class);
+    when(parentHeader.getNumber()).thenReturn(1L);
+
+    final Bytes encodedExtraData = qbftBlockCreatorFactory.createExtraData(3, parentHeader);
     final BftExtraData bftExtraData = extraDataCodec.decodeRaw(encodedExtraData);
 
     assertThat(bftExtraData.getValidators()).isEmpty();
