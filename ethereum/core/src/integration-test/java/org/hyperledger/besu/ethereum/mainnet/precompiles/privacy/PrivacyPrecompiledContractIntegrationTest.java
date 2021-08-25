@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -24,7 +26,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.SendResponse;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
@@ -86,7 +87,6 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
   private static Enclave enclave;
   private static MessageFrame messageFrame;
-  private static Blockchain blockchain;
 
   private static OrionTestHarness testHarness;
   private static WorldStateArchive worldStateArchive;
@@ -129,22 +129,23 @@ public class PrivacyPrecompiledContractIntegrationTest {
     final EnclaveFactory factory = new EnclaveFactory(vertx);
     enclave = factory.createVertxEnclave(testHarness.clientUrl());
     messageFrame = mock(MessageFrame.class);
-    blockchain = mock(Blockchain.class);
     final BlockDataGenerator blockGenerator = new BlockDataGenerator();
     final Block genesis = blockGenerator.genesisBlock();
     final Block block =
         blockGenerator.block(
             new BlockDataGenerator.BlockOptions().setParentHash(genesis.getHeader().getHash()));
-    when(blockchain.getGenesisBlock()).thenReturn(genesis);
-    when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
-    when(blockchain.getBlockByHash(genesis.getHash())).thenReturn(Optional.of(genesis));
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
     final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
     when(privateMetadataUpdater.getPrivateBlockMetadata(any())).thenReturn(null);
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
         .thenReturn(PrivacyGroupHeadBlockMap.empty());
-    when(messageFrame.getContextVariable(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER))
+    when(messageFrame.getContextVariable(
+            eq(PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE), anyBoolean()))
+        .thenReturn(false);
+    when(messageFrame.getContextVariable(eq(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER)))
         .thenReturn(privateMetadataUpdater);
+    when(messageFrame.hasContextVariable(eq(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER)))
+        .thenReturn(true);
 
     worldStateArchive = mock(WorldStateArchive.class);
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
