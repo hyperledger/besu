@@ -1,0 +1,14 @@
+{
+  "type": "GetBlockHeadersPacket66",
+  "rlp": "0xca820457c682270f050580",
+  "data": {
+    "RequestId": 1111,
+    "Origin": {
+      "Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "Number": 9999
+    },
+    "Amount": 5,
+    "Skip": 5,
+    "Reverse": false
+  }
+}
