@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.operations;
 
+import org.hyperledger.besu.evm.Account;
 import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -174,15 +175,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
       final Address to = to(frame);
       final var contract = frame.getWorldUpdater().getAccount(to);
-      if (contract == null) {
-        // FIXME new halt reason
-        return new OperationResult(
-            optionalCost, Optional.of(ExceptionalHaltReason.INVALID_OPERATION));
-      }
 
-      final var account = frame.getWorldUpdater().getAccount(frame.getRecipientAddress());
-      final var balance =
-          account == null ? Wei.ZERO : Wei.wrap(account.getBalance().getAsBytes32());
+      final Account account = frame.getWorldUpdater().getAccount(frame.getRecipientAddress());
+      final Wei balance = account == null ? Wei.ZERO : account.getBalance();
       // If the call is sending more value than the account has or the message frame is to deep
       // return a failed call
       if (value(frame).compareTo(balance) > 0 || frame.getMessageStackDepth() >= 1024) {

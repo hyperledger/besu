@@ -86,6 +86,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
             .filter(f -> f.getPath().endsWith(".json"))
             .filter(f -> !f.getPath().contains("genesis"))
             .filter(f -> Arrays.stream(exceptions).noneMatch(f.getPath()::contains))
+            .sorted()
             .map(AbstractJsonRpcHttpBySpecTest::fileToParams)
             .forEach(specFiles::add);
       } catch (final IOException e) {

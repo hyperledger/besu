@@ -18,6 +18,7 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.DelegatingBytes32;
@@ -70,7 +71,7 @@ public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plug
    * @throws IllegalArgumentException if the string is either not hexadecimal, or not the valid
    *     representation of a hash (not 32 bytes).
    */
-  //  @JsonCreator
+  @JsonCreator
   public static Hash fromHexString(final String str) {
     return new Hash(Bytes32.fromHexStringStrict(str));
   }

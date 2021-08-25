@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.evm;
 
-// import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
-// import org.hyperledger.besu.evm.MutableAccount;
-
 import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;

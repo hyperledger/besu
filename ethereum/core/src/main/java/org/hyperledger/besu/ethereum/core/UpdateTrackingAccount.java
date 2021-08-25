@@ -228,8 +228,8 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
     final NavigableMap<Bytes32, AccountStorageEntry> entries;
-    if (account instanceof UpdateTrackingAccount) {
-      entries = ((UpdateTrackingAccount<A>) account).storageEntriesFrom(startKeyHash, limit);
+    if (account != null) {
+      entries = account.storageEntriesFrom(startKeyHash, limit);
     } else {
       entries = new TreeMap<>();
     }

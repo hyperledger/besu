@@ -91,4 +91,16 @@ public class AccountStorageEntry {
   public int hashCode() {
     return Objects.hash(value, key, keyHash);
   }
+
+  @Override
+  public String toString() {
+    return "AccountStorageEntry{"
+        + "key="
+        + key
+        + ", keyHash="
+        + keyHash
+        + ", value="
+        + value
+        + '}';
+  }
 }

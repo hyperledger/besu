@@ -145,11 +145,11 @@ public abstract class AbstractMessageProcessor {
    * @param operationTracer The tracer recording execution
    */
   private void codeExecute(final MessageFrame frame, final OperationTracer operationTracer) {
-    //    try {
-    evm.runToHalt(frame, operationTracer);
-    //    } catch (final ModificationNotAllowedException e) {
-    //      frame.setState(MessageFrame.State.REVERT);
-    //    }
+    try {
+      evm.runToHalt(frame, operationTracer);
+    } catch (final ModificationNotAllowedException e) {
+      frame.setState(MessageFrame.State.REVERT);
+    }
   }
 
   public void process(final MessageFrame frame, final OperationTracer operationTracer) {

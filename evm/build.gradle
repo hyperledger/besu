@@ -36,7 +36,7 @@ dependencies {
 
   implementation 'org.apache.tuweni:tuweni-bytes'
 
-  //  implementation 'com.fasterxml.jackson.core:jackson-databind'
+  compileOnly 'com.fasterxml.jackson.core:jackson-databind'
   //  implementation 'com.google.dagger:dagger'
   //  implementation 'com.google.guava:guava'
   //  implementation 'info.picocli:picocli'

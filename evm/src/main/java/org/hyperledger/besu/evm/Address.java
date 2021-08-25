@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.DelegatingBytes;
@@ -106,7 +107,7 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
    * @throws IllegalArgumentException if the string is either not hexadecimal, or not the valid
    *     representation of an address.
    */
-  // FIXME @JsonCreator
+  @JsonCreator
   public static Address fromHexString(final String str) {
     if (str == null) return null;
     return wrap(Bytes.fromHexStringLenient(str, SIZE));
