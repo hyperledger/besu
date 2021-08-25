@@ -361,7 +361,7 @@ public class Memory {
   public Bytes32 getWord(final UInt256 location) {
     final int start = asByteIndex(location);
     ensureCapacityForBytes(start, Bytes32.SIZE);
-    return Bytes32.wrap(data.slice(start, start + Bytes32.SIZE));
+    return Bytes32.wrap(data.slice(start, Bytes32.SIZE));
   }
 
   /**
