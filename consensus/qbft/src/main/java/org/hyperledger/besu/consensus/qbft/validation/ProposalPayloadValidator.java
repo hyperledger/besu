@@ -15,13 +15,14 @@
 package org.hyperledger.besu.consensus.qbft.validation;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
-import org.hyperledger.besu.consensus.qbft.pki.PkiQbftContext;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraData;
-import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.pki.QbftContext;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -46,16 +47,19 @@ public class ProposalPayloadValidator {
   private final ConsensusRoundIdentifier targetRound;
   private final BlockValidator blockValidator;
   private final ProtocolContext protocolContext;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   public ProposalPayloadValidator(
       final Address expectedProposer,
       final ConsensusRoundIdentifier targetRound,
       final BlockValidator blockValidator,
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext,
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.expectedProposer = expectedProposer;
     this.targetRound = targetRound;
     this.blockValidator = blockValidator;
     this.protocolContext = protocolContext;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   public boolean validate(final SignedData<ProposalPayload> signedPayload) {
@@ -82,10 +86,14 @@ public class ProposalPayloadValidator {
       return false;
     }
 
-    // TODO-lucas Do we want to have a PkiProposalPayloadValidator or something?
-    // Validate the CMS in the extraData (only for PKI-mode)
-    if (!validateCms(block)) {
-      return false;
+    final QbftContext qbftContext = protocolContext.getConsensusState(QbftContext.class);
+    if (qbftContext.getPkiBlockCreationConfiguration().isPresent()) {
+      if (!validateCms(
+          block,
+          qbftContext.getBlockInterface(),
+          qbftContext.getPkiBlockCreationConfiguration().get())) {
+        return false;
+      }
     }
 
     return true;
@@ -107,36 +115,26 @@ public class ProposalPayloadValidator {
   /*
     Validate CMS in block header (only for PKI-mode)
   */
-  @SuppressWarnings("unused")
-  private boolean validateCms(final Block block) {
-    final PkiQbftContext pkiQbftContext;
-    try {
-      pkiQbftContext = protocolContext.getConsensusState(PkiQbftContext.class);
-    } catch (final ClassCastException e) {
-      // TODO-lucas Do we have a better way of doing this? This is nasty...
-      // Not running on PKI-enabled mode
-      return true;
-    }
-
-    final BftExtraData extraData =
-        pkiQbftContext.getBlockInterface().getExtraData(block.getHeader());
-    final PkiQbftExtraData pkiExtraData = (PkiQbftExtraData) extraData;
-    final KeyStoreWrapper trustStore =
-        pkiQbftContext.getPkiBlockCreationConfiguration().getTrustStore();
+  private boolean validateCms(
+      final Block block,
+      final BftBlockInterface bftBlockInterface,
+      final PkiBlockCreationConfiguration pkiBlockCreationConfiguration) {
+    final PkiQbftExtraData pkiExtraData =
+        (PkiQbftExtraData) bftBlockInterface.getExtraData(block.getHeader());
+    final KeyStoreWrapper trustStore = pkiBlockCreationConfiguration.getTrustStore();
 
     final Hash hashWithoutCms =
-        BftBlockHeaderFunctions.forCmsSignature(new PkiQbftExtraDataCodec())
-            .hash(block.getHeader());
+        BftBlockHeaderFunctions.forCmsSignature(bftExtraDataCodec).hash(block.getHeader());
 
     final CmsValidator cmsValidator = new CmsValidator(trustStore);
 
-    LOG.info(">>> Validating CMS with signed hash {}", hashWithoutCms);
+    LOG.debug("Validating CMS with signed hash {} in block {}", hashWithoutCms, block.getHash());
 
     if (!cmsValidator.validate(pkiExtraData.getCms(), hashWithoutCms)) {
-      LOG.info(">>> CMS Validation INVALID for block {}", block.getHash());
+      LOG.info("{}: invalid CMS in block {}", ERROR_PREFIX, block.getHash());
       return false;
     } else {
-      LOG.info(">>> CMS Validation VALID for block {}", block.getHash());
+      LOG.trace("Valid CMS in block {}", block.getHash());
       return true;
     }
   }

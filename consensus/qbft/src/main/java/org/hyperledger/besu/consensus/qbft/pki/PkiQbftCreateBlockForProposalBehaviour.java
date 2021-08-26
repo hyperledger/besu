@@ -28,6 +28,8 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.pki.cms.CmsCreator;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 
+import java.util.Optional;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -52,17 +54,16 @@ public class PkiQbftCreateBlockForProposalBehaviour implements CreateBlockForPro
   @Override
   public Block create(final long headerTimeStampSeconds) {
     final Block block = blockCreator.createBlock(headerTimeStampSeconds);
+    final QbftContext qbftContext = protocolContext.getConsensusState(QbftContext.class);
+    final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfig =
+        qbftContext.getPkiBlockCreationConfiguration();
 
-    /*
-     If KeyStoreWrapper exists, we are operating in "PKI" mode. We need to add the "stamp" to the
-     proposed block header
-    */
-    final PkiQbftContext pkiQbftContext = protocolContext.getConsensusState(PkiQbftContext.class);
-    final PkiBlockCreationConfiguration pkiBlockCreationConfig =
-        pkiQbftContext.getPkiBlockCreationConfiguration();
+    if (pkiBlockCreationConfig.isEmpty()) {
+      throw new IllegalStateException(
+          "Empty PkiBlockCreationConfiguration when create proposal in PKI-mode");
+    }
 
-    // TODO-lucas Should we do this as part of the block creation
-    return replaceCmsInBlock(block, pkiBlockCreationConfig);
+    return replaceCmsInBlock(block, pkiBlockCreationConfig.get());
   }
 
   private Block replaceCmsInBlock(
@@ -71,15 +72,13 @@ public class PkiQbftCreateBlockForProposalBehaviour implements CreateBlockForPro
     final String certificateAlias = pkiBlockCreationConfig.getCertificateAlias();
     final CmsCreator cmsCreator = new CmsCreator(keyStore, certificateAlias);
 
-    // We need the blockchain hash w/o CMS (old blockchain hash...)
     final Hash hashWithoutCms =
         BftBlockHeaderFunctions.forCmsSignature(bftExtraDataCodec).hash(block.getHeader());
 
-    LOG.info(">>> Creating CMS with signed hash {}", hashWithoutCms);
     final Bytes cms = cmsCreator.create(hashWithoutCms);
 
-    final BftExtraData prevExtraData = bftExtraDataCodec.decode(block.getHeader());
-    final BftExtraData substituteExtraData = new PkiQbftExtraData(prevExtraData, cms);
+    final BftExtraData previousExtraData = bftExtraDataCodec.decode(block.getHeader());
+    final BftExtraData substituteExtraData = new PkiQbftExtraData(previousExtraData, cms);
     final Bytes substituteExtraDataBytes = bftExtraDataCodec.encode(substituteExtraData);
 
     final BlockHeaderBuilder headerBuilder = BlockHeaderBuilder.fromHeader(block.getHeader());
@@ -88,7 +87,7 @@ public class PkiQbftCreateBlockForProposalBehaviour implements CreateBlockForPro
         .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     final BlockHeader newHeader = headerBuilder.buildBlockHeader();
 
-    LOG.info(">>> Created CMS for block {}", newHeader.getHash());
+    LOG.debug("Created CMS with signed hash {} for block {}", hashWithoutCms, block.getHash());
 
     return new Block(newHeader, block.getBody());
   }

@@ -64,7 +64,7 @@ public class ProposalPayloadValidatorTest {
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   final ConsensusRoundIdentifier roundIdentifier =
       ConsensusRoundHelpers.createFrom(targetRound, 1, 0);
-  final QbftExtraDataCodec bftExtraDataEncoder = new QbftExtraDataCodec();
+  final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
 
   @Before
   public void setup() {
@@ -72,16 +72,16 @@ public class ProposalPayloadValidatorTest {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(emptyList(), bftExtraDataEncoder));
+            setupContextWithBftExtraDataEncoder(emptyList(), bftExtraDataCodec));
   }
 
   @Test
   public void validationPassesWhenProposerAndRoundMatchAndBlockIsValid() {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
-            expectedProposer, roundIdentifier, blockValidator, protocolContext);
+            expectedProposer, roundIdentifier, blockValidator, protocolContext, bftExtraDataCodec);
     final Block block =
-        ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier, bftExtraDataEncoder);
+        ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier, bftExtraDataCodec);
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
@@ -99,13 +99,13 @@ public class ProposalPayloadValidatorTest {
   public void validationPassesWhenBlockRoundDoesNotMatchProposalRound() {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
-            expectedProposer, roundIdentifier, blockValidator, protocolContext);
+            expectedProposer, roundIdentifier, blockValidator, protocolContext, bftExtraDataCodec);
 
     final Block block =
         ProposedBlockHelpers.createProposalBlock(
             emptyList(),
             ConsensusRoundHelpers.createFrom(roundIdentifier, 0, +1),
-            bftExtraDataEncoder);
+            bftExtraDataCodec);
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
@@ -126,9 +126,9 @@ public class ProposalPayloadValidatorTest {
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
-            expectedProposer, roundIdentifier, blockValidator, protocolContext);
+            expectedProposer, roundIdentifier, blockValidator, protocolContext, bftExtraDataCodec);
     final Block block =
-        ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier, bftExtraDataEncoder);
+        ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier, bftExtraDataCodec);
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
@@ -146,7 +146,11 @@ public class ProposalPayloadValidatorTest {
   public void validationFailsWhenExpectedProposerDoesNotMatchPayloadsAuthor() {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
-            Address.fromHexString("0x1"), roundIdentifier, blockValidator, protocolContext);
+            Address.fromHexString("0x1"),
+            roundIdentifier,
+            blockValidator,
+            protocolContext,
+            bftExtraDataCodec);
     final Block block = ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
@@ -159,7 +163,7 @@ public class ProposalPayloadValidatorTest {
   public void validationFailsWhenMessageMismatchesExpectedRound() {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
-            expectedProposer, roundIdentifier, blockValidator, protocolContext);
+            expectedProposer, roundIdentifier, blockValidator, protocolContext, bftExtraDataCodec);
 
     final Block block = ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
     final Proposal proposal =
@@ -177,7 +181,7 @@ public class ProposalPayloadValidatorTest {
   public void validationFailsWhenMessageMismatchesExpectedHeight() {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
-            expectedProposer, roundIdentifier, blockValidator, protocolContext);
+            expectedProposer, roundIdentifier, blockValidator, protocolContext, bftExtraDataCodec);
 
     final Block block = ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
     final Proposal proposal =
@@ -195,12 +199,12 @@ public class ProposalPayloadValidatorTest {
   public void validationFailsForBlockWithIncorrectHeight() {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
-            expectedProposer, roundIdentifier, blockValidator, protocolContext);
+            expectedProposer, roundIdentifier, blockValidator, protocolContext, bftExtraDataCodec);
     final Block block =
         ProposedBlockHelpers.createProposalBlock(
             emptyList(),
             ConsensusRoundHelpers.createFrom(roundIdentifier, +1, 0),
-            bftExtraDataEncoder);
+            bftExtraDataCodec);
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
