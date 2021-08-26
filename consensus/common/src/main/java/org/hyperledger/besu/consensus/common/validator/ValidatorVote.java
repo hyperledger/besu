@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.common.validator;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.consensus.common.validator.VoteType.ADD;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Objects;
 

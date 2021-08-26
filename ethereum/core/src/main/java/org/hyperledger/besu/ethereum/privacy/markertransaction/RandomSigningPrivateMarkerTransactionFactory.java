@@ -37,7 +37,7 @@ public class RandomSigningPrivateMarkerTransactionFactory
       final PrivateTransaction privateTransaction, final String privacyUserId) {
     // Note the address here is only used as a key to lock nonce generation for the same address
     final KeyPair signingKey = SIGNATURE_ALGORITHM_SUPPLIER.get().generateKeyPair();
-    return org.hyperledger.besu.ethereum.core.Address.extract(signingKey.getPublicKey());
+    return org.hyperledger.besu.datatypes.Address.extract(signingKey.getPublicKey());
   }
 
   @Override

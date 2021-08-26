@@ -137,9 +137,9 @@ public class BesuEventsImpl implements BesuEvents {
       final List<Address> addresses,
       final List<List<Bytes32>> topics,
       final LogListener logListener) {
-    final List<org.hyperledger.besu.ethereum.core.Address> besuAddresses =
+    final List<org.hyperledger.besu.datatypes.Address> besuAddresses =
         addresses.stream()
-            .map(org.hyperledger.besu.ethereum.core.Address::fromPlugin)
+            .map(org.hyperledger.besu.datatypes.Address::fromPlugin)
             .collect(toUnmodifiableList());
     final List<List<LogTopic>> besuTopics =
         topics.stream()

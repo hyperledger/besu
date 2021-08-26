@@ -17,10 +17,10 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration.permissioni
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;

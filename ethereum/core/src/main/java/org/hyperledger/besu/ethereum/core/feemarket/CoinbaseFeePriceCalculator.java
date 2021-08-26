@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core.feemarket;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Wei;
 
 import java.util.Optional;
 

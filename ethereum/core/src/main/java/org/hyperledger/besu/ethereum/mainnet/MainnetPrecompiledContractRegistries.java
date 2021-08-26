@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128AddPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128MulPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128PairingPrecompiledContract;

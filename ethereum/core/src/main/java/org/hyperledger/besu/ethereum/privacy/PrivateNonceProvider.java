@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 
 import org.apache.tuweni.bytes.Bytes32;
 

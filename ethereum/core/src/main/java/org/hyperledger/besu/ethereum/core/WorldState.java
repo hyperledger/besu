@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.stream.Stream;

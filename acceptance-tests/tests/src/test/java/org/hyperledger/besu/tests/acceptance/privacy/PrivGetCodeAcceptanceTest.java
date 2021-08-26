@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.utils.Restriction.UNRESTRICTED;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
