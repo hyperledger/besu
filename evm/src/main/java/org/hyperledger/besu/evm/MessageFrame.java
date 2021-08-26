@@ -107,42 +107,42 @@ public class MessageFrame {
    *                            ---------------------     ---------------------
    * </pre>
    *
-   * <h3>Message Not Started ({@link #NOT_STARTED})</h3>
+   * <b>Message Not Started ({@link #NOT_STARTED})</b>
    *
    * <p>The message has not begun to execute yet.
    *
-   * <h3>Code Executing ({@link #CODE_EXECUTING})</h3>
+   * <b>Code Executing ({@link #CODE_EXECUTING})</b>
    *
    * <p>The message contains code and has begun executing it. The execution will continue until it
    * is halted due to (1) spawning a child message (2) encountering an exceptional halting condition
    * (2) completing successfully.
    *
-   * <h3>Code Suspended Execution ({@link #CODE_SUSPENDED})</h3>
+   * <b>Code Suspended Execution ({@link #CODE_SUSPENDED})</b>
    *
    * <p>The message has spawned a child message and has suspended its execution until the child
    * message has completed and notified its parent message. The message will then continue executing
    * code ({@link #CODE_EXECUTING}) again.
    *
-   * <h3>Code Execution Completed Successfully ({@link #CODE_SUSPENDED})</h3>
+   * <b>Code Execution Completed Successfully ({@link #CODE_SUSPENDED})</b>
    *
    * <p>The code within the message has executed to completion successfully.
    *
-   * <h3>Message Exceptionally Halted ({@link #EXCEPTIONAL_HALT})</h3>
+   * <b>Message Exceptionally Halted ({@link #EXCEPTIONAL_HALT})</b>
    *
    * <p>The message execution has encountered an exceptional halting condition at some point during
    * its execution.
    *
-   * <h3>Message Reverted ({@link #REVERT})</h3>
+   * <b>Message Reverted ({@link #REVERT})</b>
    *
    * <p>The message execution has requested to revert state during execution.
    *
-   * <h3>Message Execution Failed ({@link #COMPLETED_FAILED})</h3>
+   * <b>Message Execution Failed ({@link #COMPLETED_FAILED})</b>
    *
    * <p>The message execution failed to execute successfully; most likely due to encountering an
    * exceptional halting condition. At this point the message frame is finalized and the parent is
    * notified.
    *
-   * <h3>Message Execution Completed Successfully ({@link #COMPLETED_SUCCESS})</h3>
+   * <b>Message Execution Completed Successfully ({@link #COMPLETED_SUCCESS})</b>
    *
    * <p>The message execution completed successfully and needs to finalized and propagated to the
    * parent message that spawned it.

@@ -36,7 +36,7 @@ import org.apache.tuweni.bytes.MutableBytes;
  * <p>This message must be sent by the party that initiates the RLPX connection, as the first
  * message in the handshake protocol.
  *
- * <h3>Message structure</h3>
+ * <B>Message structure</B>
  *
  * The following describes the message structure:
  *
