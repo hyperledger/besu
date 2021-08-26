@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.evm.operations;
 
+import org.hyperledger.besu.evm.Account;
 import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.EvmAccount;
 import org.hyperledger.besu.evm.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.GasCalculator;
@@ -52,7 +52,7 @@ public class BalanceOperation extends AbstractOperation {
         return new OperationResult(
             optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
-        final EvmAccount account = frame.getWorldUpdater().getAccount(address);
+        final Account account = frame.getWorldUpdater().get(address);
         frame.pushStackItem(
             account == null
                 ? UInt256.ZERO

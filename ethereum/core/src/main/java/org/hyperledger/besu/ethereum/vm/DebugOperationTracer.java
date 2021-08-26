@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
+import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.evm.Address;

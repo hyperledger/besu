@@ -32,7 +32,7 @@ public class CreateOperation extends AbstractCreateOperation {
 
   @Override
   protected Address targetContractAddress(final MessageFrame frame) {
-    final var sender = frame.getWorldUpdater().getAccount(frame.getRecipientAddress());
+    final var sender = frame.getWorldUpdater().get(frame.getRecipientAddress());
     // Decrement nonce by 1 to normalize the effect of transaction execution
     final Address address =
         Address.contractAddress(frame.getRecipientAddress(), sender.getNonce() - 1L);

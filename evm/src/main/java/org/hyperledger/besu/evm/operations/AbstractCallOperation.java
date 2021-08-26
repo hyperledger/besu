@@ -174,9 +174,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       frame.clearReturnData();
 
       final Address to = to(frame);
-      final var contract = frame.getWorldUpdater().getAccount(to);
+      final var contract = frame.getWorldUpdater().get(to);
 
-      final Account account = frame.getWorldUpdater().getAccount(frame.getRecipientAddress());
+      final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
       final Wei balance = account == null ? Wei.ZERO : account.getBalance();
       // If the call is sending more value than the account has or the message frame is to deep
       // return a failed call

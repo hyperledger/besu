@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
-import org.hyperledger.besu.ethereum.vm.Words;
+import org.hyperledger.besu.evm.Words;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.Gas;

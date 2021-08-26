@@ -51,7 +51,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
         return new OperationResult(
             optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
-        final var account = frame.getWorldUpdater().getAccount(address);
+        final var account = frame.getWorldUpdater().get(address);
         if (account == null || account.isEmpty()) {
           frame.pushStackItem(UInt256.ZERO);
         } else {

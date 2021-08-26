@@ -96,7 +96,7 @@ public class StaticCallOperation extends AbstractCallOperation {
     final UInt256 inputDataLength = inputDataLength(frame);
     final UInt256 outputDataOffset = outputDataOffset(frame);
     final UInt256 outputDataLength = outputDataLength(frame);
-    final var recipient = frame.getWorldUpdater().getAccount(address(frame));
+    final var recipient = frame.getWorldUpdater().get(address(frame));
 
     return gasCalculator()
         .callOperationGasCost(
