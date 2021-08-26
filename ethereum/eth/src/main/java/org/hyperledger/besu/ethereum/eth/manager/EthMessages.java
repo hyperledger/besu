@@ -14,53 +14,31 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
-import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class EthMessages {
-  private static final Logger LOG = LogManager.getLogger();
-
   private final Map<Integer, Subscribers<MessageCallback>> listenersByCode =
       new ConcurrentHashMap<>();
   private final Map<Integer, MessageResponseConstructor> messageResponseConstructorsByCode =
       new ConcurrentHashMap<>();
 
-  void dispatch(final EthMessage message) {
-    final int code = message.getData().getCode();
+  Optional<MessageData> dispatch(final EthMessage ethMessage) {
+    final int code = ethMessage.getData().getCode();
+
+    // trigger arbitrary side-effecting listeners
     Optional.ofNullable(listenersByCode.get(code))
         .ifPresent(
-            listeners -> listeners.forEach(messageCallback -> messageCallback.exec(message)));
+            listeners -> listeners.forEach(messageCallback -> messageCallback.exec(ethMessage)));
 
-    try {
-      Optional.ofNullable(messageResponseConstructorsByCode.get(code))
-          .map(messageResponseConstructor -> messageResponseConstructor.response(message.getData()))
-          .ifPresent(
-              messageData -> {
-                try {
-                  message.getPeer().send(messageData);
-                } catch (final PeerConnection.PeerNotConnected __) {
-                  // Peer disconnected before we could respond - nothing to do
-                }
-              });
-
-    } catch (final RLPException e) {
-      LOG.debug(
-          "Received malformed message {} , disconnecting: {}",
-          message.getData().getData(),
-          message.getPeer(),
-          e);
-      message.getPeer().disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
-    }
+    return Optional.ofNullable(messageResponseConstructorsByCode.get(code))
+        .map(
+            messageResponseConstructor ->
+                messageResponseConstructor.response(ethMessage.getData()));
   }
 
   public void subscribe(final int messageCode, final MessageCallback callback) {

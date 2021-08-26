@@ -222,6 +222,33 @@ public class Transaction
         v);
   }
 
+  public Transaction(
+      final long nonce,
+      final Wei gasPrice,
+      final long gasLimit,
+      final Address to,
+      final Wei value,
+      final SECPSignature signature,
+      final Bytes payload,
+      final Optional<BigInteger> chainId,
+      final Optional<BigInteger> v) {
+    this(
+        TransactionType.FRONTIER,
+        nonce,
+        Optional.of(gasPrice),
+        Optional.empty(),
+        Optional.empty(),
+        gasLimit,
+        Optional.of(to),
+        value,
+        signature,
+        payload,
+        Optional.empty(),
+        null,
+        chainId,
+        v);
+  }
+
   /**
    * Instantiates a transaction instance.
    *
