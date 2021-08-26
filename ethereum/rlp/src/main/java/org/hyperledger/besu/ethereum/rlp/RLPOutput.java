@@ -119,6 +119,10 @@ public interface RLPOutput {
    */
   default void writeBigIntegerScalar(final BigInteger v) {
     checkArgument(v.signum() >= 0, "Invalid negative integer %s for scalar encoding", v);
+    if (v.equals(BigInteger.ZERO)) {
+      writeBytes(Bytes.EMPTY);
+      return;
+    }
 
     final byte[] bytes = v.toByteArray();
     // BigInteger will not include leading zeros by contract, but it always include at least one
