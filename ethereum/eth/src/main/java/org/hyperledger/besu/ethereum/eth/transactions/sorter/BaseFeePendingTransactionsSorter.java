@@ -26,8 +26,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.time.Clock;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NavigableSet;
@@ -104,20 +102,6 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
               .thenComparing(this::distanceFromNextNonce)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
-
-  @Override
-  public void evictOldTransactions() {
-    final Instant removeTransactionsBefore =
-        clock.instant().minus(maxTransactionRetentionHours, ChronoUnit.HOURS);
-
-    pendingTransactions.values().stream()
-        .filter(transaction -> transaction.getAddedToPoolAt().isBefore(removeTransactionsBefore))
-        .forEach(
-            transactionInfo -> {
-              LOG.trace("Evicted {} due to age", transactionInfo);
-              removeTransaction(transactionInfo.getTransaction());
-            });
-  }
 
   @Override
   public void manageBlockAdded(final Block block) {
