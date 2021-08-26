@@ -26,23 +26,45 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.OptionalLong;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class EthGetTransactionCountTest {
+
+  @Parameterized.Parameter public AbstractPendingTransactionsSorter pendingTransactions;
 
   private final Blockchain blockchain = mock(Blockchain.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final ChainHead chainHead = mock(ChainHead.class);
-  private final PendingTransactions pendingTransactions = mock(PendingTransactions.class);
 
-  private final EthGetTransactionCount ethGetTransactionCount =
-      new EthGetTransactionCount(blockchainQueries, pendingTransactions);
+  private EthGetTransactionCount ethGetTransactionCount;
   private final String pendingTransactionString = "0x00000000000000000000000000000000000000AA";
   private final Object[] pendingParams = new Object[] {pendingTransactionString, "pending"};
+
+  @Parameterized.Parameters
+  public static Collection<Object[]> data() {
+    return Arrays.asList(
+        new Object[][] {
+          {mock(GasPricePendingTransactionsSorter.class)},
+          {mock(BaseFeePendingTransactionsSorter.class)}
+        });
+  }
+
+  @Before
+  public void setup() {
+    ethGetTransactionCount = new EthGetTransactionCount(blockchainQueries, pendingTransactions);
+  }
 
   @Test
   public void shouldUsePendingTransactionsWhenToldTo() {

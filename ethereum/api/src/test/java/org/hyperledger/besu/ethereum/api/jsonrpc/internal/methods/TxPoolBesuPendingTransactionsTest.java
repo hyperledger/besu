@@ -25,7 +25,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.PendingTran
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionPendingResult;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -43,14 +44,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class TxPoolBesuPendingTransactionsTest {
 
-  @Mock private PendingTransactions pendingTransactions;
+  @Mock private GasPricePendingTransactionsSorter pendingTransactions;
   private TxPoolBesuPendingTransactions method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String TXPOOL_PENDING_TRANSACTIONS_METHOD = "txpool_besuPendingTransactions";
 
   @Before
   public void setUp() {
-    final Set<PendingTransactions.TransactionInfo> listTrx = getPendingTransactions();
+    final Set<AbstractPendingTransactionsSorter.TransactionInfo> listTrx = getPendingTransactions();
     method = new TxPoolBesuPendingTransactions(pendingTransactions);
     when(this.pendingTransactions.getTransactionInfo()).thenReturn(listTrx);
   }
@@ -232,13 +233,13 @@ public class TxPoolBesuPendingTransactionsTest {
         .hasMessageContaining("The `to` filter only supports the `eq` or `action` operator");
   }
 
-  private Set<PendingTransactions.TransactionInfo> getPendingTransactions() {
+  private Set<AbstractPendingTransactionsSorter.TransactionInfo> getPendingTransactions() {
 
     final BlockDataGenerator gen = new BlockDataGenerator();
     return gen.transactionsWithAllTypes(4).stream()
         .map(
             transaction ->
-                new PendingTransactions.TransactionInfo(
+                new AbstractPendingTransactionsSorter.TransactionInfo(
                     transaction, true, Instant.ofEpochSecond(Integer.MAX_VALUE)))
         .collect(Collectors.toUnmodifiableSet());
   }
