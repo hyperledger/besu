@@ -23,27 +23,45 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class PeerPendingTransactionTrackerTest {
+
+  @Parameterized.Parameter public AbstractPendingTransactionsSorter pendingTransactions;
 
   private final EthPeer ethPeer1 = mock(EthPeer.class);
   private final EthPeer ethPeer2 = mock(EthPeer.class);
   private final BlockDataGenerator generator = new BlockDataGenerator();
-  private final PendingTransactions pendingTransactions = mock(PendingTransactions.class);
-  private final PeerPendingTransactionTracker tracker =
-      new PeerPendingTransactionTracker(pendingTransactions);
+  private PeerPendingTransactionTracker tracker;
   private final Hash hash1 = generator.transaction().getHash();
   private final Hash hash2 = generator.transaction().getHash();
   private final Hash hash3 = generator.transaction().getHash();
 
+  @Parameterized.Parameters
+  public static Collection<Object[]> data() {
+    return Arrays.asList(
+        new Object[][] {
+          {mock(GasPricePendingTransactionsSorter.class)},
+          {mock(BaseFeePendingTransactionsSorter.class)}
+        });
+  }
+
   @Before
   public void setUp() {
+    tracker = new PeerPendingTransactionTracker(pendingTransactions);
     Transaction tx = mock(Transaction.class);
     when(pendingTransactions.getTransactionByHash(any())).thenReturn(Optional.of(tx));
   }
