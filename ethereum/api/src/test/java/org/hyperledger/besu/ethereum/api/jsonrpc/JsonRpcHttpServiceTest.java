@@ -1726,7 +1726,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     }
     assertThat(Wei.fromHexString(result.getString("value"))).isEqualTo(transaction.getValue());
     assertThat(Optional.ofNullable(result.getString("gasPrice")).map(Wei::fromHexString))
-        .isEqualTo(Optional.of(Wei.of(transaction.getEffectivePriorityFeePerGas(baseFee))));
+        .isEqualTo(Optional.of(transaction.getEffectiveGasPrice(baseFee)));
     assertThat(Optional.ofNullable(result.getString("maxFeePerGas")).map(Wei::fromHexString))
         .isEqualTo(transaction.getMaxFeePerGas());
     assertThat(
