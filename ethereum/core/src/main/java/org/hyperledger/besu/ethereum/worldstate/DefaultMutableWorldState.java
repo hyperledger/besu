@@ -404,7 +404,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
         wrapped.accountStateTrie.remove(addressHash);
         wrapped.updatedStorageTries.remove(address);
         wrapped.updatedAccountCode.remove(address);
-        super.codeCache.invalidate(get(address));
       }
 
       for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {

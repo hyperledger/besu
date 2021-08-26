@@ -109,6 +109,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   @Override
   public void deleteAccount(final Address address) {
+    this.codeCache.invalidate(get(address));
     deletedAccounts.add(address);
     updatedAccounts.remove(address);
   }
@@ -214,7 +215,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       // may kill some of "their" updates, and our updates may review some of the account "they"
       // deleted.
       getDeletedAccounts().forEach(wrapped.updatedAccounts::remove);
-      getDeletedAccounts().stream().map(a -> get(a)).forEach(super.codeCache::invalidate);
       getUpdatedAccounts().forEach(a -> wrapped.deletedAccounts.remove(a.getAddress()));
 
       // Then push our deletes and updates to the stacked ones.
