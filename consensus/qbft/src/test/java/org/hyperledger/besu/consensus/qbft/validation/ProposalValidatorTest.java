@@ -35,6 +35,7 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
+import org.hyperledger.besu.consensus.qbft.pki.QbftContext;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -95,7 +96,8 @@ public class ProposalValidatorTest {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(emptyList(), bftExtraDataEncoder));
+            setupContextWithBftExtraDataEncoder(
+                QbftContext.class, emptyList(), bftExtraDataEncoder));
 
     // typically tests require the blockValidation to be successful
     when(blockValidator.validateAndProcessBlock(

@@ -24,6 +24,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
 import org.hyperledger.besu.consensus.common.bft.Vote;
+import org.hyperledger.besu.consensus.qbft.pki.QbftContext;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -47,7 +48,10 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
     return new ProtocolContext(
-        null, null, setupContextWithBftExtraDataEncoder(validators, new QbftExtraDataCodec()));
+        null,
+        null,
+        setupContextWithBftExtraDataEncoder(
+            QbftContext.class, validators, new QbftExtraDataCodec()));
   }
 
   @Test

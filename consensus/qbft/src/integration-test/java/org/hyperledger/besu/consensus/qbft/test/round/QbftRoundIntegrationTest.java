@@ -32,6 +32,7 @@ import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaste
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.pki.QbftContext;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRound;
 import org.hyperledger.besu.consensus.qbft.statemachine.RoundState;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
@@ -115,7 +116,8 @@ public class QbftRoundIntegrationTest {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(emptyList(), qbftExtraDataEncoder));
+            setupContextWithBftExtraDataEncoder(
+                QbftContext.class, emptyList(), qbftExtraDataEncoder));
   }
 
   @Test

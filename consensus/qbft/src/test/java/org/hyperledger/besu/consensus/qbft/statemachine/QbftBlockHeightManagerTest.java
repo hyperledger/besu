@@ -48,6 +48,7 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.pki.QbftContext;
 import org.hyperledger.besu.consensus.qbft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
@@ -148,7 +149,10 @@ public class QbftBlockHeightManagerTest {
 
     protocolContext =
         new ProtocolContext(
-            null, null, setupContextWithBftExtraDataEncoder(validators, new QbftExtraDataCodec()));
+            null,
+            null,
+            setupContextWithBftExtraDataEncoder(
+                QbftContext.class, validators, new QbftExtraDataCodec()));
 
     // Ensure the created IbftRound has the valid ConsensusRoundIdentifier;
     when(roundFactory.createNewRound(any(), anyInt()))
