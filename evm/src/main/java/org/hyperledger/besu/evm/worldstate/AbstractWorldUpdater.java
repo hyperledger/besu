@@ -112,6 +112,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   @Override
   public void deleteAccount(final Address address) {
+    this.codeCache.invalidate(get(address));
     deletedAccounts.add(address);
     updatedAccounts.remove(address);
   }
