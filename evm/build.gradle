@@ -42,3 +42,16 @@ dependencies {
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'net.java.dev.jna:jna'
 }
+
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      groupId 'org.hyperledger.besu'
+      pom {
+        name = 'Besu EVM'
+        description = 'EVM Engine component'
+      }
+    }
+  }
+}
+
