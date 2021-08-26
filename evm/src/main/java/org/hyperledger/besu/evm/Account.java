@@ -25,7 +25,6 @@ public interface Account extends AccountState {
 
   long DEFAULT_NONCE = 0L;
   Wei DEFAULT_BALANCE = Wei.ZERO;
-  int DEFAULT_VERSION = 0;
 
   /**
    * The account address.

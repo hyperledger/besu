@@ -18,9 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.gascalculators.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.operations.RevertOperation;
 
 import org.apache.tuweni.bytes.Bytes;

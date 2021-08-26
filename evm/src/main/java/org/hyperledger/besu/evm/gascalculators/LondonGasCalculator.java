@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.evm.gascalculators;
 
 import org.hyperledger.besu.evm.Account;
 import org.hyperledger.besu.evm.Gas;
@@ -26,7 +26,7 @@ public class LondonGasCalculator extends BerlinGasCalculator {
 
   private static final Gas NEGATIVE_SSTORE_CLEARS_SCHEDULE = Gas.ZERO.minus(SSTORE_CLEARS_SCHEDULE);
 
-  protected LondonGasCalculator() {}
+  public LondonGasCalculator() {}
 
   // Redefined refund amount from EIP-3529
   @Override

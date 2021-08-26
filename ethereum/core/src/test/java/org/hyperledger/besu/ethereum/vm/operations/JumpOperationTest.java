@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
-import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.Code;
@@ -34,6 +33,7 @@ import org.hyperledger.besu.evm.Operation.OperationResult;
 import org.hyperledger.besu.evm.OperationRegistry;
 import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.evm.gascalculators.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.operations.JumpDestOperation;
 import org.hyperledger.besu.evm.operations.JumpOperation;
 

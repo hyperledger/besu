@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
-import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.ExceptionalHaltReason;
@@ -33,6 +32,7 @@ import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.Operation.OperationResult;
 import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.evm.gascalculators.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.operations.SStoreOperation;
 
 import java.util.Arrays;

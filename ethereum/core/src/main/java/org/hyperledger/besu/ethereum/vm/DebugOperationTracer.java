@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.Operation;
 import org.hyperledger.besu.evm.OperationTracer;
 import org.hyperledger.besu.evm.Wei;

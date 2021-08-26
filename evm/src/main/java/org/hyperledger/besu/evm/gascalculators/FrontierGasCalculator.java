@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.evm.gascalculators;
 
 import org.hyperledger.besu.evm.Account;
 import org.hyperledger.besu.evm.Address;

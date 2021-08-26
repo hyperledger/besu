@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.PetersburgGasCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.gascalculators.PetersburgGasCalculator;
 import org.hyperledger.besu.evm.operations.BlockHashOperation;
 
 import org.apache.tuweni.bytes.Bytes32;

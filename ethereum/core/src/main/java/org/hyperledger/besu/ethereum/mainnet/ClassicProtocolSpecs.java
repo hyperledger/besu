@@ -22,11 +22,18 @@ import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.ContractCreationProcessor;
+import org.hyperledger.besu.evm.MainnetEvmOperations;
 import org.hyperledger.besu.evm.MessageCallProcessor;
 import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.WorldState;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
+import org.hyperledger.besu.evm.gascalculators.BerlinGasCalculator;
+import org.hyperledger.besu.evm.gascalculators.DieHardGasCalculator;
+import org.hyperledger.besu.evm.gascalculators.IstanbulGasCalculator;
+import org.hyperledger.besu.evm.gascalculators.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculators.SpuriousDragonGasCalculator;
+import org.hyperledger.besu.evm.gascalculators.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -139,7 +146,7 @@ public class ClassicProtocolSpecs {
             configStackSizeLimit,
             ecip1017EraRounds,
             quorumCompatibilityMode)
-        .evmBuilder(MainnetEvmRegistries::byzantium)
+        .evmBuilder(MainnetEvmOperations::byzantium)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
         .messageCallProcessorBuilder(
@@ -192,9 +199,8 @@ public class ClassicProtocolSpecs {
             enableRevertReason,
             ecip1017EraRounds,
             quorumCompatibilityMode)
-        .evmBuilder(MainnetEvmRegistries::constantinople)
+        .evmBuilder(MainnetEvmOperations::constantinople)
         .gasCalculator(PetersburgGasCalculator::new)
-        .evmBuilder(gasCalculator -> MainnetEvmRegistries.constantinople(gasCalculator))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .name("Agharta");
   }
@@ -216,7 +222,7 @@ public class ClassicProtocolSpecs {
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
-                MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+                MainnetEvmOperations.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .name("Phoenix");
   }
