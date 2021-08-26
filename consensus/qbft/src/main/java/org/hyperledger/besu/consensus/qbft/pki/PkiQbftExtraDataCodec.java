@@ -25,9 +25,8 @@ import java.util.Collections;
 import org.apache.tuweni.bytes.Bytes;
 
 /*
- The PkiQbftExtraData encoding format is different from the "regular" QbftExtraData encoding.
- We have an "envelope" list, with two elements: the extra data and the cms message.
- The RLP encoding format is as follows: ["extra_data" || "cms"]
+ The PkiQbftExtraData encoding format is different from the "regular" QbftExtraData encoding. We
+ have an extra bytes element in the end of the list.
 */
 public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
 
@@ -39,6 +38,7 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
 
     final BftExtraData bftExtraData = super.decodeRaw(input);
 
+    // Skip through every element in the list and read the last one (CMS message)
     final RLPInput rlpInput = new BytesValueRLPInput(input, false);
     rlpInput.enterList();
     rlpInput.skipNext();
@@ -65,8 +65,7 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
       extraData = (PkiQbftExtraData) bftExtraData;
     }
 
-    // TODO-lucas Instead of overriding the QbftExtraDataCodec method, we should just just do the
-    // extra
+    // TODO-lucas We should not duplicate the code from QbftExtraDataCodec
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(bftExtraData.getVanityData());
@@ -77,8 +76,6 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
     } else {
       encoder.writeList(Collections.emptyList(), (o, rlpOutput) -> {});
     }
-
-    // When encoding w/o CMS, we don't need 'commit seals' or 'round number'
 
     if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER) {
       encoder.writeIntScalar(bftExtraData.getRound());

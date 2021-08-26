@@ -22,7 +22,7 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftCreateBlockForProposalBehaviour;
-import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.pki.QbftContext;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRound.CreateBlockForProposalBehaviour;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -83,8 +83,9 @@ public class QbftRoundFactory {
     final QbftMessageTransmitter messageTransmitter =
         new QbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
 
-    CreateBlockForProposalBehaviour createBlockForProposalBehaviour;
-    if (bftExtraDataCodec instanceof PkiQbftExtraDataCodec) {
+    final QbftContext qbftContext = protocolContext.getConsensusState(QbftContext.class);
+    final CreateBlockForProposalBehaviour createBlockForProposalBehaviour;
+    if (qbftContext.getPkiBlockCreationConfiguration().isPresent()) {
       createBlockForProposalBehaviour =
           new PkiQbftCreateBlockForProposalBehaviour(
               blockCreator, protocolContext, bftExtraDataCodec);

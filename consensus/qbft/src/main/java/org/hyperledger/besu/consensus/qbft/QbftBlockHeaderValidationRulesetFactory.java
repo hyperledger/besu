@@ -64,7 +64,5 @@ public class QbftBlockHeaderValidationRulesetFactory {
         .addRule(new QbftValidatorsValidationRule(extraDataContractBasedValidatorRule))
         .addRule(new BftCoinbaseValidationRule())
         .addRule(new BftCommitSealsValidationRule());
-
-    // TODO-lucas Rule to check that extraData has a non-empty CMS field (on PKI mode)
   }
 }

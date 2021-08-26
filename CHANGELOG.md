@@ -3,7 +3,6 @@
 ## 21.7.3
 ### Additions and Improvements
 - Migration to Apache Tuweni 2.0 [\#2376](https://github.com/hyperledger/besu/pull/2376)
-- \[EXPERIMENTAL\] Added support for DevP2P-over-TLS [#2536](https://github.com/hyperledger/besu/pull/2536)
 - `eth_getWork`, `eth_submitWork` support over the Stratum port [#2581](https://github.com/hyperledger/besu/pull/2581)
 - Stratum metrics [#2583](https://github.com/hyperledger/besu/pull/2583)
 - Support for mining ommers [#2576](https://github.com/hyperledger/besu/pull/2576)
@@ -15,7 +14,8 @@
 - Added Labelled gauges for metrics [#2646](https://github.com/hyperledger/besu/pull/2646)
 - support for `eth/66` networking protocol [#2365](https://github.com/hyperledger/besu/pull/2365)
 - update RPC methods for post london 1559 transaction [#2535](https://github.com/hyperledger/besu/pull/2535)
-
+- \[EXPERIMENTAL\] Added support for DevP2P-over-TLS [#2536](https://github.com/hyperledger/besu/pull/2536)
+- \[EXPERIMENTAL\] Added support for QBFT with PKI-backed Block Creation. [#2647](https://github.com/hyperledger/besu/issues/2647)
 
 ### Bug Fixes
 - Consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)

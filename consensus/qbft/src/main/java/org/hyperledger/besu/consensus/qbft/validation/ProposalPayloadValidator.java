@@ -112,9 +112,6 @@ public class ProposalPayloadValidator {
     return true;
   }
 
-  /*
-    Validate CMS in block header (only for PKI-mode)
-  */
   private boolean validateCms(
       final Block block,
       final BftBlockInterface bftBlockInterface,
