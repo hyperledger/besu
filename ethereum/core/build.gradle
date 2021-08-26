@@ -42,6 +42,7 @@ dependencies {
 
   implementation project(':config')
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':enclave')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')

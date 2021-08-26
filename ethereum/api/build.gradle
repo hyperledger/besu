@@ -34,6 +34,7 @@ configurations {
 dependencies {
   implementation project(':config')
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':enclave')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')

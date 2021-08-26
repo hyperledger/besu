@@ -36,6 +36,7 @@ dependencies {
   implementation project(':consensus:ibftlegacy')
   implementation project(':consensus:qbft')
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':enclave')
   implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
