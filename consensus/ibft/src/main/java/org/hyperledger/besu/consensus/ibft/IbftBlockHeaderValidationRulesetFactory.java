@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCoinbaseValidationRule;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCommitSealsValidationRule;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftValidatorsValidationRule;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
@@ -29,7 +30,6 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRange
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
-import org.hyperledger.besu.evm.Hash;
 
 import org.apache.tuweni.units.bigints.UInt256;
 

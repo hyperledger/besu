@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm;
 
+import org.hyperledger.besu.datatypes.Address;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;

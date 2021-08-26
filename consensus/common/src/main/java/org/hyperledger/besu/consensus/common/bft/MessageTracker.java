@@ -16,8 +16,8 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import static java.util.Collections.newSetFromMap;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.evm.Hash;
 
 import java.util.Set;
 

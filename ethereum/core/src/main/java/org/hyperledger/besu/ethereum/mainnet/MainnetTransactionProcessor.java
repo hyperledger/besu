@@ -19,6 +19,8 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVAT
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -32,14 +34,12 @@ import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldState
 import org.hyperledger.besu.evm.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.Account;
 import org.hyperledger.besu.evm.AccountState;
-import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EvmAccount;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.GasCalculator;
 import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.OperationTracer;
-import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.WorldUpdater;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 

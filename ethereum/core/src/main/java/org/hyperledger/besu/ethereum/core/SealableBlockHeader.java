@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.evm.Address;
-import org.hyperledger.besu.evm.Hash;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 
 import org.apache.tuweni.bytes.Bytes;
 

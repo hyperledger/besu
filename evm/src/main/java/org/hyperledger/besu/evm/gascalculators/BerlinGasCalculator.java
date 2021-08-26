@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.evm.gascalculators;
 
-import static org.hyperledger.besu.evm.Address.BLAKE2B_F_COMPRESSION;
+import static org.hyperledger.besu.datatypes.Address.BLAKE2B_F_COMPRESSION;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Account;
-import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.MessageFrame;
-import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.precompiles.BigIntegerModularExponentiationPrecompiledContract;
 
 import java.math.BigInteger;

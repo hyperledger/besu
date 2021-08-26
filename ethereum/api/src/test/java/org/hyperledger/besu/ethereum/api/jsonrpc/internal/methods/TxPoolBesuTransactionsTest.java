@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PendingTransac
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionInfoResult;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
-import org.hyperledger.besu.evm.Hash;
 
 import java.time.Instant;
 

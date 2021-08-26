@@ -15,12 +15,12 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
-import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.MutableAccount;
-import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.WorldUpdater;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 

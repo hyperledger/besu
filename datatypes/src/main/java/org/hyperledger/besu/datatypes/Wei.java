@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm;
+package org.hyperledger.besu.datatypes;
 
 import org.hyperledger.besu.plugin.data.Quantity;
 

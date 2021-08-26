@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.evm.MutableAccount;
 import org.hyperledger.besu.evm.MutableWorldState;
-import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.WorldUpdater;
 
 import java.math.BigInteger;

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.precompiles.AltBN128AddPrecompiledContract;
 import org.hyperledger.besu.evm.precompiles.AltBN128MulPrecompiledContract;
 import org.hyperledger.besu.evm.precompiles.AltBN128PairingPrecompiledContract;

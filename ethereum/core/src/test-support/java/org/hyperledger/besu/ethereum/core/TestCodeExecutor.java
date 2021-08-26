@@ -15,10 +15,11 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.MessageCallProcessor;
@@ -27,7 +28,6 @@ import org.hyperledger.besu.evm.MutableAccount;
 import org.hyperledger.besu.evm.MutableWorldState;
 import org.hyperledger.besu.evm.OperationTracer;
 import org.hyperledger.besu.evm.PrecompileContractRegistry;
-import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionType;
 

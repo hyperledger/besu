@@ -16,8 +16,8 @@ package org.hyperledger.besu.consensus.common.bft.inttest;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.evm.Address;
 
 import java.util.ArrayList;
 import java.util.List;

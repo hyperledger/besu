@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.eth.messages;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
-import org.hyperledger.besu.evm.Hash;
 
 import java.util.Arrays;
 import java.util.List;

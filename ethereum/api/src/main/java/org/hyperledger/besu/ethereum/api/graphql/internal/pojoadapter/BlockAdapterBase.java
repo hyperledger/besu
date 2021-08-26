@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContext;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -27,11 +30,8 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.evm.Address;
-import org.hyperledger.besu.evm.Hash;
 import org.hyperledger.besu.evm.LogTopic;
 import org.hyperledger.besu.evm.OperationTracer;
-import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.WorldState;
 
 import java.util.ArrayList;

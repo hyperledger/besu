@@ -16,8 +16,8 @@ package org.hyperledger.besu.consensus.qbft.validator;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteType;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.evm.Address;
 
 import java.util.Collections;
 import java.util.Map;

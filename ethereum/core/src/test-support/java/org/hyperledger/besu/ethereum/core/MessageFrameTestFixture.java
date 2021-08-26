@@ -16,14 +16,14 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.hyperledger.besu.evm.MessageFrame.DEFAULT_MAX_STACK_SIZE;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.MutableWorldState;
-import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.WorldUpdater;
 
 import java.util.ArrayDeque;

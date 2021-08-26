@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
 import static java.util.function.Predicate.isEqual;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater;
@@ -28,7 +29,6 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
-import org.hyperledger.besu.evm.Hash;
 import org.hyperledger.besu.evm.OperationTracer;
 import org.hyperledger.besu.evm.WorldUpdater;
 

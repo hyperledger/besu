@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm;
 
+import org.hyperledger.besu.datatypes.Hash;
+
 import java.util.Objects;
 import java.util.Optional;
 

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.operations.BalanceOperation;
 import org.hyperledger.besu.evm.operations.BlockHashOperation;
 import org.hyperledger.besu.evm.operations.ExpOperation;

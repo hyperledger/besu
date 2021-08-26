@@ -16,11 +16,11 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.Account;
-import org.hyperledger.besu.evm.Address;
-import org.hyperledger.besu.evm.Hash;
 import org.hyperledger.besu.evm.MutableWorldState;
 import org.hyperledger.besu.evm.WorldState;
 import org.hyperledger.besu.evm.WorldUpdater;

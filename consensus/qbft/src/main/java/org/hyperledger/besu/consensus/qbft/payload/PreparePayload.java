@@ -17,9 +17,9 @@ package org.hyperledger.besu.consensus.qbft.payload;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.evm.Hash;
 
 import java.util.Objects;
 import java.util.StringJoiner;

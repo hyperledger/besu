@@ -22,8 +22,8 @@ import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.evm.Address;
 
 import java.math.BigInteger;
 import java.util.Arrays;

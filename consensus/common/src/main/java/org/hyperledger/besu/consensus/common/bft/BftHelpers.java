@@ -15,11 +15,11 @@
 package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.evm.Hash;
 
 import java.util.Collection;
 

@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.evm.operations;
 
-import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.GasCalculator;
 import org.hyperledger.besu.evm.MessageFrame;
-import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.Words;
 
 import java.util.Optional;

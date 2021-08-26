@@ -35,11 +35,11 @@ import org.hyperledger.besu.consensus.ibft.validation.RoundChangePayloadValidato
 import org.hyperledger.besu.consensus.ibft.validation.SignedDataValidator;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.evm.Address;
 
 import java.util.Collections;
 import java.util.List;

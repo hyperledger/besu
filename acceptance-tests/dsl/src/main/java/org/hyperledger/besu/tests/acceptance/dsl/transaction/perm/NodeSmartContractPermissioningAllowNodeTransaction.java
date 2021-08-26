@@ -17,10 +17,10 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.perm;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.web3j.utils.Numeric.toHexString;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.NodeSmartContractPermissioningController;
-import org.hyperledger.besu.evm.Address;
-import org.hyperledger.besu.evm.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;

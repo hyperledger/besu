@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionGasCalculator;
@@ -25,13 +28,10 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.evm.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.Account;
-import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.Hash;
 import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.OperationTracer;
-import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.WorldUpdater;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 

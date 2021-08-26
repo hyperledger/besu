@@ -21,13 +21,13 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVA
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.PROXY_RUNTIME_BYTECODE;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.evm.Account;
-import org.hyperledger.besu.evm.Address;
-import org.hyperledger.besu.evm.Hash;
 import org.hyperledger.besu.evm.MutableWorldState;
-import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.WorldUpdater;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 import org.hyperledger.besu.plugin.data.PrivacyGenesisAccount;

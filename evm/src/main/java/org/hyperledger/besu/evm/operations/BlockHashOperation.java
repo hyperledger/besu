@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.evm.operations;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.GasCalculator;
-import org.hyperledger.besu.evm.Hash;
 import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.Operation;
 import org.hyperledger.besu.plugin.data.BlockHeader;

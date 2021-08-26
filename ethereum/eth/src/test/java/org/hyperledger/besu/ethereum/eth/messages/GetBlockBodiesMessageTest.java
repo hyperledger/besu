@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -21,7 +22,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.evm.Hash;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

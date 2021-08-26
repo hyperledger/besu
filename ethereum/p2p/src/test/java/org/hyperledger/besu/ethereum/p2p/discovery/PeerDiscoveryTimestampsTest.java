@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
-import org.hyperledger.besu.evm.Hash;
 
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicLong;

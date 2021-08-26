@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.query;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.evm.Hash;
 
 import java.util.Optional;
 

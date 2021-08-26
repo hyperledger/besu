@@ -19,9 +19,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
-import org.hyperledger.besu.evm.Address;
 
 import java.util.List;
 import java.util.Optional;

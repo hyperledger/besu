@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.common.validator;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.evm.Address;
 
 import java.util.Collection;
 import java.util.Optional;

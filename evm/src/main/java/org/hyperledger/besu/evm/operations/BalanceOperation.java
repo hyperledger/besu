@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.evm.operations;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.Account;
-import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.Gas;

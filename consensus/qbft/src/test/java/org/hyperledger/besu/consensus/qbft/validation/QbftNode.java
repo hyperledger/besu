@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.qbft.validation;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.evm.Address;
 
 public class QbftNode {
 

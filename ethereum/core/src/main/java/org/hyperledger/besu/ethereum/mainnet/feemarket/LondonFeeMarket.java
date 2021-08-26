@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
 import static java.lang.Math.max;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.BaseFee;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
-import org.hyperledger.besu.evm.Wei;
 
 import java.math.BigInteger;
 import java.util.Optional;

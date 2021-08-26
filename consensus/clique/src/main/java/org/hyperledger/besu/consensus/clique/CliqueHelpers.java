@@ -16,10 +16,10 @@ package org.hyperledger.besu.consensus.clique;
 
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueProposerSelector;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.evm.Address;
 
 import java.util.Collection;
 

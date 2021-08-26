@@ -16,14 +16,14 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import static org.hyperledger.besu.evm.Hash.fromPlugin;
+import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.Address;
-import org.hyperledger.besu.evm.Hash;
 import org.hyperledger.besu.evm.MutableWorldState;
 import org.hyperledger.besu.evm.WorldState;
 import org.hyperledger.besu.plugin.data.BlockHeader;

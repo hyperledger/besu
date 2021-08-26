@@ -16,7 +16,7 @@ package org.hyperledger.besu.evm.operations;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
-import org.hyperledger.besu.evm.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.GasCalculator;
 import org.hyperledger.besu.evm.MessageFrame;

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.util;
 
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -24,7 +25,6 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateMigrationBlockProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.migration.PrivateStorageMigration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.Address;
 
 public class PrivateStorageMigrationBuilder {
 

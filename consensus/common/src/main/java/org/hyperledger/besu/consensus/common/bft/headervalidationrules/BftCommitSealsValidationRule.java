@@ -17,10 +17,10 @@ package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 import static org.hyperledger.besu.consensus.common.bft.BftHelpers.calculateRequiredValidatorQuorum;
 
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
-import org.hyperledger.besu.evm.Address;
 
 import java.util.ArrayList;
 import java.util.Collection;

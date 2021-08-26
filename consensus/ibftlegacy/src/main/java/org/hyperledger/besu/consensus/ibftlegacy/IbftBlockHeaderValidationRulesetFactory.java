@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecificatio
 
 import org.hyperledger.besu.consensus.ibftlegacy.headervalidationrules.IbftExtraDataValidationRule;
 import org.hyperledger.besu.consensus.ibftlegacy.headervalidationrules.VoteValidationRule;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
@@ -27,7 +28,6 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRange
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
-import org.hyperledger.besu.evm.Hash;
 
 import org.apache.tuweni.units.bigints.UInt256;
 

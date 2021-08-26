@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVA
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -36,7 +37,6 @@ import org.hyperledger.besu.evm.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.GasCalculator;
 import org.hyperledger.besu.evm.PrecompileContractRegistry;
-import org.hyperledger.besu.evm.Wei;
 
 import java.util.Optional;
 import java.util.function.BiFunction;

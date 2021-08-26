@@ -17,6 +17,9 @@ package org.hyperledger.besu.evm;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptySet;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm;
 
+import org.hyperledger.besu.datatypes.Address;
+
 import java.util.HashMap;
 import java.util.Map;
 

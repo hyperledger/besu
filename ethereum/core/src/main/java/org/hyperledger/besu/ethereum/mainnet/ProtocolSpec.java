@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -24,7 +25,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.GasCalculator;
 import org.hyperledger.besu.evm.PrecompileContractRegistry;
-import org.hyperledger.besu.evm.Wei;
 
 import java.util.Optional;
 

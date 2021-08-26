@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
+import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
-import static org.hyperledger.besu.evm.Hash.fromPlugin;
 
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;

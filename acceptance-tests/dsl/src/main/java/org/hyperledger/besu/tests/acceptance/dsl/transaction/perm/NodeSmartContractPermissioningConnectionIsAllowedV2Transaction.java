@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.transaction.perm;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.NodeSmartContractV2PermissioningController;
-import org.hyperledger.besu.evm.Address;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;

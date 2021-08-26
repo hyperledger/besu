@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.powHasher;
 
 import org.hyperledger.besu.config.PowAlgorithm;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.evm.ContractCreationProcessor;
 import org.hyperledger.besu.evm.MainnetEvmOperations;
 import org.hyperledger.besu.evm.MessageCallProcessor;
 import org.hyperledger.besu.evm.MessageFrame;
-import org.hyperledger.besu.evm.Wei;
 import org.hyperledger.besu.evm.WorldState;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.gascalculators.BerlinGasCalculator;
