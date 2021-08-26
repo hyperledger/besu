@@ -20,6 +20,7 @@ public enum JsonRpcResponseKey {
   DIFFICULTY,
   EXTRA_DATA,
   GAS_LIMIT,
+  GAS_PRICE,
   GAS_USED,
   LOGS_BLOOM,
   MIX_HASH,

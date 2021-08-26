@@ -89,7 +89,8 @@ public class DebugStorageRangeAtTest {
   @Test
   public void shouldRetrieveStorageRange_fullValues() {
     final TransactionWithMetadata transactionWithMetadata =
-        new TransactionWithMetadata(transaction, 12L, blockHash, TRANSACTION_INDEX);
+        new TransactionWithMetadata(
+            transaction, 12L, Optional.empty(), blockHash, TRANSACTION_INDEX);
     final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata =
         new BlockWithMetadata<>(
             blockHeader,

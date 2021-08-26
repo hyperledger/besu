@@ -1682,7 +1682,12 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
         final Hash expectedBlockHash = block.getHeader().getHash();
         final long expectedBlockNumber = block.getHeader().getNumber();
         assertTransactionResultMatchesTransaction(
-            transactionResult, transaction, expectedIndex, expectedBlockHash, expectedBlockNumber);
+            transactionResult,
+            transaction,
+            expectedIndex,
+            expectedBlockHash,
+            block.getHeader().getBaseFee(),
+            expectedBlockNumber);
       }
     }
   }
@@ -1692,6 +1697,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final Transaction transaction,
       final Integer index,
       final Hash blockHash,
+      final Optional<Long> baseFee,
       final Long blockNumber) {
     assertThat(Hash.fromHexString(result.getString("hash"))).isEqualTo(transaction.getHash());
     assertThat(Long.decode(result.getString("nonce"))).isEqualByComparingTo(transaction.getNonce());
@@ -1720,7 +1726,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     }
     assertThat(Wei.fromHexString(result.getString("value"))).isEqualTo(transaction.getValue());
     assertThat(Optional.ofNullable(result.getString("gasPrice")).map(Wei::fromHexString))
-        .isEqualTo(transaction.getGasPrice());
+        .isEqualTo(Optional.of(transaction.getEffectiveGasPrice(baseFee)));
     assertThat(Optional.ofNullable(result.getString("maxFeePerGas")).map(Wei::fromHexString))
         .isEqualTo(transaction.getMaxFeePerGas());
     assertThat(
@@ -1843,7 +1849,11 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     for (int i = 0; i < txs.size(); i++) {
       formattedTxs.add(
           new TransactionWithMetadata(
-              txs.get(i), block.getHeader().getNumber(), block.getHash(), i));
+              txs.get(i),
+              block.getHeader().getNumber(),
+              block.getHeader().getBaseFee(),
+              block.getHash(),
+              i));
     }
     final List<Hash> ommers =
         block.getBody().getOmmers().stream().map(BlockHeader::getHash).collect(Collectors.toList());

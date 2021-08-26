@@ -45,6 +45,7 @@ public class TransactionCompleteResultTest {
                     .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
                     .createTransaction(gen.generateKeyPair()),
                 0L,
+                Optional.of(7L),
                 Hash.ZERO,
                 0));
 
@@ -57,10 +58,41 @@ public class TransactionCompleteResultTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Transaction transaction = gen.transaction(TransactionType.EIP1559);
     TransactionCompleteResult tcr =
-        new TransactionCompleteResult(new TransactionWithMetadata(transaction, 0L, Hash.ZERO, 0));
+        new TransactionCompleteResult(
+            new TransactionWithMetadata(transaction, 0L, Optional.of(7L), Hash.ZERO, 0));
     assertThat(tcr.getMaxFeePerGas()).isNotEmpty();
     assertThat(tcr.getMaxPriorityFeePerGas()).isNotEmpty();
-    assertThat(tcr.getGasPrice()).isNull();
+    assertThat(tcr.getGasPrice()).isNotEmpty();
+    assertThat(tcr.getGasPrice())
+        .isEqualTo(Quantity.create(transaction.getEffectiveGasPrice(Optional.of(7L))));
+  }
+
+  @Test
+  public void legacyTransactionPostLondonFields() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final Transaction transaction = gen.transaction(TransactionType.FRONTIER);
+    TransactionCompleteResult tcr =
+        new TransactionCompleteResult(
+            new TransactionWithMetadata(transaction, 0L, Optional.of(7L), Hash.ZERO, 0));
+    assertThat(tcr.getMaxFeePerGas()).isNull();
+    assertThat(tcr.getMaxPriorityFeePerGas()).isNull();
+    assertThat(tcr.getGasPrice()).isNotEmpty();
+    assertThat(tcr.getGasPrice())
+        .isEqualTo(Quantity.create(transaction.getGasPrice().orElseThrow()));
+  }
+
+  @Test
+  public void legacyTransactionPreLondonFields() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final Transaction transaction = gen.transaction(TransactionType.FRONTIER);
+    TransactionCompleteResult tcr =
+        new TransactionCompleteResult(
+            new TransactionWithMetadata(transaction, 0L, Optional.empty(), Hash.ZERO, 0));
+    assertThat(tcr.getMaxFeePerGas()).isNull();
+    assertThat(tcr.getMaxPriorityFeePerGas()).isNull();
+    assertThat(tcr.getGasPrice()).isNotEmpty();
+    assertThat(tcr.getGasPrice())
+        .isEqualTo(Quantity.create(transaction.getGasPrice().orElseThrow()));
   }
 
   @Test
@@ -72,6 +104,7 @@ public class TransactionCompleteResultTest {
             new TransactionWithMetadata(
                 transaction,
                 136,
+                Optional.empty(),
                 Hash.fromHexString(
                     "0xfc84c3946cb419cbd8c2c68d5e79a3b2a03a8faff4d9e2be493f5a07eb5da95e"),
                 0));
