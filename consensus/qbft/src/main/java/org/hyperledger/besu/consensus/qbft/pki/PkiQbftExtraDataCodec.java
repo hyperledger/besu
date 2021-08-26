@@ -93,7 +93,7 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
       encoder.writeEmptyList();
     }
 
-    if (encodingType != EncodingType.WITHOUT_CMS) {
+    if (encodingType != EncodingType.EXCLUDE_CMS) {
       encoder.writeBytes(extraData.getCms());
     } else {
       encoder.writeBytes(Bytes.EMPTY);

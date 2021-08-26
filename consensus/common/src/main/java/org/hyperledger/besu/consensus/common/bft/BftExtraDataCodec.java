@@ -26,7 +26,7 @@ public abstract class BftExtraDataCodec {
     ALL,
     EXCLUDE_COMMIT_SEALS,
     EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER,
-    WITHOUT_CMS // TODO-lucas How can we achieve this w/o changing the BftExtraDataCodec base class
+    EXCLUDE_CMS // TODO-lucas How can we achieve this w/o changing the BftExtraDataCodec base class
   }
 
   private static final Logger LOG = LogManager.getLogger();
@@ -46,7 +46,7 @@ public abstract class BftExtraDataCodec {
   }
 
   public Bytes encodeForProposal(final BftExtraData bftExtraData) {
-    return encode(bftExtraData, EncodingType.WITHOUT_CMS);
+    return encode(bftExtraData, EncodingType.EXCLUDE_CMS);
   }
 
   protected abstract Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType);
