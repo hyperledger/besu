@@ -25,8 +25,7 @@ public abstract class BftExtraDataCodec {
   protected enum EncodingType {
     ALL,
     EXCLUDE_COMMIT_SEALS,
-    EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER,
-    EXCLUDE_CMS // TODO-lucas How can we achieve this w/o changing the BftExtraDataCodec base class
+    EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER
   }
 
   private static final Logger LOG = LogManager.getLogger();
@@ -43,10 +42,6 @@ public abstract class BftExtraDataCodec {
 
   public Bytes encodeWithoutCommitSealsAndRoundNumber(final BftExtraData bftExtraData) {
     return encode(bftExtraData, EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER);
-  }
-
-  public Bytes encodeForProposal(final BftExtraData bftExtraData) {
-    return encode(bftExtraData, EncodingType.EXCLUDE_CMS);
   }
 
   protected abstract Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType);

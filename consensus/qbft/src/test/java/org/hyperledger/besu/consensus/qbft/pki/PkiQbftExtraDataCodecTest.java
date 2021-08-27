@@ -190,7 +190,7 @@ public class PkiQbftExtraDataCodecTest {
   @Test
   public void encodingForCreatingCmsProposal() {
     final Bytes expectedRawDecoding = Bytes.fromHexString(RAW_PROPOSAL_ENCODED_STRING);
-    final Bytes encoded = bftExtraDataCodec.encodeForProposal(getDecodedExtraData(cms));
+    final Bytes encoded = bftExtraDataCodec.encodeWithoutCms(getDecodedExtraData(cms));
 
     assertThat(encoded).isEqualTo(expectedRawDecoding);
   }

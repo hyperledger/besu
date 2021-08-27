@@ -40,7 +40,7 @@ public class PkiQbftCreateBlockForProposalBehaviour implements CreateBlockForPro
 
   private final BlockCreator blockCreator;
   private final ProtocolContext protocolContext;
-  private final BftExtraDataCodec bftExtraDataCodec;
+  private final PkiQbftExtraDataCodec bftExtraDataCodec;
 
   public PkiQbftCreateBlockForProposalBehaviour(
       final BlockCreator blockCreator,
@@ -48,7 +48,8 @@ public class PkiQbftCreateBlockForProposalBehaviour implements CreateBlockForPro
       final BftExtraDataCodec bftExtraDataCodec) {
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
-    this.bftExtraDataCodec = bftExtraDataCodec;
+    assert (bftExtraDataCodec instanceof PkiQbftExtraDataCodec);
+    this.bftExtraDataCodec = (PkiQbftExtraDataCodec) bftExtraDataCodec;
   }
 
   @Override
@@ -73,7 +74,7 @@ public class PkiQbftCreateBlockForProposalBehaviour implements CreateBlockForPro
     final CmsCreator cmsCreator = new CmsCreator(keyStore, certificateAlias);
 
     final Hash hashWithoutCms =
-        BftBlockHeaderFunctions.forCmsSignature(bftExtraDataCodec).hash(block.getHeader());
+        PkiQbftBlockHeaderFunctions.forCmsSignature(bftExtraDataCodec).hash(block.getHeader());
 
     final Bytes cms = cmsCreator.create(hashWithoutCms);
 

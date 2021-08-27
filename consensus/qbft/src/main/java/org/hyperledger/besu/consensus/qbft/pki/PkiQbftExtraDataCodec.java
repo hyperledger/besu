@@ -58,6 +58,11 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
 
   @Override
   protected Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType) {
+    return encode(bftExtraData, encodingType, true);
+  }
+
+  private Bytes encode(
+      final BftExtraData bftExtraData, final EncodingType encodingType, final boolean includeCms) {
     final PkiQbftExtraData extraData;
     if (!(bftExtraData instanceof PkiQbftExtraData)) {
       return super.encode(bftExtraData, encodingType);
@@ -90,7 +95,7 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
       encoder.writeEmptyList();
     }
 
-    if (encodingType != EncodingType.EXCLUDE_CMS) {
+    if (includeCms) {
       encoder.writeBytes(extraData.getCms());
     } else {
       encoder.writeBytes(Bytes.EMPTY);
@@ -99,5 +104,9 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
     encoder.endList();
 
     return encoder.encoded();
+  }
+
+  public Bytes encodeWithoutCms(final BftExtraData bftExtraData) {
+    return encode(bftExtraData, EncodingType.ALL, false);
   }
 }

@@ -14,14 +14,15 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
-import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
+import org.hyperledger.besu.consensus.qbft.pki.PkiQbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraData;
+import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.pki.QbftContext;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
@@ -119,7 +120,8 @@ public class ProposalPayloadValidator {
     final KeyStoreWrapper trustStore = pkiBlockCreationConfiguration.getTrustStore();
 
     final Hash hashWithoutCms =
-        BftBlockHeaderFunctions.forCmsSignature(bftExtraDataCodec).hash(block.getHeader());
+        PkiQbftBlockHeaderFunctions.forCmsSignature((PkiQbftExtraDataCodec) bftExtraDataCodec)
+            .hash(block.getHeader());
 
     final CmsValidator cmsValidator = new CmsValidator(trustStore);
 

@@ -78,13 +78,6 @@ public class BftBlockHashing {
             bftExtraDataCodec));
   }
 
-  public Hash calculateHashOfBftBlockForCmsSignature(final BlockHeader header) {
-    final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
-    return Hash.hash(
-        serializeHeader(
-            header, () -> bftExtraDataCodec.encodeForProposal(bftExtraData), bftExtraDataCodec));
-  }
-
   /**
    * Recovers the {@link Address} for each validator that contributed a committed seal to the block.
    *
