@@ -88,12 +88,10 @@ public class ProposalPayloadValidator {
 
     final QbftContext qbftContext = protocolContext.getConsensusState(QbftContext.class);
     if (qbftContext.getPkiBlockCreationConfiguration().isPresent()) {
-      if (!validateCms(
+      return validateCms(
           block,
           qbftContext.getBlockInterface(),
-          qbftContext.getPkiBlockCreationConfiguration().get())) {
-        return false;
-      }
+          qbftContext.getPkiBlockCreationConfiguration().get());
     }
 
     return true;

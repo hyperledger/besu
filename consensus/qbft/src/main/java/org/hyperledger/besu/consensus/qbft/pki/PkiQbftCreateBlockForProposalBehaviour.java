@@ -18,7 +18,7 @@ package org.hyperledger.besu.consensus.qbft.pki;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.qbft.statemachine.QbftRound.CreateBlockForProposalBehaviour;
+import org.hyperledger.besu.consensus.qbft.statemachine.CreateBlockForProposalBehaviour;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Block;

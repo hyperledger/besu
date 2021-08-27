@@ -121,12 +121,6 @@ public class QbftRound {
     roundTimer.startTimer(getRoundIdentifier());
   }
 
-  @FunctionalInterface
-  public interface CreateBlockForProposalBehaviour {
-
-    Block create(final long headerTimeStampSeconds);
-  }
-
   public ConsensusRoundIdentifier getRoundIdentifier() {
     return roundState.getRoundIdentifier();
   }

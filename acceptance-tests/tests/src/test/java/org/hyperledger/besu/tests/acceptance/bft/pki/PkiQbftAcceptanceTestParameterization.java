@@ -30,7 +30,7 @@ public class PkiQbftAcceptanceTestParameterization {
     ret.addAll(
         List.of(
             new Object[] {
-              "pki-qbft",
+              "qbft-pki",
               new PkiQbftAcceptanceTestParameterization(
                   BesuNodeFactory::createPkiQbftNode,
                   BesuNodeFactory::createPkiQbftNodeWithValidators)
