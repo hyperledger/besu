@@ -411,8 +411,7 @@ public abstract class MainnetProtocolSpecs {
         .gasCalculator(IstanbulGasCalculator::new)
         .transactionGasCalculator(new IstanbulTransactionGasCalculator())
         .evmBuilder(
-            gasCalculator ->
-                MainnetEvms.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+            gasCalculator -> MainnetEvms.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
@@ -532,8 +531,7 @@ public abstract class MainnetProtocolSpecs {
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .evmBuilder(
-            gasCalculator ->
-                MainnetEvms.london(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+            gasCalculator -> MainnetEvms.london(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .feeMarket(londonFeeMarket)
         .difficultyCalculator(MainnetDifficultyCalculators.LONDON)
         .blockHeaderValidatorBuilder(

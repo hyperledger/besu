@@ -162,7 +162,8 @@ public class SoftwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
       }
       return certificateChain;
     } catch (final Exception e) {
-      throw new PkiException("Failed to certificate chain for alias: " + certificateAlias, e);
+      throw new PkiException(
+          "Failed to retrieve certificate chain for alias: " + certificateAlias, e);
     }
   }
 

@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionResult;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.util.EnumMap;
@@ -110,6 +111,7 @@ public class EthGetBlockByHashIntegrationTest {
     expectedResult.put(JsonRpcResponseKey.EXTRA_DATA, "0x");
     expectedResult.put(JsonRpcResponseKey.SIZE, "0x96a");
     expectedResult.put(JsonRpcResponseKey.GAS_LIMIT, "0x2fefd8");
+    expectedResult.put(JsonRpcResponseKey.GAS_PRICE, "0x1");
     expectedResult.put(JsonRpcResponseKey.GAS_USED, "0x78674");
     expectedResult.put(JsonRpcResponseKey.TIMESTAMP, "0x561bc2e0");
     expectedResult.put(
@@ -121,6 +123,7 @@ public class EthGetBlockByHashIntegrationTest {
     final List<TransactionResult> transactions =
         responseUtils.transactions(
             responseUtils.transaction(
+                TransactionType.FRONTIER,
                 "0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9",
                 "0x1",
                 null,

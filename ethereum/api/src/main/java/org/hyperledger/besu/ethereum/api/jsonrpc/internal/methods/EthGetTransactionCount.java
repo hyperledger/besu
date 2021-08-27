@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 
 import java.util.OptionalLong;
 import java.util.function.Supplier;
@@ -29,17 +29,18 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 
 public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMethod {
-  private final Supplier<PendingTransactions> pendingTransactions;
+  private final Supplier<AbstractPendingTransactionsSorter> pendingTransactions;
   private final boolean resultAsDecimal;
 
   public EthGetTransactionCount(
-      final BlockchainQueries blockchain, final PendingTransactions pendingTransactions) {
+      final BlockchainQueries blockchain,
+      final AbstractPendingTransactionsSorter pendingTransactions) {
     this(Suppliers.ofInstance(blockchain), Suppliers.ofInstance(pendingTransactions), false);
   }
 
   public EthGetTransactionCount(
       final Supplier<BlockchainQueries> blockchain,
-      final Supplier<PendingTransactions> pendingTransactions,
+      final Supplier<AbstractPendingTransactionsSorter> pendingTransactions,
       final boolean resultAsDecimal) {
     super(blockchain);
     this.pendingTransactions = pendingTransactions;

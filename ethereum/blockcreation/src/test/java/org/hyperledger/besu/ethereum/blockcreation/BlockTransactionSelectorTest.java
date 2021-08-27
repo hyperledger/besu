@@ -38,8 +38,9 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -72,8 +73,8 @@ public class BlockTransactionSelectorTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private final Blockchain blockchain = new ReferenceTestBlockchain();
-  private final PendingTransactions pendingTransactions =
-      new PendingTransactions(
+  private final GasPricePendingTransactionsSorter pendingTransactions =
+      new GasPricePendingTransactionsSorter(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           5,
           5,
@@ -318,8 +319,8 @@ public class BlockTransactionSelectorTest {
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(300);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
-    final PendingTransactions pendingTransactions1559 =
-        new PendingTransactions(
+    final BaseFeePendingTransactionsSorter pendingTransactions1559 =
+        new BaseFeePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             5,
             5,

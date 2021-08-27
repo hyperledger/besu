@@ -248,11 +248,11 @@ allprojects {
 
   javadoc {
     options.addStringOption('-Xdoclint:all')
-//    options.addStringOption('Xdoclint:accessibility')
+    //    options.addStringOption('Xdoclint:accessibility')
     options.addStringOption('-Xdoclint:-html')
     options.addStringOption('-Xdoclint:-missing')
-//    options.addStringOption('Xdoclint:reference')
-//    options.addStringOption('Xdoclint:syntax')
+    //    options.addStringOption('Xdoclint:reference')
+    //    options.addStringOption('Xdoclint:syntax')
     options.addStringOption('-quiet')
     options.addStringOption('-Xwerror')
     options.addStringOption('-html5')

@@ -20,20 +20,42 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.OptionalLong;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class LatestNonceProviderTest {
 
   private final Address senderAdress = Address.fromHexString("1");
 
-  private final PendingTransactions pendingTransactions = mock(PendingTransactions.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
-  private final LatestNonceProvider nonceProvider =
-      new LatestNonceProvider(blockchainQueries, pendingTransactions);
+  private LatestNonceProvider nonceProvider;
+
+  @Parameterized.Parameter public AbstractPendingTransactionsSorter pendingTransactions;
+
+  @Parameterized.Parameters
+  public static Collection<Object[]> data() {
+    return Arrays.asList(
+        new Object[][] {
+          {mock(GasPricePendingTransactionsSorter.class)},
+          {mock(BaseFeePendingTransactionsSorter.class)}
+        });
+  }
+
+  @Before
+  public void setUp() {
+    nonceProvider = new LatestNonceProvider(blockchainQueries, pendingTransactions);
+  }
 
   @Test
   public void nextNonceUsesTxPool() {

@@ -94,7 +94,7 @@ public class PeerTable {
    * Attempts to add the provided peer to the peer table, and returns an {@link AddResult}
    * signalling one of three outcomes.
    *
-   * <b>Possible outcomes:</b>
+   * <p><b>Possible outcomes:</b>
    *
    * <ul>
    *   <li>the operation succeeded and the peer was added to the corresponding k-bucket.

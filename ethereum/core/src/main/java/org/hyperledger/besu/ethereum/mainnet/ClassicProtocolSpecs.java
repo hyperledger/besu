@@ -221,8 +221,7 @@ public class ClassicProtocolSpecs {
             quorumCompatibilityMode)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
-            gasCalculator ->
-                MainnetEvms.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+            gasCalculator -> MainnetEvms.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .name("Phoenix");
   }

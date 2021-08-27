@@ -64,6 +64,7 @@ public class BlockResultFactory {
           new TransactionWithMetadata(
               block.getBody().getTransactions().get(i),
               block.getHeader().getNumber(),
+              block.getHeader().getBaseFee(),
               block.getHash(),
               i));
     }

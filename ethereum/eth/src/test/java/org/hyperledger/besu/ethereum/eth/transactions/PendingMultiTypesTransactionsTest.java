@@ -25,6 +25,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
@@ -53,8 +55,8 @@ public class PendingMultiTypesTransactionsTest {
   private final BlockHeader blockHeader = mock(BlockHeader.class);
 
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
-  private final PendingTransactions transactions =
-      new PendingTransactions(
+  private final BaseFeePendingTransactionsSorter transactions =
+      new BaseFeePendingTransactionsSorter(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           MAX_TRANSACTIONS,
           MAX_TRANSACTION_HASHES,
@@ -102,7 +104,7 @@ public class PendingMultiTypesTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           assertThat(transaction.getNonce()).isNotEqualTo(1);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
   }
 
@@ -126,7 +128,7 @@ public class PendingMultiTypesTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           assertThat(transaction.getNonce()).isNotEqualTo(2);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
   }
 
@@ -149,7 +151,7 @@ public class PendingMultiTypesTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           assertThat(transaction.getNonce()).isNotEqualTo(1);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
   }
 
@@ -172,7 +174,7 @@ public class PendingMultiTypesTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           assertThat(transaction.getNonce()).isNotEqualTo(2);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
   }
 
@@ -190,7 +192,7 @@ public class PendingMultiTypesTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
 
     assertThat(iterationOrder)
@@ -202,7 +204,7 @@ public class PendingMultiTypesTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           iterationOrderAfterBaseIncreased.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
 
     assertThat(iterationOrderAfterBaseIncreased)
@@ -225,7 +227,7 @@ public class PendingMultiTypesTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
 
     assertThat(iterationOrder)
@@ -237,7 +239,7 @@ public class PendingMultiTypesTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           iterationOrderAfterBaseIncreased.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
 
     assertThat(iterationOrderAfterBaseIncreased)
@@ -260,7 +262,7 @@ public class PendingMultiTypesTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
 
     assertThat(iterationOrder)
@@ -284,7 +286,7 @@ public class PendingMultiTypesTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
 
     assertThat(iterationOrder)
@@ -298,7 +300,7 @@ public class PendingMultiTypesTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
 
     assertThat(iterationOrder).isEmpty();

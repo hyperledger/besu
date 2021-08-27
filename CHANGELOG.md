@@ -13,6 +13,9 @@
 - A native library was added for the alternative signature algorithm secp256r1, which will be used by default [#2630](https://github.com/hyperledger/besu/pull/2630)
 - The command line option --Xsecp-native-enabled was added as an alias for --Xsecp256k1-native-enabled [#2630](https://github.com/hyperledger/besu/pull/2630)
 - Added Labelled gauges for metrics [#2646](https://github.com/hyperledger/besu/pull/2646)
+- support for `eth/66` networking protocol [#2365](https://github.com/hyperledger/besu/pull/2365)
+- update RPC methods for post london 1559 transaction [#2535](https://github.com/hyperledger/besu/pull/2535)
+
 
 ### Bug Fixes
 - Consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)

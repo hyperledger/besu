@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
 import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ADDED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -31,7 +32,8 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -65,7 +67,7 @@ public class TransactionPool implements BlockAddedObserver {
   private static final long SYNC_TOLERANCE = 100L;
   private static final String REMOTE = "remote";
   private static final String LOCAL = "local";
-  private final PendingTransactions pendingTransactions;
+  private final AbstractPendingTransactionsSorter pendingTransactions;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final TransactionBatchAddedListener transactionBatchAddedListener;
@@ -78,7 +80,7 @@ public class TransactionPool implements BlockAddedObserver {
   private final TransactionPoolConfiguration configuration;
 
   public TransactionPool(
-      final PendingTransactions pendingTransactions,
+      final AbstractPendingTransactionsSorter pendingTransactions,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionBatchAddedListener transactionBatchAddedListener,
@@ -138,7 +140,7 @@ public class TransactionPool implements BlockAddedObserver {
       }
       final TransactionAddedStatus transactionAddedStatus =
           pendingTransactions.addLocalTransaction(transaction);
-      if (!transactionAddedStatus.equals(TransactionAddedStatus.ADDED)) {
+      if (!transactionAddedStatus.equals(ADDED)) {
         duplicateTransactionCounter.labels(LOCAL).inc();
         return ValidationResult.invalid(transactionAddedStatus.getInvalidReason().orElseThrow());
       }
@@ -206,7 +208,7 @@ public class TransactionPool implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     event.getAddedTransactions().forEach(pendingTransactions::transactionAddedToBlock);
-    event.getBlock().getHeader().getBaseFee().ifPresent(pendingTransactions::updateBaseFee);
+    pendingTransactions.manageBlockAdded(event.getBlock());
     addRemoteTransactions(event.getRemovedTransactions());
   }
 
@@ -216,7 +218,7 @@ public class TransactionPool implements BlockAddedObserver {
         .getTransactionValidator();
   }
 
-  public PendingTransactions getPendingTransactions() {
+  public AbstractPendingTransactionsSorter getPendingTransactions() {
     return pendingTransactions;
   }
 

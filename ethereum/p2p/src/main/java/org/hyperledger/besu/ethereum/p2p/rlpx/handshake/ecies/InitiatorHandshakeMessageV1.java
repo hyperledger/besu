@@ -36,9 +36,9 @@ import org.apache.tuweni.bytes.MutableBytes;
  * <p>This message must be sent by the party that initiates the RLPX connection, as the first
  * message in the handshake protocol.
  *
- * <B>Message structure</B>
+ * <p><B>Message structure</B>
  *
- * The following describes the message structure:
+ * <p>The following describes the message structure:
  *
  * <pre>
  *   authInitiator -&gt; E(remote-pubk,

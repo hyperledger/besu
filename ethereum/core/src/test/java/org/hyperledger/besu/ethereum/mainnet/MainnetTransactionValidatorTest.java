@@ -29,6 +29,7 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -202,6 +203,22 @@ public class MainnetTransactionValidatorTest {
 
     assertThat(validator.validateForSender(builder.createTransaction(senderKeyPair), null, false))
         .isEqualTo(ValidationResult.valid());
+  }
+
+  @Test
+  public void shouldRejectTransactionIfAccountIsNotEOA() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            transactionGasCalculator, false, Optional.empty(), defaultGoQuorumCompatibilityMode);
+    validator.setTransactionFilter(transactionFilter(false));
+
+    Account invalidEOA =
+        when(account(basicTransaction.getUpfrontCost(), basicTransaction.getNonce()).getCodeHash())
+            .thenReturn(Hash.fromHexStringLenient("0xdeadbeef"))
+            .getMock();
+
+    assertThat(validator.validateForSender(basicTransaction, invalidEOA, true))
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED));
   }
 
   @Test

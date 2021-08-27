@@ -18,6 +18,7 @@ dependencies {
   implementation project(':ethereum:rlp')
   implementation project(':metrics:core')
   implementation project(':pki')
+  implementation project(path: ':pki', configuration: 'testArtifacts')
   implementation project(':plugin-api')
   implementation project(':plugins:rocksdb')
   implementation project(':services:kvstore')

@@ -29,9 +29,9 @@ import org.apache.tuweni.bytes.MutableBytes;
  * <p>This message must be sent by the party who responded to the RLPX connection, in response to
  * the initiator message.
  *
- * <B>Message structure</B>
+ * <p><B>Message structure</B>
  *
- * The following describes the message structure:
+ * <p>The following describes the message structure:
  *
  * <pre>
  *   authRecipient -&gt; E(remote-pubk,

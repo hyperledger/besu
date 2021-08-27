@@ -31,7 +31,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -48,7 +50,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
-public class PendingTransactionsTest {
+public class BaseFeePendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final int MAX_TRANSACTION_HASHES = 5;
@@ -64,14 +66,14 @@ public class PendingTransactionsTest {
 
   private final TestClock clock = new TestClock();
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
-  private final PendingTransactions transactions =
-      new PendingTransactions(
+  private final BaseFeePendingTransactionsSorter transactions =
+      new BaseFeePendingTransactionsSorter(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           MAX_TRANSACTIONS,
           MAX_TRANSACTION_HASHES,
           TestClock.fixed(),
           metricsSystem,
-          PendingTransactionsTest::mockBlockHeader,
+          BaseFeePendingTransactionsTest::mockBlockHeader,
           TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
@@ -312,7 +314,7 @@ public class PendingTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.COMPLETE_OPERATION;
+          return TransactionSelectionResult.COMPLETE_OPERATION;
         });
 
     assertThat(parsedTransactions.size()).isEqualTo(1);
@@ -328,7 +330,7 @@ public class PendingTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
 
     assertThat(parsedTransactions.size()).isEqualTo(2);
@@ -348,7 +350,7 @@ public class PendingTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
 
     assertThat(parsedTransactions).containsExactly(transaction2);
@@ -363,7 +365,7 @@ public class PendingTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
+          return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
         });
 
     assertThat(parsedTransactions.size()).isEqualTo(2);
@@ -529,7 +531,7 @@ public class PendingTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
 
     assertThat(iterationOrder).containsExactly(transaction1, transaction2, transaction3);
@@ -547,7 +549,7 @@ public class PendingTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
 
     assertThat(iterationOrder).containsExactly(transaction2, transaction1);
@@ -569,7 +571,7 @@ public class PendingTransactionsTest {
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+          return TransactionSelectionResult.CONTINUE;
         });
 
     // Ignoring nonces, the order would be 3, 2, 4, 1 but we have to delay 3 and 2 until after 1.
@@ -611,14 +613,14 @@ public class PendingTransactionsTest {
   @Test
   public void shouldEvictMultipleOldTransactions() {
     final int maxTransactionRetentionHours = 1;
-    final PendingTransactions transactions =
-        new PendingTransactions(
+    final BaseFeePendingTransactionsSorter transactions =
+        new BaseFeePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            PendingTransactionsTest::mockBlockHeader,
+            BaseFeePendingTransactionsTest::mockBlockHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     transactions.addRemoteTransaction(transaction1);
@@ -635,14 +637,14 @@ public class PendingTransactionsTest {
   @Test
   public void shouldEvictSingleOldTransaction() {
     final int maxTransactionRetentionHours = 1;
-    final PendingTransactions transactions =
-        new PendingTransactions(
+    final BaseFeePendingTransactionsSorter transactions =
+        new BaseFeePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            PendingTransactionsTest::mockBlockHeader,
+            BaseFeePendingTransactionsTest::mockBlockHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -655,14 +657,14 @@ public class PendingTransactionsTest {
   @Test
   public void shouldEvictExclusivelyOldTransactions() {
     final int maxTransactionRetentionHours = 2;
-    final PendingTransactions transactions =
-        new PendingTransactions(
+    final BaseFeePendingTransactionsSorter transactions =
+        new BaseFeePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            PendingTransactionsTest::mockBlockHeader,
+            BaseFeePendingTransactionsTest::mockBlockHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);

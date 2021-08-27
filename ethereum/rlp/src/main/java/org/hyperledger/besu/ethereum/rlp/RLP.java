@@ -18,7 +18,6 @@ import static java.lang.String.format;
 
 import java.util.function.Consumer;
 
-//import io.vertx.core.buffer.Buffer;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 
@@ -58,27 +57,6 @@ public abstract class RLP {
   public static RLPInput input(final Bytes encoded, final boolean lenient) {
     return new BytesValueRLPInput(encoded, lenient);
   }
-
-//  /**
-//   * Creates a new {@link RLPInput} suitable for decoding an RLP value encoded in the provided
-//   * Vert.x {@link Buffer}.
-//   *
-//   * <p>The created input is strict, in that exceptions will be thrown for any malformed input,
-//   * either by this method or by future reads from the returned input.
-//   *
-//   * @param buffer A buffer containing the RLP encoded data to decode.
-//   * @param offset The offset in {@code encoded} at which the data to decode starts.
-//   * @return A newly created {@link RLPInput} to decode RLP data in {@code encoded} from {@code
-//   *     offset}.
-//   * @throws MalformedRLPInputException if {@code encoded} doesn't contain a properly encoded RLP
-//   *     item. Note that this only detect malformation on the main item at {@code offset}, but more
-//   *     deeply nested corruption/malformation of the input will not be detected by this method
-//   *     call, but only later when the input is read.
-//   */
-//  public static BytesValueRLPInput input(final Buffer buffer, final int offset) {
-//    return new BytesValueRLPInput(
-//        Bytes.wrapBuffer(buffer, offset, buffer.length() - offset), false, false);
-//  }
 
   /**
    * Creates a {@link RLPOutput}, pass it to the provided consumer for writing, and then return the

@@ -22,13 +22,15 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Represents a client capability.
  *
  * @see <a href= "https://github.com/ethereum/devp2p/blob/master/devp2p.md">Capability wire
  *     format</a>
  */
-public class Capability {
+public class Capability implements Comparable<Capability> {
   private final String name;
   private final int version;
 
@@ -84,5 +86,10 @@ public class Capability {
   @Override
   public String toString() {
     return name + "/" + version;
+  }
+
+  @Override
+  public int compareTo(@NotNull final Capability that) {
+    return Integer.compare(this.getVersion(), that.getVersion());
   }
 }
