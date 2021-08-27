@@ -92,16 +92,13 @@ public class CliqueProtocolSchedule {
       final ProtocolSpecBuilder specBuilder,
       final boolean goQuorumMode) {
 
-    Optional<BaseFeeMarket> baseFeeMarket =
-        Optional.of(specBuilder.getFeeMarket())
-            .filter(FeeMarket::implementsBaseFee)
-            .map(BaseFeeMarket.class::cast);
-
     return specBuilder
         .blockHeaderValidatorBuilder(
-            getBlockHeaderValidator(epochManager, secondsBetweenBlocks, baseFeeMarket))
+            baseFeeMarket ->
+                getBlockHeaderValidator(epochManager, secondsBetweenBlocks, baseFeeMarket))
         .ommerHeaderValidatorBuilder(
-            getBlockHeaderValidator(epochManager, secondsBetweenBlocks, baseFeeMarket))
+            baseFeeMarket ->
+                getBlockHeaderValidator(epochManager, secondsBetweenBlocks, baseFeeMarket))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)
@@ -113,9 +110,10 @@ public class CliqueProtocolSchedule {
   }
 
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(
-      final EpochManager epochManager,
-      final long secondsBetweenBlocks,
-      final Optional<BaseFeeMarket> baseFeeMarket) {
+      final EpochManager epochManager, final long secondsBetweenBlocks, final FeeMarket feeMarket) {
+    Optional<BaseFeeMarket> baseFeeMarket =
+        Optional.of(feeMarket).filter(FeeMarket::implementsBaseFee).map(BaseFeeMarket.class::cast);
+
     return BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator(
         secondsBetweenBlocks, epochManager, baseFeeMarket);
   }
