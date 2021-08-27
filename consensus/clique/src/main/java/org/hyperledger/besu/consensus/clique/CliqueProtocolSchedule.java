@@ -31,10 +31,12 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.math.BigInteger;
 import java.util.Optional;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /** Defines the protocol behaviours for a blockchain using Clique. */
 public class CliqueProtocolSchedule {
@@ -57,11 +59,6 @@ public class CliqueProtocolSchedule {
 
     final EpochManager epochManager = new EpochManager(cliqueConfig.getEpochLength());
 
-    final Optional<BaseFeeMarket> feeMarket =
-        config.getEIP1559BlockNumber().isPresent()
-            ? Optional.of(new LondonFeeMarket(config.getEIP1559BlockNumber().orElse(0)))
-            : Optional.empty();
-
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
@@ -73,7 +70,6 @@ public class CliqueProtocolSchedule {
                         cliqueConfig.getBlockPeriodSeconds(),
                         localNodeAddress,
                         builder,
-                        feeMarket,
                         privacyParameters.getGoQuorumPrivacyParameters().isPresent())),
             privacyParameters,
             isRevertReasonEnabled,
@@ -88,13 +84,18 @@ public class CliqueProtocolSchedule {
     return create(config, nodeKey, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
   }
 
-  private static ProtocolSpecBuilder applyCliqueSpecificModifications(
+  @VisibleForTesting
+  static ProtocolSpecBuilder applyCliqueSpecificModifications(
       final EpochManager epochManager,
       final long secondsBetweenBlocks,
       final Address localNodeAddress,
       final ProtocolSpecBuilder specBuilder,
-      final Optional<BaseFeeMarket> baseFeeMarket,
       final boolean goQuorumMode) {
+
+    Optional<BaseFeeMarket> baseFeeMarket =
+        Optional.of(specBuilder.getFeeMarket())
+            .filter(FeeMarket::implementsBaseFee)
+            .map(BaseFeeMarket.class::cast);
 
     return specBuilder
         .blockHeaderValidatorBuilder(

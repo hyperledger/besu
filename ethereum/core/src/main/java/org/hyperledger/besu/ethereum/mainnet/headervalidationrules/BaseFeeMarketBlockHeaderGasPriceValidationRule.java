@@ -36,6 +36,11 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRule
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     try {
+      // this should not occur for a correctly configured ProtocolSpec, but here as a failsafe
+      if (baseFeeMarket.isBeforeForkBlock(header.getNumber())) {
+        return true;
+      }
+
       // if this is the fork block, baseFee should be the initial baseFee
       if (baseFeeMarket.isForkBlock(header.getNumber())) {
         return baseFeeMarket.getInitialBasefee()

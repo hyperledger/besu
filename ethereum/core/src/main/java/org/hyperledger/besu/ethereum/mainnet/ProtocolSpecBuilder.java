@@ -231,6 +231,10 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public FeeMarket getFeeMarket() {
+    return this.feeMarket;
+  }
+
   public ProtocolSpecBuilder badBlocksManager(final BadBlockManager badBlockManager) {
     this.badBlockManager = badBlockManager;
     return this;
