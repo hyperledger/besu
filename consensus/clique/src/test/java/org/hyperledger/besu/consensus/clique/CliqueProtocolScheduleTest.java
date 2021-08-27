@@ -24,9 +24,15 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+
+import java.time.Instant;
 
 import org.junit.Test;
 
@@ -92,5 +98,75 @@ public class CliqueProtocolScheduleTest {
     assertThatThrownBy(() -> CliqueProtocolSchedule.create(genesisConfig, NODE_KEY, false))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
+  }
+
+  @Test
+  public void shouldValidateBaseFeeMarketTransition() {
+
+    final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
+
+    final String jsonInput =
+        "{\"config\": " + "\t{\"chainId\": 1337,\n" + "\t\"londonBlock\": 2}\n" + "}";
+
+    final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
+    final ProtocolSchedule protocolSchedule =
+        CliqueProtocolSchedule.create(config, NODE_KEY, false);
+
+    BlockHeader emptyFrontierParent =
+        headerBuilder
+            .number(0)
+            .mixHash(Hash.fromHexStringLenient("0x0"))
+            .gasLimit(5000L)
+            .timestamp(Instant.now().getEpochSecond() - 30L)
+            .buildHeader();
+
+    // legacy FeeMarket block
+    BlockHeader emptyFrontierBlock1 =
+        headerBuilder
+            .number(1)
+            .timestamp(Instant.now().getEpochSecond() - 15L)
+            .parentHash(emptyFrontierParent.getHash())
+            .buildHeader();
+
+    // premature BaseFeeMarket block
+    BlockHeader emptyLondonBlock1 =
+        headerBuilder.baseFeePerGas(1000000000L).gasLimit(10000L).buildHeader();
+
+    // first BaseFeeMarket block
+    BlockHeader emptyLondonBlock2 =
+        headerBuilder
+            .number(2)
+            .timestamp(Instant.now().getEpochSecond())
+            .parentHash(emptyFrontierBlock1.getHash())
+            .buildHeader();
+
+    // assert block 1 validates (no fee market)
+    assertThat(
+            validateHeaderByProtocolSchedule(
+                protocolSchedule, emptyFrontierBlock1, emptyFrontierParent))
+        .isTrue();
+
+    // assert block 1 with a base fee fails
+    assertThat(
+            validateHeaderByProtocolSchedule(
+                protocolSchedule, emptyLondonBlock1, emptyFrontierParent))
+        .isFalse();
+
+    // assert block 2 with a base fee validates (has fee market)
+    assertThat(
+            validateHeaderByProtocolSchedule(
+                protocolSchedule, emptyLondonBlock2, emptyFrontierBlock1))
+        .isTrue();
+  }
+
+  private boolean validateHeaderByProtocolSchedule(
+      final ProtocolSchedule schedule,
+      final BlockHeader blockHeader,
+      final BlockHeader parentBlockHeader) {
+
+    return schedule
+        .getByBlockNumber(blockHeader.getNumber())
+        .getBlockHeaderValidator()
+        .validateHeader(blockHeader, parentBlockHeader, null, HeaderValidationMode.LIGHT);
   }
 }
