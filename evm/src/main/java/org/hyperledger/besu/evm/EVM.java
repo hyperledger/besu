@@ -42,11 +42,17 @@ public class EVM {
           Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
 
   private final OperationRegistry operations;
+  private final GasCalculator gasCalculator;
   private final Operation endOfScriptStop;
 
   public EVM(final OperationRegistry operations, final GasCalculator gasCalculator) {
     this.operations = operations;
+    this.gasCalculator = gasCalculator;
     this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
+  }
+
+  public GasCalculator getGasCalculator() {
+    return gasCalculator;
   }
 
   public void runToHalt(final MessageFrame frame, final OperationTracer operationTracer) {

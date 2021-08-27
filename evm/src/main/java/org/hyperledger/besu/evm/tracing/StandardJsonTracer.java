@@ -19,11 +19,16 @@ package org.hyperledger.besu.evm.tracing;
 import org.hyperledger.besu.evm.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.Operation;
 import org.hyperledger.besu.evm.OperationTracer;
 
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
+import com.google.common.base.Joiner;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -46,69 +51,72 @@ public class StandardJsonTracer implements OperationTracer {
     return bytes.isZero() ? "0x0" : bytes.toShortHexString();
   }
 
-  //  public static String summaryTrace(
-  //      final Transaction transaction, final long timer, final TransactionProcessingResult result)
-  // {
-  //    final StringBuilder summaryLine = new StringBuilder(1024);
-  //    summaryLine.append("{ \"output\":", result.getOutput().toUnprefixedHexString());
-  //    summaryLine.put(
-  //        "gasUsed",
-  //        StandardJsonTracer.shortNumber(
-  //            UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining())));
-  //    summaryLine.put("time", timer);
-  //    return summaryLine.toString();
-  //  }
+  //    public static String summaryTrace(
+  //        final Transaction transaction, final long timer, final TransactionProcessingResult
+  // result)
+  //   {
+  //      final StringBuilder summaryLine = new StringBuilder(1024);
+  //      summaryLine.append("{ \"output\":", result.getOutput().toUnprefixedHexString());
+  //      summaryLine.put(
+  //          "gasUsed",
+  //          StandardJsonTracer.shortNumber(
+  //              UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining())));
+  //      summaryLine.put("time", timer);
+  //      return summaryLine.toString();
+  //    }
+  Joiner commaJoiner = Joiner.on(',');
 
   @Override
   public void traceExecution(
       final MessageFrame messageFrame, final ExecuteOperation executeOperation) {
-    //    final ObjectNode traceLine = OBJECT_MAPPER.createObjectNode();
-    //
-    //    final Operation currentOp = messageFrame.getCurrentOperation();
-    //    traceLine.put("pc", messageFrame.getPC());
-    //    traceLine.put("op", Bytes.of(currentOp.getOpcode()).toInt());
-    //    traceLine.put("gas", shortNumber(messageFrame.getRemainingGas().asUInt256()));
-    //    traceLine.putNull("gasCost");
-    //    traceLine.putNull("memory");
-    //    traceLine.putNull("memSize");
-    //    final ArrayNode stack = traceLine.putArray("stack");
-    //    for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
-    //      stack.add(shortBytes(messageFrame.getStackItem(i)));
-    //    }
-    //    Bytes returnData = messageFrame.getReturnData();
-    //    traceLine.put("returnData", returnData.size() > 0 ? returnData.toHexString() : null);
-    //    traceLine.put("depth", messageFrame.getMessageStackDepth() + 1);
-    //
-    //    final OperationResult executeResult = executeOperation.execute();
-    //
-    //    traceLine.put("refund", messageFrame.getGasRefund().toLong());
-    //    traceLine.put(
-    //        "gasCost", executeResult.getGasCost().map(gas ->
-    // shortNumber(gas.asUInt256())).orElse(""));
-    //
-    //    if (showMemory) {
-    //      traceLine.put(
-    //          "memory",
-    //          messageFrame
-    //              .readMemory(UInt256.ZERO, messageFrame.memoryWordSize().multiply(32))
-    //              .toHexString());
-    //    } else {
-    //      traceLine.put("memory", "0x");
-    //    }
-    //    traceLine.put("memSize", messageFrame.memoryByteSize());
-    //
-    //    final String error =
-    //        executeResult
-    //            .getHaltReason()
-    //            .map(ExceptionalHaltReason::getDescription)
-    //            .orElse(
-    //                messageFrame
-    //                    .getRevertReason()
-    //                    .map(bytes -> new String(bytes.toArrayUnsafe(), StandardCharsets.UTF_8))
-    //                    .orElse(""));
-    //    traceLine.put("opName", currentOp.getName());
-    //    traceLine.put("error", error);
-    //    out.println(traceLine);
+    final Operation currentOp = messageFrame.getCurrentOperation();
+    int pc = messageFrame.getPC();
+    int opcode = currentOp.getOpcode();
+    String remainingGas = shortNumber(messageFrame.getRemainingGas().asUInt256());
+    List<String> stack = new ArrayList<>(messageFrame.stackSize());
+    for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
+      stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
+    }
+    Bytes returnData = messageFrame.getReturnData();
+    int depth = messageFrame.getMessageStackDepth() + 1;
+
+    final Operation.OperationResult executeResult = executeOperation.execute();
+
+    StringBuilder sb = new StringBuilder(1024);
+    sb.append("{");
+    sb.append("\"pc\":").append(pc).append(",");
+    sb.append("\"op\":").append(opcode).append(",");
+    sb.append("\"gas\":\"").append(remainingGas).append("\",");
+    sb.append("\"gasCost\":\"")
+        .append(executeResult.getGasCost().map(gas -> shortNumber(gas.asUInt256())).orElse(""))
+        .append("\",");
+    if (showMemory) {
+      Bytes memory =
+          messageFrame.readMemory(UInt256.ZERO, messageFrame.memoryWordSize().multiply(32));
+      sb.append("\"memory\":\"").append(memory.toHexString()).append("\",");
+      sb.append("\"memSize\":").append(memory.size()).append(",");
+    } else {
+      sb.append("\"memory\":\"\", \"memSize\":-1,").append(remainingGas).append("\",");
+    }
+    sb.append("\"stack\":[").append(commaJoiner.join(stack)).append("],");
+    sb.append("\"returnData\":")
+        .append(returnData.size() > 0 ? '"' + returnData.toHexString() + '"' : "null")
+        .append(",");
+    sb.append("\"depth\":").append(depth).append(",");
+    sb.append("\"refund\":\"").append(messageFrame.getGasRefund().toLong()).append("\",");
+    sb.append("\"opName\":\"").append(currentOp.getName()).append("\",");
+    sb.append("\"error\":\"")
+        .append(
+            executeResult
+                .getHaltReason()
+                .map(ExceptionalHaltReason::getDescription)
+                .orElse(
+                    messageFrame
+                        .getRevertReason()
+                        .map(bytes -> new String(bytes.toArrayUnsafe(), StandardCharsets.UTF_8))
+                        .orElse("")))
+        .append("\"}");
+    out.println(sb.toString());
   }
 
   @Override

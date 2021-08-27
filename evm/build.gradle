@@ -41,6 +41,8 @@ dependencies {
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'net.java.dev.jna:jna'
+
+  testImplementation 'info.picocli:picocli'
 }
 
 publishing {
