@@ -196,7 +196,7 @@ public class SECP256K1 extends AbstractSECP256 {
     if (useNative) {
       return recoverFromSignatureNative(dataHash, new SECPSignature(r, s, (byte) recId))
           .map(key -> new BigInteger(1, key.getEncoded()))
-          .orElse(BigInteger.ONE);
+          .orElse(null);
     } else {
       return super.recoverFromSignature(recId, r, s, dataHash);
     }
