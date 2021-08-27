@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.ContractCreationProcessor;
-import org.hyperledger.besu.evm.MainnetEvmOperations;
+import org.hyperledger.besu.evm.MainnetEvms;
 import org.hyperledger.besu.evm.MessageCallProcessor;
 import org.hyperledger.besu.evm.MessageFrame;
 import org.hyperledger.besu.evm.MutableAccount;
@@ -106,7 +106,7 @@ public abstract class MainnetProtocolSpecs {
         .gasCalculator(FrontierGasCalculator::new)
         .transactionGasCalculator(new FrontierTransactionGasCalculator())
         .gasLimitCalculator(new FrontierTargetingGasLimitCalculator())
-        .evmBuilder(MainnetEvmOperations::frontier)
+        .evmBuilder(MainnetEvms::frontier)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::frontier)
         .messageCallProcessorBuilder(MessageCallProcessor::new)
         .contractCreationProcessorBuilder(
@@ -212,7 +212,7 @@ public abstract class MainnetProtocolSpecs {
     return frontierDefinition(
             configContractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .transactionGasCalculator(new HomesteadTransactionGasCalculator())
-        .evmBuilder(MainnetEvmOperations::homestead)
+        .evmBuilder(MainnetEvms::homestead)
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new ContractCreationProcessor(
@@ -333,7 +333,7 @@ public abstract class MainnetProtocolSpecs {
     return spuriousDragonDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .gasCalculator(ByzantiumGasCalculator::new)
-        .evmBuilder(MainnetEvmOperations::byzantium)
+        .evmBuilder(MainnetEvms::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
         .difficultyCalculator(MainnetDifficultyCalculators.BYZANTIUM)
         .transactionReceiptFactory(
@@ -373,7 +373,7 @@ public abstract class MainnetProtocolSpecs {
             quorumCompatibilityMode)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
-        .evmBuilder(MainnetEvmOperations::constantinople)
+        .evmBuilder(MainnetEvms::constantinople)
         .blockReward(CONSTANTINOPLE_BLOCK_REWARD)
         .name("Constantinople");
   }
@@ -412,7 +412,7 @@ public abstract class MainnetProtocolSpecs {
         .transactionGasCalculator(new IstanbulTransactionGasCalculator())
         .evmBuilder(
             gasCalculator ->
-                MainnetEvmOperations.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+                MainnetEvms.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
@@ -533,7 +533,7 @@ public abstract class MainnetProtocolSpecs {
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .evmBuilder(
             gasCalculator ->
-                MainnetEvmOperations.london(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+                MainnetEvms.london(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .feeMarket(londonFeeMarket)
         .difficultyCalculator(MainnetDifficultyCalculators.LONDON)
         .blockHeaderValidatorBuilder(

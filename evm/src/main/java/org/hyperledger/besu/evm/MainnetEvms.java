@@ -106,7 +106,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** Provides EVMs supporting the appropriate operations for mainnet hard forks. */
-public abstract class MainnetEvmOperations {
+public abstract class MainnetEvms {
 
   public static final BigInteger DEV_NET_CHAIN_ID = BigInteger.valueOf(1337);
 
