@@ -108,7 +108,10 @@ public class EthPeer {
 
     final boolean supportsRequestId =
         getAgreedCapabilities().stream()
-            .anyMatch(capability -> capability.compareTo(EthProtocol.ETH66) >= 0);
+            .anyMatch(
+                capability ->
+                    EthProtocol.NAME.equals(capability.getName())
+                        && capability.compareTo(EthProtocol.ETH66) >= 0);
     this.headersRequestManager = new RequestManager(this, supportsRequestId);
     this.bodiesRequestManager = new RequestManager(this, supportsRequestId);
     this.receiptsRequestManager = new RequestManager(this, supportsRequestId);
