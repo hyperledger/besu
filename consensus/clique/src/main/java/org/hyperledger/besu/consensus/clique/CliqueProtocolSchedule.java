@@ -36,8 +36,6 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import com.google.common.annotations.VisibleForTesting;
-
 /** Defines the protocol behaviours for a blockchain using Clique. */
 public class CliqueProtocolSchedule {
 
@@ -84,8 +82,7 @@ public class CliqueProtocolSchedule {
     return create(config, nodeKey, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
   }
 
-  @VisibleForTesting
-  static ProtocolSpecBuilder applyCliqueSpecificModifications(
+  private static ProtocolSpecBuilder applyCliqueSpecificModifications(
       final EpochManager epochManager,
       final long secondsBetweenBlocks,
       final Address localNodeAddress,
