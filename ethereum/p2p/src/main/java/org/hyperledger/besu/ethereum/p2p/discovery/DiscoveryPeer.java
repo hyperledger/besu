@@ -27,7 +27,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 
 /**
- * Represents an Ethereum node that we are interacting with through the discovery and wire protocols.
+ * Represents an Ethereum node that we are interacting with through the discovery and wire
+ * protocols.
  */
 public class DiscoveryPeer extends DefaultPeer {
   private PeerDiscoveryStatus status = PeerDiscoveryStatus.KNOWN;
