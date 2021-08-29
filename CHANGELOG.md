@@ -15,6 +15,7 @@
 - Added Labelled gauges for metrics [#2646](https://github.com/hyperledger/besu/pull/2646)
 - support for `eth/66` networking protocol [#2365](https://github.com/hyperledger/besu/pull/2365)
 - update RPC methods for post london 1559 transaction [#2535](https://github.com/hyperledger/besu/pull/2535)
+- Ignore `type` when supplied to eth_estimateGas or eth_call. [\#2690](https://github.com/hyperledger/besu/pull/2690)
 
 
 ### Bug Fixes
