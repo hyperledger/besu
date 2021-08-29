@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 
-@JsonIgnoreProperties({"nonce", "privateFor", "timestamp"})
+@JsonIgnoreProperties({"nonce", "privateFor", "timestamp", "type"})
 public class JsonCallParameter extends CallParameter {
 
   private final Optional<Boolean> strict;
