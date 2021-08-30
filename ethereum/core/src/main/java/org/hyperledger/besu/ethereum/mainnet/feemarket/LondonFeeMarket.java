@@ -116,4 +116,9 @@ public class LondonFeeMarket implements BaseFeeMarket {
   public boolean isForkBlock(final long blockNumber) {
     return londonForkBlockNumber == blockNumber;
   }
+
+  @Override
+  public boolean isBeforeForkBlock(final long blockNumber) {
+    return londonForkBlockNumber > blockNumber;
+  }
 }
