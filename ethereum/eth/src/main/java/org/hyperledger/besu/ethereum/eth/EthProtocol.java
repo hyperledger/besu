@@ -169,4 +169,8 @@ public class EthProtocol implements SubProtocol {
     public static final int V65 = 65;
     public static final int V66 = 66;
   }
+
+  public static boolean isEth66Compatible(final Capability capability) {
+    return capability.getName().equals(NAME) && capability.getVersion() >= ETH66.getVersion();
+  }
 }

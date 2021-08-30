@@ -107,11 +107,7 @@ public class EthPeer {
     fullyValidated.set(peerValidators.isEmpty());
 
     final boolean supportsRequestId =
-        getAgreedCapabilities().stream()
-            .anyMatch(
-                capability ->
-                    EthProtocol.NAME.equals(capability.getName())
-                        && capability.compareTo(EthProtocol.ETH66) >= 0);
+        getAgreedCapabilities().stream().anyMatch(EthProtocol::isEth66Compatible);
     this.headersRequestManager = new RequestManager(this, supportsRequestId);
     this.bodiesRequestManager = new RequestManager(this, supportsRequestId);
     this.receiptsRequestManager = new RequestManager(this, supportsRequestId);
