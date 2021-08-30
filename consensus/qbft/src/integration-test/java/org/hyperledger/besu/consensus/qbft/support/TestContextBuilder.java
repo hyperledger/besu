@@ -104,7 +104,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -384,12 +383,13 @@ public class TestContextBuilder {
             .enabled(true)
             .build();
 
-    // TODO-jf this seems hacky, is there a better way
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
-    final Map<String, Object> qbftConfigValues = new HashMap<>();
-    if (useValidatorContract) {
-      qbftConfigValues.put("validatorcontractaddress", VALIDATOR_CONTRACT_ADDRESS.toHexString());
-    }
+    final Map<String, Object> qbftConfigValues =
+        useValidatorContract
+            ? Map.of(
+                QbftConfigOptions.VALIDATOR_CONTRACT_ADDRESS,
+                VALIDATOR_CONTRACT_ADDRESS.toHexString())
+            : Collections.emptyMap();
 
     genesisConfigOptions.byzantiumBlock(0);
     genesisConfigOptions.qbftConfigOptions(
