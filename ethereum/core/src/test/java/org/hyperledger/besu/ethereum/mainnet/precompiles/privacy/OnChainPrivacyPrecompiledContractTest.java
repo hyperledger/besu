@@ -245,7 +245,7 @@ public class OnChainPrivacyPrecompiledContractTest {
 
   @Test
   public void testInvalidResponseToMembershipQuery() {
-    // response shorter than emoty array response
+    // response shorter than empty array response
     assertThatComputeReturnsEmptyGivenContractMembershipQueryReturns(
         Bytes32.fromHexStringLenient("0x0"));
 

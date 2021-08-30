@@ -296,7 +296,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       // the new group
       participantsFromParameter = getParticipantsFromParameter(privateTransaction.getPayload());
     }
-    String base64privateFrom = privateFrom.toBase64String();
+    final String base64privateFrom = privateFrom.toBase64String();
     return members.contains(base64privateFrom)
         || participantsFromParameter.contains(base64privateFrom);
   }
@@ -317,10 +317,10 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
   protected boolean isContractLocked(
       final OnchainPrivacyGroupContract onchainPrivacyGroupContract, final Bytes32 privacyGroupId) {
-    Optional<Bytes32> canExecuteResult =
+    final Optional<Bytes32> canExecuteResult =
         onchainPrivacyGroupContract.getCanExecute(
             privacyGroupId.toBase64String(), Optional.empty());
-    boolean isLocked = canExecuteResult.map(Bytes::isZero).orElse(true);
+    final boolean isLocked = canExecuteResult.map(Bytes::isZero).orElse(true);
     return isLocked;
   }
 
@@ -328,9 +328,9 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final OnchainPrivacyGroupContract onchainPrivacyGroupContract,
       final Bytes32 privacyGroupId,
       final Bytes32 version) {
-    Optional<Bytes32> contractVersionResult =
+    final Optional<Bytes32> contractVersionResult =
         onchainPrivacyGroupContract.getVersion(privacyGroupId.toBase64String(), Optional.empty());
-    boolean versionEqual =
+    final boolean versionEqual =
         contractVersionResult.map(contractVersion -> version.equals(contractVersion)).orElse(false);
 
     if (!versionEqual) {

@@ -60,10 +60,10 @@ import org.apache.tuweni.units.bigints.UInt256;
 
  2. When using the alternative constructor, no height or hash
     parameter must be supplied to subsequent method calls. All methods
-    operate on the state specified by the given MessageFrom. Only when
-    constructed this way, the class can be used to query state that is
-    not on a block boundary. Used this way, the object's life time is
-    intended to be short.
+    operate on the state specified by the given MessageFrame. Only
+    when constructed this way, the class can be used to query state
+    that is not on a block boundary. Used this way, the object's life
+    time is intended to be short.
 */
 public class OnchainPrivacyGroupContract {
   @FunctionalInterface
@@ -106,11 +106,6 @@ public class OnchainPrivacyGroupContract {
           assert !blockHash.isPresent();
           assert !blockNumber.isPresent();
 
-          // We need the "lock status" of the group for every single
-          // transaction but we don't want this call to affect the
-          // state privateTransactionProcessor.processTransaction(...)
-          // commits the state if the process was successful before it
-          // returns
           final Bytes privacyGroupId = Bytes.fromBase64String(base64privacyGroupId);
           final MutableWorldState localMutableState =
               privateWorldStateArchive.getMutable(disposablePrivateState.rootHash(), null).get();
