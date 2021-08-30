@@ -182,7 +182,8 @@ public abstract class AbstractCallOperation extends AbstractOperation {
         return new OperationResult(optionalCost, Optional.empty());
       }
 
-      final Bytes inputData = frame.readMemory(inputDataOffset(frame), inputDataLength(frame));
+      final Bytes inputData =
+          frame.readMutableMemory(inputDataOffset(frame), inputDataLength(frame));
 
       final MessageFrame childFrame =
           MessageFrame.builder()

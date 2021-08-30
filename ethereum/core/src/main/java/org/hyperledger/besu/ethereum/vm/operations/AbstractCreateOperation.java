@@ -96,7 +96,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   private void fail(final MessageFrame frame) {
     final UInt256 inputOffset = frame.getStackItem(1);
     final UInt256 inputSize = frame.getStackItem(2);
-    frame.readMemory(inputOffset, inputSize);
+    frame.readMutableMemory(inputOffset, inputSize);
     frame.popStackItems(getStackItemsConsumed());
     frame.pushStackItem(UInt256.ZERO);
   }
@@ -114,7 +114,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final Wei value = Wei.wrap(frame.getStackItem(0));
     final UInt256 inputOffset = frame.getStackItem(1);
     final UInt256 inputSize = frame.getStackItem(2);
-    final Bytes inputData = frame.readMemory(inputOffset, inputSize);
+    final Bytes inputData = frame.readMutableMemory(inputOffset, inputSize);
 
     final Address contractAddress = targetContractAddress(frame);
 

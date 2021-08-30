@@ -563,14 +563,25 @@ public class MessageFrame {
   }
 
   /**
-   * Read bytes in memory.
+   * Read bytes in memory as mutable.
+   *
+   * @param offset The offset in memory
+   * @param length The length of the bytes to read
+   * @return The bytes in the specified range
+   */
+  public Bytes readMutableMemory(final UInt256 offset, final UInt256 length) {
+    return readMutableMemory(offset, length, false);
+  }
+
+  /**
+   * Read bytes in memory .
    *
    * @param offset The offset in memory
    * @param length The length of the bytes to read
    * @return The bytes in the specified range
    */
   public Bytes readMemory(final UInt256 offset, final UInt256 length) {
-    return readMemory(offset, length, false);
+    return readMutableMemory(offset, length, false).copy();
   }
 
   /**
@@ -581,7 +592,7 @@ public class MessageFrame {
    * @param explicitMemoryRead true if triggered by a memory opcode, false otherwise
    * @return The bytes in the specified range
    */
-  public Bytes readMemory(
+  public Bytes readMutableMemory(
       final UInt256 offset, final UInt256 length, final boolean explicitMemoryRead) {
     final Bytes value = memory.getBytes(offset, length);
     if (explicitMemoryRead) {

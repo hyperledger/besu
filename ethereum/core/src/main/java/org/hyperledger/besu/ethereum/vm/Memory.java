@@ -303,10 +303,10 @@ public class Memory {
 
     ensureCapacityForBytes(start, length);
     if (srcLength >= length) {
-      data.set(start, taintedValue);
+      data.set(start, taintedValue.slice(0, length));
     } else {
       data.set(start, Bytes.of(new byte[end - start]));
-      data.set(start, taintedValue);
+      data.set(start, taintedValue.slice(0, srcLength));
     }
   }
 
