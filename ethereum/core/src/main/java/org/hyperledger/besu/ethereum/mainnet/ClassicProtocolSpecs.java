@@ -43,7 +43,8 @@ public class ClassicProtocolSpecs {
       final boolean quorumCompatibilityMode) {
     return MainnetProtocolSpecs.homesteadDefinition(
             contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createClassicValidator())
+        .blockHeaderValidatorBuilder(
+            feeMarket -> MainnetBlockHeaderValidator.createClassicValidator())
         .name("ClassicRecoveryInit");
   }
 
@@ -234,11 +235,13 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             quorumCompatibilityMode)
         .blockHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createLegacyBlockHeaderValidator(
-                new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
+            feeMarket ->
+                MainnetBlockHeaderValidator.createLegacyBlockHeaderValidator(
+                    new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
         .ommerHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
-                new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
+            feeMarket ->
+                MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
+                    new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
         .name("Thanos");
   }
 
@@ -277,11 +280,15 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             quorumCompatibilityMode)
         .blockHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createLegacyBlockHeaderValidator(
-                new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.KECCAK256)))
+            feeMarket ->
+                MainnetBlockHeaderValidator.createLegacyBlockHeaderValidator(
+                    new EpochCalculator.Ecip1099EpochCalculator(),
+                    powHasher(PowAlgorithm.KECCAK256)))
         .ommerHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
-                new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.KECCAK256)))
+            feeMarket ->
+                MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
+                    new EpochCalculator.Ecip1099EpochCalculator(),
+                    powHasher(PowAlgorithm.KECCAK256)))
         .powHasher(powHasher(PowAlgorithm.KECCAK256))
         .name("ecip1049");
   }
