@@ -47,4 +47,6 @@ public interface BaseFeeMarket extends FeeMarket {
       final long targetGasUsed);
 
   boolean isForkBlock(final long blockNumber);
+
+  boolean isBeforeForkBlock(final long blockNumber);
 }
