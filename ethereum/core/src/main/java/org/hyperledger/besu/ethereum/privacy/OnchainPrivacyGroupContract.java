@@ -236,8 +236,12 @@ public class OnchainPrivacyGroupContract {
   private List<String> decodeList(final Bytes rlpEncodedList) {
     final ArrayList<String> decodedElements = new ArrayList<>();
     // first 32 bytes is dynamic list offset
-    final UInt256 lengthOfList = UInt256.fromBytes(rlpEncodedList.slice(32, 32)); // length of list
-    for (int i = 0; i < lengthOfList.toLong(); ++i) {
+    if (rlpEncodedList.size() < 64) return decodedElements;
+    final long lengthOfList =
+        UInt256.fromBytes(rlpEncodedList.slice(32, 32)).toLong(); // length of list
+    if (rlpEncodedList.size() < 64 + lengthOfList * 32) return decodedElements;
+
+    for (int i = 0; i < lengthOfList; ++i) {
       decodedElements.add(
           Bytes.wrap(rlpEncodedList.slice(64 + (32 * i), 32)).toBase64String()); // participant
     }

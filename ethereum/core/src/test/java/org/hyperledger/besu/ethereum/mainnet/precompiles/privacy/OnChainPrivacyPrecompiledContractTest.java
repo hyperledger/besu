@@ -233,18 +233,39 @@ public class OnChainPrivacyPrecompiledContractTest {
 
   @Test
   public void testPrivateFromNotMemberOfGroup() {
-    final Enclave enclave = mock(Enclave.class);
-    final OnChainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
-
-    final List<Log> logs = new ArrayList<>();
-    final Bytes memberList =
+    // array length too big
+    assertThatComputeReturnsEmptyGivenContractMembershipQueryReturns(
         Bytes.concatenate(
-            // offset to start of array
             Bytes32.fromHexStringLenient("0x0"),
             // array length
             Bytes32.fromHexStringLenient("0x1"),
             // first array content
-            Bytes32.fromHexStringLenient("0x1"));
+            Bytes32.fromHexStringLenient("0x1")));
+  }
+
+  @Test
+  public void testInvalidResponseToMembershipQuery() {
+    // response shorter than emoty array response
+    assertThatComputeReturnsEmptyGivenContractMembershipQueryReturns(
+        Bytes32.fromHexStringLenient("0x0"));
+
+    // array length too big
+    assertThatComputeReturnsEmptyGivenContractMembershipQueryReturns(
+        Bytes.concatenate(
+            // offset to start of array
+            Bytes32.fromHexStringLenient("0x0"),
+            // array length
+            Bytes32.fromHexStringLenient("0x2"),
+            // first array content
+            Bytes32.fromHexStringLenient("0x1")));
+  }
+
+  private void assertThatComputeReturnsEmptyGivenContractMembershipQueryReturns(
+      final Bytes memberList) {
+    final Enclave enclave = mock(Enclave.class);
+    final OnChainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
+
+    final List<Log> logs = new ArrayList<>();
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
             TransactionProcessingResult.successful(logs, 0, 0, memberList, null)));
