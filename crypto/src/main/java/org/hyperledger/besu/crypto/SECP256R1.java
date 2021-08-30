@@ -102,6 +102,18 @@ public class SECP256R1 extends AbstractSECP256 {
         nativeSignature.getV());
   }
 
+  @Override
+  protected BigInteger recoverFromSignature(
+      final int recId, final BigInteger r, final BigInteger s, final Bytes32 dataHash) {
+    if (useNative) {
+      return recoverPublicKeyFromSignatureNative(dataHash, new SECPSignature(r, s, (byte) recId))
+          .map(key -> new BigInteger(1, key.getEncoded()))
+          .orElse(null);
+    } else {
+      return super.recoverFromSignature(recId, r, s, dataHash);
+    }
+  }
+
   private Optional<SECPPublicKey> recoverPublicKeyFromSignatureNative(
       final Bytes32 dataHash, final SECPSignature signature) {
     byte[] recoveredKey;

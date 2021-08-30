@@ -15,23 +15,25 @@
 
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo;
 
 import java.util.NavigableMap;
 import java.util.OptionalLong;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
-class TransactionsForSenderInfo {
-  private final NavigableMap<Long, PendingTransactions.TransactionInfo> transactionsInfos;
+public class TransactionsForSenderInfo {
+  private final NavigableMap<Long, AbstractPendingTransactionsSorter.TransactionInfo>
+      transactionsInfos;
   private OptionalLong nextGap = OptionalLong.empty();
 
-  TransactionsForSenderInfo() {
+  public TransactionsForSenderInfo() {
     transactionsInfos = new TreeMap<>();
   }
 
-  void addTransactionToTrack(
-      final long nonce, final PendingTransactions.TransactionInfo transactionInfo) {
+  public void addTransactionToTrack(
+      final long nonce, final AbstractPendingTransactionsSorter.TransactionInfo transactionInfo) {
     synchronized (transactionsInfos) {
       if (!transactionsInfos.isEmpty()) {
         final long expectedNext = transactionsInfos.lastKey() + 1;
@@ -46,7 +48,7 @@ class TransactionsForSenderInfo {
     }
   }
 
-  void removeTrackedTransaction(final long nonce) {
+  public void removeTrackedTransaction(final long nonce) {
     transactionsInfos.remove(nonce);
     synchronized (transactionsInfos) {
       if (!transactionsInfos.isEmpty() && nonce != transactionsInfos.firstKey()) {
@@ -70,7 +72,7 @@ class TransactionsForSenderInfo {
     nextGap = OptionalLong.empty();
   }
 
-  OptionalLong maybeNextNonce() {
+  public OptionalLong maybeNextNonce() {
     if (transactionsInfos.isEmpty()) {
       return OptionalLong.empty();
     } else {
@@ -78,11 +80,11 @@ class TransactionsForSenderInfo {
     }
   }
 
-  Stream<TransactionInfo> streamTransactionInfos() {
+  public Stream<TransactionInfo> streamTransactionInfos() {
     return transactionsInfos.values().stream();
   }
 
-  TransactionInfo getTransactionInfoForNonce(final long nonce) {
+  public TransactionInfo getTransactionInfoForNonce(final long nonce) {
     return transactionsInfos.get(nonce);
   }
 }

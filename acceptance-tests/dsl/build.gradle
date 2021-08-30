@@ -14,6 +14,7 @@ dependencies {
   implementation project(':ethereum:eth')
   implementation project(':ethereum:p2p')
   implementation project(':pki')
+  implementation project(path: ':pki', configuration: 'testArtifacts')
   implementation project(':ethereum:permissioning')
   implementation project(':ethereum:rlp')
   implementation project(':metrics:core')

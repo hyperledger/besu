@@ -129,7 +129,7 @@ public interface RLPInput {
   void leaveListLenient();
 
   /**
-   * Reads a scalar from the input and return is as a long value.
+   * Reads a non-negative scalar from the input and return is as a long value.
    *
    * @return The next scalar item of this input as a long value.
    * @throws RLPException if the next item to read is a list, the input is at the end of its current

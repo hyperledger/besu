@@ -116,7 +116,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
         revertReason);
   }
 
-  private TransactionReceipt(
+  public TransactionReceipt(
       final TransactionType transactionType,
       final int status,
       final long cumulativeGasUsed,
