@@ -16,10 +16,8 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
-import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
@@ -58,9 +56,10 @@ import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.validator.QbftForksSchedule;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorConfig;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorForksSchedule;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -84,6 +83,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -96,7 +96,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
   private QbftConfigOptions qbftConfig;
-  private QbftForksSchedule qbftForksSchedule;
+  private ValidatorSelectorForksSchedule qbftForksSchedule;
   private ValidatorPeers peers;
 
   @Override
@@ -115,7 +115,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected void prepForBuild() {
     qbftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getQbftConfigOptions();
     bftEventQueue = new BftEventQueue(qbftConfig.getMessageQueueLimit());
-    qbftForksSchedule = createQbftForksSchedule(genesisConfig.getConfigOptions(), qbftConfig);
+    qbftForksSchedule = createQbftForksSchedule(genesisConfig.getConfigOptions());
   }
 
   @Override
@@ -308,25 +308,14 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     }
   }
 
-  private QbftForksSchedule createQbftForksSchedule(
-      final GenesisConfigOptions configOptions, final QbftConfigOptions qbftConfig) {
-    final VALIDATOR_SELECTION_MODE validatorSelectionMode =
-        isContractValidatorSelectionMode(qbftConfig)
-            ? VALIDATOR_SELECTION_MODE.CONTRACT
-            : VALIDATOR_SELECTION_MODE.BLOCKHEADER;
-    final QbftFork genesisFork = createGenesisFork(configOptions, validatorSelectionMode);
-    return new QbftForksSchedule(
-        genesisFork, genesisConfig.getConfigOptions().getTransitions().getQbftForks());
-  }
-
-  private QbftFork createGenesisFork(
-      final GenesisConfigOptions configOptions,
-      final VALIDATOR_SELECTION_MODE validatorSelectionMode) {
-    final Map<String, Object> genesisForkValues =
-        new HashMap<>(configOptions.getQbftConfigOptions().asMap());
-    genesisForkValues.put(BftFork.FORK_BLOCK_KEY, 0);
-    genesisForkValues.put(QbftFork.VALIDATOR_SELECTION_MODE_KEY, validatorSelectionMode);
-    return new QbftFork(JsonUtil.objectNodeFromMap(genesisForkValues));
+  private ValidatorSelectorForksSchedule createQbftForksSchedule(
+      final GenesisConfigOptions configOptions) {
+    final ValidatorSelectorConfig initialFork =
+        ValidatorSelectorConfig.fromQbftConfig(configOptions.getQbftConfigOptions());
+    final List<ValidatorSelectorConfig> validatorSelectionForks =
+        convertToValidatorSelectionConfig(
+            genesisConfig.getConfigOptions().getTransitions().getQbftForks());
+    return new ValidatorSelectorForksSchedule(initialFork, validatorSelectionForks);
   }
 
   private BftValidatorOverrides convertBftForks(final List<QbftFork> bftForks) {
@@ -346,8 +335,12 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     return new BftValidatorOverrides(result);
   }
 
-  private boolean isContractValidatorSelectionMode(final QbftConfigOptions qbftConfig) {
-    return qbftConfig.getValidatorContractAddress().isPresent();
+  private List<ValidatorSelectorConfig> convertToValidatorSelectionConfig(
+      final List<QbftFork> qbftForks) {
+    return qbftForks.stream()
+        .map(ValidatorSelectorConfig::fromQbftFork)
+        .flatMap(Optional::stream)
+        .collect(Collectors.toList());
   }
 
   private static MinedBlockObserver blockLogger(

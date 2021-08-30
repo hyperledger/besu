@@ -19,11 +19,9 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
-import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
@@ -65,9 +63,10 @@ import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.validator.QbftForksSchedule;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorConfig;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorForksSchedule;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -415,8 +414,14 @@ public class TestContextBuilder {
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule);
 
-    final QbftFork genesisFork = createGenesisFork(useValidatorContract);
-    final QbftForksSchedule forksSchedule = new QbftForksSchedule(genesisFork, qbftForks);
+    final ValidatorSelectorConfig genesisFork = createGenesisFork(useValidatorContract);
+    final List<ValidatorSelectorConfig> validatorSelectorForks =
+        qbftForks.stream()
+            .map(ValidatorSelectorConfig::fromQbftFork)
+            .flatMap(Optional::stream)
+            .collect(Collectors.toList());
+    final ValidatorSelectorForksSchedule forksSchedule =
+        new ValidatorSelectorForksSchedule(genesisFork, validatorSelectorForks);
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
             blockChain, epochManager, blockInterface, validatorOverrides);
@@ -520,23 +525,9 @@ public class TestContextBuilder {
         validatorProvider);
   }
 
-  private static QbftFork createGenesisFork(final boolean useValidatorContract) {
+  private static ValidatorSelectorConfig createGenesisFork(final boolean useValidatorContract) {
     return useValidatorContract
-        ? new QbftFork(
-            JsonUtil.objectNodeFromMap(
-                Map.of(
-                    BftFork.FORK_BLOCK_KEY,
-                    0L,
-                    QbftFork.VALIDATOR_SELECTION_MODE_KEY,
-                    VALIDATOR_SELECTION_MODE.CONTRACT,
-                    QbftFork.VALIDATOR_CONTRACT_ADDRESS_KEY,
-                    VALIDATOR_CONTRACT_ADDRESS.toHexString())))
-        : new QbftFork(
-            JsonUtil.objectNodeFromMap(
-                Map.of(
-                    BftFork.FORK_BLOCK_KEY,
-                    0L,
-                    QbftFork.VALIDATOR_SELECTION_MODE_KEY,
-                    VALIDATOR_SELECTION_MODE.BLOCKHEADER)));
+        ? ValidatorSelectorConfig.createContractConfig(0L, VALIDATOR_CONTRACT_ADDRESS.toHexString())
+        : ValidatorSelectorConfig.createBlockConfig(0L);
   }
 }

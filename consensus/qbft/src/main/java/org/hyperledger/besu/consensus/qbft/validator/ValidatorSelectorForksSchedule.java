@@ -15,27 +15,26 @@
 
 package org.hyperledger.besu.consensus.qbft.validator;
 
-import org.hyperledger.besu.config.QbftFork;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
 
-public class QbftForksSchedule {
+public class ValidatorSelectorForksSchedule {
 
-  private final NavigableSet<QbftFork> qbftForks =
-      new TreeSet<>(Comparator.comparing(QbftFork::getForkBlock).reversed());
+  private final NavigableSet<ValidatorSelectorConfig> forks =
+      new TreeSet<>(Comparator.comparing(ValidatorSelectorConfig::getBlock).reversed());
 
-  public QbftForksSchedule(final QbftFork genesisFork, final List<QbftFork> forks) {
-    qbftForks.add(genesisFork);
-    qbftForks.addAll(forks);
+  public ValidatorSelectorForksSchedule(
+      final ValidatorSelectorConfig initialFork, final List<ValidatorSelectorConfig> forks) {
+    this.forks.add(initialFork);
+    this.forks.addAll(forks);
   }
 
-  public Optional<QbftFork> getForkWithValidatorSelectionMode(final long blockNumber) {
-    for (final QbftFork f : qbftForks) {
-      if (blockNumber >= f.getForkBlock() && f.getValidatorSelectionMode().isPresent()) {
+  public Optional<ValidatorSelectorConfig> getFork(final long blockNumber) {
+    for (final ValidatorSelectorConfig f : forks) {
+      if (blockNumber >= f.getBlock()) {
         return Optional.of(f);
       }
     }

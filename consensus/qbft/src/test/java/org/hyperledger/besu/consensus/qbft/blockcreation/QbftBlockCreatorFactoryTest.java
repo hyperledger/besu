@@ -19,11 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.QbftFork;
-import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
-import org.hyperledger.besu.consensus.qbft.validator.QbftForksSchedule;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorConfig;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorForksSchedule;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -32,7 +31,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -47,24 +45,11 @@ public class QbftBlockCreatorFactoryTest {
     final MiningParameters miningParams = mock(MiningParameters.class);
     when(miningParams.getExtraData()).thenReturn(Bytes.wrap("Qbft tests".getBytes(UTF_8)));
 
-    final QbftFork genesisFork =
-        new QbftFork(
-            0,
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.of(VALIDATOR_SELECTION_MODE.BLOCKHEADER),
-            Optional.empty());
-    final QbftFork contractFork =
-        new QbftFork(
-            2,
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.of(VALIDATOR_SELECTION_MODE.CONTRACT),
-            Optional.empty());
-    final QbftForksSchedule qbftForksSchedule =
-        new QbftForksSchedule(genesisFork, List.of(contractFork));
+    final ValidatorSelectorConfig genesisFork = ValidatorSelectorConfig.createBlockConfig(0);
+    final ValidatorSelectorConfig contractFork =
+        ValidatorSelectorConfig.createContractConfig(2, "");
+    final ValidatorSelectorForksSchedule qbftForksSchedule =
+        new ValidatorSelectorForksSchedule(genesisFork, List.of(contractFork));
 
     qbftBlockCreatorFactory =
         new QbftBlockCreatorFactory(

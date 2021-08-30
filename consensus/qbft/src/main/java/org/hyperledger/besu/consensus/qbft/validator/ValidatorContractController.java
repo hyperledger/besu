@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.validator;
 
-import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -37,11 +36,12 @@ public class ValidatorContractController {
   public static final String GET_VALIDATORS = "getValidators";
   public static final String CONTRACT_ERROR_MSG = "Failed validator smart contract call";
   private final TransactionSimulator transactionSimulator;
-  private final QbftForksSchedule forksSchedule;
+  private final ValidatorSelectorForksSchedule forksSchedule;
   private final Function getValidatorsFunction;
 
   public ValidatorContractController(
-      final TransactionSimulator transactionSimulator, final QbftForksSchedule forksSchedule) {
+      final TransactionSimulator transactionSimulator,
+      final ValidatorSelectorForksSchedule forksSchedule) {
     this.transactionSimulator = transactionSimulator;
     this.forksSchedule = forksSchedule;
 
@@ -83,8 +83,8 @@ public class ValidatorContractController {
 
   private Address resolveContractAddress(final long blockNumber) {
     return forksSchedule
-        .getForkWithValidatorSelectionMode(blockNumber)
-        .flatMap(QbftFork::getValidatorContractAddress)
+        .getFork(blockNumber)
+        .flatMap(ValidatorSelectorConfig::getContractAddress)
         .map(Address::fromHexString)
         .orElseThrow(
             () ->

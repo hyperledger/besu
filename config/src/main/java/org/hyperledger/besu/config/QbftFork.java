@@ -15,9 +15,7 @@
 
 package org.hyperledger.besu.config;
 
-import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -36,19 +34,6 @@ public class QbftFork extends BftFork {
   @JsonCreator
   public QbftFork(final ObjectNode forkConfigRoot) {
     super(forkConfigRoot);
-  }
-
-  public QbftFork(
-      final long block,
-      final Optional<Integer> blockPeriod,
-      final Optional<BigInteger> blockReward,
-      final Optional<List<String>> validators,
-      final Optional<VALIDATOR_SELECTION_MODE> validatorSelectionMode,
-      final Optional<String> validatorContractAddress) {
-    super(block, blockPeriod, blockReward, validators);
-    validatorSelectionMode.ifPresent(
-        v -> forkConfigRoot.put(VALIDATOR_SELECTION_MODE_KEY, v.toString()));
-    validatorContractAddress.ifPresent(v -> forkConfigRoot.put(VALIDATOR_CONTRACT_ADDRESS_KEY, v));
   }
 
   public Optional<VALIDATOR_SELECTION_MODE> getValidatorSelectionMode() {

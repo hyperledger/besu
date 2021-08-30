@@ -121,7 +121,6 @@ public class ValidatorContractTest {
     assertThat(extraDataCodec.decode(block1).getVote()).isEmpty();
   }
 
-  // TODO-jf remove this duplication
   private QbftFork createContractFork(final long block, final Address contractAddress) {
     return new QbftFork(
         JsonUtil.objectNodeFromMap(

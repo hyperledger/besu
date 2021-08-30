@@ -15,9 +15,7 @@
 package org.hyperledger.besu.config;
 
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -39,19 +37,6 @@ public class BftFork {
   @JsonCreator
   public BftFork(final ObjectNode forkConfigRoot) {
     this.forkConfigRoot = forkConfigRoot;
-  }
-
-  public BftFork(
-      final long block,
-      final Optional<Integer> blockPeriod,
-      final Optional<BigInteger> blockReward,
-      final Optional<List<String>> validators) {
-    final Map<String, Object> values = new HashMap<>();
-    values.put(FORK_BLOCK_KEY, block);
-    blockPeriod.ifPresent(v -> values.put(BLOCK_PERIOD_SECONDS_KEY, v));
-    blockReward.ifPresent(v -> values.put(BLOCK_REWARD_KEY, v));
-    validators.ifPresent(v -> values.put(VALIDATORS_KEY, v));
-    this.forkConfigRoot = JsonUtil.objectNodeFromMap(values);
   }
 
   public long getForkBlock() {
@@ -94,7 +79,7 @@ public class BftFork {
             value -> {
               if (!value.isTextual()) {
                 throw new IllegalArgumentException(
-                    "Bft Validator fork does not contain a string " + value.toString());
+                    "Bft Validator fork does not contain a string " + value);
               }
 
               validators.add(value.asText());

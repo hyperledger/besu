@@ -15,13 +15,9 @@
 package org.hyperledger.besu.consensus.qbft.validator;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE.CONTRACT;
 import static org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController.GET_VALIDATORS;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.BftFork;
-import org.hyperledger.besu.config.JsonUtil;
-import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -34,7 +30,6 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -58,8 +53,8 @@ public class ValidatorContractControllerTest {
       Mockito.mock(TransactionSimulator.class);
   private final Transaction transaction = Mockito.mock(Transaction.class);
   private CallParameter callParameter;
-  private QbftFork genesisFork;
-  private QbftForksSchedule qbftForksSchedule;
+  private ValidatorSelectorConfig genesisFork;
+  private ValidatorSelectorForksSchedule qbftForksSchedule;
 
   @Before
   public void setup() {
@@ -70,17 +65,8 @@ public class ValidatorContractControllerTest {
             List.of(new TypeReference<DynamicArray<org.web3j.abi.datatypes.Address>>() {}));
     final Bytes payload = Bytes.fromHexString(FunctionEncoder.encode(getValidatorsFunction));
     callParameter = new CallParameter(null, CONTRACT_ADDRESS, -1, null, null, payload);
-    genesisFork =
-        new QbftFork(
-            JsonUtil.objectNodeFromMap(
-                Map.of(
-                    BftFork.FORK_BLOCK_KEY,
-                    0,
-                    QbftFork.VALIDATOR_SELECTION_MODE_KEY,
-                    CONTRACT,
-                    QbftFork.VALIDATOR_CONTRACT_ADDRESS_KEY,
-                    CONTRACT_ADDRESS.toHexString())));
-    qbftForksSchedule = new QbftForksSchedule(genesisFork, Collections.emptyList());
+    genesisFork = ValidatorSelectorConfig.createContractConfig(0, CONTRACT_ADDRESS.toHexString());
+    qbftForksSchedule = new ValidatorSelectorForksSchedule(genesisFork, Collections.emptyList());
   }
 
   @Test
