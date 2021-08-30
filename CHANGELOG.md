@@ -15,7 +15,7 @@
 - Added Labelled gauges for metrics [#2646](https://github.com/hyperledger/besu/pull/2646)
 - support for `eth/66` networking protocol [#2365](https://github.com/hyperledger/besu/pull/2365)
 - update RPC methods for post london 1559 transaction [#2535](https://github.com/hyperledger/besu/pull/2535)
-
+- \[EXPERIMENTAL\] Added support for using DNS entries in onchain node permissioning contract rules  [#2667](https://github.com/hyperledger/besu/pull/2667)
 
 ### Bug Fixes
 - Consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)
