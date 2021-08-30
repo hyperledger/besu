@@ -38,4 +38,9 @@ public class EthProtocolTest {
     assertThat(EthProtocol.isEth66Compatible(Capability.create("istanbul", 66))).isFalse();
     assertThat(EthProtocol.isEth66Compatible(Capability.create("istanbul", 100))).isFalse();
   }
+
+  @Test
+  public void eth66CheckWithNullNameReturnsFalse() {
+    assertThat(EthProtocol.isEth66Compatible(Capability.create(null, 1))).isFalse();
+  }
 }
