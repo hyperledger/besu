@@ -51,7 +51,7 @@ public class CodeCacheTest {
               mruContract.setCode(Bytes.fromHexString(manyJumps));
               cache.getContract(mruContract);
             });
-
+    cache.cleanUp();
     assertThat(cache.getIfPresent(lruContract)).isNull();
   }
 }
