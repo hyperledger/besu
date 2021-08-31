@@ -2138,8 +2138,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
           && privacyPluginPluginService.getPayloadProvider() == null) {
-        throw new ParameterException(
-            commandLine, "Privacy Plugin must be registered when enabling privacy plugin!");
+        // The plugin may register the payload provider in start or register.
+        // At this point we have only called start.
+        logger.warn(
+            "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
       }
 
       if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled() && isFlexiblePrivacyGroupsEnabled) {
