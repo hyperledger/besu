@@ -323,7 +323,7 @@ public abstract class PeerDiscoveryAgent {
                 }
                 return;
               }
-              peer.setLastContacted(System.currentTimeMillis());
+              peer.setLastContacted(System.nanoTime());
             });
   }
 
