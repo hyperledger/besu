@@ -50,7 +50,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.google.common.collect.Lists;
 import org.junit.BeforeClass;
@@ -100,7 +102,8 @@ public class Istanbul99ProtocolManagerTest {
   }
 
   @Test
-  public void respondToEth65GetHeadersUsingIstanbul99() {
+  public void respondToEth65GetHeadersUsingIstanbul99()
+      throws ExecutionException, InterruptedException, TimeoutException {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     final EthScheduler ethScheduler = new DeterministicEthScheduler(() -> false);
     EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
@@ -142,8 +145,6 @@ public class Istanbul99ProtocolManagerTest {
       ethManager.processMessage(
           Istanbul99Protocol.ISTANBUL99, new DefaultMessage(peer, messageData));
       done.get(10, TimeUnit.SECONDS);
-    } catch (Exception e) {
-      throw new RuntimeException("Test timed out", e.getCause());
     }
   }
 }
