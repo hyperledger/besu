@@ -72,15 +72,13 @@ public class BlockHeaderValidationRulesetFactory {
             .addRule(new VoteValidationRule())
             .addRule(new CliqueDifficultyValidationRule())
             .addRule(new SignerRateLimitValidationRule())
-            .addRule(new CoinbaseHeaderValidationRule(epochManager));
-    if (baseFeeMarket.isPresent()) {
-      builder
-          .addRule((new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket.get())))
-          .addRule(new GasUsageValidationRule());
+            .addRule(new CoinbaseHeaderValidationRule(epochManager))
+            .addRule(new GasUsageValidationRule());
 
-    } else {
-      builder.addRule(new GasUsageValidationRule());
+    if (baseFeeMarket.isPresent()) {
+      builder.addRule(new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket.get()));
     }
+
     return builder;
   }
 }

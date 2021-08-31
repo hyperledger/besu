@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.perm.NodeSmartContractPermissioningV2Conditions;
@@ -110,15 +111,33 @@ class NodeSmartContractPermissioningV2AcceptanceTestBase extends AcceptanceTestB
     return smartContractNodePermissioningV2.allowNode(CONTRACT_ADDRESS, node);
   }
 
+  protected Transaction<Hash> allowNode(final EnodeURL enodeURL) {
+    return smartContractNodePermissioningV2.allowNode(CONTRACT_ADDRESS, enodeURL);
+  }
+
   protected Transaction<Hash> forbidNode(final Node node) {
     return smartContractNodePermissioningV2.forbidNode(CONTRACT_ADDRESS, node);
+  }
+
+  protected Transaction<Hash> forbidNode(final EnodeURL enodeURL) {
+    return smartContractNodePermissioningV2.forbidNode(CONTRACT_ADDRESS, enodeURL);
   }
 
   protected Condition connectionIsForbidden(final Node node) {
     return nodeSmartContractPermissioningConditionsV2.connectionIsForbidden(CONTRACT_ADDRESS, node);
   }
 
+  protected Condition connectionIsForbidden(final EnodeURL enodeURL) {
+    return nodeSmartContractPermissioningConditionsV2.connectionIsForbidden(
+        CONTRACT_ADDRESS, enodeURL);
+  }
+
   protected Condition connectionIsAllowed(final Node node) {
     return nodeSmartContractPermissioningConditionsV2.connectionIsAllowed(CONTRACT_ADDRESS, node);
+  }
+
+  protected Condition connectionIsAllowed(final EnodeURL enodeURL) {
+    return nodeSmartContractPermissioningConditionsV2.connectionIsAllowed(
+        CONTRACT_ADDRESS, enodeURL);
   }
 }
