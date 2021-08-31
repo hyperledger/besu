@@ -87,7 +87,9 @@ public class QbftRoundFactory {
     if (qbftContext.getPkiBlockCreationConfiguration().isPresent()) {
       createBlockForProposalBehaviour =
           new PkiQbftCreateBlockForProposalBehaviour(
-              blockCreator, protocolContext, bftExtraDataCodec);
+              blockCreator,
+              qbftContext.getPkiBlockCreationConfiguration().get(),
+              bftExtraDataCodec);
     } else {
       createBlockForProposalBehaviour = blockCreator::createBlock;
     }
