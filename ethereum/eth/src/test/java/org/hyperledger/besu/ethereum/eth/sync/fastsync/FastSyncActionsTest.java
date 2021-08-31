@@ -26,17 +26,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -45,13 +39,10 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.testutil.TestClock;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
@@ -92,26 +83,13 @@ public class FastSyncActionsTest {
     blockchainSetupUtil = BlockchainSetupUtil.forTesting(storageFormat);
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
-    final EthScheduler ethScheduler =
-        new DeterministicEthScheduler(() -> timeoutCount.getAndDecrement() > 0);
-    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
-    EthMessages messages = new EthMessages();
-
-    final BigInteger networkId = BigInteger.ONE;
     ethProtocolManager =
-        new EthProtocolManager(
+        EthProtocolManagerTestUtil.create(
             blockchain,
-            networkId,
+            () -> timeoutCount.getAndDecrement() > 0,
             blockchainSetupUtil.getWorldArchive(),
             blockchainSetupUtil.getTransactionPool(),
-            EthProtocolConfiguration.defaultConfig(),
-            peers,
-            messages,
-            new EthContext(peers, messages, ethScheduler),
-            Collections.emptyList(),
-            false,
-            ethScheduler,
-            new ForkIdManager(blockchain, Collections.emptyList(), false));
+            EthProtocolConfiguration.defaultConfig());
     fastSyncActions = createFastSyncActions(syncConfig);
   }
 

@@ -26,16 +26,9 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler;
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
@@ -44,13 +37,10 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.ExceptionUtils;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -96,25 +86,13 @@ public class PivotBlockRetrieverTest {
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
     transactionPool = blockchainSetupUtil.getTransactionPool();
-    final EthScheduler ethScheduler = new DeterministicEthScheduler(timeout::get);
-    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
-    EthMessages messages = new EthMessages();
-
-    final BigInteger networkId = BigInteger.ONE;
     ethProtocolManager =
-        new EthProtocolManager(
+        EthProtocolManagerTestUtil.create(
             blockchain,
-            networkId,
+            timeout::get,
             blockchainSetupUtil.getWorldArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig(),
-            peers,
-            messages,
-            new EthContext(peers, messages, ethScheduler),
-            Collections.emptyList(),
-            false,
-            ethScheduler,
-            new ForkIdManager(blockchain, Collections.emptyList(), false));
+            EthProtocolConfiguration.defaultConfig());
 
     pivotBlockRetriever = createPivotBlockRetriever(3, 1, 1);
   }

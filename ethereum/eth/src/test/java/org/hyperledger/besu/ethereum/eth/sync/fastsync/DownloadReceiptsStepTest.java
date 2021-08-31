@@ -25,24 +25,14 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler;
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.testutil.TestClock;
 
-import java.math.BigInteger;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -69,25 +59,13 @@ public class DownloadReceiptsStepTest {
   @Before
   public void setUp() {
     TransactionPool transactionPool = mock(TransactionPool.class);
-    final EthScheduler ethScheduler = new DeterministicEthScheduler(() -> false);
-    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
-    EthMessages messages = new EthMessages();
-
-    final BigInteger networkId = BigInteger.ONE;
     ethProtocolManager =
-        new EthProtocolManager(
+        EthProtocolManagerTestUtil.create(
             blockchain,
-            networkId,
+            () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig(),
-            peers,
-            messages,
-            new EthContext(peers, messages, ethScheduler),
-            Collections.emptyList(),
-            false,
-            ethScheduler,
-            new ForkIdManager(blockchain, Collections.emptyList(), false));
+            EthProtocolConfiguration.defaultConfig());
     downloadReceiptsStep =
         new DownloadReceiptsStep(ethProtocolManager.ethContext(), new NoOpMetricsSystem());
   }
