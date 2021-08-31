@@ -46,6 +46,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -323,7 +324,7 @@ public abstract class PeerDiscoveryAgent {
                 }
                 return;
               }
-              peer.setLastContacted(System.nanoTime());
+              peer.setLastContacted(Instant.now().getNano());
             });
   }
 
