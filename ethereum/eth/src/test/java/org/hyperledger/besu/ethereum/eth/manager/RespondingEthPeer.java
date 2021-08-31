@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -228,7 +229,7 @@ public class RespondingEthPeer {
   }
 
   private static TransactionPool createTransactionPool() {
-    return Mockito.mock(TransactionPool.class);
+    return mock(TransactionPool.class);
   }
 
   public static Responder blockchainResponder(
