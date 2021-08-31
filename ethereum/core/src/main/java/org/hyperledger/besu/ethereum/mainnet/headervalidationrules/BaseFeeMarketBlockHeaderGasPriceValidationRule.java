@@ -36,6 +36,7 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRule
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     try {
+
       // if this is the fork block, baseFee should be the initial baseFee
       if (baseFeeMarket.isForkBlock(header.getNumber())) {
         return baseFeeMarket.getInitialBasefee()
