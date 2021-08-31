@@ -65,7 +65,6 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
-import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
@@ -145,7 +144,6 @@ public abstract class CommandTestAbstract {
   @Mock protected RlpBlockImporter rlpBlockImporter;
   @Mock protected StorageServiceImpl storageService;
   @Mock protected SecurityModuleServiceImpl securityModuleService;
-  @Mock protected BesuConfiguration commonPluginConfiguration;
   @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
   @Mock protected PrivacyKeyValueStorageFactory rocksDBSPrivacyStorageFactory;
   @Mock protected PicoCLIOptions cliOptions;
@@ -352,8 +350,6 @@ public abstract class CommandTestAbstract {
             securityModuleService,
             mockPkiBlockCreationConfigProvider);
     besuCommands.add(besuCommand);
-
-    besuCommand.setBesuConfiguration(commonPluginConfiguration);
 
     // parse using Ansi.OFF to be able to assert on non formatted output results
     besuCommand.parse(

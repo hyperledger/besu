@@ -146,6 +146,7 @@ import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+import org.hyperledger.besu.plugin.services.JsonRpcConfigurationService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
@@ -1113,7 +1114,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Optional<TLSConfiguration> p2pTLSConfiguration;
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
-  private BesuConfiguration pluginCommonConfiguration;
+  private final BesuCommandConfigurationService pluginCommonConfiguration;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(() -> MetricsSystemFactory.create(metricsConfiguration()));
   private Vertx vertx;
@@ -1175,6 +1176,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.privacyPluginPluginService = privacyPluginPluginService;
     pluginCommonConfiguration = new BesuCommandConfigurationService();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
+    besuPluginContext.addService(JsonRpcConfigurationService.class, pluginCommonConfiguration);
     this.pkiBlockCreationConfigProvider = pkiBlockCreationConfigProvider;
   }
 
@@ -1228,11 +1230,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
-  }
-
-  @VisibleForTesting
-  void setBesuConfiguration(final BesuConfiguration pluginCommonConfiguration) {
-    this.pluginCommonConfiguration = pluginCommonConfiguration;
   }
 
   private void addSubCommands(
@@ -2687,7 +2684,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return logLevel;
   }
 
-  private class BesuCommandConfigurationService implements BesuConfiguration {
+  private class BesuCommandConfigurationService
+      implements BesuConfiguration, JsonRpcConfigurationService {
 
     @Override
     public Path getStoragePath() {
@@ -2705,6 +2703,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .toDomainObject()
           .getDataStorageFormat()
           .getDatabaseVersion();
+    }
+
+    @Override
+    public boolean isJsonRpcEnabled() {
+      return isRpcHttpEnabled;
+    }
+
+    @Override
+    public int getJsonRpcPort() {
+      return rpcHttpPort;
+    }
+
+    @Override
+    public String getJsonRpcHost() {
+      return rpcHttpHost;
+    }
+
+    @Override
+    public Collection<String> getJsonRpcApis() {
+      return rpcHttpApis.stream().map(RpcApi::toString).collect(Collectors.toList());
     }
   }
 
