@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -43,6 +44,8 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.math.BigInteger;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -101,16 +104,21 @@ public abstract class AbstractMessageTaskTest<T, R> {
             syncState,
             Wei.of(1),
             TransactionPoolConfiguration.DEFAULT);
+    final BigInteger networkId = BigInteger.ONE;
     ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
+        new EthProtocolManager(
             blockchain,
-            ethScheduler,
+            networkId,
             protocolContext.getWorldStateArchive(),
             transactionPool,
             EthProtocolConfiguration.defaultConfig(),
             ethPeers,
             ethMessages,
-            ethContext);
+            ethContext,
+            Collections.emptyList(),
+            false,
+            ethScheduler,
+            new ForkIdManager(blockchain, Collections.emptyList(), false));
   }
 
   protected abstract T generateDataToBeRequested();

@@ -1,22 +1,20 @@
 /*
- * Copyright ConsenSys AG.
+ *  Copyright ConsenSys AG.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ *  the License. You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ *  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations under the License.
  *
- * SPDX-License-Identifier: Apache-2.0
+ *  SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
-import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -24,6 +22,7 @@ import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -42,6 +41,8 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.OptionalLong;
 
+import org.mockito.Mockito;
+
 public class EthProtocolManagerTestUtil {
 
   public static EthProtocolManager create(
@@ -50,12 +51,24 @@ public class EthProtocolManagerTestUtil {
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration) {
-    return create(
+    final EthScheduler ethScheduler = new DeterministicEthScheduler(timeoutPolicy);
+    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
+    EthMessages messages = new EthMessages();
+
+    final BigInteger networkId = BigInteger.ONE;
+    return new EthProtocolManager(
         blockchain,
-        new DeterministicEthScheduler(timeoutPolicy),
+        networkId,
         worldStateArchive,
         transactionPool,
-        ethereumWireProtocolConfiguration);
+        ethereumWireProtocolConfiguration,
+        peers,
+        messages,
+        new EthContext(peers, messages, ethScheduler),
+        Collections.emptyList(),
+        false,
+        ethScheduler,
+        new ForkIdManager(blockchain, Collections.emptyList(), false));
   }
 
   public static EthProtocolManager create(
@@ -92,19 +105,32 @@ public class EthProtocolManagerTestUtil {
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethProtocolConfiguration) {
-    return create(
+    final EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
+    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
+    EthMessages messages = new EthMessages();
+
+    final BigInteger networkId = BigInteger.ONE;
+    return new EthProtocolManager(
         blockchain,
-        new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT),
+        networkId,
         worldStateArchive,
         transactionPool,
-        ethProtocolConfiguration);
+        ethProtocolConfiguration,
+        peers,
+        messages,
+        new EthContext(peers, messages, ethScheduler),
+        Collections.emptyList(),
+        false,
+        ethScheduler,
+        new ForkIdManager(blockchain, Collections.emptyList(), false));
   }
 
   public static EthProtocolManager create(final EthScheduler ethScheduler) {
     final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
     final GenesisConfigFile config = GenesisConfigFile.mainnet();
     final GenesisState genesisState = GenesisState.fromConfig(config, protocolSchedule);
-    final Blockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
+    final Blockchain blockchain =
+        InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisState.getBlock());
     return create(blockchain, ethScheduler);
   }
 
@@ -117,15 +143,20 @@ public class EthProtocolManagerTestUtil {
     EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
     EthMessages messages = new EthMessages();
 
-    return create(
+    final BigInteger networkId = BigInteger.ONE;
+    return new EthProtocolManager(
         blockchain,
-        ethScheduler,
+        networkId,
         worldStateArchive,
         transactionPool,
         configuration,
         peers,
         messages,
-        new EthContext(peers, messages, ethScheduler));
+        new EthContext(peers, messages, ethScheduler),
+        Collections.emptyList(),
+        false,
+        ethScheduler,
+        new ForkIdManager(blockchain, Collections.emptyList(), false));
   }
 
   public static EthProtocolManager create(
@@ -133,15 +164,20 @@ public class EthProtocolManagerTestUtil {
     EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
     EthMessages messages = new EthMessages();
 
-    return create(
+    final BigInteger networkId = BigInteger.ONE;
+    return new EthProtocolManager(
         blockchain,
-        ethScheduler,
+        networkId,
         BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST).getWorldArchive(),
-        mock(TransactionPool.class),
+        Mockito.mock(TransactionPool.class),
         EthProtocolConfiguration.defaultConfig(),
         peers,
         messages,
-        new EthContext(peers, messages, ethScheduler));
+        new EthContext(peers, messages, ethScheduler),
+        Collections.emptyList(),
+        false,
+        ethScheduler,
+        new ForkIdManager(blockchain, Collections.emptyList(), false));
   }
 
   public static EthProtocolManager create() {

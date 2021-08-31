@@ -228,6 +228,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public void processMessage(final Capability cap, final Message message) {
+    LOG.info("Processing message {} with cap {}", message, cap);
     checkArgument(
         getSupportedCapabilities().contains(cap),
         "Unsupported capability passed to processMessage(): " + cap);

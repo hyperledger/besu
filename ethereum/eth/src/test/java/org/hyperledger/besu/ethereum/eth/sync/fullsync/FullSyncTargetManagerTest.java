@@ -25,11 +25,15 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
@@ -37,9 +41,12 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.testutil.TestClock;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -82,13 +89,25 @@ public class FullSyncTargetManagerTest {
     final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
     final ProtocolContext protocolContext =
         new ProtocolContext(localBlockchain, localWorldState, null);
+    final EthScheduler ethScheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
+    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
+    EthMessages messages = new EthMessages();
+
+    final BigInteger networkId = BigInteger.ONE;
     ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
+        new EthProtocolManager(
             localBlockchain,
-            new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()),
+            networkId,
             localWorldState,
             localBlockchainSetup.getTransactionPool(),
-            EthProtocolConfiguration.defaultConfig());
+            EthProtocolConfiguration.defaultConfig(),
+            peers,
+            messages,
+            new EthContext(peers, messages, ethScheduler),
+            Collections.emptyList(),
+            false,
+            ethScheduler,
+            new ForkIdManager(localBlockchain, Collections.emptyList(), false));
     final EthContext ethContext = ethProtocolManager.ethContext();
     localBlockchainSetup.importFirstBlocks(5);
     otherBlockchainSetup.importFirstBlocks(20);
