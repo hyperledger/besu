@@ -1,13 +1,16 @@
 /*
  * Copyright ConsenSys AG.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with
  * the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See
+ *  the License for the
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -20,7 +23,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import java.util.Collections;
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -30,6 +33,8 @@ import org.apache.tuweni.bytes.Bytes;
 */
 public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
 
+  public static final int QBFT_EXTRA_DATA_LIST_SIZE = 5;
+
   @Override
   public BftExtraData decodeRaw(final Bytes input) {
     if (input.isEmpty()) {
@@ -38,17 +43,13 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
 
     final BftExtraData bftExtraData = super.decodeRaw(input);
 
-    // Skip through every element in the list and read the last one (CMS message)
     final RLPInput rlpInput = new BytesValueRLPInput(input, false);
-    rlpInput.enterList();
-    rlpInput.skipNext();
-    rlpInput.skipNext();
-    rlpInput.skipNext();
-    rlpInput.skipNext();
-    rlpInput.skipNext();
+
     final Bytes cms;
-    if (!rlpInput.isEndOfCurrentList()) {
-      cms = rlpInput.readBytes();
+    final List<RLPInput> elements = rlpInput.readList(RLPInput::readAsRlp);
+    if (elements.size() > QBFT_EXTRA_DATA_LIST_SIZE) {
+      final RLPInput cmsElement = elements.get(elements.size() - 1);
+      cms = cmsElement.readBytes();
     } else {
       cms = Bytes.EMPTY;
     }
@@ -63,47 +64,23 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
 
   private Bytes encode(
       final BftExtraData bftExtraData, final EncodingType encodingType, final boolean includeCms) {
-    final PkiQbftExtraData extraData;
+    final Bytes encoded = super.encode(bftExtraData, encodingType);
     if (!(bftExtraData instanceof PkiQbftExtraData)) {
-      return super.encode(bftExtraData, encodingType);
-    } else {
-      extraData = (PkiQbftExtraData) bftExtraData;
+      return encoded;
     }
 
-    // TODO-lucas We should not duplicate the code from QbftExtraDataCodec
-    final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
-    encoder.startList();
-    encoder.writeBytes(bftExtraData.getVanityData());
-    encoder.writeList(bftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator));
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    rlpOutput.startList();
+    // Read through extraData RLP list elements and write them to the new RLP output
+    new BytesValueRLPInput(encoded, false)
+        .readList(RLPInput::readAsRlp).stream()
+            .map(RLPInput::raw)
+            .forEach(rlpOutput::writeRLPBytes);
+    // Only write CMS if includeCms is true
+    rlpOutput.writeBytes(includeCms ? ((PkiQbftExtraData) bftExtraData).getCms() : Bytes.EMPTY);
+    rlpOutput.endList();
 
-    if (bftExtraData.getVote().isPresent()) {
-      encodeVote(encoder, bftExtraData.getVote().get());
-    } else {
-      encoder.writeList(Collections.emptyList(), (o, rlpOutput) -> {});
-    }
-
-    if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER) {
-      encoder.writeIntScalar(bftExtraData.getRound());
-      if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS) {
-        encoder.writeList(
-            bftExtraData.getSeals(), (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
-      } else {
-        encoder.writeEmptyList();
-      }
-    } else {
-      encoder.writeIntScalar(0);
-      encoder.writeEmptyList();
-    }
-
-    if (includeCms) {
-      encoder.writeBytes(extraData.getCms());
-    } else {
-      encoder.writeBytes(Bytes.EMPTY);
-    }
-
-    encoder.endList();
-
-    return encoder.encoded();
+    return rlpOutput.encoded();
   }
 
   public Bytes encodeWithoutCms(final BftExtraData bftExtraData) {
