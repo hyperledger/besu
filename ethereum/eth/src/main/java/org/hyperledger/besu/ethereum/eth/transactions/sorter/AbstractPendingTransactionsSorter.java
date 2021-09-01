@@ -131,19 +131,6 @@ public abstract class AbstractPendingTransactionsSorter {
         pendingTransactions::size);
   }
 
-  protected Long distanceFromNextNonce(final TransactionInfo incomingTx) {
-    final TransactionsForSenderInfo inPool = transactionsBySender.get(incomingTx.getSender());
-    if ((inPool == null)
-        || (inPool.streamTransactionInfos().count() < 1)) { // nothing in pool, you're next
-      return 0L;
-    }
-    long minNonceForAccount =
-        inPool.streamTransactionInfos().mapToLong(TransactionInfo::getNonce).min().getAsLong();
-    // despite this looking backwards, it produces the sort order we want.
-    // greater distances produce more negative results, which are then .reversed()
-    return minNonceForAccount - incomingTx.getNonce();
-  }
-
   public void evictOldTransactions() {
     final Instant removeTransactionsBefore =
         clock.instant().minus(maxTransactionRetentionHours, ChronoUnit.HOURS);
