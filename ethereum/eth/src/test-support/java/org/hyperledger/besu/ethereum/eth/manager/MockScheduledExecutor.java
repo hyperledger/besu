@@ -25,7 +25,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-class MockScheduledExecutor extends MockExecutorService implements ScheduledExecutorService {
+public class MockScheduledExecutor extends MockExecutorService implements ScheduledExecutorService {
 
   @Override
   public ScheduledFuture<?> schedule(
