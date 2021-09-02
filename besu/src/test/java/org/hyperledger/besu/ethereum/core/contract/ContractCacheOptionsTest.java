@@ -12,19 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+package org.hyperledger.besu.ethereum.core.contract;
 
-package org.hyperledger.besu.ethereum.core;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.vm.Code;
+import org.hyperledger.besu.cli.CommandTestAbstract;
+import org.junit.Test;
 
-import com.google.common.cache.Weigher;
+public class ContractCacheOptionsTest extends CommandTestAbstract {
 
-public class CodeScale implements Weigher<Account, Code> {
-  public static final long DEFAULT_WEIGHT =
-      1024 * 25 * 10000; // TODO: make configurable, this is 10k full size contracts
-
-  @Override
-  public int weigh(final Account key, final Code value) {
-    return value.getSize();
+  @Test
+  public void providedValueGoesToCodeCache() {
+    parseCommand(ContractCacheOptions.CONTRACT_CACHE_WEIGHT, "13");
+    assertThat(ContractCacheOptions.getContractCacheWeightKilobytes()).isEqualTo(13l);
+    CodeCache cache = new CodeCache();
+    assertThat(cache.getWeight()).isEqualTo(13L * 1024);
   }
 }

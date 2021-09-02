@@ -28,8 +28,6 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.CodeCache;
-import org.hyperledger.besu.ethereum.core.CodeLoader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -69,8 +67,6 @@ public class MainnetTransactionProcessorTest {
   @Mock private AbstractMessageProcessor contractCreationProcessor;
   @Mock private AbstractMessageProcessor messageCallProcessor;
 
-  private CodeLoader loader;
-  private CodeCache cache;
   @Mock private Blockchain blockchain;
   @Mock private WorldUpdater worldState;
   @Mock private ProcessableBlockHeader blockHeader;
@@ -98,8 +94,6 @@ public class MainnetTransactionProcessorTest {
     when(transactionValidator.validate(any(), any(), any())).thenReturn(ValidationResult.valid());
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(70L));
 
-    this.loader = spy(new CodeLoader());
-    this.cache = new CodeCache(loader);
     this.worldState = spy(createInMemoryWorldStateUsingCache(this.cache).updater());
 
     transactionProcessor =

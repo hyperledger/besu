@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
+import org.hyperledger.besu.ethereum.core.contract.CodeCache;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.ArrayList;

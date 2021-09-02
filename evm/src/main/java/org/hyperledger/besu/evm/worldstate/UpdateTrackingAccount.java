@@ -63,7 +63,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   private boolean storageWasCleared = false;
   private boolean transactionBoundary = false;
 
-  UpdateTrackingAccount(final Address address) {
+  public UpdateTrackingAccount(final Address address) {
     checkNotNull(address);
     this.address = address;
     this.addressHash = Hash.hash(this.address);

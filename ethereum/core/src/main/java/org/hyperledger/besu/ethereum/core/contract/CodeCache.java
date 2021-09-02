@@ -13,8 +13,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.ethereum.core;
+package org.hyperledger.besu.ethereum.core.contract;
 
+import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.Map;
@@ -32,18 +33,23 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public class CodeCache implements LoadingCache<Account, Code> {
 
   private final LoadingCache<Account, Code> cache;
+  private final long weight;
 
-  public CodeCache(final long maxWeight, final CodeLoader loader) {
+  public CodeCache(final long maxWeightBytes, final CodeLoader loader) {
+    this.weight = maxWeightBytes;
     this.cache =
-        CacheBuilder.newBuilder().maximumWeight(maxWeight).weigher(new CodeScale()).build(loader);
+        CacheBuilder.newBuilder()
+            .maximumWeight(maxWeightBytes)
+            .weigher(new CodeScale())
+            .build(loader);
   }
 
   public CodeCache() {
-    this(CodeScale.DEFAULT_WEIGHT, new CodeLoader());
+    this(ContractCacheOptions.getContractCacheWeightKilobytes() * 1024, new CodeLoader());
   }
 
   public CodeCache(final CodeLoader loader) {
-    this(CodeScale.DEFAULT_WEIGHT, loader);
+    this(ContractCacheOptions.getContractCacheWeightKilobytes() * 1024, loader);
   }
 
   public Optional<Code> getContract(final Account account) {
@@ -147,5 +153,9 @@ public class CodeCache implements LoadingCache<Account, Code> {
   @Override
   public void cleanUp() {
     this.cache.cleanUp();
+  }
+
+  public long getWeight() {
+    return weight;
   }
 }

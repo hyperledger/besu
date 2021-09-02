@@ -12,8 +12,10 @@
 
 
 ## 21.7.4
+
 ### Additions and Improvements
 - Upgrade Gradle to 7.2, which supports building with Java 17 [#2761](https://github.com/hyperledger/besu/pull/2376) 
+- reduces need for JUMPDEST analysis via contract caching [#2607](https://github.com/hyperledger/besu/issues/2607)
 
 ### Bug Fixes
 - Set an idle timeout for metrics connections, to clean up ports when no longer used [\#2748](https://github.com/hyperledger/besu/pull/2748)
@@ -27,6 +29,7 @@
 ### Download Link
 https://hyperledger.jfrog.io/native/besu-binaries/besu/21.7.4/besu-21.7.4.zip \
 SHA256: 778d3c42851db11fec9171f77b22662f2baeb9b2ce913d7cfaaf1042ec19b7f9
+
 
 ## 21.7.3
 ### Additions and Improvements

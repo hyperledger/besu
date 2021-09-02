@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 import org.hyperledger.besu.ethereum.core.CodeCache;
+import org.hyperledger.besu.ethereum.core.contract.CodeCache;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.Collection;
