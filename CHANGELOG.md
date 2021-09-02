@@ -16,6 +16,7 @@
 - support for `eth/66` networking protocol [#2365](https://github.com/hyperledger/besu/pull/2365)
 - update RPC methods for post london 1559 transaction [#2535](https://github.com/hyperledger/besu/pull/2535)
 - \[EXPERIMENTAL\] Added support for using DNS host name in place of IP address in onchain node permissioning rules [#2667](https://github.com/hyperledger/besu/pull/2667)
+- Implement EIP-3607 Reject transactions from senders with deployed code. [#2676](https://github.com/hyperledger/besu/pull/2676)
 - Ignore all unknown fields when supplied to eth_estimateGas or eth_call. [\#2690](https://github.com/hyperledger/besu/pull/2690)
 
 ### Bug Fixes
