@@ -13,8 +13,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.ethereum.core;
+package org.hyperledger.besu.ethereum.core.contract;
 
+import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import com.google.common.cache.CacheLoader;

@@ -13,10 +13,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.ethereum.core;
+package org.hyperledger.besu.ethereum.core.contract;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.EvmAccount;
+import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.Optional;
@@ -47,7 +50,7 @@ public class CodeCacheTest {
         .forEach(
             index -> {
               final UpdateTrackingAccount<EvmAccount> mruContract =
-                  new UpdateTrackingAccount<EvmAccount>(gen.address());
+                  new UpdateTrackingAccount<>(gen.address());
               mruContract.setCode(Bytes.fromHexString(manyJumps));
               cache.getContract(mruContract);
             });
