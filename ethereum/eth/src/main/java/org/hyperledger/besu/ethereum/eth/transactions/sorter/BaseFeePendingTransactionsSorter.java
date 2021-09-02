@@ -85,7 +85,6 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .get()
                           .getValue()
                           .longValue())
-              .thenComparing(this::distanceFromNextNonce)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
 
@@ -99,7 +98,6 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .getMaxFeePerGas()
                           .map(maxFeePerGas -> maxFeePerGas.getValue().longValue())
                           .orElse(transactionInfo.getGasPrice().toLong()))
-              .thenComparing(this::distanceFromNextNonce)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
 
