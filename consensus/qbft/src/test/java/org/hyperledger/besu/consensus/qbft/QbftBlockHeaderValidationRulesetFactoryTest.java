@@ -24,7 +24,6 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
 import org.hyperledger.besu.consensus.common.bft.Vote;
-import org.hyperledger.besu.consensus.qbft.pki.QbftContext;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;

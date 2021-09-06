@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
-import org.hyperledger.besu.consensus.qbft.pki.QbftContext;
+import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
