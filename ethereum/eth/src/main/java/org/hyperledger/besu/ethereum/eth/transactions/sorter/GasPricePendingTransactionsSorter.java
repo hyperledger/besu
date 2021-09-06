@@ -41,7 +41,6 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(TransactionInfo::getGasPrice)
-              .thenComparing(this::distanceFromNextNonce)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
 
