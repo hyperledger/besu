@@ -65,7 +65,7 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
   private Bytes encode(
       final BftExtraData bftExtraData, final EncodingType encodingType, final boolean includeCms) {
     final Bytes encoded = super.encode(bftExtraData, encodingType);
-    if (!(bftExtraData instanceof PkiQbftExtraData)) {
+    if (!(bftExtraData instanceof PkiQbftExtraData) || !includeCms) {
       return encoded;
     }
 
@@ -76,8 +76,7 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
         .readList(RLPInput::readAsRlp).stream()
             .map(RLPInput::raw)
             .forEach(rlpOutput::writeRLPBytes);
-    // Only write CMS if includeCms is true
-    rlpOutput.writeBytes(includeCms ? ((PkiQbftExtraData) bftExtraData).getCms() : Bytes.EMPTY);
+    rlpOutput.writeBytes(((PkiQbftExtraData) bftExtraData).getCms());
     rlpOutput.endList();
 
     return rlpOutput.encoded();
