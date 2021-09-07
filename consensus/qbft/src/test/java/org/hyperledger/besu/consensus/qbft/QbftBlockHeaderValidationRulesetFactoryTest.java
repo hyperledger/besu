@@ -47,7 +47,10 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
     return new ProtocolContext(
-        null, null, setupContextWithBftExtraDataEncoder(validators, new QbftExtraDataCodec()));
+        null,
+        null,
+        setupContextWithBftExtraDataEncoder(
+            QbftContext.class, validators, new QbftExtraDataCodec()));
   }
 
   @Test

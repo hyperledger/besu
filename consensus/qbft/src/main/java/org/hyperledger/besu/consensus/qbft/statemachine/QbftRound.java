@@ -49,6 +49,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,15 +59,17 @@ public class QbftRound {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Subscribers<MinedBlockObserver> observers;
-  private final RoundState roundState;
-  private final BftBlockCreator blockCreator;
-  private final ProtocolContext protocolContext;
+  protected final RoundState roundState;
+  protected final BftBlockCreator blockCreator;
+  protected final ProtocolContext protocolContext;
   private final BlockImporter blockImporter;
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final QbftMessageTransmitter transmitter;
-  private final BftExtraDataCodec bftExtraDataCodec;
+  protected final BftExtraDataCodec bftExtraDataCodec;
+  protected CreateBlockForProposalBehaviour createBlockForProposalBehaviour;
 
+  @VisibleForTesting
   public QbftRound(
       final RoundState roundState,
       final BftBlockCreator blockCreator,
@@ -78,6 +81,32 @@ public class QbftRound {
       final QbftMessageTransmitter transmitter,
       final RoundTimer roundTimer,
       final BftExtraDataCodec bftExtraDataCodec) {
+    this(
+        roundState,
+        blockCreator,
+        protocolContext,
+        blockImporter,
+        observers,
+        nodeKey,
+        messageFactory,
+        transmitter,
+        roundTimer,
+        bftExtraDataCodec,
+        blockCreator::createBlock);
+  }
+
+  public QbftRound(
+      final RoundState roundState,
+      final BftBlockCreator blockCreator,
+      final ProtocolContext protocolContext,
+      final BlockImporter blockImporter,
+      final Subscribers<MinedBlockObserver> observers,
+      final NodeKey nodeKey,
+      final MessageFactory messageFactory,
+      final QbftMessageTransmitter transmitter,
+      final RoundTimer roundTimer,
+      final BftExtraDataCodec bftExtraDataCodec,
+      final CreateBlockForProposalBehaviour createBlockForProposalBehaviour) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
@@ -87,6 +116,7 @@ public class QbftRound {
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
     this.bftExtraDataCodec = bftExtraDataCodec;
+    this.createBlockForProposalBehaviour = createBlockForProposalBehaviour;
 
     roundTimer.startTimer(getRoundIdentifier());
   }
@@ -96,8 +126,9 @@ public class QbftRound {
   }
 
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
-    final Block block = blockCreator.createBlock(headerTimeStampSeconds);
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
+    final Block block = createBlockForProposalBehaviour.create(headerTimeStampSeconds);
+
     LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
     updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
   }
@@ -110,7 +141,7 @@ public class QbftRound {
     Block blockToPublish;
     if (bestPreparedCertificate.isEmpty()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
-      blockToPublish = blockCreator.createBlock(headerTimestamp);
+      blockToPublish = createBlockForProposalBehaviour.create(headerTimestamp);
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
@@ -123,7 +154,7 @@ public class QbftRound {
         bestPreparedCertificate.map(PreparedCertificate::getPrepares).orElse(emptyList()));
   }
 
-  private void updateStateWithProposalAndTransmit(
+  protected void updateStateWithProposalAndTransmit(
       final Block block,
       final List<SignedData<RoundChangePayload>> roundChanges,
       final List<SignedData<PreparePayload>> prepares) {
