@@ -34,7 +34,7 @@ import java.util.function.Supplier;
 // too hard to coordinate with the state machine).
 public class BftBlockCreator extends AbstractBlockCreator {
 
-  private final BftExtraDataCodec bftExtraDataCodec;
+  protected final BftExtraDataCodec bftExtraDataCodec;
 
   public BftBlockCreator(
       final Address localAddress,

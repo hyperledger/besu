@@ -17,8 +17,12 @@ package org.hyperledger.besu.consensus.qbft.blockcreation;
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.qbft.QbftContext;
+import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -27,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -52,6 +57,33 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
         miningBeneficiary,
         bftExtraDataCodec);
     this.extraDataWithRoundInformationOnly = extraDataWithRoundInformationOnly;
+  }
+
+  @Override
+  public BlockCreator create(final BlockHeader parentHeader, final int round) {
+    final BftBlockCreator bftBlockCreator =
+        new BftBlockCreator(
+            localAddress,
+            () -> targetGasLimit.map(AtomicLong::longValue),
+            ph -> createExtraData(round, ph),
+            pendingTransactions,
+            protocolContext,
+            protocolSchedule,
+            minTransactionGasPrice,
+            minBlockOccupancyRatio,
+            parentHeader,
+            miningBeneficiary,
+            bftExtraDataCodec);
+
+    final QbftContext qbftContext = protocolContext.getConsensusState(QbftContext.class);
+    if (qbftContext.getPkiBlockCreationConfiguration().isEmpty()) {
+      return bftBlockCreator;
+    } else {
+      return new PkiQbftBlockCreator(
+          bftBlockCreator,
+          qbftContext.getPkiBlockCreationConfiguration().get(),
+          (PkiQbftExtraDataCodec) bftExtraDataCodec);
+    }
   }
 
   @Override
