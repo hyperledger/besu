@@ -187,3 +187,6 @@ Xp2p-tls-truststore-type="none"
 Xp2p-tls-truststore-file="none.file"
 Xp2p-tls-keystore-password-file="none"
 Xp2p-tls-crl-file="none.file"
+
+#contracts
+contract-code-cache-weight-kb=250000
