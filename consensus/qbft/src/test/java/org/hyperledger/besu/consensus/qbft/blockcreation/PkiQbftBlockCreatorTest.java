@@ -67,8 +67,7 @@ public class PkiQbftBlockCreatorTest {
     assertThatThrownBy(
             () -> new PkiQbftBlockCreator(blockCreator, cmsCreator, new QbftExtraDataCodec()))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining(
-            "PkiQbftCreateBlockForProposalBehaviour must use PkiQbftExtraDataCodec");
+        .hasMessageContaining("PkiQbftBlockCreator must use PkiQbftExtraDataCodec");
   }
 
   @Test

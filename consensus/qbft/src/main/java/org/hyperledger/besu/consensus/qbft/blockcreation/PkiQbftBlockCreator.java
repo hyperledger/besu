@@ -67,7 +67,7 @@ public class PkiQbftBlockCreator implements BlockCreator {
 
     checkArgument(
         bftExtraDataCodec instanceof PkiQbftExtraDataCodec,
-        "PkiQbftCreateBlockForProposalBehaviour must use PkiQbftExtraDataCodec");
+        "PkiQbftBlockCreator must use PkiQbftExtraDataCodec");
     this.pkiQbftExtraDataCodec = (PkiQbftExtraDataCodec) bftExtraDataCodec;
   }
 
