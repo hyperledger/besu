@@ -12,28 +12,30 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
-package org.hyperledger.besu.consensus.qbft.pki;
+package org.hyperledger.besu.consensus.qbft;
 
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 
-public class PkiQbftContext extends BftContext {
+import java.util.Optional;
 
-  private final PkiBlockCreationConfiguration pkiBlockCreationConfiguration;
+public class QbftContext extends BftContext {
 
-  public PkiQbftContext(
+  private final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration;
+
+  public QbftContext(
       final ValidatorProvider validatorProvider,
       final EpochManager epochManager,
       final BftBlockInterface blockInterface,
-      final PkiBlockCreationConfiguration pkiBlockCreationConfiguration) {
+      final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration) {
     super(validatorProvider, epochManager, blockInterface);
     this.pkiBlockCreationConfiguration = pkiBlockCreationConfiguration;
   }
 
-  public PkiBlockCreationConfiguration getPkiBlockCreationConfiguration() {
+  public Optional<PkiBlockCreationConfiguration> getPkiBlockCreationConfiguration() {
     return pkiBlockCreationConfiguration;
   }
 }

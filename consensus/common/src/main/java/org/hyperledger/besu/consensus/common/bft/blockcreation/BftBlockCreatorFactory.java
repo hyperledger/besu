@@ -24,6 +24,7 @@ import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -74,7 +75,7 @@ public class BftBlockCreatorFactory {
     this.targetGasLimit = miningParams.getTargetGasLimit();
   }
 
-  public BftBlockCreator create(final BlockHeader parentHeader, final int round) {
+  public BlockCreator create(final BlockHeader parentHeader, final int round) {
     return new BftBlockCreator(
         localAddress,
         () -> targetGasLimit.map(AtomicLong::longValue),

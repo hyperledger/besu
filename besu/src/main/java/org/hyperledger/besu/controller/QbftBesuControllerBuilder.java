@@ -42,12 +42,12 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffe
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.QbftBlockHeaderValidationRulesetFactory;
+import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.QbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.qbft.pki.PkiQbftContext;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.protocol.Istanbul100SubProtocol;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
@@ -299,15 +299,8 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
       validatorProvider = new TransactionValidatorProvider(blockchain, validatorContractController);
     }
 
-    if (pkiBlockCreationConfiguration.isPresent()) {
-      return new PkiQbftContext(
-          validatorProvider,
-          epochManager,
-          bftBlockInterface().get(),
-          pkiBlockCreationConfiguration.get());
-    } else {
-      return new BftContext(validatorProvider, epochManager, bftBlockInterface().get());
-    }
+    return new QbftContext(
+        validatorProvider, epochManager, bftBlockInterface().get(), pkiBlockCreationConfiguration);
   }
 
   private BftValidatorOverrides convertBftForks(final List<BftFork> bftForks) {
