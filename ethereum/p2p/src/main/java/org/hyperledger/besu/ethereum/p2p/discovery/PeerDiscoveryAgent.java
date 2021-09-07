@@ -358,7 +358,7 @@ public abstract class PeerDiscoveryAgent {
   }
 
   /**
-   * Removes an previously added peer bonded observer.
+   * Removes a previously added peer bonded observer.
    *
    * @param observerId The unique ID identifying the observer to remove.
    * @return Whether the observer was located and removed.

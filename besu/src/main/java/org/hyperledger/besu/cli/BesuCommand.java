@@ -2312,7 +2312,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return pruningEnabled;
   }
 
-  // Blockchain synchronisation from peers.
+  // Blockchain synchronization from peers.
   private void synchronize(
       final BesuController controller,
       final boolean p2pEnabled,
