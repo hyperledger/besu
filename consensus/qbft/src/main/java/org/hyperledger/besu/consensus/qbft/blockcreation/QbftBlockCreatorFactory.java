@@ -18,7 +18,9 @@ import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -52,6 +54,18 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
         miningBeneficiary,
         bftExtraDataCodec);
     this.extraDataWithRoundInformationOnly = extraDataWithRoundInformationOnly;
+  }
+
+  @Override
+  public BlockCreator create(final BlockHeader parentHeader, final int round) {
+    final BlockCreator blockCreator = super.create(parentHeader, round);
+    final QbftContext qbftContext = protocolContext.getConsensusState(QbftContext.class);
+    if (qbftContext.getPkiBlockCreationConfiguration().isEmpty()) {
+      return blockCreator;
+    } else {
+      return new PkiQbftBlockCreator(
+          blockCreator, qbftContext.getPkiBlockCreationConfiguration().get(), bftExtraDataCodec);
+    }
   }
 
   @Override

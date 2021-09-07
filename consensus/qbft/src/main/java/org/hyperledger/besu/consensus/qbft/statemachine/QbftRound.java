@@ -25,7 +25,6 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
@@ -37,6 +36,7 @@ import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -49,7 +49,6 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,19 +59,17 @@ public class QbftRound {
 
   private final Subscribers<MinedBlockObserver> observers;
   protected final RoundState roundState;
-  protected final BftBlockCreator blockCreator;
+  protected final BlockCreator blockCreator;
   protected final ProtocolContext protocolContext;
   private final BlockImporter blockImporter;
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final QbftMessageTransmitter transmitter;
   protected final BftExtraDataCodec bftExtraDataCodec;
-  protected CreateBlockForProposalBehaviour createBlockForProposalBehaviour;
 
-  @VisibleForTesting
   public QbftRound(
       final RoundState roundState,
-      final BftBlockCreator blockCreator,
+      final BlockCreator blockCreator,
       final ProtocolContext protocolContext,
       final BlockImporter blockImporter,
       final Subscribers<MinedBlockObserver> observers,
@@ -81,32 +78,6 @@ public class QbftRound {
       final QbftMessageTransmitter transmitter,
       final RoundTimer roundTimer,
       final BftExtraDataCodec bftExtraDataCodec) {
-    this(
-        roundState,
-        blockCreator,
-        protocolContext,
-        blockImporter,
-        observers,
-        nodeKey,
-        messageFactory,
-        transmitter,
-        roundTimer,
-        bftExtraDataCodec,
-        blockCreator::createBlock);
-  }
-
-  public QbftRound(
-      final RoundState roundState,
-      final BftBlockCreator blockCreator,
-      final ProtocolContext protocolContext,
-      final BlockImporter blockImporter,
-      final Subscribers<MinedBlockObserver> observers,
-      final NodeKey nodeKey,
-      final MessageFactory messageFactory,
-      final QbftMessageTransmitter transmitter,
-      final RoundTimer roundTimer,
-      final BftExtraDataCodec bftExtraDataCodec,
-      final CreateBlockForProposalBehaviour createBlockForProposalBehaviour) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
@@ -116,7 +87,6 @@ public class QbftRound {
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
     this.bftExtraDataCodec = bftExtraDataCodec;
-    this.createBlockForProposalBehaviour = createBlockForProposalBehaviour;
 
     roundTimer.startTimer(getRoundIdentifier());
   }
@@ -127,7 +97,7 @@ public class QbftRound {
 
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
-    final Block block = createBlockForProposalBehaviour.create(headerTimeStampSeconds);
+    final Block block = blockCreator.createBlock(headerTimeStampSeconds);
 
     LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
     updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
@@ -141,7 +111,7 @@ public class QbftRound {
     Block blockToPublish;
     if (bestPreparedCertificate.isEmpty()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
-      blockToPublish = createBlockForProposalBehaviour.create(headerTimestamp);
+      blockToPublish = blockCreator.createBlock(headerTimestamp);
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());

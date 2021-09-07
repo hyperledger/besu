@@ -1,22 +1,18 @@
 /*
  * Copyright ConsenSys AG.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
- * except in compliance with
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the
- * License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See
- *  the License for the
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
-package org.hyperledger.besu.consensus.qbft.pki;
+package org.hyperledger.besu.consensus.qbft.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -30,6 +26,9 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.pki.PkiQbftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraData;
+import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -44,13 +43,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
-public class PkiQbftCreateBlockForProposalBehaviourTest {
+public class PkiQbftBlockCreatorTest {
 
   private final PkiQbftExtraDataCodec extraDataCodec = new PkiQbftExtraDataCodec();
 
   private BlockCreator blockCreator;
   private CmsCreator cmsCreator;
-  private PkiQbftCreateBlockForProposalBehaviour createBlockForProposalBehaviour;
+  private PkiQbftBlockCreator pkiQbftBlockCreator;
   private BlockHeaderTestFixture blockHeaderBuilder;
 
   @Before
@@ -58,8 +57,7 @@ public class PkiQbftCreateBlockForProposalBehaviourTest {
     blockCreator = mock(BlockCreator.class);
     cmsCreator = mock(CmsCreator.class);
 
-    createBlockForProposalBehaviour =
-        new PkiQbftCreateBlockForProposalBehaviour(blockCreator, cmsCreator, extraDataCodec);
+    pkiQbftBlockCreator = new PkiQbftBlockCreator(blockCreator, cmsCreator, extraDataCodec);
 
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
@@ -67,12 +65,9 @@ public class PkiQbftCreateBlockForProposalBehaviourTest {
   @Test
   public void createProposalBehaviourWithNonPkiCodecFails() {
     assertThatThrownBy(
-            () ->
-                new PkiQbftCreateBlockForProposalBehaviour(
-                    blockCreator, cmsCreator, new QbftExtraDataCodec()))
+            () -> new PkiQbftBlockCreator(blockCreator, cmsCreator, new QbftExtraDataCodec()))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining(
-            "PkiQbftCreateBlockForProposalBehaviour must use PkiQbftExtraDataCodec");
+        .hasMessageContaining("PkiQbftBlockCreator must use PkiQbftExtraDataCodec");
   }
 
   @Test
@@ -82,7 +77,7 @@ public class PkiQbftCreateBlockForProposalBehaviourTest {
     final Bytes cms = Bytes.random(32);
     when(cmsCreator.create(any(Bytes.class))).thenReturn(cms);
 
-    final Block proposedBlock = createBlockForProposalBehaviour.create(1L);
+    final Block proposedBlock = pkiQbftBlockCreator.createBlock(1L);
 
     final PkiQbftExtraData proposedBlockExtraData =
         (PkiQbftExtraData) extraDataCodec.decodeRaw(proposedBlock.getHeader().getExtraData());
@@ -98,7 +93,7 @@ public class PkiQbftCreateBlockForProposalBehaviourTest {
 
     when(cmsCreator.create(any(Bytes.class))).thenReturn(Bytes.random(32));
 
-    createBlockForProposalBehaviour.create(1L);
+    pkiQbftBlockCreator.createBlock(1L);
 
     verify(cmsCreator).create(eq(expectedHashForCmsCreation));
   }
@@ -108,7 +103,7 @@ public class PkiQbftCreateBlockForProposalBehaviourTest {
     createBlockBeingProposed();
     when(cmsCreator.create(any(Bytes.class))).thenReturn(Bytes.random(32));
 
-    final Block blockWithCms = createBlockForProposalBehaviour.create(1L);
+    final Block blockWithCms = pkiQbftBlockCreator.createBlock(1L);
 
     final Hash expectedBlockHash =
         BftBlockHeaderFunctions.forCommittedSeal(extraDataCodec).hash(blockWithCms.getHeader());
