@@ -43,17 +43,17 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class BftBlockCreatorFactory {
 
-  protected final AbstractPendingTransactionsSorter pendingTransactions;
+  private final AbstractPendingTransactionsSorter pendingTransactions;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
   protected final BftExtraDataCodec bftExtraDataCodec;
-  protected final Address localAddress;
-  protected final Address miningBeneficiary;
+  private final Address localAddress;
+  final Address miningBeneficiary;
 
   protected volatile Bytes vanityData;
-  protected volatile Wei minTransactionGasPrice;
-  protected volatile Double minBlockOccupancyRatio;
-  protected volatile Optional<AtomicLong> targetGasLimit;
+  private volatile Wei minTransactionGasPrice;
+  private volatile Double minBlockOccupancyRatio;
+  private volatile Optional<AtomicLong> targetGasLimit;
 
   public BftBlockCreatorFactory(
       final AbstractPendingTransactionsSorter pendingTransactions,
