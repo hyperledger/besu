@@ -19,7 +19,6 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.QbftContext;
-import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -65,9 +64,7 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
       return blockCreator;
     } else {
       return new PkiQbftBlockCreator(
-          blockCreator,
-          qbftContext.getPkiBlockCreationConfiguration().get(),
-          (PkiQbftExtraDataCodec) bftExtraDataCodec);
+          blockCreator, qbftContext.getPkiBlockCreationConfiguration().get(), bftExtraDataCodec);
     }
   }
 

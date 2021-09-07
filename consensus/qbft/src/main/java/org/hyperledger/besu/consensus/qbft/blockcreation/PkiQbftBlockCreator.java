@@ -48,7 +48,7 @@ public class PkiQbftBlockCreator implements BlockCreator {
   public PkiQbftBlockCreator(
       final BlockCreator blockCreator,
       final PkiBlockCreationConfiguration pkiBlockCreationConfiguration,
-      final PkiQbftExtraDataCodec pkiQbftExtraDataCodec) {
+      final BftExtraDataCodec pkiQbftExtraDataCodec) {
     this(
         blockCreator,
         new CmsCreator(
