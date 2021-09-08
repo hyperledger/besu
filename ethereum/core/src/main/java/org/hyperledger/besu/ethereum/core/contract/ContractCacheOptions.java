@@ -28,8 +28,8 @@ public class ContractCacheOptions {
   @CommandLine.Option(
       names = {CONTRACT_CACHE_WEIGHT},
       description =
-          "size in kilobytes to allow the cached" +
-                  "contract bytecode to grow to before evicting the least recently used contract",
+          "size in kilobytes to allow the cached"
+              + "contract bytecode to grow to before evicting the least recently used contract",
       fallbackValue = "250000",
       defaultValue = "250000",
       hidden = true,
