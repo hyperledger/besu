@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.vm.Code;
 
 import com.google.common.cache.Weigher;
 
-public class CodeScale implements Weigher<Account, Code> {
+class CodeScale implements Weigher<Account, Code> {
   @Override
   public int weigh(final Account key, final Code value) {
     return value.getSize();

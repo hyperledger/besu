@@ -4,7 +4,7 @@
 ### Additions and Improvements
 * The EVM has been factored out into a standalone module, suitable for inclusion as a library. [#2790](https://github.com/hyperledger/besu/pull/2790)
 * Low level performance improvements changes to cut worst-case EVM performance in half. [#2796](https://github.com/hyperledger/besu/pull/2796)
-
+* reduces need for JUMPDEST analysis via contract caching [#2607](https://github.com/hyperledger/besu/issues/2607)
 ### Bug Fixes
 *  Allow BESU_CONFIG_FILE environment to specify TOML file [#2455](https://github.com/hyperledger/besu/issues/2455)
 
@@ -15,7 +15,6 @@
 
 ### Additions and Improvements
 - Upgrade Gradle to 7.2, which supports building with Java 17 [#2761](https://github.com/hyperledger/besu/pull/2376) 
-- reduces need for JUMPDEST analysis via contract caching [#2607](https://github.com/hyperledger/besu/issues/2607)
 
 ### Bug Fixes
 - Set an idle timeout for metrics connections, to clean up ports when no longer used [\#2748](https://github.com/hyperledger/besu/pull/2748)
