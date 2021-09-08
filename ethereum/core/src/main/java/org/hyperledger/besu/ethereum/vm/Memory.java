@@ -15,10 +15,10 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt256s;
 
@@ -40,18 +40,18 @@ public class Memory {
    * overflow this. A byte array implementation limits us to 2GiB. But that would cost over 51
    * trillion gas. So this is likely a reasonable limitation, at least at first.
    */
-  private byte[] data;
+  private MutableBytes data;
 
   private UInt256 activeWords;
   private int dataSize256;
 
   public Memory() {
-    data = new byte[0];
+    data = MutableBytes.EMPTY;
     updateSize();
   }
 
   private void updateSize() {
-    dataSize256 = data.length / Bytes32.SIZE;
+    dataSize256 = data.size() / Bytes32.SIZE;
     activeWords = UInt256.valueOf(dataSize256);
   }
 
@@ -170,8 +170,8 @@ public class Memory {
     if (dataSize256 >= newActiveWords) return;
 
     // Require full capacity to guarantee we don't resize more than once.
-    final byte[] newData = new byte[newActiveWords * Bytes32.SIZE];
-    System.arraycopy(data, 0, newData, 0, data.length);
+    final MutableBytes newData = MutableBytes.create(newActiveWords * Bytes32.SIZE);
+    data.copyTo(newData, 0);
     data = newData;
     updateSize();
   }
@@ -189,12 +189,12 @@ public class Memory {
     if (!(other instanceof Memory)) return false;
 
     final Memory that = (Memory) other;
-    return Arrays.equals(this.data, that.data);
+    return this.data.equals(that.data);
   }
 
   @Override
   public int hashCode() {
-    return Arrays.hashCode(data);
+    return data.hashCode();
   }
 
   /**
@@ -203,7 +203,7 @@ public class Memory {
    * @return The current number of active bytes stored in memory.
    */
   int getActiveBytes() {
-    return data.length;
+    return data.size();
   }
 
   /**
@@ -236,7 +236,7 @@ public class Memory {
     final int start = asByteIndex(location);
 
     ensureCapacityForBytes(start, length);
-    return Bytes.of(Arrays.copyOfRange(data, start, start + numBytes.intValue()));
+    return data.slice(start, numBytes.intValue());
   }
 
   /**
@@ -303,10 +303,10 @@ public class Memory {
 
     ensureCapacityForBytes(start, length);
     if (srcLength >= length) {
-      System.arraycopy(taintedValue.toArrayUnsafe(), 0, data, start, length);
+      data.set(start, taintedValue.slice(0, length));
     } else {
-      Arrays.fill(data, start, end, (byte) 0);
-      System.arraycopy(taintedValue.toArrayUnsafe(), 0, data, start, srcLength);
+      data.set(start, Bytes.of(new byte[end - start]));
+      data.set(start, taintedValue.slice(0, srcLength));
     }
   }
 
@@ -337,7 +337,7 @@ public class Memory {
     }
 
     ensureCapacityForBytes(location, numBytes);
-    Arrays.fill(data, location, location + numBytes, (byte) 0);
+    data.set(location, Bytes.of(new byte[numBytes]));
   }
 
   /**
@@ -349,7 +349,7 @@ public class Memory {
   void setByte(final UInt256 location, final byte value) {
     final int start = asByteIndex(location);
     ensureCapacityForBytes(start, 1);
-    data[start] = value;
+    data.set(start, value);
   }
 
   /**
@@ -361,7 +361,7 @@ public class Memory {
   public Bytes32 getWord(final UInt256 location) {
     final int start = asByteIndex(location);
     ensureCapacityForBytes(start, Bytes32.SIZE);
-    return Bytes32.wrap(Arrays.copyOfRange(data, start, start + Bytes32.SIZE));
+    return Bytes32.wrap(data.slice(start, Bytes32.SIZE));
   }
 
   /**
@@ -376,12 +376,11 @@ public class Memory {
   public void setWord(final UInt256 location, final Bytes32 bytes) {
     final int start = asByteIndex(location);
     ensureCapacityForBytes(start, Bytes32.SIZE);
-
-    System.arraycopy(bytes.toArrayUnsafe(), 0, data, start, Bytes32.SIZE);
+    data.set(start, bytes);
   }
 
   @Override
   public String toString() {
-    return Bytes.wrap(data).toHexString();
+    return data.toHexString();
   }
 }
