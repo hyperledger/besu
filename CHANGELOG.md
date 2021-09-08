@@ -2,7 +2,7 @@
 
 ## 21.10.0-RC1
 ### Additions and Improvements
-
+- reduces need for JUMPDEST analysis via contract caching [#2607](https://github.com/hyperledger/besu/issues/2607)
 ### Bug Fixes
 
 ### Early Access Features
@@ -11,8 +11,7 @@
 ## 21.7.4
 
 ### Additions and Improvements
-- Upgrade Gradle to 7.2, which supports building with Java 17 [#2761](https://github.com/hyperledger/besu/pull/2376) 
-- reduces need for JUMPDEST analysis via contract caching [#2607](https://github.com/hyperledger/besu/issues/2607)
+- Upgrade Gradle to 7.2, which supports building with Java 17 [#2761](https://github.com/hyperledger/besu/pull/2376)
 
 ### Bug Fixes
 - Set an idle timeout for metrics connections, to clean up ports when no longer used [\#2748](https://github.com/hyperledger/besu/pull/2748)

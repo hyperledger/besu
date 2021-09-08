@@ -19,7 +19,7 @@ import picocli.CommandLine;
 
 public class ContractCacheOptions {
 
-  public static final String CONTRACT_CACHE_WEIGHT = "--contract-code-cache-weight-kb";
+  public static final String CONTRACT_CACHE_WEIGHT = "--Xcontract-code-cache-weight-kb";
 
   public static Long getContractCacheWeightKilobytes() {
     return contractCacheWeightKilobytes;
@@ -28,9 +28,11 @@ public class ContractCacheOptions {
   @CommandLine.Option(
       names = {CONTRACT_CACHE_WEIGHT},
       description =
-          "size in kilobytes to allow the cache to grow to before evicting the least recently used",
+          "size in kilobytes to allow the cached" +
+                  "contract bytecode to grow to before evicting the least recently used contract",
       fallbackValue = "250000",
       defaultValue = "250000",
+      hidden = true,
       arity = "1")
   public static Long contractCacheWeightKilobytes = 250000l;
 }
