@@ -32,6 +32,9 @@ public class Code {
   //  private BitSet validJumpDestinations;
   long[] validJumpDestinations;
 
+  /** Syntactic sugar for an empty contract */
+  public static Code EMPTY = new Code(Bytes.EMPTY);
+
   /**
    * Public constructor.
    *
