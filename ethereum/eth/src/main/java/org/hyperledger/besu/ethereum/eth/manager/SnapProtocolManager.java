@@ -50,6 +50,8 @@ public class SnapProtocolManager implements ProtocolManager {
     this.ethPeers = ethPeers;
     this.snapMessages = snapMessages;
     this.supportedCapabilities = calculateCapabilities();
+
+    new SnapServer(snapMessages);
   }
 
   private List<Capability> calculateCapabilities() {
@@ -117,11 +119,7 @@ public class SnapProtocolManager implements ProtocolManager {
       final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
           RequestId.unwrapSnapMessageData(ethMessage.getData());
       maybeResponseData =
-          snapMessages
-              .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()))
-              .map(
-                  responseData ->
-                      RequestId.wrapMessageData(requestIdAndEthMessage.getKey(), responseData));
+          snapMessages.dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()));
     } catch (final RLPException e) {
       LOG.debug(
           "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);
@@ -130,7 +128,7 @@ public class SnapProtocolManager implements ProtocolManager {
     maybeResponseData.ifPresent(
         responseData -> {
           try {
-            ethPeer.send(responseData);
+            ethPeer.send(responseData, getSupportedProtocol());
           } catch (final PeerConnection.PeerNotConnected __) {
             // Peer disconnected before we could respond - nothing to do
           }

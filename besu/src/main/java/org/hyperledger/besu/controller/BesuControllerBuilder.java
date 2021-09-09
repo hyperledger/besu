@@ -312,7 +312,7 @@ public abstract class BesuControllerBuilder {
     ethContext
         .getSnapMessages()
         .subscribe(
-            SnapV1.GET_ACCOUNT_RANGE,
+            SnapV1.ACCOUNT_RANGE,
             message -> {
               System.out.println("test" + message.getData().getData().toHexString());
             });
