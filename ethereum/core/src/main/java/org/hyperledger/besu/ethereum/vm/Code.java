@@ -31,6 +31,9 @@ public class Code {
   /** Used to cache valid jump destinations. */
   private BitSet validJumpDestinations;
 
+  /** Syntactic sugar for an empty contract */
+  public static Code EMPTY = new Code(Bytes.EMPTY);
+
   /**
    * Public constructor.
    *

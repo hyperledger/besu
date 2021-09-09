@@ -200,7 +200,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
               .sender(sender(frame))
               .value(value(frame))
               .apparentValue(apparentValue(frame))
-              .code(frame.getWorldState().getContract(contract).orElse(new Code()))
+              .code(frame.getWorldState().getContract(contract).orElse(Code.EMPTY))
               .blockHeader(frame.getBlockHeader())
               .depth(frame.getMessageStackDepth() + 1)
               .isStatic(isStatic(frame))
