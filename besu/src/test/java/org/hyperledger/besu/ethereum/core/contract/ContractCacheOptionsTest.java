@@ -26,7 +26,7 @@ public class ContractCacheOptionsTest extends CommandTestAbstract {
   public void providedValueGoesToCodeCache() {
     parseCommand(ContractCacheOptions.CONTRACT_CACHE_WEIGHT, "13");
     assertThat(ContractCacheOptions.getContractCacheWeightKilobytes()).isEqualTo(13l);
-    CodeCache cache = new CodeCache();
+    CodeCache cache = new CodeCache(13 * 1024);
     assertThat(cache.getWeight()).isEqualTo(13L * 1024);
   }
 }

@@ -57,7 +57,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   private Hash worldStateRootHash;
   private Hash worldStateBlockHash;
-  private final CodeCache codeCache = new CodeCache();
+
 
   public BonsaiPersistedWorldState(
       final BonsaiWorldStateArchive archive,

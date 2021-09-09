@@ -20,8 +20,6 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
-import org.hyperledger.besu.ethereum.core.contract.CodeCache;
-import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,7 +51,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   protected AbstractWorldUpdater(final W world) {
     this.world = world;
-    this.codeCache = new CodeCache();
   }
 
   protected abstract A getForMutation(Address address);

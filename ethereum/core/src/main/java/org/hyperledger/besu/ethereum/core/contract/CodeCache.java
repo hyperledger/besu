@@ -18,21 +18,15 @@ package org.hyperledger.besu.ethereum.core.contract;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.vm.Code;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
 
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableMap;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public class CodeCache implements LoadingCache<Account, Code> {
+public class CodeCache {
 
-  private final LoadingCache<Account, Code> cache;
+  private final LoadingCache<WrappedAccount, Code> cache;
   private final long weight;
 
   public CodeCache(final long maxWeightBytes, final CodeLoader loader) {
@@ -44,118 +38,37 @@ public class CodeCache implements LoadingCache<Account, Code> {
             .build(loader);
   }
 
-  public CodeCache() {
-    this(ContractCacheOptions.getContractCacheWeightKilobytes() * 1024, new CodeLoader());
-  }
-
-  public CodeCache(final CodeLoader loader) {
-    this(ContractCacheOptions.getContractCacheWeightKilobytes() * 1024, loader);
+  public CodeCache(final long maxWeightBytes) {
+    this(maxWeightBytes, new CodeLoader());
   }
 
   public Optional<Code> getContract(final Account account) {
     if (account != null && account.hasCode()) {
-      return Optional.of(this.getUnchecked(account));
+      return Optional.of(cache.getUnchecked(new WrappedAccount(account)));
     } else {
       return Optional.empty();
     }
   }
 
-  @Override
-  public Code get(final Account key) throws ExecutionException {
-    return this.cache.get(key);
-  }
-
-  @Override
-  public Code getUnchecked(final Account key) {
-    return this.cache.getUnchecked(key);
-  }
-
-  @Override
-  public ImmutableMap<Account, Code> getAll(final Iterable<? extends Account> keys)
-      throws ExecutionException {
-    return this.cache.getAll(keys);
-  }
-
-  @Override
-  public Code apply(final Account key) {
-    return this.cache.apply(key);
-  }
-
-  @Override
-  public void refresh(final Account key) {
-    this.cache.refresh(key);
-  }
-
-  @Override
-  public @Nullable Code getIfPresent(final Object key) {
-    return this.cache.getIfPresent(key);
-  }
-
-  @Override
-  public Code get(final Account key, final Callable<? extends Code> loader)
-      throws ExecutionException {
-    return this.cache.get(key, loader);
-  }
-
-  @Override
-  public ImmutableMap<Account, Code> getAllPresent(final Iterable<?> keys) {
-    return this.cache.getAllPresent(keys);
-  }
-
-  @Override
-  public void put(final Account key, final Code value) {
-    this.cache.put(key, value);
-  }
-
-  @Override
-  public void putAll(final Map<? extends Account, ? extends Code> m) {
-    this.cache.putAll(m);
-  }
-
-  @Override
-  public void invalidate(final Object key) {
-    if (key != null) {
-      this.cache.invalidate(key);
-    }
-  }
-
   public void invalidate(final Account key) {
     if (key != null) {
-      this.cache.invalidate(key);
+      this.cache.invalidate(new WrappedAccount(key));
     }
   }
 
-  @Override
-  public void invalidateAll(final Iterable<?> keys) {
-    this.cache.invalidateAll(keys);
-  }
-
-  @Override
-  public void invalidateAll() {
-    this.cache.invalidateAll();
-  }
-
-  @Override
-  public long size() {
-    return this.cache.size();
-  }
-
-  @Override
-  public CacheStats stats() {
-    return this.cache.stats();
-  }
-
-  @Override
-  public ConcurrentMap<Account, Code> asMap() {
-    return this.cache.asMap();
-  }
-
-  @Override
   public void cleanUp() {
     this.cache.cleanUp();
   }
 
   public long getWeight() {
     return weight;
+  }
+
+  public @Nullable Code getIfPresent(final Account lruContract) {
+    return cache.getIfPresent(new WrappedAccount(lruContract));
+  }
+
+  public long size() {
+    return cache.size();
   }
 }

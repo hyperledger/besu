@@ -131,53 +131,6 @@ public class MainnetTransactionProcessorTest {
   }
 
   @Test
-  public void shouldCacheCode() {
-
-    KeyPair senderKeys = SignatureAlgorithmFactory.getInstance().generateKeyPair();
-    Address sending = Address.extract(senderKeys.getPublicKey());
-    Address contractAddr = Address.fromHexString("B0B0FACE");
-    Transaction messageToContract =
-        new TransactionTestFixture()
-            .to(Optional.of(contractAddr))
-            .sender(sending)
-            .type(TransactionType.EIP1559)
-            .maxFeePerGas(Optional.of(Wei.ONE))
-            .gasLimit(300000L)
-            .maxPriorityFeePerGas(Optional.of(Wei.ONE))
-            .createTransaction(senderKeys);
-
-    worldState.getOrCreateSenderAccount(sending).getMutable().setBalance(Wei.fromEth(1000L));
-    worldState.createAccount(contractAddr).getMutable().setCode(Bytes.fromHexString(manyJumps));
-
-    transactionProcessor.processTransaction(
-        blockchain,
-        worldState,
-        blockHeader,
-        messageToContract,
-        Address.fromHexString("1"),
-        blockHashLookup,
-        false,
-        ImmutableTransactionValidationParams.builder().build());
-
-    Account contractAccount = worldState.get(contractAddr);
-    Mockito.verify(worldState, times(1)).getContract(contractAccount);
-    Mockito.verify(loader, times(1)).load(contractAccount);
-
-    transactionProcessor.processTransaction(
-        blockchain,
-        worldState,
-        blockHeader,
-        messageToContract,
-        Address.fromHexString("1"),
-        blockHashLookup,
-        false,
-        ImmutableTransactionValidationParams.builder().build());
-
-    Mockito.verify(worldState, times(2)).getContract(contractAccount);
-    Mockito.verify(loader, times(1)).load(contractAccount);
-  }
-
-  @Test
   public void shouldEvictOnAccountDestruct() {
     KeyPair senderKeys = SignatureAlgorithmFactory.getInstance().generateKeyPair();
 
@@ -211,7 +164,6 @@ public class MainnetTransactionProcessorTest {
 
     Account contractAccount = this.worldState.get(contractAddr);
     Mockito.verify(this.worldState, times(1)).getContract(contractAccount);
-    Mockito.verify(loader, times(1)).load(contractAccount);
 
     this.worldState.deleteAccount(contractAccount.getAddress());
     this.worldState.commit();

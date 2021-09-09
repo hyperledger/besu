@@ -20,12 +20,13 @@ import org.hyperledger.besu.ethereum.vm.Code;
 
 import com.google.common.cache.CacheLoader;
 
-public class CodeLoader extends CacheLoader<Account, Code> {
+public class CodeLoader extends CacheLoader<WrappedAccount, Code> {
   @Override
-  public Code load(final Account key) throws RuntimeException {
-    if (!key.hasCode()) {
+  public Code load(final WrappedAccount key) throws RuntimeException {
+    Account account = key.getWrapped();
+    if (!account.hasCode()) {
       throw new IllegalArgumentException("account " + key + " has no executable code");
     }
-    return new Code(key.getCode());
+    return new Code(account.getCode());
   }
 }

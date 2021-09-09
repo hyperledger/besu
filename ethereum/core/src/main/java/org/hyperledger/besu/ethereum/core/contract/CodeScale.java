@@ -15,14 +15,13 @@
 
 package org.hyperledger.besu.ethereum.core.contract;
 
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import com.google.common.cache.Weigher;
 
-class CodeScale implements Weigher<Account, Code> {
+class CodeScale implements Weigher<WrappedAccount, Code> {
   @Override
-  public int weigh(final Account key, final Code value) {
+  public int weigh(final WrappedAccount key, final Code value) {
     return value.getSize();
   }
 }
