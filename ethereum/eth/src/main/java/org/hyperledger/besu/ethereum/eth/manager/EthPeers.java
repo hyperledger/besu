@@ -124,8 +124,9 @@ public class EthPeers {
     return pendingPeerRequest;
   }
 
-  public void dispatchMessage(final EthPeer peer, final EthMessage ethMessage) {
-    peer.dispatch(ethMessage);
+  public void dispatchMessage(
+      final EthPeer peer, final EthMessage ethMessage, final String protocolName) {
+    peer.dispatch(ethMessage, protocolName);
     if (peer.hasAvailableRequestCapacity()) {
       reattemptPendingPeerRequests();
     }

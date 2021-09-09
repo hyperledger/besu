@@ -62,7 +62,7 @@ public class RequestManager {
     if (supportsRequestId) {
       // If there's a requestId, find the specific stream it belongs to
       final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
-          RequestId.unwrapMessageData(ethMessage.getData());
+          RequestId.unwrapEthMessageData(ethMessage.getData());
       Optional.ofNullable(responseStreams.get(requestIdAndEthMessage.getKey()))
           .ifPresentOrElse(
               responseStream -> responseStream.processMessage(requestIdAndEthMessage.getValue()),

@@ -28,11 +28,11 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
+import org.hyperledger.besu.ethereum.eth.manager.ProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
@@ -62,7 +62,7 @@ public class TransactionPoolFactoryTest {
     when(context.getBlockchain()).thenReturn(blockchain);
     final EthPeers ethPeers = new EthPeers("ETH", TestClock.fixed(), new NoOpMetricsSystem());
     final EthContext ethContext = mock(EthContext.class);
-    when(ethContext.getEthMessages()).thenReturn(mock(EthMessages.class));
+    when(ethContext.getEthMessages()).thenReturn(mock(ProtocolMessages.class));
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
     final SyncState state = mock(SyncState.class);
     final GasPricePendingTransactionsSorter pendingTransactions =
@@ -104,7 +104,7 @@ public class TransactionPoolFactoryTest {
             pool,
             new EthProtocolConfiguration(5, 5, 5, 5, 5, false),
             ethPeers,
-            mock(EthMessages.class),
+            mock(ProtocolMessages.class),
             ethContext,
             Collections.emptyList(),
             true,

@@ -35,7 +35,7 @@ public class RequestId {
     return new RawMessage(messageData.getCode(), rlpOutput.encoded());
   }
 
-  static Map.Entry<BigInteger, MessageData> unwrapMessageData(final MessageData messageData) {
+  static Map.Entry<BigInteger, MessageData> unwrapEthMessageData(final MessageData messageData) {
     final RLPInput messageDataRLP = RLP.input(messageData.getData());
     messageDataRLP.enterList();
     final BigInteger requestId = messageDataRLP.readBigIntegerScalar();
@@ -44,5 +44,15 @@ public class RequestId {
 
     return new AbstractMap.SimpleImmutableEntry<>(
         requestId, new RawMessage(messageData.getCode(), unwrappedMessageRLP.raw()));
+  }
+
+  static Map.Entry<BigInteger, MessageData> unwrapSnapMessageData(final MessageData messageData) {
+    final RLPInput messageDataRLP = RLP.input(messageData.getData());
+    messageDataRLP.enterList();
+    final BigInteger requestId = messageDataRLP.readBigIntegerScalar();
+    messageDataRLP.leaveListLenient();
+
+    return new AbstractMap.SimpleImmutableEntry<>(
+        requestId, new RawMessage(messageData.getCode(), messageData.getData()));
   }
 }

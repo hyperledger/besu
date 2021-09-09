@@ -65,7 +65,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final ForkIdManager forkIdManager;
   private final BigInteger networkId;
   private final EthPeers ethPeers;
-  private final EthMessages ethMessages;
+  private final ProtocolMessages protocolMessages;
   private final EthContext ethContext;
   private final List<Capability> supportedCapabilities;
   private final Blockchain blockchain;
@@ -79,7 +79,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
-      final EthMessages ethMessages,
+      final ProtocolMessages protocolMessages,
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final boolean fastSyncEnabled,
@@ -96,7 +96,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.forkIdManager = forkIdManager;
 
     this.ethPeers = ethPeers;
-    this.ethMessages = ethMessages;
+    this.protocolMessages = protocolMessages;
     this.ethContext = ethContext;
 
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
@@ -113,7 +113,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         blockchain,
         worldStateArchive,
         transactionPool,
-        ethMessages,
+        protocolMessages,
         ethereumWireProtocolConfiguration);
   }
 
@@ -125,7 +125,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
-      final EthMessages ethMessages,
+      final ProtocolMessages protocolMessages,
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final boolean fastSyncEnabled,
@@ -137,7 +137,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         transactionPool,
         ethereumWireProtocolConfiguration,
         ethPeers,
-        ethMessages,
+        protocolMessages,
         ethContext,
         peerValidators,
         fastSyncEnabled,
@@ -155,7 +155,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
-      final EthMessages ethMessages,
+      final ProtocolMessages protocolMessages,
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final boolean fastSyncEnabled,
@@ -168,7 +168,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         transactionPool,
         ethereumWireProtocolConfiguration,
         ethPeers,
-        ethMessages,
+        protocolMessages,
         ethContext,
         peerValidators,
         fastSyncEnabled,
@@ -265,29 +265,29 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
 
-    if (!ethPeer.validateReceivedMessage(ethMessage)) {
+    if (!ethPeer.validateReceivedMessage(ethMessage, getSupportedProtocol())) {
       LOG.debug("Unsolicited message received from, disconnecting: {}", ethPeer);
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
 
     // This will handle responses
-    ethPeers.dispatchMessage(ethPeer, ethMessage);
+    ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
 
     // This will handle requests
     Optional<MessageData> maybeResponseData = Optional.empty();
     try {
       if (EthProtocol.isEth66Compatible(cap) && EthProtocol.requestIdCompatible(code)) {
         final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
-            RequestId.unwrapMessageData(ethMessage.getData());
+            RequestId.unwrapEthMessageData(ethMessage.getData());
         maybeResponseData =
-            ethMessages
+            protocolMessages
                 .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()))
                 .map(
                     responseData ->
                         RequestId.wrapMessageData(requestIdAndEthMessage.getKey(), responseData));
       } else {
-        maybeResponseData = ethMessages.dispatch(ethMessage);
+        maybeResponseData = protocolMessages.dispatch(ethMessage);
       }
     } catch (final RLPException e) {
       LOG.debug(

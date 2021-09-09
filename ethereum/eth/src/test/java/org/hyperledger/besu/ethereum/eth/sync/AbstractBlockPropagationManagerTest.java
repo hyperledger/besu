@@ -36,11 +36,11 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.ProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
@@ -570,7 +570,9 @@ public abstract class AbstractBlockPropagationManagerTest {
         .thenReturn(new CompletableFuture<>());
     final EthContext ethContext =
         new EthContext(
-            new EthPeers("eth", TestClock.fixed(), metricsSystem), new EthMessages(), ethScheduler);
+            new EthPeers("eth", TestClock.fixed(), metricsSystem),
+            new ProtocolMessages(),
+            ethScheduler);
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
             syncConfig,
@@ -627,7 +629,9 @@ public abstract class AbstractBlockPropagationManagerTest {
             });
     final EthContext ethContext =
         new EthContext(
-            new EthPeers("eth", TestClock.fixed(), metricsSystem), new EthMessages(), ethScheduler);
+            new EthPeers("eth", TestClock.fixed(), metricsSystem),
+            new ProtocolMessages(),
+            ethScheduler);
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
             syncConfig,

@@ -17,13 +17,18 @@ package org.hyperledger.besu.ethereum.eth.manager;
 public class EthContext {
 
   private final EthPeers ethPeers;
-  private final EthMessages ethMessages;
+  private final ProtocolMessages ethMessages;
+  final ProtocolMessages snapMessages;
   private final EthScheduler scheduler;
 
   public EthContext(
-      final EthPeers ethPeers, final EthMessages ethMessages, final EthScheduler scheduler) {
+      final EthPeers ethPeers,
+      final ProtocolMessages ethMessages,
+      final ProtocolMessages snapMessages,
+      final EthScheduler scheduler) {
     this.ethPeers = ethPeers;
     this.ethMessages = ethMessages;
+    this.snapMessages = snapMessages;
     this.scheduler = scheduler;
   }
 
@@ -31,8 +36,12 @@ public class EthContext {
     return ethPeers;
   }
 
-  public EthMessages getEthMessages() {
+  public ProtocolMessages getEthMessages() {
     return ethMessages;
+  }
+
+  public ProtocolMessages getSnapMessages() {
+    return snapMessages;
   }
 
   public EthScheduler getScheduler() {

@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class EthMessages {
+public class ProtocolMessages {
   private final Map<Integer, Subscribers<MessageCallback>> listenersByCode =
       new ConcurrentHashMap<>();
   private final Map<Integer, MessageResponseConstructor> messageResponseConstructorsByCode =

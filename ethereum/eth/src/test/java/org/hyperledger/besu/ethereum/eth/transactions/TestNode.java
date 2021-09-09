@@ -37,10 +37,10 @@ import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSch
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.ProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -120,12 +120,12 @@ public class TestNode implements Closeable {
     final SyncState syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
 
-    final EthMessages ethMessages = new EthMessages();
+    final ProtocolMessages protocolMessages = new ProtocolMessages();
 
     final EthPeers ethPeers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem);
 
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
-    final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
+    final EthContext ethContext = new EthContext(ethPeers, protocolMessages, scheduler);
 
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -146,7 +146,7 @@ public class TestNode implements Closeable {
             transactionPool,
             EthProtocolConfiguration.defaultConfig(),
             ethPeers,
-            ethMessages,
+            protocolMessages,
             ethContext,
             Collections.emptyList(),
             false,

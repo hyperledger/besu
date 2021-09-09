@@ -25,12 +25,12 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.ProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -85,11 +85,11 @@ public abstract class AbstractMessageTaskTest<T, R> {
     peersDoTimeout = new AtomicBoolean(false);
     peerCountToTimeout = new AtomicInteger(0);
     ethPeers = spy(new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem));
-    final EthMessages ethMessages = new EthMessages();
+    final ProtocolMessages protocolMessages = new ProtocolMessages();
     final EthScheduler ethScheduler =
         new DeterministicEthScheduler(
             () -> peerCountToTimeout.getAndDecrement() > 0 || peersDoTimeout.get());
-    ethContext = new EthContext(ethPeers, ethMessages, ethScheduler);
+    ethContext = new EthContext(ethPeers, protocolMessages, ethScheduler);
     final SyncState syncState = new SyncState(blockchain, ethContext.getEthPeers());
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -109,7 +109,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
             transactionPool,
             EthProtocolConfiguration.defaultConfig(),
             ethPeers,
-            ethMessages,
+            protocolMessages,
             ethContext);
   }
 

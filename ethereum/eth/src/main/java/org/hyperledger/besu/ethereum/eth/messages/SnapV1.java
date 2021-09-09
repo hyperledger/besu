@@ -12,20 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager;
+package org.hyperledger.besu.ethereum.eth.messages;
 
-import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler.TimeoutPolicy;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.testutil.TestClock;
+public final class SnapV1 {
 
-public class EthContextTestUtil {
+  public static final int GET_ACCOUNT_RANGE = 0x00;
+  public static final int ACCOUNT_RANGE = 0x01;
 
-  private static final String PROTOCOL_NAME = "ETH";
-
-  public static EthContext createTestEthContext(final TimeoutPolicy timeoutPolicy) {
-    return new EthContext(
-        new EthPeers(PROTOCOL_NAME, TestClock.fixed(), new NoOpMetricsSystem()),
-        new ProtocolMessages(),
-        new DeterministicEthScheduler(timeoutPolicy));
+  private SnapV1() {
+    // Holder for constants only
   }
 }

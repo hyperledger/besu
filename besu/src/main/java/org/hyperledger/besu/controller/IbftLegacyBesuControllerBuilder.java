@@ -31,11 +31,13 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.ProtocolMessages;
+import org.hyperledger.besu.ethereum.eth.manager.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -55,9 +57,10 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected SubProtocolConfiguration createSubProtocolConfiguration(
-      final EthProtocolManager ethProtocolManager) {
+      final EthProtocolManager ethProtocolManager, final SnapProtocolManager snapProtocolManager) {
     return new SubProtocolConfiguration()
-        .withSubProtocol(Istanbul99Protocol.get(), ethProtocolManager);
+        .withSubProtocol(Istanbul99Protocol.get(), ethProtocolManager)
+        .withSubProtocol(SnapProtocol.get(), snapProtocolManager);
   }
 
   @Override
@@ -122,7 +125,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
       final EthContext ethContext,
-      final EthMessages ethMessages,
+      final ProtocolMessages protocolMessages,
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators) {
     LOG.info("Operating on IBFT-1.0 network.");
@@ -133,7 +136,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
         transactionPool,
         ethereumWireProtocolConfiguration,
         ethPeers,
-        ethMessages,
+        protocolMessages,
         ethContext,
         peerValidators,
         fastSyncEnabled,
