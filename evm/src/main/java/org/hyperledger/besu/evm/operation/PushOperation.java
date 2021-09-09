@@ -17,8 +17,8 @@ package org.hyperledger.besu.evm.operation;
 import static java.lang.Math.min;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes32;

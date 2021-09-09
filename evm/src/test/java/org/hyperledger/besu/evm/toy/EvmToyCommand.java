@@ -21,12 +21,12 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
-import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -136,7 +136,7 @@ public class EvmToyCommand implements Runnable {
 
   @Override
   public void run() {
-    WorldUpdater worldUpdater = new SimpleWorld();
+    WorldUpdater worldUpdater = new ToyWorld();
     worldUpdater.getOrCreate(sender).getMutable().setBalance(Wei.of(BigInteger.TWO.pow(20)));
     worldUpdater.getOrCreate(receiver).getMutable().setCode(codeBytes);
 
@@ -171,7 +171,7 @@ public class EvmToyCommand implements Runnable {
               .value(ethValue)
               .apparentValue(ethValue)
               .code(new Code(codeBytes))
-              .blockHeader(new SimpleBlockHeader())
+              .blockHeader(new ToyBlockHeader())
               .depth(0)
               .completer(c -> {})
               .miningBeneficiary(Address.ZERO)
@@ -179,13 +179,18 @@ public class EvmToyCommand implements Runnable {
               .build());
 
       final MessageCallProcessor mcp = new MessageCallProcessor(evm, precompileContractRegistry);
-      final ContractCreationProcessor ccp = new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0);
+      final ContractCreationProcessor ccp =
+          new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0);
       stopwatch.start();
       while (!messageFrameStack.isEmpty()) {
         final MessageFrame messageFrame = messageFrameStack.peek();
         switch (messageFrame.getType()) {
-          case CONTRACT_CREATION: ccp.process(messageFrame, tracer); break;
-          case MESSAGE_CALL: mcp.process(messageFrame, tracer); break;
+          case CONTRACT_CREATION:
+            ccp.process(messageFrame, tracer);
+            break;
+          case MESSAGE_CALL:
+            mcp.process(messageFrame, tracer);
+            break;
         }
         if (lastLoop) {
           if (messageFrame.getExceptionalHaltReason().isPresent()) {

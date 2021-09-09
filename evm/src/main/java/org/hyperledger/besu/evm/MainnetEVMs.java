@@ -22,6 +22,8 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.AddressOperation;
@@ -232,6 +234,14 @@ public abstract class MainnetEVMs {
     registry.put(new DelegateCallOperation(gasCalculator));
   }
 
+  public static EVM spuriousDragon() {
+    return homestead(new SpuriousDragonGasCalculator());
+  }
+
+  public static EVM tangerineWhistle() {
+    return homestead(new TangerineWhistleGasCalculator());
+  }
+
   public static EVM byzantium() {
     return byzantium(new ByzantiumGasCalculator());
   }
@@ -295,7 +305,8 @@ public abstract class MainnetEVMs {
     return new EVM(istanbulOperations(gasCalculator, chainId), gasCalculator);
   }
 
-  public static OperationRegistry istanbulOperations(final GasCalculator gasCalculator, BigInteger chainId) {
+  public static OperationRegistry istanbulOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
     OperationRegistry operationRegistry = new OperationRegistry();
     registerIstanbulOperations(operationRegistry, gasCalculator, chainId);
     return operationRegistry;
@@ -332,7 +343,8 @@ public abstract class MainnetEVMs {
     return new EVM(londonOperations(gasCalculator, chainId), gasCalculator);
   }
 
-  public static OperationRegistry londonOperations(final GasCalculator gasCalculator, BigInteger chainId) {
+  public static OperationRegistry londonOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
     OperationRegistry operationRegistry = new OperationRegistry();
     registerLondonOperations(operationRegistry, gasCalculator, chainId);
     return operationRegistry;

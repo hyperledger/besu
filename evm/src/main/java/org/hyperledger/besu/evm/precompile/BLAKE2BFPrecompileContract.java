@@ -19,8 +19,8 @@ import static org.hyperledger.besu.crypto.Blake2bfMessageDigest.Blake2bfDigest.M
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
 

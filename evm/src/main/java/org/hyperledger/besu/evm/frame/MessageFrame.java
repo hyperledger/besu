@@ -977,7 +977,8 @@ public class MessageFrame {
     return messageFrameStack;
   }
 
-  public void setExceptionalHaltReason(final Optional<ExceptionalHaltReason> exceptionalHaltReason) {
+  public void setExceptionalHaltReason(
+      final Optional<ExceptionalHaltReason> exceptionalHaltReason) {
     this.exceptionalHaltReason = exceptionalHaltReason;
   }
 

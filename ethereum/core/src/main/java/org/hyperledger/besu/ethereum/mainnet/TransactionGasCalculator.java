@@ -25,9 +25,9 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
  *
  * <p>The {@code TransactionGasCalculator} is meant to encapsulate all {@link Gas}-related
  * calculations not needed during EVM execution or caused by EVM execution. EVM Relevant or caused
- * gas calculations live in the {@link GasCalculator}. Current calculations
- * revolve around block encoding of transactions, account creation, how much refund to apply, and
- * private transaction gas reservations.
+ * gas calculations live in the {@link GasCalculator}. Current calculations revolve around block
+ * encoding of transactions, account creation, how much refund to apply, and private transaction gas
+ * reservations.
  */
 public interface TransactionGasCalculator {
 

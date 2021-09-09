@@ -25,7 +25,7 @@ public class MaxCodeSizeRule implements ContractValidationRule {
 
   private final int maxCodeSize;
 
-  private MaxCodeSizeRule(final int maxCodeSize) {
+  MaxCodeSizeRule(final int maxCodeSize) {
     this.maxCodeSize = maxCodeSize;
   }
 

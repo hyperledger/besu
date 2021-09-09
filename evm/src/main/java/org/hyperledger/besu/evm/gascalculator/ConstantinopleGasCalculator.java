@@ -15,8 +15,8 @@
 package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
