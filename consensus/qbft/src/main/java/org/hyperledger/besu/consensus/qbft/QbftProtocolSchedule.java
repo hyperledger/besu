@@ -101,19 +101,6 @@ public class QbftProtocolSchedule {
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
-      final boolean isRevertReasonEnabled,
-      final BiFunction<Integer, Boolean, BlockHeaderValidator.Builder> blockHeaderRuleset,
-      final BftExtraDataCodec bftExtraDataCodec) {
-    return create(
-        config,
-        PrivacyParameters.DEFAULT,
-        isRevertReasonEnabled,
-        blockHeaderRuleset,
-        bftExtraDataCodec);
-  }
-
-  public static ProtocolSchedule create(
-      final GenesisConfigOptions config,
       final BiFunction<Integer, Boolean, BlockHeaderValidator.Builder> blockHeaderRuleset,
       final BftExtraDataCodec bftExtraDataCodec) {
     return create(config, PrivacyParameters.DEFAULT, false, blockHeaderRuleset, bftExtraDataCodec);

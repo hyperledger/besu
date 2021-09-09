@@ -96,19 +96,6 @@ public class BftProtocolSchedule {
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
-      final boolean isRevertReasonEnabled,
-      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
-      final BftExtraDataCodec bftExtraDataCodec) {
-    return create(
-        config,
-        PrivacyParameters.DEFAULT,
-        isRevertReasonEnabled,
-        blockHeaderRuleset,
-        bftExtraDataCodec);
-  }
-
-  public static ProtocolSchedule create(
-      final GenesisConfigOptions config,
       final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
       final BftExtraDataCodec bftExtraDataCodec) {
     return create(config, PrivacyParameters.DEFAULT, false, blockHeaderRuleset, bftExtraDataCodec);
