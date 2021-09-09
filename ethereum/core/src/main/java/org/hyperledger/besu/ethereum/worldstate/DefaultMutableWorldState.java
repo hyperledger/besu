@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
+import org.hyperledger.besu.ethereum.core.contract.ContractCacheOptions;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -67,7 +68,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   public DefaultMutableWorldState(
       final WorldStateStorage storage, final WorldStatePreimageStorage preimageStorage) {
-    this(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, storage, preimageStorage, new CodeCache());
+    this(
+        MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH,
+        storage,
+        preimageStorage,
+        new CodeCache(ContractCacheOptions.getContractCacheWeight()));
   }
 
   public DefaultMutableWorldState(
@@ -75,7 +80,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
       final WorldStateStorage worldStateStorage,
       final WorldStatePreimageStorage preimageStorage) {
 
-    this(rootHash, worldStateStorage, preimageStorage, new CodeCache());
+    this(
+        rootHash,
+        worldStateStorage,
+        preimageStorage,
+        new CodeCache(ContractCacheOptions.getContractCacheWeight()));
   }
 
   public DefaultMutableWorldState(
@@ -101,7 +110,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
     this.worldStateStorage = other.worldStateStorage;
     this.preimageStorage = other.preimageStorage;
     this.accountStateTrie = newAccountStateTrie(other.accountStateTrie.getRootHash());
-    this.codeCache = new CodeCache();
+    this.codeCache = new CodeCache(ContractCacheOptions.getContractCacheWeight());
   }
 
   private MerklePatriciaTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
@@ -130,7 +139,10 @@ public class DefaultMutableWorldState implements MutableWorldState {
   @Override
   public MutableWorldState copy() {
     return new DefaultMutableWorldState(
-        rootHash(), worldStateStorage, preimageStorage, new CodeCache());
+        rootHash(),
+        worldStateStorage,
+        preimageStorage,
+        new CodeCache(ContractCacheOptions.getContractCacheWeight()));
   }
 
   @Override

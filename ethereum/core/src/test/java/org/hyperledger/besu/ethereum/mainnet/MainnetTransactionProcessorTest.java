@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
 import org.hyperledger.besu.ethereum.core.contract.CodeLoader;
+import org.hyperledger.besu.ethereum.core.contract.ContractCacheOptions;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -97,7 +98,7 @@ public class MainnetTransactionProcessorTest {
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(70L));
 
     this.loader = spy(new CodeLoader());
-    this.cache = new CodeCache(loader);
+    this.cache = new CodeCache(ContractCacheOptions.getContractCacheWeight(), loader);
     this.worldState = spy(createInMemoryWorldStateUsingCache(this.cache).updater());
 
     transactionProcessor =
@@ -165,7 +166,7 @@ public class MainnetTransactionProcessorTest {
 
     Account contractAccount = worldState.get(contractAddr);
     Mockito.verify(worldState, times(1)).getContract(contractAccount);
-    Mockito.verify(loader, times(1)).load(contractAccount);
+    Mockito.verify(loader, times(1)).load(any());
 
     transactionProcessor.processTransaction(
         blockchain,
@@ -178,7 +179,7 @@ public class MainnetTransactionProcessorTest {
         ImmutableTransactionValidationParams.builder().build());
 
     Mockito.verify(worldState, times(2)).getContract(contractAccount);
-    Mockito.verify(loader, times(1)).load(contractAccount);
+    Mockito.verify(loader, times(1)).load(any());
   }
 
   @Test
@@ -215,7 +216,7 @@ public class MainnetTransactionProcessorTest {
 
     Account contractAccount = this.worldState.get(contractAddr);
     Mockito.verify(this.worldState, times(1)).getContract(contractAccount);
-    Mockito.verify(loader, times(1)).load(contractAccount);
+    Mockito.verify(loader, times(1)).load(any());
 
     this.worldState.deleteAccount(contractAccount.getAddress());
     this.worldState.commit();

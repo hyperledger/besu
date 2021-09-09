@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.CodeCache;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
+import org.hyperledger.besu.ethereum.core.contract.ContractCacheOptions;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -76,7 +77,10 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
     }
     return Optional.of(
         new DefaultMutableWorldState(
-            rootHash, worldStateStorage, preimageStorage, new CodeCache()));
+            rootHash,
+            worldStateStorage,
+            preimageStorage,
+            new CodeCache(ContractCacheOptions.getContractCacheWeight())));
   }
 
   @Override

@@ -25,6 +25,10 @@ public class ContractCacheOptions {
     return contractCacheWeightKilobytes;
   }
 
+  public static Long getContractCacheWeight() {
+    return contractCacheWeightKilobytes * 1024;
+  }
+
   @CommandLine.Option(
       names = {CONTRACT_CACHE_WEIGHT},
       description =
