@@ -238,8 +238,8 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public Gas createOperationGasCost(final MessageFrame frame) {
-    final UInt256 initCodeOffset = frame.getStackItem(1);
-    final UInt256 initCodeLength = frame.getStackItem(2);
+    final UInt256 initCodeOffset = UInt256.fromBytes(frame.getStackItem(1));
+    final UInt256 initCodeLength = UInt256.fromBytes(frame.getStackItem(2));
 
     final Gas memoryGasCost = memoryExpansionGasCost(frame, initCodeOffset, initCodeLength);
     return CREATE_OPERATION_GAS_COST.plus(memoryGasCost);

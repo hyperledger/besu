@@ -18,6 +18,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -32,8 +33,8 @@ public class SarOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final UInt256 shiftAmount = frame.popStackItem();
-    Bytes32 value = frame.popStackItem();
+    final UInt256 shiftAmount = UInt256.fromBytes(frame.popStackItem());
+    Bytes value = frame.popStackItem();
 
     final boolean negativeNumber = value.get(0) < 0;
 

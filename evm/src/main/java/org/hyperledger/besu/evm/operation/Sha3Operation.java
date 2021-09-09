@@ -35,8 +35,8 @@ public class Sha3Operation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final UInt256 from = frame.popStackItem();
-    final UInt256 length = frame.popStackItem();
+    final UInt256 from = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 length = UInt256.fromBytes(frame.popStackItem());
 
     final Gas cost = gasCalculator().sha3OperationGasCost(frame, from, length);
     final Optional<Gas> optionalCost = Optional.of(cost);

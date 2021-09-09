@@ -36,9 +36,9 @@ public class Create2Operation extends AbstractCreateOperation {
   @Override
   public Address targetContractAddress(final MessageFrame frame) {
     final Address sender = frame.getRecipientAddress();
-    final UInt256 offset = frame.getStackItem(1);
-    final UInt256 length = frame.getStackItem(2);
-    final Bytes32 salt = frame.getStackItem(3);
+    final UInt256 offset = UInt256.fromBytes(frame.getStackItem(1));
+    final UInt256 length = UInt256.fromBytes(frame.getStackItem(2));
+    final Bytes32 salt = UInt256.fromBytes(frame.getStackItem(3));
     final Bytes initCode = frame.readMemory(offset, length);
     final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, sender, salt, keccak256(initCode)));
     final Address address = Address.extract(hash);

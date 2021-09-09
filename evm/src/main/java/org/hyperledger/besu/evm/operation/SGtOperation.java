@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class SGtOperation extends AbstractFixedCostOperation {
@@ -31,11 +32,15 @@ public class SGtOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final UInt256 value0 = frame.popStackItem();
-    final UInt256 value1 = frame.popStackItem();
+    final Bytes value0 = frame.popStackItem();
+    final Bytes value1 = frame.popStackItem();
 
-    final BigInteger b0 = value0.toSignedBigInteger();
-    final BigInteger b1 = value1.toSignedBigInteger();
+    final BigInteger b0 = value0.size() < 32 ?
+        new BigInteger(1, value0.toArrayUnsafe()) :
+        new BigInteger(value0.toArrayUnsafe());
+    final BigInteger b1 = value1.size() < 32 ?
+        new BigInteger(1, value1.toArrayUnsafe()) :
+        new BigInteger(value1.toArrayUnsafe());
 
     final UInt256 result = b0.compareTo(b1) > 0 ? UInt256.ONE : UInt256.ZERO;
 

@@ -20,8 +20,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class GasLimitOperation extends AbstractFixedCostOperation {
 
@@ -33,7 +31,7 @@ public class GasLimitOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final Gas gasLimit = Gas.of(frame.getBlockHeader().getGasLimit());
-    final UInt256 value = UInt256.fromBytes(Bytes32.leftPad(Bytes.of(gasLimit.getBytes())));
+    final Bytes value = Bytes.of(gasLimit.getBytes());
     frame.pushStackItem(value);
 
     return successResponse;

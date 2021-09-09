@@ -51,7 +51,7 @@ public class SLoadOperation extends AbstractOperation {
     try {
       final var account = frame.getWorldUpdater().get(frame.getRecipientAddress());
       final Address address = account.getAddress();
-      final Bytes32 key = frame.popStackItem();
+      final Bytes32 key = UInt256.fromBytes(frame.popStackItem());
       final boolean slotIsWarm = frame.warmUpStorage(address, key);
       final Optional<Gas> optionalCost = slotIsWarm ? warmCost : coldCost;
       if (frame.getRemainingGas().compareTo(optionalCost.get()) < 0) {

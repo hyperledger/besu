@@ -33,14 +33,18 @@ public class SModOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final UInt256 value0 = frame.popStackItem();
-    final UInt256 value1 = frame.popStackItem();
+    final Bytes value0 = frame.popStackItem();
+    final Bytes value1 = frame.popStackItem();
 
     if (value1.isZero()) {
       frame.pushStackItem(UInt256.ZERO);
     } else {
-      final BigInteger b1 = value0.toSignedBigInteger();
-      final BigInteger b2 = value1.toSignedBigInteger();
+      final BigInteger b1 = value0.size() < 32 ?
+          new BigInteger(1, value0.toArrayUnsafe()) :
+          new BigInteger(value0.toArrayUnsafe());
+      final BigInteger b2 = value1.size() < 32 ?
+          new BigInteger(1, value1.toArrayUnsafe()) :
+          new BigInteger(value1.toArrayUnsafe());
       BigInteger result = b1.abs().mod(b2.abs());
       if (b1.signum() < 0) {
         result = result.negate();

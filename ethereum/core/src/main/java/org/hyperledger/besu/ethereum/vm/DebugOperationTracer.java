@@ -56,9 +56,9 @@ public class DebugOperationTracer implements OperationTracer {
     final int pc = frame.getPC();
     final Gas gasRemaining = frame.getRemainingGas();
     final Bytes inputData = frame.getInputData();
-    final Optional<Bytes32[]> stack = captureStack(frame);
+    final Optional<Bytes[]> stack = captureStack(frame);
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
-    final Optional<Bytes32[]> stackPostExecution;
+    final Optional<Bytes[]> stackPostExecution;
     final Operation.OperationResult operationResult = executeOperation.execute();
     final Bytes outputData = frame.getOutputData();
     final Optional<Bytes[]> memory = captureMemory(frame);
@@ -207,12 +207,12 @@ public class DebugOperationTracer implements OperationTracer {
     return Optional.of(memoryContents);
   }
 
-  private Optional<Bytes32[]> captureStack(final MessageFrame frame) {
+  private Optional<Bytes[]> captureStack(final MessageFrame frame) {
     if (!options.isStackEnabled()) {
       return Optional.empty();
     }
 
-    final Bytes32[] stackContents = new Bytes32[frame.stackSize()];
+    final Bytes[] stackContents = new Bytes32[frame.stackSize()];
     for (int i = 0; i < stackContents.length; i++) {
       // Record stack contents in reverse
       stackContents[i] = frame.getStackItem(stackContents.length - i - 1);

@@ -22,7 +22,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class MStoreOperation extends AbstractOperation {
@@ -33,8 +33,8 @@ public class MStoreOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final UInt256 location = frame.popStackItem();
-    final Bytes32 value = frame.popStackItem();
+    final UInt256 location = UInt256.fromBytes(frame.popStackItem());
+    final Bytes value = frame.popStackItem();
 
     final Gas cost = gasCalculator().mStoreOperationGasCost(frame, location);
     final Optional<Gas> optionalCost = Optional.of(cost);

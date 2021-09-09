@@ -18,7 +18,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class ShrOperation extends AbstractFixedCostOperation {
@@ -30,8 +30,8 @@ public class ShrOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final UInt256 shiftAmount = frame.popStackItem();
-    final Bytes32 value = frame.popStackItem();
+    final UInt256 shiftAmount = UInt256.fromBytes(frame.popStackItem());
+    final Bytes value = frame.popStackItem();
 
     if (!shiftAmount.fitsInt() || shiftAmount.intValue() >= 256) {
       frame.pushStackItem(UInt256.ZERO);

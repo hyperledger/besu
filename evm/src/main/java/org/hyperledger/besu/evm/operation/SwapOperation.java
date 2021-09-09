@@ -21,7 +21,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes;
 
 public class SwapOperation extends AbstractFixedCostOperation {
 
@@ -52,7 +52,7 @@ public class SwapOperation extends AbstractFixedCostOperation {
       return underflowResponse;
     }
 
-    final UInt256 tmp = frame.getStackItem(0);
+    final Bytes tmp = frame.getStackItem(0);
     frame.setStackItem(0, frame.getStackItem(index));
     frame.setStackItem(index, tmp);
 

@@ -95,8 +95,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected abstract Address targetContractAddress(MessageFrame frame);
 
   private void fail(final MessageFrame frame) {
-    final UInt256 inputOffset = frame.getStackItem(1);
-    final UInt256 inputSize = frame.getStackItem(2);
+    final UInt256 inputOffset = UInt256.fromBytes(frame.getStackItem(1));
+    final UInt256 inputSize = UInt256.fromBytes(frame.getStackItem(2));
     frame.readMemory(inputOffset, inputSize);
     frame.popStackItems(getStackItemsConsumed());
     frame.pushStackItem(UInt256.ZERO);
@@ -113,8 +113,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     account.incrementNonce();
 
     final Wei value = Wei.wrap(frame.getStackItem(0));
-    final UInt256 inputOffset = frame.getStackItem(1);
-    final UInt256 inputSize = frame.getStackItem(2);
+    final UInt256 inputOffset = UInt256.fromBytes(frame.getStackItem(1));
+    final UInt256 inputSize = UInt256.fromBytes(frame.getStackItem(2));
     final Bytes inputData = frame.readMemory(inputOffset, inputSize);
 
     final Address contractAddress = targetContractAddress(frame);

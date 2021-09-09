@@ -55,22 +55,22 @@ public class CallOperation extends AbstractCallOperation {
 
   @Override
   protected UInt256 inputDataOffset(final MessageFrame frame) {
-    return frame.getStackItem(3);
+    return UInt256.fromBytes(frame.getStackItem(3));
   }
 
   @Override
   protected UInt256 inputDataLength(final MessageFrame frame) {
-    return frame.getStackItem(4);
+    return UInt256.fromBytes(frame.getStackItem(4));
   }
 
   @Override
   protected UInt256 outputDataOffset(final MessageFrame frame) {
-    return frame.getStackItem(5);
+    return UInt256.fromBytes(frame.getStackItem(5));
   }
 
   @Override
   protected UInt256 outputDataLength(final MessageFrame frame) {
-    return frame.getStackItem(6);
+    return UInt256.fromBytes(frame.getStackItem(6));
   }
 
   @Override

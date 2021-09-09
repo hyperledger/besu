@@ -33,7 +33,7 @@ public class MLoadOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final UInt256 location = frame.popStackItem();
+    final UInt256 location = UInt256.fromBytes(frame.popStackItem());
 
     final Gas cost = gasCalculator().mLoadOperationGasCost(frame, location);
     final Optional<Gas> optionalCost = Optional.of(cost);

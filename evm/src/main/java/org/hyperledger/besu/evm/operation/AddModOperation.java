@@ -29,9 +29,9 @@ public class AddModOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final UInt256 value0 = frame.popStackItem();
-    final UInt256 value1 = frame.popStackItem();
-    final UInt256 value2 = frame.popStackItem();
+    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value2 = UInt256.fromBytes(frame.popStackItem());
 
     if (value2.isZero()) {
       frame.pushStackItem(UInt256.ZERO);

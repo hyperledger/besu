@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** Static utility methods to work with VM words (that is, {@link Bytes32} values). */
@@ -44,6 +45,26 @@ public abstract class Words {
    */
   public static Address toAddress(final Bytes32 bytes) {
     return Address.wrap(bytes.slice(bytes.size() - Address.SIZE, Address.SIZE));
+  }
+
+  /**
+   * Extract an address from the the provided address.
+   *
+   * @param bytes The word to extract the address from.
+   * @return An address build from the right-most 160-bits of the {@code bytes} (as according to the
+   *     VM specification (Appendix H. of the Yellow paper)).
+   */
+  public static Address toAddress(final Bytes bytes) {
+    int size = bytes.size();
+    if (size < 20) {
+      MutableBytes result = MutableBytes.create(20);
+      bytes.copyTo(result, 20 - size);
+      return Address.wrap(result);
+    } else if (size == 20) {
+      return Address.wrap(bytes);
+    } else {
+      return Address.wrap(bytes.slice(size - Address.SIZE, Address.SIZE));
+    }
   }
 
   /**

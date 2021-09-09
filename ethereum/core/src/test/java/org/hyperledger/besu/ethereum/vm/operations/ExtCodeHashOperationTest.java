@@ -71,7 +71,7 @@ public class ExtCodeHashOperationTest {
 
   @Test
   public void shouldReturnZeroWhenAccountDoesNotExist() {
-    final Bytes32 result = executeOperation(REQUESTED_ADDRESS);
+    final Bytes result = executeOperation(REQUESTED_ADDRESS);
     assertThat(result).isEqualTo(Bytes32.ZERO);
   }
 
@@ -121,7 +121,7 @@ public class ExtCodeHashOperationTest {
     assertThat(frame.getStackItem(0)).isEqualTo(Hash.hash(code));
   }
 
-  private Bytes32 executeOperation(final Address requestedAddress) {
+  private Bytes executeOperation(final Address requestedAddress) {
     final MessageFrame frame = createMessageFrame(requestedAddress);
     operation.execute(frame, null);
     return frame.getStackItem(0);

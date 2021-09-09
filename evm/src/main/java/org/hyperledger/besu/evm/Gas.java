@@ -16,10 +16,11 @@ package org.hyperledger.besu.evm;
 
 import org.hyperledger.besu.datatypes.Wei;
 
-import java.math.BigInteger;
 import javax.annotation.concurrent.Immutable;
+import java.math.BigInteger;
 
 import com.google.common.primitives.Longs;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -60,7 +61,20 @@ public final class Gas {
   }
 
   public static Gas of(final Bytes32 value) {
-    return Gas.of(UInt256.fromBytes(value));
+    return Gas.of((Bytes)value);
+  }
+
+  public static Gas of(final Bytes value) {
+    if (value.size() > 8 && value.trimLeadingZeros().size() > 8) {
+      return MAX_VALUE;
+    } else {
+      long gas = value.toLong();
+      if (gas < 0) {
+        return MAX_VALUE;
+      } else {
+        return Gas.of(gas);
+      }
+    }
   }
 
   public static Gas fromHexString(final String str) {

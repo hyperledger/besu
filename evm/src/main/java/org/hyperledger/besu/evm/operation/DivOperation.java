@@ -18,6 +18,9 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import java.math.BigInteger;
+
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class DivOperation extends AbstractFixedCostOperation {
@@ -29,14 +32,17 @@ public class DivOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final UInt256 value0 = frame.popStackItem();
-    final UInt256 value1 = frame.popStackItem();
+    final Bytes value0 = frame.popStackItem();
+    final Bytes value1 = frame.popStackItem();
 
     if (value1.isZero()) {
       frame.pushStackItem(UInt256.ZERO);
     } else {
-      final UInt256 result = value0.divide(value1);
-      frame.pushStackItem(result);
+      var b1 = new BigInteger(1, value0.toArrayUnsafe());
+      var b2 = new BigInteger(1, value1.toArrayUnsafe());
+      final BigInteger result = b1.divide(b2);
+
+      frame.pushStackItem(Bytes.wrap(result.toByteArray()));
     }
 
     return successResponse;
