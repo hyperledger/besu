@@ -20,11 +20,11 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.GasCalculator;
-import org.hyperledger.besu.evm.Operation;
-import org.hyperledger.besu.evm.OperationRegistry;
-import org.hyperledger.besu.evm.gascalculators.FrontierGasCalculator;
-import org.hyperledger.besu.evm.operations.StopOperation;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.operation.OperationRegistry;
+import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
+import org.hyperledger.besu.evm.operation.StopOperation;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;

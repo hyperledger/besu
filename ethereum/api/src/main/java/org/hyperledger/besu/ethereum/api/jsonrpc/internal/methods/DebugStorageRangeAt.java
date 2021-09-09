@@ -27,9 +27,9 @@ import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.evm.Account;
-import org.hyperledger.besu.evm.AccountStorageEntry;
-import org.hyperledger.besu.evm.WorldState;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.Collections;
 import java.util.NavigableMap;

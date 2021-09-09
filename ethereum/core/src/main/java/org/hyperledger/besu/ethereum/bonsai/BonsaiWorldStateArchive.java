@@ -24,8 +24,8 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.MutableWorldState;
-import org.hyperledger.besu.evm.WorldState;
+import org.hyperledger.besu.evm.worldstate.MutableWorldState;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.ArrayList;

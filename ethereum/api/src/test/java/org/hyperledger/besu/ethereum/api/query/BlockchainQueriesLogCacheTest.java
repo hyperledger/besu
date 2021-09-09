@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.Log;
+import org.hyperledger.besu.evm.log.Log;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;

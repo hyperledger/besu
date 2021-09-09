@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.evm.WorldState;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.List;
 import java.util.Map;

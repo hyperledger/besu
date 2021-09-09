@@ -43,9 +43,9 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.evm.Account;
-import org.hyperledger.besu.evm.LogTopic;
-import org.hyperledger.besu.evm.WorldState;
+import org.hyperledger.besu.evm.log.LogTopic;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
 import java.util.ArrayList;

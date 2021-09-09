@@ -18,9 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.MessageFrame;
-import org.hyperledger.besu.evm.gascalculators.PetersburgGasCalculator;
-import org.hyperledger.besu.evm.precompiles.BLAKE2BFPrecompileContract;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.precompile.BLAKE2BFPrecompileContract;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;

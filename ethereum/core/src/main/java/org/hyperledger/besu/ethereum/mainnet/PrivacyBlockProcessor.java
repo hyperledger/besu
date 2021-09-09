@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.MutableWorldState;
+import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 
 import java.util.Base64;
 import java.util.Collections;

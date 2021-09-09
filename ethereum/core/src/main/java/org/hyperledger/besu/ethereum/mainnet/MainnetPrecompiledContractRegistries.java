@@ -17,15 +17,15 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
-import static org.hyperledger.besu.evm.MainnetPrecompiledContracts.populateForBLS12;
-import static org.hyperledger.besu.evm.MainnetPrecompiledContracts.populateForByzantium;
-import static org.hyperledger.besu.evm.MainnetPrecompiledContracts.populateForFrontier;
-import static org.hyperledger.besu.evm.MainnetPrecompiledContracts.populateForIstanbul;
+import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForBLS12;
+import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForByzantium;
+import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForFrontier;
+import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForIstanbul;
 
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
-import org.hyperledger.besu.evm.PrecompileContractRegistry;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 /** Provides the various precompiled contracts used on mainnet hard forks. */
 public abstract class MainnetPrecompiledContractRegistries {

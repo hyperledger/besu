@@ -23,7 +23,7 @@ import static org.mockito.Mockito.verify;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.mainnet.MainnetPrecompiledContractRegistries;
 import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
 import java.io.InputStreamReader;

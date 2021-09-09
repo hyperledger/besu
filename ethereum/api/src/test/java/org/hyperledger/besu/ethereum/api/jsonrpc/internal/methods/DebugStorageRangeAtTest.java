@@ -36,9 +36,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
-import org.hyperledger.besu.evm.Account;
-import org.hyperledger.besu.evm.AccountStorageEntry;
-import org.hyperledger.besu.evm.MutableWorldState;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 /**
  * Provides various gas cost lookups and calculations used during transaction processing outside the
@@ -24,7 +25,7 @@ import org.hyperledger.besu.evm.Gas;
  *
  * <p>The {@code TransactionGasCalculator} is meant to encapsulate all {@link Gas}-related
  * calculations not needed during EVM execution or caused by EVM execution. EVM Relevant or caused
- * gas calculations live in the {@link org.hyperledger.besu.evm.GasCalculator}. Current calculations
+ * gas calculations live in the {@link GasCalculator}. Current calculations
  * revolve around block encoding of transactions, account creation, how much refund to apply, and
  * private transaction gas reservations.
  */

@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.EvmAccount;
-import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 // This class uses a public WorldUpdater and a private WorldUpdater to provide a
 // MutableWorldStateUpdater that can read and write from BOTH the private world state and the public

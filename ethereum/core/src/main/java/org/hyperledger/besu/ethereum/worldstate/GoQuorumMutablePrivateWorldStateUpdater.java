@@ -15,10 +15,10 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
-import org.hyperledger.besu.evm.EvmAccount;
-import org.hyperledger.besu.evm.MessageFrame;
-import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 // This class uses a public WorldUpdater and a private WorldUpdater to provide a
 // MutableWorldStateUpdater that can read and write from the private world state and can read from

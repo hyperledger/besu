@@ -28,9 +28,9 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.VMReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.MessageFrame;
-import org.hyperledger.besu.evm.MutableWorldState;
-import org.hyperledger.besu.evm.OperationTracer;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.math.BigInteger;

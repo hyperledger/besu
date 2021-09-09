@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.NormalBloc
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
-import org.hyperledger.besu.evm.MutableWorldState;
+import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 
 import java.util.Optional;
 import java.util.Set;

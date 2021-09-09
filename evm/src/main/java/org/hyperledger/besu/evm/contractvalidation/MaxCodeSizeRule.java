@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.evm.contractvalidation;
 
-import org.hyperledger.besu.evm.ContractValidationRule;
-import org.hyperledger.besu.evm.MessageFrame;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

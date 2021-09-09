@@ -32,14 +32,14 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
-import org.hyperledger.besu.evm.Account;
-import org.hyperledger.besu.evm.Log;
-import org.hyperledger.besu.evm.MutableWorldState;
-import org.hyperledger.besu.evm.OperationTracer;
-import org.hyperledger.besu.evm.WorldState;
-import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.worldstate.MutableWorldState;
+import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 
 import java.io.BufferedReader;
@@ -124,7 +124,7 @@ public class StateTestSubCommand implements Runnable {
                   objectMapper.readValue(file, javaType);
               executeStateTest(generalStateTests);
             } catch (final JsonProcessingException jpe) {
-              System.out.println("File content error :" + jpe.toString());
+              System.out.println("File content error :" + jpe);
             }
           } else {
             System.out.println("File not found:" + fileName);
@@ -215,10 +215,8 @@ public class StateTestSubCommand implements Runnable {
 
       final ObjectNode summaryLine = objectMapper.createObjectNode();
       summaryLine.put("output", result.getOutput().toUnprefixedHexString());
-      summaryLine.put(
-          "gasUsed",
-          StandardJsonTracer.shortNumber(
-              UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining())));
+      UInt256 gasUsed = UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining());
+      summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
       summaryLine.put("time", timer.elapsed(TimeUnit.NANOSECONDS));
 
       // Check the world state root hash.
@@ -238,6 +236,11 @@ public class StateTestSubCommand implements Runnable {
       if (result.isInvalid()) {
         summaryLine.put("validationError", result.getValidationResult().getErrorMessage());
       }
+
+      summaryLine.put(
+          "gas/sec",
+          String.format(
+              "%,d", gasUsed.toLong() * 1_000_000_000 / timer.elapsed(TimeUnit.NANOSECONDS)));
 
       System.out.println(summaryLine);
     }

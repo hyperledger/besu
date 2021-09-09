@@ -16,11 +16,10 @@
 
 package org.hyperledger.besu.evm.tracing;
 
-import org.hyperledger.besu.evm.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.MessageFrame;
-import org.hyperledger.besu.evm.Operation;
-import org.hyperledger.besu.evm.OperationTracer;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.operation.Operation;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;

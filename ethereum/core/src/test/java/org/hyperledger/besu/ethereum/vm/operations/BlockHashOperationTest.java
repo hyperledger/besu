@@ -25,9 +25,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.evm.MessageFrame;
-import org.hyperledger.besu.evm.gascalculators.FrontierGasCalculator;
-import org.hyperledger.besu.evm.operations.BlockHashOperation;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 
 import com.google.common.base.Strings;
 import org.apache.tuweni.bytes.Bytes;

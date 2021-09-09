@@ -1,3 +1,18 @@
+/*
+ * Copyright contributors to Hyperledger Besu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ */
 package org.hyperledger.besu.evm.toy;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -5,14 +20,15 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.MainnetEvms;
-import org.hyperledger.besu.evm.MainnetPrecompiledContracts;
-import org.hyperledger.besu.evm.MessageCallProcessor;
-import org.hyperledger.besu.evm.MessageFrame;
-import org.hyperledger.besu.evm.OperationTracer;
-import org.hyperledger.besu.evm.PrecompileContractRegistry;
-import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
+import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
+import org.hyperledger.besu.evm.processor.MessageCallProcessor;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.io.PrintStream;
 import java.math.BigInteger;
@@ -125,7 +141,7 @@ public class EvmToyCommand implements Runnable {
     worldUpdater.getOrCreate(receiver).getMutable().setCode(codeBytes);
 
     int repeat = this.repeat;
-    final EVM evm = MainnetEvms.berlin();
+    final EVM evm = MainnetEVMs.berlin();
     final PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
     MainnetPrecompiledContracts.populateForIstanbul(
         precompileContractRegistry, evm.getGasCalculator());
@@ -163,10 +179,14 @@ public class EvmToyCommand implements Runnable {
               .build());
 
       final MessageCallProcessor mcp = new MessageCallProcessor(evm, precompileContractRegistry);
+      final ContractCreationProcessor ccp = new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0);
       stopwatch.start();
       while (!messageFrameStack.isEmpty()) {
         final MessageFrame messageFrame = messageFrameStack.peek();
-        mcp.process(messageFrame, tracer);
+        switch (messageFrame.getType()) {
+          case CONTRACT_CREATION: ccp.process(messageFrame, tracer); break;
+          case MESSAGE_CALL: mcp.process(messageFrame, tracer); break;
+        }
         if (lastLoop) {
           if (messageFrame.getExceptionalHaltReason().isPresent()) {
             out.println(messageFrame.getExceptionalHaltReason().get());

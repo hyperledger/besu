@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.processing;
 
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.evm.Log;
+import org.hyperledger.besu.evm.log.Log;
 
 import java.util.ArrayList;
 import java.util.List;

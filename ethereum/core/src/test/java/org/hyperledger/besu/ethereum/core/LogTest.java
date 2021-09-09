@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.evm.Log;
+import org.hyperledger.besu.evm.log.Log;
 
 import org.junit.Test;
 

@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.debug;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.WorldUpdater;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Map;
 import java.util.Optional;

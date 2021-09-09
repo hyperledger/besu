@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.evm.Memory;
+import org.hyperledger.besu.evm.frame.Memory;
 
 import com.google.common.base.Strings;
 import org.apache.tuweni.bytes.Bytes;

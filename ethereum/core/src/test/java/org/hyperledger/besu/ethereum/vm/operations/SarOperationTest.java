@@ -19,10 +19,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.GasCalculator;
-import org.hyperledger.besu.evm.MessageFrame;
-import org.hyperledger.besu.evm.gascalculators.SpuriousDragonGasCalculator;
-import org.hyperledger.besu.evm.operations.SarOperation;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
+import org.hyperledger.besu.evm.operation.SarOperation;
 
 import java.util.Arrays;
 

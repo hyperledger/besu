@@ -38,12 +38,12 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.GasCalculator;
-import org.hyperledger.besu.evm.MessageFrame;
-import org.hyperledger.besu.evm.MutableWorldState;
-import org.hyperledger.besu.evm.OperationTracer;
-import org.hyperledger.besu.evm.WorldUpdater;
-import org.hyperledger.besu.evm.precompiles.AbstractPrecompiledContract;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
+import org.hyperledger.besu.evm.worldstate.MutableWorldState;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.Hash;
 

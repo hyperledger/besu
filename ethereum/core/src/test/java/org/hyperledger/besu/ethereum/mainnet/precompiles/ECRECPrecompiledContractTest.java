@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.evm.MessageFrame;
-import org.hyperledger.besu.evm.gascalculators.SpuriousDragonGasCalculator;
-import org.hyperledger.besu.evm.precompiles.ECRECPrecompiledContract;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
+import org.hyperledger.besu.evm.precompile.ECRECPrecompiledContract;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;

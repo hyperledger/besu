@@ -19,12 +19,12 @@ import static org.apache.tuweni.units.bigints.UInt256.ZERO;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.evm.Account;
 import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.GasCalculator;
-import org.hyperledger.besu.evm.gascalculators.ConstantinopleGasCalculator;
-import org.hyperledger.besu.evm.gascalculators.IstanbulGasCalculator;
-import org.hyperledger.besu.evm.gascalculators.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;

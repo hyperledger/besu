@@ -17,7 +17,7 @@ package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.evm.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.function.Function;
 import javax.inject.Singleton;
