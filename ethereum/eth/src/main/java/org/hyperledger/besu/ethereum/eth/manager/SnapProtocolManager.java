@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -33,6 +34,7 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class SnapProtocolManager implements ProtocolManager {
   private static final Logger LOG = LogManager.getLogger();
@@ -86,7 +88,13 @@ public class SnapProtocolManager implements ProtocolManager {
    */
   @Override
   public void processMessage(final Capability cap, final Message message) {
-    final MessageData messageData = message.getData();
+    final MessageData messageData =
+        new AbstractSnapMessageData(message.getData().getData()) {
+          @Override
+          public int getCode() {
+            return message.getData().getCode();
+          }
+        };
     final int code = messageData.getCode();
     LOG.trace("Process snap message {}, {}", cap, code);
     final EthPeer ethPeer = ethPeers.peer(message.getConnection());
@@ -109,7 +117,7 @@ public class SnapProtocolManager implements ProtocolManager {
     Optional<MessageData> maybeResponseData = Optional.empty();
     try {
       final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
-          RequestId.unwrapMessageData(ethMessage.getData(), getSupportedProtocol());
+          ethMessage.getData().unwrapMessageData();
       maybeResponseData =
           snapMessages.dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()));
     } catch (final RLPException e) {
@@ -144,5 +152,25 @@ public class SnapProtocolManager implements ProtocolManager {
         reason,
         connection.getPeerInfo(),
         ethPeers.peerCount());
+  }
+
+  static class RawSnapMessageData extends AbstractSnapMessageData {
+
+    private final MessageData originalMessageData;
+
+    public RawSnapMessageData(final MessageData data) {
+      super(data.getData());
+      this.originalMessageData = data;
+    }
+
+    @Override
+    public int getCode() {
+      return originalMessageData.getCode();
+    }
+
+    @Override
+    protected Bytes wrap(final BigInteger requestId) {
+      throw new UnsupportedOperationException("cannot wrap this message");
+    }
   }
 }

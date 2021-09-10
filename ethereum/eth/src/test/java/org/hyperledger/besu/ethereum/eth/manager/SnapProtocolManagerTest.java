@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
-import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -59,7 +58,7 @@ public final class SnapProtocolManagerTest {
   @Test
   public void disconnectOnUnsolicitedMessage() {
     try (final SnapProtocolManager snapManager = create()) {
-      final MessageData messageData = AccountRangeMessage.create(BigInteger.ONE);
+      final MessageData messageData = AccountRangeMessage.create();
       final MockPeerConnection peer =
           setupPeerWithoutStatusExchange(snapManager, (cap, msg, conn) -> {});
       snapManager.processMessage(SnapProtocol.SNAP1, new DefaultMessage(peer, messageData));
@@ -71,17 +70,14 @@ public final class SnapProtocolManagerTest {
   public void respondToGetAccountRange() throws ExecutionException, InterruptedException {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     try (final SnapProtocolManager snapManager = create()) {
-      final BigInteger requestId = BigInteger.ONE;
       final Hash worldStateRoot = Hash.hash(Bytes.wrap(new byte[] {0x01}));
       final Hash startKeyHash = Hash.hash(Bytes.wrap(new byte[] {0x02}));
       final Hash endKeyHash = Hash.hash(Bytes.wrap(new byte[] {0x03}));
       final MessageData messageData =
-          GetAccountRangeMessage.create(requestId, worldStateRoot, startKeyHash, endKeyHash);
+          GetAccountRangeMessage.create(worldStateRoot, startKeyHash, endKeyHash);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
             assertThat(message.getCode()).isEqualTo(SnapV1.ACCOUNT_RANGE);
-            final AccountRangeMessage accountRangeMessage = AccountRangeMessage.readFrom(message);
-            assertThat(accountRangeMessage.getId()).isEqualTo(requestId);
             done.complete(null);
           };
       final PeerConnection peer = setupPeerWithoutStatusExchange(snapManager, onSend);

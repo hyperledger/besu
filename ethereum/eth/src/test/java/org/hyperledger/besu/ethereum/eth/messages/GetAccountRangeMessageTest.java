@@ -18,8 +18,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 
-import java.math.BigInteger;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -30,7 +28,6 @@ public final class GetAccountRangeMessageTest {
   private static final Bytes VALUE1 = Bytes.of(1);
   private static final Bytes VALUE2 = Bytes.of(2);
   private static final Bytes VALUE3 = Bytes.of(3);
-  private static final BigInteger REQUEST_ID = BigInteger.TWO;
   private static final Hash STATEROOT = Hash.hash(VALUE1);
   private static final Hash START_HASH = Hash.hash(VALUE2);
   private static final Hash END_HASH = Hash.hash(VALUE3);
@@ -42,7 +39,7 @@ public final class GetAccountRangeMessageTest {
     // Create GetAccountRangeMessage, copy it to a generic message, then read back into a
     // GetAccountRangeMessage message
     final MessageData initialMessage =
-        GetAccountRangeMessage.create(REQUEST_ID, STATEROOT, START_HASH, END_HASH);
+        GetAccountRangeMessage.create(STATEROOT, START_HASH, END_HASH);
     final MessageData raw = new RawMessage(SnapV1.GET_ACCOUNT_RANGE, initialMessage.getData());
     final GetAccountRangeMessage message = GetAccountRangeMessage.readFrom(raw);
 

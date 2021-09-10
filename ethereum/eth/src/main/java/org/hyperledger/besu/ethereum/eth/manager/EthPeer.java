@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.messages.GetAccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
@@ -277,11 +278,20 @@ public class EthPeer {
         requestManagers.get(EthProtocol.NAME).get(EthPV65.GET_POOLED_TRANSACTIONS), message);
   }
 
+  public RequestManager.ResponseStream getAccountRange(
+      final Hash rootHash, final Hash startingHash, final Hash endingHash) throws PeerNotConnected {
+    final GetAccountRangeMessage message =
+        GetAccountRangeMessage.create(rootHash, startingHash, endingHash);
+    return sendRequest(
+        requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_ACCOUNT_RANGE), message);
+  }
+
   private RequestManager.ResponseStream sendRequest(
       final RequestManager requestManager, final MessageData messageData) throws PeerNotConnected {
     lastRequestTimestamp = clock.millis();
     return requestManager.dispatchRequest(
-        msgData -> connection.sendForProtocol(protocolName, msgData), messageData);
+        msgData -> connection.sendForProtocol(requestManager.getProtocolName(), msgData),
+        messageData);
   }
 
   boolean validateReceivedMessage(final EthMessage message, final String protocolName) {

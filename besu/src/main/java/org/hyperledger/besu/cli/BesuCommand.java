@@ -62,6 +62,7 @@ import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.PkiBlockCreationOptions;
 import org.hyperledger.besu.cli.options.unstable.PrivacyPluginOptions;
 import org.hyperledger.besu.cli.options.unstable.RPCOptions;
+import org.hyperledger.besu.cli.options.unstable.SnapSyncOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
@@ -265,6 +266,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
   private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
+  private final SnapSyncOptions unstableSnapSyncOptions = SnapSyncOptions.create();
 
   // stable CLI options
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
@@ -1296,6 +1298,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Native Library", unstableNativeLibraryOptions)
             .put("Data Storage Options", unstableDataStorageOptions)
             .put("Launcher", unstableLauncherOptions)
+            .put("Snapsync", unstableSnapSyncOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);

@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
-import static org.hyperledger.besu.ethereum.eth.manager.RequestId.wrapMessageData;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -54,7 +53,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
-public class RequestIdMessageTest {
+public class MessageWrapperTest {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -62,16 +61,14 @@ public class RequestIdMessageTest {
   public void GetBlockHeaders() throws IOException {
     final var testJson = parseTestFile("GetBlockHeadersPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
-    final Bytes actual =
-        wrapMessageData(
-                BigInteger.valueOf(1111),
-                GetBlockHeadersMessage.create(
-                    Hash.fromHexString(
-                        "0x00000000000000000000000000000000000000000000000000000000deadc0de"),
-                    5,
-                    5,
-                    false))
-            .getData();
+    final GetBlockHeadersMessage getBlockHeadersMessage =
+        GetBlockHeadersMessage.create(
+            Hash.fromHexString(
+                "0x00000000000000000000000000000000000000000000000000000000deadc0de"),
+            5,
+            5,
+            false);
+    final Bytes actual = getBlockHeadersMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -79,9 +76,9 @@ public class RequestIdMessageTest {
   public void GetBlockHeaders1() throws IOException {
     final var testJson = parseTestFile("GetBlockHeadersPacket66-1.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
-    final Bytes actual =
-        wrapMessageData(BigInteger.valueOf(1111), GetBlockHeadersMessage.create(9999, 5, 5, false))
-            .getData();
+    final GetBlockHeadersMessage getBlockHeadersMessage =
+        GetBlockHeadersMessage.create(9999, 5, 5, false);
+    final Bytes actual = getBlockHeadersMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -89,15 +86,12 @@ public class RequestIdMessageTest {
   public void BlockHeaders() throws IOException {
     final var testJson = parseTestFile("BlockHeadersPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
-    final Bytes actual =
-        wrapMessageData(
-                BigInteger.valueOf(1111),
-                BlockHeadersMessage.create(
-                    Arrays.asList(
-                        objectMapper.treeToValue(
-                            testJson.get("data").get("BlockHeadersPacket"),
-                            TestBlockHeader[].class))))
-            .getData();
+    final BlockHeadersMessage blockHeadersMessage =
+        BlockHeadersMessage.create(
+            Arrays.asList(
+                objectMapper.treeToValue(
+                    testJson.get("data").get("BlockHeadersPacket"), TestBlockHeader[].class)));
+    final Bytes actual = blockHeadersMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -105,16 +99,14 @@ public class RequestIdMessageTest {
   public void GetBlockBodies() throws IOException {
     final var testJson = parseTestFile("GetBlockBodiesPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
-    final Bytes actual =
-        wrapMessageData(
-                BigInteger.valueOf(1111),
-                GetBlockBodiesMessage.create(
-                    Stream.of(
-                            "0x00000000000000000000000000000000000000000000000000000000deadc0de",
-                            "0x00000000000000000000000000000000000000000000000000000000feedbeef")
-                        .map(Hash::fromHexString)
-                        .collect(toUnmodifiableList())))
-            .getData();
+    final GetBlockBodiesMessage getBlockBodiesMessage =
+        GetBlockBodiesMessage.create(
+            Stream.of(
+                    "0x00000000000000000000000000000000000000000000000000000000deadc0de",
+                    "0x00000000000000000000000000000000000000000000000000000000feedbeef")
+                .map(Hash::fromHexString)
+                .collect(toUnmodifiableList()));
+    final Bytes actual = getBlockBodiesMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -122,14 +114,12 @@ public class RequestIdMessageTest {
   public void BlockBodies() throws IOException {
     final var testJson = parseTestFile("BlockBodiesPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
-    final Bytes actual =
-        wrapMessageData(
-                BigInteger.valueOf(1111),
-                BlockBodiesMessage.create(
-                    Arrays.asList(
-                        objectMapper.treeToValue(
-                            testJson.get("data").get("BlockBodiesPacket"), TestBlockBody[].class))))
-            .getData();
+    final BlockBodiesMessage blockBodiesMessage =
+        BlockBodiesMessage.create(
+            Arrays.asList(
+                objectMapper.treeToValue(
+                    testJson.get("data").get("BlockBodiesPacket"), TestBlockBody[].class)));
+    final Bytes actual = blockBodiesMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -137,16 +127,14 @@ public class RequestIdMessageTest {
   public void GetNodeData() throws IOException {
     final var testJson = parseTestFile("GetNodeDataPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
-    final Bytes actual =
-        wrapMessageData(
-                BigInteger.valueOf(1111),
-                GetNodeDataMessage.create(
-                    Stream.of(
-                            "0x00000000000000000000000000000000000000000000000000000000deadc0de",
-                            "0x00000000000000000000000000000000000000000000000000000000feedbeef")
-                        .map(Hash::fromHexString)
-                        .collect(toUnmodifiableList())))
-            .getData();
+    final GetNodeDataMessage getNodeDataMessage =
+        GetNodeDataMessage.create(
+            Stream.of(
+                    "0x00000000000000000000000000000000000000000000000000000000deadc0de",
+                    "0x00000000000000000000000000000000000000000000000000000000feedbeef")
+                .map(Hash::fromHexString)
+                .collect(toUnmodifiableList()));
+    final Bytes actual = getNodeDataMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -154,14 +142,12 @@ public class RequestIdMessageTest {
   public void NodeData() throws IOException {
     final var testJson = parseTestFile("NodeDataPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
-    final Bytes actual =
-        wrapMessageData(
-                BigInteger.valueOf(1111),
-                NodeDataMessage.create(
-                    Stream.of("0xdeadc0de", "0xfeedbeef")
-                        .map(Bytes::fromHexString)
-                        .collect(toUnmodifiableList())))
-            .getData();
+    final NodeDataMessage nodeDataMessage =
+        NodeDataMessage.create(
+            Stream.of("0xdeadc0de", "0xfeedbeef")
+                .map(Bytes::fromHexString)
+                .collect(toUnmodifiableList()));
+    final Bytes actual = nodeDataMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -169,16 +155,14 @@ public class RequestIdMessageTest {
   public void GetReceipts() throws IOException {
     final var testJson = parseTestFile("GetReceiptsPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
-    final Bytes actual =
-        wrapMessageData(
-                BigInteger.valueOf(1111),
-                GetReceiptsMessage.create(
-                    Stream.of(
-                            "0x00000000000000000000000000000000000000000000000000000000deadc0de",
-                            "0x00000000000000000000000000000000000000000000000000000000feedbeef")
-                        .map(Hash::fromHexString)
-                        .collect(toUnmodifiableList())))
-            .getData();
+    final GetReceiptsMessage getReceiptsMessage =
+        GetReceiptsMessage.create(
+            Stream.of(
+                    "0x00000000000000000000000000000000000000000000000000000000deadc0de",
+                    "0x00000000000000000000000000000000000000000000000000000000feedbeef")
+                .map(Hash::fromHexString)
+                .collect(toUnmodifiableList()));
+    final Bytes actual = getReceiptsMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -186,35 +170,33 @@ public class RequestIdMessageTest {
   public void Receipts() throws IOException {
     final var testJson = parseTestFile("ReceiptsPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
-    final Bytes actual =
-        wrapMessageData(
-                BigInteger.valueOf(1111),
-                ReceiptsMessage.create(
-                    singletonList(
+    final ReceiptsMessage receiptsMessage =
+        ReceiptsMessage.create(
+            singletonList(
+                singletonList(
+                    new TransactionReceipt(
+                        TransactionType.FRONTIER,
+                        0,
+                        1,
                         singletonList(
-                            new TransactionReceipt(
-                                TransactionType.FRONTIER,
+                            new LogWithMetadata(
                                 0,
-                                1,
-                                singletonList(
-                                    new LogWithMetadata(
-                                        0,
-                                        0,
-                                        Hash.ZERO,
-                                        Hash.ZERO,
-                                        0,
-                                        Address.fromHexString("0x11"),
-                                        Bytes.fromHexString("0x0100ff"),
-                                        Stream.of(
-                                                "0x000000000000000000000000000000000000000000000000000000000000dead",
-                                                "0x000000000000000000000000000000000000000000000000000000000000beef")
-                                            .map(LogTopic::fromHexString)
-                                            .collect(toUnmodifiableList()),
-                                        false)),
-                                LogsBloomFilter.fromHexString(
-                                    "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
-                                Optional.empty())))))
-            .getData();
+                                0,
+                                Hash.ZERO,
+                                Hash.ZERO,
+                                0,
+                                Address.fromHexString("0x11"),
+                                Bytes.fromHexString("0x0100ff"),
+                                Stream.of(
+                                        "0x000000000000000000000000000000000000000000000000000000000000dead",
+                                        "0x000000000000000000000000000000000000000000000000000000000000beef")
+                                    .map(LogTopic::fromHexString)
+                                    .collect(toUnmodifiableList()),
+                                false)),
+                        LogsBloomFilter.fromHexString(
+                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+                        Optional.empty()))));
+    final Bytes actual = receiptsMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -222,16 +204,15 @@ public class RequestIdMessageTest {
   public void GetPooledTransactions() throws IOException {
     final var testJson = parseTestFile("GetPooledTransactionsPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
+    final GetPooledTransactionsMessage getPooledTransactionsMessage =
+        GetPooledTransactionsMessage.create(
+            Stream.of(
+                    "0x00000000000000000000000000000000000000000000000000000000deadc0de",
+                    "0x00000000000000000000000000000000000000000000000000000000feedbeef")
+                .map(Hash::fromHexString)
+                .collect(toUnmodifiableList()));
     final Bytes actual =
-        wrapMessageData(
-                BigInteger.valueOf(1111),
-                GetPooledTransactionsMessage.create(
-                    Stream.of(
-                            "0x00000000000000000000000000000000000000000000000000000000deadc0de",
-                            "0x00000000000000000000000000000000000000000000000000000000feedbeef")
-                        .map(Hash::fromHexString)
-                        .collect(toUnmodifiableList())))
-            .getData();
+        getPooledTransactionsMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -239,15 +220,14 @@ public class RequestIdMessageTest {
   public void PooledTransactions() throws IOException {
     final var testJson = parseTestFile("PooledTransactionsPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
+    final PooledTransactionsMessage pooledTransactionsMessage =
+        PooledTransactionsMessage.create(
+            Arrays.asList(
+                objectMapper.treeToValue(
+                    testJson.get("data").get("PooledTransactionsPacket"),
+                    TestTransaction[].class)));
     final Bytes actual =
-        wrapMessageData(
-                BigInteger.valueOf(1111),
-                PooledTransactionsMessage.create(
-                    Arrays.asList(
-                        objectMapper.treeToValue(
-                            testJson.get("data").get("PooledTransactionsPacket"),
-                            TestTransaction[].class))))
-            .getData();
+        pooledTransactionsMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
   }
 

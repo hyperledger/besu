@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -26,9 +26,8 @@ import java.math.BigInteger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.immutables.value.Value;
-import org.w3c.dom.ranges.Range;
 
-public final class GetAccountRangeMessage extends AbstractMessageData {
+public final class GetAccountRangeMessage extends AbstractSnapMessageData {
 
   public static GetAccountRangeMessage readFrom(final MessageData message) {
     if (message instanceof GetAccountRangeMessage) {
@@ -43,13 +42,9 @@ public final class GetAccountRangeMessage extends AbstractMessageData {
   }
 
   public static GetAccountRangeMessage create(
-      final BigInteger requestId,
-      final Hash worldStateRootHash,
-      final Hash startKeyHash,
-      final Hash endKeyHash) {
+      final Hash worldStateRootHash, final Hash startKeyHash, final Hash endKeyHash) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
-    tmp.writeBigIntegerScalar(requestId);
     tmp.writeBytes(worldStateRootHash);
     tmp.writeBytes(startKeyHash);
     tmp.writeBytes(endKeyHash);
@@ -62,6 +57,19 @@ public final class GetAccountRangeMessage extends AbstractMessageData {
   }
 
   @Override
+  protected Bytes wrap(final BigInteger requestId) {
+    final Range range = range();
+    final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
+    tmp.startList();
+    tmp.writeBigIntegerScalar(requestId);
+    tmp.writeBytes(range.worldStateRootHash());
+    tmp.writeBytes(range.startKeyHash());
+    tmp.writeBytes(range.endKeyHash());
+    tmp.endList();
+    return tmp.encoded();
+  }
+
+  @Override
   public int getCode() {
     return SnapV1.GET_ACCOUNT_RANGE;
   }
@@ -71,7 +79,6 @@ public final class GetAccountRangeMessage extends AbstractMessageData {
     input.enterList();
     final ImmutableRange range =
         ImmutableRange.builder()
-            .id(input.readBigIntegerScalar())
             .worldStateRootHash(Hash.wrap(Bytes32.wrap(input.readBytes())))
             .startKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes())))
             .endKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes())))

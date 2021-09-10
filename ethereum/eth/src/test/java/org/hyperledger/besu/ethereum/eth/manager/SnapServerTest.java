@@ -21,8 +21,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.messages.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetAccountRangeMessage;
 
-import java.math.BigInteger;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +30,6 @@ public class SnapServerTest {
   private static final Bytes VALUE1 = Bytes.of(1);
   private static final Bytes VALUE2 = Bytes.of(2);
   private static final Bytes VALUE3 = Bytes.of(3);
-  private static final BigInteger REQUEST_ID = BigInteger.TWO;
   private static final Hash STATEROOT = Hash.hash(VALUE1);
   private static final Hash START_HASH = Hash.hash(VALUE2);
   private static final Hash END_HASH = Hash.hash(VALUE3);
@@ -49,8 +46,7 @@ public class SnapServerTest {
     assertThat(
             ethMessages.dispatch(
                 new EthMessage(
-                    ethPeer,
-                    GetAccountRangeMessage.create(REQUEST_ID, STATEROOT, START_HASH, END_HASH))))
-        .contains(AccountRangeMessage.create(REQUEST_ID));
+                    ethPeer, GetAccountRangeMessage.create(STATEROOT, START_HASH, END_HASH))))
+        .contains(AccountRangeMessage.create());
   }
 }

@@ -36,6 +36,6 @@ class SnapServer {
     @SuppressWarnings("unused")
     final GetAccountRangeMessage getAccountRangeMessage = GetAccountRangeMessage.readFrom(message);
     // TODO RETRIEVE ACCOUNT RANGE
-    return AccountRangeMessage.create(getAccountRangeMessage.range().id());
+    return AccountRangeMessage.create();
   }
 }

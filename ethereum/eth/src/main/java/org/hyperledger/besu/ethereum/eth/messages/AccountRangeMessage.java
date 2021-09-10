@@ -14,17 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public final class AccountRangeMessage extends AbstractMessageData {
+public final class AccountRangeMessage extends AbstractSnapMessageData {
 
   public static AccountRangeMessage readFrom(final MessageData message) {
     if (message instanceof AccountRangeMessage) {
@@ -38,26 +36,25 @@ public final class AccountRangeMessage extends AbstractMessageData {
     return new AccountRangeMessage(message.getData());
   }
 
-  public static AccountRangeMessage create(final BigInteger requestId) {
+  public static AccountRangeMessage create() {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
-    tmp.writeBigIntegerScalar(requestId);
     // TODO COMPLETE
     tmp.endList();
     return new AccountRangeMessage(tmp.encoded());
   }
 
-  public BigInteger getId() {
-    // TODO CHANGE THIS METHOD
-    final RLPInput input = new BytesValueRLPInput(data, false);
-    input.enterList();
-    final BigInteger requestId = input.readBigIntegerScalar();
-    input.leaveList();
-    return requestId;
-  }
-
   private AccountRangeMessage(final Bytes data) {
     super(data);
+  }
+
+  @Override
+  protected Bytes wrap(final BigInteger requestId) {
+    final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
+    tmp.startList();
+    tmp.writeBigIntegerScalar(requestId);
+    tmp.endList();
+    return tmp.encoded();
   }
 
   @Override
