@@ -65,7 +65,7 @@ public class EthProtocolManagerTestUtil {
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
-      final ProtocolMessages protocolMessages,
+      final EthMessages ethMessages,
       final EthContext ethContext) {
     final BigInteger networkId = BigInteger.ONE;
     return new EthProtocolManager(
@@ -75,7 +75,7 @@ public class EthProtocolManagerTestUtil {
         transactionPool,
         ethereumWireProtocolConfiguration,
         ethPeers,
-        protocolMessages,
+        ethMessages,
         ethContext,
         Collections.emptyList(),
         false,
@@ -115,7 +115,7 @@ public class EthProtocolManagerTestUtil {
       final TransactionPool transactionPool,
       final EthProtocolConfiguration configuration) {
     EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
-    ProtocolMessages messages = new ProtocolMessages();
+    EthMessages messages = new EthMessages();
 
     return create(
         blockchain,
@@ -131,7 +131,7 @@ public class EthProtocolManagerTestUtil {
   public static EthProtocolManager create(
       final Blockchain blockchain, final EthScheduler ethScheduler) {
     EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
-    ProtocolMessages messages = new ProtocolMessages();
+    EthMessages ethMessages = new EthMessages();
 
     return create(
         blockchain,
@@ -140,8 +140,8 @@ public class EthProtocolManagerTestUtil {
         mock(TransactionPool.class),
         EthProtocolConfiguration.defaultConfig(),
         peers,
-        messages,
-        new EthContext(peers, messages, ethScheduler));
+        ethMessages,
+        new EthContext(peers, ethMessages, ethScheduler));
   }
 
   public static EthProtocolManager create() {

@@ -40,12 +40,12 @@ public class SnapProtocolManager implements ProtocolManager {
   private final List<PeerValidator> peerValidators;
   private final List<Capability> supportedCapabilities;
   private final EthPeers ethPeers;
-  private final ProtocolMessages snapMessages;
+  private final EthMessages snapMessages;
 
   public SnapProtocolManager(
       final List<PeerValidator> peerValidators,
       final EthPeers ethPeers,
-      final ProtocolMessages snapMessages) {
+      final EthMessages snapMessages) {
     this.peerValidators = peerValidators;
     this.ethPeers = ethPeers;
     this.snapMessages = snapMessages;
@@ -117,7 +117,7 @@ public class SnapProtocolManager implements ProtocolManager {
     Optional<MessageData> maybeResponseData = Optional.empty();
     try {
       final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
-          RequestId.unwrapSnapMessageData(ethMessage.getData());
+          RequestId.unwrapMessageData(ethMessage.getData(), getSupportedProtocol());
       maybeResponseData =
           snapMessages.dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()));
     } catch (final RLPException e) {

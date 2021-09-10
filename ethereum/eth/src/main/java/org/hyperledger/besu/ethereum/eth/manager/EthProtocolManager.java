@@ -65,7 +65,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final ForkIdManager forkIdManager;
   private final BigInteger networkId;
   private final EthPeers ethPeers;
-  private final ProtocolMessages protocolMessages;
+  private final EthMessages ethMessages;
   private final EthContext ethContext;
   private final List<Capability> supportedCapabilities;
   private final Blockchain blockchain;
@@ -79,7 +79,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
-      final ProtocolMessages protocolMessages,
+      final EthMessages ethMessages,
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final boolean fastSyncEnabled,
@@ -96,7 +96,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.forkIdManager = forkIdManager;
 
     this.ethPeers = ethPeers;
-    this.protocolMessages = protocolMessages;
+    this.ethMessages = ethMessages;
     this.ethContext = ethContext;
 
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
@@ -113,7 +113,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         blockchain,
         worldStateArchive,
         transactionPool,
-        protocolMessages,
+        ethMessages,
         ethereumWireProtocolConfiguration);
   }
 
@@ -125,7 +125,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
-      final ProtocolMessages protocolMessages,
+      final EthMessages ethMessages,
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final boolean fastSyncEnabled,
@@ -137,7 +137,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         transactionPool,
         ethereumWireProtocolConfiguration,
         ethPeers,
-        protocolMessages,
+        ethMessages,
         ethContext,
         peerValidators,
         fastSyncEnabled,
@@ -155,7 +155,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
-      final ProtocolMessages protocolMessages,
+      final EthMessages ethMessages,
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final boolean fastSyncEnabled,
@@ -168,7 +168,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         transactionPool,
         ethereumWireProtocolConfiguration,
         ethPeers,
-        protocolMessages,
+        ethMessages,
         ethContext,
         peerValidators,
         fastSyncEnabled,
@@ -279,15 +279,15 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     try {
       if (EthProtocol.isEth66Compatible(cap) && EthProtocol.requestIdCompatible(code)) {
         final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
-            RequestId.unwrapEthMessageData(ethMessage.getData());
+            RequestId.unwrapMessageData(ethMessage.getData(), getSupportedProtocol());
         maybeResponseData =
-            protocolMessages
+            ethMessages
                 .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()))
                 .map(
                     responseData ->
                         RequestId.wrapMessageData(requestIdAndEthMessage.getKey(), responseData));
       } else {
-        maybeResponseData = protocolMessages.dispatch(ethMessage);
+        maybeResponseData = ethMessages.dispatch(ethMessage);
       }
     } catch (final RLPException e) {
       LOG.debug(

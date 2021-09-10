@@ -37,10 +37,10 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.manager.ProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -95,7 +95,7 @@ public class BesuEventsImplTest {
   private SyncState syncState;
   @Mock private EthPeers mockEthPeers;
   @Mock private EthContext mockEthContext;
-  @Mock private ProtocolMessages mockProtocolMessages;
+  @Mock private EthMessages mockEthMessages;
   @Mock private EthScheduler mockEthScheduler;
   @Mock private MainnetTransactionValidator mockTransactionValidator;
   @Mock private ProtocolSpec mockProtocolSpec;
@@ -117,7 +117,7 @@ public class BesuEventsImplTest {
             new NoOpMetricsSystem(),
             0);
 
-    when(mockEthContext.getEthMessages()).thenReturn(mockProtocolMessages);
+    when(mockEthContext.getEthMessages()).thenReturn(mockEthMessages);
     when(mockEthContext.getEthPeers()).thenReturn(mockEthPeers);
     when(mockEthContext.getScheduler()).thenReturn(mockEthScheduler);
     when(mockEthPeers.streamAvailablePeers()).thenAnswer(z -> Stream.empty());

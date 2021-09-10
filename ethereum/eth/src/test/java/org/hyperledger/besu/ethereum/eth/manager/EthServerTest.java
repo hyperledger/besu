@@ -46,7 +46,7 @@ public class EthServerTest {
   private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
   private final TransactionPool transactionPool = mock(TransactionPool.class);
   private final EthPeer ethPeer = mock(EthPeer.class);
-  private final ProtocolMessages protocolMessages = new ProtocolMessages();
+  private final EthMessages ethMessages = new EthMessages();
 
   @Before
   public void setUp() {
@@ -54,7 +54,7 @@ public class EthServerTest {
         blockchain,
         worldStateArchive,
         transactionPool,
-        protocolMessages,
+        ethMessages,
         new EthProtocolConfiguration(2, 2, 2, 2, 2, false));
   }
 
@@ -63,7 +63,7 @@ public class EthServerTest {
     when(worldStateArchive.getNodeData(HASH1)).thenReturn(Optional.of(VALUE1));
     when(worldStateArchive.getNodeData(HASH2)).thenReturn(Optional.empty());
     assertThat(
-            protocolMessages.dispatch(
+            ethMessages.dispatch(
                 new EthMessage(ethPeer, GetNodeDataMessage.create(asList(HASH1, HASH2)))))
         .contains(NodeDataMessage.create(singletonList(VALUE1)));
   }
@@ -73,7 +73,7 @@ public class EthServerTest {
     when(worldStateArchive.getNodeData(HASH1)).thenReturn(Optional.of(VALUE1));
     when(worldStateArchive.getNodeData(HASH2)).thenReturn(Optional.of(VALUE2));
     assertThat(
-            protocolMessages.dispatch(
+            ethMessages.dispatch(
                 new EthMessage(ethPeer, GetNodeDataMessage.create(asList(HASH1, HASH2, HASH3)))))
         .contains(NodeDataMessage.create(asList(VALUE1, VALUE2)));
   }
@@ -85,7 +85,7 @@ public class EthServerTest {
     when(worldStateArchive.getNodeData(HASH2)).thenReturn(Optional.empty());
     when(worldStateArchive.getNodeData(HASH3)).thenReturn(Optional.of(VALUE3));
     assertThat(
-            protocolMessages.dispatch(
+            ethMessages.dispatch(
                 new EthMessage(ethPeer, GetNodeDataMessage.create(asList(HASH1, HASH2, HASH3)))))
         .contains(NodeDataMessage.create(singletonList(VALUE1)));
   }

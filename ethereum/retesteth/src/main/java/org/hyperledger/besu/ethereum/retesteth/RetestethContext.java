@@ -33,9 +33,9 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.manager.ProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -192,7 +192,7 @@ public class RetestethContext {
 
     ethScheduler = new EthScheduler(1, 1, 1, 1, metricsSystem);
     final EthContext ethContext =
-        new EthContext(ethPeers, new ProtocolMessages(), new ProtocolMessages(), ethScheduler);
+        new EthContext(ethPeers, new EthMessages(), new EthMessages(), ethScheduler);
 
     final TransactionPoolConfiguration transactionPoolConfiguration =
         ImmutableTransactionPoolConfiguration.builder().build();

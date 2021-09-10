@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.math.BigInteger;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.immutables.value.Value;
@@ -40,10 +42,17 @@ public final class GetAccountRangeMessage extends AbstractMessageData {
     return new GetAccountRangeMessage(message.getData());
   }
 
-  public static GetAccountRangeMessage create(final Iterable<Hash> hashes) {
+  public static GetAccountRangeMessage create(
+      final BigInteger requestId,
+      final Hash worldStateRootHash,
+      final Hash startKeyHash,
+      final Hash endKeyHash) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
-    hashes.forEach(tmp::writeBytes);
+    tmp.writeBigIntegerScalar(requestId);
+    tmp.writeBytes(worldStateRootHash);
+    tmp.writeBytes(startKeyHash);
+    tmp.writeBytes(endKeyHash);
     tmp.endList();
     return new GetAccountRangeMessage(tmp.encoded());
   }
@@ -60,16 +69,21 @@ public final class GetAccountRangeMessage extends AbstractMessageData {
   public Range range() {
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
-    input.skipNext(); // request id
-    return ImmutableRange.builder()
-        .worldStateRootHash(Hash.wrap(Bytes32.wrap(input.readBytes())))
-        .startKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes())))
-        .endKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes())))
-        .build();
+    final ImmutableRange range =
+        ImmutableRange.builder()
+            .id(input.readBigIntegerScalar())
+            .worldStateRootHash(Hash.wrap(Bytes32.wrap(input.readBytes())))
+            .startKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes())))
+            .endKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes())))
+            .build();
+    input.leaveList();
+    return range;
   }
 
   @Value.Immutable
   public interface Range {
+    BigInteger id();
+
     Hash worldStateRootHash();
 
     Hash startKeyHash();

@@ -17,14 +17,14 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.time.Instant.now;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.manager.ProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 
 import java.time.Duration;
 import java.time.Instant;
 
-class PendingTransactionsMessageHandler implements ProtocolMessages.MessageCallback {
+class PendingTransactionsMessageHandler implements EthMessages.MessageCallback {
 
   private final PendingTransactionsMessageProcessor transactionsMessageProcessor;
   private final EthScheduler scheduler;

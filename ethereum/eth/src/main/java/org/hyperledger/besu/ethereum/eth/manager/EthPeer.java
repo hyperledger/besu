@@ -121,12 +121,17 @@ public class EthPeer {
         getAgreedCapabilities().stream().anyMatch(EthProtocol::isEth66Compatible);
     // eth protocol
     final Map<Integer, RequestManager> ethRequestManagers = new HashMap<>();
-    ethRequestManagers.put(EthPV62.GET_BLOCK_HEADERS, new RequestManager(this, supportsRequestId));
-    ethRequestManagers.put(EthPV62.GET_BLOCK_BODIES, new RequestManager(this, supportsRequestId));
-    ethRequestManagers.put(EthPV63.GET_RECEIPTS, new RequestManager(this, supportsRequestId));
-    ethRequestManagers.put(EthPV63.GET_NODE_DATA, new RequestManager(this, supportsRequestId));
     ethRequestManagers.put(
-        EthPV65.GET_POOLED_TRANSACTIONS, new RequestManager(this, supportsRequestId));
+        EthPV62.GET_BLOCK_HEADERS, new RequestManager(this, supportsRequestId, EthProtocol.NAME));
+    ethRequestManagers.put(
+        EthPV62.GET_BLOCK_BODIES, new RequestManager(this, supportsRequestId, EthProtocol.NAME));
+    ethRequestManagers.put(
+        EthPV63.GET_RECEIPTS, new RequestManager(this, supportsRequestId, EthProtocol.NAME));
+    ethRequestManagers.put(
+        EthPV63.GET_NODE_DATA, new RequestManager(this, supportsRequestId, EthProtocol.NAME));
+    ethRequestManagers.put(
+        EthPV65.GET_POOLED_TRANSACTIONS,
+        new RequestManager(this, supportsRequestId, EthProtocol.NAME));
     requestManagers.put(EthProtocol.NAME, ethRequestManagers);
 
     linkedMessages.put(EthPV62.BLOCK_HEADERS, EthPV62.GET_BLOCK_HEADERS);
@@ -139,7 +144,8 @@ public class EthPeer {
   private void initSnapRequestManagers() {
     // snap protocol
     final Map<Integer, RequestManager> snapRequestManagers = new HashMap<>();
-    snapRequestManagers.put(SnapV1.GET_ACCOUNT_RANGE, new RequestManager(this, true));
+    snapRequestManagers.put(
+        SnapV1.GET_ACCOUNT_RANGE, new RequestManager(this, true, SnapProtocol.NAME));
     requestManagers.put(SnapProtocol.NAME, snapRequestManagers);
 
     linkedMessages.put(SnapV1.ACCOUNT_RANGE, SnapV1.GET_ACCOUNT_RANGE);
@@ -289,6 +295,7 @@ public class EthPeer {
    * Routes messages originating from this peer to listeners.
    *
    * @param ethMessage the Eth message to dispatch
+   * @param protocolName Specific protocol name if needed
    */
   void dispatch(final EthMessage ethMessage, final String protocolName) {
     checkArgument(
@@ -298,6 +305,15 @@ public class EthPeer {
 
     getRequestManager(protocolName, messageCode)
         .ifPresent(requestManager -> requestManager.dispatchResponse(ethMessage));
+  }
+
+  /**
+   * Routes messages originating from this peer to listeners.
+   *
+   * @param ethMessage the Eth message to dispatch
+   */
+  void dispatch(final EthMessage ethMessage) {
+    dispatch(ethMessage, protocolName);
   }
 
   private Optional<RequestManager> getRequestManager(final String protocolName, final int code) {

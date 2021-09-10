@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -23,6 +24,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import java.math.BigInteger;
 import java.util.AbstractMap;
 import java.util.Map;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class RequestId {
   public static MessageData wrapMessageData(
@@ -35,24 +38,19 @@ public class RequestId {
     return new RawMessage(messageData.getCode(), rlpOutput.encoded());
   }
 
-  static Map.Entry<BigInteger, MessageData> unwrapEthMessageData(final MessageData messageData) {
+  static Map.Entry<BigInteger, MessageData> unwrapMessageData(
+      final MessageData messageData, final String protocolName) {
     final RLPInput messageDataRLP = RLP.input(messageData.getData());
     messageDataRLP.enterList();
     final BigInteger requestId = messageDataRLP.readBigIntegerScalar();
-    final RLPInput unwrappedMessageRLP = messageDataRLP.readAsRlp();
-    messageDataRLP.leaveList();
-
-    return new AbstractMap.SimpleImmutableEntry<>(
-        requestId, new RawMessage(messageData.getCode(), unwrappedMessageRLP.raw()));
-  }
-
-  static Map.Entry<BigInteger, MessageData> unwrapSnapMessageData(final MessageData messageData) {
-    final RLPInput messageDataRLP = RLP.input(messageData.getData());
-    messageDataRLP.enterList();
-    final BigInteger requestId = messageDataRLP.readBigIntegerScalar();
+    final Bytes message;
+    if (protocolName.equalsIgnoreCase(EthProtocol.NAME)) {
+      message = messageDataRLP.readAsRlp().raw();
+    } else { /// SNAP
+      message = messageData.getData();
+    }
     messageDataRLP.leaveListLenient();
-
     return new AbstractMap.SimpleImmutableEntry<>(
-        requestId, new RawMessage(messageData.getCode(), messageData.getData()));
+        requestId, new RawMessage(messageData.getCode(), message));
   }
 }

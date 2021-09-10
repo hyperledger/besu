@@ -21,8 +21,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import java.util.List;
 
 /**
- * Snap protocol messages as defined in
- * https://github.com/ethereum/wiki/wiki/Ethereum-Wire-Protocol#new-model-syncing-pv62}
+ * Snap protocol messages as defined in https://github.com/ethereum/devp2p/blob/master/caps/snap.md}
  */
 public class SnapProtocol implements SubProtocol {
   public static final String NAME = "snap";
@@ -41,8 +40,6 @@ public class SnapProtocol implements SubProtocol {
   public int messageSpace(final int protocolVersion) {
     switch (protocolVersion) {
       case SnapVersion.V1:
-        // same number of messages in each range, eth65 defines messages in the middle of the
-        // range defined by eth63 and eth64 defines no new ranges.
         return 17;
       default:
         return 0;
@@ -64,6 +61,8 @@ public class SnapProtocol implements SubProtocol {
     switch (code) {
       case SnapV1.GET_ACCOUNT_RANGE:
         return "GetAccountRange";
+      case SnapV1.ACCOUNT_RANGE:
+        return "AccountRange";
       default:
         return INVALID_MESSAGE_NAME;
     }

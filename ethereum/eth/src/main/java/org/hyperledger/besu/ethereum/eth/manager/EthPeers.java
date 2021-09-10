@@ -132,6 +132,10 @@ public class EthPeers {
     }
   }
 
+  public void dispatchMessage(final EthPeer peer, final EthMessage ethMessage) {
+    dispatchMessage(peer, ethMessage, protocolName);
+  }
+
   private void reattemptPendingPeerRequests() {
     synchronized (this) {
       pendingRequests.removeIf(PendingPeerRequest::attemptExecution);

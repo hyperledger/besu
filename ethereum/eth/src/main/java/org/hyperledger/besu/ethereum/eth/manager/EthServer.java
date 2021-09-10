@@ -51,49 +51,49 @@ class EthServer {
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final TransactionPool transactionPool;
-  private final ProtocolMessages protocolMessages;
+  private final EthMessages ethMessages;
   private final EthProtocolConfiguration ethereumWireProtocolConfiguration;
 
   EthServer(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
-      final ProtocolMessages protocolMessages,
+      final EthMessages ethMessages,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.transactionPool = transactionPool;
-    this.protocolMessages = protocolMessages;
+    this.ethMessages = ethMessages;
     this.ethereumWireProtocolConfiguration = ethereumWireProtocolConfiguration;
     this.registerResponseConstructors();
   }
 
   private void registerResponseConstructors() {
-    protocolMessages.registerResponseConstructor(
+    ethMessages.registerResponseConstructor(
         EthPV62.GET_BLOCK_HEADERS,
         messageData ->
             constructGetHeadersResponse(
                 blockchain,
                 messageData,
                 ethereumWireProtocolConfiguration.getMaxGetBlockHeaders()));
-    protocolMessages.registerResponseConstructor(
+    ethMessages.registerResponseConstructor(
         EthPV62.GET_BLOCK_BODIES,
         messageData ->
             constructGetBodiesResponse(
                 blockchain, messageData, ethereumWireProtocolConfiguration.getMaxGetBlockBodies()));
-    protocolMessages.registerResponseConstructor(
+    ethMessages.registerResponseConstructor(
         EthPV63.GET_RECEIPTS,
         messageData ->
             constructGetReceiptsResponse(
                 blockchain, messageData, ethereumWireProtocolConfiguration.getMaxGetReceipts()));
-    protocolMessages.registerResponseConstructor(
+    ethMessages.registerResponseConstructor(
         EthPV63.GET_NODE_DATA,
         messageData ->
             constructGetNodeDataResponse(
                 worldStateArchive,
                 messageData,
                 ethereumWireProtocolConfiguration.getMaxGetNodeData()));
-    protocolMessages.registerResponseConstructor(
+    ethMessages.registerResponseConstructor(
         EthPV65.GET_POOLED_TRANSACTIONS,
         messageData ->
             constructGetPooledTransactionsResponse(

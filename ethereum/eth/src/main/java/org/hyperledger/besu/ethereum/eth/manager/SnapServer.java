@@ -14,26 +14,28 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import org.hyperledger.besu.ethereum.eth.messages.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetAccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.SnapV1;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 class SnapServer {
-  private final ProtocolMessages protocolMessages;
+  private final EthMessages snapMessages;
 
-  SnapServer(final ProtocolMessages protocolMessages) {
-    this.protocolMessages = protocolMessages;
+  SnapServer(final EthMessages snapMessages) {
+    this.snapMessages = snapMessages;
     this.registerResponseConstructors();
   }
 
   private void registerResponseConstructors() {
-    protocolMessages.registerResponseConstructor(
+    snapMessages.registerResponseConstructor(
         SnapV1.GET_ACCOUNT_RANGE, SnapServer::constructGetAccountRangeResponse);
   }
 
   static MessageData constructGetAccountRangeResponse(final MessageData message) {
+    @SuppressWarnings("unused")
     final GetAccountRangeMessage getAccountRangeMessage = GetAccountRangeMessage.readFrom(message);
-    System.out.println(getAccountRangeMessage.range().worldStateRootHash());
-    return getAccountRangeMessage;
+    // TODO RETRIEVE ACCOUNT RANGE
+    return AccountRangeMessage.create(getAccountRangeMessage.range().id());
   }
 }

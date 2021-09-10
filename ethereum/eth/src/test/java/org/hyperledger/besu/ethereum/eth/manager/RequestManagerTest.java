@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.manager.RequestId.unwrapEthMessageData;
+import static org.hyperledger.besu.ethereum.eth.manager.RequestId.unwrapMessageData;
 
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -45,7 +45,8 @@ public class RequestManagerTest {
   public void dispatchesMessagesReceivedAfterRegisteringCallback() throws Exception {
     for (final boolean supportsRequestId : List.of(true, false)) {
       final EthPeer peer = createPeer();
-      final RequestManager requestManager = new RequestManager(peer, supportsRequestId);
+      final RequestManager requestManager =
+          new RequestManager(peer, supportsRequestId, EthProtocol.NAME);
 
       final AtomicInteger sendCount = new AtomicInteger(0);
       final RequestManager.RequestSender sender = __ -> sendCount.incrementAndGet();
@@ -81,7 +82,8 @@ public class RequestManagerTest {
   public void dispatchesMessagesReceivedBeforeRegisteringCallback() throws Exception {
     for (final boolean supportsRequestId : List.of(true, false)) {
       final EthPeer peer = createPeer();
-      final RequestManager requestManager = new RequestManager(peer, supportsRequestId);
+      final RequestManager requestManager =
+          new RequestManager(peer, supportsRequestId, EthProtocol.NAME);
 
       final AtomicInteger sendCount = new AtomicInteger(0);
       final RequestManager.RequestSender sender = __ -> sendCount.incrementAndGet();
@@ -116,7 +118,7 @@ public class RequestManagerTest {
   @Test
   public void dispatchesMessagesReceivedBeforeAndAfterRegisteringCallback() throws Exception {
     final EthPeer peer = createPeer();
-    final RequestManager requestManager = new RequestManager(peer, false);
+    final RequestManager requestManager = new RequestManager(peer, false, EthProtocol.NAME);
 
     final AtomicInteger sendCount = new AtomicInteger(0);
     final RequestManager.RequestSender sender = __ -> sendCount.incrementAndGet();
@@ -161,7 +163,7 @@ public class RequestManagerTest {
   @Test
   public void dispatchesMessagesToMultipleStreamsIfNoRequestId() throws Exception {
     final EthPeer peer = createPeer();
-    final RequestManager requestManager = new RequestManager(peer, false);
+    final RequestManager requestManager = new RequestManager(peer, false, EthProtocol.NAME);
 
     final AtomicInteger sendCount = new AtomicInteger(0);
     final RequestManager.RequestSender sender = __ -> sendCount.incrementAndGet();
@@ -228,7 +230,7 @@ public class RequestManagerTest {
   @Test
   public void dispatchesMessagesToSingleStreamIfRequestId() throws Exception {
     final EthPeer peer = createPeer();
-    final RequestManager requestManager = new RequestManager(peer, true);
+    final RequestManager requestManager = new RequestManager(peer, true, EthProtocol.NAME);
 
     final AtomicInteger sendCount = new AtomicInteger(0);
     final RequestManager.RequestSender sender = __ -> sendCount.incrementAndGet();
@@ -290,7 +292,7 @@ public class RequestManagerTest {
     assertThat(response)
         .isEqualTo(
             (supportsRequestId
-                ? unwrapEthMessageData(mockMessage.getData()).getValue()
+                ? unwrapMessageData(mockMessage.getData(), EthProtocol.NAME).getValue()
                 : mockMessage.getData()));
   }
 
