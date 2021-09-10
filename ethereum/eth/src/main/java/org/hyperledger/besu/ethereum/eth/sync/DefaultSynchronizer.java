@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.config.experimental.RayonismOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -124,6 +125,11 @@ public class DefaultSynchronizer implements Synchronizer {
 
   @Override
   public void start() {
+    if (RayonismOptions.isMergeEnabled()) {
+      // no chain sync for initial rayonism test nets
+      return;
+    }
+
     if (running.compareAndSet(false, true)) {
       LOG.info("Starting synchronizer.");
       blockPropagationManager.start();

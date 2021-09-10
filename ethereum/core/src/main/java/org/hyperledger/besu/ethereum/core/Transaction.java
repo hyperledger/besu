@@ -39,6 +39,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -333,6 +334,11 @@ public class Transaction
         sender,
         chainId,
         v);
+  }
+
+  @JsonCreator
+  public Transaction Transaction(final String hexString) {
+    return TransactionDecoder.decodeOpaqueBytes(Bytes.fromHexString(hexString));
   }
 
   /**

@@ -23,8 +23,13 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.vertx.core.Vertx;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(VertxUnitRunner.class)
 public class PeerDiscoveryTimestampsTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
@@ -63,7 +68,7 @@ public class PeerDiscoveryTimestampsTest {
   }
 
   @Test
-  public void lastContactedTimestampUpdatedOnOutboundMessage() {
+  public void lastContactedTimestampUpdatedOnOutboundMessage(final TestContext ctx) {
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(Collections.emptyList());
     assertThat(agent.streamDiscoveredPeers()).hasSize(0);
 
@@ -78,7 +83,7 @@ public class PeerDiscoveryTimestampsTest {
     final AtomicLong lastSeen = new AtomicLong();
     final AtomicLong firstDiscovered = new AtomicLong();
 
-    DiscoveryPeer peer = agent.streamDiscoveredPeers().iterator().next();
+    final DiscoveryPeer peer = agent.streamDiscoveredPeers().iterator().next();
     final long lc = peer.getLastContacted();
     final long ls = peer.getLastSeen();
     final long fd = peer.getFirstDiscovered();
@@ -91,13 +96,25 @@ public class PeerDiscoveryTimestampsTest {
     lastSeen.set(ls);
     firstDiscovered.set(fd);
 
-    // Send another packet and ensure that timestamps are updated accordingly.
+    // Send another packet
     helper.sendMessageBetweenAgents(testAgent, agent, ping);
 
-    peer = agent.streamDiscoveredPeers().iterator().next();
-
-    assertThat(peer.getLastContacted()).isGreaterThan(lastContacted.get());
-    assertThat(peer.getLastSeen()).isGreaterThan(lastSeen.get());
-    assertThat(peer.getFirstDiscovered()).isEqualTo(firstDiscovered.get());
+    // and ensure asynchronously that timestamps are updated accordingly.
+    Vertx.vertx()
+        .executeBlocking(
+            z -> {
+              agent
+                  .streamDiscoveredPeers()
+                  .findFirst()
+                  .ifPresentOrElse(
+                      peerVal -> {
+                        assertThat(peerVal.getLastContacted()).isGreaterThan(lastContacted.get());
+                        assertThat(peerVal.getLastSeen()).isGreaterThan(lastSeen.get());
+                        assertThat(peerVal.getFirstDiscovered()).isEqualTo(firstDiscovered.get());
+                      },
+                      () -> ctx.fail("no discovered peers"));
+              z.complete();
+            },
+            ctx.asyncAssertSuccess());
   }
 }

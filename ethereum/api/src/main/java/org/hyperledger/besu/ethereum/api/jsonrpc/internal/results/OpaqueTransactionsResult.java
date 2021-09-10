@@ -12,23 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.blockcreation;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import java.util.List;
-import java.util.Optional;
+import com.fasterxml.jackson.annotation.JsonValue;
 
-public interface BlockCreator {
-  Block createBlock(final long timestamp);
+public class OpaqueTransactionsResult implements TransactionResult {
 
-  Block createBlock(
-      final List<Transaction> transactions, final List<BlockHeader> ommers, final long timestamp);
+  private final Set<String> transactionInfoResults;
 
-  Block createBlock(
-      final Optional<List<Transaction>> maybeTransactions,
-      final Optional<List<BlockHeader>> maybeOmmers,
-      final long timestamp);
+  public OpaqueTransactionsResult(final Set<String> transactionInfoSet) {
+    transactionInfoResults =
+        transactionInfoSet.stream().map(String::new).collect(Collectors.toSet());
+  }
+
+  @JsonValue
+  public Set<String> getResults() {
+    return transactionInfoResults;
+  }
 }
