@@ -191,8 +191,7 @@ public class RetestethContext {
     final SyncState syncState = new SyncState(blockchain, ethPeers);
 
     ethScheduler = new EthScheduler(1, 1, 1, 1, metricsSystem);
-    final EthContext ethContext =
-        new EthContext(ethPeers, new EthMessages(), new EthMessages(), ethScheduler);
+    final EthContext ethContext = new EthContext(ethPeers, new EthMessages(), ethScheduler);
 
     final TransactionPoolConfiguration transactionPoolConfiguration =
         ImmutableTransactionPoolConfiguration.builder().build();

@@ -133,7 +133,6 @@ public class CapabilityMultiplexer {
       if (messageSpace > 0) {
         builder.put(Range.closedOpen(offset, offset + messageSpace), cap);
       }
-
       offset += messageSpace;
     }
 

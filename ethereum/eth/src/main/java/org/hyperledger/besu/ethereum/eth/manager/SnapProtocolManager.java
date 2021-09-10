@@ -78,16 +78,8 @@ public class SnapProtocolManager implements ProtocolManager {
   public void awaitStop() throws InterruptedException {}
 
   /**
-   * This function is called by the P2P framework when an "IBF" message has been received. This
+   * This function is called by the P2P framework when an "SNAP message has been received. This
    * function is responsible for:
-   *
-   * <ul>
-   *   <li>Determining if the message was from a current validator (discard if not)
-   *   <li>Determining if the message received was for the 'current round', discarding if old and
-   *       buffering for the future if ahead of current state.
-   *   <li>If the received message is otherwise valid, it is sent to the state machine which is
-   *       responsible for determining how to handle the message given its internal state.
-   * </ul>
    *
    * @param cap The capability under which the message was transmitted.
    * @param message The message to be decoded.
@@ -138,17 +130,19 @@ public class SnapProtocolManager implements ProtocolManager {
   @Override
   public void handleNewConnection(final PeerConnection connection) {
     ethPeers.registerConnection(connection, peerValidators);
-    final EthPeer peer = ethPeers.peer(connection);
-    if (peer.statusHasBeenSentToPeer()) {
-      return;
-    }
   }
 
   @Override
   public void handleDisconnect(
-      final PeerConnection peerConnection,
-      final DisconnectReason disconnectReason,
+      final PeerConnection connection,
+      final DisconnectReason reason,
       final boolean initiatedByPeer) {
-    System.out.println("handleDisconnect");
+    ethPeers.registerDisconnect(connection);
+    LOG.debug(
+        "Disconnect - {} - {} - {} - {} peers left",
+        initiatedByPeer ? "Inbound" : "Outbound",
+        reason,
+        connection.getPeerInfo(),
+        ethPeers.peerCount());
   }
 }
