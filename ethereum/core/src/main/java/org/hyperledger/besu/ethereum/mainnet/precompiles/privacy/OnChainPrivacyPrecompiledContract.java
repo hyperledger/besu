@@ -310,7 +310,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     return input.slice(4).toBase64String();
   }
 
-  public boolean isTargettingOnchainPrivacyProxy(final PrivateTransaction privateTransaction) {
+  private boolean isTargettingOnchainPrivacyProxy(final PrivateTransaction privateTransaction) {
     return privateTransaction.getTo().isPresent()
         && privateTransaction.getTo().get().equals(Address.ONCHAIN_PRIVACY_PROXY);
   }
@@ -323,7 +323,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
             .startsWith(OnChainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE.toHexString());
   }
 
-  public boolean isRemovingParticipant(final PrivateTransaction privateTransaction) {
+  private boolean isRemovingParticipant(final PrivateTransaction privateTransaction) {
     return isTargettingOnchainPrivacyProxy(privateTransaction)
         && privateTransaction
             .getPayload()
