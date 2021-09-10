@@ -12,14 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft;
-
-import static com.google.common.base.Preconditions.checkArgument;
+package org.hyperledger.besu.consensus.ibft;
 
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.QbftFork;
-import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -28,15 +24,15 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.function.Supplier;
 
-/** Defines the protocol behaviours for a blockchain using a QBFT consensus mechanism. */
-public class QbftProtocolSchedule extends BftProtocolSchedule {
+/** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
+public class IbftProtocolSchedule extends BftProtocolSchedule {
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec) {
-    return new QbftProtocolSchedule()
+    return new IbftProtocolSchedule()
         .createProtocolSchedule(
             config, privacyParameters, isRevertReasonEnabled, bftExtraDataCodec);
   }
@@ -49,23 +45,16 @@ public class QbftProtocolSchedule extends BftProtocolSchedule {
   @Override
   protected Supplier<BlockHeaderValidator.Builder> createForkBlockHeaderRuleset(
       final GenesisConfigOptions config, final BftFork fork) {
-    checkArgument(fork instanceof QbftFork, "QbftProtocolSchedule must use QbftForks");
-    final QbftFork qbftFork = (QbftFork) fork;
     return () ->
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-            config.getBftConfigOptions().getBlockPeriodSeconds(),
-            qbftFork
-                .getValidatorSelectionMode()
-                .filter(m -> m == VALIDATOR_SELECTION_MODE.CONTRACT)
-                .isPresent());
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
+            config.getBftConfigOptions().getBlockPeriodSeconds());
   }
 
   @Override
   protected Supplier<BlockHeaderValidator.Builder> createGenesisBlockHeaderRuleset(
       final GenesisConfigOptions config) {
     return () ->
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-            config.getBftConfigOptions().getBlockPeriodSeconds(),
-            config.getQbftConfigOptions().getValidatorContractAddress().isPresent());
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
+            config.getBftConfigOptions().getBlockPeriodSeconds());
   }
 }

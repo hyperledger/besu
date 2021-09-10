@@ -398,10 +398,7 @@ public class TestContextBuilder {
     final QbftBlockHeaderValidationRulesetFactory qbftBlockHeaderValidationRulesetFactory =
         new QbftBlockHeaderValidationRulesetFactory();
     final ProtocolSchedule protocolSchedule =
-        QbftProtocolSchedule.create(
-            genesisConfigOptions,
-            qbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
-            BFT_EXTRA_DATA_ENCODER);
+        QbftProtocolSchedule.create(genesisConfigOptions, BFT_EXTRA_DATA_ENCODER);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController

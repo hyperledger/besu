@@ -41,7 +41,6 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.QbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolSchedule;
@@ -255,14 +254,10 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
-    final QbftBlockHeaderValidationRulesetFactory qbftBlockHeaderValidationRulesetFactory =
-        new QbftBlockHeaderValidationRulesetFactory();
-
     return QbftProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled,
-        qbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
         bftExtraDataCodec().get());
   }
 
