@@ -44,7 +44,7 @@ public class AccountStorageEntry {
   }
 
   public static AccountStorageEntry forKeyAndValue(final UInt256 key, final UInt256 value) {
-    return create(value, Hash.hash(key.toBytes()), key);
+    return create(value, Hash.hash(key), key);
   }
 
   /**

@@ -21,19 +21,19 @@ import org.immutables.value.Value;
 public interface TransactionValidationParams {
 
   TransactionValidationParams processingBlockParams =
-      ImmutableTransactionValidationParams.of(false, false, true, false);
+      ImmutableTransactionValidationParams.of(false, false, false, true, false);
 
   TransactionValidationParams transactionPoolParams =
-      ImmutableTransactionValidationParams.of(true, false, false, true);
+      ImmutableTransactionValidationParams.of(true, false, true, true, true);
 
   TransactionValidationParams miningParams =
-      ImmutableTransactionValidationParams.of(false, false, true, true);
+      ImmutableTransactionValidationParams.of(false, false, false, true, true);
 
   TransactionValidationParams blockReplayParams =
-      ImmutableTransactionValidationParams.of(false, false, false, false);
+      ImmutableTransactionValidationParams.of(false, false, false, false, false);
 
   TransactionValidationParams transactionSimulatorParams =
-      ImmutableTransactionValidationParams.of(false, false, false, false);
+      ImmutableTransactionValidationParams.of(false, false, false, false, false);
 
   @Value.Default
   default boolean isAllowFutureNonce() {
@@ -42,6 +42,11 @@ public interface TransactionValidationParams {
 
   @Value.Default
   default boolean isAllowExceedingBalance() {
+    return false;
+  }
+
+  @Value.Default
+  default boolean isAllowMaxFeerGasBelowBaseFee() {
     return false;
   }
 

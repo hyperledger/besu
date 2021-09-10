@@ -121,7 +121,8 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
     if (isProposer) {
       if (roundIdentifier.equals(qbftRound.getRoundIdentifier())) {
-        qbftRound.createAndSendProposalMessage(clock.millis() / 1000L);
+        final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
+        qbftRound.createAndSendProposalMessage(headerTimeStampSeconds);
       } else {
         LOG.trace(
             "Block timer expired for a round ({}) other than current ({})",

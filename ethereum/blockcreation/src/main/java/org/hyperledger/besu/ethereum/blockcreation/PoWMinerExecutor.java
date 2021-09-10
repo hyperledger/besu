@@ -21,13 +21,14 @@ import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
@@ -36,25 +37,24 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
   protected boolean stratumMiningEnabled;
   protected final Iterable<Long> nonceGenerator;
   protected final EpochCalculator epochCalculator;
+  protected final long powJobTimeToLive;
+  protected final int maxOmmerDepth;
 
   public PoWMinerExecutor(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final PendingTransactions pendingTransactions,
+      final AbstractPendingTransactionsSorter pendingTransactions,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final GasLimitCalculator gasLimitCalculator,
-      final EpochCalculator epochCalculator) {
-    super(
-        protocolContext,
-        protocolSchedule,
-        pendingTransactions,
-        miningParams,
-        blockScheduler,
-        gasLimitCalculator);
+      final EpochCalculator epochCalculator,
+      final long powJobTimeToLive,
+      final int maxOmmerDepth) {
+    super(protocolContext, protocolSchedule, pendingTransactions, miningParams, blockScheduler);
     this.coinbase = miningParams.getCoinbase();
     this.nonceGenerator = miningParams.getNonceGenerator().orElse(new RandomNonceGenerator());
     this.epochCalculator = epochCalculator;
+    this.powJobTimeToLive = powJobTimeToLive;
+    this.maxOmmerDepth = maxOmmerDepth;
   }
 
   @Override
@@ -79,19 +79,22 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
             protocolSchedule.getByBlockNumber(parentHeader.getNumber() + 1).getPoWHasher().get(),
             stratumMiningEnabled,
             ethHashObservers,
-            epochCalculator);
+            epochCalculator,
+            powJobTimeToLive,
+            maxOmmerDepth);
     final Function<BlockHeader, PoWBlockCreator> blockCreator =
         (header) ->
             new PoWBlockCreator(
                 coinbase.orElseGet(
                     () ->
-                        // supply a ZERO coinbase if unspecified AND merge is enabled:
+                        // TODO: FROMRAYONISM does this still apply to the merge?
+                        //  supply a ZERO coinbase if unspecified AND merge is enabled
                         RayonismOptions.isMergeEnabled() ? Address.ZERO : null),
+                () -> targetGasLimit.map(AtomicLong::longValue),
                 parent -> extraData,
                 pendingTransactions,
                 protocolContext,
                 protocolSchedule,
-                gasLimitCalculator,
                 solver,
                 minTransactionGasPrice,
                 minBlockOccupancyRatio,

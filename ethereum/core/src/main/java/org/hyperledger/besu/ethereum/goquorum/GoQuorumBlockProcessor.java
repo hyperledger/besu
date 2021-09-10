@@ -23,12 +23,12 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
+import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -64,7 +64,6 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final TransactionGasBudgetCalculator gasBudgetCalculator,
       final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
     super(
         transactionProcessor,
@@ -72,7 +71,6 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        gasBudgetCalculator,
         Optional.empty());
 
     this.goQuorumEnclave = goQuorumPrivacyParameters.orElseThrow().enclave();
@@ -200,6 +198,13 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       return AbstractBlockProcessor.Result.failed();
     }
 
+    // create the bloom for the private transactions in the block and store it
+    final LogsBloomFilter.Builder privateBloomBuilder = LogsBloomFilter.builder();
+    privateTxReceipts.stream()
+        .filter(pr -> pr != null)
+        .forEach(pr -> privateBloomBuilder.insertFilter(pr.getBloomFilter()));
+    blockHeader.setPrivateLogsBloom(privateBloomBuilder.build());
+
     publicWorldState.persist(blockHeader);
     privateWorldState.persist(null);
 
@@ -216,8 +221,11 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       final WorldUpdater publicWorldStateUpdater) {
     final MainnetTransactionValidator transactionValidator =
         transactionProcessor.getTransactionValidator();
+    final TransactionValidationParams transactionValidationParams =
+        TransactionValidationParams.processingBlock();
     ValidationResult<TransactionInvalidReason> validationResult =
-        transactionValidator.validate(transaction, blockHeader.getBaseFee());
+        transactionValidator.validate(
+            transaction, blockHeader.getBaseFee(), transactionValidationParams);
     if (!validationResult.isValid()) {
       LOG.warn(
           "Invalid transaction: {}. Block {} Transaction {}",
@@ -231,8 +239,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
 
     final EvmAccount sender = publicWorldStateUpdater.getOrCreate(senderAddress);
     validationResult =
-        transactionValidator.validateForSender(
-            transaction, sender, TransactionValidationParams.processingBlock());
+        transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
     if (!validationResult.isValid()) {
       LOG.warn(
           "Invalid transaction: {}. Block {} Transaction {}",
@@ -262,7 +269,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
 
     return new Transaction(
         transaction.getNonce(),
-        transaction.getGasPrice(),
+        transaction.getGasPrice().get(),
         transaction.getGasLimit(),
         transaction.getTo(),
         transaction.getValue(),

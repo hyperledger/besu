@@ -47,18 +47,17 @@ public class VMReferenceTest extends AbstractRetryingTest {
 
   /** The path where all of the VM test configuration files live. */
   private static final String[] TEST_CONFIG_FILE_DIR_PATHS = {
-    "VMTests/vmArithmeticTest",
-    "VMTests/vmBitwiseLogicOperation",
-    "VMTests/vmBlockInfoTest",
-    "VMTests/vmEnvironmentalInfo",
-    "VMTests/vmIOandFlowOperations",
-    "VMTests/vmLogTest",
-    //    "VMTests/vmPerformance",
-    "VMTests/vmPushDupSwapTest",
-    "VMTests/vmRandomTest",
-    "VMTests/vmSha3Test",
-    "VMTests/vmTests",
-    "VMTests/vmSystemOperations"
+    "LegacyTests/Constantinople/VMTests/vmArithmeticTest",
+    "LegacyTests/Constantinople/VMTests/vmBitwiseLogicOperation",
+    "LegacyTests/Constantinople/VMTests/vmBlockInfoTest",
+    "LegacyTests/Constantinople/VMTests/vmEnvironmentalInfo",
+    "LegacyTests/Constantinople/VMTests/vmIOandFlowOperations",
+    "LegacyTests/Constantinople/VMTests/vmLogTest",
+    "LegacyTests/Constantinople/VMTests/vmPushDupSwapTest",
+    "LegacyTests/Constantinople/VMTests/vmRandomTest",
+    "LegacyTests/Constantinople/VMTests/vmSha3Test",
+    "LegacyTests/Constantinople/VMTests/vmTests",
+    "LegacyTests/Constantinople/VMTests/vmSystemOperations"
   };
 
   // The ignored test cases fall into two categories:
@@ -123,7 +122,6 @@ public class VMReferenceTest extends AbstractRetryingTest {
             .code(execEnv.getCode())
             .blockHeader(execEnv.getBlockHeader())
             .depth(execEnv.getDepth())
-            .contractAccountVersion(execEnv.getVersion())
             .completer(c -> {})
             .miningBeneficiary(execEnv.getBlockHeader().getCoinbase())
             .blockHashLookup(new BlockHashLookup(execEnv.getBlockHeader(), blockchain))

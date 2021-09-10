@@ -38,7 +38,7 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'org.apache.logging.log4j:log4j-api'
-  implementation 'org.apache.tuweni:bytes'
+  implementation 'org.apache.tuweni:tuweni-bytes'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
 

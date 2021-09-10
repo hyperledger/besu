@@ -21,8 +21,7 @@ import static org.hyperledger.besu.ethereum.core.Address.fromHexString;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.clique.CliqueBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -58,16 +57,15 @@ public class CliqueGetSignersAtHashTest {
   private List<String> validatorsAsStrings;
 
   @Mock private BlockchainQueries blockchainQueries;
-  @Mock private VoteTallyCache voteTallyCache;
   @Mock private BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata;
-  @Mock private VoteTally voteTally;
+  @Mock private ValidatorProvider validatorProvider;
 
   public static final String BLOCK_HASH =
       "0xe36a3edf0d8664002a72ef7c5f8e271485e7ce5c66455a07cb679d855818415f";
 
   @Before
   public void setup() {
-    method = new CliqueGetSignersAtHash(blockchainQueries, voteTallyCache);
+    method = new CliqueGetSignersAtHash(blockchainQueries, validatorProvider);
 
     final byte[] genesisBlockExtraData =
         Hex.decode(
@@ -116,8 +114,7 @@ public class CliqueGetSignersAtHashTest {
     when(blockchainQueries.blockByHash(Hash.fromHexString(BLOCK_HASH)))
         .thenReturn(Optional.of(blockWithMetadata));
     when(blockWithMetadata.getHeader()).thenReturn(blockHeader);
-    when(voteTallyCache.getVoteTallyAfterBlock(blockHeader)).thenReturn(voteTally);
-    when(voteTally.getValidators()).thenReturn(validators);
+    when(validatorProvider.getValidatorsAfterBlock(blockHeader)).thenReturn(validators);
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
     assertThat(response.getResult()).isEqualTo(validatorsAsStrings);

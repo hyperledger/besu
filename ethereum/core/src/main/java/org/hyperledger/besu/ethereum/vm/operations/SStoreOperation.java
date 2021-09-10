@@ -50,8 +50,8 @@ public class SStoreOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
 
-    final UInt256 key = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 key = frame.popStackItem();
+    final UInt256 value = frame.popStackItem();
 
     final MutableAccount account =
         frame.getWorldState().getAccount(frame.getRecipientAddress()).getMutable();
@@ -60,7 +60,7 @@ public class SStoreOperation extends AbstractOperation {
     }
 
     final Address address = account.getAddress();
-    final boolean slotIsWarm = frame.warmUpStorage(address, key.toBytes());
+    final boolean slotIsWarm = frame.warmUpStorage(address, key);
     final Gas cost =
         gasCalculator()
             .calculateStorageCost(account, key, value)
@@ -82,7 +82,7 @@ public class SStoreOperation extends AbstractOperation {
     frame.incrementGasRefund(gasCalculator().calculateStorageRefundAmount(account, key, value));
 
     account.setStorageValue(key, value);
-    frame.storageWasUpdated(key, value.toBytes());
+    frame.storageWasUpdated(key, value);
     return new OperationResult(optionalCost, Optional.empty());
   }
 }

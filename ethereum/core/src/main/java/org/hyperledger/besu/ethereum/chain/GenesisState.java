@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -116,7 +115,6 @@ public final class GenesisState {
           account.setNonce(genesisAccount.nonce);
           account.setBalance(genesisAccount.balance);
           account.setCode(genesisAccount.code);
-          account.setVersion(genesisAccount.version);
           genesisAccount.storage.forEach(account::setStorageValue);
         });
     updater.commit();
@@ -156,7 +154,7 @@ public final class GenesisState {
         .mixHash(parseMixHash(genesis))
         .nonce(parseNonce(genesis))
         .blockHeaderFunctions(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))
-        .baseFee(genesis.getConfigOptions().getGenesisBaseFee().orElse(null))
+        .baseFee(genesis.getBaseFeePerGas().orElse(null))
         .buildBlockHeader();
   }
 
@@ -229,7 +227,6 @@ public final class GenesisState {
     final Wei balance;
     final Map<UInt256, UInt256> storage;
     final Bytes code;
-    final int version;
 
     static GenesisAccount fromAllocation(final GenesisAllocation allocation) {
       return new GenesisAccount(
@@ -237,8 +234,7 @@ public final class GenesisState {
           allocation.getAddress(),
           allocation.getBalance(),
           allocation.getStorage(),
-          allocation.getCode(),
-          allocation.getVersion());
+          allocation.getCode());
     }
 
     private GenesisAccount(
@@ -246,13 +242,11 @@ public final class GenesisState {
         final String hexAddress,
         final String balance,
         final Map<String, String> storage,
-        final String hexCode,
-        final String version) {
+        final String hexCode) {
       this.nonce = withNiceErrorMessage("nonce", hexNonce, GenesisState::parseUnsignedLong);
       this.address = withNiceErrorMessage("address", hexAddress, Address::fromHexString);
       this.balance = withNiceErrorMessage("balance", balance, this::parseBalance);
       this.code = hexCode != null ? Bytes.fromHexString(hexCode) : null;
-      this.version = version != null ? Integer.decode(version) : Account.DEFAULT_VERSION;
       this.storage = parseStorage(storage);
     }
 
@@ -291,7 +285,6 @@ public final class GenesisState {
           .add("balance", balance)
           .add("storage", storage)
           .add("code", code)
-          .add("version", version)
           .toString();
     }
   }

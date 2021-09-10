@@ -22,8 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -56,7 +55,7 @@ public class CliqueGetSignerMetricsTest {
   private final String JSON_RPC_VERSION = "2.0";
   private CliqueGetSignerMetrics method;
 
-  private VoteTallyCache voteTallyCache;
+  private ValidatorProvider validatorProvider;
   private BlockchainQueries blockchainQueries;
   private BlockInterface blockInterface;
 
@@ -64,10 +63,10 @@ public class CliqueGetSignerMetricsTest {
 
   @Before
   public void setup() {
-    voteTallyCache = mock(VoteTallyCache.class);
+    validatorProvider = mock(ValidatorProvider.class);
     blockchainQueries = mock(BlockchainQueries.class);
     blockInterface = mock(BlockInterface.class);
-    method = new CliqueGetSignerMetrics(voteTallyCache, blockInterface, blockchainQueries);
+    method = new CliqueGetSignerMetrics(validatorProvider, blockInterface, blockchainQueries);
   }
 
   @Test
@@ -261,8 +260,7 @@ public class CliqueGetSignerMetricsTest {
     when(blockchainQueries.getBlockHeaderByNumber(number)).thenReturn(Optional.of(header));
     when(blockInterface.getProposerOfBlock(header)).thenReturn(proposerAddressBlock);
 
-    when(voteTallyCache.getVoteTallyAfterBlock(header))
-        .thenReturn(new VoteTally(Arrays.asList(VALIDATORS)));
+    when(validatorProvider.getValidatorsAfterBlock(header)).thenReturn((Arrays.asList(VALIDATORS)));
 
     final SignerMetricResult signerMetricResult = new SignerMetricResult(proposerAddressBlock);
     signerMetricResult.incrementeNbBlock();

@@ -19,11 +19,13 @@ import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -49,13 +51,23 @@ public class EthPeers {
   private final Map<PeerConnection, EthPeer> connections = new ConcurrentHashMap<>();
   private final String protocolName;
   private final Clock clock;
+  private final List<NodeMessagePermissioningProvider> permissioningProviders;
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new ArrayList<>();
 
   public EthPeers(final String protocolName, final Clock clock, final MetricsSystem metricsSystem) {
+    this(protocolName, clock, metricsSystem, Collections.emptyList());
+  }
+
+  public EthPeers(
+      final String protocolName,
+      final Clock clock,
+      final MetricsSystem metricsSystem,
+      final List<NodeMessagePermissioningProvider> permissioningProviders) {
     this.protocolName = protocolName;
     this.clock = clock;
+    this.permissioningProviders = permissioningProviders;
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.PEERS,
         "pending_peer_requests_current",
@@ -67,7 +79,12 @@ public class EthPeers {
       final PeerConnection peerConnection, final List<PeerValidator> peerValidators) {
     final EthPeer peer =
         new EthPeer(
-            peerConnection, protocolName, this::invokeConnectionCallbacks, peerValidators, clock);
+            peerConnection,
+            protocolName,
+            this::invokeConnectionCallbacks,
+            peerValidators,
+            clock,
+            permissioningProviders);
     connections.putIfAbsent(peerConnection, peer);
   }
 
@@ -158,7 +175,7 @@ public class EthPeers {
   }
 
   public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
-    return streamAvailablePeers().filter(matchesCriteria::test).max(BEST_CHAIN);
+    return streamAvailablePeers().filter(matchesCriteria).max(BEST_CHAIN);
   }
 
   @FunctionalInterface

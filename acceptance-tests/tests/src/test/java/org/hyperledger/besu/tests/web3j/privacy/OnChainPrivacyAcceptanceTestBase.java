@@ -41,12 +41,12 @@ public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
 
   protected String createOnChainPrivacyGroup(final PrivacyNode... members) {
     final List<String> addresses =
-        Arrays.asList(members).stream().map(m -> m.getEnclaveKey()).collect(Collectors.toList());
+        Arrays.stream(members).map(PrivacyNode::getEnclaveKey).collect(Collectors.toList());
     return createOnChainPrivacyGroup(members[0].getEnclaveKey(), addresses, members);
   }
 
   /**
-   * Crete an onchain privacy group. The privacy group id will be randomly generated.
+   * Create an onchain privacy group. The privacy group id will be randomly generated.
    *
    * <p>This method also checks that each node member has successfully processed the transaction and
    * has the expected list of member for the group.
@@ -98,7 +98,6 @@ public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
             Address.ONCHAIN_PRIVACY_PROXY.toHexString(),
             GET_PARTICIPANTS_METHOD_SIGNATURE.toString(),
             groupCreator.getTransactionSigningKey(),
-            POW_CHAIN_ID,
             privateFrom,
             privacyGroupId));
   }

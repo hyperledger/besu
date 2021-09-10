@@ -212,7 +212,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
                   GetBlockFromPeerTask.create(
                           protocolSchedule,
                           ethContext,
-                          child.getHash(),
+                          Optional.of(child.getHash()),
                           child.getNumber(),
                           metricsSystem)
                       .assignPeer(headersResult.getPeer());

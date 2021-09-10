@@ -38,7 +38,7 @@ public class BftConfigOptions {
   private static final int DEFAULT_FUTURE_MESSAGES_LIMIT = 1000;
   private static final int DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE = 10;
 
-  private final ObjectNode bftConfigRoot;
+  protected final ObjectNode bftConfigRoot;
 
   BftConfigOptions(final ObjectNode bftConfigRoot) {
     this.bftConfigRoot = bftConfigRoot;

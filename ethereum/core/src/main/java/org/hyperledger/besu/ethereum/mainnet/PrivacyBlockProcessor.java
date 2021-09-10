@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRehydration;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionWithMetadata;
@@ -53,6 +54,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
   private final PrivateStateStorage privateStateStorage;
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateStateRootResolver privateStateRootResolver;
+  private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
   private WorldStateArchive publicWorldStateArchive;
 
   public PrivacyBlockProcessor(
@@ -61,13 +63,15 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final Enclave enclave,
       final PrivateStateStorage privateStateStorage,
       final WorldStateArchive privateWorldStateArchive,
-      final PrivateStateRootResolver privateStateRootResolver) {
+      final PrivateStateRootResolver privateStateRootResolver,
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator) {
     this.blockProcessor = blockProcessor;
     this.protocolSchedule = protocolSchedule;
     this.enclave = enclave;
     this.privateStateStorage = privateStateStorage;
     this.privateWorldStateArchive = privateWorldStateArchive;
     this.privateStateRootResolver = privateStateRootResolver;
+    this.privateStateGenesisAllocator = privateStateGenesisAllocator;
   }
 
   public void setPublicWorldStateArchive(final WorldStateArchive publicWorldStateArchive) {
@@ -104,16 +108,14 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions) {
     transactions.stream()
-        .filter(
-            t ->
-                t.getTo().isPresent()
-                    && t.getTo().equals(Optional.of(Address.ONCHAIN_PRIVACY))
-                    && t.getPayload().size() == 64)
+        .filter(this::onChainAddToGroupPrivateMarkerTransactions)
         .forEach(
-            t -> {
-              final Bytes32 addKey = Bytes32.wrap(t.getPayload().slice(32, 32));
+            pmt -> {
+              final Bytes32 privateTransactionsLookupId =
+                  Bytes32.wrap(pmt.getPayload().slice(32, 32));
               try {
-                final ReceiveResponse receiveResponse = enclave.receive(addKey.toBase64String());
+                final ReceiveResponse receiveResponse =
+                    enclave.receive(privateTransactionsLookupId.toBase64String());
                 final List<PrivateTransactionWithMetadata> privateTransactionWithMetadataList =
                     PrivateTransactionWithMetadata.readListFromPayload(
                         Bytes.wrap(Base64.getDecoder().decode(receiveResponse.getPayload())));
@@ -125,15 +127,15 @@ public class PrivacyBlockProcessor implements BlockProcessor {
                             .getPrivacyGroupId()
                             .get());
 
-                final List<PrivateTransactionWithMetadata> actualList =
-                    createActualList(
+                final List<PrivateTransactionWithMetadata> actualListToRehydrate =
+                    transactionsInGroupThatNeedToBeApplied(
                         blockHeader, privateTransactionWithMetadataList, privacyGroupId);
 
-                if (actualList.size() > 0) {
+                if (actualListToRehydrate.size() > 0) {
                   LOG.debug(
                       "Rehydrating privacy group {}, number of transactions to be rehydrated is {} out of a total number of {} transactions.",
                       privacyGroupId.toString(),
-                      actualList.size(),
+                      actualListToRehydrate.size(),
                       privateTransactionWithMetadataList.size());
                   final PrivateStateRehydration privateStateRehydration =
                       new PrivateStateRehydration(
@@ -142,9 +144,13 @@ public class PrivacyBlockProcessor implements BlockProcessor {
                           protocolSchedule,
                           publicWorldStateArchive,
                           privateWorldStateArchive,
-                          privateStateRootResolver);
-                  privateStateRehydration.rehydrate(actualList);
-                  privateStateStorage.updater().putAddDataKey(privacyGroupId, addKey).commit();
+                          privateStateRootResolver,
+                          privateStateGenesisAllocator);
+                  privateStateRehydration.rehydrate(actualListToRehydrate);
+                  privateStateStorage
+                      .updater()
+                      .putAddDataKey(privacyGroupId, privateTransactionsLookupId)
+                      .commit();
                 }
               } catch (final EnclaveClientException e) {
                 // we were not being added because we have not found the add blob
@@ -152,7 +158,13 @@ public class PrivacyBlockProcessor implements BlockProcessor {
             });
   }
 
-  private List<PrivateTransactionWithMetadata> createActualList(
+  private boolean onChainAddToGroupPrivateMarkerTransactions(final Transaction t) {
+    return t.getTo().isPresent()
+        && t.getTo().equals(Optional.of(Address.ONCHAIN_PRIVACY))
+        && t.getPayload().size() == 64;
+  }
+
+  private List<PrivateTransactionWithMetadata> transactionsInGroupThatNeedToBeApplied(
       final BlockHeader blockHeader,
       final List<PrivateTransactionWithMetadata> privateTransactionWithMetadataList,
       final Bytes32 privacyGroupId) {
@@ -191,16 +203,16 @@ public class PrivacyBlockProcessor implements BlockProcessor {
           actualList = Collections.emptyList();
         } else {
           // we are being added, but do not have to rehydrate all private transactions
-          final Hash nodeLatestPrivacyMarkerTransactionHash =
+          final Hash nodeLatestPrivateMarkerTransactionHash =
               nodeLatestPrivateTxMetadataList
                   .get(nodeLatestPrivateTxMetadataList.size() - 1)
-                  .getPrivacyMarkerTransactionHash();
+                  .getPrivateMarkerTransactionHash();
           for (int i = 0; i < privateTransactionWithMetadataList.size(); i++) {
             if (!privateTransactionWithMetadataList
                 .get(i)
                 .getPrivateTransactionMetadata()
-                .getPrivacyMarkerTransactionHash()
-                .equals(nodeLatestPrivacyMarkerTransactionHash)) {
+                .getPrivateMarkerTransactionHash()
+                .equals(nodeLatestPrivateMarkerTransactionHash)) {
               continue;
             }
             if (privateTransactionWithMetadataList.size() - 1 == i) {

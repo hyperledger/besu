@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -104,7 +103,6 @@ public class ExtCodeHashOperationTest {
     final Bytes code = Bytes.fromHexString("0xabcdef");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).getMutable();
     account.setCode(code);
-    account.setVersion(Account.DEFAULT_VERSION);
     assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.hash(code));
   }
 
@@ -114,11 +112,9 @@ public class ExtCodeHashOperationTest {
     final Bytes code = Bytes.fromHexString("0xabcdef");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).getMutable();
     account.setCode(code);
-    account.setVersion(Account.DEFAULT_VERSION);
-    final Bytes32 value =
+    final UInt256 value =
         UInt256.fromBytes(Words.fromAddress(REQUESTED_ADDRESS))
-            .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)))
-            .toBytes();
+            .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)));
     final MessageFrame frame = createMessageFrame(value);
     operation.execute(frame, null);
     assertThat(frame.getStackItem(0)).isEqualTo(Hash.hash(code));
@@ -131,11 +127,11 @@ public class ExtCodeHashOperationTest {
   }
 
   private MessageFrame createMessageFrame(final Address requestedAddress) {
-    final Bytes32 stackItem = Words.fromAddress(requestedAddress);
+    final UInt256 stackItem = Words.fromAddress(requestedAddress);
     return createMessageFrame(stackItem);
   }
 
-  private MessageFrame createMessageFrame(final Bytes32 stackItem) {
+  private MessageFrame createMessageFrame(final UInt256 stackItem) {
     final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
     final MessageFrame frame =
         new MessageFrameTestFixture()

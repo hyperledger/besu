@@ -54,14 +54,47 @@ import org.web3j.protocol.core.methods.response.EthUninstallFilter;
 import org.web3j.protocol.eea.crypto.PrivateTransactionEncoder;
 import org.web3j.protocol.eea.crypto.RawPrivateTransaction;
 import org.web3j.protocol.exceptions.TransactionException;
+import org.web3j.tx.ChainIdLong;
 import org.web3j.tx.Contract;
+import org.web3j.tx.PrivateTransactionManager;
 import org.web3j.tx.response.PollingPrivateTransactionReceiptProcessor;
 import org.web3j.utils.Base64String;
 import org.web3j.utils.Numeric;
+import org.web3j.utils.Restriction;
 
 public class PrivacyRequestFactory {
 
   private final SecureRandom secureRandom;
+
+  public PrivateTransactionManager getTransactionManager(
+      final Credentials credentials,
+      final Base64String privateFrom,
+      final List<Base64String> privateFor,
+      final Restriction restriction) {
+    return new PrivateTransactionManager(
+        getBesuClient(),
+        credentials,
+        new PollingPrivateTransactionReceiptProcessor(getBesuClient(), 1000, 60),
+        ChainIdLong.NONE,
+        privateFrom,
+        privateFor,
+        restriction);
+  }
+
+  public PrivateTransactionManager getTransactionManager(
+      final Credentials credentials,
+      final Base64String privateFrom,
+      final Base64String privacyGroupId,
+      final Restriction restriction) {
+    return new PrivateTransactionManager(
+        getBesuClient(),
+        credentials,
+        new PollingPrivateTransactionReceiptProcessor(getBesuClient(), 1000, 60),
+        ChainIdLong.NONE,
+        privateFrom,
+        privacyGroupId,
+        restriction);
+  }
 
   public static class GetPrivacyPrecompileAddressResponse extends Response<Address> {}
 

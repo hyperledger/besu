@@ -18,28 +18,32 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteType;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validator.VoteProvider;
+import org.hyperledger.besu.consensus.common.validator.VoteType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 
+import java.util.Optional;
+
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 public abstract class AbstractVoteProposerMethodTest {
 
-  private final VoteProposer voteProposer = mock(VoteProposer.class);
+  private final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+  private final VoteProvider voteProvider = mock(VoteProvider.class);
   private final String JSON_RPC_VERSION = "2.0";
 
   protected abstract AbstractVoteProposerMethod getMethod();
 
   protected abstract String getMethodName();
 
-  protected VoteProposer getVoteProposer() {
-    return voteProposer;
+  protected ValidatorProvider getValidatorProvider() {
+    return validatorProvider;
   }
 
   @Test
@@ -48,7 +52,8 @@ public abstract class AbstractVoteProposerMethodTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest(JSON_RPC_VERSION, getMethodName(), new Object[] {}));
 
-    when(voteProposer.getProposals())
+    when(validatorProvider.getVoteProvider()).thenReturn(Optional.of(voteProvider));
+    when(voteProvider.getProposals())
         .thenReturn(
             ImmutableMap.of(
                 Address.fromHexString("1"),

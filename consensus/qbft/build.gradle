@@ -65,12 +65,14 @@ dependencies {
   implementation project(':ethereum:eth')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')
+  implementation project(':pki')
   implementation project(':services:kvstore')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:units'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'org.web3j:abi'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
@@ -92,6 +94,7 @@ dependencies {
   integrationTestImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(':metrics:core')
   integrationTestImplementation project(':testutil')
+  integrationTestImplementation project(':crypto')
 
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
@@ -103,7 +106,7 @@ dependencies {
   referenceTestImplementation 'org.mockito:mockito-core'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
-  referenceTestImplementation 'org.apache.tuweni:bytes'
+  referenceTestImplementation 'org.apache.tuweni:tuweni-bytes'
   referenceTestImplementation project(':crypto')
   referenceTestImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   referenceTestImplementation project(':consensus:common')

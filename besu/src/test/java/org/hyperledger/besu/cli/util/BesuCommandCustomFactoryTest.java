@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.BesuInfo;
-import org.hyperledger.besu.services.PluginVersionsProvider;
+import org.hyperledger.besu.plugin.services.PluginVersionsProvider;
 
 import java.util.Arrays;
 

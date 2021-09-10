@@ -28,9 +28,9 @@ public class IsZeroOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final UInt256 value = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value = frame.popStackItem();
 
-    frame.pushStackItem(value.isZero() ? UInt256.ONE.toBytes() : UInt256.ZERO.toBytes());
+    frame.pushStackItem(value.isZero() ? UInt256.ONE : UInt256.ZERO);
 
     return successResponse;
   }

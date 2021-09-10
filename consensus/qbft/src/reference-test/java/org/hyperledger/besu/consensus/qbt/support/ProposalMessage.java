@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.qbt.support;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -37,6 +38,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.apache.tuweni.bytes.Bytes;
 
 public class ProposalMessage implements RlpTestCaseMessage {
+  private static final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
+
   private final SignedProposal signedProposal;
   private final List<SignedRoundChange> roundChanges;
 
@@ -54,7 +57,7 @@ public class ProposalMessage implements RlpTestCaseMessage {
 
   @Override
   public BftMessage<ProposalPayload> fromRlp(final Bytes rlp) {
-    return Proposal.decode(rlp);
+    return Proposal.decode(rlp, bftExtraDataCodec);
   }
 
   @Override

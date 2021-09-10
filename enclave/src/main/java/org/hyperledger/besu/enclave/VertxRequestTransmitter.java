@@ -87,6 +87,7 @@ public class VertxRequestTransmitter implements RequestTransmitter {
         request.putHeader(HttpHeaderNames.ACCEPT, APPLICATION_JSON);
       }
       contentType.ifPresent(ct -> request.putHeader(HttpHeaders.CONTENT_TYPE, ct));
+
       if (content.isPresent()) {
         request.end(content.get());
       } else {

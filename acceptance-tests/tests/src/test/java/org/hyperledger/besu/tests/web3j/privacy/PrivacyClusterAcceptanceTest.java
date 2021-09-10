@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.web3j.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.web3j.utils.Restriction.RESTRICTED;
 
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
@@ -23,16 +24,25 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+import org.testcontainers.containers.Network;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
@@ -41,30 +51,55 @@ import org.web3j.protocol.eea.crypto.PrivateTransactionEncoder;
 import org.web3j.protocol.eea.crypto.RawPrivateTransaction;
 import org.web3j.utils.Base64String;
 import org.web3j.utils.Numeric;
-import org.web3j.utils.Restriction;
 
+@RunWith(Parameterized.class)
 public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
-
-  private static final long POW_CHAIN_ID = 1337;
 
   private static final String eventEmitterDeployed =
       "0x6080604052600436106100565763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416633fa4f245811461005b5780636057361d1461008257806367e404ce146100ae575b600080fd5b34801561006757600080fd5b506100706100ec565b60408051918252519081900360200190f35b34801561008e57600080fd5b506100ac600480360360208110156100a557600080fd5b50356100f2565b005b3480156100ba57600080fd5b506100c3610151565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b60025490565b604080513381526020810183905281517fc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5929181900390910190a16002556001805473ffffffffffffffffffffffffffffffffffffffff191633179055565b60015473ffffffffffffffffffffffffffffffffffffffff169056fea165627a7a72305820c7f729cb24e05c221f5aa913700793994656f233fe2ce3b9fd9a505ea17e8d8a0029";
 
-  private PrivacyNode alice;
-  private PrivacyNode bob;
-  private PrivacyNode charlie;
+  private final PrivacyNode alice;
+  private final PrivacyNode bob;
+  private final PrivacyNode charlie;
   private final Vertx vertx = Vertx.vertx();
   private final EnclaveFactory enclaveFactory = new EnclaveFactory(vertx);
 
-  @Before
-  public void setUp() throws Exception {
+  @Parameters(name = "{0}")
+  public static Collection<EnclaveType> enclaveTypes() {
+    return Arrays.stream(EnclaveType.values())
+        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
+        .collect(Collectors.toList());
+  }
+
+  public PrivacyClusterAcceptanceTest(final EnclaveType enclaveType) throws IOException {
+    final Network containerNetwork = Network.newNetwork();
     alice =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "node1", privacyAccountResolver.resolve(0));
+            "node1",
+            privacyAccountResolver.resolve(0),
+            enclaveType,
+            Optional.of(containerNetwork),
+            false,
+            false,
+            false);
     bob =
-        privacyBesu.createPrivateTransactionEnabledNode("node2", privacyAccountResolver.resolve(1));
+        privacyBesu.createPrivateTransactionEnabledNode(
+            "node2",
+            privacyAccountResolver.resolve(1),
+            enclaveType,
+            Optional.of(containerNetwork),
+            false,
+            false,
+            false);
     charlie =
-        privacyBesu.createPrivateTransactionEnabledNode("node3", privacyAccountResolver.resolve(2));
+        privacyBesu.createPrivateTransactionEnabledNode(
+            "node3",
+            privacyAccountResolver.resolve(2),
+            enclaveType,
+            Optional.of(containerNetwork),
+            false,
+            false,
+            false);
     privacyCluster.start(alice, bob, charlie);
   }
 
@@ -83,7 +118,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -97,7 +131,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                 eventEmitter.getContractAddress(),
                 eventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
+                RESTRICTED,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -118,7 +152,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                 eventEmitter.getContractAddress(),
                 eventEmitter.value().encodeFunctionCall(),
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
+                RESTRICTED,
                 alice.getEnclaveKey(),
                 charlie.getEnclaveKey()));
 
@@ -145,23 +179,21 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             Numeric.prependHexPrefix(EventEmitter.BINARY),
             Base64String.wrap(alice.getEnclaveKey()),
             Collections.singletonList(Base64String.wrap(bob.getEnclaveKey())),
-            Restriction.RESTRICTED);
+            RESTRICTED);
 
     final String signedPrivateTransaction =
         Numeric.toHexString(
             PrivateTransactionEncoder.signMessage(
-                rawPrivateTransaction,
-                POW_CHAIN_ID,
-                Credentials.create(alice.getTransactionSigningKey())));
+                rawPrivateTransaction, Credentials.create(alice.getTransactionSigningKey())));
     final String transactionKey =
         alice.execute(privacyTransactions.privDistributeTransaction(signedPrivateTransaction));
 
-    final Enclave aliceEnclave = enclaveFactory.createVertxEnclave(alice.getOrion().clientUrl());
+    final Enclave aliceEnclave = enclaveFactory.createVertxEnclave(alice.getEnclave().clientUrl());
     final ReceiveResponse aliceRR =
         aliceEnclave.receive(
             Bytes.fromHexString(transactionKey).toBase64String(), alice.getEnclaveKey());
 
-    final Enclave bobEnclave = enclaveFactory.createVertxEnclave(bob.getOrion().clientUrl());
+    final Enclave bobEnclave = enclaveFactory.createVertxEnclave(bob.getEnclave().clientUrl());
     final ReceiveResponse bobRR =
         bobEnclave.receive(
             Bytes.fromHexString(transactionKey).toBase64String(), bob.getEnclaveKey());
@@ -179,7 +211,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     final String signedPmt =
         Numeric.toHexString(
             TransactionEncoder.signMessage(
-                pmt, POW_CHAIN_ID, Credentials.create(alice.getTransactionSigningKey())));
+                pmt, Credentials.create(alice.getTransactionSigningKey())));
 
     final String transactionHash = alice.execute(ethTransactions.sendRawTransaction(signedPmt));
 
@@ -217,7 +249,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -232,7 +263,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -251,7 +281,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey(),
                 charlie.getEnclaveKey()));
@@ -267,7 +296,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                 firstEventEmitter.getContractAddress(),
                 firstEventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 charlie.getTransactionSigningKey(),
-                POW_CHAIN_ID,
+                RESTRICTED,
                 charlie.getEnclaveKey(),
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
@@ -292,7 +321,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -307,7 +335,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                 secondEventEmitter.getContractAddress(),
                 secondEventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 bob.getTransactionSigningKey(),
-                POW_CHAIN_ID,
+                RESTRICTED,
                 bob.getEnclaveKey(),
                 alice.getEnclaveKey()));
 

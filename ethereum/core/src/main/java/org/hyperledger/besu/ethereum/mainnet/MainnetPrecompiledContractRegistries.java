@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128AddPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.AltBN128MulPrecompiledContract;
@@ -35,6 +34,7 @@ import org.hyperledger.besu.ethereum.mainnet.precompiles.IDPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.RIPEMD160PrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.SHA256PrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
@@ -44,143 +44,101 @@ public abstract class MainnetPrecompiledContractRegistries {
   private MainnetPrecompiledContractRegistries() {}
 
   private static void populateForFrontier(
-      final PrecompileContractRegistry registry,
-      final GasCalculator gasCalculator,
-      final int accountVersion) {
-    registry.put(Address.ECREC, accountVersion, new ECRECPrecompiledContract(gasCalculator));
-    registry.put(Address.SHA256, accountVersion, new SHA256PrecompiledContract(gasCalculator));
-    registry.put(
-        Address.RIPEMD160, accountVersion, new RIPEMD160PrecompiledContract(gasCalculator));
-    registry.put(Address.ID, accountVersion, new IDPrecompiledContract(gasCalculator));
+      final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
+    registry.put(Address.ECREC, new ECRECPrecompiledContract(gasCalculator));
+    registry.put(Address.SHA256, new SHA256PrecompiledContract(gasCalculator));
+    registry.put(Address.RIPEMD160, new RIPEMD160PrecompiledContract(gasCalculator));
+    registry.put(Address.ID, new IDPrecompiledContract(gasCalculator));
   }
 
   public static PrecompileContractRegistry frontier(
       final PrecompiledContractConfiguration precompiledContractConfiguration) {
     final PrecompileContractRegistry registry = new PrecompileContractRegistry();
-    populateForFrontier(
-        registry, precompiledContractConfiguration.getGasCalculator(), Account.DEFAULT_VERSION);
+    populateForFrontier(registry, precompiledContractConfiguration.getGasCalculator());
     return registry;
   }
 
   private static void populateForByzantium(
-      final PrecompileContractRegistry registry,
-      final GasCalculator gasCalculator,
-      final int accountVersion) {
-    populateForFrontier(registry, gasCalculator, accountVersion);
+      final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
+    populateForFrontier(registry, gasCalculator);
     registry.put(
-        Address.MODEXP,
-        accountVersion,
-        new BigIntegerModularExponentiationPrecompiledContract(gasCalculator));
+        Address.MODEXP, new BigIntegerModularExponentiationPrecompiledContract(gasCalculator));
+    registry.put(Address.ALTBN128_ADD, AltBN128AddPrecompiledContract.byzantium(gasCalculator));
+    registry.put(Address.ALTBN128_MUL, AltBN128MulPrecompiledContract.byzantium(gasCalculator));
     registry.put(
-        Address.ALTBN128_ADD,
-        accountVersion,
-        AltBN128AddPrecompiledContract.byzantium(gasCalculator));
-    registry.put(
-        Address.ALTBN128_MUL,
-        accountVersion,
-        AltBN128MulPrecompiledContract.byzantium(gasCalculator));
-    registry.put(
-        Address.ALTBN128_PAIRING,
-        accountVersion,
-        AltBN128PairingPrecompiledContract.byzantium(gasCalculator));
+        Address.ALTBN128_PAIRING, AltBN128PairingPrecompiledContract.byzantium(gasCalculator));
   }
 
   public static PrecompileContractRegistry byzantium(
       final PrecompiledContractConfiguration precompiledContractConfiguration) {
     final PrecompileContractRegistry registry = new PrecompileContractRegistry();
-    populateForByzantium(
-        registry, precompiledContractConfiguration.getGasCalculator(), Account.DEFAULT_VERSION);
+    populateForByzantium(registry, precompiledContractConfiguration.getGasCalculator());
     return registry;
   }
 
   private static void populateForIstanbul(
-      final PrecompileContractRegistry registry,
-      final GasCalculator gasCalculator,
-      final int accountVersion) {
-    populateForByzantium(registry, gasCalculator, accountVersion);
+      final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
+    populateForByzantium(registry, gasCalculator);
+    registry.put(Address.ALTBN128_ADD, AltBN128AddPrecompiledContract.istanbul(gasCalculator));
+    registry.put(Address.ALTBN128_MUL, AltBN128MulPrecompiledContract.istanbul(gasCalculator));
     registry.put(
-        Address.ALTBN128_ADD,
-        Account.DEFAULT_VERSION,
-        AltBN128AddPrecompiledContract.istanbul(gasCalculator));
-    registry.put(
-        Address.ALTBN128_MUL,
-        Account.DEFAULT_VERSION,
-        AltBN128MulPrecompiledContract.istanbul(gasCalculator));
-    registry.put(
-        Address.ALTBN128_PAIRING,
-        Account.DEFAULT_VERSION,
-        AltBN128PairingPrecompiledContract.istanbul(gasCalculator));
-    registry.put(
-        Address.BLAKE2B_F_COMPRESSION,
-        Account.DEFAULT_VERSION,
-        new BLAKE2BFPrecompileContract(gasCalculator));
+        Address.ALTBN128_PAIRING, AltBN128PairingPrecompiledContract.istanbul(gasCalculator));
+    registry.put(Address.BLAKE2B_F_COMPRESSION, new BLAKE2BFPrecompileContract(gasCalculator));
   }
 
   public static PrecompileContractRegistry istanbul(
       final PrecompiledContractConfiguration precompiledContractConfiguration) {
     final PrecompileContractRegistry registry = new PrecompileContractRegistry();
-    populateForIstanbul(
-        registry, precompiledContractConfiguration.getGasCalculator(), Account.DEFAULT_VERSION);
+    populateForIstanbul(registry, precompiledContractConfiguration.getGasCalculator());
     return registry;
   }
 
   private static void populateForBLS12(
-      final PrecompileContractRegistry registry,
-      final GasCalculator gasCalculator,
-      final int accountVersion) {
-    populateForIstanbul(registry, gasCalculator, accountVersion);
-    registry.put(Address.BLS12_G1ADD, Account.DEFAULT_VERSION, new BLS12G1AddPrecompiledContract());
-    registry.put(Address.BLS12_G1MUL, Account.DEFAULT_VERSION, new BLS12G1MulPrecompiledContract());
-    registry.put(
-        Address.BLS12_G1MULTIEXP,
-        Account.DEFAULT_VERSION,
-        new BLS12G1MultiExpPrecompiledContract());
-    registry.put(Address.BLS12_G2ADD, Account.DEFAULT_VERSION, new BLS12G2AddPrecompiledContract());
-    registry.put(Address.BLS12_G2MUL, Account.DEFAULT_VERSION, new BLS12G2MulPrecompiledContract());
-    registry.put(
-        Address.BLS12_G2MULTIEXP,
-        Account.DEFAULT_VERSION,
-        new BLS12G2MultiExpPrecompiledContract());
-    registry.put(
-        Address.BLS12_PAIRING, Account.DEFAULT_VERSION, new BLS12PairingPrecompiledContract());
-    registry.put(
-        Address.BLS12_MAP_FP_TO_G1,
-        Account.DEFAULT_VERSION,
-        new BLS12MapFpToG1PrecompiledContract());
-    registry.put(
-        Address.BLS12_MAP_FP2_TO_G2,
-        Account.DEFAULT_VERSION,
-        new BLS12MapFp2ToG2PrecompiledContract());
+      final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
+    populateForIstanbul(registry, gasCalculator);
+    registry.put(Address.BLS12_G1ADD, new BLS12G1AddPrecompiledContract());
+    registry.put(Address.BLS12_G1MUL, new BLS12G1MulPrecompiledContract());
+    registry.put(Address.BLS12_G1MULTIEXP, new BLS12G1MultiExpPrecompiledContract());
+    registry.put(Address.BLS12_G2ADD, new BLS12G2AddPrecompiledContract());
+    registry.put(Address.BLS12_G2MUL, new BLS12G2MulPrecompiledContract());
+    registry.put(Address.BLS12_G2MULTIEXP, new BLS12G2MultiExpPrecompiledContract());
+    registry.put(Address.BLS12_PAIRING, new BLS12PairingPrecompiledContract());
+    registry.put(Address.BLS12_MAP_FP_TO_G1, new BLS12MapFpToG1PrecompiledContract());
+    registry.put(Address.BLS12_MAP_FP2_TO_G2, new BLS12MapFp2ToG2PrecompiledContract());
   }
 
   public static PrecompileContractRegistry bls12(
       final PrecompiledContractConfiguration precompiledContractConfiguration) {
     final PrecompileContractRegistry registry = new PrecompileContractRegistry();
-    populateForBLS12(
-        registry, precompiledContractConfiguration.getGasCalculator(), Account.DEFAULT_VERSION);
+    populateForBLS12(registry, precompiledContractConfiguration.getGasCalculator());
     return registry;
   }
 
   static void appendPrivacy(
       final PrecompileContractRegistry registry,
-      final PrecompiledContractConfiguration precompiledContractConfiguration,
-      final int accountVersion) {
+      final PrecompiledContractConfiguration precompiledContractConfiguration) {
 
     if (!precompiledContractConfiguration.getPrivacyParameters().isEnabled()) {
       return;
     }
 
-    if (precompiledContractConfiguration.getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
+    if (precompiledContractConfiguration.getPrivacyParameters().isPrivacyPluginEnabled()) {
+      registry.put(
+          Address.PLUGIN_PRIVACY,
+          new PrivacyPluginPrecompiledContract(
+              precompiledContractConfiguration.getGasCalculator(),
+              precompiledContractConfiguration.getPrivacyParameters()));
+    } else if (precompiledContractConfiguration
+        .getPrivacyParameters()
+        .isOnchainPrivacyGroupsEnabled()) {
       registry.put(
           Address.ONCHAIN_PRIVACY,
-          accountVersion,
           new OnChainPrivacyPrecompiledContract(
               precompiledContractConfiguration.getGasCalculator(),
               precompiledContractConfiguration.getPrivacyParameters()));
     } else {
       registry.put(
           Address.DEFAULT_PRIVACY,
-          accountVersion,
           new PrivacyPrecompiledContract(
               precompiledContractConfiguration.getGasCalculator(),
               precompiledContractConfiguration.getPrivacyParameters(),

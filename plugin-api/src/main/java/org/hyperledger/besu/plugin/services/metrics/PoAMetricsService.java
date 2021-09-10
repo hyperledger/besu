@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services.metrics;
 
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.services.BesuService;
 
 import java.util.Collection;
 
@@ -26,7 +27,7 @@ import java.util.Collection;
  *     org.hyperledger.besu.plugin.services.query.PoaQueryService}
  */
 @Deprecated
-public interface PoAMetricsService {
+public interface PoAMetricsService extends BesuService {
 
   /**
    * Retrieves the validators who have signed the latest block from the canonical chain.

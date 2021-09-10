@@ -28,12 +28,12 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
@@ -50,8 +50,7 @@ public class PrivateTransactionProcessor {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  @SuppressWarnings("unused")
-  private final GasCalculator gasCalculator;
+  private final TransactionGasCalculator transactionGasCalculator;
 
   @SuppressWarnings("unused")
   private final MainnetTransactionValidator transactionValidator;
@@ -64,27 +63,23 @@ public class PrivateTransactionProcessor {
 
   private final int maxStackSize;
 
-  private final int createContractAccountVersion;
-
   @SuppressWarnings("unused")
   private final boolean clearEmptyAccounts;
 
   public PrivateTransactionProcessor(
-      final GasCalculator gasCalculator,
+      final TransactionGasCalculator transactionGasCalculator,
       final MainnetTransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final int maxStackSize,
-      final int createContractAccountVersion,
       final PrivateTransactionValidator privateTransactionValidator) {
-    this.gasCalculator = gasCalculator;
+    this.transactionGasCalculator = transactionGasCalculator;
     this.transactionValidator = transactionValidator;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
     this.clearEmptyAccounts = clearEmptyAccounts;
     this.maxStackSize = maxStackSize;
-    this.createContractAccountVersion = createContractAccountVersion;
     this.privateTransactionValidator = privateTransactionValidator;
   }
 
@@ -162,7 +157,6 @@ public class PrivateTransactionProcessor {
                 .type(MessageFrame.Type.CONTRACT_CREATION)
                 .address(privateContractAddress)
                 .contract(privateContractAddress)
-                .contractAccountVersion(createContractAccountVersion)
                 .inputData(Bytes.EMPTY)
                 .code(new Code(transaction.getPayload()))
                 .build();
@@ -174,8 +168,6 @@ public class PrivateTransactionProcessor {
                 .type(MessageFrame.Type.MESSAGE_CALL)
                 .address(to)
                 .contract(to)
-                .contractAccountVersion(
-                    maybeContract.map(AccountState::getVersion).orElse(Account.DEFAULT_VERSION))
                 .inputData(transaction.getPayload())
                 .code(new Code(maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY)))
                 .build();
@@ -235,11 +227,12 @@ public class PrivateTransactionProcessor {
   }
 
   @SuppressWarnings("unused")
-  private static Gas refunded(
-      final Transaction transaction, final Gas gasRemaining, final Gas gasRefund) {
+  private Gas refunded(final Transaction transaction, final Gas gasRemaining, final Gas gasRefund) {
     // Integer truncation takes care of the the floor calculation needed after the divide.
     final Gas maxRefundAllowance =
-        Gas.of(transaction.getGasLimit()).minus(gasRemaining).dividedBy(2);
+        Gas.of(transaction.getGasLimit())
+            .minus(gasRemaining)
+            .dividedBy(transactionGasCalculator.getMaxRefundQuotient());
     final Gas refundAllowance = maxRefundAllowance.min(gasRefund);
     return gasRemaining.plus(refundAllowance);
   }

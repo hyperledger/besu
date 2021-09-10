@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.OperationRegistry;
@@ -108,7 +107,7 @@ abstract class MainnetEvmRegistries {
   static EVM frontier(final GasCalculator gasCalculator) {
     final OperationRegistry registry = new OperationRegistry();
 
-    registerFrontierOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION);
+    registerFrontierOpcodes(registry, gasCalculator);
 
     return new EVM(registry, gasCalculator);
   }
@@ -116,7 +115,7 @@ abstract class MainnetEvmRegistries {
   static EVM homestead(final GasCalculator gasCalculator) {
     final OperationRegistry registry = new OperationRegistry();
 
-    registerHomesteadOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION);
+    registerHomesteadOpcodes(registry, gasCalculator);
 
     return new EVM(registry, gasCalculator);
   }
@@ -124,7 +123,7 @@ abstract class MainnetEvmRegistries {
   static EVM byzantium(final GasCalculator gasCalculator) {
     final OperationRegistry registry = new OperationRegistry();
 
-    registerByzantiumOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION);
+    registerByzantiumOpcodes(registry, gasCalculator);
 
     return new EVM(registry, gasCalculator);
   }
@@ -132,7 +131,7 @@ abstract class MainnetEvmRegistries {
   static EVM constantinople(final GasCalculator gasCalculator) {
     final OperationRegistry registry = new OperationRegistry();
 
-    registerConstantinopleOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION);
+    registerConstantinopleOpcodes(registry, gasCalculator);
 
     return new EVM(registry, gasCalculator);
   }
@@ -140,7 +139,7 @@ abstract class MainnetEvmRegistries {
   static EVM istanbul(final GasCalculator gasCalculator, final BigInteger chainId) {
     final OperationRegistry registry = new OperationRegistry();
 
-    registerIstanbulOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION, chainId);
+    registerIstanbulOpcodes(registry, gasCalculator, chainId);
 
     return new EVM(registry, gasCalculator);
   }
@@ -148,152 +147,137 @@ abstract class MainnetEvmRegistries {
   static EVM london(final GasCalculator gasCalculator, final BigInteger chainId) {
     final OperationRegistry registry = new OperationRegistry();
 
-    registerLondonOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION, chainId);
+    registerLondonOpcodes(registry, gasCalculator, chainId);
 
     return new EVM(registry, gasCalculator);
   }
 
   private static void registerFrontierOpcodes(
-      final OperationRegistry registry,
-      final GasCalculator gasCalculator,
-      final int accountVersion) {
-    registry.put(new AddOperation(gasCalculator), accountVersion);
-    registry.put(new AddOperation(gasCalculator), accountVersion);
-    registry.put(new MulOperation(gasCalculator), accountVersion);
-    registry.put(new SubOperation(gasCalculator), accountVersion);
-    registry.put(new DivOperation(gasCalculator), accountVersion);
-    registry.put(new SDivOperation(gasCalculator), accountVersion);
-    registry.put(new ModOperation(gasCalculator), accountVersion);
-    registry.put(new SModOperation(gasCalculator), accountVersion);
-    registry.put(new ExpOperation(gasCalculator), accountVersion);
-    registry.put(new AddModOperation(gasCalculator), accountVersion);
-    registry.put(new MulModOperation(gasCalculator), accountVersion);
-    registry.put(new SignExtendOperation(gasCalculator), accountVersion);
-    registry.put(new LtOperation(gasCalculator), accountVersion);
-    registry.put(new GtOperation(gasCalculator), accountVersion);
-    registry.put(new SLtOperation(gasCalculator), accountVersion);
-    registry.put(new SGtOperation(gasCalculator), accountVersion);
-    registry.put(new EqOperation(gasCalculator), accountVersion);
-    registry.put(new IsZeroOperation(gasCalculator), accountVersion);
-    registry.put(new AndOperation(gasCalculator), accountVersion);
-    registry.put(new OrOperation(gasCalculator), accountVersion);
-    registry.put(new XorOperation(gasCalculator), accountVersion);
-    registry.put(new NotOperation(gasCalculator), accountVersion);
-    registry.put(new ByteOperation(gasCalculator), accountVersion);
-    registry.put(new Sha3Operation(gasCalculator), accountVersion);
-    registry.put(new AddressOperation(gasCalculator), accountVersion);
-    registry.put(new BalanceOperation(gasCalculator), accountVersion);
-    registry.put(new OriginOperation(gasCalculator), accountVersion);
-    registry.put(new CallerOperation(gasCalculator), accountVersion);
-    registry.put(new CallValueOperation(gasCalculator), accountVersion);
-    registry.put(new CallDataLoadOperation(gasCalculator), accountVersion);
-    registry.put(new CallDataSizeOperation(gasCalculator), accountVersion);
-    registry.put(new CallDataCopyOperation(gasCalculator), accountVersion);
-    registry.put(new CodeSizeOperation(gasCalculator), accountVersion);
-    registry.put(new CodeCopyOperation(gasCalculator), accountVersion);
-    registry.put(new GasPriceOperation(gasCalculator), accountVersion);
-    registry.put(new ExtCodeCopyOperation(gasCalculator), accountVersion);
-    registry.put(new ExtCodeSizeOperation(gasCalculator), accountVersion);
-    registry.put(new BlockHashOperation(gasCalculator), accountVersion);
-    registry.put(new CoinbaseOperation(gasCalculator), accountVersion);
-    registry.put(new TimestampOperation(gasCalculator), accountVersion);
-    registry.put(new NumberOperation(gasCalculator), accountVersion);
-    registry.put(new DifficultyOperation(gasCalculator), accountVersion);
-    registry.put(new GasLimitOperation(gasCalculator), accountVersion);
-    registry.put(new PopOperation(gasCalculator), accountVersion);
-    registry.put(new MLoadOperation(gasCalculator), accountVersion);
-    registry.put(new MStoreOperation(gasCalculator), accountVersion);
-    registry.put(new MStore8Operation(gasCalculator), accountVersion);
-    registry.put(new SLoadOperation(gasCalculator), accountVersion);
-    registry.put(
-        new SStoreOperation(gasCalculator, SStoreOperation.FRONTIER_MINIMUM), accountVersion);
-    registry.put(new JumpOperation(gasCalculator), accountVersion);
-    registry.put(new JumpiOperation(gasCalculator), accountVersion);
-    registry.put(new PCOperation(gasCalculator), accountVersion);
-    registry.put(new MSizeOperation(gasCalculator), accountVersion);
-    registry.put(new GasOperation(gasCalculator), accountVersion);
-    registry.put(new JumpDestOperation(gasCalculator), accountVersion);
-    registry.put(new ReturnOperation(gasCalculator), accountVersion);
-    registry.put(new InvalidOperation(gasCalculator), accountVersion);
-    registry.put(new StopOperation(gasCalculator), accountVersion);
-    registry.put(new SelfDestructOperation(gasCalculator), accountVersion);
-    registry.put(new CreateOperation(gasCalculator), accountVersion);
-    registry.put(new CallOperation(gasCalculator), accountVersion);
-    registry.put(new CallCodeOperation(gasCalculator), accountVersion);
+      final OperationRegistry registry, final GasCalculator gasCalculator) {
+    registry.put(new AddOperation(gasCalculator));
+    registry.put(new MulOperation(gasCalculator));
+    registry.put(new SubOperation(gasCalculator));
+    registry.put(new DivOperation(gasCalculator));
+    registry.put(new SDivOperation(gasCalculator));
+    registry.put(new ModOperation(gasCalculator));
+    registry.put(new SModOperation(gasCalculator));
+    registry.put(new ExpOperation(gasCalculator));
+    registry.put(new AddModOperation(gasCalculator));
+    registry.put(new MulModOperation(gasCalculator));
+    registry.put(new SignExtendOperation(gasCalculator));
+    registry.put(new LtOperation(gasCalculator));
+    registry.put(new GtOperation(gasCalculator));
+    registry.put(new SLtOperation(gasCalculator));
+    registry.put(new SGtOperation(gasCalculator));
+    registry.put(new EqOperation(gasCalculator));
+    registry.put(new IsZeroOperation(gasCalculator));
+    registry.put(new AndOperation(gasCalculator));
+    registry.put(new OrOperation(gasCalculator));
+    registry.put(new XorOperation(gasCalculator));
+    registry.put(new NotOperation(gasCalculator));
+    registry.put(new ByteOperation(gasCalculator));
+    registry.put(new Sha3Operation(gasCalculator));
+    registry.put(new AddressOperation(gasCalculator));
+    registry.put(new BalanceOperation(gasCalculator));
+    registry.put(new OriginOperation(gasCalculator));
+    registry.put(new CallerOperation(gasCalculator));
+    registry.put(new CallValueOperation(gasCalculator));
+    registry.put(new CallDataLoadOperation(gasCalculator));
+    registry.put(new CallDataSizeOperation(gasCalculator));
+    registry.put(new CallDataCopyOperation(gasCalculator));
+    registry.put(new CodeSizeOperation(gasCalculator));
+    registry.put(new CodeCopyOperation(gasCalculator));
+    registry.put(new GasPriceOperation(gasCalculator));
+    registry.put(new ExtCodeCopyOperation(gasCalculator));
+    registry.put(new ExtCodeSizeOperation(gasCalculator));
+    registry.put(new BlockHashOperation(gasCalculator));
+    registry.put(new CoinbaseOperation(gasCalculator));
+    registry.put(new TimestampOperation(gasCalculator));
+    registry.put(new NumberOperation(gasCalculator));
+    registry.put(new DifficultyOperation(gasCalculator));
+    registry.put(new GasLimitOperation(gasCalculator));
+    registry.put(new PopOperation(gasCalculator));
+    registry.put(new MLoadOperation(gasCalculator));
+    registry.put(new MStoreOperation(gasCalculator));
+    registry.put(new MStore8Operation(gasCalculator));
+    registry.put(new SLoadOperation(gasCalculator));
+    registry.put(new SStoreOperation(gasCalculator, SStoreOperation.FRONTIER_MINIMUM));
+    registry.put(new JumpOperation(gasCalculator));
+    registry.put(new JumpiOperation(gasCalculator));
+    registry.put(new PCOperation(gasCalculator));
+    registry.put(new MSizeOperation(gasCalculator));
+    registry.put(new GasOperation(gasCalculator));
+    registry.put(new JumpDestOperation(gasCalculator));
+    registry.put(new ReturnOperation(gasCalculator));
+    registry.put(new InvalidOperation(gasCalculator));
+    registry.put(new StopOperation(gasCalculator));
+    registry.put(new SelfDestructOperation(gasCalculator));
+    registry.put(new CreateOperation(gasCalculator));
+    registry.put(new CallOperation(gasCalculator));
+    registry.put(new CallCodeOperation(gasCalculator));
 
     // Register the PUSH1, PUSH2, ..., PUSH32 operations.
     for (int i = 1; i <= 32; ++i) {
-      registry.put(new PushOperation(i, gasCalculator), accountVersion);
+      registry.put(new PushOperation(i, gasCalculator));
     }
 
     // Register the DUP1, DUP2, ..., DUP16 operations.
     for (int i = 1; i <= 16; ++i) {
-      registry.put(new DupOperation(i, gasCalculator), accountVersion);
+      registry.put(new DupOperation(i, gasCalculator));
     }
 
     // Register the SWAP1, SWAP2, ..., SWAP16 operations.
     for (int i = 1; i <= 16; ++i) {
-      registry.put(new SwapOperation(i, gasCalculator), accountVersion);
+      registry.put(new SwapOperation(i, gasCalculator));
     }
 
     // Register the LOG0, LOG1, ..., LOG4 operations.
     for (int i = 0; i < 5; ++i) {
-      registry.put(new LogOperation(i, gasCalculator), accountVersion);
+      registry.put(new LogOperation(i, gasCalculator));
     }
   }
 
   private static void registerHomesteadOpcodes(
-      final OperationRegistry registry,
-      final GasCalculator gasCalculator,
-      final int accountVersion) {
-    registerFrontierOpcodes(registry, gasCalculator, accountVersion);
-    registry.put(new DelegateCallOperation(gasCalculator), accountVersion);
+      final OperationRegistry registry, final GasCalculator gasCalculator) {
+    registerFrontierOpcodes(registry, gasCalculator);
+    registry.put(new DelegateCallOperation(gasCalculator));
   }
 
   private static void registerByzantiumOpcodes(
-      final OperationRegistry registry,
-      final GasCalculator gasCalculator,
-      final int accountVersion) {
-    registerHomesteadOpcodes(registry, gasCalculator, accountVersion);
-    registry.put(new ReturnDataCopyOperation(gasCalculator), accountVersion);
-    registry.put(new ReturnDataSizeOperation(gasCalculator), accountVersion);
-    registry.put(new RevertOperation(gasCalculator), accountVersion);
-    registry.put(new StaticCallOperation(gasCalculator), accountVersion);
+      final OperationRegistry registry, final GasCalculator gasCalculator) {
+    registerHomesteadOpcodes(registry, gasCalculator);
+    registry.put(new ReturnDataCopyOperation(gasCalculator));
+    registry.put(new ReturnDataSizeOperation(gasCalculator));
+    registry.put(new RevertOperation(gasCalculator));
+    registry.put(new StaticCallOperation(gasCalculator));
   }
 
   private static void registerConstantinopleOpcodes(
-      final OperationRegistry registry,
-      final GasCalculator gasCalculator,
-      final int accountVersion) {
-    registerByzantiumOpcodes(registry, gasCalculator, accountVersion);
-    registry.put(new Create2Operation(gasCalculator), accountVersion);
-    registry.put(new SarOperation(gasCalculator), accountVersion);
-    registry.put(new ShlOperation(gasCalculator), accountVersion);
-    registry.put(new ShrOperation(gasCalculator), accountVersion);
-    registry.put(new ExtCodeHashOperation(gasCalculator), accountVersion);
+      final OperationRegistry registry, final GasCalculator gasCalculator) {
+    registerByzantiumOpcodes(registry, gasCalculator);
+    registry.put(new Create2Operation(gasCalculator));
+    registry.put(new SarOperation(gasCalculator));
+    registry.put(new ShlOperation(gasCalculator));
+    registry.put(new ShrOperation(gasCalculator));
+    registry.put(new ExtCodeHashOperation(gasCalculator));
   }
 
   private static void registerIstanbulOpcodes(
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
-      final int accountVersion,
       final BigInteger chainId) {
-    registerConstantinopleOpcodes(registry, gasCalculator, accountVersion);
+    registerConstantinopleOpcodes(registry, gasCalculator);
     registry.put(
-        new ChainIdOperation(gasCalculator, Bytes32.leftPad(Bytes.of(chainId.toByteArray()))),
-        Account.DEFAULT_VERSION);
-    registry.put(new SelfBalanceOperation(gasCalculator), Account.DEFAULT_VERSION);
-    registry.put(
-        new SStoreOperation(gasCalculator, SStoreOperation.EIP_1706_MINIMUM),
-        Account.DEFAULT_VERSION);
+        new ChainIdOperation(gasCalculator, Bytes32.leftPad(Bytes.of(chainId.toByteArray()))));
+    registry.put(new SelfBalanceOperation(gasCalculator));
+    registry.put(new SStoreOperation(gasCalculator, SStoreOperation.EIP_1706_MINIMUM));
   }
 
   private static void registerLondonOpcodes(
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
-      final int accountVersion,
       final BigInteger chainId) {
-    registerIstanbulOpcodes(registry, gasCalculator, accountVersion, chainId);
-    registry.put(new BaseFeeOperation(gasCalculator), Account.DEFAULT_VERSION);
+    registerIstanbulOpcodes(registry, gasCalculator, chainId);
+    registry.put(new BaseFeeOperation(gasCalculator));
   }
 }

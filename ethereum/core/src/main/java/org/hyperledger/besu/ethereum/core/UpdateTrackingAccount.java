@@ -44,7 +44,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
 
   private long nonce;
   private Wei balance;
-  private int version;
 
   @Nullable private Bytes updatedCode; // Null if the underlying code has not been updated.
   @Nullable private Hash updatedCodeHash;
@@ -63,7 +62,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
 
     this.nonce = 0;
     this.balance = Wei.ZERO;
-    this.version = Account.DEFAULT_VERSION;
 
     this.updatedCode = Bytes.EMPTY;
     this.updatedStorage = new TreeMap<>();
@@ -81,7 +79,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
 
     this.nonce = account.getNonce();
     this.balance = account.getBalance();
-    this.version = account.getVersion();
 
     this.updatedStorage = new TreeMap<>();
   }
@@ -186,16 +183,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   public void setCode(final Bytes code) {
     this.updatedCode = code;
     this.updatedCodeHash = null;
-  }
-
-  @Override
-  public void setVersion(final int version) {
-    this.version = version;
-  }
-
-  @Override
-  public int getVersion() {
-    return version;
   }
 
   void markTransactionBoundary() {

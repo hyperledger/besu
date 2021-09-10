@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -51,7 +51,7 @@ public class PrivGetTransactionCountTest {
   private final long NONCE = 5;
   private final User user =
       new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   @Before
   public void before() {
@@ -63,7 +63,7 @@ public class PrivGetTransactionCountTest {
   @Test
   public void verifyTransactionCount() {
     final PrivGetTransactionCount privGetTransactionCount =
-        new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider);
+        new PrivGetTransactionCount(privacyController, privacyIdProvider);
 
     final Object[] params = new Object[] {senderAddress, PRIVACY_GROUP_ID};
     final JsonRpcRequestContext request =
@@ -81,7 +81,7 @@ public class PrivGetTransactionCountTest {
   @Test
   public void failsWithNonceErrorIfExceptionIsThrown() {
     final PrivGetTransactionCount privGetTransactionCount =
-        new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider);
+        new PrivGetTransactionCount(privacyController, privacyIdProvider);
 
     when(privacyController.determineBesuNonce(senderAddress, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
         .thenThrow(EnclaveClientException.class);
@@ -101,7 +101,7 @@ public class PrivGetTransactionCountTest {
   @Test
   public void failsWithUnauthorizedErrorIfMultiTenancyValidationFails() {
     final PrivGetTransactionCount privGetTransactionCount =
-        new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider);
+        new PrivGetTransactionCount(privacyController, privacyIdProvider);
 
     when(privacyController.determineBesuNonce(senderAddress, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
         .thenThrow(new MultiTenancyValidationException("validation failed"));

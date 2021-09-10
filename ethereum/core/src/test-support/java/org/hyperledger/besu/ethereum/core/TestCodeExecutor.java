@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -42,10 +43,7 @@ public class TestCodeExecutor {
   }
 
   public MessageFrame executeCode(
-      final String code,
-      final int accountVersion,
-      final long gasLimit,
-      final Consumer<MutableAccount> accountSetup) {
+      final String code, final long gasLimit, final Consumer<MutableAccount> accountSetup) {
     final ProtocolSpec protocolSpec = fixture.getProtocolSchedule().getByBlockNumber(0);
     final WorldUpdater worldState =
         createInitialWorldState(accountSetup, fixture.getStateArchive());
@@ -56,6 +54,7 @@ public class TestCodeExecutor {
 
     final Transaction transaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .value(Wei.ZERO)
             .sender(SENDER_ADDRESS)
             .signature(
@@ -76,8 +75,7 @@ public class TestCodeExecutor {
             .address(SENDER_ADDRESS)
             .originator(SENDER_ADDRESS)
             .contract(SENDER_ADDRESS)
-            .contractAccountVersion(accountVersion)
-            .gasPrice(transaction.getGasPrice())
+            .gasPrice(transaction.getGasPrice().get())
             .inputData(transaction.getPayload())
             .sender(SENDER_ADDRESS)
             .value(transaction.getValue())

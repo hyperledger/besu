@@ -21,8 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.ibft.IbftLegacyContext;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPSignature;
@@ -53,11 +52,9 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext setupContextWithValidators(final Collection<Address> validators) {
     final IbftLegacyContext bftContext = mock(IbftLegacyContext.class);
-    final VoteTallyCache mockCache = mock(VoteTallyCache.class);
-    final VoteTally mockVoteTally = mock(VoteTally.class);
-    when(bftContext.getVoteTallyCache()).thenReturn(mockCache);
-    when(mockCache.getVoteTallyAfterBlock(any())).thenReturn(mockVoteTally);
-    when(mockVoteTally.getValidators()).thenReturn(validators);
+    final ValidatorProvider mockValidatorProvider = mock(ValidatorProvider.class);
+    when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
+    when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
 
     return new ProtocolContext(null, null, bftContext);
   }

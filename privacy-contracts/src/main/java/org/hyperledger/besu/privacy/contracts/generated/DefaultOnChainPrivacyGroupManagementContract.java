@@ -82,7 +82,7 @@ public class DefaultOnChainPrivacyGroupManagementContract extends Contract {
           Arrays.<TypeReference<?>>asList(
               new TypeReference<Bool>() {},
               new TypeReference<Bytes32>() {},
-              new TypeReference<Utf8String>() {}));;
+              new TypeReference<Utf8String>() {}));
 
   @Deprecated
   protected DefaultOnChainPrivacyGroupManagementContract(

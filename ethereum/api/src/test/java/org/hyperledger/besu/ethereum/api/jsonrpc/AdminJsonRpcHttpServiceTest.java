@@ -25,6 +25,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -75,21 +76,24 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             "eth",
             c -> {},
             List.of(),
-            TestClock.fixed()));
+            TestClock.fixed(),
+            Collections.emptyList()));
     peerList.add(
         new EthPeer(
             MockPeerConnection.create(info2, addr30301, addr60302),
             "eth",
             c -> {},
             List.of(),
-            TestClock.fixed()));
+            TestClock.fixed(),
+            Collections.emptyList()));
     peerList.add(
         new EthPeer(
             MockPeerConnection.create(info3, addr30301, addr60303),
             "eth",
             c -> {},
             List.of(),
-            TestClock.fixed()));
+            TestClock.fixed(),
+            Collections.emptyList()));
 
     when(ethPeersMock.streamAllPeers()).thenReturn(peerList.stream());
     when(peerDiscoveryMock.getPeerCount()).thenReturn(peerList.size());

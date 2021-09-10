@@ -386,7 +386,10 @@ public class BlockchainQueries {
                                       final List<Transaction> txs = body.getTransactions();
                                       final List<TransactionWithMetadata> formattedTxs =
                                           formatTransactions(
-                                              txs, header.getNumber(), blockHeaderHash);
+                                              txs,
+                                              header.getNumber(),
+                                              header.getBaseFee(),
+                                              blockHeaderHash);
                                       final List<Hash> ommers =
                                           body.getOmmers().stream()
                                               .map(BlockHeader::getHash)
@@ -504,7 +507,11 @@ public class BlockchainQueries {
     final Transaction transaction = blockchain.getTransactionByHash(transactionHash).orElseThrow();
     return Optional.of(
         new TransactionWithMetadata(
-            transaction, header.getNumber(), blockHash, loc.getTransactionIndex()));
+            transaction,
+            header.getNumber(),
+            header.getBaseFee(),
+            blockHash,
+            loc.getTransactionIndex()));
   }
 
   /**
@@ -555,7 +562,7 @@ public class BlockchainQueries {
       return null;
     }
     return new TransactionWithMetadata(
-        txs.get(txIndex), header.getNumber(), blockHeaderHash, txIndex);
+        txs.get(txIndex), header.getNumber(), header.getBaseFee(), blockHeaderHash, txIndex);
   }
 
   public Optional<TransactionLocation> transactionLocationByHash(final Hash transactionHash) {
@@ -578,11 +585,12 @@ public class BlockchainQueries {
     // getTransactionLocation should not return if the TX or block doesn't exist, so throwing
     // on a missing optional is appropriate.
     final TransactionLocation location = maybeLocation.get();
-    final BlockBody blockBody = blockchain.getBlockBody(location.getBlockHash()).orElseThrow();
-    final Transaction transaction = blockBody.getTransactions().get(location.getTransactionIndex());
+    final Block block = blockchain.getBlockByHash(location.getBlockHash()).orElseThrow();
+    final Transaction transaction =
+        block.getBody().getTransactions().get(location.getTransactionIndex());
 
     final Hash blockhash = location.getBlockHash();
-    final BlockHeader header = blockchain.getBlockHeader(blockhash).orElseThrow();
+    final BlockHeader header = block.getHeader();
     final List<TransactionReceipt> transactionReceipts =
         blockchain.getTxReceipts(blockhash).orElseThrow();
     final TransactionReceipt transactionReceipt =
@@ -602,6 +610,7 @@ public class BlockchainQueries {
             transactionHash,
             location.getTransactionIndex(),
             gasUsed,
+            header.getBaseFee(),
             blockhash,
             header.getNumber()));
   }
@@ -683,7 +692,7 @@ public class BlockchainQueries {
         // handles the case when fromBlockNumber is past chain head.
         .takeWhile(Optional::isPresent)
         .map(Optional::get)
-        .filter(header -> query.couldMatch(header.getLogsBloom()))
+        .filter(header -> query.couldMatch(header.getLogsBloom(true)))
         .flatMap(header -> matchingLogs(header.getHash(), query, isQueryAlive).stream())
         .collect(Collectors.toList());
   }
@@ -818,7 +827,8 @@ public class BlockchainQueries {
                         .orElseThrow(
                             () -> new IllegalStateException("Could not retrieve block #" + l)))
             .flatMap(Collection::stream)
-            .mapToLong(t -> t.getGasPrice().toLong())
+            .filter(t -> t.getGasPrice().isPresent())
+            .mapToLong(t -> t.getGasPrice().get().toLong())
             .sorted()
             .toArray();
     return (gasCollection == null || gasCollection.length == 0)
@@ -851,11 +861,14 @@ public class BlockchainQueries {
   }
 
   private List<TransactionWithMetadata> formatTransactions(
-      final List<Transaction> txs, final long blockNumber, final Hash blockHash) {
+      final List<Transaction> txs,
+      final long blockNumber,
+      final Optional<Long> baseFee,
+      final Hash blockHash) {
     final int count = txs.size();
     final List<TransactionWithMetadata> result = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {
-      result.add(new TransactionWithMetadata(txs.get(i), blockNumber, blockHash, i));
+      result.add(new TransactionWithMetadata(txs.get(i), blockNumber, baseFee, blockHash, i));
     }
     return result;
   }

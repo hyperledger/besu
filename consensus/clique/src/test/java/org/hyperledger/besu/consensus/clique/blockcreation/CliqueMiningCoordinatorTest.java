@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.clique.blockcreation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -28,8 +27,7 @@ import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -80,7 +78,7 @@ public class CliqueMiningCoordinatorTest {
   @Mock private CliqueMinerExecutor minerExecutor;
   @Mock private CliqueBlockMiner blockMiner;
   @Mock private SyncState syncState;
-  @Mock private VoteTallyCache voteTallyCache;
+  @Mock private ValidatorProvider validatorProvider;
 
   @Before
   public void setup() {
@@ -89,11 +87,8 @@ public class CliqueMiningCoordinatorTest {
     Block genesisBlock = createEmptyBlock(0, Hash.ZERO, proposerKeys); // not normally signed but ok
     blockChain = createInMemoryBlockchain(genesisBlock);
 
-    final VoteTally voteTally = mock(VoteTally.class);
-    when(voteTally.getValidators()).thenReturn(validators);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(voteTally);
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, null, null, blockInterface);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
 
     when(protocolContext.getConsensusState(CliqueContext.class)).thenReturn(cliqueContext);
     when(protocolContext.getBlockchain()).thenReturn(blockChain);

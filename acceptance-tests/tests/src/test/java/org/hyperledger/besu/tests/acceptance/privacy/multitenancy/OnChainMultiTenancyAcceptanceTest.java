@@ -28,21 +28,42 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningT
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.besu.tests.web3j.privacy.OnChainPrivacyAcceptanceTestBase;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.utils.Base64String;
+import org.web3j.utils.Restriction;
 
+@RunWith(Parameterized.class)
 public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceTestBase {
+
+  private final EnclaveType enclaveType;
+
+  public OnChainMultiTenancyAcceptanceTest(final EnclaveType enclaveType) {
+    this.enclaveType = enclaveType;
+  }
+
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection<EnclaveType> enclaveTypes() {
+    return Arrays.stream(EnclaveType.values())
+        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
+        .collect(Collectors.toList());
+  }
 
   private static final String eventEmitterDeployed =
       "0x6080604052600436106100565763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416633fa4f245811461005b5780636057361d1461008257806367e404ce146100ae575b600080fd5b34801561006757600080fd5b506100706100ec565b60408051918252519081900360200190f35b34801561008e57600080fd5b506100ac600480360360208110156100a557600080fd5b50356100f2565b005b3480156100ba57600080fd5b506100c3610151565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b60025490565b604080513381526020810183905281517fc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5929181900390910190a16002556001805473ffffffffffffffffffffffffffffffffffffffff191633179055565b60015473ffffffffffffffffffffffffffffffffffffffff169056fea165627a7a72305820c7f729cb24e05c221f5aa913700793994656f233fe2ce3b9fd9a505ea17e8d8a0029";
@@ -58,7 +79,7 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
   public void setUp() throws Exception {
     alice =
         privacyBesu.createOnChainPrivacyGroupEnabledMinerNode(
-            "node1", PrivacyAccountResolver.MULTI_TENANCY, Address.PRIVACY, true);
+            "node1", PrivacyAccountResolver.MULTI_TENANCY, true, enclaveType, Optional.empty());
     final BesuNode aliceBesu = alice.getBesu();
     privacyCluster.startNodes(alice);
     final String alice1Token =
@@ -70,9 +91,9 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
         aliceBesu.execute(permissioningTransactions.createSuccessfulLogin("user3", "Password3"));
     privacyCluster.awaitPeerCount(alice);
 
-    final String alice1EnclaveKey = alice.getOrion().getPublicKeys().get(0);
-    final String alice2EnclaveKey = alice.getOrion().getPublicKeys().get(1);
-    final String alice3EnclaveKey = alice.getOrion().getPublicKeys().get(2);
+    final String alice1EnclaveKey = alice.getEnclave().getPublicKeys().get(0);
+    final String alice2EnclaveKey = alice.getEnclave().getPublicKeys().get(1);
+    final String alice3EnclaveKey = alice.getEnclave().getPublicKeys().get(2);
 
     aliceMultiTenancyPrivacyNode = new MultiTenancyPrivacyNode(alice);
     aliceMultiTenancyPrivacyNode
@@ -119,7 +140,6 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
                 EventEmitter.class,
                 privacyNode.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 tenant,
                 privacyGroupId));
 
@@ -180,7 +200,7 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
             eventEmitter.getContractAddress(),
             eventEmitter.store(BigInteger.valueOf(VALUE_SET)).encodeFunctionCall(),
             privacyNode.getTransactionSigningKey(),
-            POW_CHAIN_ID,
+            Restriction.RESTRICTED,
             tenant,
             privacyGroupId);
     final String storeTransactionHash = privacyNode.execute(storeTransaction);
@@ -320,7 +340,6 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
                 EventEmitter.class,
                 groupCreatingPrivacyNode.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 groupCreatingTenant,
                 privacyGroupId));
 
@@ -341,7 +360,7 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
             eventEmitter.getContractAddress(),
             eventEmitter.store(BigInteger.valueOf(VALUE_SET)).encodeFunctionCall(),
             groupCreatingPrivacyNode.getTransactionSigningKey(),
-            POW_CHAIN_ID,
+            Restriction.RESTRICTED,
             groupCreatingTenant,
             privacyGroupId);
     final String storeTransactionHash = groupCreatingPrivacyNode.execute(storeTransaction);
@@ -365,7 +384,7 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
             eventEmitter.getContractAddress(),
             eventEmitter.store(BigInteger.valueOf(VALUE_SET)).encodeFunctionCall(),
             groupCreatingPrivacyNode.getTransactionSigningKey(),
-            POW_CHAIN_ID,
+            Restriction.RESTRICTED,
             groupCreatingTenant,
             privacyGroupId);
     final String store2TransactionHash = groupCreatingPrivacyNode.execute(store2Transaction);

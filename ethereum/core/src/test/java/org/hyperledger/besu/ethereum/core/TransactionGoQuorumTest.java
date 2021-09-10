@@ -20,6 +20,8 @@ import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.math.BigInteger;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -52,6 +54,7 @@ public class TransactionGoQuorumTest {
   public void givenPublicTransaction_assertThatIsGoQuorumFlagIsFalse() {
     final Transaction transaction = Transaction.readFrom(ETHEREUM_PUBLIC_TX_RLP);
     assertThat(transaction.isGoQuorumPrivateTransaction()).isFalse();
+    assertThat(transaction.hasCostParams()).isTrue();
   }
 
   @Test
@@ -60,6 +63,7 @@ public class TransactionGoQuorumTest {
 
     assertThat(transaction.getV()).isEqualTo(37);
     assertThat(transaction.isGoQuorumPrivateTransaction()).isTrue();
+    assertThat(transaction.hasCostParams()).isFalse();
   }
 
   @Test
@@ -67,6 +71,19 @@ public class TransactionGoQuorumTest {
     final Transaction transaction = Transaction.readFrom(GOQUORUM_PRIVATE_TX_RLP_V38);
 
     assertThat(transaction.getV()).isEqualTo(38);
+    assertThat(transaction.isGoQuorumPrivateTransaction()).isTrue();
+    assertThat(transaction.hasCostParams()).isFalse();
+  }
+
+  @Test
+  public void givenTransactionWithChainId_assertThatIsGoQuorumFlagIsFalse() {
+    final Transaction transaction = Transaction.builder().chainId(BigInteger.valueOf(0)).build();
+    assertThat(transaction.isGoQuorumPrivateTransaction()).isFalse();
+  }
+
+  @Test
+  public void givenTransactionWithoutChainIdAndV37_assertThatIsGoQuorumFlagIsTrue() {
+    final Transaction transaction = Transaction.builder().v(BigInteger.valueOf(37)).build();
     assertThat(transaction.isGoQuorumPrivateTransaction()).isTrue();
   }
 

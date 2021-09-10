@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -107,6 +109,8 @@ public class EthCallTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
     when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
 
     final JsonRpcResponse response = method.response(request);
@@ -128,6 +132,8 @@ public class EthCallTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
     when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
 
     final JsonRpcResponse response = method.response(request);
 
@@ -144,6 +150,8 @@ public class EthCallTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
     when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
 
     final JsonRpcResponse response = method.response(request);
 
@@ -157,6 +165,8 @@ public class EthCallTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
     when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
 
     method.response(request);
@@ -169,6 +179,8 @@ public class EthCallTest {
   public void shouldUseCorrectBlockNumberWhenEarliest() {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), "earliest");
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.ZERO));
+    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
     method.response(request);
 
@@ -181,12 +193,26 @@ public class EthCallTest {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), Quantity.create(13L));
     when(blockchainQueries.headBlockNumber()).thenReturn(14L);
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.ZERO));
+    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
 
     method.response(request);
 
     verify(blockchainQueries).getBlockHeaderByHash(eq(Hash.ZERO));
     verify(transactionSimulator).process(any(), any(), any(), any());
+  }
+
+  @Test
+  public void shouldReturnBlockNotFoundWhenInvalidBlockNumberSpecified() {
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), Quantity.create(33L));
+    when(blockchainQueries.headBlockNumber()).thenReturn(14L);
+    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, BLOCK_NOT_FOUND);
+
+    JsonRpcResponse response = method.response(request);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+
+    verify(blockchainQueries).headBlockNumber();
   }
 
   private JsonCallParameter callParameter() {

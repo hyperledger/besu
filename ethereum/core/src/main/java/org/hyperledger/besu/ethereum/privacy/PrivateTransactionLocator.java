@@ -192,10 +192,10 @@ public class PrivateTransactionLocator {
 
           for (final PrivateTransactionWithMetadata privateTx :
               privateTransactionWithMetadataList) {
-            final Hash actualPrivacyMarkerTransactionHash =
-                privateTx.getPrivateTransactionMetadata().getPrivacyMarkerTransactionHash();
+            final Hash actualPrivateMarkerTransactionHash =
+                privateTx.getPrivateTransactionMetadata().getPrivateMarkerTransactionHash();
 
-            if (expectedPmtHash.equals(actualPrivacyMarkerTransactionHash)) {
+            if (expectedPmtHash.equals(actualPrivateMarkerTransactionHash)) {
               return Optional.of(
                   new TransactionFromEnclave(
                       privateTx.getPrivateTransaction(),

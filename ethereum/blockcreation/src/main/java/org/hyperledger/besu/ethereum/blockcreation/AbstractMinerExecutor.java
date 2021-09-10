@@ -21,7 +21,8 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -31,6 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,31 +45,30 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
   private final ExecutorService executorService = Executors.newCachedThreadPool();
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
-  protected final PendingTransactions pendingTransactions;
+  protected final AbstractPendingTransactionsSorter pendingTransactions;
   protected final AbstractBlockScheduler blockScheduler;
-  protected final GasLimitCalculator gasLimitCalculator;
 
   protected volatile Bytes extraData;
   protected volatile Wei minTransactionGasPrice;
   protected volatile Double minBlockOccupancyRatio;
+  protected volatile Optional<AtomicLong> targetGasLimit;
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   protected AbstractMinerExecutor(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final PendingTransactions pendingTransactions,
+      final AbstractPendingTransactionsSorter pendingTransactions,
       final MiningParameters miningParams,
-      final AbstractBlockScheduler blockScheduler,
-      final GasLimitCalculator gasLimitCalculator) {
+      final AbstractBlockScheduler blockScheduler) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.pendingTransactions = pendingTransactions;
     this.extraData = miningParams.getExtraData();
     this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
     this.blockScheduler = blockScheduler;
-    this.gasLimitCalculator = gasLimitCalculator;
     this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
+    this.targetGasLimit = miningParams.getTargetGasLimit();
   }
 
   public Optional<M> startAsyncMining(
@@ -115,7 +116,13 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
 
   public abstract Optional<Address> getCoinbase();
 
-  public void changeTargetGasLimit(final Long targetGasLimit) {
-    gasLimitCalculator.changeTargetGasLimit(targetGasLimit);
+  public void changeTargetGasLimit(final Long newTargetGasLimit) {
+    if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
+      this.targetGasLimit.ifPresentOrElse(
+          existing -> existing.set(newTargetGasLimit),
+          () -> this.targetGasLimit = Optional.of(new AtomicLong(newTargetGasLimit)));
+    } else {
+      throw new UnsupportedOperationException("Specified target gas limit is invalid");
+    }
   }
 }

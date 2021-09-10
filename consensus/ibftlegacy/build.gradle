@@ -28,12 +28,13 @@ dependencies {
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:units'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
 
   testImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':consensus:ibft', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':ethereum:eth', configuration: 'testSupportArtifacts')
   testImplementation project(':metrics:core')
   testImplementation project(':testutil')
 

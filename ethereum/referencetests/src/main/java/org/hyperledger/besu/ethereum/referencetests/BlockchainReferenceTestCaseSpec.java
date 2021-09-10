@@ -153,7 +153,7 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("gasUsed") final String gasUsed,
         @JsonProperty("timestamp") final String timestamp,
         @JsonProperty("extraData") final String extraData,
-        @JsonProperty("baseFee") final String baseFee,
+        @JsonProperty("baseFeePerGas") final String baseFee,
         @JsonProperty("mixHash") final String mixHash,
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("hash") final String hash) {
@@ -201,7 +201,8 @@ public class BlockchainReferenceTestCaseSpec {
     "blocknumber",
     "chainname",
     "expectExceptionALL",
-    "chainnetwork"
+    "chainnetwork",
+    "transactionSequence"
   })
   public static class CandidateBlock {
 

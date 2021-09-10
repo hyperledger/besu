@@ -25,10 +25,13 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** A memory holder for testing. */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -41,6 +44,7 @@ public class ReferenceTestEnv extends BlockHeader {
    * @param difficulty Difficulty for the mock block being tested.
    * @param gasLimit Gas Limit for the mock block being tested.
    * @param number Block number for the mock block being tested.
+   * @param baseFee Optional BaseFee for the mock block being tested.
    * @param timestamp Timestamp for the mock block being tested.
    */
   @JsonCreator
@@ -49,6 +53,7 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("currentDifficulty") final String difficulty,
       @JsonProperty("currentGasLimit") final String gasLimit,
       @JsonProperty("currentNumber") final String number,
+      @JsonProperty(value = "currentBaseFee", required = false) final String baseFee,
       @JsonProperty("currentTimestamp") final String timestamp) {
     super(
         generateTestBlockHash(Long.decode(number) - 1),
@@ -64,7 +69,7 @@ public class ReferenceTestEnv extends BlockHeader {
         0L,
         Long.decode(timestamp),
         Bytes.EMPTY,
-        0L,
+        Optional.ofNullable(baseFee).map(UInt256::fromHexString).map(UInt256::toLong).orElse(null),
         Hash.ZERO,
         0L,
         new MainnetBlockHeaderFunctions());

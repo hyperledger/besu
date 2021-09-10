@@ -35,8 +35,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -68,6 +68,9 @@ public class BftBlockCreatorTest {
     final MutableBlockchain blockchain = mock(MutableBlockchain.class);
     when(blockchain.getChainHeadHash()).thenReturn(parentHeader.getHash());
     when(blockchain.getBlockHeader(any())).thenReturn(optionalHeader);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
 
     final KeyPair nodeKeys = SignatureAlgorithmFactory.getInstance().generateKeyPair();
     // Add the local node as a validator (can't propose a block if node is not a validator).
@@ -94,11 +97,12 @@ public class BftBlockCreatorTest {
     final IbftBlockCreator blockCreator =
         new IbftBlockCreator(
             Address.fromHexString(String.format("%020d", 0)),
+            () -> Optional.of(10_000_000L),
             parent ->
                 new IbftExtraData(
                         Bytes.wrap(new byte[32]), Lists.newArrayList(), null, initialValidatorList)
                     .encode(),
-            new PendingTransactions(
+            new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
                 5,
@@ -108,7 +112,6 @@ public class BftBlockCreatorTest {
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protContext,
             protocolSchedule,
-            parentGasLimit -> parentGasLimit,
             nodeKeys,
             Wei.ZERO,
             0.8,

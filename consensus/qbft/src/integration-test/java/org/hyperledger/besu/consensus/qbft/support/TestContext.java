@@ -22,6 +22,7 @@ import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -50,6 +51,7 @@ public class TestContext {
   private final BftFinalState finalState;
   private final EventMultiplexer eventMultiplexer;
   private final MessageFactory messageFactory;
+  private final ValidatorProvider validatorProvider;
   private final BftExtraDataCodec bftExtraDataCodec;
 
   public TestContext(
@@ -60,6 +62,7 @@ public class TestContext {
       final BftFinalState finalState,
       final EventMultiplexer eventMultiplexer,
       final MessageFactory messageFactory,
+      final ValidatorProvider validatorProvider,
       final BftExtraDataCodec bftExtraDataCodec) {
     this.remotePeers = remotePeers;
     this.blockchain = blockchain;
@@ -68,6 +71,7 @@ public class TestContext {
     this.finalState = finalState;
     this.eventMultiplexer = eventMultiplexer;
     this.messageFactory = messageFactory;
+    this.validatorProvider = validatorProvider;
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
@@ -123,7 +127,7 @@ public class TestContext {
     final List<ValidatorPeer> nonProposers = new ArrayList<>(remotePeers.values());
     nonProposers.remove(proposer);
 
-    return new RoundSpecificPeers(proposer, remotePeers.values(), nonProposers);
+    return new RoundSpecificPeers(proposer, remotePeers.values(), nonProposers, bftExtraDataCodec);
   }
 
   public NodeParams getLocalNodeParams() {
@@ -132,5 +136,9 @@ public class TestContext {
 
   public long getCurrentChainHeight() {
     return blockchain.getChainHeadBlockNumber();
+  }
+
+  public ValidatorProvider getValidatorProvider() {
+    return validatorProvider;
   }
 }

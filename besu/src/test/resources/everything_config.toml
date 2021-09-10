@@ -143,7 +143,6 @@ privacy-url="http://127.0.0.1:8888"
 privacy-public-key-file="./pubKey.pub"
 privacy-enabled=false
 privacy-multi-tenancy-enabled=true
-privacy-precompiled-address=9
 privacy-marker-transaction-signing-key-file="./signerKey"
 privacy-enable-database-migration=false
 privacy-onchain-groups-enabled=false
@@ -169,8 +168,8 @@ target-gas-limit=8000000
 auto-log-bloom-caching-enabled=true
 
 # ethstats
-Xethstats="nodename:secret@host:1234"
-Xethstats-contact="contact@mail.n"
+ethstats="nodename:secret@host:1234"
+ethstats-contact="contact@mail.n"
 
 # feature flags
 Xsecp256k1-native-enabled=false
@@ -178,3 +177,13 @@ Xaltbn128-native-enabled=false
 
 # compatibility flags
 compatibility-eth64-forkid-enabled=false
+
+#p2p over ssl
+Xp2p-tls-enabled=false
+Xp2p-tls-keystore-type="none"
+Xp2p-tls-keystore-file="none.file"
+Xp2p-tls-truststore-password-file="none"
+Xp2p-tls-truststore-type="none"
+Xp2p-tls-truststore-file="none.file"
+Xp2p-tls-keystore-password-file="none"
+Xp2p-tls-crl-file="none.file"

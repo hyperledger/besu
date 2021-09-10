@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo;
 
 import java.util.List;
 import java.util.Optional;
@@ -67,7 +67,8 @@ public class PendingTransactionFilter {
           isValid = validateTo(transactionInfo, predicate, value);
           break;
         case GAS_PRICE_FIELD:
-          isValid = validateWei(transactionInfo.getTransaction().getGasPrice(), predicate, value);
+          isValid =
+              validateWei(transactionInfo.getTransaction().getGasPrice().get(), predicate, value);
           break;
         case GAS_FIELD:
           isValid =

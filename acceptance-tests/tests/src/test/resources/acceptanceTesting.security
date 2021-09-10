@@ -1,6 +1,6 @@
 ##### NOT FOR PRODUCTION USE ######
 ### FOR ACCEPTANCE TESTING ONLY ###
 # Disable OS provided entropy
-securerandom.source=
+securerandom.source=file:/dev/urandom
 ### FOR ACCEPTANCE TESTING ONLY ###
 ##### NOT FOR PRODUCTION USE ######

@@ -28,11 +28,13 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ValidationTestUtils;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
@@ -53,7 +55,7 @@ public class ProofOfWorkValidationRuleTest {
     parentHeader = ValidationTestUtils.readHeader(blockNum);
     validationRule =
         new ProofOfWorkValidationRule(
-            new EpochCalculator.DefaultEpochCalculator(), false, PoWHasher.ETHASH_LIGHT);
+            new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT);
   }
 
   @Parameters(name = "block {1}")
@@ -118,8 +120,7 @@ public class ProofOfWorkValidationRuleTest {
 
   @Test
   public void failsWithMisMatchedMixHash() {
-    final Hash updateMixHash =
-        Hash.wrap(UInt256.fromBytes(blockHeader.getMixHash()).subtract(1L).toBytes());
+    final Hash updateMixHash = Hash.wrap(UInt256.fromBytes(blockHeader.getMixHash()).subtract(1L));
     final BlockHeader header =
         BlockHeaderBuilder.fromHeader(blockHeader)
             .mixHash(updateMixHash)
@@ -137,6 +138,61 @@ public class ProofOfWorkValidationRuleTest {
             .blockHeaderFunctions(mainnetBlockHashFunction())
             .buildBlockHeader();
     assertThat(validationRule.validate(header, parentHeader)).isFalse();
+  }
+
+  @Test
+  public void failsWithNonEip1559BlockAfterFork() {
+    final ProofOfWorkValidationRule proofOfWorkValidationRule =
+        new ProofOfWorkValidationRule(
+            new EpochCalculator.DefaultEpochCalculator(),
+            PoWHasher.ETHASH_LIGHT,
+            Optional.of(FeeMarket.london(0L)));
+
+    final BlockHeaderBuilder headerBuilder =
+        BlockHeaderBuilder.fromHeader(blockHeader)
+            .difficulty(Difficulty.ONE)
+            .blockHeaderFunctions(mainnetBlockHashFunction())
+            .timestamp(1);
+    final BlockHeader preHeader = headerBuilder.buildBlockHeader();
+    final Hash headerHash = validationRule.hashHeader(preHeader);
+
+    PoWSolution solution =
+        PoWHasher.ETHASH_LIGHT.hash(
+            preHeader.getNonce(),
+            preHeader.getNumber(),
+            new EpochCalculator.DefaultEpochCalculator(),
+            headerHash);
+
+    final BlockHeader header = headerBuilder.mixHash(solution.getMixHash()).buildBlockHeader();
+
+    assertThat(proofOfWorkValidationRule.validate(header, parentHeader)).isFalse();
+  }
+
+  @Test
+  public void failsWithEip1559BlockBeforeFork() {
+    final ProofOfWorkValidationRule proofOfWorkValidationRule =
+        new ProofOfWorkValidationRule(
+            new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT);
+
+    final BlockHeaderBuilder headerBuilder =
+        BlockHeaderBuilder.fromHeader(blockHeader)
+            .difficulty(Difficulty.ONE)
+            .baseFee(10L)
+            .blockHeaderFunctions(mainnetBlockHashFunction())
+            .timestamp(1);
+    final BlockHeader preHeader = headerBuilder.buildBlockHeader();
+    final Hash headerHash = validationRule.hashHeader(preHeader);
+
+    PoWSolution solution =
+        PoWHasher.ETHASH_LIGHT.hash(
+            preHeader.getNonce(),
+            preHeader.getNumber(),
+            new EpochCalculator.DefaultEpochCalculator(),
+            headerHash);
+
+    final BlockHeader header = headerBuilder.mixHash(solution.getMixHash()).buildBlockHeader();
+
+    assertThat(proofOfWorkValidationRule.validate(header, parentHeader)).isFalse();
   }
 
   private BlockHeaderFunctions mainnetBlockHashFunction() {

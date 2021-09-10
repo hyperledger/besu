@@ -15,23 +15,17 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -41,11 +35,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -74,7 +65,8 @@ public class TransactionPoolFactoryTest {
     when(ethContext.getEthMessages()).thenReturn(mock(EthMessages.class));
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
     final SyncState state = mock(SyncState.class);
-    final PendingTransactions pendingTransactions = mock(PendingTransactions.class);
+    final GasPricePendingTransactionsSorter pendingTransactions =
+        mock(GasPricePendingTransactionsSorter.class);
     final PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
     final TransactionsMessageSender transactionsMessageSender =
         mock(TransactionsMessageSender.class);
@@ -101,10 +93,8 @@ public class TransactionPoolFactoryTest {
             pendingTransactions,
             peerTransactionTracker,
             transactionsMessageSender,
-            Optional.of(peerPendingTransactionTracker),
-            Optional.of(pendingTransactionsMessageSender),
-            true,
-            Optional.empty());
+            peerPendingTransactionTracker,
+            pendingTransactionsMessageSender);
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
@@ -112,7 +102,7 @@ public class TransactionPoolFactoryTest {
             BigInteger.ONE,
             mock(WorldStateArchive.class),
             pool,
-            new EthProtocolConfiguration(5, 5, 5, 5, 5, true, false),
+            new EthProtocolConfiguration(5, 5, 5, 5, 5, false),
             ethPeers,
             mock(EthMessages.class),
             ethContext,
@@ -128,95 +118,5 @@ public class TransactionPoolFactoryTest {
     ethPeer.disconnect(DisconnectMessage.DisconnectReason.CLIENT_QUITTING);
     verify(peerTransactionTracker, times(1)).onDisconnect(ethPeer.getEthPeer());
     verify(peerPendingTransactionTracker, times(1)).onDisconnect(ethPeer.getEthPeer());
-  }
-
-  @Test
-  public void testNoEth65() {
-    final EthPeers ethPeers = new EthPeers("ETH", TestClock.fixed(), new NoOpMetricsSystem());
-
-    final BlockHeader blockHeader = mock(BlockHeader.class);
-    final EthContext ethContext = mock(EthContext.class);
-    final EthScheduler ethScheduler = mock(EthScheduler.class);
-    final MutableBlockchain blockchain = mock(MutableBlockchain.class);
-    final PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
-    final PendingTransactions pendingTransactions = mock(PendingTransactions.class);
-    final ProtocolContext context = mock(ProtocolContext.class);
-    final ProtocolSchedule schedule = mock(ProtocolSchedule.class);
-    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
-    final SyncState state = mock(SyncState.class);
-    final TransactionsMessageSender transactionsMessageSender =
-        mock(TransactionsMessageSender.class);
-    final MainnetTransactionValidator transactionValidator =
-        mock(MainnetTransactionValidator.class);
-    final WorldState worldState = mock(WorldState.class);
-    final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
-
-    when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.of(mock(Block.class)));
-    when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(mock(Hash.class)));
-    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(blockHeader));
-    when(context.getBlockchain()).thenReturn(blockchain);
-    when(context.getWorldStateArchive()).thenReturn(worldStateArchive);
-    when(ethContext.getEthMessages()).thenReturn(mock(EthMessages.class));
-    when(ethContext.getEthPeers()).thenReturn(ethPeers);
-    when(ethContext.getScheduler()).thenReturn(ethScheduler);
-    when(pendingTransactions.addLocalTransaction(any())).thenReturn(TransactionAddedStatus.ADDED);
-    when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
-    when(schedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
-    when(transactionValidator.validate(any(), any(Optional.class)))
-        .thenReturn(ValidationResult.valid());
-    when(transactionValidator.validateForSender(any(), any(), any()))
-        .thenReturn(ValidationResult.valid());
-    when(worldStateArchive.get(any(), any())).thenReturn(Optional.of(worldState));
-
-    final TransactionPool pool =
-        TransactionPoolFactory.createTransactionPool(
-            schedule,
-            context,
-            ethContext,
-            new NoOpMetricsSystem(),
-            state,
-            Wei.of(1),
-            ImmutableTransactionPoolConfiguration.of(
-                1,
-                1,
-                1,
-                1,
-                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP,
-                TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD,
-                TransactionPoolConfiguration.DEFAULT_RPC_TX_FEE_CAP),
-            pendingTransactions,
-            peerTransactionTracker,
-            transactionsMessageSender,
-            Optional.empty(),
-            Optional.empty(),
-            false,
-            Optional.empty());
-
-    final EthProtocolManager ethProtocolManager =
-        new EthProtocolManager(
-            blockchain,
-            BigInteger.ONE,
-            mock(WorldStateArchive.class),
-            pool,
-            new EthProtocolConfiguration(5, 5, 5, 5, 5, true, false),
-            ethPeers,
-            mock(EthMessages.class),
-            ethContext,
-            Collections.emptyList(),
-            true,
-            mock(EthScheduler.class),
-            mock(ForkIdManager.class));
-
-    // Now that we have the mocks we try to run the methods and see if smoke comes out.
-    // Only exceptions cause the test to fail.
-
-    RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
-    final Transaction transaction =
-        new TransactionTestFixture()
-            .nonce(1)
-            .gasLimit(0)
-            .gasPrice(Wei.of(1))
-            .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
-    pool.addLocalTransaction(transaction);
   }
 }

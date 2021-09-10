@@ -15,8 +15,8 @@
 package org.hyperledger.besu.consensus.qbft.jsonrpc.methods;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.jsonrpc.AbstractGetSignerMetricsMethod;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -24,10 +24,10 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 public class QbftGetSignerMetrics extends AbstractGetSignerMetricsMethod implements JsonRpcMethod {
 
   public QbftGetSignerMetrics(
-      final VoteTallyCache voteTallyCache,
+      final ValidatorProvider validatorProvider,
       final BlockInterface blockInterface,
       final BlockchainQueries blockchainQueries) {
-    super(voteTallyCache, blockInterface, blockchainQueries);
+    super(validatorProvider, blockInterface, blockchainQueries);
   }
 
   @Override

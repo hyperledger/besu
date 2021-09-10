@@ -75,11 +75,25 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
 
   @Override
   public Number getValue() {
+    return getAsBigInteger();
+  }
+
+  @Override
+  public BigInteger getAsBigInteger() {
     return toBigInteger();
   }
 
   @Override
   public String toHexString() {
     return super.toHexString();
+  }
+
+  @Override
+  public String toShortHexString() {
+    return super.isZero() ? "0x0" : super.toShortHexString();
+  }
+
+  public static Wei fromQuantity(final Quantity quantity) {
+    return Wei.of(quantity.getAsBigInteger());
   }
 }

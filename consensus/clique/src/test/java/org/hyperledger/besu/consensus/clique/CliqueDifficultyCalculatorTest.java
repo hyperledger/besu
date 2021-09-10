@@ -19,9 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -55,12 +53,10 @@ public class CliqueDifficultyCalculatorTest {
     validatorList.add(localAddr);
     validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddr, 1));
 
-    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
-    final VoteProposer voteProposer = new VoteProposer();
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext);
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }

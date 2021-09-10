@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
+public class TangerineWhistleGasCalculator extends FrontierGasCalculator {
 
   private static final Gas BALANCE_OPERATION_GAS_COST = Gas.of(400L);
 

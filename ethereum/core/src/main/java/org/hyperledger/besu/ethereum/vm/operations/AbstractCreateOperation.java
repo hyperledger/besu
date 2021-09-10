@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.vm.Words;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public abstract class AbstractCreateOperation extends AbstractOperation {
@@ -95,11 +94,11 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected abstract Address targetContractAddress(MessageFrame frame);
 
   private void fail(final MessageFrame frame) {
-    final UInt256 inputOffset = UInt256.fromBytes(frame.getStackItem(1));
-    final UInt256 inputSize = UInt256.fromBytes(frame.getStackItem(2));
-    frame.readMemory(inputOffset, inputSize);
+    final UInt256 inputOffset = frame.getStackItem(1);
+    final UInt256 inputSize = frame.getStackItem(2);
+    frame.readMutableMemory(inputOffset, inputSize);
     frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackItem(Bytes32.ZERO);
+    frame.pushStackItem(UInt256.ZERO);
   }
 
   private void spawnChildMessage(final MessageFrame frame) {
@@ -113,9 +112,9 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     account.incrementNonce();
 
     final Wei value = Wei.wrap(frame.getStackItem(0));
-    final UInt256 inputOffset = UInt256.fromBytes(frame.getStackItem(1));
-    final UInt256 inputSize = UInt256.fromBytes(frame.getStackItem(2));
-    final Bytes inputData = frame.readMemory(inputOffset, inputSize);
+    final UInt256 inputOffset = frame.getStackItem(1);
+    final UInt256 inputSize = frame.getStackItem(2);
+    final Bytes inputData = frame.readMutableMemory(inputOffset, inputSize);
 
     final Address contractAddress = targetContractAddress(frame);
 
@@ -132,7 +131,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .address(contractAddress)
             .originator(frame.getOriginatorAddress())
             .contract(contractAddress)
-            .contractAccountVersion(frame.getContractAccountVersion())
             .gasPrice(frame.getGasPrice())
             .inputData(Bytes.EMPTY)
             .sender(frame.getRecipientAddress())
@@ -168,7 +166,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       frame.pushStackItem(Words.fromAddress(childFrame.getContractAddress()));
     } else {
       frame.setReturnData(childFrame.getOutputData());
-      frame.pushStackItem(Bytes32.ZERO);
+      frame.pushStackItem(UInt256.ZERO);
     }
 
     final int currentPC = frame.getPC();

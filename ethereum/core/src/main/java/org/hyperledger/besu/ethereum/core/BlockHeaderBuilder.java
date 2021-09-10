@@ -89,7 +89,7 @@ public class BlockHeaderBuilder {
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
-    BlockHeaderBuilder toBuilder =
+    final BlockHeaderBuilder toBuilder =
         create()
             .parentHash(fromBuilder.parentHash)
             .ommersHash(fromBuilder.ommersHash)

@@ -19,7 +19,7 @@ import static org.web3j.utils.Numeric.toHexString;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.NodeSmartContractPermissioningController;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
@@ -68,7 +68,7 @@ public class NodeSmartContractPermissioningForbidNodeTransaction implements Tran
     final String enodeURL = ((RunnableNode) node).enodeUrl().toASCIIString();
     final Bytes payload =
         NodeSmartContractPermissioningController.createPayload(
-            REMOVE_ENODE_SIGNATURE, EnodeURL.fromString(enodeURL));
+            REMOVE_ENODE_SIGNATURE, EnodeURLImpl.fromString(enodeURL));
 
     RawTransaction transaction =
         RawTransaction.createTransaction(

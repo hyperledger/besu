@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -70,15 +70,14 @@ public class PrivGetLogsTest {
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private PrivacyQueries privacyQueries;
   @Mock private PrivacyController privacyController;
-  @Mock private EnclavePublicKeyProvider enclavePublicKeyProvider;
+  @Mock private PrivacyIdProvider privacyIdProvider;
 
   private PrivGetLogs method;
 
   @Before
   public void before() {
     method =
-        new PrivGetLogs(
-            blockchainQueries, privacyQueries, privacyController, enclavePublicKeyProvider);
+        new PrivGetLogs(blockchainQueries, privacyQueries, privacyController, privacyIdProvider);
   }
 
   @Test
@@ -199,14 +198,14 @@ public class PrivGetLogsTest {
     final FilterParameter filterParameter = mock(FilterParameter.class);
     final BlockParameter blockParameter = new BlockParameter(100L);
 
-    when(enclavePublicKeyProvider.getEnclaveKey(any())).thenReturn(ENCLAVE_KEY);
+    when(privacyIdProvider.getPrivacyUserId(any())).thenReturn(ENCLAVE_KEY);
     when(filterParameter.isValid()).thenReturn(true);
     when(filterParameter.getBlockHash()).thenReturn(Optional.empty());
     when(filterParameter.getFromBlock()).thenReturn(blockParameter);
     when(filterParameter.getToBlock()).thenReturn(blockParameter);
     doThrow(new MultiTenancyValidationException("msg"))
         .when(privacyController)
-        .verifyPrivacyGroupContainsEnclavePublicKey(
+        .verifyPrivacyGroupContainsPrivacyUserId(
             eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY), eq(Optional.of(99L)));
 
     final JsonRpcRequestContext request =

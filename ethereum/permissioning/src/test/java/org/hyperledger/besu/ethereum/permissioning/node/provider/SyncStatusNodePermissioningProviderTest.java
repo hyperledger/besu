@@ -23,8 +23,9 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -49,13 +50,13 @@ public class SyncStatusNodePermissioningProviderTest {
   private IntSupplier syncGauge;
 
   private static final EnodeURL bootnode =
-      EnodeURL.fromString(
+      EnodeURLImpl.fromString(
           "enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@192.168.0.1:9999");
   private static final EnodeURL enode1 =
-      EnodeURL.fromString(
+      EnodeURLImpl.fromString(
           "enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.168.0.2:1234");
   private static final EnodeURL enode2 =
-      EnodeURL.fromString(
+      EnodeURLImpl.fromString(
           "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.3:5678");
 
   @Mock private Synchronizer synchronizer;
@@ -142,7 +143,7 @@ public class SyncStatusNodePermissioningProviderTest {
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
-    boolean isPermitted = provider.isPermitted(enode1, enode2);
+    boolean isPermitted = provider.isConnectionPermitted(enode1, enode2);
 
     assertThat(isPermitted).isFalse();
     verify(checkCounter, times(1)).inc();
@@ -155,7 +156,7 @@ public class SyncStatusNodePermissioningProviderTest {
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
-    boolean isPermitted = provider.isPermitted(bootnode, enode1);
+    boolean isPermitted = provider.isConnectionPermitted(bootnode, enode1);
 
     assertThat(isPermitted).isFalse();
     verify(checkCounter, times(1)).inc();
@@ -168,7 +169,7 @@ public class SyncStatusNodePermissioningProviderTest {
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
-    boolean isPermitted = provider.isPermitted(enode1, bootnode);
+    boolean isPermitted = provider.isConnectionPermitted(enode1, bootnode);
 
     assertThat(isPermitted).isTrue();
     verify(checkCounter, times(1)).inc();
@@ -182,7 +183,7 @@ public class SyncStatusNodePermissioningProviderTest {
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
-    boolean isPermitted = provider.isPermitted(enode1, enode2);
+    boolean isPermitted = provider.isConnectionPermitted(enode1, enode2);
 
     assertThat(isPermitted).isFalse();
     verify(checkCounter, times(1)).inc();
@@ -196,7 +197,7 @@ public class SyncStatusNodePermissioningProviderTest {
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
-    boolean isPermitted = provider.isPermitted(bootnode, enode1);
+    boolean isPermitted = provider.isConnectionPermitted(bootnode, enode1);
 
     assertThat(isPermitted).isFalse();
     verify(checkCounter, times(1)).inc();
@@ -210,7 +211,7 @@ public class SyncStatusNodePermissioningProviderTest {
     assertThat(provider.hasReachedSync()).isFalse();
     assertThat(syncGauge.getAsInt()).isEqualTo(0);
 
-    boolean isPermitted = provider.isPermitted(enode1, bootnode);
+    boolean isPermitted = provider.isConnectionPermitted(enode1, bootnode);
 
     assertThat(isPermitted).isTrue();
     verify(checkCounter, times(1)).inc();
@@ -224,7 +225,7 @@ public class SyncStatusNodePermissioningProviderTest {
     assertThat(provider.hasReachedSync()).isTrue();
     assertThat(syncGauge.getAsInt()).isEqualTo(1);
 
-    boolean isPermitted = provider.isPermitted(enode1, enode2);
+    boolean isPermitted = provider.isConnectionPermitted(enode1, enode2);
 
     assertThat(isPermitted).isTrue();
     verify(checkCounter, times(0)).inc();
@@ -238,17 +239,17 @@ public class SyncStatusNodePermissioningProviderTest {
     assertThat(provider.hasReachedSync()).isFalse();
 
     final EnodeURL bootnode =
-        EnodeURL.fromString(
+        EnodeURLImpl.fromString(
             "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.3:5678");
     final EnodeURL enodeWithDiscoveryPort =
-        EnodeURL.fromString(
+        EnodeURLImpl.fromString(
             "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.3:5678?discport=30303");
 
     final SyncStatusNodePermissioningProvider provider =
         new SyncStatusNodePermissioningProvider(
             synchronizer, Lists.newArrayList(bootnode), metricsSystem);
 
-    boolean isPermitted = provider.isPermitted(enode1, enodeWithDiscoveryPort);
+    boolean isPermitted = provider.isConnectionPermitted(enode1, enodeWithDiscoveryPort);
 
     assertThat(isPermitted).isTrue();
   }

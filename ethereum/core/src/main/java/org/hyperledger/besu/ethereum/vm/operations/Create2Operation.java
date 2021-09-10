@@ -35,10 +35,10 @@ public class Create2Operation extends AbstractCreateOperation {
   @Override
   protected Address targetContractAddress(final MessageFrame frame) {
     final Address sender = frame.getRecipientAddress();
-    final UInt256 offset = UInt256.fromBytes(frame.getStackItem(1));
-    final UInt256 length = UInt256.fromBytes(frame.getStackItem(2));
+    final UInt256 offset = frame.getStackItem(1);
+    final UInt256 length = frame.getStackItem(2);
     final Bytes32 salt = frame.getStackItem(3);
-    final Bytes initCode = frame.readMemory(offset, length);
+    final Bytes initCode = frame.readMutableMemory(offset, length);
     final Hash hash = Hash.hash(Bytes.concatenate(PREFIX, sender, salt, Hash.hash(initCode)));
     final Address address = Address.extract(hash);
     frame.warmUpAddress(address);

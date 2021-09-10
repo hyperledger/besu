@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.vm.Words;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BalanceOperation extends AbstractOperation {
 
@@ -54,7 +54,7 @@ public class BalanceOperation extends AbstractOperation {
             optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
         final Account account = frame.getWorldState().get(address);
-        frame.pushStackItem(account == null ? Bytes32.ZERO : account.getBalance().toBytes());
+        frame.pushStackItem(account == null ? UInt256.ZERO : account.getBalance().toUInt256());
         return new OperationResult(optionalCost, Optional.empty());
       }
     } catch (final UnderflowException ufe) {

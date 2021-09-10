@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.enclave;
 
-public class EnclaveClientException extends IllegalArgumentException {
+public class EnclaveClientException extends RuntimeException {
   private int statusCode;
 
   public EnclaveClientException(final int statusCode, final String message) {

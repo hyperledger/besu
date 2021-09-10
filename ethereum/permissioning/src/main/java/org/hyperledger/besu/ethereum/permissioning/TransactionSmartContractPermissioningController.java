@@ -33,6 +33,8 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.BaseUInt256Value;
 
 /**
  * Controller that can read from a smart contract that exposes the permissioning call
@@ -193,8 +195,8 @@ public class TransactionSmartContractPermissioningController
     return Bytes.concatenate(
         encodeAddress(transaction.getSender()),
         encodeAddress(transaction.getTo()),
-        transaction.getValue().toBytes(),
-        transaction.getGasPrice().toBytes(),
+        transaction.getValue(),
+        transaction.getGasPrice().map(BaseUInt256Value::toBytes).orElse(Bytes32.ZERO),
         encodeLong(transaction.getGasLimit()),
         encodeBytes(transaction.getPayload()));
   }

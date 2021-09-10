@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.p2p.peers;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Arrays;
 
@@ -34,8 +35,8 @@ public class PeerTestHelper {
     return enodeBuilder().build();
   }
 
-  public static EnodeURL.Builder enodeBuilder() {
-    return EnodeURL.builder().ipAddress("127.0.0.1").useDefaultPorts().nodeId(Peer.randomId());
+  public static EnodeURLImpl.Builder enodeBuilder() {
+    return EnodeURLImpl.builder().ipAddress("127.0.0.1").useDefaultPorts().nodeId(Peer.randomId());
   }
 
   /** @return A LocalNode that is setup and ready. */

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyByte;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.mainnet.FrontierGasCalculator;
@@ -32,7 +31,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EVMTest {
 
-  private static final int CONTRACT_ACCOUNT_VERSION = 1;
   @Mock private OperationRegistry operationRegistry;
   private final GasCalculator gasCalculator = new FrontierGasCalculator();
   private EVM evm;
@@ -45,8 +43,7 @@ public class EVMTest {
   @Test
   public void assertThatEndOfScriptNotExplicitlySetInCodeReturnsAVirtualOperation() {
     final Code code = new Code(Bytes.fromHexString("0x60203560003555606035604035556000"));
-    final Operation operation =
-        evm.operationAtOffset(code, CONTRACT_ACCOUNT_VERSION, code.getSize());
+    final Operation operation = evm.operationAtOffset(code, code.getSize());
     assertThat(operation).isNotNull();
     assertThat(operation.isVirtualOperation()).isTrue();
   }
@@ -54,10 +51,8 @@ public class EVMTest {
   @Test
   public void assertThatEndOfScriptExplicitlySetInCodeDoesNotReturnAVirtualOperation() {
     final Code code = new Code(Bytes.fromHexString("0x6020356000355560603560403555600000"));
-    when(operationRegistry.get(anyByte(), eq(CONTRACT_ACCOUNT_VERSION)))
-        .thenReturn(new StopOperation(gasCalculator));
-    final Operation operation =
-        evm.operationAtOffset(code, CONTRACT_ACCOUNT_VERSION, code.getSize() - 1);
+    when(operationRegistry.get(anyByte())).thenReturn(new StopOperation(gasCalculator));
+    final Operation operation = evm.operationAtOffset(code, code.getSize() - 1);
     assertThat(operation).isNotNull();
     assertThat(operation.isVirtualOperation()).isFalse();
   }

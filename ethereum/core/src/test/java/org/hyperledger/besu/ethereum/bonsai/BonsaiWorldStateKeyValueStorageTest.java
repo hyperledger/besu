@@ -177,8 +177,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   @Test
   public void isWorldStateAvailable_defaultIsFalse() {
-    assertThat(emptyStorage().isWorldStateAvailable(UInt256.valueOf(1).toBytes(), Hash.EMPTY))
-        .isFalse();
+    assertThat(emptyStorage().isWorldStateAvailable(UInt256.valueOf(1), Hash.EMPTY)).isFalse();
   }
 
   @Test

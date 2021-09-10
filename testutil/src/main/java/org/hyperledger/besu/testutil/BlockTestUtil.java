@@ -33,6 +33,8 @@ public final class BlockTestUtil {
 
   private static final Supplier<ChainResources> testChainSupplier =
       Suppliers.memoize(BlockTestUtil::supplyTestChainResources);
+  private static final Supplier<ChainResources> testChainLondonSupplier =
+      Suppliers.memoize(BlockTestUtil::supplyTestChainLondonResources);
   private static final Supplier<ChainResources> mainnetChainSupplier =
       Suppliers.memoize(BlockTestUtil::supplyMainnetChainResources);
   private static final Supplier<ChainResources> badPowChainSupplier =
@@ -46,12 +48,24 @@ public final class BlockTestUtil {
     return getTestChainResources().getBlocksURL();
   }
 
+  public static URL getTestLondonBlockchainUrl() {
+    return getTestChainLondonResources().getBlocksURL();
+  }
+
   public static URL getTestGenesisUrl() {
     return getTestChainResources().getGenesisURL();
   }
 
+  public static URL getTestLondonGenesisUrl() {
+    return getTestChainLondonResources().getGenesisURL();
+  }
+
   public static ChainResources getTestChainResources() {
     return testChainSupplier.get();
+  }
+
+  public static ChainResources getTestChainLondonResources() {
+    return testChainLondonSupplier.get();
   }
 
   public static ChainResources getMainnetResources() {
@@ -75,6 +89,20 @@ public final class BlockTestUtil {
         ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("testGenesis.json"));
     final URL blocksURL =
         ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("testBlockchain.blocks"));
+    return new ChainResources(genesisURL, blocksURL);
+  }
+
+  private static ChainResources supplyTestChainLondonResources() {
+    final URL genesisURL =
+        ensureFileUrl(
+            BlockTestUtil.class
+                .getClassLoader()
+                .getResource("fork-london-data/testLondonGenesis.json"));
+    final URL blocksURL =
+        ensureFileUrl(
+            BlockTestUtil.class
+                .getClassLoader()
+                .getResource("fork-london-data/testLondonBlockchain.blocks"));
     return new ChainResources(genesisURL, blocksURL);
   }
 

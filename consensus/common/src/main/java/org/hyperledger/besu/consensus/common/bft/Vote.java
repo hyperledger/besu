@@ -14,15 +14,10 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.consensus.common.VoteType;
+import org.hyperledger.besu.consensus.common.validator.VoteType;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
-
-import com.google.common.collect.ImmutableBiMap;
 
 /**
  * This class is only used to serialise/deserialise BlockHeaders and should not appear in business
@@ -34,11 +29,6 @@ public class Vote {
 
   public static final byte ADD_BYTE_VALUE = (byte) 0xFF;
   public static final byte DROP_BYTE_VALUE = (byte) 0x0L;
-
-  private static final ImmutableBiMap<VoteType, Byte> voteToValue =
-      ImmutableBiMap.of(
-          VoteType.ADD, ADD_BYTE_VALUE,
-          VoteType.DROP, DROP_BYTE_VALUE);
 
   public Vote(final Address recipient, final VoteType voteType) {
     this.recipient = recipient;
@@ -80,25 +70,5 @@ public class Vote {
   @Override
   public int hashCode() {
     return Objects.hash(recipient, voteType);
-  }
-
-  public void writeTo(final RLPOutput rlpOutput) {
-    rlpOutput.startList();
-    rlpOutput.writeBytes(recipient);
-    rlpOutput.writeByte(voteToValue.get(voteType));
-    rlpOutput.endList();
-  }
-
-  public static Vote readFrom(final RLPInput rlpInput) {
-
-    rlpInput.enterList();
-    final Address recipient = Address.readFrom(rlpInput);
-    final VoteType vote = voteToValue.inverse().get(rlpInput.readByte());
-    if (vote == null) {
-      throw new RLPException("Vote field was of an incorrect binary value.");
-    }
-    rlpInput.leaveList();
-
-    return new Vote(recipient, vote);
   }
 }

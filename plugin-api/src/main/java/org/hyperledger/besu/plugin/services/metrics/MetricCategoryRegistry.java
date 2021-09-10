@@ -14,13 +14,15 @@
  */
 package org.hyperledger.besu.plugin.services.metrics;
 
+import org.hyperledger.besu.plugin.services.BesuService;
+
 /**
  * Allow registration of {@link MetricCategory} instances so they are recognised by the metrics
  * system and can be enabled.
  *
  * <p>Categories must be registered during plugin initialisation.
  */
-public interface MetricCategoryRegistry {
+public interface MetricCategoryRegistry extends BesuService {
 
   /**
    * Registers a {@link MetricCategory}.

@@ -59,7 +59,7 @@ public class SubscriptionBuilder {
           connectionId,
           privateSubscribeRequest.getFilterParameter(),
           privateSubscribeRequest.getPrivacyGroupId(),
-          privateSubscribeRequest.getEnclavePublicKey());
+          privateSubscribeRequest.getPrivacyUserId());
     } else {
       return new LogsSubscription(subscriptionId, connectionId, request.getFilterParameter());
     }

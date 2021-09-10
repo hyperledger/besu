@@ -14,39 +14,28 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
-import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
-
-import org.hyperledger.besu.crypto.SECPSignature;
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
+import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.privacy.OnchainPrivacyGroupContract;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
-import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -58,49 +47,41 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContract {
 
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-
-  // Dummy signature for transactions to not fail being processed.
-  private static final SECPSignature FAKE_SIGNATURE =
-      SIGNATURE_ALGORITHM
-          .get()
-          .createSignature(
-              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
-              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
-              (byte) 0);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final Subscribers<PrivateTransactionObserver> privateTransactionEventObservers =
       Subscribers.create();
-
-  private static final Logger LOG = LogManager.getLogger();
 
   public OnChainPrivacyPrecompiledContract(
       final GasCalculator gasCalculator,
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
-      final PrivateStateRootResolver privateStateRootResolver) {
-    super(gasCalculator, enclave, worldStateArchive, privateStateRootResolver, "OnChainPrivacy");
+      final PrivateStateRootResolver privateStateRootResolver,
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator) {
+    super(
+        gasCalculator,
+        enclave,
+        worldStateArchive,
+        privateStateRootResolver,
+        privateStateGenesisAllocator,
+        "OnChainPrivacy");
   }
 
   public OnChainPrivacyPrecompiledContract(
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
-    super(
+    this(
         gasCalculator,
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateRootResolver(),
-        "OnChainPrivacy");
+        privacyParameters.getPrivateStateGenesisAllocator());
   }
 
   public long addPrivateTransactionObserver(final PrivateTransactionObserver observer) {
@@ -163,18 +144,20 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
-    final WorldUpdater publicWorldState = messageFrame.getWorldState();
-    final Blockchain blockchain = messageFrame.getBlockchain();
+    maybeApplyGenesisToPrivateWorldState(
+        lastRootHash,
+        disposablePrivateState,
+        privateWorldStateUpdater,
+        privacyGroupId,
+        currentBlockHeader.getNumber());
 
-    maybeInjectDefaultManagementAndProxy(
-        lastRootHash, disposablePrivateState, privateWorldStateUpdater);
+    final Blockchain blockchain = messageFrame.getBlockchain();
 
     if (!canExecute(
         messageFrame,
         currentBlockHeader,
         privateTransaction,
         versionedPrivateTransaction.getVersion(),
-        publicWorldState,
         privacyGroupId,
         blockchain,
         disposablePrivateState,
@@ -231,12 +214,19 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final ProcessableBlockHeader currentBlockHeader,
       final PrivateTransaction privateTransaction,
       final Bytes32 version,
-      final WorldUpdater publicWorldState,
       final Bytes32 privacyGroupId,
       final Blockchain blockchain,
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater,
       final Bytes privateFrom) {
+    final OnchainPrivacyGroupContract onchainPrivacyGroupContract =
+        new OnchainPrivacyGroupContract(
+            messageFrame,
+            currentBlockHeader,
+            disposablePrivateState,
+            privateWorldStateUpdater,
+            privateWorldStateArchive,
+            privateTransactionProcessor);
 
     final boolean isAddingParticipant =
         privateTransaction
@@ -245,14 +235,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
             .startsWith(OnChainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE.toHexString());
 
     final boolean isPrivacyGroupLocked =
-        isContractLocked(
-            messageFrame,
-            currentBlockHeader,
-            publicWorldState,
-            privacyGroupId,
-            blockchain,
-            disposablePrivateState,
-            privateWorldStateUpdater);
+        isContractLocked(onchainPrivacyGroupContract, privacyGroupId);
 
     if (isAddingParticipant && !isPrivacyGroupLocked) {
       LOG.debug(
@@ -270,15 +253,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       return false;
     }
 
-    if (!onChainPrivacyGroupVersionMatches(
-        messageFrame,
-        currentBlockHeader,
-        version,
-        publicWorldState,
-        privacyGroupId,
-        blockchain,
-        disposablePrivateState,
-        privateWorldStateUpdater)) {
+    if (!onChainPrivacyGroupVersionMatches(onchainPrivacyGroupContract, privacyGroupId, version)) {
       LOG.debug(
           "Privacy group version mismatch while trying to execute transaction with commitment {}",
           messageFrame.getTransactionHash());
@@ -289,13 +264,8 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         isAddingParticipant,
         privateTransaction,
         privateFrom,
-        privacyGroupId,
-        messageFrame,
-        currentBlockHeader,
-        publicWorldState,
-        blockchain,
-        disposablePrivateState,
-        privateWorldStateUpdater)) {
+        onchainPrivacyGroupContract,
+        privacyGroupId)) {
       LOG.debug(
           "PrivateTransaction with hash {} cannot execute in privacy group {} because privateFrom"
               + " {} is not a member.",
@@ -312,43 +282,23 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final boolean isAddingParticipant,
       final PrivateTransaction privateTransaction,
       final Bytes privateFrom,
-      final Bytes32 privacyGroupId,
-      final MessageFrame messageFrame,
-      final ProcessableBlockHeader currentBlockHeader,
-      final WorldUpdater publicWorldState,
-      final Blockchain blockchain,
-      final MutableWorldState disposablePrivateState,
-      final WorldUpdater privateWorldStateUpdater) {
-    final TransactionProcessingResult result =
-        simulateTransaction(
-            messageFrame,
-            currentBlockHeader,
-            publicWorldState,
-            privacyGroupId,
-            blockchain,
-            disposablePrivateState,
-            privateWorldStateUpdater,
-            OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE);
-    final List<Bytes> list = getMembersFromResult(result);
+      final OnchainPrivacyGroupContract onchainPrivacyGroupContract,
+      final Bytes32 privacyGroupId) {
+    final List<String> members =
+        onchainPrivacyGroupContract
+            .getPrivacyGroupByIdAndBlockHash(privacyGroupId.toBase64String(), Optional.empty())
+            .map(PrivacyGroup::getMembers)
+            .orElse(Collections.<String>emptyList());
+
     List<String> participantsFromParameter = Collections.emptyList();
-    if (list.isEmpty() && isAddingParticipant) {
+    if (members.isEmpty() && isAddingParticipant) {
       // creating a new group, so we are checking whether the privateFrom is one of the members of
       // the new group
       participantsFromParameter = getParticipantsFromParameter(privateTransaction.getPayload());
     }
-    return list.contains(privateFrom)
-        || participantsFromParameter.contains(privateFrom.toBase64String());
-  }
-
-  List<Bytes> getMembersFromResult(final TransactionProcessingResult result) {
-    List<Bytes> list = Collections.emptyList();
-    if (result != null && result.isSuccessful()) {
-      final RLPInput rlpInput = RLP.input(result.getOutput());
-      if (rlpInput.nextSize() > 0) {
-        list = decodeList(rlpInput.raw());
-      }
-    }
-    return list;
+    final String base64privateFrom = privateFrom.toBase64String();
+    return members.contains(base64privateFrom)
+        || participantsFromParameter.contains(base64privateFrom);
   }
 
   // TODO: this method is copied from DefaultPrivacyController. Fix the duplication in a separate GI
@@ -365,151 +315,32 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     return input.slice(4).toBase64String();
   }
 
-  private List<Bytes> decodeList(final Bytes rlpEncodedList) {
-    final ArrayList<Bytes> decodedElements = new ArrayList<>();
-    // first 32 bytes is dynamic list offset
-    final UInt256 lengthOfList = UInt256.fromBytes(rlpEncodedList.slice(32, 32)); // length of list
-    for (int i = 0; i < lengthOfList.toLong(); ++i) {
-      decodedElements.add(Bytes.wrap(rlpEncodedList.slice(64 + (32 * i), 32))); // participant
-    }
-    return decodedElements;
-  }
-
   protected boolean isContractLocked(
-      final MessageFrame messageFrame,
-      final ProcessableBlockHeader currentBlockHeader,
-      final WorldUpdater publicWorldState,
-      final Bytes32 privacyGroupId,
-      final Blockchain blockchain,
-      final MutableWorldState disposablePrivateState,
-      final WorldUpdater privateWorldStateUpdater) {
-    final TransactionProcessingResult result =
-        simulateTransaction(
-            messageFrame,
-            currentBlockHeader,
-            publicWorldState,
-            privacyGroupId,
-            blockchain,
-            disposablePrivateState,
-            privateWorldStateUpdater,
-            OnChainGroupManagement.CAN_EXECUTE_METHOD_SIGNATURE);
-    return result.getOutput().toHexString().endsWith("0");
-  }
-
-  protected TransactionProcessingResult simulateTransaction(
-      final MessageFrame messageFrame,
-      final ProcessableBlockHeader currentBlockHeader,
-      final WorldUpdater publicWorldState,
-      final Bytes32 privacyGroupId,
-      final Blockchain currentBlockchain,
-      final MutableWorldState disposablePrivateState,
-      final WorldUpdater privateWorldStateUpdater,
-      final Bytes methodSignature) {
-    // We need the "lock status" of the group for every single transaction but we don't want this
-    // call to affect the state
-    // privateTransactionProcessor.processTransaction(...) commits the state if the process was
-    // successful before it returns
-    final MutableWorldState localMutableState =
-        privateWorldStateArchive.getMutable(disposablePrivateState.rootHash(), null).get();
-    final WorldUpdater updater = localMutableState.updater();
-
-    return privateTransactionProcessor.processTransaction(
-        currentBlockchain,
-        publicWorldState,
-        updater,
-        currentBlockHeader,
-        messageFrame.getTransactionHash(),
-        buildSimulationTransaction(privacyGroupId, privateWorldStateUpdater, methodSignature),
-        messageFrame.getMiningBeneficiary(),
-        new DebugOperationTracer(TraceOptions.DEFAULT),
-        messageFrame.getBlockHashLookup(),
-        privacyGroupId);
-  }
-
-  protected void maybeInjectDefaultManagementAndProxy(
-      final Hash lastRootHash,
-      final MutableWorldState disposablePrivateState,
-      final WorldUpdater privateWorldStateUpdater) {
-    if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
-      // inject management
-      final EvmAccount managementPrecompile =
-          privateWorldStateUpdater.createAccount(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT);
-      final MutableAccount mutableManagementPrecompiled = managementPrecompile.getMutable();
-      // this is the code for the simple management contract
-      mutableManagementPrecompiled.setCode(
-          OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
-
-      // inject proxy
-      final EvmAccount proxyPrecompile =
-          privateWorldStateUpdater.createAccount(Address.ONCHAIN_PRIVACY_PROXY);
-      final MutableAccount mutableProxyPrecompiled = proxyPrecompile.getMutable();
-      // this is the code for the proxy contract
-      mutableProxyPrecompiled.setCode(OnChainGroupManagement.PROXY_RUNTIME_BYTECODE);
-      // manually set the management contract address so the proxy can trust it
-      mutableProxyPrecompiled.setStorageValue(
-          UInt256.ZERO,
-          UInt256.fromBytes(Bytes32.leftPad(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)));
-
-      privateWorldStateUpdater.commit();
-      disposablePrivateState.persist(null);
-    }
+      final OnchainPrivacyGroupContract onchainPrivacyGroupContract, final Bytes32 privacyGroupId) {
+    final Optional<Bytes32> canExecuteResult =
+        onchainPrivacyGroupContract.getCanExecute(
+            privacyGroupId.toBase64String(), Optional.empty());
+    final boolean isLocked = canExecuteResult.map(Bytes::isZero).orElse(true);
+    return isLocked;
   }
 
   protected boolean onChainPrivacyGroupVersionMatches(
-      final MessageFrame messageFrame,
-      final ProcessableBlockHeader currentBlockHeader,
-      final Bytes32 version,
-      final WorldUpdater publicWorldState,
+      final OnchainPrivacyGroupContract onchainPrivacyGroupContract,
       final Bytes32 privacyGroupId,
-      final Blockchain currentBlockchain,
-      final MutableWorldState disposablePrivateState,
-      final WorldUpdater privateWorldStateUpdater) {
-    // We need the "version" of the group for every single transaction but we don't want this
-    // call to affect the state
-    // privateTransactionProcessor.processTransaction(...) commits the state if the process was
-    // successful before it returns
-    final TransactionProcessingResult getVersionResult =
-        simulateTransaction(
-            messageFrame,
-            currentBlockHeader,
-            publicWorldState,
-            privacyGroupId,
-            currentBlockchain,
-            disposablePrivateState,
-            privateWorldStateUpdater,
-            OnChainGroupManagement.GET_VERSION_METHOD_SIGNATURE);
+      final Bytes32 version) {
+    final Optional<Bytes32> contractVersionResult =
+        onchainPrivacyGroupContract.getVersion(privacyGroupId.toBase64String(), Optional.empty());
+    final boolean versionEqual =
+        contractVersionResult.map(contractVersion -> version.equals(contractVersion)).orElse(false);
 
-    if (version.equals(getVersionResult.getOutput())) {
-      return true;
+    if (!versionEqual) {
+      LOG.debug(
+          "Privacy Group {} version mismatch: expecting {} but got {}",
+          privacyGroupId.toBase64String(),
+          contractVersionResult,
+          Optional.of(version));
     }
-    LOG.debug(
-        "Privacy Group {} version mismatch for commitment {}: expecting {} but got {}",
-        privacyGroupId.toBase64String(),
-        messageFrame.getTransactionHash(),
-        getVersionResult.getOutput(),
-        version);
-    return false;
-  }
 
-  private PrivateTransaction buildSimulationTransaction(
-      final Bytes privacyGroupId,
-      final WorldUpdater privateWorldStateUpdater,
-      final Bytes payload) {
-    return PrivateTransaction.builder()
-        .privateFrom(Bytes.EMPTY)
-        .privacyGroupId(privacyGroupId)
-        .restriction(Restriction.RESTRICTED)
-        .nonce(
-            privateWorldStateUpdater.getAccount(Address.ZERO) != null
-                ? privateWorldStateUpdater.getAccount(Address.ZERO).getNonce()
-                : 0)
-        .gasPrice(Wei.of(1000))
-        .gasLimit(3000000)
-        .to(Address.ONCHAIN_PRIVACY_PROXY)
-        .sender(Address.ZERO)
-        .value(Wei.ZERO)
-        .payload(payload)
-        .signature(FAKE_SIGNATURE)
-        .build();
+    return versionEqual;
   }
 }

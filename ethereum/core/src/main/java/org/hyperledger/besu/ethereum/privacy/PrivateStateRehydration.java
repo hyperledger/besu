@@ -47,6 +47,7 @@ public class PrivateStateRehydration {
   private final WorldStateArchive publicWorldStateArchive;
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateStateRootResolver privateStateRootResolver;
+  private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
 
   public PrivateStateRehydration(
       final PrivateStateStorage privateStateStorage,
@@ -54,13 +55,15 @@ public class PrivateStateRehydration {
       final ProtocolSchedule protocolSchedule,
       final WorldStateArchive publicWorldStateArchive,
       final WorldStateArchive privateWorldStateArchive,
-      final PrivateStateRootResolver privateStateRootResolver) {
+      final PrivateStateRootResolver privateStateRootResolver,
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator) {
     this.privateStateStorage = privateStateStorage;
     this.blockchain = blockchain;
     this.protocolSchedule = protocolSchedule;
     this.publicWorldStateArchive = publicWorldStateArchive;
     this.privateWorldStateArchive = privateWorldStateArchive;
     this.privateStateRootResolver = privateStateRootResolver;
+    this.privateStateGenesisAllocator = privateStateGenesisAllocator;
   }
 
   public void rehydrate(
@@ -98,7 +101,7 @@ public class PrivateStateRehydration {
       final PrivateTransactionWithMetadata transactionWithMetadata =
           privateTransactionWithMetadataList.get(j);
       pmtHashToPrivateTransactionMap.put(
-          transactionWithMetadata.getPrivateTransactionMetadata().getPrivacyMarkerTransactionHash(),
+          transactionWithMetadata.getPrivateTransactionMetadata().getPrivateMarkerTransactionHash(),
           transactionWithMetadata.getPrivateTransaction());
     }
 
@@ -117,7 +120,7 @@ public class PrivateStateRehydration {
           privateTransactionWithMetadataList
               .get(i)
               .getPrivateTransactionMetadata()
-              .getPrivacyMarkerTransactionHash();
+              .getPrivateMarkerTransactionHash();
 
       final Optional<TransactionLocation> transactionLocationOfLastPmtInBlock =
           blockchain.getTransactionLocation(lastPmtHash);
@@ -145,7 +148,8 @@ public class PrivateStateRehydration {
               protocolSpec.getTransactionReceiptFactory(),
               protocolSpec.getBlockReward(),
               protocolSpec.getMiningBeneficiaryCalculator(),
-              protocolSpec.isSkipZeroBlockRewards());
+              protocolSpec.isSkipZeroBlockRewards(),
+              privateStateGenesisAllocator);
 
       final MutableWorldState publicWorldState =
           blockchain
@@ -241,7 +245,7 @@ public class PrivateStateRehydration {
             privateTransactionWithMetadataList
                 .get(index)
                 .getPrivateTransactionMetadata()
-                .getPrivacyMarkerTransactionHash())
+                .getPrivateMarkerTransactionHash())
         .orElseThrow()
         .getBlockHash();
   }

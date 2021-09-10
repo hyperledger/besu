@@ -75,7 +75,8 @@ public class PeerDiscoveryTableRefreshTest {
     controller.start();
 
     final PingPacketData mockPing =
-        PingPacketData.create(localPeer.getEndpoint(), remotePeer.getEndpoint(), UInt64.ONE);
+        PingPacketData.create(
+            Optional.ofNullable(localPeer.getEndpoint()), remotePeer.getEndpoint(), UInt64.ONE);
     final Packet mockPingPacket = Packet.create(PacketType.PING, mockPing, localKeyPair);
 
     doAnswer(
@@ -89,7 +90,8 @@ public class PeerDiscoveryTableRefreshTest {
 
     // Send a PING, so as to add a Peer in the controller.
     final PingPacketData ping =
-        PingPacketData.create(remotePeer.getEndpoint(), localPeer.getEndpoint(), UInt64.ONE);
+        PingPacketData.create(
+            Optional.ofNullable(remotePeer.getEndpoint()), localPeer.getEndpoint(), UInt64.ONE);
     final Packet pingPacket = Packet.create(PacketType.PING, ping, remoteKeyPair);
     controller.onMessage(pingPacket, remotePeer);
 

@@ -55,8 +55,7 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
       transferValue(frame);
 
       // Check first if the message call is to a pre-compile contract
-      final PrecompiledContract precompile =
-          precompiles.get(frame.getContractAddress(), frame.getContractAccountVersion());
+      final PrecompiledContract precompile = precompiles.get(frame.getContractAddress());
       if (precompile != null) {
         executePrecompile(precompile, frame, operationTracer);
       } else {
@@ -85,8 +84,7 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
    * of the world state of this executor.
    */
   private void transferValue(final MessageFrame frame) {
-    final MutableAccount senderAccount =
-        frame.getWorldState().getOrCreateSenderAccount(frame.getSenderAddress()).getMutable();
+    final MutableAccount senderAccount = frame.getWorldState().getSenderAccount(frame).getMutable();
     // The yellow paper explicitly states that if the recipient account doesn't exist at this
     // point, it is created.
     final MutableAccount recipientAccount =

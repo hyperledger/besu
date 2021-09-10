@@ -63,7 +63,8 @@ public class ReferenceTestProtocolSchedules {
     builder.put("Istanbul", createSchedule(new StubGenesisConfigOptions().istanbulBlock(0)));
     builder.put("MuirGlacier", createSchedule(new StubGenesisConfigOptions().muirGlacierBlock(0)));
     builder.put("Berlin", createSchedule(new StubGenesisConfigOptions().berlinBlock(0)));
-    builder.put("YOLOv3", createSchedule(new StubGenesisConfigOptions().berlinBlock(0)));
+    builder.put("London", createSchedule(new StubGenesisConfigOptions().londonBlock(0)));
+    builder.put("Baikal", createSchedule(new StubGenesisConfigOptions().londonBlock(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 

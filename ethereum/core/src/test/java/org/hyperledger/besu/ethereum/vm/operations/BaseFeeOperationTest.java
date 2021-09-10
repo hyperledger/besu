@@ -33,6 +33,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class BaseFeeOperationTest {
@@ -52,7 +53,7 @@ public class BaseFeeOperationTest {
     final MessageFrame frame = createMessageFrame(100, Optional.of(5L));
     final Operation operation = new BaseFeeOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    verify(frame).pushStackItem(eq(Bytes32.leftPad(Bytes.ofUnsignedLong(5L))));
+    verify(frame).pushStackItem(eq(UInt256.fromBytes(Bytes32.leftPad(Bytes.ofUnsignedLong(5L)))));
     assertSuccessResult(result);
   }
 

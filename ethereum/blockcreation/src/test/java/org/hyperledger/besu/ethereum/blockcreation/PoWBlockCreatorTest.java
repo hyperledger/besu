@@ -28,8 +28,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
@@ -44,6 +44,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
@@ -85,10 +86,12 @@ public class PoWBlockCreatorTest {
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            1000,
+            8);
 
-    final PendingTransactions pendingTransactions =
-        new PendingTransactions(
+    final BaseFeePendingTransactionsSorter pendingTransactions =
+        new BaseFeePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             1,
             5,
@@ -100,11 +103,11 @@ public class PoWBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
+            () -> Optional.empty(),
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
-            gasLimit -> gasLimit,
             solver,
             Wei.ZERO,
             0.8,
@@ -144,10 +147,12 @@ public class PoWBlockCreatorTest {
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            1000,
+            8);
 
-    final PendingTransactions pendingTransactions =
-        new PendingTransactions(
+    final BaseFeePendingTransactionsSorter pendingTransactions =
+        new BaseFeePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             1,
             5,
@@ -159,11 +164,11 @@ public class PoWBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
+            () -> Optional.empty(),
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
-            gasLimit -> gasLimit,
             solver,
             Wei.ZERO,
             0.8,
@@ -198,10 +203,12 @@ public class PoWBlockCreatorTest {
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            1000,
+            8);
 
-    final PendingTransactions pendingTransactions =
-        new PendingTransactions(
+    final BaseFeePendingTransactionsSorter pendingTransactions =
+        new BaseFeePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             1,
             5,
@@ -213,11 +220,11 @@ public class PoWBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
+            () -> Optional.of(10_000_000L),
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
-            gasLimit -> gasLimit,
             solver,
             Wei.ZERO,
             0.8,
@@ -268,10 +275,12 @@ public class PoWBlockCreatorTest {
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            1000,
+            8);
 
-    final PendingTransactions pendingTransactions =
-        new PendingTransactions(
+    final BaseFeePendingTransactionsSorter pendingTransactions =
+        new BaseFeePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             1,
             5,
@@ -283,11 +292,11 @@ public class PoWBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
+            () -> Optional.of(10_000_000L),
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
-            gasLimit -> gasLimit,
             solver,
             Wei.ZERO,
             0.8,

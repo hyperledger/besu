@@ -26,8 +26,8 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -53,6 +53,8 @@ public class MainnetTransactionProcessor {
 
   protected final GasCalculator gasCalculator;
 
+  protected final TransactionGasCalculator transactionGasCalculator;
+
   protected final MainnetTransactionValidator transactionValidator;
 
   private final AbstractMessageProcessor contractCreationProcessor;
@@ -63,9 +65,7 @@ public class MainnetTransactionProcessor {
 
   protected final boolean clearEmptyAccounts;
 
-  protected final int createContractAccountVersion;
-
-  protected final TransactionPriceCalculator transactionPriceCalculator;
+  protected final FeeMarket feeMarket;
   protected final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
   /**
@@ -220,22 +220,22 @@ public class MainnetTransactionProcessor {
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
+      final TransactionGasCalculator transacitonGasCalculator,
       final MainnetTransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final int maxStackSize,
-      final int createContractAccountVersion,
-      final TransactionPriceCalculator transactionPriceCalculator,
+      final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
     this.gasCalculator = gasCalculator;
+    this.transactionGasCalculator = transacitonGasCalculator;
     this.transactionValidator = transactionValidator;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
     this.clearEmptyAccounts = clearEmptyAccounts;
     this.maxStackSize = maxStackSize;
-    this.createContractAccountVersion = createContractAccountVersion;
-    this.transactionPriceCalculator = transactionPriceCalculator;
+    this.feeMarket = feeMarket;
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
   }
 
@@ -253,7 +253,8 @@ public class MainnetTransactionProcessor {
     try {
       LOG.trace("Starting execution of {}", transaction);
       ValidationResult<TransactionInvalidReason> validationResult =
-          transactionValidator.validate(transaction, blockHeader.getBaseFee());
+          transactionValidator.validate(
+              transaction, blockHeader.getBaseFee(), transactionValidationParams);
       // Make sure the transaction is intrinsically valid before trying to
       // compare against a sender account (because the transaction may not
       // be signed correctly to extract the sender).
@@ -276,7 +277,7 @@ public class MainnetTransactionProcessor {
       final MutableAccount senderMutableAccount = sender.getMutable();
       final long previousNonce = senderMutableAccount.incrementNonce();
       final Wei transactionGasPrice =
-          transactionPriceCalculator.price(transaction, blockHeader.getBaseFee());
+          feeMarket.getTransactionPriceCalculator().price(transaction, blockHeader.getBaseFee());
       LOG.trace(
           "Incremented sender {} nonce ({} -> {})",
           senderAddress,
@@ -293,7 +294,7 @@ public class MainnetTransactionProcessor {
           sender.getBalance());
 
       final GasAndAccessedState gasAndAccessedState =
-          gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction);
+          transactionGasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction);
       final Gas intrinsicGas = gasAndAccessedState.getGas();
       final Gas gasAvailable = Gas.of(transaction.getGasLimit()).minus(intrinsicGas);
       LOG.trace(
@@ -323,6 +324,7 @@ public class MainnetTransactionProcessor {
               .blockHashLookup(blockHashLookup)
               .isPersistingPrivateState(isPersistingPrivateState)
               .transactionHash(transaction.getHash())
+              .transaction(transaction)
               .accessListWarmAddresses(gasAndAccessedState.getAccessListAddressSet())
               .accessListWarmStorage(gasAndAccessedState.getAccessListStorageByAddress())
               .privateMetadataUpdater(privateMetadataUpdater);
@@ -337,7 +339,6 @@ public class MainnetTransactionProcessor {
                 .type(MessageFrame.Type.CONTRACT_CREATION)
                 .address(contractAddress)
                 .contract(contractAddress)
-                .contractAccountVersion(createContractAccountVersion)
                 .inputData(Bytes.EMPTY)
                 .code(new Code(transaction.getPayload()))
                 .build();
@@ -349,8 +350,6 @@ public class MainnetTransactionProcessor {
                 .type(MessageFrame.Type.MESSAGE_CALL)
                 .address(to)
                 .contract(to)
-                .contractAccountVersion(
-                    maybeContract.map(AccountState::getVersion).orElse(Account.DEFAULT_VERSION))
                 .inputData(transaction.getPayload())
                 .code(new Code(maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY)))
                 .build();
@@ -466,11 +465,13 @@ public class MainnetTransactionProcessor {
     }
   }
 
-  protected static Gas refunded(
+  protected Gas refunded(
       final Transaction transaction, final Gas gasRemaining, final Gas gasRefund) {
     // Integer truncation takes care of the the floor calculation needed after the divide.
     final Gas maxRefundAllowance =
-        Gas.of(transaction.getGasLimit()).minus(gasRemaining).dividedBy(2);
+        Gas.of(transaction.getGasLimit())
+            .minus(gasRemaining)
+            .dividedBy(transactionGasCalculator.getMaxRefundQuotient());
     final Gas refundAllowance = maxRefundAllowance.min(gasRefund);
     return gasRemaining.plus(refundAllowance);
   }

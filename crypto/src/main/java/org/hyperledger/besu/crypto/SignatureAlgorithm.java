@@ -26,7 +26,9 @@ public interface SignatureAlgorithm {
   // needs to be known at compile time otherwise triggers InsecureCryptoUsage error
   String ALGORITHM = "ECDSA";
 
-  void enableNative();
+  void disableNative();
+
+  boolean isNative();
 
   SECPSignature sign(final Bytes32 dataHash, final KeyPair keyPair);
 

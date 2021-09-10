@@ -25,7 +25,7 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -55,7 +55,7 @@ public class PrivFindPrivacyGroupTest {
   private final PrivacyController privacyController = mock(PrivacyController.class);
   private final User user =
       new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   private JsonRpcRequestContext request;
   private PrivacyGroup privacyGroup;
@@ -81,7 +81,7 @@ public class PrivFindPrivacyGroupTest {
         .thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final PrivFindPrivacyGroup privFindPrivacyGroup =
-        new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider);
+        new PrivFindPrivacyGroup(privacyController, privacyIdProvider);
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privFindPrivacyGroup.response(request);
@@ -96,7 +96,7 @@ public class PrivFindPrivacyGroupTest {
     when(privacyController.findOffChainPrivacyGroupByMembers(ADDRESSES, ENCLAVE_PUBLIC_KEY))
         .thenThrow(new EnclaveClientException(500, "some failure"));
     final PrivFindPrivacyGroup privFindPrivacyGroup =
-        new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider);
+        new PrivFindPrivacyGroup(privacyController, privacyIdProvider);
 
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) privFindPrivacyGroup.response(request);
@@ -109,7 +109,7 @@ public class PrivFindPrivacyGroupTest {
     when(privacyController.findOffChainPrivacyGroupByMembers(ADDRESSES, ENCLAVE_PUBLIC_KEY))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
     final PrivFindPrivacyGroup privFindPrivacyGroup =
-        new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider);
+        new PrivFindPrivacyGroup(privacyController, privacyIdProvider);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(

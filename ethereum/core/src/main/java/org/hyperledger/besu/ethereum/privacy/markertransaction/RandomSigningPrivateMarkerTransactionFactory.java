@@ -15,23 +15,38 @@
 package org.hyperledger.besu.ethereum.privacy.markertransaction;
 
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.plugin.data.Address;
+import org.hyperledger.besu.plugin.data.PrivateTransaction;
+import org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
-public class RandomSigningPrivateMarkerTransactionFactory extends PrivateMarkerTransactionFactory {
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 
-  public RandomSigningPrivateMarkerTransactionFactory(final Address privacyPrecompileAddress) {
-    super(privacyPrecompileAddress);
+public class RandomSigningPrivateMarkerTransactionFactory
+    extends SigningPrivateMarkerTransactionFactory implements PrivateMarkerTransactionFactory {
+
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM_SUPPLIER =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+
+  @Override
+  public Address getSender(
+      final PrivateTransaction privateTransaction, final String privacyUserId) {
+    // Note the address here is only used as a key to lock nonce generation for the same address
+    final KeyPair signingKey = SIGNATURE_ALGORITHM_SUPPLIER.get().generateKeyPair();
+    return org.hyperledger.besu.ethereum.core.Address.extract(signingKey.getPublicKey());
   }
 
   @Override
-  public Transaction create(
-      final String privateTransactionLookupId,
+  public Bytes create(
+      final UnsignedPrivateMarkerTransaction unsignedPrivateMarkerTransaction,
       final PrivateTransaction privateTransaction,
-      final Address precompileAddress) {
-    final KeyPair signingKey = SignatureAlgorithmFactory.getInstance().generateKeyPair();
-    return create(privateTransactionLookupId, privateTransaction, 0, signingKey, precompileAddress);
+      final String privacyUserId) {
+    final KeyPair signingKey = SIGNATURE_ALGORITHM_SUPPLIER.get().generateKeyPair();
+
+    return signAndBuild(unsignedPrivateMarkerTransaction, signingKey);
   }
 }

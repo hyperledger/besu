@@ -109,7 +109,7 @@ public class EthGetUncleByBlockNumberAndIndexTest {
   public void shouldReturnExpectedBlockResult() {
     final JsonRpcRequestContext request =
         getUncleByBlockNumberAndIndex(new Object[] {"0x1", "0x0"});
-    final BlockHeader header = blockHeaderTestFixture.buildHeader();
+    final BlockHeader header = blockHeaderTestFixture.baseFeePerGas(7L).buildHeader();
     final BlockResult expectedBlockResult = blockResult(header);
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, expectedBlockResult);
 
@@ -117,7 +117,7 @@ public class EthGetUncleByBlockNumberAndIndexTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private BlockResult blockResult(final BlockHeader header) {
@@ -143,7 +143,8 @@ public class EthGetUncleByBlockNumberAndIndexTest {
     for (int i = 0; i < 3; i++) {
       final Transaction transaction = transactionTestFixture.createTransaction(keyPair);
       transactions.add(
-          new TransactionWithMetadata(transaction, header.getNumber(), header.getHash(), 0));
+          new TransactionWithMetadata(
+              transaction, header.getNumber(), Optional.empty(), header.getHash(), 0));
     }
 
     final List<Hash> ommers = new ArrayList<>();

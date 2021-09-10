@@ -16,11 +16,12 @@ package org.hyperledger.besu.plugin.services.query;
 
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.services.BesuService;
 
 import java.util.Collection;
 
 /** Provides methods to query the status of a Proof of Authority (PoA) network. */
-public interface PoaQueryService {
+public interface PoaQueryService extends BesuService {
 
   /**
    * Retrieves the validators specified in the latest block from the canonical chain.

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.common.jsonrpc;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -37,15 +37,15 @@ public abstract class AbstractGetSignerMetricsMethod {
 
   private static final long DEFAULT_RANGE_BLOCK = 100;
 
-  private final VoteTallyCache voteTallyCache;
+  private final ValidatorProvider validatorProvider;
   private final BlockInterface blockInterface;
   private final BlockchainQueries blockchainQueries;
 
   protected AbstractGetSignerMetricsMethod(
-      final VoteTallyCache voteTallyCache,
+      final ValidatorProvider validatorProvider,
       final BlockInterface blockInterface,
       final BlockchainQueries blockchainQueries) {
-    this.voteTallyCache = voteTallyCache;
+    this.validatorProvider = validatorProvider;
     this.blockInterface = blockInterface;
     this.blockchainQueries = blockchainQueries;
   }
@@ -88,9 +88,8 @@ public abstract class AbstractGetSignerMetricsMethod {
                     // Get All validators present in the last block of the range even
                     // if they didn't propose a block
                     if (currentIndex == lastBlockIndex) {
-                      voteTallyCache
-                          .getVoteTallyAfterBlock(header)
-                          .getValidators()
+                      validatorProvider
+                          .getValidatorsAfterBlock(header)
                           .forEach(
                               address ->
                                   proposersMap.computeIfAbsent(address, SignerMetricResult::new));

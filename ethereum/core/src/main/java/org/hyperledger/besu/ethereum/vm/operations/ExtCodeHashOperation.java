@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.vm.Words;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class ExtCodeHashOperation extends AbstractOperation {
 
@@ -55,9 +55,9 @@ public class ExtCodeHashOperation extends AbstractOperation {
       } else {
         final Account account = frame.getWorldState().get(address);
         if (account == null || account.isEmpty()) {
-          frame.pushStackItem(Bytes32.ZERO);
+          frame.pushStackItem(UInt256.ZERO);
         } else {
-          frame.pushStackItem(account.getCodeHash());
+          frame.pushStackItem(UInt256.fromBytes(account.getCodeHash()));
         }
         return new OperationResult(optionalCost, Optional.empty());
       }

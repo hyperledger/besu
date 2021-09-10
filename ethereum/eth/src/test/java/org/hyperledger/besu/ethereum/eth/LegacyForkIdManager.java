@@ -38,7 +38,7 @@ public class LegacyForkIdManager {
     this.forks =
         forks.stream().filter(fork -> fork > 0).distinct().collect(Collectors.toUnmodifiableList());
     createForkIds();
-  };
+  }
 
   public List<ForkId> getForkAndHashList() {
     return this.forkAndHashList;

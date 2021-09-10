@@ -14,36 +14,46 @@
  */
 package org.hyperledger.besu.tests.web3j.privacy;
 
+import static org.web3j.utils.Restriction.UNRESTRICTED;
+
 import org.hyperledger.besu.tests.acceptance.dsl.ethsigner.EthSignerClient;
 import org.hyperledger.besu.tests.acceptance.dsl.ethsigner.testutil.EthSignerTestHarness;
 import org.hyperledger.besu.tests.acceptance.dsl.ethsigner.testutil.EthSignerTestHarnessFactory;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Optional;
 
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
+import org.web3j.crypto.CipherException;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
-import org.web3j.utils.Base64String;
+import org.web3j.utils.Restriction;
 
-public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
+public class EthSignerAcceptanceTest extends ParameterizedEnclaveTestBase {
+  private final PrivacyNode minerNode;
+  private final EthSignerTestHarness ethSigner;
 
-  private PrivacyNode minerNode;
-  private EthSignerTestHarness ethSigner;
+  private final EthSignerClient ethSignerClient;
 
-  private EthSignerClient ethSignerClient;
+  public EthSignerAcceptanceTest(final Restriction restriction, final EnclaveType enclaveType)
+      throws IOException, CipherException {
+    super(restriction, enclaveType);
 
-  @Before
-  public void setUp() throws Exception {
     minerNode =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "miner-node", privacyAccountResolver.resolve(0));
+            "miner-node",
+            privacyAccountResolver.resolve(0),
+            enclaveType,
+            Optional.empty(),
+            false,
+            false,
+            restriction == UNRESTRICTED);
     privacyCluster.start(minerNode);
 
     ethSigner =
@@ -61,13 +71,13 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
             null,
-            BigInteger.valueOf(23176),
+            BigInteger.valueOf(3000000L),
             BigInteger.valueOf(1000),
             EventEmitter.BINARY,
             BigInteger.valueOf(0),
             minerNode.getEnclaveKey(),
             Collections.emptyList(),
-            "restricted");
+            restriction.toString().toLowerCase());
 
     final PrivateTransactionReceipt receipt =
         minerNode.execute(privacyTransactions.getPrivateTransactionReceipt(transactionHash));
@@ -84,12 +94,12 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
             null,
-            BigInteger.valueOf(23176),
+            BigInteger.valueOf(3000000L),
             BigInteger.valueOf(1000),
             EventEmitter.BINARY,
             minerNode.getEnclaveKey(),
             Collections.emptyList(),
-            "restricted");
+            restriction.toString().toLowerCase());
 
     final PrivateTransactionReceipt receipt =
         minerNode.execute(privacyTransactions.getPrivateTransactionReceipt(transactionHash));
@@ -100,28 +110,18 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   @Test
   public void privateSmartContractMustDeployWithPrivacyGroup() throws IOException {
-    final String privacyGroupId =
-        minerNode.execute(privacyTransactions.createPrivacyGroup(null, null, minerNode));
-
-    minerNode.verify(
-        privateTransactionVerifier.validPrivacyGroupCreated(
-            new PrivacyGroup(
-                privacyGroupId,
-                PrivacyGroup.Type.PANTHEON,
-                "",
-                "",
-                Base64String.wrapList(minerNode.getEnclaveKey()))));
+    final String privacyGroupId = minerNode.execute(createPrivacyGroup(null, null, minerNode));
 
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
             null,
-            BigInteger.valueOf(23176),
+            BigInteger.valueOf(3000000L),
             BigInteger.valueOf(1000),
             EventEmitter.BINARY,
             BigInteger.valueOf(0),
             minerNode.getEnclaveKey(),
             privacyGroupId,
-            "restricted");
+            restriction.toString().toLowerCase());
 
     final PrivateTransactionReceipt receipt =
         minerNode.execute(privacyTransactions.getPrivateTransactionReceipt(transactionHash));
@@ -132,27 +132,17 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   @Test
   public void privateSmartContractMustDeployWithPrivacyGroupNoNonce() throws IOException {
-    final String privacyGroupId =
-        minerNode.execute(privacyTransactions.createPrivacyGroup(null, null, minerNode));
-
-    minerNode.verify(
-        privateTransactionVerifier.validPrivacyGroupCreated(
-            new PrivacyGroup(
-                privacyGroupId,
-                PrivacyGroup.Type.PANTHEON,
-                "",
-                "",
-                Base64String.wrapList(minerNode.getEnclaveKey()))));
+    final String privacyGroupId = minerNode.execute(createPrivacyGroup(null, null, minerNode));
 
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
             null,
-            BigInteger.valueOf(23176),
+            BigInteger.valueOf(3000000L),
             BigInteger.valueOf(1000),
             EventEmitter.BINARY,
             minerNode.getEnclaveKey(),
             privacyGroupId,
-            "restricted");
+            restriction.toString().toLowerCase());
 
     final PrivateTransactionReceipt receipt =
         minerNode.execute(privacyTransactions.getPrivateTransactionReceipt(transactionHash));

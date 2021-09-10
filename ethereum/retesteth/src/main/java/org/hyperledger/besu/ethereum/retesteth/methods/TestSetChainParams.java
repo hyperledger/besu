@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -133,19 +132,8 @@ public class TestSetChainParams implements JsonRpcMethod {
     maybeMove(genesis, "nonce", chainParamsJson, "nonce");
     maybeMove(genesis, "timestamp", chainParamsJson, "timestamp");
     maybeMove(chainParamsJson, "accounts", chainParamsJson, "alloc");
-
-    if (ExperimentalEIPs.eip1559Enabled) {
-      // TODO EIP-1559 change for the actual fork name when known
-      maybeMoveToNumber(params, "londonForkBlock", config, "aleutBlock");
-      ExperimentalEIPs.initialBasefee =
-          Optional.ofNullable(
-                  chainParamsJson
-                      .getJsonObject("genesis", new JsonObject())
-                      .getString("baseFeePerGas"))
-              .map(Long::decode)
-              .orElse(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
-      maybeMove(genesis, "gasTarget", chainParamsJson, "gasLimit");
-    }
+    maybeMove(genesis, "baseFeePerGas", chainParamsJson, "baseFeePerGas");
+    maybeMoveToNumber(params, "londonForkBlock", config, "londonBlock");
 
     // strip out precompiles with zero balance
     final JsonObject alloc = chainParamsJson.getJsonObject("alloc");

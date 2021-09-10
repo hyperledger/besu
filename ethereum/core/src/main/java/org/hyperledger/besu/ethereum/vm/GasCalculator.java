@@ -17,10 +17,7 @@ package org.hyperledger.besu.ethereum.vm;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.ECRECPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.IDPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.RIPEMD160PrecompiledContract;
@@ -44,37 +41,15 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
- * Provides various gas cost lookups and calculations used during block processing.
+ * Provides various gas cost lookups and calculations used during EVM Execution.
  *
- * <p>The {@code GasCalculator} is meant to encapsulate all {@link Gas}-related calculations except
- * for the following "safe" operations:
- *
- * <ul>
- *   <li><b>Operation Gas Deductions:</b> Deducting the operation's gas cost from the VM's current
- *       message frame because the
- * </ul>
+ * <p>The {@code GasCalculator} is meant to encapsulate all {@link Gas}-related calculations needed
+ * during EVM execution or caused by EVM execution. Hence, refund calculation is part of this as the
+ * EVM should report the refund counter at the end of execution. However, the amount to apply to a
+ * transaction is out of scope and part of the {@link
+ * org.hyperledger.besu.ethereum.mainnet.TransactionGasCalculator}.
  */
 public interface GasCalculator {
-
-  // Transaction Gas Calculations
-
-  /**
-   * Returns a {@link Transaction}s intrinisic gas cost
-   *
-   * @param transaction The transaction
-   * @return the transaction's intrinsic gas cost
-   */
-  GasAndAccessedState transactionIntrinsicGasCostAndAccessedState(Transaction transaction);
-
-  // Contract Creation Gas Calculations
-
-  /**
-   * Returns the cost for a {@link AbstractMessageProcessor} to deposit the code in storage
-   *
-   * @param codeSize The size of the code in bytes
-   * @return the code deposit cost
-   */
-  Gas codeDepositGasCost(int codeSize);
 
   // Precompiled Contract Gas Calculations
 

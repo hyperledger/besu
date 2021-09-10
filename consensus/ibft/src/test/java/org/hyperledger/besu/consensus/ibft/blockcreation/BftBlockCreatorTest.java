@@ -36,8 +36,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -68,6 +68,9 @@ public class BftBlockCreatorTest {
     final MutableBlockchain blockchain = mock(MutableBlockchain.class);
     when(blockchain.getChainHeadHash()).thenReturn(parentHeader.getHash());
     when(blockchain.getBlockHeader(any())).thenReturn(optionalHeader);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
 
     final List<Address> initialValidatorList = Lists.newArrayList();
     for (int i = 0; i < 4; i++) {
@@ -87,8 +90,8 @@ public class BftBlockCreatorTest {
             createInMemoryWorldStateArchive(),
             setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder));
 
-    final PendingTransactions pendingTransactions =
-        new PendingTransactions(
+    final GasPricePendingTransactionsSorter pendingTransactions =
+        new GasPricePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             1,
             5,
@@ -100,6 +103,7 @@ public class BftBlockCreatorTest {
     final BftBlockCreator blockCreator =
         new BftBlockCreator(
             initialValidatorList.get(0),
+            () -> Optional.of(10_000_000L),
             parent ->
                 bftExtraDataEncoder.encode(
                     new BftExtraData(
@@ -111,7 +115,6 @@ public class BftBlockCreatorTest {
             pendingTransactions,
             protContext,
             protocolSchedule,
-            parentGasLimit -> parentGasLimit,
             Wei.ZERO,
             0.8,
             parentHeader,

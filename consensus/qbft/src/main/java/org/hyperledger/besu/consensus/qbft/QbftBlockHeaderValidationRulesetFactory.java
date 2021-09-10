@@ -14,9 +14,13 @@
  */
 package org.hyperledger.besu.consensus.qbft;
 
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_GAS_LIMIT;
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MIN_GAS_LIMIT;
+
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCoinbaseValidationRule;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCommitSealsValidationRule;
-import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftValidatorsValidationRule;
+import org.hyperledger.besu.consensus.qbft.headervalidationrules.QbftValidatorsValidationRule;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
@@ -29,6 +33,12 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMore
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class QbftBlockHeaderValidationRulesetFactory {
+  private final boolean extraDataContractBasedValidatorRule;
+
+  public QbftBlockHeaderValidationRulesetFactory(
+      final boolean extraDataContractBasedValidatorRule) {
+    this.extraDataContractBasedValidatorRule = extraDataContractBasedValidatorRule;
+  }
 
   /**
    * Produces a BlockHeaderValidator configured for assessing bft block headers which are to form
@@ -37,17 +47,21 @@ public class QbftBlockHeaderValidationRulesetFactory {
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
    * @return BlockHeaderValidator configured for assessing bft block headers
    */
-  public static BlockHeaderValidator.Builder blockHeaderValidator(final long secondsBetweenBlocks) {
+  public BlockHeaderValidator.Builder blockHeaderValidator(final long secondsBetweenBlocks) {
     return new BlockHeaderValidator.Builder()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
-        .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
+        .addRule(
+            new GasLimitRangeAndDeltaValidationRule(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT))
         .addRule(new TimestampBoundedByFutureParameter(1))
         .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
         .addRule(
             new ConstantFieldValidationRule<>(
+                "MixHash", BlockHeader::getMixHash, BftHelpers.EXPECTED_MIX_HASH))
+        .addRule(
+            new ConstantFieldValidationRule<>(
                 "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
-        .addRule(new BftValidatorsValidationRule())
+        .addRule(new QbftValidatorsValidationRule(extraDataContractBasedValidatorRule))
         .addRule(new BftCoinbaseValidationRule())
         .addRule(new BftCommitSealsValidationRule());
   }

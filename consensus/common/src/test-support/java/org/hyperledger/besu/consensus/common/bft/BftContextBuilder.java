@@ -19,9 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.core.Address;
 
 import java.util.Collection;
@@ -30,29 +28,32 @@ public class BftContextBuilder {
 
   public static BftContext setupContextWithValidators(final Collection<Address> validators) {
     final BftContext bftContext = mock(BftContext.class, withSettings().lenient());
-    final VoteTallyCache mockCache = mock(VoteTallyCache.class, withSettings().lenient());
-    final VoteTally mockVoteTally = mock(VoteTally.class, withSettings().lenient());
+    final ValidatorProvider mockValidatorProvider =
+        mock(ValidatorProvider.class, withSettings().lenient());
     final BftBlockInterface mockBftBlockInterface =
         mock(BftBlockInterface.class, withSettings().lenient());
-    when(bftContext.getVoteTallyCache()).thenReturn(mockCache);
-    when(mockCache.getVoteTallyAfterBlock(any())).thenReturn(mockVoteTally);
-    when(mockVoteTally.getValidators()).thenReturn(validators);
-    when(bftContext.getVoteProposer()).thenReturn(new VoteProposer());
+    when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
+    when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
     when(bftContext.getBlockInterface()).thenReturn(mockBftBlockInterface);
     return bftContext;
   }
 
   public static BftContext setupContextWithBftExtraData(
       final Collection<Address> validators, final BftExtraData bftExtraData) {
-    final BftContext bftContext = mock(BftContext.class, withSettings().lenient());
-    final VoteTallyCache mockCache = mock(VoteTallyCache.class, withSettings().lenient());
-    final VoteTally mockVoteTally = mock(VoteTally.class, withSettings().lenient());
+    return setupContextWithBftExtraData(BftContext.class, validators, bftExtraData);
+  }
+
+  public static <T extends BftContext> T setupContextWithBftExtraData(
+      final Class<T> contextClazz,
+      final Collection<Address> validators,
+      final BftExtraData bftExtraData) {
+    final T bftContext = mock(contextClazz, withSettings().lenient());
+    final ValidatorProvider mockValidatorProvider =
+        mock(ValidatorProvider.class, withSettings().lenient());
     final BftBlockInterface mockBftBlockInterface =
         mock(BftBlockInterface.class, withSettings().lenient());
-    when(bftContext.getVoteTallyCache()).thenReturn(mockCache);
-    when(mockCache.getVoteTallyAfterBlock(any())).thenReturn(mockVoteTally);
-    when(mockVoteTally.getValidators()).thenReturn(validators);
-    when(bftContext.getVoteProposer()).thenReturn(new VoteProposer());
+    when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
+    when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
     when(bftContext.getBlockInterface()).thenReturn(mockBftBlockInterface);
     when(mockBftBlockInterface.getExtraData(any())).thenReturn(bftExtraData);
     return bftContext;
@@ -60,13 +61,18 @@ public class BftContextBuilder {
 
   public static BftContext setupContextWithBftExtraDataEncoder(
       final Collection<Address> validators, final BftExtraDataCodec bftExtraDataCodec) {
-    final BftContext bftContext = mock(BftContext.class, withSettings().lenient());
-    final VoteTallyCache mockCache = mock(VoteTallyCache.class, withSettings().lenient());
-    final VoteTally mockVoteTally = mock(VoteTally.class, withSettings().lenient());
-    when(bftContext.getVoteTallyCache()).thenReturn(mockCache);
-    when(mockCache.getVoteTallyAfterBlock(any())).thenReturn(mockVoteTally);
-    when(mockVoteTally.getValidators()).thenReturn(validators);
-    when(bftContext.getVoteProposer()).thenReturn(new VoteProposer());
+    return setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec);
+  }
+
+  public static <T extends BftContext> T setupContextWithBftExtraDataEncoder(
+      final Class<T> contextClazz,
+      final Collection<Address> validators,
+      final BftExtraDataCodec bftExtraDataCodec) {
+    final T bftContext = mock(contextClazz, withSettings().lenient());
+    final ValidatorProvider mockValidatorProvider =
+        mock(ValidatorProvider.class, withSettings().lenient());
+    when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
+    when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
     when(bftContext.getBlockInterface()).thenReturn(new BftBlockInterface(bftExtraDataCodec));
 
     return bftContext;

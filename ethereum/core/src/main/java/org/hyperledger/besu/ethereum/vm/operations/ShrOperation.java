@@ -29,13 +29,13 @@ public class ShrOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final UInt256 shiftAmount = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 shiftAmount = frame.popStackItem();
     final Bytes32 value = frame.popStackItem();
 
     if (!shiftAmount.fitsInt() || shiftAmount.intValue() >= 256) {
-      frame.pushStackItem(Bytes32.ZERO);
+      frame.pushStackItem(UInt256.ZERO);
     } else {
-      frame.pushStackItem(value.shiftRight(shiftAmount.intValue()));
+      frame.pushStackItem(UInt256.fromBytes(value.shiftRight(shiftAmount.intValue())));
     }
 
     return successResponse;

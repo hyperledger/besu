@@ -5,10 +5,7 @@
       "prompt-type": "LIST",
       "question": "Which Ethereum network would you like to use ?",
       "config-key": "network",
-      "available-options": "org.hyperledger.besu.cli.config.NetworkName",
-      "additional-flag": {
-        "yolo_v3": "Xberlin-enabled"
-      }
+      "available-options": "org.hyperledger.besu.cli.config.NetworkName"
     },
     {
       "prompt-type": "LIST",
@@ -127,13 +124,13 @@
         {
           "prompt-type": "INPUT",
           "question": "What is the URL of Ethstats (nodename:secret@host:port) ?",
-          "config-key": "Xethstats",
+          "config-key": "ethstats",
           "regex": "([-\\w]+):([\\w]+)?@([-.\\w]+):([\\d]+)"
         },
         {
           "prompt-type": "INPUT",
           "question": "What is the contact address ?",
-          "config-key": "Xethstats-contact"
+          "config-key": "ethstats-contact"
         }
       ]
     },

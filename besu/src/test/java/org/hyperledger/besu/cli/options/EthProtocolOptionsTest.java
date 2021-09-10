@@ -134,7 +134,6 @@ public class EthProtocolOptionsTest
         .maxGetPooledTransactions(
             PositiveNumber.fromInt(
                 EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS + 2))
-        .eth65Enabled(!EthProtocolConfiguration.DEFAULT_ETH_65_ENABLED)
         .build();
   }
 

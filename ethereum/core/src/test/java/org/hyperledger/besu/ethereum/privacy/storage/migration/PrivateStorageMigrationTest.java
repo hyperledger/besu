@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.privacy.storage.migration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privacyMarkerTransaction;
+import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privateMarkerTransaction;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_0_0;
 import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_0;
@@ -147,8 +147,8 @@ public class PrivateStorageMigrationTest {
 
   @Test
   public void successfulMigrationBumpsSchemaVersion() {
-    final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
-    mockBlockchainWithPrivacyMarkerTransaction(privacyMarkerTransaction);
+    final Transaction privateMarkerTransaction = createPrivateMarkerTransaction();
+    mockBlockchainWithPrivateMarkerTransaction(privateMarkerTransaction);
     assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_0_0);
 
     migration.migratePrivateStorage();
@@ -158,8 +158,8 @@ public class PrivateStorageMigrationTest {
 
   @Test
   public void failedMigrationThrowsErrorAndDoesNotBumpSchemaVersion() {
-    final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
-    mockBlockchainWithPrivacyMarkerTransaction(privacyMarkerTransaction);
+    final Transaction privateMarkerTransaction = createPrivateMarkerTransaction();
+    mockBlockchainWithPrivateMarkerTransaction(privateMarkerTransaction);
     final Hash rootHashOtherThanZero = Hash.wrap(Bytes32.fromHexStringLenient("1"));
     createPrivacyGroupHeadBlockInitialMapAndMetadata(PRIVACY_GROUP_BYTES, rootHashOtherThanZero);
 
@@ -186,8 +186,8 @@ public class PrivateStorageMigrationTest {
 
   @Test
   public void migrationReprocessBlocksWithPMT() {
-    final Transaction privacyMarkerTransaction = createPrivacyMarkerTransaction();
-    mockBlockchainWithPrivacyMarkerTransaction(privacyMarkerTransaction);
+    final Transaction privateMarkerTransaction = createPrivateMarkerTransaction();
+    mockBlockchainWithPrivateMarkerTransaction(privateMarkerTransaction);
     final Block blockWithPMT = blockchain.getBlockByNumber(1L).orElseThrow();
 
     migration.migratePrivateStorage();
@@ -208,7 +208,7 @@ public class PrivateStorageMigrationTest {
   public void migrationOnlyProcessRequiredTransactions() {
     final List<Transaction> transactions = new ArrayList<>();
     transactions.add(publicTransaction());
-    transactions.add(createPrivacyMarkerTransaction());
+    transactions.add(createPrivateMarkerTransaction());
     transactions.add(publicTransaction());
 
     mockBlockchainWithTransactionsInABlock(transactions);
@@ -240,10 +240,10 @@ public class PrivateStorageMigrationTest {
     return existingPgHeadMap;
   }
 
-  private Transaction createPrivacyMarkerTransaction() {
-    final Transaction privacyMarkerTransaction = privacyMarkerTransaction();
-    mockBlockchainWithPrivacyMarkerTransaction(privacyMarkerTransaction);
-    return privacyMarkerTransaction;
+  private Transaction createPrivateMarkerTransaction() {
+    final Transaction privateMarkerTransaction = privateMarkerTransaction();
+    mockBlockchainWithPrivateMarkerTransaction(privateMarkerTransaction);
+    return privateMarkerTransaction;
   }
 
   private void mockBlockchainWithZeroTransactions() {
@@ -265,7 +265,7 @@ public class PrivateStorageMigrationTest {
         .thenReturn(Optional.of(EMPTY_ROOT_HASH));
   }
 
-  private void mockBlockchainWithPrivacyMarkerTransaction(final Transaction transaction) {
+  private void mockBlockchainWithPrivateMarkerTransaction(final Transaction transaction) {
     final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
     final Block genesis = blockDataGenerator.genesisBlock();

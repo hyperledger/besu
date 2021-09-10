@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -38,7 +38,50 @@ public class BlockHeader extends SealableBlockHeader
 
   private final Supplier<Hash> hash;
 
+  private Optional<LogsBloomFilter> privateLogsBloom;
+
   private final Supplier<ParsedExtraData> parsedExtraData;
+
+  public BlockHeader(
+      final Hash parentHash,
+      final Hash ommersHash,
+      final Address coinbase,
+      final Hash stateRoot,
+      final Hash transactionsRoot,
+      final Hash receiptsRoot,
+      final LogsBloomFilter logsBloom,
+      final Difficulty difficulty,
+      final long number,
+      final long gasLimit,
+      final long gasUsed,
+      final long timestamp,
+      final Bytes extraData,
+      final Long baseFee,
+      final Hash mixHash,
+      final long nonce,
+      final BlockHeaderFunctions blockHeaderFunctions,
+      final Optional<LogsBloomFilter> privateLogsBloom) {
+    super(
+        parentHash,
+        ommersHash,
+        coinbase,
+        stateRoot,
+        transactionsRoot,
+        receiptsRoot,
+        logsBloom,
+        difficulty,
+        number,
+        gasLimit,
+        gasUsed,
+        timestamp,
+        extraData,
+        baseFee);
+    this.mixHash = mixHash;
+    this.nonce = nonce;
+    this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
+    this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
+    this.privateLogsBloom = privateLogsBloom;
+  }
 
   public BlockHeader(
       final Hash parentHash,
@@ -77,6 +120,7 @@ public class BlockHeader extends SealableBlockHeader
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
+    this.privateLogsBloom = Optional.empty();
   }
 
   /**
@@ -122,6 +166,31 @@ public class BlockHeader extends SealableBlockHeader
     return hash.get();
   }
 
+  public LogsBloomFilter getLogsBloom(final boolean addPrivateBloom) {
+    if (addPrivateBloom && privateLogsBloom.isPresent()) {
+      return LogsBloomFilter.builder()
+          .insertFilter(logsBloom)
+          .insertFilter(privateLogsBloom.get())
+          .build();
+    } else {
+      return logsBloom;
+    }
+  }
+
+  public void setPrivateLogsBloom(final LogsBloomFilter privateLogsBloom) {
+    this.privateLogsBloom = Optional.ofNullable(privateLogsBloom);
+  }
+
+  /**
+   * Returns the block's private logs bloom filter that might be available if we are in goQuorum
+   * mode
+   *
+   * @return the private logs bloom filter
+   */
+  public Optional<LogsBloomFilter> getPrivateLogsBloom() {
+    return privateLogsBloom;
+  }
+
   /**
    * Write an RLP representation.
    *
@@ -145,7 +214,7 @@ public class BlockHeader extends SealableBlockHeader
     out.writeBytes(extraData);
     out.writeBytes(mixHash);
     out.writeLong(nonce);
-    if (ExperimentalEIPs.eip1559Enabled && baseFee != null) {
+    if (baseFee != null) {
       out.writeLongScalar(baseFee);
     }
     out.endList();
@@ -169,10 +238,7 @@ public class BlockHeader extends SealableBlockHeader
     final Bytes extraData = input.readBytes();
     final Hash mixHash = Hash.wrap(input.readBytes32());
     final long nonce = input.readLong();
-    final Long baseFee =
-        ExperimentalEIPs.eip1559Enabled && !input.isEndOfCurrentList()
-            ? input.readLongScalar()
-            : null;
+    final Long baseFee = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,

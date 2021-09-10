@@ -51,6 +51,6 @@ public class AccountAdapter extends AdapterBase {
 
   public Optional<Bytes32> getStorage(final DataFetchingEnvironment environment) {
     final Bytes32 slot = environment.getArgument("slot");
-    return Optional.of(account.getStorageValue(UInt256.fromBytes(slot)).toBytes());
+    return Optional.of(account.getStorageValue(UInt256.fromBytes(slot)));
   }
 }

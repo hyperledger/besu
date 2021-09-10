@@ -65,8 +65,9 @@ public class ForkIdsTest {
               new ForkId(Bytes.ofUnsignedInt(0xd6e2149bL), 6485846L),
               new ForkId(Bytes.ofUnsignedInt(0x4bc66396L), 7117117L),
               new ForkId(Bytes.ofUnsignedInt(0x6727ef90L), 9812189L),
-              new ForkId(Bytes.ofUnsignedInt(0xa157d377L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0xa157d377L), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0xa157d377L), 10499401L),
+              new ForkId(Bytes.ofUnsignedInt(0x7119b6b3L), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0x7119b6b3L), 0L))
         },
         new Object[] {
           NetworkName.RINKEBY,
@@ -79,16 +80,18 @@ public class ForkIdsTest {
               new ForkId(Bytes.ofUnsignedInt(0xe49cab14L), 4321234L),
               new ForkId(Bytes.ofUnsignedInt(0xafec6b27L), 5435345L),
               new ForkId(Bytes.ofUnsignedInt(0xcbdb8838L), 8290928L),
-              new ForkId(Bytes.ofUnsignedInt(0x6910c8bdL), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x6910c8bdL), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0x6910c8bdL), 8897988L),
+              new ForkId(Bytes.ofUnsignedInt(0x8e29f2f3L), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0x8e29f2f3L), 0L))
         },
         new Object[] {
           NetworkName.GOERLI,
           List.of(
               new ForkId(Bytes.ofUnsignedInt(0xa3f5ab08L), 1561651L),
               new ForkId(Bytes.ofUnsignedInt(0xc25efa5cL), 4460644L),
-              new ForkId(Bytes.ofUnsignedInt(0x757a1c47L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x757a1c47L), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0x757a1c47L), 5062605L),
+              new ForkId(Bytes.ofUnsignedInt(0xb8c6299dL), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0xb8c6299dL), 0L))
         },
         new Object[] {
           NetworkName.MAINNET,
@@ -104,8 +107,9 @@ public class ForkIdsTest {
               new ForkId(Bytes.ofUnsignedInt(0x668db0afL), 9069000L),
               new ForkId(Bytes.ofUnsignedInt(0x879d6e30L), 9200000L),
               new ForkId(Bytes.ofUnsignedInt(0xe029e991L), 12244000L),
-              new ForkId(Bytes.ofUnsignedInt(0xeb440f6L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0xeb440f6L), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0xeb440f6L), 12965000),
+              new ForkId(Bytes.ofUnsignedInt(0xb715077dL), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0xb715077dL), 0L))
         },
         new Object[] {
           NetworkName.MORDOR,
@@ -113,8 +117,9 @@ public class ForkIdsTest {
               new ForkId(Bytes.ofUnsignedInt(0x175782aaL), 301243L),
               new ForkId(Bytes.ofUnsignedInt(0x604f6ee1L), 999983L),
               new ForkId(Bytes.ofUnsignedInt(0xf42f5539L), 2520000L),
-              new ForkId(Bytes.ofUnsignedInt(0x66b5c286L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x66b5c286L), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0x66b5c286L), 3985893),
+              new ForkId(Bytes.ofUnsignedInt(0x92b323e0L), 0),
+              new ForkId(Bytes.ofUnsignedInt(0x92b323e0L), 0))
         },
         new Object[] {
           NetworkName.KOTTI,
@@ -122,8 +127,9 @@ public class ForkIdsTest {
               new ForkId(Bytes.ofUnsignedInt(0x550152eL), 716617L),
               new ForkId(Bytes.ofUnsignedInt(0xa3270822L), 1705549L),
               new ForkId(Bytes.ofUnsignedInt(0x8f3698e0L), 2200013L),
-              new ForkId(Bytes.ofUnsignedInt(0x6f402821L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x6f402821L), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0x6f402821L), 4368634),
+              new ForkId(Bytes.ofUnsignedInt(0xf03e54e7L), 0),
+              new ForkId(Bytes.ofUnsignedInt(0xf03e54e7L), 0))
         },
         new Object[] {
           NetworkName.CLASSIC,
@@ -139,8 +145,9 @@ public class ForkIdsTest {
               new ForkId(Bytes.ofUnsignedInt(0x518b59c6L), 9573000L),
               new ForkId(Bytes.ofUnsignedInt(0x7ba22882L), 10500839L),
               new ForkId(Bytes.ofUnsignedInt(0x9007bfccL), 11700000L),
-              new ForkId(Bytes.ofUnsignedInt(0xdb63a1caL), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0xdb63a1caL), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0xdb63a1caL), 13189133),
+              new ForkId(Bytes.ofUnsignedInt(0x0f6bf187L), 0),
+              new ForkId(Bytes.ofUnsignedInt(0x0f6bf187L), 0))
         });
   }
 

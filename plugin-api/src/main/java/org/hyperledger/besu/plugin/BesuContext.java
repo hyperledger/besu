@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin;
 
+import org.hyperledger.besu.plugin.services.BesuService;
+
 import java.util.Optional;
 
 /** Allows plugins to access Besu services. */
@@ -40,5 +42,5 @@ public interface BesuContext {
    * @return an optional containing the instance of the requested service, or empty if the service
    *     is unavailable
    */
-  <T> Optional<T> getService(Class<T> serviceType);
+  <T extends BesuService> Optional<T> getService(Class<T> serviceType);
 }

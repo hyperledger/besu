@@ -21,11 +21,10 @@ import java.io.IOException;
 import java.math.BigInteger;
 
 import org.web3j.crypto.Credentials;
-import org.web3j.protocol.besu.Besu;
-import org.web3j.tx.BesuPrivateTransactionManager;
 import org.web3j.tx.PrivateTransactionManager;
 import org.web3j.tx.gas.BesuPrivacyGasProvider;
 import org.web3j.utils.Base64String;
+import org.web3j.utils.Restriction;
 
 public class CallOnChainPermissioningPrivateSmartContractFunction implements Transaction<String> {
 
@@ -34,7 +33,6 @@ public class CallOnChainPermissioningPrivateSmartContractFunction implements Tra
   private final String contractAddress;
   private final String encodedFunction;
   private final Credentials senderCredentials;
-  private final long chainId;
   private final Base64String privateFrom;
   private final Base64String privacyGroupId;
 
@@ -42,25 +40,22 @@ public class CallOnChainPermissioningPrivateSmartContractFunction implements Tra
       final String contractAddress,
       final String encodedFunction,
       final String transactionSigningKey,
-      final long chainId,
       final String privateFrom,
       final String privacyGroupId) {
 
     this.contractAddress = contractAddress;
     this.encodedFunction = encodedFunction;
     this.senderCredentials = Credentials.create(transactionSigningKey);
-    this.chainId = chainId;
     this.privateFrom = Base64String.wrap(privateFrom);
     this.privacyGroupId = Base64String.wrap(privacyGroupId);
   }
 
   @Override
   public String execute(final NodeRequests node) {
-    final Besu besu = node.privacy().getBesuClient();
-
     final PrivateTransactionManager privateTransactionManager =
-        new BesuPrivateTransactionManager(
-            besu, GAS_PROVIDER, senderCredentials, chainId, privateFrom, privacyGroupId);
+        node.privacy()
+            .getTransactionManager(
+                senderCredentials, privateFrom, privacyGroupId, Restriction.RESTRICTED);
 
     try {
       return privateTransactionManager

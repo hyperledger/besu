@@ -29,13 +29,11 @@ import org.junit.Test;
 
 public class PrivGetPrivacyPrecompileAddressTest {
 
-  private final int rawPrivacyAddress = Address.PRIVACY;
-  private final String privacyAddress = Address.privacyPrecompiled(rawPrivacyAddress).toString();
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
 
   @Test
   public void verifyPrivacyPrecompileAddress() {
-    when(privacyParameters.getPrivacyAddress()).thenReturn(rawPrivacyAddress);
+    when(privacyParameters.getPrivacyAddress()).thenReturn(Address.DEFAULT_PRIVACY);
     when(privacyParameters.isEnabled()).thenReturn(true);
 
     final PrivGetPrivacyPrecompileAddress privGetPrivacyPrecompileAddress =
@@ -49,6 +47,6 @@ public class PrivGetPrivacyPrecompileAddressTest {
         (JsonRpcSuccessResponse) privGetPrivacyPrecompileAddress.response(request);
 
     verify(privacyParameters).getPrivacyAddress();
-    assertThat(response.getResult()).isEqualTo(privacyAddress);
+    assertThat(response.getResult()).isEqualTo(Address.precompiled(Address.PRIVACY).toString());
   }
 }

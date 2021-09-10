@@ -24,7 +24,7 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -56,7 +56,7 @@ public class PrivxFindOnChainPrivacyGroupTest {
 
   private final User user =
       new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   private JsonRpcRequestContext request;
   private PrivacyGroup privacyGroup;
@@ -77,7 +77,7 @@ public class PrivxFindOnChainPrivacyGroupTest {
     privacyGroup.setMembers(Lists.list("member1"));
 
     privxFindOnChainPrivacyGroup =
-        new PrivxFindOnChainPrivacyGroup(privacyController, enclavePublicKeyProvider);
+        new PrivxFindOnChainPrivacyGroup(privacyController, privacyIdProvider);
   }
 
   @SuppressWarnings("unchecked")

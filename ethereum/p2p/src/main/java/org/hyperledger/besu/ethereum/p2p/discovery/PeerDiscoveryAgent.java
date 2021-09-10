@@ -30,13 +30,14 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryControl
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerRequirement;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -161,7 +162,7 @@ public abstract class PeerDiscoveryAgent {
                 final int discoveryPort = localAddress.getPort();
                 final DiscoveryPeer ourNode =
                     DiscoveryPeer.fromEnode(
-                        EnodeURL.builder()
+                        EnodeURLImpl.builder()
                             .nodeId(id)
                             .ipAddress(advertisedAddress)
                             .listeningPort(tcpPort)
@@ -289,7 +290,7 @@ public abstract class PeerDiscoveryAgent {
     final String host = sourceEndpoint.getHost();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .nodeId(packet.getNodeId())
                 .ipAddress(host)
                 .listeningPort(tcpPort)
@@ -357,7 +358,7 @@ public abstract class PeerDiscoveryAgent {
   }
 
   /**
-   * Removes an previously added peer bonded observer.
+   * Removes a previously added peer bonded observer.
    *
    * @param observerId The unique ID identifying the observer to remove.
    * @return Whether the observer was located and removed.

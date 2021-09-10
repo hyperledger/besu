@@ -39,8 +39,7 @@ public class CalculatedDifficultyValidationRule implements AttachedBlockHeaderVa
     if (RayonismOptions.isMergeEnabled()) {
       return true;
     }
-    final BigInteger actualDifficulty =
-        new BigInteger(1, header.getDifficulty().toBytes().toArray());
+    final BigInteger actualDifficulty = new BigInteger(1, header.getDifficulty().toArray());
     final BigInteger expectedDifficulty =
         difficultyCalculator.nextDifficulty(header.getTimestamp(), parent, context);
 

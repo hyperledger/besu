@@ -122,6 +122,11 @@ public class GenesisConfigFile {
     return parseLong("gasLimit", getFirstRequiredString("gaslimit", "gastarget"));
   }
 
+  public Optional<Long> getBaseFeePerGas() {
+    return JsonUtil.getString(configRoot, "basefeepergas")
+        .map(baseFeeStr -> parseLong("baseFeePerGas", baseFeeStr));
+  }
+
   public String getMixHash() {
     return JsonUtil.getString(configRoot, "mixhash", "");
   }

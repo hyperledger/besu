@@ -53,22 +53,22 @@ public class DelegateCallOperation extends AbstractCallOperation {
 
   @Override
   protected UInt256 inputDataOffset(final MessageFrame frame) {
-    return UInt256.fromBytes(frame.getStackItem(2));
+    return frame.getStackItem(2);
   }
 
   @Override
   protected UInt256 inputDataLength(final MessageFrame frame) {
-    return UInt256.fromBytes(frame.getStackItem(3));
+    return frame.getStackItem(3);
   }
 
   @Override
   protected UInt256 outputDataOffset(final MessageFrame frame) {
-    return UInt256.fromBytes(frame.getStackItem(4));
+    return frame.getStackItem(4);
   }
 
   @Override
   protected UInt256 outputDataLength(final MessageFrame frame) {
-    return UInt256.fromBytes(frame.getStackItem(5));
+    return frame.getStackItem(5);
   }
 
   @Override

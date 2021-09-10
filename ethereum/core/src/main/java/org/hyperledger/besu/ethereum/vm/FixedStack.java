@@ -66,7 +66,7 @@ public class FixedStack<T> {
 
   public T get(final int offset) {
     if (offset < 0 || offset >= size()) {
-      throw new IndexOutOfBoundsException();
+      throw new UnderflowException();
     }
 
     return entries[top - offset];

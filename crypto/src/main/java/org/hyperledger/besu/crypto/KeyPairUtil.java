@@ -70,11 +70,8 @@ public class KeyPairUtil {
           "Loaded public key {} from {}", key.getPublicKey().toString(), keyFile.getAbsolutePath());
     } else {
       key = SIGNATURE_ALGORITHM.get().generateKeyPair();
-      try {
-        storeKeyPair(key, keyFile);
-      } catch (IOException e) {
-        throw new IllegalArgumentException("Cannot store generated private key.");
-      }
+      storeKeyFile(key, keyFile.getParentFile().toPath());
+
       LOG.info(
           "Generated new public key {} and stored it to {}",
           key.getPublicKey().toString(),
@@ -83,12 +80,20 @@ public class KeyPairUtil {
     return key;
   }
 
-  public static KeyPair loadKeyPair(final Path homeDirectory) {
-    return loadKeyPair(getDefaultKeyFile(homeDirectory));
+  public static KeyPair loadKeyPair(final Path directory) {
+    return loadKeyPair(getDefaultKeyFile(directory));
   }
 
-  public static File getDefaultKeyFile(final Path homeDirectory) {
-    return homeDirectory.resolve("key").toFile();
+  public static void storeKeyFile(final KeyPair keyPair, final Path homeDirectory) {
+    try {
+      storeKeyPair(keyPair, getDefaultKeyFile(homeDirectory));
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Cannot store generated private key.");
+    }
+  }
+
+  public static File getDefaultKeyFile(final Path directory) {
+    return directory.resolve("key").toFile();
   }
 
   public static KeyPair load(final File file) {
@@ -107,13 +112,13 @@ public class KeyPairUtil {
     }
   }
 
-  static void storeKeyPair(final KeyPair keyKair, final File file) throws IOException {
+  static void storeKeyPair(final KeyPair keyPair, final File file) throws IOException {
     final File privateKeyDir = file.getParentFile();
     privateKeyDir.mkdirs();
     final Path tempPath = Files.createTempFile(privateKeyDir.toPath(), ".tmp", "");
     Files.write(
         tempPath,
-        keyKair.getPrivateKey().getEncodedBytes().toString().getBytes(StandardCharsets.UTF_8));
+        keyPair.getPrivateKey().getEncodedBytes().toString().getBytes(StandardCharsets.UTF_8));
     Files.move(tempPath, file.toPath(), REPLACE_EXISTING, ATOMIC_MOVE);
   }
 }

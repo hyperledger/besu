@@ -20,11 +20,7 @@ executors:
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
 
-  machine_executor:
-    machine:
-      image: ubuntu-2004:202010-01
-
-  acceptance_tests_executor:
+  xl_machine_executor:
     machine:
       image: ubuntu-2004:202101-01
     resource_class: xlarge
@@ -39,10 +35,11 @@ commands:
     steps:
       - checkout
       - run:
-          name: Install Packages - LibSodium
+          name: Install Packages - LibSodium, nssdb
           command: |
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https
+            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools
+            sudo service haveged restart
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
@@ -139,7 +136,7 @@ jobs:
       - capture_test_results
 
   integrationTests:
-    executor: besu_executor_xl
+    executor: besu_executor_med
     steps:
       - prepare
       - attach_workspace:
@@ -166,22 +163,22 @@ jobs:
           at: ~/project
       - run:
           name: ReferenceTests
-          no_output_timeout: 20m
+          no_output_timeout: 30m
           command: |
             git submodule update --init --recursive
             ./gradlew --no-daemon referenceTest
       - capture_test_results
 
   acceptanceTests:
-    parallelism: 8
-    executor: besu_executor_xl
+    parallelism: 6
+    executor: xl_machine_executor
     steps:
       - prepare
       - attach_workspace:
           at: ~/project
       - run:
           name: AcceptanceTests
-          no_output_timeout: 40m
+          no_output_timeout: 30m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
               | sed 's@.*/src/test/java/@@' \
@@ -196,15 +193,15 @@ jobs:
 
   acceptanceTestsQuorum:
     parallelism: 1
-    executor: acceptance_tests_executor
+    executor: xl_machine_executor
     steps:
       - prepare
       - attach_workspace:
           at: ~/project
       - run:
-          name: Quorum Acceptance Tests (failures ignored)
+          name: Quorum Acceptance Tests
           no_output_timeout: 40m
-          command: ./gradlew --no-daemon acceptanceTestsQuorum || true # ignore result of job for now, until all issues are fixed
+          command: ./gradlew --no-daemon acceptanceTestsQuorum
       - store_artifacts:
           path: build/quorum-at
           destination: quorum-at-artifacts
@@ -289,7 +286,7 @@ workflows:
             - assemble
       - acceptanceTestsQuorum:
           requires:
-            - buildDocker
+            - assemble
       - buildDocker:
           requires:
             - assemble
@@ -297,24 +294,26 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
                 - /^release-.*/
           requires:
             - integrationTests
             - unitTests
             - acceptanceTests
+            - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
       - publishDocker:
           filters:
             branches:
               only:
-                - master
+                - main
                 - /^release-.*/
           requires:
             - integrationTests
             - unitTests
             - acceptanceTests
+            - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
           context:

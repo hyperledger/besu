@@ -16,10 +16,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -29,15 +27,15 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockProcessor;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockProcessorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
+import org.hyperledger.besu.ethereum.mainnet.contractvalidation.PrefixCodeRule;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
@@ -67,6 +65,8 @@ public abstract class MainnetProtocolSpecs {
 
   public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 24576;
 
+  public static final String LONDON_FORK_NAME = "London";
+
   private static final Address RIPEMD160_PRECOMPILE =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
 
@@ -92,54 +92,57 @@ public abstract class MainnetProtocolSpecs {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return new ProtocolSpecBuilder()
         .gasCalculator(FrontierGasCalculator::new)
+        .transactionGasCalculator(new FrontierTransactionGasCalculator())
+        .gasLimitCalculator(new FrontierTargetingGasLimitCalculator())
         .evmBuilder(MainnetEvmRegistries::frontier)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::frontier)
         .messageCallProcessorBuilder(MainnetMessageCallProcessor::new)
         .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
+            (transactionGasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    gasCalculator,
+                    transactionGasCalculator,
                     evm,
                     false,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     0))
         .transactionValidatorBuilder(
-            gasCalculator ->
+            transactionGasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, false, Optional.empty(), goQuorumMode))
+                    transactionGasCalculator, false, Optional.empty(), goQuorumMode))
         .transactionProcessorBuilder(
             (gasCalculator,
+                transactionGasCalculator,
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
+                    transactionGasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION,
-                    TransactionPriceCalculator.frontier(),
+                    FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
         .privateTransactionProcessorBuilder(
-            (gasCalculator,
+            (transactionGasCalculator,
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor,
                 privateTransactionValidator) ->
                 new PrivateTransactionProcessor(
-                    gasCalculator,
+                    transactionGasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION,
                     new PrivateTransactionValidator(Optional.empty())))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.create())
-        .ommerHeaderValidatorBuilder(MainnetBlockHeaderValidator.createOmmerValidator())
+        .blockHeaderValidatorBuilder(feeMarket -> MainnetBlockHeaderValidator.create())
+        .ommerHeaderValidatorBuilder(
+            feeMarket -> MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator())
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
         .blockReward(FRONTIER_BLOCK_REWARD)
@@ -196,20 +199,20 @@ public abstract class MainnetProtocolSpecs {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
     return frontierDefinition(
             configContractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
-        .gasCalculator(HomesteadGasCalculator::new)
+        .transactionGasCalculator(new HomesteadTransactionGasCalculator())
         .evmBuilder(MainnetEvmRegistries::homestead)
         .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
+            (transactionGasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    gasCalculator,
+                    transactionGasCalculator,
                     evm,
                     true,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     0))
         .transactionValidatorBuilder(
-            gasCalculator ->
+            transactionGasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, true, Optional.empty(), quorumCompatibilityMode))
+                    transactionGasCalculator, true, Optional.empty(), quorumCompatibilityMode))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
         .name("Homestead");
   }
@@ -219,14 +222,13 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean quorumCompatibilityMode) {
     return homesteadDefinition(contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createDaoValidator())
+        .blockHeaderValidatorBuilder(feeMarket -> MainnetBlockHeaderValidator.createDaoValidator())
         .blockProcessorBuilder(
             (transactionProcessor,
                 transactionReceiptFactory,
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                gasBudgetCalculator,
                 goQuorumPrivacyParameters) ->
                 new DaoBlockProcessor(
                     new MainnetBlockProcessor(
@@ -235,7 +237,6 @@ public abstract class MainnetProtocolSpecs {
                         blockReward,
                         miningBeneficiaryCalculator,
                         skipZeroBlockRewards,
-                        gasBudgetCalculator,
                         Optional.empty())))
         .name("DaoRecoveryInit");
   }
@@ -279,32 +280,33 @@ public abstract class MainnetProtocolSpecs {
                     precompileContractRegistry,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
+            (transactionGasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    gasCalculator,
+                    transactionGasCalculator,
                     evm,
                     true,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .transactionValidatorBuilder(
-            gasCalculator ->
+            transactionGasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, true, chainId, quorumCompatibilityMode))
+                    transactionGasCalculator, true, chainId, quorumCompatibilityMode))
         .transactionProcessorBuilder(
             (gasCalculator,
+                transactionGasCalculator,
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
+                    transactionGasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION,
-                    TransactionPriceCalculator.frontier(),
+                    FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
         .name("SpuriousDragon");
   }
@@ -329,19 +331,18 @@ public abstract class MainnetProtocolSpecs {
         .blockReward(BYZANTIUM_BLOCK_REWARD)
         .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(chainId))
         .privateTransactionProcessorBuilder(
-            (gasCalculator,
+            (transactionGasCalculator,
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor,
                 privateTransactionValidator) ->
                 new PrivateTransactionProcessor(
-                    gasCalculator,
+                    transactionGasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION,
                     privateTransactionValidator))
         .name("Byzantium");
   }
@@ -396,14 +397,15 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             quorumCompatibilityMode)
         .gasCalculator(IstanbulGasCalculator::new)
+        .transactionGasCalculator(new IstanbulTransactionGasCalculator())
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
+            (transactionGasCalculator, evm) ->
                 new MainnetContractCreationProcessor(
-                    gasCalculator,
+                    transactionGasCalculator,
                     evm,
                     true,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
@@ -441,10 +443,11 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             quorumCompatibilityMode)
         .gasCalculator(BerlinGasCalculator::new)
+        .transactionGasCalculator(new BerlinTransactionGasCalculator())
         .transactionValidatorBuilder(
-            gasCalculator ->
+            transactionGasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator,
+                    transactionGasCalculator,
                     true,
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),
@@ -458,58 +461,76 @@ public abstract class MainnetProtocolSpecs {
 
   static ProtocolSpecBuilder londonDefinition(
       final Optional<BigInteger> chainId,
-      final Optional<TransactionPriceCalculator> transactionPriceCalculator,
-      final OptionalInt contractSizeLimit,
+      final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final boolean quorumCompatibilityMode) {
-    ExperimentalEIPs.eip1559MustBeEnabled();
+    final int contractSizeLimit =
+        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-    final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
+    final long londonForkBlockNumber =
+        genesisConfigOptions.getEIP1559BlockNumber().orElse(Long.MAX_VALUE);
+    final BaseFeeMarket londonFeeMarket = FeeMarket.london(londonForkBlockNumber);
     return berlinDefinition(
             chainId,
-            contractSizeLimit,
+            configContractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode)
+        .gasCalculator(LondonGasCalculator::new)
+        .transactionGasCalculator(new LondonTransactionGasCalculator())
+        .gasLimitCalculator(
+            new LondonTargetingGasLimitCalculator(londonForkBlockNumber, londonFeeMarket))
         .transactionValidatorBuilder(
-            gasCalculator ->
+            transactionGasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator,
-                    transactionPriceCalculator,
+                    transactionGasCalculator,
+                    londonFeeMarket,
                     true,
                     chainId,
                     Set.of(
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
-                    genesisConfigOptions.isQuorum()))
+                    quorumCompatibilityMode))
         .transactionProcessorBuilder(
             (gasCalculator,
+                transactionGasCalculator,
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
+                    transactionGasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
                     stackSizeLimit,
-                    Account.DEFAULT_VERSION,
-                    transactionPriceCalculator.orElseThrow(),
+                    londonFeeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
+        .contractCreationProcessorBuilder(
+            (transactionGasCalculator, evm) ->
+                new MainnetContractCreationProcessor(
+                    transactionGasCalculator,
+                    evm,
+                    true,
+                    List.of(MaxCodeSizeRule.of(contractSizeLimit), PrefixCodeRule.of()),
+                    1,
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.london(gasCalculator, chainId.orElse(BigInteger.ZERO)))
-        .name("London")
-        .transactionPriceCalculator(transactionPriceCalculator.orElseThrow())
-        .eip1559(Optional.of(eip1559))
-        .gasBudgetCalculator(TransactionGasBudgetCalculator.eip1559(eip1559))
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
+        .feeMarket(londonFeeMarket)
+        .difficultyCalculator(MainnetDifficultyCalculators.LONDON)
+        .blockHeaderValidatorBuilder(
+            feeMarket -> MainnetBlockHeaderValidator.createBaseFeeMarketValidator(londonFeeMarket))
         .ommerHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559));
+            feeMarket ->
+                MainnetBlockHeaderValidator.createBaseFeeMarketOmmerValidator(londonFeeMarket))
+        .blockBodyValidatorBuilder(BaseFeeBlockBodyValidator::new)
+        .name(LONDON_FORK_NAME);
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(
@@ -545,7 +566,7 @@ public abstract class MainnetProtocolSpecs {
         result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
   }
 
-  private static TransactionReceipt berlinTransactionReceiptFactory(
+  static TransactionReceipt berlinTransactionReceiptFactory(
       final TransactionType transactionType,
       final TransactionProcessingResult transactionProcessingResult,
       final WorldState worldState,
@@ -558,7 +579,7 @@ public abstract class MainnetProtocolSpecs {
         Optional.empty());
   }
 
-  private static TransactionReceipt berlinTransactionReceiptFactoryWithReasonEnabled(
+  static TransactionReceipt berlinTransactionReceiptFactoryWithReasonEnabled(
       final TransactionType transactionType,
       final TransactionProcessingResult transactionProcessingResult,
       final WorldState worldState,

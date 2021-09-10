@@ -211,7 +211,7 @@ public class PrivacyQueriesTest {
               new PrivateTransactionReceiptTestFixture().logs(List.of(log)).create();
 
           when(privateWorldStateReader.getPrivateTransactionReceipt(
-                  blockHash, metadata.getPrivacyMarkerTransactionHash()))
+                  blockHash, metadata.getPrivateMarkerTransactionHash()))
               .thenReturn(Optional.of(receipt));
         });
   }
@@ -222,7 +222,7 @@ public class PrivacyQueriesTest {
 
     for (int i = 0; i < transactionMetadataList.size(); i++) {
       final PrivateTransactionMetadata privateTransactionMetadata = transactionMetadataList.get(i);
-      final Hash pmtHash = privateTransactionMetadata.getPrivacyMarkerTransactionHash();
+      final Hash pmtHash = privateTransactionMetadata.getPrivateMarkerTransactionHash();
       final TransactionLocation pmtLocation = new TransactionLocation(blockHeader.getHash(), i);
       when(blockchainQueries.transactionLocationByHash(pmtHash))
           .thenReturn(Optional.of(pmtLocation));

@@ -34,8 +34,8 @@ public class RevertOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final UInt256 from = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 length = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 from = frame.popStackItem();
+    final UInt256 length = frame.popStackItem();
 
     final Gas cost = gasCalculator().memoryExpansionGasCost(frame, from, length);
     final Optional<Gas> optionalCost = Optional.of(cost);

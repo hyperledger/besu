@@ -33,8 +33,8 @@ public class ExpOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final UInt256 number = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 power = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 number = frame.popStackItem();
+    final UInt256 power = frame.popStackItem();
 
     final int numBytes = (power.bitLength() + 7) / 8;
 
@@ -46,7 +46,7 @@ public class ExpOperation extends AbstractOperation {
 
     final UInt256 result = number.pow(power);
 
-    frame.pushStackItem(result.toBytes());
+    frame.pushStackItem(result);
     return new OperationResult(optionalCost, Optional.empty());
   }
 }

@@ -39,8 +39,7 @@ public class PrivateStorageMigrationBuilder {
 
   public PrivateStorageMigration build() {
     final Blockchain blockchain = besuController.getProtocolContext().getBlockchain();
-    final Address privacyPrecompileAddress =
-        Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
+    final Address privacyPrecompileAddress = privacyParameters.getPrivacyAddress();
     final ProtocolSchedule protocolSchedule = besuController.getProtocolSchedule();
     final WorldStateArchive publicWorldStateArchive =
         besuController.getProtocolContext().getWorldStateArchive();

@@ -27,8 +27,8 @@ jar {
 }
 
 dependencies {
-  api 'org.apache.tuweni:bytes'
-  api 'org.apache.tuweni:units'
+  api 'org.apache.tuweni:tuweni-bytes'
+  api 'org.apache.tuweni:tuweni-units'
 }
 
 configurations { testArtifacts }
@@ -64,7 +64,7 @@ Calculated : ${currentHash}
 tasks.register('checkAPIChanges', FileStateChecker) {
   description = "Checks that the API for the Plugin-API project does not change without deliberate thought"
   files = sourceSets.main.allJava.files
-  knownHash = 'CSYnesxrM26KNr8yz9WZEWLvxkHMBofp0QA4kkSZ3Zw='
+  knownHash = 'zpv92JZmlU6gPifGcPG5ATE6Lv/ruWdJtjLk3EVXO4g='
 }
 check.dependsOn('checkAPIChanges')
 

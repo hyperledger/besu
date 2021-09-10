@@ -24,6 +24,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -190,8 +191,13 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void traceReportingWithTraceId() {
-
-    OkHttpClient okClient = new OkHttpClient();
+    Duration timeout = Duration.ofSeconds(1);
+    OkHttpClient okClient =
+        new OkHttpClient.Builder()
+            .connectTimeout(timeout)
+            .readTimeout(timeout)
+            .writeTimeout(timeout)
+            .build();
     WaitUtils.waitFor(
         30,
         () -> {
@@ -213,6 +219,7 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
                   .build();
           Response response = client.newCall(request).execute();
           assertThat(response.code()).isEqualTo(200);
+          response.close();
           List<ResourceSpans> spans = new ArrayList<>(fakeTracesCollector.getReceivedSpans());
           fakeTracesCollector.getReceivedSpans().clear();
           assertThat(spans.isEmpty()).isFalse();

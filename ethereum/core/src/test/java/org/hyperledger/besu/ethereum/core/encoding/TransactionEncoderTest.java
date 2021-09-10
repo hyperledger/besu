@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -63,7 +62,6 @@ public class TransactionEncoderTest {
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
     TransactionEncoder.encodeForWire(transaction, output);
     assertThat(EIP1559_TX_RLP).isEqualTo(output.encoded().toHexString());
-    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }
 
   @Test

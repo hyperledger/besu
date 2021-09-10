@@ -91,7 +91,7 @@ public class TransactionAdapter extends AdapterBase {
   }
 
   public Optional<Wei> getGasPrice() {
-    return Optional.of(transactionWithMetadata.getTransaction().getGasPrice());
+    return transactionWithMetadata.getTransaction().getGasPrice();
   }
 
   public Optional<Long> getGas() {
@@ -184,5 +184,17 @@ public class TransactionAdapter extends AdapterBase {
       }
     }
     return results;
+  }
+
+  public boolean getIsPrivate() {
+    return transactionWithMetadata.getTransaction().isGoQuorumPrivateTransaction();
+  }
+
+  public Optional<Bytes> getPrivateInputData() {
+    final Transaction transaction = transactionWithMetadata.getTransaction();
+    if (transaction.isGoQuorumPrivateTransaction()) {
+      return Optional.ofNullable(transaction.getPayload());
+    }
+    return Optional.of(Bytes.EMPTY);
   }
 }

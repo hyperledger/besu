@@ -33,7 +33,7 @@ public class NodeSmartContractPermissioningOutOfSyncAcceptanceTest
 
     permissionedCluster.start(bootnode, permissionedNodeA);
 
-    // update onchain smart contract to whitelist nodes
+    // update onchain smart contract to allowlist nodes
     permissionedNodeA.execute(allowNode(bootnode));
     permissionedNodeA.verify(nodeIsAllowed(bootnode));
     permissionedNodeA.execute(allowNode(permissionedNodeA));

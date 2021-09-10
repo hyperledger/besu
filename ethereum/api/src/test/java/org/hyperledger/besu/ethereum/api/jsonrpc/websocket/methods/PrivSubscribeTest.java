@@ -23,7 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -54,7 +54,7 @@ public class PrivSubscribeTest {
   @Mock private SubscriptionManager subscriptionManagerMock;
   @Mock private SubscriptionRequestMapper mapperMock;
   @Mock private PrivacyController privacyController;
-  @Mock private EnclavePublicKeyProvider enclavePublicKeyProvider;
+  @Mock private PrivacyIdProvider privacyIdProvider;
 
   private PrivSubscribe privSubscribe;
 
@@ -62,7 +62,7 @@ public class PrivSubscribeTest {
   public void before() {
     privSubscribe =
         new PrivSubscribe(
-            subscriptionManagerMock, mapperMock, privacyController, enclavePublicKeyProvider);
+            subscriptionManagerMock, mapperMock, privacyController, privacyIdProvider);
   }
 
   @Test
@@ -127,10 +127,10 @@ public class PrivSubscribeTest {
             "public_key");
 
     when(mapperMock.mapPrivateSubscribeRequest(any(), any())).thenReturn(subscribeRequest);
-    when(enclavePublicKeyProvider.getEnclaveKey(any())).thenReturn(ENCLAVE_KEY);
+    when(privacyIdProvider.getPrivacyUserId(any())).thenReturn(ENCLAVE_KEY);
     doThrow(new MultiTenancyValidationException("msg"))
         .when(privacyController)
-        .verifyPrivacyGroupContainsEnclavePublicKey(eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY));
+        .verifyPrivacyGroupContainsPrivacyUserId(eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY));
 
     assertThatThrownBy(() -> privSubscribe.response(jsonRpcrequestContext))
         .isInstanceOf(MultiTenancyValidationException.class)
@@ -154,7 +154,7 @@ public class PrivSubscribeTest {
             ENCLAVE_KEY);
 
     when(mapperMock.mapPrivateSubscribeRequest(any(), any())).thenReturn(subscribeRequest);
-    when(enclavePublicKeyProvider.getEnclaveKey(any())).thenReturn(ENCLAVE_KEY);
+    when(privacyIdProvider.getPrivacyUserId(any())).thenReturn(ENCLAVE_KEY);
 
     // This should pass if a MultiTenancyMultiTenancyValidationException isn't thrown
 

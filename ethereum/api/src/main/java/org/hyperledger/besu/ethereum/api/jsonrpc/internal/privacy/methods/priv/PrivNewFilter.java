@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -30,15 +30,15 @@ public class PrivNewFilter implements JsonRpcMethod {
 
   private final FilterManager filterManager;
   private final PrivacyController privacyController;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyIdProvider privacyIdProvider;
 
   public PrivNewFilter(
       final FilterManager filterManager,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyIdProvider privacyIdProvider) {
     this.filterManager = filterManager;
     this.privacyController = privacyController;
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyIdProvider = privacyIdProvider;
   }
 
   @Override
@@ -50,10 +50,10 @@ public class PrivNewFilter implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
     final FilterParameter filter = request.getRequiredParameter(1, FilterParameter.class);
-    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
 
     // no need to pass blockNumber. To create a filter, you need to be a current member of the group
-    checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(enclavePublicKey, privacyGroupId);
+    checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(privacyUserId, privacyGroupId);
 
     if (!filter.isValid()) {
       return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
@@ -62,7 +62,7 @@ public class PrivNewFilter implements JsonRpcMethod {
     final String logFilterId =
         filterManager.installPrivateLogFilter(
             privacyGroupId,
-            enclavePublicKey,
+            privacyUserId,
             filter.getFromBlock(),
             filter.getToBlock(),
             filter.getLogsQuery());
@@ -70,8 +70,8 @@ public class PrivNewFilter implements JsonRpcMethod {
     return new JsonRpcSuccessResponse(request.getRequest().getId(), logFilterId);
   }
 
-  private void checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
-      final String enclavePublicKey, final String privacyGroupId) {
-    privacyController.verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
+  private void checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(
+      final String privacyUserId, final String privacyGroupId) {
+    privacyController.verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId);
   }
 }

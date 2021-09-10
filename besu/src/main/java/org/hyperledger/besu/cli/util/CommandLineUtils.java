@@ -70,28 +70,25 @@ public class CommandLineUtils {
    * that could replace this. See https://github.com/remkop/picocli/issues/295
    *
    * @param logger the logger instance used to log the warning
-   * @param commandLine the command line containing the options we want to check
-   * @param mainOptions the names of the main options to test dependency against. Only used for
-   *     display.
+   * @param commandLine the command line containing the options we want to check display.
+   * @param stringToLog the string that is going to be logged.
    * @param isMainOptionCondition the conditions to test dependent options against. If all
    *     conditions are true, dependent options will be checked.
    * @param dependentOptionsNames a list of option names that can't be used if condition is met.
-   *     Example: if --min-gas-price is in the list and condition is that either --miner-enabled or
-   *     --goquorum-compatibility-enabled should not be false, we log a warning.
+   *     Example: if --min-gas-price is in the list and condition is that --miner-enabled should not
+   *     be false, we log a warning.
    */
   public static void checkMultiOptionDependencies(
       final Logger logger,
       final CommandLine commandLine,
-      final List<String> mainOptions,
+      final String stringToLog,
       final List<Boolean> isMainOptionCondition,
       final List<String> dependentOptionsNames) {
     if (isMainOptionCondition.stream().allMatch(isTrue -> isTrue)) {
       final String affectedOptions = getAffectedOptions(commandLine, dependentOptionsNames);
 
       if (!affectedOptions.isEmpty()) {
-        final String joinedMainOptions =
-            StringUtils.joiningWithLastDelimiter(", ", " or ").apply(mainOptions);
-        logger.warn(MULTI_DEPENDENCY_WARNING_MSG, affectedOptions, joinedMainOptions);
+        logger.warn(stringToLog);
       }
     }
   }

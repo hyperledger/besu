@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX;
 import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
@@ -23,7 +22,6 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 
-import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -33,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.transaction.GoQuorumPrivateTransactionDetector;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -77,7 +76,7 @@ public class TransactionDecoder {
     try {
       transactionType = TransactionType.of(input.get(0));
     } catch (final IllegalArgumentException __) {
-      return decodeFrontier(RLP.input(input));
+      return decodeForWire(RLP.input(input));
     }
     return getDecoder(transactionType).decode(RLP.input(input.slice(1)));
   }
@@ -104,7 +103,7 @@ public class TransactionDecoder {
     final BigInteger v = input.readBigIntegerScalar();
     final byte recId;
     Optional<BigInteger> chainId = Optional.empty();
-    if (isGoQuorumPrivateTransaction(v)) {
+    if (GoQuorumPrivateTransactionDetector.isGoQuorumPrivateTransactionV(v)) {
       builder.v(v);
       recId = v.subtract(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN).byteValueExact();
     } else if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
@@ -116,8 +115,8 @@ public class TransactionDecoder {
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
     }
-    final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();
+    final BigInteger s = input.readUInt256Scalar().toUnsignedBigInteger();
     final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
 
     input.leaveList();
@@ -158,8 +157,8 @@ public class TransactionDecoder {
                 SIGNATURE_ALGORITHM
                     .get()
                     .createSignature(
-                        rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
-                        rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                        rlpInput.readUInt256Scalar().toUnsignedBigInteger(),
+                        rlpInput.readUInt256Scalar().toUnsignedBigInteger(),
                         recId))
             .build();
     rlpInput.leaveList();
@@ -174,8 +173,8 @@ public class TransactionDecoder {
             .type(TransactionType.EIP1559)
             .chainId(chainId)
             .nonce(input.readLongScalar())
-            .gasPremium(Wei.wrap(input.readBytes()))
-            .feeCap(Wei.wrap(input.readBytes()))
+            .maxPriorityFeePerGas(Wei.of(input.readUInt256Scalar()))
+            .maxFeePerGas(Wei.of(input.readUInt256Scalar()))
             .gasLimit(input.readLongScalar())
             .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
             .value(Wei.of(input.readUInt256Scalar()))
@@ -198,17 +197,11 @@ public class TransactionDecoder {
                 SIGNATURE_ALGORITHM
                     .get()
                     .createSignature(
-                        input.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
-                        input.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                        input.readUInt256Scalar().toUnsignedBigInteger(),
+                        input.readUInt256Scalar().toUnsignedBigInteger(),
                         recId))
             .build();
     input.leaveList();
     return transaction;
-  }
-
-  private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {
-    return GoQuorumOptions.goQuorumCompatibilityMode
-        && (v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
-            || v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN));
   }
 }

@@ -15,6 +15,7 @@ dependencies {
   implementation project(':crypto')
 
   testImplementation project(':acceptance-tests:dsl')
+  testImplementation project(':acceptance-tests:test-plugins')
   testImplementation project(':besu')
   testImplementation project(':config')
   testImplementation project(':consensus:clique')
@@ -22,6 +23,7 @@ dependencies {
   testImplementation project(':ethereum:api')
   testImplementation project(':ethereum:core')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':ethereum:p2p')
   testImplementation project(':ethereum:permissioning')
   testImplementation project(':ethereum:rlp')
   testImplementation project(':metrics:core')
@@ -48,11 +50,13 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'net.consensys:orion'
   testImplementation 'org.apache.commons:commons-compress'
-  testImplementation 'org.apache.tuweni:crypto'
+  testImplementation 'org.apache.tuweni:tuweni-crypto'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:besu'
+
+  testImplementation 'org.testcontainers:testcontainers'
 }
 
 test.enabled = false
@@ -60,12 +64,12 @@ test.enabled = false
 sourceSets {
   test {
     resources {
-      srcDirs "${rootDir}/besu/build/libs"
+      srcDirs "${rootDir}/acceptance-tests/test-plugins/build/libs"
     }
   }
 }
 
-processTestResources.dependsOn(':besu:testJar')
+processTestResources.dependsOn(':acceptance-tests:test-plugins:testPluginsJar')
 
 task acceptanceTest(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation

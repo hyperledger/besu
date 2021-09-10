@@ -17,6 +17,7 @@
       "cumulativeGasUsed": "0x5eef",
       "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
       "gasUsed": "0x5eef",
+      "effectiveGasPrice": "0x1",
       "logs": [
         {
           "address": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",

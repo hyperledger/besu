@@ -31,7 +31,7 @@ public class ReturnDataSizeOperation extends AbstractFixedCostOperation {
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Bytes returnData = frame.getReturnData();
-    frame.pushStackItem(UInt256.valueOf(returnData.size()).toBytes());
+    frame.pushStackItem(UInt256.valueOf(returnData.size()));
 
     return successResponse;
   }

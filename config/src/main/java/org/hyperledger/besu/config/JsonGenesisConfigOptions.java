@@ -17,8 +17,6 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.isNull;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
@@ -157,6 +155,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public QbftConfigOptions getQbftConfigOptions() {
+    return JsonUtil.getObjectNode(configRoot, QBFT_CONFIG_KEY)
+        .map(QbftConfigOptions::new)
+        .orElse(QbftConfigOptions.DEFAULT);
+  }
+
+  @Override
   public CliqueConfigOptions getCliqueConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, CLIQUE_CONFIG_KEY)
         .map(CliqueConfigOptions::new)
@@ -242,22 +247,36 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getBerlinBlockNumber() {
-    final OptionalLong berlinBlock = getOptionalLong("berlinblock");
-    final OptionalLong yolov3Block = getOptionalLong("yolov3block");
-    if (yolov3Block.isPresent()) {
-      if (berlinBlock.isPresent()) {
+    return getOptionalLong("berlinblock");
+  }
+
+  @Override
+  public OptionalLong getLondonBlockNumber() {
+    final OptionalLong londonBlock = getOptionalLong("londonblock");
+    final OptionalLong calaverasblock = getOptionalLong("calaverasblock");
+    if (calaverasblock.isPresent()) {
+      if (londonBlock.isPresent()) {
         throw new RuntimeException(
-            "Genesis files cannot specify both berlinblock and yoloV2Block.");
+            "Genesis files cannot specify both londonblock and calaverasblock.");
       }
-      return yolov3Block;
+      return calaverasblock;
     }
-    return berlinBlock;
+    return londonBlock;
+  }
+
+  @Override
+  public OptionalLong getAleutBlockNumber() {
+    return getOptionalLong("aleutblock");
   }
 
   @Override
   // TODO EIP-1559 change for the actual fork name when known
   public OptionalLong getEIP1559BlockNumber() {
-    return ExperimentalEIPs.eip1559Enabled ? getOptionalLong("aleutblock") : OptionalLong.empty();
+    if (getAleutBlockNumber().isPresent()) {
+      return getAleutBlockNumber();
+    } else {
+      return getLondonBlockNumber();
+    }
   }
 
   @Override
@@ -303,6 +322,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getThanosBlockNumber() {
     return getOptionalLong("thanosblock");
+  }
+
+  @Override
+  public OptionalLong getMagnetoBlockNumber() {
+    return getOptionalLong("magnetoblock");
   }
 
   @Override
@@ -380,6 +404,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
+    getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
+    getAleutBlockNumber().ifPresent(l -> builder.put("aleutBlock", l));
 
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
@@ -391,9 +417,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getAghartaBlockNumber().ifPresent(l -> builder.put("aghartaBlock", l));
     getPhoenixBlockNumber().ifPresent(l -> builder.put("phoenixBlock", l));
     getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
+    getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
     getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
 
-    getEIP1559BlockNumber().ifPresent(l -> builder.put("aleutblock", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
     getEcip1017EraRounds().ifPresent(l -> builder.put("ecip1017EraRounds", l));
@@ -480,7 +506,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getIstanbulBlockNumber(),
             getMuirGlacierBlockNumber(),
             getBerlinBlockNumber(),
-            getEIP1559BlockNumber(),
+            getLondonBlockNumber(),
+            getAleutBlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
             getGothamBlockNumber(),
@@ -489,7 +516,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getAghartaBlockNumber(),
             getPhoenixBlockNumber(),
             getThanosBlockNumber(),
+            getMagnetoBlockNumber(),
             getEcip1049BlockNumber());
+    // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 
     return forkBlockNumbers
         .filter(OptionalLong::isPresent)

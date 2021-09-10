@@ -17,6 +17,9 @@ package org.hyperledger.besu.ethereum.privacy;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE;
+import static org.hyperledger.besu.plugin.data.Restriction.RESTRICTED;
+import static org.hyperledger.besu.plugin.data.Restriction.UNRESTRICTED;
+import static org.hyperledger.besu.plugin.data.Restriction.UNSUPPORTED;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPublicKey;
@@ -26,10 +29,12 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.Restriction;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -40,12 +45,15 @@ import java.util.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** An operation submitted by an external actor to be applied to the system. */
-public class PrivateTransaction {
+public class PrivateTransaction implements org.hyperledger.besu.plugin.data.PrivateTransaction {
+  private static final Logger LOG = LogManager.getLogger();
 
   // Used for transactions that are not tied to a specific chain
   // (e.g. does not have a chain id associated with it).
@@ -105,6 +113,45 @@ public class PrivateTransaction {
     return new Builder();
   }
 
+  public static PrivateTransaction readFrom(
+      final org.hyperledger.besu.plugin.data.PrivateTransaction p) {
+
+    final BigInteger v = p.getV();
+    final byte recId;
+    Optional<BigInteger> chainId = p.getChainId();
+    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
+      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
+    } else {
+      throw new RuntimeException(
+          String.format("An unsupported encoded `v` value of %s was found", v));
+    }
+
+    final SECPSignature signature =
+        SIGNATURE_ALGORITHM.get().createSignature(p.getR(), p.getS(), recId);
+
+    final Builder b =
+        builder()
+            .nonce(p.getNonce())
+            .gasPrice(Wei.of(p.getGasPrice().getAsBigInteger()))
+            .gasLimit(p.getGasLimit())
+            .to(p.getTo().map(Address::wrap).orElse(null))
+            .value(Wei.of(p.getValue().getAsBigInteger()))
+            .sender(Address.wrap(p.getSender()))
+            .payload(p.getPayload())
+            .privateFrom(p.getPrivateFrom())
+            .restriction(p.getRestriction())
+            .signature(signature);
+
+    chainId.ifPresent(b::chainId);
+    p.getPrivateFor().ifPresent(b::privateFor);
+    p.getPrivacyGroupId().ifPresent(b::privacyGroupId);
+
+    return b.build();
+  }
+
   @SuppressWarnings({"unchecked"})
   public static PrivateTransaction readFrom(final RLPInput input) throws RLPException {
     input.enterList();
@@ -130,8 +177,8 @@ public class PrivateTransaction {
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
     }
-    final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();
+    final BigInteger s = input.readUInt256Scalar().toUnsignedBigInteger();
     final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
 
     final Bytes privateFrom = input.readBytes();
@@ -172,12 +219,14 @@ public class PrivateTransaction {
   }
 
   private static Restriction convertToEnum(final Bytes readBytes) {
-    if (readBytes.equals(Restriction.RESTRICTED.getBytes())) {
-      return Restriction.RESTRICTED;
-    } else if (readBytes.equals(Restriction.UNRESTRICTED.getBytes())) {
-      return Restriction.UNRESTRICTED;
+    if (readBytes.equals(RESTRICTED.getBytes())) {
+      return RESTRICTED;
+    } else if (readBytes.equals(UNRESTRICTED.getBytes())) {
+      return UNRESTRICTED;
+    } else {
+      LOG.error("Transaction restriction '{}' not supported", readBytes.toString());
+      return UNSUPPORTED;
     }
-    return Restriction.UNSUPPORTED;
   }
 
   /**
@@ -253,6 +302,7 @@ public class PrivateTransaction {
    *
    * @return the transaction nonce
    */
+  @Override
   public long getNonce() {
     return nonce;
   }
@@ -262,6 +312,7 @@ public class PrivateTransaction {
    *
    * @return the transaction gas price
    */
+  @Override
   public Wei getGasPrice() {
     return gasPrice;
   }
@@ -271,6 +322,7 @@ public class PrivateTransaction {
    *
    * @return the transaction gas limit
    */
+  @Override
   public long getGasLimit() {
     return gasLimit;
   }
@@ -283,6 +335,7 @@ public class PrivateTransaction {
    *
    * @return the transaction recipient if a message call; otherwise {@code Optional.empty()}
    */
+  @Override
   public Optional<Address> getTo() {
     return to;
   }
@@ -292,6 +345,7 @@ public class PrivateTransaction {
    *
    * @return the value transferred in the transaction
    */
+  @Override
   public Wei getValue() {
     return value;
   }
@@ -310,6 +364,7 @@ public class PrivateTransaction {
    *
    * @return the transaction payload
    */
+  @Override
   public Bytes getPayload() {
     return payload;
   }
@@ -322,6 +377,7 @@ public class PrivateTransaction {
    *
    * @return the transaction chain id if it exists; otherwise {@code OptionalInt.empty()}
    */
+  @Override
   public Optional<BigInteger> getChainId() {
     return chainId;
   }
@@ -331,6 +387,7 @@ public class PrivateTransaction {
    *
    * @return the enclave public key of the sender.
    */
+  @Override
   public Bytes getPrivateFrom() {
     return privateFrom;
   }
@@ -340,6 +397,7 @@ public class PrivateTransaction {
    *
    * @return the enclave public keys of the receivers
    */
+  @Override
   public Optional<List<Bytes>> getPrivateFor() {
     return privateFor;
   }
@@ -349,6 +407,7 @@ public class PrivateTransaction {
    *
    * @return the enclave privacy group id.
    */
+  @Override
   public Optional<Bytes> getPrivacyGroupId() {
     return privacyGroupId;
   }
@@ -358,6 +417,7 @@ public class PrivateTransaction {
    *
    * @return the restriction
    */
+  @Override
   public Restriction getRestriction() {
     return restriction;
   }
@@ -367,6 +427,7 @@ public class PrivateTransaction {
    *
    * @return the transaction sender
    */
+  @Override
   public Address getSender() {
     if (sender == null) {
       final SECPPublicKey publicKey =
@@ -407,38 +468,44 @@ public class PrivateTransaction {
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
+    out.writeRLPBytes(serialize(this).encoded());
+  }
+
+  public static BytesValueRLPOutput serialize(
+      final org.hyperledger.besu.plugin.data.PrivateTransaction t) {
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
 
-    out.writeLongScalar(getNonce());
-    out.writeUInt256Scalar(getGasPrice());
-    out.writeLongScalar(getGasLimit());
-    out.writeBytes(getTo().isPresent() ? getTo().get() : Bytes.EMPTY);
-    out.writeUInt256Scalar(getValue());
-    out.writeBytes(getPayload());
-    writeSignature(out);
-    out.writeBytes(getPrivateFrom());
-    getPrivateFor()
+    out.writeLongScalar(t.getNonce());
+    out.writeUInt256Scalar((Wei) t.getGasPrice());
+    out.writeLongScalar(t.getGasLimit());
+    out.writeBytes(t.getTo().isPresent() ? t.getTo().get() : Bytes.EMPTY);
+    out.writeUInt256Scalar((Wei) t.getValue());
+    out.writeBytes(t.getPayload());
+    out.writeBigIntegerScalar(t.getV());
+    out.writeBigIntegerScalar(t.getR());
+    out.writeBigIntegerScalar(t.getS());
+    out.writeBytes(t.getPrivateFrom());
+    t.getPrivateFor()
         .ifPresent(privateFor -> out.writeList(privateFor, (bv, rlpO) -> rlpO.writeBytes(bv)));
-    getPrivacyGroupId().ifPresent(out::writeBytes);
-    out.writeBytes(getRestriction().getBytes());
+    t.getPrivacyGroupId().ifPresent(out::writeBytes);
+    out.writeBytes(t.getRestriction().getBytes());
 
     out.endList();
+    return out;
   }
 
-  private void writeSignature(final RLPOutput out) {
-    out.writeBigIntegerScalar(getV());
-    out.writeBigIntegerScalar(getSignature().getR());
-    out.writeBigIntegerScalar(getSignature().getS());
-  }
-
+  @Override
   public BigInteger getR() {
     return signature.getR();
   }
 
+  @Override
   public BigInteger getS() {
     return signature.getS();
   }
 
+  @Override
   public BigInteger getV() {
     final BigInteger v;
     final BigInteger recId = BigInteger.valueOf(signature.getRecId());
@@ -458,9 +525,10 @@ public class PrivateTransaction {
    */
   // This field will be removed in 1.5.0
   @Deprecated(since = "1.4.3")
+  @Override
   public Hash getHash() {
     if (hash == null) {
-      final Bytes rlp = RLP.encode(this::writeTo);
+      final Bytes rlp = serialize(this).encoded();
       hash = Hash.hash(rlp);
     }
     return hash;

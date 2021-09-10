@@ -16,7 +16,6 @@ package org.hyperledger.besu.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.MULTI_DEPENDENCY_WARNING_MSG;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static picocli.CommandLine.defaultExceptionHandler;
@@ -122,7 +121,7 @@ public class CommandLineUtilsTest {
       CommandLineUtils.checkMultiOptionDependencies(
           logger,
           commandLine,
-          List.of("--option-enabled", "--other-option-enabled"),
+          "--option2 and/or --option3 ignored because none of --option-enabled or --other-option-enabled was defined.",
           List.of(!optionEnabled, !otherOptionEnabled),
           Arrays.asList("--option2", "--option3"));
     }
@@ -223,7 +222,8 @@ public class CommandLineUtilsTest {
         "--option2",
         "20");
     verifyMultiOptionsConstraintLoggerCall(
-        mockLogger, "--option2", "--option-enabled", "--other-option-enabled");
+        mockLogger,
+        "--option2 and/or --option3 ignored because none of --option-enabled or --other-option-enabled was defined.");
 
     assertThat(testCommand.optionEnabled).isFalse();
     assertThat(testCommand.otherOptionEnabled).isFalse();
@@ -242,20 +242,6 @@ public class CommandLineUtilsTest {
   private void verifyOptionsConstraintLoggerCall(
       final Logger logger, final String dependentOptions, final String... mainOptions) {
     verifyCall(logger, dependentOptions, DEPENDENCY_WARNING_MSG, mainOptions);
-  }
-
-  /**
-   * Check logger calls, where multiple main options have been specified
-   *
-   * <p>Here we check the calls to logger and not the result of the log line as we don't test the
-   * logger itself but the fact that we call it.
-   *
-   * @param dependentOptions the string representing the list of dependent options names
-   * @param mainOptions the main option name
-   */
-  private void verifyMultiOptionsConstraintLoggerCall(
-      final Logger logger, final String dependentOptions, final String... mainOptions) {
-    verifyCall(logger, dependentOptions, MULTI_DEPENDENCY_WARNING_MSG, mainOptions);
   }
 
   private void verifyCall(
@@ -277,5 +263,19 @@ public class CommandLineUtilsTest {
     final String joinedMainOptions =
         StringUtils.joiningWithLastDelimiter(", ", " or ").apply(Arrays.asList(mainOptions));
     assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(joinedMainOptions);
+  }
+
+  /**
+   * Check logger calls, where multiple main options have been specified
+   *
+   * <p>Here we check the calls to logger and not the result of the log line as we don't test the
+   * logger itself but the fact that we call it.
+   *
+   * @param stringToLog the string representing the list of dependent options names
+   */
+  private void verifyMultiOptionsConstraintLoggerCall(
+      final Logger logger, final String stringToLog) {
+
+    verify(logger).warn(stringToLog);
   }
 }

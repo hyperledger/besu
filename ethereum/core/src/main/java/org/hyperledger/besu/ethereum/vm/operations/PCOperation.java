@@ -28,7 +28,7 @@ public class PCOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(UInt256.valueOf(frame.getPC()).toBytes());
+    frame.pushStackItem(UInt256.valueOf(frame.getPC()));
 
     return successResponse;
   }

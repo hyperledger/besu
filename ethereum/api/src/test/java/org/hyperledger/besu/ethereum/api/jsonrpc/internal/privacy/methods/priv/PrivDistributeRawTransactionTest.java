@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -60,20 +60,21 @@ public class PrivDistributeRawTransactionTest {
 
   private final User user =
       new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   @Mock private PrivDistributeRawTransaction method;
   @Mock private PrivacyController privacyController;
 
   @Before
   public void before() {
-    method = new PrivDistributeRawTransaction(privacyController, enclavePublicKeyProvider, false);
+    method = new PrivDistributeRawTransaction(privacyController, privacyIdProvider, false);
   }
 
   @Test
   public void validTransactionHashReturnedAfterDistribute() {
     final String enclavePublicKey = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
-    when(privacyController.sendTransaction(any(PrivateTransaction.class), any(), any()))
+    when(privacyController.createPrivateMarkerTransactionPayload(
+            any(PrivateTransaction.class), any(), any()))
         .thenReturn(enclavePublicKey);
     when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());
@@ -95,14 +96,16 @@ public class PrivDistributeRawTransactionTest {
 
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
     verify(privacyController)
-        .sendTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY), any());
+        .createPrivateMarkerTransactionPayload(
+            any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY), any());
     verify(privacyController)
         .validatePrivateTransaction(any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY));
   }
 
   @Test
   public void invalidTransactionFailingWithMultiTenancyValidationErrorReturnsUnauthorizedError() {
-    when(privacyController.sendTransaction(any(PrivateTransaction.class), any(), any()))
+    when(privacyController.createPrivateMarkerTransactionPayload(
+            any(PrivateTransaction.class), any(), any()))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
     when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());

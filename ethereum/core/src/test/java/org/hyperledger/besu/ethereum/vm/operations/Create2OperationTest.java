@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import java.util.ArrayDeque;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
@@ -129,7 +128,7 @@ public class Create2OperationTest {
 
   @Before
   public void setUp() {
-    final Bytes32 memoryOffset = Bytes32.fromHexString("0xFF");
+    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final Bytes codeBytes = Bytes.fromHexString(code);
     final UInt256 memoryLength = UInt256.valueOf(codeBytes.size());
     when(account.getMutable()).thenReturn(mutableAccount);
@@ -144,7 +143,6 @@ public class Create2OperationTest {
             .code(new Code(codeBytes))
             .depth(1)
             .completer(__ -> {})
-            .contractAccountVersion(0)
             .address(Address.fromHexString(sender))
             .blockHashLookup(mock(BlockHashLookup.class))
             .blockHeader(mock(ProcessableBlockHeader.class))
@@ -156,10 +154,10 @@ public class Create2OperationTest {
             .initialGas(Gas.of(100000))
             .worldState(worldUpdater)
             .build();
-    messageFrame.pushStackItem(Bytes32.fromHexString(salt));
-    messageFrame.pushStackItem(memoryLength.toBytes());
+    messageFrame.pushStackItem(UInt256.fromHexString(salt));
+    messageFrame.pushStackItem(memoryLength);
     messageFrame.pushStackItem(memoryOffset);
-    messageFrame.pushStackItem(Bytes32.ZERO);
+    messageFrame.pushStackItem(UInt256.ZERO);
     messageFrame.expandMemory(UInt256.ZERO, UInt256.valueOf(500));
     messageFrame.writeMemory(
         UInt256.fromBytes(memoryOffset), UInt256.valueOf(code.length()), codeBytes);

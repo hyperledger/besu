@@ -33,8 +33,8 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   private final W world;
 
-  private final Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new HashMap<>();
-  private final Set<Address> deletedAccounts = new HashSet<>();
+  protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new HashMap<>();
+  protected Set<Address> deletedAccounts = new HashSet<>();
 
   protected AbstractWorldUpdater(final W world) {
     this.world = world;
@@ -218,7 +218,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
         existing.setBalance(update.getBalance());
         if (update.codeWasUpdated()) {
           existing.setCode(update.getCode());
-          existing.setVersion(update.getVersion());
         }
         if (update.getStorageWasCleared()) {
           existing.clearStorage();

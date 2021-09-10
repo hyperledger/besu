@@ -186,7 +186,7 @@ public class SubscriptionManager extends AbstractVerticle implements PrivateTran
     subscriptionsOfType(SubscriptionType.LOGS, PrivateLogsSubscription.class).stream()
         .filter(
             subscription ->
-                subscription.getEnclavePublicKey().equals(event.getEnclavePublicKey())
+                subscription.getPrivacyUserId().equals(event.getPrivacyUserId())
                     && subscription.getPrivacyGroupId().equals(event.getPrivacyGroupId()))
         .forEach(
             subscription ->

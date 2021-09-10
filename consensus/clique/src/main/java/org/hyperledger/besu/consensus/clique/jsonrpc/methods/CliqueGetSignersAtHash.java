@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.clique.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -33,12 +33,12 @@ import java.util.stream.Collectors;
 
 public class CliqueGetSignersAtHash implements JsonRpcMethod {
   private final BlockchainQueries blockchainQueries;
-  private final VoteTallyCache voteTallyCache;
+  private final ValidatorProvider validatorProvider;
 
   public CliqueGetSignersAtHash(
-      final BlockchainQueries blockchainQueries, final VoteTallyCache voteTallyCache) {
+      final BlockchainQueries blockchainQueries, final ValidatorProvider validatorProvider) {
     this.blockchainQueries = blockchainQueries;
-    this.voteTallyCache = voteTallyCache;
+    this.validatorProvider = validatorProvider;
   }
 
   @Override
@@ -50,7 +50,7 @@ public class CliqueGetSignersAtHash implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Optional<BlockHeader> blockHeader = determineBlockHeader(requestContext);
     return blockHeader
-        .map(bh -> voteTallyCache.getVoteTallyAfterBlock(bh).getValidators())
+        .map(validatorProvider::getValidatorsAfterBlock)
         .map(addresses -> addresses.stream().map(Objects::toString).collect(Collectors.toList()))
         .<JsonRpcResponse>map(
             addresses -> new JsonRpcSuccessResponse(requestContext.getRequest().getId(), addresses))

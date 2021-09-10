@@ -36,12 +36,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethstats.authentication.ImmutableAuthenticationData;
 import org.hyperledger.besu.ethstats.authentication.ImmutableNodeInfo;
 import org.hyperledger.besu.ethstats.authentication.NodeInfo;
@@ -56,6 +54,7 @@ import org.hyperledger.besu.ethstats.report.PendingTransactionsReport;
 import org.hyperledger.besu.ethstats.request.EthStatsRequest;
 import org.hyperledger.besu.ethstats.util.NetstatsUrl;
 import org.hyperledger.besu.ethstats.util.PrimusHeartBeatsHelper;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.math.BigInteger;
@@ -439,8 +438,8 @@ public class EthStatsService {
     // retrieves transactions from the last blocks and takes the lowest gas price. If no transaction
     // is present we return the minTransactionGasPrice of the mining coordinator
     return block.getBody().getTransactions().stream()
-        .min(Comparator.comparing(Transaction::getGasPrice))
-        .map(Transaction::getGasPrice)
+        .min(Comparator.comparing(t -> t.getEffectiveGasPrice(block.getHeader().getBaseFee())))
+        .map(t -> t.getEffectiveGasPrice(block.getHeader().getBaseFee()))
         .filter(wei -> wei.getValue().longValue() > 0)
         .orElse(miningCoordinator.getMinTransactionGasPrice())
         .getValue()

@@ -15,13 +15,16 @@
 package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.nio.file.Path;
@@ -41,6 +44,7 @@ public class BesuNodeConfiguration {
   private final boolean devMode;
   private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean p2pEnabled;
+  private final Optional<TLSConfiguration> tlsConfiguration;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean discoveryEnabled;
   private final boolean bootnodeEligible;
@@ -54,6 +58,8 @@ public class BesuNodeConfiguration {
   private final Optional<PrivacyParameters> privacyParameters;
   private final List<String> runCommand;
   private final NetworkName network;
+  private final Optional<KeyPair> keyPair;
+  private final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration;
 
   BesuNodeConfiguration(
       final String name,
@@ -68,6 +74,7 @@ public class BesuNodeConfiguration {
       final NetworkName network,
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
+      final Optional<TLSConfiguration> tlsConfiguration,
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
@@ -79,7 +86,9 @@ public class BesuNodeConfiguration {
       final List<String> staticNodes,
       final boolean isDnsEnabled,
       final Optional<PrivacyParameters> privacyParameters,
-      final List<String> runCommand) {
+      final List<String> runCommand,
+      final Optional<KeyPair> keyPair,
+      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -92,6 +101,7 @@ public class BesuNodeConfiguration {
     this.network = network;
     this.genesisConfigProvider = genesisConfigProvider;
     this.p2pEnabled = p2pEnabled;
+    this.tlsConfiguration = tlsConfiguration;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
@@ -104,6 +114,8 @@ public class BesuNodeConfiguration {
     this.isDnsEnabled = isDnsEnabled;
     this.privacyParameters = privacyParameters;
     this.runCommand = runCommand;
+    this.keyPair = keyPair;
+    this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
   }
 
   public String getName() {
@@ -154,6 +166,10 @@ public class BesuNodeConfiguration {
     return p2pEnabled;
   }
 
+  public Optional<TLSConfiguration> getTLSConfiguration() {
+    return tlsConfiguration;
+  }
+
   public NetworkingConfiguration getNetworkingConfiguration() {
     return networkingConfiguration;
   }
@@ -200,5 +216,13 @@ public class BesuNodeConfiguration {
 
   public NetworkName getNetwork() {
     return network;
+  }
+
+  public Optional<KeyPair> getKeyPair() {
+    return keyPair;
+  }
+
+  public Optional<PkiKeyStoreConfiguration> getPkiKeyStoreConfiguration() {
+    return pkiKeyStoreConfiguration;
   }
 }

@@ -29,6 +29,7 @@ jar {
 
 dependencies {
   implementation project(':config')
+  implementation project(':pki')
   implementation project(':consensus:clique')
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
@@ -62,10 +63,10 @@ dependencies {
   implementation 'io.vertx:vertx-web'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.logging.log4j:log4j-core'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:config'
-  implementation 'org.apache.tuweni:toml'
-  implementation 'org.apache.tuweni:units'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-config'
+  implementation 'org.apache.tuweni:tuweni-toml'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'
   implementation 'net.consensys.services:quorum-mainnet-launcher'
@@ -84,27 +85,10 @@ dependencies {
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'junit:junit'
   testImplementation 'org.apache.commons:commons-text'
-  testImplementation 'org.apache.tuweni:bytes'
-  testImplementation 'org.apache.tuweni:units'
+  testImplementation 'org.apache.tuweni:tuweni-bytes'
+  testImplementation 'org.apache.tuweni:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'commons-io:commons-io'
 }
-
-task testJar(type: Jar) {
-  archiveFileName = 'testPlugins.jar'
-  manifest {
-    attributes(
-      'Specification-Title': archiveBaseName,
-      'Specification-Version': project.version,
-      'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
-      )
-  }
-  archiveClassifier = 'tests'
-  from sourceSets.test.output
-}
-
-configurations { testArtifacts }
-
-artifacts { testArtifacts testJar }

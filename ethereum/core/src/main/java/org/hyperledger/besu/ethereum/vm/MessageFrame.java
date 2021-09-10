@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptySet;
 
@@ -29,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
+import org.hyperledger.besu.ethereum.vm.FixedStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
 
 import java.util.ArrayList;
@@ -221,7 +221,6 @@ public class MessageFrame {
   private final Address recipient;
   private final Address originator;
   private final Address contract;
-  private final int contractAccountVersion;
   private final Wei gasPrice;
   private final Bytes inputData;
   private final Address sender;
@@ -238,6 +237,7 @@ public class MessageFrame {
 
   // Privacy Execution Environment fields.
   private final Hash transactionHash;
+  private final Transaction transaction;
 
   // Miscellaneous fields.
   private Optional<ExceptionalHaltReason> exceptionalHaltReason = Optional.empty();
@@ -260,7 +260,6 @@ public class MessageFrame {
       final Address recipient,
       final Address originator,
       final Address contract,
-      final int contractAccountVersion,
       final Wei gasPrice,
       final Bytes inputData,
       final Address sender,
@@ -276,6 +275,7 @@ public class MessageFrame {
       final Boolean isPersistingPrivateState,
       final PrivateMetadataUpdater privateMetadataUpdater,
       final Hash transactionHash,
+      final Transaction transaction,
       final Optional<Bytes> revertReason,
       final int maxStackSize,
       final Set<Address> accessListWarmAddresses,
@@ -299,7 +299,6 @@ public class MessageFrame {
     this.recipient = recipient;
     this.originator = originator;
     this.contract = contract;
-    this.contractAccountVersion = contractAccountVersion;
     this.gasPrice = gasPrice;
     this.inputData = inputData;
     this.sender = sender;
@@ -315,6 +314,7 @@ public class MessageFrame {
     this.isPersistingPrivateState = isPersistingPrivateState;
     this.privateMetadataUpdater = privateMetadataUpdater;
     this.transactionHash = transactionHash;
+    this.transaction = transaction;
     this.revertReason = revertReason;
 
     this.warmedUpAddresses = new HashSet<>(accessListWarmAddresses);
@@ -324,16 +324,13 @@ public class MessageFrame {
 
     // the warmed up addresses will always be a superset of the address keys in the warmed up
     // storage so we can do both warm ups in one pass
-    accessListWarmAddresses
-        .parallelStream()
+    accessListWarmAddresses.parallelStream()
         .forEach(
             address ->
                 Optional.ofNullable(worldState.get(address))
                     .ifPresent(
                         account ->
-                            warmedUpStorage
-                                .get(address)
-                                .parallelStream()
+                            warmedUpStorage.get(address).parallelStream()
                                 .forEach(
                                     storageKeyBytes ->
                                         account.getStorageValue(
@@ -450,9 +447,9 @@ public class MessageFrame {
    *
    * @param offset The item's position relative to the top of the stack
    * @return The item at the specified offset in the stack
-   * @throws IndexOutOfBoundsException if the offset is out of range
+   * @throws UnderflowException if the offset is out of range
    */
-  public Bytes32 getStackItem(final int offset) {
+  public UInt256 getStackItem(final int offset) {
     return stack.get(offset);
   }
 
@@ -460,9 +457,9 @@ public class MessageFrame {
    * Removes the item at the top of the stack.
    *
    * @return the item at the top of the stack
-   * @throws IllegalStateException if the stack is empty
+   * @throws UnderflowException if the stack is empty
    */
-  public Bytes32 popStackItem() {
+  public UInt256 popStackItem() {
     return stack.pop();
   }
 
@@ -480,7 +477,7 @@ public class MessageFrame {
    *
    * @param value The value to push onto the stack.
    */
-  public void pushStackItem(final Bytes32 value) {
+  public void pushStackItem(final UInt256 value) {
     stack.push(value);
   }
 
@@ -491,7 +488,7 @@ public class MessageFrame {
    * @param value The value to set the stack item to
    * @throws IllegalStateException if the stack is too small
    */
-  public void setStackItem(final int offset, final Bytes32 value) {
+  public void setStackItem(final int offset, final UInt256 value) {
     stack.set(offset, value);
   }
 
@@ -566,14 +563,25 @@ public class MessageFrame {
   }
 
   /**
-   * Read bytes in memory.
+   * Read bytes in memory as mutable.
+   *
+   * @param offset The offset in memory
+   * @param length The length of the bytes to read
+   * @return The bytes in the specified range
+   */
+  public Bytes readMutableMemory(final UInt256 offset, final UInt256 length) {
+    return readMutableMemory(offset, length, false);
+  }
+
+  /**
+   * Read bytes in memory .
    *
    * @param offset The offset in memory
    * @param length The length of the bytes to read
    * @return The bytes in the specified range
    */
   public Bytes readMemory(final UInt256 offset, final UInt256 length) {
-    return readMemory(offset, length, false);
+    return readMutableMemory(offset, length, false).copy();
   }
 
   /**
@@ -584,7 +592,7 @@ public class MessageFrame {
    * @param explicitMemoryRead true if triggered by a memory opcode, false otherwise
    * @return The bytes in the specified range
    */
-  public Bytes readMemory(
+  public Bytes readMutableMemory(
       final UInt256 offset, final UInt256 length, final boolean explicitMemoryRead) {
     final Bytes value = memory.getBytes(offset, length);
     if (explicitMemoryRead) {
@@ -1056,16 +1064,16 @@ public class MessageFrame {
     return transactionHash;
   }
 
+  public Transaction getTransaction() {
+    return transaction;
+  }
+
   public void setCurrentOperation(final Operation currentOperation) {
     this.currentOperation = currentOperation;
   }
 
   public void setGasCost(final Optional<Gas> gasCost) {
     this.gasCost = gasCost;
-  }
-
-  public int getContractAccountVersion() {
-    return contractAccountVersion;
   }
 
   Optional<MemoryEntry> getMaybeUpdatedMemory() {
@@ -1091,7 +1099,6 @@ public class MessageFrame {
     private Address address;
     private Address originator;
     private Address contract;
-    private int contractAccountVersion = -1;
     private Wei gasPrice;
     private Bytes inputData;
     private Address sender;
@@ -1108,6 +1115,7 @@ public class MessageFrame {
     private Boolean isPersistingPrivateState = false;
     private PrivateMetadataUpdater privateMetadataUpdater = null;
     private Hash transactionHash;
+    private Transaction transaction;
     private Optional<Bytes> reason = Optional.empty();
     private Set<Address> accessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
@@ -1149,12 +1157,6 @@ public class MessageFrame {
 
     public Builder contract(final Address contract) {
       this.contract = contract;
-      return this;
-    }
-
-    public Builder contractAccountVersion(final int contractAccountVersion) {
-      checkArgument(contractAccountVersion >= 0, "Contract account version cannot be negative");
-      this.contractAccountVersion = contractAccountVersion;
       return this;
     }
 
@@ -1238,6 +1240,11 @@ public class MessageFrame {
       return this;
     }
 
+    public Builder transaction(final Transaction transaction) {
+      this.transaction = transaction;
+      return this;
+    }
+
     public Builder reason(final Bytes reason) {
       this.reason = Optional.ofNullable(reason);
       return this;
@@ -1274,7 +1281,6 @@ public class MessageFrame {
       checkState(miningBeneficiary != null, "Missing mining beneficiary");
       checkState(blockHashLookup != null, "Missing block hash lookup");
       checkState(isPersistingPrivateState != null, "Missing isPersistingPrivateState");
-      checkState(contractAccountVersion != -1, "Missing contractAccountVersion");
     }
 
     public MessageFrame build() {
@@ -1289,7 +1295,6 @@ public class MessageFrame {
           address,
           originator,
           contract,
-          contractAccountVersion,
           gasPrice,
           inputData,
           sender,
@@ -1305,6 +1310,7 @@ public class MessageFrame {
           isPersistingPrivateState,
           privateMetadataUpdater,
           transactionHash,
+          transaction,
           reason,
           maxStackSize,
           accessListWarmAddresses,

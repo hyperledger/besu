@@ -33,8 +33,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class StandardJsonTracer implements OperationTracer {
 
-  private static final int EIP_150_DIVISOR = 64;
-
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final PrintStream out;
@@ -88,18 +86,8 @@ public class StandardJsonTracer implements OperationTracer {
     final OperationResult executeResult = executeOperation.execute();
 
     traceLine.put("refund", messageFrame.getGasRefund().toLong());
-
-    if (AbstractCallOperation.class.isAssignableFrom(
-        messageFrame.getCurrentOperation().getClass())) {
-      final AbstractCallOperation callOperation =
-          (AbstractCallOperation) messageFrame.getCurrentOperation();
-      traceLine.put(
-          "gasCost", shortNumber((computeCallGas(callOperation, messageFrame).asUInt256())));
-    } else {
-      traceLine.put(
-          "gasCost",
-          executeResult.getGasCost().map(gas -> shortNumber(gas.asUInt256())).orElse(""));
-    }
+    traceLine.put(
+        "gasCost", executeResult.getGasCost().map(gas -> shortNumber(gas.asUInt256())).orElse(""));
 
     if (showMemory) {
       traceLine.put(
@@ -123,19 +111,7 @@ public class StandardJsonTracer implements OperationTracer {
                     .orElse(""));
     traceLine.put("opName", currentOp.getName());
     traceLine.put("error", error);
-    out.println(traceLine.toString());
-  }
-
-  private Gas computeCallGas(
-      final AbstractCallOperation callOperation, final MessageFrame messageFrame) {
-    final GasCalculator gasCalculator = callOperation.gasCalculator();
-    // as part of EIP 150 the returned costGas is gas - base * 63 / 64.
-    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-150.md
-    final Gas callCost = callOperation.gas(messageFrame);
-    final Gas gasAvailable = callCost.minus(messageFrame.getGasCost().orElse(Gas.ZERO));
-    final Gas gas = gasAvailable.minus(gasAvailable.dividedBy(EIP_150_DIVISOR));
-    final Gas baseCost = gasCalculator.callOperationBaseGasCost();
-    return ((gas.compareTo(callCost) < 0) ? gas : callCost).plus(baseCost);
+    out.println(traceLine);
   }
 
   @Override

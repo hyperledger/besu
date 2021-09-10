@@ -52,6 +52,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -119,16 +120,13 @@ public class BesuEventsImplTest {
     when(mockEthContext.getEthMessages()).thenReturn(mockEthMessages);
     when(mockEthContext.getEthPeers()).thenReturn(mockEthPeers);
     when(mockEthContext.getScheduler()).thenReturn(mockEthScheduler);
-    when(mockEthPeers.streamAvailablePeers())
-        .thenReturn(Stream.empty())
-        .thenReturn(Stream.empty())
-        .thenReturn(Stream.empty())
-        .thenReturn(Stream.empty());
+    when(mockEthPeers.streamAvailablePeers()).thenAnswer(z -> Stream.empty());
     when(mockProtocolContext.getBlockchain()).thenReturn(blockchain);
     when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
     when(mockProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);
     when(mockProtocolSpec.getTransactionValidator()).thenReturn(mockTransactionValidator);
-    when(mockTransactionValidator.validate(any(), any(Optional.class)))
+    when(mockProtocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
+    when(mockTransactionValidator.validate(any(), any(Optional.class), any()))
         .thenReturn(ValidationResult.valid());
     when(mockTransactionValidator.validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
@@ -149,9 +147,7 @@ public class BesuEventsImplTest {
             new NoOpMetricsSystem(),
             syncState,
             Wei.ZERO,
-            txPoolConfig,
-            true,
-            Optional.empty());
+            txPoolConfig);
 
     serviceImpl = new BesuEventsImpl(blockchain, blockBroadcaster, transactionPool, syncState);
   }
@@ -436,7 +432,7 @@ public class BesuEventsImplTest {
     transactionPool.addLocalTransaction(TX2);
 
     assertThat(result.get()).isNotNull();
-    serviceImpl.removeTransactionAddedListener(id);
+    serviceImpl.removeTransactionDroppedListener(id);
     result.set(null);
 
     transactionPool.addLocalTransaction(TX2);

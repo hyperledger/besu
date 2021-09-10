@@ -35,10 +35,7 @@ import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.ArrayList;
@@ -48,13 +45,9 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 class EthServer {
-  private static final Logger LOG = LogManager.getLogger();
-
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final TransactionPool transactionPool;
@@ -72,106 +65,41 @@ class EthServer {
     this.transactionPool = transactionPool;
     this.ethMessages = ethMessages;
     this.ethereumWireProtocolConfiguration = ethereumWireProtocolConfiguration;
-    this.setupListeners();
+    this.registerResponseConstructors();
   }
 
-  private void setupListeners() {
-    ethMessages.subscribe(EthPV62.GET_BLOCK_HEADERS, this::handleGetBlockHeaders);
-    ethMessages.subscribe(EthPV62.GET_BLOCK_BODIES, this::handleGetBlockBodies);
-    ethMessages.subscribe(EthPV63.GET_RECEIPTS, this::handleGetReceipts);
-    ethMessages.subscribe(EthPV63.GET_NODE_DATA, this::handleGetNodeData);
-    if (ethereumWireProtocolConfiguration.isEth65Enabled()) {
-      ethMessages.subscribe(EthPV65.GET_POOLED_TRANSACTIONS, this::handleGetPooledTransactions);
-    }
-  }
-
-  private void handleGetBlockHeaders(final EthMessage message) {
-    LOG.trace("Responding to GET_BLOCK_HEADERS request");
-    try {
-      final MessageData response =
-          constructGetHeadersResponse(
-              blockchain,
-              message.getData(),
-              ethereumWireProtocolConfiguration.getMaxGetBlockHeaders());
-      message.getPeer().send(response);
-    } catch (final RLPException e) {
-      LOG.debug(
-          "Received malformed GET_BLOCK_HEADERS message, disconnecting: {}", message.getPeer(), e);
-      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-    } catch (final PeerNotConnected peerNotConnected) {
-      // Peer disconnected before we could respond - nothing to do
-    }
-  }
-
-  private void handleGetBlockBodies(final EthMessage message) {
-    LOG.trace("Responding to GET_BLOCK_BODIES request");
-    try {
-      final MessageData response =
-          constructGetBodiesResponse(
-              blockchain,
-              message.getData(),
-              ethereumWireProtocolConfiguration.getMaxGetBlockBodies());
-      message.getPeer().send(response);
-    } catch (final RLPException e) {
-      LOG.debug(
-          "Received malformed GET_BLOCK_BODIES message, disconnecting: {}", message.getPeer(), e);
-      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-    } catch (final PeerNotConnected peerNotConnected) {
-      // Peer disconnected before we could respond - nothing to do
-    }
-  }
-
-  private void handleGetReceipts(final EthMessage message) {
-    LOG.trace("Responding to GET_RECEIPTS request");
-    try {
-      final MessageData response =
-          constructGetReceiptsResponse(
-              blockchain, message.getData(), ethereumWireProtocolConfiguration.getMaxGetReceipts());
-      message.getPeer().send(response);
-    } catch (final RLPException e) {
-      LOG.debug("Received malformed GET_RECEIPTS message, disconnecting: {}", message.getPeer(), e);
-      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-    } catch (final PeerNotConnected peerNotConnected) {
-      // Peer disconnected before we could respond - nothing to do
-    }
-  }
-
-  private void handleGetNodeData(final EthMessage message) {
-    LOG.trace("Responding to GET_NODE_DATA request");
-    try {
-      final MessageData response =
-          constructGetNodeDataResponse(
-              worldStateArchive,
-              message.getData(),
-              ethereumWireProtocolConfiguration.getMaxGetNodeData());
-      message.getPeer().send(response);
-    } catch (final RLPException e) {
-      LOG.debug(
-          "Received malformed GET_NODE_DATA message, disconnecting: {}", message.getPeer(), e);
-      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-    } catch (final PeerNotConnected peerNotConnected) {
-      // Peer disconnected before we could respond - nothing to do
-    }
-  }
-
-  private void handleGetPooledTransactions(final EthMessage message) {
-    LOG.trace("Responding to GET_POOLED_TRANSACTIONS request");
-    try {
-      final MessageData response =
-          constructGetPooledTransactionsResponse(
-              transactionPool,
-              message.getData(),
-              ethereumWireProtocolConfiguration.getMaxGetPooledTransactions());
-      message.getPeer().send(response);
-    } catch (final RLPException e) {
-      LOG.debug(
-          "Received malformed GET_POOLED_TRANSACTIONS message, disconnecting: {}",
-          message.getPeer(),
-          e);
-      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-    } catch (final PeerNotConnected peerNotConnected) {
-      // Peer disconnected before we could respond - nothing to do
-    }
+  private void registerResponseConstructors() {
+    ethMessages.registerResponseConstructor(
+        EthPV62.GET_BLOCK_HEADERS,
+        messageData ->
+            constructGetHeadersResponse(
+                blockchain,
+                messageData,
+                ethereumWireProtocolConfiguration.getMaxGetBlockHeaders()));
+    ethMessages.registerResponseConstructor(
+        EthPV62.GET_BLOCK_BODIES,
+        messageData ->
+            constructGetBodiesResponse(
+                blockchain, messageData, ethereumWireProtocolConfiguration.getMaxGetBlockBodies()));
+    ethMessages.registerResponseConstructor(
+        EthPV63.GET_RECEIPTS,
+        messageData ->
+            constructGetReceiptsResponse(
+                blockchain, messageData, ethereumWireProtocolConfiguration.getMaxGetReceipts()));
+    ethMessages.registerResponseConstructor(
+        EthPV63.GET_NODE_DATA,
+        messageData ->
+            constructGetNodeDataResponse(
+                worldStateArchive,
+                messageData,
+                ethereumWireProtocolConfiguration.getMaxGetNodeData()));
+    ethMessages.registerResponseConstructor(
+        EthPV65.GET_POOLED_TRANSACTIONS,
+        messageData ->
+            constructGetPooledTransactionsResponse(
+                transactionPool,
+                messageData,
+                ethereumWireProtocolConfiguration.getMaxGetPooledTransactions()));
   }
 
   static MessageData constructGetHeadersResponse(

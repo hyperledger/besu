@@ -26,13 +26,14 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
@@ -46,24 +47,31 @@ public class NodeSmartContractV2PermissioningControllerTest {
   /*
    Payloads created using Remix to call method connectionAllowed(string, string, uint16)
   */
-  private static final Bytes SOURCE_ENODE_EXPECTED_PAYLOAD =
+  private static final Bytes SOURCE_ENODE_EXPECTED_PAYLOAD_IP =
       Bytes.fromHexString(
           "0x45a59e5b00000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000765f0000000000000000000000000000000000000000000000000000000000000080666362653966383332313834383762336330623530383738313933383830653663323563666438363730386330613062663063613931663063653633333734366138393266653234306166613562396138383062386263613438653861323237303465663933376664646132643763633633653464343165643162343137616500000000000000000000000000000000000000000000000000000000000000093132372e302e302e310000000000000000000000000000000000000000000000");
-  private static final Bytes DESTINATION_ENODE_EXPECTED_PAYLOAD =
+  private static final Bytes DESTINATION_ENODE_EXPECTED_PAYLOAD_IP =
       Bytes.fromHexString(
           "0x45a59e5b000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000009dd40000000000000000000000000000000000000000000000000000000000000080333534386338376239393230666631366161346264636630316338356632353131376132396165313537346437353962616434386363393436336438653966376333633164316539666230643238653733383938393531663930653032373134616262373730666436643232653930333731383832613435363538383030653900000000000000000000000000000000000000000000000000000000000000093132372e302e302e310000000000000000000000000000000000000000000000");
 
+  private static final Bytes SOURCE_ENODE_EXPECTED_PAYLOAD_DNS =
+      Bytes.fromHexString(
+          "0x45a59e5b00000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000765f0000000000000000000000000000000000000000000000000000000000000080666362653966383332313834383762336330623530383738313933383830653663323563666438363730386330613062663063613931663063653633333734366138393266653234306166613562396138383062386263613438653861323237303465663933376664646132643763633633653464343165643162343137616500000000000000000000000000000000000000000000000000000000000000096c6f63616c686f73740000000000000000000000000000000000000000000000");
+  private static final Bytes DESTINATION_ENODE_EXPECTED_PAYLOAD_DNS =
+      Bytes.fromHexString(
+          "0x45a59e5b000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000009dd40000000000000000000000000000000000000000000000000000000000000080333534386338376239393230666631366161346264636630316338356632353131376132396165313537346437353962616434386363393436336438653966376333633164316539666230643238653733383938393531663930653032373134616262373730666436643232653930333731383832613435363538383030653900000000000000000000000000000000000000000000000000000000000000096c6f63616c686f73740000000000000000000000000000000000000000000000");
+
   private static final EnodeURL SOURCE_ENODE_IPV4 =
-      EnodeURL.fromString(
+      EnodeURLImpl.fromString(
           "enode://fcbe9f83218487b3c0b50878193880e6c25cfd86708c0a0bf0ca91f0ce633746a892fe240afa5b9a880b8bca48e8a22704ef937fdda2d7cc63e4d41ed1b417ae@127.0.0.1:30303");
   private static final EnodeURL DESTINATION_ENODE_IPV4 =
-      EnodeURL.fromString(
+      EnodeURLImpl.fromString(
           "enode://3548c87b9920ff16aa4bdcf01c85f25117a29ae1574d759bad48cc9463d8e9f7c3c1d1e9fb0d28e73898951f90e02714abb770fd6d22e90371882a45658800e9@127.0.0.1:40404");
   private static final EnodeURL SOURCE_ENODE_IPV6 =
-      EnodeURL.fromString(
+      EnodeURLImpl.fromString(
           "enode://fcbe9f83218487b3c0b50878193880e6c25cfd86708c0a0bf0ca91f0ce633746a892fe240afa5b9a880b8bca48e8a22704ef937fdda2d7cc63e4d41ed1b417ae@[::ffff:7f00:0001]:30303");
   private static final EnodeURL DESTINATION_ENODE_IPV6 =
-      EnodeURL.fromString(
+      EnodeURLImpl.fromString(
           "enode://3548c87b9920ff16aa4bdcf01c85f25117a29ae1574d759bad48cc9463d8e9f7c3c1d1e9fb0d28e73898951f90e02714abb770fd6d22e90371882a45658800e9@[::ffff:7f00:0001]:40404");
 
   private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
@@ -85,7 +93,7 @@ public class NodeSmartContractV2PermissioningControllerTest {
     final TransactionSimulatorResult txSimulatorResult =
         transactionSimulatorResult(Bytes.random(10), ValidationResult.valid());
 
-    when(transactionSimulator.processAtHead(eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD))))
+    when(transactionSimulator.processAtHead(eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP))))
         .thenReturn(Optional.of(txSimulatorResult));
 
     assertThatIllegalStateException()
@@ -101,7 +109,7 @@ public class NodeSmartContractV2PermissioningControllerTest {
         transactionSimulatorResult(
             NodeSmartContractV2PermissioningController.FALSE_RESPONSE, ValidationResult.valid());
 
-    when(transactionSimulator.processAtHead(eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD))))
+    when(transactionSimulator.processAtHead(eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP))))
         .thenReturn(Optional.of(txSimulatorResult));
 
     boolean isPermitted =
@@ -116,7 +124,7 @@ public class NodeSmartContractV2PermissioningControllerTest {
             NodeSmartContractV2PermissioningController.TRUE_RESPONSE,
             ValidationResult.invalid(TransactionInvalidReason.INTERNAL_ERROR));
 
-    when(transactionSimulator.processAtHead(eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD))))
+    when(transactionSimulator.processAtHead(eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP))))
         .thenReturn(Optional.of(txSimulatorResult));
 
     boolean isPermitted =
@@ -130,9 +138,9 @@ public class NodeSmartContractV2PermissioningControllerTest {
         transactionSimulatorResult(
             NodeSmartContractV2PermissioningController.TRUE_RESPONSE, ValidationResult.valid());
 
-    when(transactionSimulator.processAtHead(eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD))))
+    when(transactionSimulator.processAtHead(eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP))))
         .thenReturn(Optional.of(txSimulatorResult));
-    when(transactionSimulator.processAtHead(eq(callParams(DESTINATION_ENODE_EXPECTED_PAYLOAD))))
+    when(transactionSimulator.processAtHead(eq(callParams(DESTINATION_ENODE_EXPECTED_PAYLOAD_IP))))
         .thenReturn(Optional.of(txSimulatorResult));
 
     boolean isPermitted =
@@ -148,9 +156,9 @@ public class NodeSmartContractV2PermissioningControllerTest {
         transactionSimulatorResult(
             NodeSmartContractV2PermissioningController.TRUE_RESPONSE, ValidationResult.valid());
 
-    when(transactionSimulator.processAtHead(eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD))))
+    when(transactionSimulator.processAtHead(eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP))))
         .thenReturn(Optional.of(txSimulatorResult));
-    when(transactionSimulator.processAtHead(eq(callParams(DESTINATION_ENODE_EXPECTED_PAYLOAD))))
+    when(transactionSimulator.processAtHead(eq(callParams(DESTINATION_ENODE_EXPECTED_PAYLOAD_IP))))
         .thenReturn(Optional.of(txSimulatorResult));
 
     boolean isPermitted =
@@ -158,6 +166,33 @@ public class NodeSmartContractV2PermissioningControllerTest {
     assertThat(isPermitted).isTrue();
 
     verify(transactionSimulator, times(2)).processAtHead(any());
+  }
+
+  @Test
+  public void expectedPayloadWhenCheckingPermissioningWithAlternateDNS() {
+    final TransactionSimulatorResult txSimulatorResultFalse =
+        transactionSimulatorResult(
+            NodeSmartContractV2PermissioningController.FALSE_RESPONSE, ValidationResult.valid());
+
+    final TransactionSimulatorResult txSimulatorResultTrue =
+        transactionSimulatorResult(
+            NodeSmartContractV2PermissioningController.TRUE_RESPONSE, ValidationResult.valid());
+
+    when(transactionSimulator.processAtHead(eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP))))
+        .thenReturn(Optional.of(txSimulatorResultFalse));
+    when(transactionSimulator.processAtHead(eq(callParams(DESTINATION_ENODE_EXPECTED_PAYLOAD_IP))))
+        .thenReturn(Optional.of(txSimulatorResultFalse));
+
+    when(transactionSimulator.processAtHead(eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_DNS))))
+        .thenReturn(Optional.of(txSimulatorResultTrue));
+    when(transactionSimulator.processAtHead(eq(callParams(DESTINATION_ENODE_EXPECTED_PAYLOAD_DNS))))
+        .thenReturn(Optional.of(txSimulatorResultTrue));
+
+    boolean isPermitted =
+        permissioningController.checkSmartContractRules(SOURCE_ENODE_IPV4, DESTINATION_ENODE_IPV4);
+    assertThat(isPermitted).isTrue();
+
+    verify(transactionSimulator, times(4)).processAtHead(any());
   }
 
   private CallParameter callParams(final Bytes payload) {

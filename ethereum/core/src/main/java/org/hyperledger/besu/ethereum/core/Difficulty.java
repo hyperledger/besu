@@ -69,12 +69,22 @@ public final class Difficulty extends BaseUInt256Value<Difficulty> implements Qu
 
   @Override
   public Number getValue() {
+    return getAsBigInteger();
+  }
+
+  @Override
+  public BigInteger getAsBigInteger() {
     return toBigInteger();
   }
 
   @Override
   public String toHexString() {
     return super.toHexString();
+  }
+
+  @Override
+  public String toShortHexString() {
+    return super.isZero() ? "0x0" : super.toShortHexString();
   }
 
   @Override

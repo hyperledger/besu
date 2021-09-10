@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodePermissioningControllerFactory;
@@ -31,6 +31,8 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -53,7 +55,7 @@ public class NodePermissioningControllerFactoryTest {
   private final String enode =
       "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:1111";
   Collection<EnodeURL> bootnodes = Collections.emptyList();
-  EnodeURL selfEnode = EnodeURL.fromString(enode);
+  EnodeURL selfEnode = EnodeURLImpl.fromString(enode);
   LocalPermissioningConfiguration localPermissioningConfig;
   SmartContractPermissioningConfiguration smartContractPermissioningConfiguration;
   PermissioningConfiguration config;
@@ -75,9 +77,10 @@ public class NodePermissioningControllerFactoryTest {
             selfEnode.getNodeId(),
             transactionSimulator,
             new NoOpMetricsSystem(),
-            blockchain);
+            blockchain,
+            Collections.emptyList());
 
-    List<NodePermissioningProvider> providers = controller.getProviders();
+    List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(0);
     assertThat(controller.getSyncStatusNodePermissioningProvider()).isNotPresent();
   }
@@ -103,12 +106,13 @@ public class NodePermissioningControllerFactoryTest {
             selfEnode.getNodeId(),
             transactionSimulator,
             new NoOpMetricsSystem(),
-            blockchain);
+            blockchain,
+            Collections.emptyList());
 
-    List<NodePermissioningProvider> providers = controller.getProviders();
+    List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(1);
 
-    NodePermissioningProvider p1 = providers.get(0);
+    NodeConnectionPermissioningProvider p1 = providers.get(0);
     assertThat(p1).isInstanceOf(NodeSmartContractPermissioningController.class);
     assertThat(controller.getSyncStatusNodePermissioningProvider()).isEmpty();
   }
@@ -131,12 +135,13 @@ public class NodePermissioningControllerFactoryTest {
             selfEnode.getNodeId(),
             transactionSimulator,
             new NoOpMetricsSystem(),
-            blockchain);
+            blockchain,
+            Collections.emptyList());
 
-    List<NodePermissioningProvider> providers = controller.getProviders();
+    List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(1);
 
-    NodePermissioningProvider p1 = providers.get(0);
+    NodeConnectionPermissioningProvider p1 = providers.get(0);
     assertThat(p1).isInstanceOf(NodeLocalConfigPermissioningController.class);
     assertThat(controller.getSyncStatusNodePermissioningProvider()).isNotPresent();
   }
@@ -167,12 +172,13 @@ public class NodePermissioningControllerFactoryTest {
             selfEnode.getNodeId(),
             transactionSimulator,
             new NoOpMetricsSystem(),
-            blockchain);
+            blockchain,
+            Collections.emptyList());
 
-    List<NodePermissioningProvider> providers = controller.getProviders();
+    List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(1);
 
-    NodePermissioningProvider p1 = providers.get(0);
+    NodeConnectionPermissioningProvider p1 = providers.get(0);
     assertThat(p1).isInstanceOf(NodeLocalConfigPermissioningController.class);
     assertThat(controller.getSyncStatusNodePermissioningProvider()).isNotPresent();
   }
@@ -202,13 +208,14 @@ public class NodePermissioningControllerFactoryTest {
             selfEnode.getNodeId(),
             transactionSimulator,
             new NoOpMetricsSystem(),
-            blockchain);
+            blockchain,
+            Collections.emptyList());
 
-    List<NodePermissioningProvider> providers = controller.getProviders();
+    List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(2);
 
-    NodePermissioningProvider p1 = providers.get(0);
-    NodePermissioningProvider p2 = providers.get(1);
+    NodeConnectionPermissioningProvider p1 = providers.get(0);
+    NodeConnectionPermissioningProvider p2 = providers.get(1);
     if (p1.getClass() == NodeLocalConfigPermissioningController.class) {
       assertThat(p2).isInstanceOf(NodeSmartContractPermissioningController.class);
     } else {
@@ -241,7 +248,8 @@ public class NodePermissioningControllerFactoryTest {
             selfEnode.getNodeId(),
             transactionSimulator,
             new NoOpMetricsSystem(),
-            blockchain);
+            blockchain,
+            Collections.emptyList());
 
     assertThat(controller.getSyncStatusNodePermissioningProvider()).isPresent();
   }
@@ -271,7 +279,8 @@ public class NodePermissioningControllerFactoryTest {
                         selfEnode.getNodeId(),
                         transactionSimulator,
                         new NoOpMetricsSystem(),
-                        blockchain));
+                        blockchain,
+                        Collections.emptyList()));
 
     assertThat(thrown)
         .isInstanceOf(IllegalStateException.class)

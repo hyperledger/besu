@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNot
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.time.Clock;
 import java.util.Collections;
@@ -59,21 +61,30 @@ public class EthPeer {
 
   private final int maxTrackedSeenBlocks = 300;
 
-  private final Set<Hash> knownBlocks;
+  private final Set<Hash> knownBlocks =
+      Collections.newSetFromMap(
+          Collections.synchronizedMap(
+              new LinkedHashMap<>(16, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(final Map.Entry<Hash, Boolean> eldest) {
+                  return size() > maxTrackedSeenBlocks;
+                }
+              }));
   private final String protocolName;
   private final Clock clock;
-  private final ChainState chainHeadState;
+  private final List<NodeMessagePermissioningProvider> permissioningProviders;
+  private final ChainState chainHeadState = new ChainState();
   private final AtomicBoolean statusHasBeenSentToPeer = new AtomicBoolean(false);
   private final AtomicBoolean statusHasBeenReceivedFromPeer = new AtomicBoolean(false);
   private final AtomicBoolean fullyValidated = new AtomicBoolean(false);
   private final AtomicInteger lastProtocolVersion = new AtomicInteger(0);
 
   private volatile long lastRequestTimestamp = 0;
-  private final RequestManager headersRequestManager = new RequestManager(this);
-  private final RequestManager bodiesRequestManager = new RequestManager(this);
-  private final RequestManager receiptsRequestManager = new RequestManager(this);
-  private final RequestManager nodeDataRequestManager = new RequestManager(this);
-  private final RequestManager pooledTransactionsRequestManager = new RequestManager(this);
+  private final RequestManager headersRequestManager;
+  private final RequestManager bodiesRequestManager;
+  private final RequestManager receiptsRequestManager;
+  private final RequestManager nodeDataRequestManager;
+  private final RequestManager pooledTransactionsRequestManager;
 
   private final AtomicReference<Consumer<EthPeer>> onStatusesExchanged = new AtomicReference<>();
   private final PeerReputation reputation = new PeerReputation();
@@ -85,25 +96,23 @@ public class EthPeer {
       final String protocolName,
       final Consumer<EthPeer> onStatusesExchanged,
       final List<PeerValidator> peerValidators,
-      final Clock clock) {
+      final Clock clock,
+      final List<NodeMessagePermissioningProvider> permissioningProviders) {
     this.connection = connection;
     this.protocolName = protocolName;
     this.clock = clock;
-    knownBlocks =
-        Collections.newSetFromMap(
-            Collections.synchronizedMap(
-                new LinkedHashMap<>(16, 0.75f, true) {
-                  @Override
-                  protected boolean removeEldestEntry(final Map.Entry<Hash, Boolean> eldest) {
-                    return size() > maxTrackedSeenBlocks;
-                  }
-                }));
-    this.chainHeadState = new ChainState();
+    this.permissioningProviders = permissioningProviders;
     this.onStatusesExchanged.set(onStatusesExchanged);
-    for (final PeerValidator peerValidator : peerValidators) {
-      validationStatus.put(peerValidator, false);
-    }
+    peerValidators.forEach(peerValidator -> validationStatus.put(peerValidator, false));
     fullyValidated.set(peerValidators.isEmpty());
+
+    final boolean supportsRequestId =
+        getAgreedCapabilities().stream().anyMatch(EthProtocol::isEth66Compatible);
+    this.headersRequestManager = new RequestManager(this, supportsRequestId);
+    this.bodiesRequestManager = new RequestManager(this, supportsRequestId);
+    this.receiptsRequestManager = new RequestManager(this, supportsRequestId);
+    this.nodeDataRequestManager = new RequestManager(this, supportsRequestId);
+    this.pooledTransactionsRequestManager = new RequestManager(this, supportsRequestId);
   }
 
   public void markValidated(final PeerValidator validator) {
@@ -150,6 +159,23 @@ public class EthPeer {
   }
 
   public RequestManager.ResponseStream send(final MessageData messageData) throws PeerNotConnected {
+    if (permissioningProviders.stream()
+        .anyMatch(p -> !p.isMessagePermitted(connection.getRemoteEnode(), messageData.getCode()))) {
+      LOG.info(
+          "Permissioning blocked sending of message code {} to {}",
+          messageData.getCode(),
+          connection.getRemoteEnode());
+      LOG.debug(
+          "Permissioning blocked by providers {}",
+          () ->
+              permissioningProviders.stream()
+                  .filter(
+                      p ->
+                          !p.isMessagePermitted(
+                              connection.getRemoteEnode(), messageData.getCode())));
+      return null;
+    }
+
     switch (messageData.getCode()) {
       case EthPV62.GET_BLOCK_HEADERS:
         return sendRequest(headersRequestManager, messageData);
@@ -183,13 +209,6 @@ public class EthPeer {
     return sendRequest(headersRequestManager, message);
   }
 
-  private RequestManager.ResponseStream sendRequest(
-      final RequestManager requestManager, final MessageData messageData) throws PeerNotConnected {
-    lastRequestTimestamp = clock.millis();
-    return requestManager.dispatchRequest(
-        () -> connection.sendForProtocol(protocolName, messageData));
-  }
-
   public RequestManager.ResponseStream getBodies(final List<Hash> blockHashes)
       throws PeerNotConnected {
     final GetBlockBodiesMessage message = GetBlockBodiesMessage.create(blockHashes);
@@ -212,6 +231,13 @@ public class EthPeer {
       throws PeerNotConnected {
     final GetPooledTransactionsMessage message = GetPooledTransactionsMessage.create(hashes);
     return sendRequest(pooledTransactionsRequestManager, message);
+  }
+
+  private RequestManager.ResponseStream sendRequest(
+      final RequestManager requestManager, final MessageData messageData) throws PeerNotConnected {
+    lastRequestTimestamp = clock.millis();
+    return requestManager.dispatchRequest(
+        msgData -> connection.sendForProtocol(protocolName, msgData), messageData);
   }
 
   boolean validateReceivedMessage(final EthMessage message) {
@@ -256,30 +282,28 @@ public class EthPeer {
   /**
    * Routes messages originating from this peer to listeners.
    *
-   * @param message the message to dispatch
+   * @param ethMessage the Eth message to dispatch
    */
-  void dispatch(final EthMessage message) {
-    checkArgument(message.getPeer().equals(this), "Mismatched message sent to peer for dispatch");
-    switch (message.getData().getCode()) {
+  void dispatch(final EthMessage ethMessage) {
+    checkArgument(
+        ethMessage.getPeer().equals(this), "Mismatched Eth message sent to peer for dispatch");
+    final int messageCode = ethMessage.getData().getCode();
+    reputation.resetTimeoutCount(messageCode);
+    switch (messageCode) {
       case EthPV62.BLOCK_HEADERS:
-        reputation.resetTimeoutCount(EthPV62.GET_BLOCK_HEADERS);
-        headersRequestManager.dispatchResponse(message);
+        headersRequestManager.dispatchResponse(ethMessage);
         break;
       case EthPV62.BLOCK_BODIES:
-        reputation.resetTimeoutCount(EthPV62.GET_BLOCK_BODIES);
-        bodiesRequestManager.dispatchResponse(message);
+        bodiesRequestManager.dispatchResponse(ethMessage);
         break;
       case EthPV63.RECEIPTS:
-        reputation.resetTimeoutCount(EthPV63.GET_RECEIPTS);
-        receiptsRequestManager.dispatchResponse(message);
+        receiptsRequestManager.dispatchResponse(ethMessage);
         break;
       case EthPV63.NODE_DATA:
-        reputation.resetTimeoutCount(EthPV63.GET_NODE_DATA);
-        nodeDataRequestManager.dispatchResponse(message);
+        nodeDataRequestManager.dispatchResponse(ethMessage);
         break;
       case EthPV65.POOLED_TRANSACTIONS:
-        reputation.resetTimeoutCount(EthPV65.GET_POOLED_TRANSACTIONS);
-        pooledTransactionsRequestManager.dispatchResponse(message);
+        pooledTransactionsRequestManager.dispatchResponse(ethMessage);
         break;
       default:
         // Nothing to do

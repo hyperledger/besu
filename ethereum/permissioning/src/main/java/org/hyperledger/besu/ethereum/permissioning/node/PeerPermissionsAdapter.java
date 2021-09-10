@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.permissioning.node;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.List;
 import java.util.Optional;

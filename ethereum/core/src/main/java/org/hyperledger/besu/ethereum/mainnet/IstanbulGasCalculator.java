@@ -16,17 +16,10 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
-import org.hyperledger.besu.ethereum.core.Transaction;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class IstanbulGasCalculator extends PetersburgGasCalculator {
-
-  private static final Gas TX_DATA_ZERO_COST = Gas.of(4L);
-  private static final Gas ISTANBUL_TX_DATA_NON_ZERO_COST = Gas.of(16L);
-  private static final Gas TX_BASE_COST = Gas.of(21_000L);
 
   private static final Gas SLOAD_GAS = Gas.of(800);
   private static final Gas BALANCE_OPERATION_GAS_COST = Gas.of(700);
@@ -39,30 +32,6 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
   private static final Gas SSTORE_SET_GAS_LESS_SLOAD_GAS = SSTORE_SET_GAS.minus(SLOAD_GAS);
   private static final Gas SSTORE_RESET_GAS_LESS_SLOAD_GAS = SSTORE_RESET_GAS.minus(SLOAD_GAS);
   private static final Gas NEGATIVE_SSTORE_CLEARS_SCHEDULE = Gas.ZERO.minus(SSTORE_CLEARS_SCHEDULE);
-
-  @Override
-  public GasAndAccessedState transactionIntrinsicGasCostAndAccessedState(
-      final Transaction transaction) {
-    final Bytes payload = transaction.getPayload();
-    int zeros = 0;
-    for (int i = 0; i < payload.size(); i++) {
-      if (payload.get(i) == 0) {
-        ++zeros;
-      }
-    }
-    final int nonZeros = payload.size() - zeros;
-
-    Gas cost =
-        TX_BASE_COST
-            .plus(TX_DATA_ZERO_COST.times(zeros))
-            .plus(ISTANBUL_TX_DATA_NON_ZERO_COST.times(nonZeros));
-
-    if (transaction.isContractCreation()) {
-      cost = cost.plus(txCreateExtraGasCost());
-    }
-
-    return new GasAndAccessedState(cost);
-  }
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200

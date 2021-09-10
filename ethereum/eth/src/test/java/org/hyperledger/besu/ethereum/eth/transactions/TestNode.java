@@ -65,7 +65,6 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
@@ -137,9 +136,7 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState,
             Wei.ZERO,
-            TransactionPoolConfiguration.DEFAULT,
-            true,
-            Optional.empty());
+            TransactionPoolConfiguration.DEFAULT);
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(

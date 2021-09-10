@@ -9,12 +9,14 @@
 | Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Adrian Sutton    | ajsutton         | ajsutton         |
 | Antoine Toulme   | atoulme          | atoulme          |
+| Antony Denyer    | antonydenyer     | antonydenyer     |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | David Mechler    | davemec          | davemec          |
 | Edward Mack      | edwardmack       | mackcom          | 
 | Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jason Frame      | jframe           | jframe           |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
+| Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
 | Sally MacFarlane | macfarla         | macfarla         |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
@@ -22,11 +24,13 @@
 | Karim Taam       | matkt            | matkt            |
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
+| Sajida Zouarhi   | sajz             | SajidaZ          |
 | Stefan Pingel    | pinges           | pinges           |
 | Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Danno Ferrin     | shemnon          | shemnon          |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
+| Vijay Michalik   | vmichalik        | VijayMichalik    |
 
 ## Emeritus Maintainers
 
@@ -40,39 +44,67 @@
 
 ## Becoming a Maintainer
 
-Besu welcomes community contribution. Community members may progress to become a
-maintainer. To become a maintainer the following steps occur, roughly in order.
+Besu welcomes community contribution.
+Each community member may progress to become a maintainer.
 
-- 5 significant changes have been authored by the proposed maintainer and
-  accepted.
+There are two ways to become a maintainer:
+
+- Contribute significantly to the code in this repository.
+- Contribute significantly to the doc or being recognized as great help by other contributors.
+  
+### Code maintainers contribution requirement
+
+The requirement to be able to be proposed as a code maintainer is:
+
+- 5 significant changes on code have been authored in this repos by the proposed maintainer and accepted (merged PRs).
+  
+### Other maintainers contribution requirement
+
+The requirements to be able to be proposed as a non-code maintainer are:
+
+- 5 significant changes on documentation have been authored in this repos by the proposed maintainer and accepted (merged pull-requests (PR), excluding hyperledger/besu-doc repos contribution).
+- or 5 significant support answers on official public channels that solved the user issue.
+- or being recognised as a fully involved and significant help for issue triage and assignment or roadmap planning effort and code review by other maintainers.
+  There is no number defined for these criteria as the vote will decide if the criteria are valid.
+  
+### Maintainers approval process
+
+For both types of maintainers, the following steps must occur for a contributor to be "upgraded" as a maintainer:
+
+- The proposed maintainer meets the expectations for the targeted maintainership type (see [code](#code-maintainers-contribution-requirement) and [non code](#other-maintainers-contribution-requirement) types.)
 - The proposed maintainer has the sponsorship of at least one other maintainer.
-  - This sponsoring maintainer will create a PR modifying the list of
-    maintainers.
+  - This sponsoring maintainer will create a proposal PR modifying the list of
+    maintainers. (see [proposal PR template](#proposal-pr-template).)
   - The proposed maintainer accepts the nomination and expresses a willingness
-    to be a long-term (more than 6 month) committer.
-  - This would be a comment in the above PR.
-  - This PR will be communicated in all appropriate communication channels. It
-    should be mentioned in any maintainer/community call. It should also be
-    posted to the appropriate mailing list or chat channels if they exist.
+    to be a long-term (more than 6 month) committer by adding a comment in the proposal PR.
+  - The PR will be communicated in all appropriate communication channels
+    including at least [Besu Rocket Chat](https://wiki.hyperledger.org/display/BESU/Rocket+Chat),
+    the [mailing list](https://lists.hyperledger.org/g/besu)
+    and any maintainer/community call.
 - Approval by at least 3 current maintainers within two weeks of the proposal or
-  an absolute majority of current maintainers.
-  - These votes will be recorded in the PR modifying the list of maintainers.
-- No veto by another maintainer within two weeks of proposal are recorded.
+  an absolute majority (half the total + 1) of current maintainers.
+  - Maintainers will vote by approving the proposal PR.
+- No veto raised by another maintainer within the voting timeframe.
   - All vetoes must be accompanied by a public explanation as a comment in the
-    PR for adding this maintainer
-  - The explanation of the veto must be reasonable.
-  - A veto can be retracted, in that case the approval/veto timeframe is reset.
+    proposal PR.
+  - The explanation of the veto must be reasonable and follow the [Besu code of conduct](https://wiki.hyperledger.org/display/BESU/Code+of+Conduct).
+  - A veto can be retracted, in that case the voting timeframe is reset and all approvals are removed.
   - It is bad form to veto, retract, and veto again.
-- The proposed maintainer becomes a maintainer
-  - Either two weeks have passed since the third approval,
-  - Or an absolute majority of maintainers approve.
-  - In either case, no maintainer presents a veto.
+  
+The proposed maintainer becomes a maintainer either:
+
+  - when two weeks have passed without veto since the third approval of the proposal PR,
+  - or an absolute majority of maintainers approved the proposal PR.
+
+In either case, no maintainer raised and stood by a veto.
 
 ## Removing Maintainers
 
-Being a maintainer is not a status symbol or a title to be maintained
-indefinitely. It will occasionally be necessary and appropriate to move a
-maintainer to emeritus status. This can occur in the following situations:
+Being a maintainer is not a status symbol or a title to be maintained indefinitely.
+
+It will occasionally be necessary and appropriate to move a maintainer to emeritus status.
+
+This can occur in the following situations:
 
 - Resignation of a maintainer.
 - Violation of the Code of Conduct warranting removal.
@@ -84,9 +116,33 @@ maintainer to emeritus status. This can occur in the following situations:
     leave such as parental leave and medical leave.
 - Other unspecified circumstances.
 
-Like adding a maintainer the record and governance process for moving a
-maintainer to emeritus status is recorded in the github PR making that change.
+As for adding a maintainer, the record and governance process for moving a
+maintainer to emeritus status is recorded using review approval in the PR making that change.
 
 Returning to active status from emeritus status uses the same steps as adding a
-new maintainer. Note that the emeritus maintainer already has the 5 required
-significant changes as there is no contribution time horizon for those.
+new maintainer.
+
+Note that the emeritus maintainer always already has the required significant contributions.
+There is no contribution prescription delay.
+
+## Proposal PR template
+
+```markdown
+I propose to add [maintainer github handle] as a Besu project maintainer.
+
+<!-- for code contributors -->
+[maintainer github handle] contributed with many high quality commits:
+
+- [list significant achievements]
+
+Here are [their past contributions on Besu project](https://github.com/hyperledger/besu/commits?author=[user github handle]).
+
+<!-- for non-code contributors -->
+[maintainer github handle] contributed with many high quality actions:
+
+- [list significant actions]
+
+Voting ends two weeks from today at [[insert date and time]]([link to coundtown created with some tool like https://www.timeanddate.com/countdown/create])
+
+For more information on this process see the Becoming a Maintainer section in the MAINTAINERS.md file.
+```

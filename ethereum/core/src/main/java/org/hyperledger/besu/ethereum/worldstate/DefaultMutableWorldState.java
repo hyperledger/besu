@@ -134,13 +134,9 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   private static Bytes serializeAccount(
-      final long nonce,
-      final Wei balance,
-      final Hash storageRoot,
-      final Hash codeHash,
-      final int version) {
+      final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
     final StateTrieAccountValue accountValue =
-        new StateTrieAccountValue(nonce, balance, storageRoot, codeHash, version);
+        new StateTrieAccountValue(nonce, balance, storageRoot, codeHash);
     return RLP.encode(accountValue::writeTo);
   }
 
@@ -304,14 +300,9 @@ public class DefaultMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    public int getVersion() {
-      return accountValue.getVersion();
-    }
-
-    @Override
     public UInt256 getStorageValue(final UInt256 key) {
       return storageTrie()
-          .get(Hash.hash(key.toBytes()))
+          .get(Hash.hash(key))
           .map(DefaultMutableWorldState::convertToUInt256)
           .orElse(UInt256.ZERO);
     }
@@ -346,7 +337,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
       builder.append("balance=").append(getBalance()).append(", ");
       builder.append("storageRoot=").append(getStorageRoot()).append(", ");
       builder.append("codeHash=").append(getCodeHash()).append(", ");
-      builder.append("version=").append(getVersion());
       return builder.append("}").toString();
     }
   }
@@ -427,7 +417,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
           for (final Map.Entry<UInt256, UInt256> entry : entries) {
             final UInt256 value = entry.getValue();
-            final Hash keyHash = Hash.hash(entry.getKey().toBytes());
+            final Hash keyHash = Hash.hash(entry.getKey());
             if (value.isZero()) {
               storageTrie.remove(keyHash);
             } else {
@@ -443,12 +433,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         wrapped.newAccountKeyPreimages.put(updated.getAddressHash(), updated.getAddress());
         // Lastly, save the new account.
         final Bytes account =
-            serializeAccount(
-                updated.getNonce(),
-                updated.getBalance(),
-                storageRoot,
-                codeHash,
-                updated.getVersion());
+            serializeAccount(updated.getNonce(), updated.getBalance(), storageRoot, codeHash);
 
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
       }

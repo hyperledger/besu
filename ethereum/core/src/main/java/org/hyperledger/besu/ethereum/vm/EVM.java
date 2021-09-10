@@ -56,15 +56,12 @@ public class EVM {
     }
   }
 
-  void forEachOperation(
-      final Code code,
-      final int contractAccountVersion,
-      final BiConsumer<Operation, Integer> operationDelegate) {
+  void forEachOperation(final Code code, final BiConsumer<Operation, Integer> operationDelegate) {
     int pc = 0;
     final int length = code.getSize();
 
     while (pc < length) {
-      final Operation curOp = operationAtOffset(code, contractAccountVersion, pc);
+      final Operation curOp = operationAtOffset(code, pc);
       operationDelegate.accept(curOp, pc);
       pc += curOp.getOpSize();
     }
@@ -72,8 +69,7 @@ public class EVM {
 
   private void executeNextOperation(
       final MessageFrame frame, final OperationTracer operationTracer) {
-    frame.setCurrentOperation(
-        operationAtOffset(frame.getCode(), frame.getContractAccountVersion(), frame.getPC()));
+    frame.setCurrentOperation(operationAtOffset(frame.getCode(), frame.getPC()));
     operationTracer.traceExecution(
         frame,
         () -> {
@@ -128,7 +124,7 @@ public class EVM {
   }
 
   @VisibleForTesting
-  Operation operationAtOffset(final Code code, final int contractAccountVersion, final int offset) {
+  Operation operationAtOffset(final Code code, final int offset) {
     final Bytes bytecode = code.getBytes();
     // If the length of the program code is shorter than the required offset, halt execution.
     if (offset >= bytecode.size()) {
@@ -136,7 +132,7 @@ public class EVM {
     }
 
     final byte opcode = bytecode.get(offset);
-    final Operation operation = operations.get(opcode, contractAccountVersion);
+    final Operation operation = operations.get(opcode);
     if (operation == null) {
       return new InvalidOperation(opcode, null);
     } else {

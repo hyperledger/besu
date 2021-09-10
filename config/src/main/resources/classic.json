@@ -4,13 +4,14 @@
     "homesteadBlock": 1150000,
     "classicForkBlock": 1920000,
     "ecip1015Block": 2500000,
-    "diehardBlock": 3000000,
+    "dieHardBlock": 3000000,
     "gothamBlock": 5000000,
     "ecip1041Block": 5900000,
     "atlantisBlock": 8772000,
     "aghartaBlock": 9573000,
     "phoenixBlock": 10500839,
     "thanosBlock": 11700000,
+    "magnetoBlock": 13189133,
     "ethash": {
 
     }

@@ -71,7 +71,7 @@ public class CrossContractReader extends Contract {
 
   public static final Event NEWEVENTEMITTER_EVENT =
       new Event(
-          "NewEventEmitter", Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));;
+          "NewEventEmitter", Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
 
   @Deprecated
   protected CrossContractReader(

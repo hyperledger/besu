@@ -76,6 +76,15 @@ public class KeyPair {
     return this.privateKey.equals(that.privateKey) && this.publicKey.equals(that.publicKey);
   }
 
+  @Override
+  public String toString() {
+    return ("KeyPair{privateKey: "
+        + this.privateKey.toString()
+        + ", publicKey: "
+        + this.publicKey.toString()
+        + "]");
+  }
+
   public SECPPrivateKey getPrivateKey() {
     return privateKey;
   }

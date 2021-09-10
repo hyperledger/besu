@@ -40,6 +40,7 @@ import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
+import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagedata.RoundChangeMessageData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
@@ -148,7 +149,10 @@ public class QbftBlockHeightManagerTest {
 
     protocolContext =
         new ProtocolContext(
-            null, null, setupContextWithBftExtraDataEncoder(validators, new QbftExtraDataCodec()));
+            null,
+            null,
+            setupContextWithBftExtraDataEncoder(
+                QbftContext.class, validators, new QbftExtraDataCodec()));
 
     // Ensure the created IbftRound has the valid ConsensusRoundIdentifier;
     when(roundFactory.createNewRound(any(), anyInt()))
@@ -495,7 +499,7 @@ public class QbftBlockHeightManagerTest {
     assertThat(capturedMessageData).isInstanceOf(RoundChangeMessageData.class);
     final RoundChangeMessageData roundChange = (RoundChangeMessageData) capturedMessageData;
 
-    final RoundChange receivedRoundChange = roundChange.decode();
+    final RoundChange receivedRoundChange = roundChange.decode(bftExtraDataCodec);
 
     Assertions.assertThat(receivedRoundChange.getPreparedRoundMetadata()).isNotEmpty();
 

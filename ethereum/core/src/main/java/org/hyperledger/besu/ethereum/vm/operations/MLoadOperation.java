@@ -34,7 +34,7 @@ public class MLoadOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final UInt256 location = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 location = frame.popStackItem();
 
     final Gas cost = gasCalculator().mLoadOperationGasCost(frame, location);
     final Optional<Gas> optionalCost = Optional.of(cost);
@@ -42,7 +42,9 @@ public class MLoadOperation extends AbstractOperation {
       return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
-    final Bytes32 value = Bytes32.leftPad(frame.readMemory(location, UInt256.valueOf(32), true));
+    final UInt256 value =
+        UInt256.fromBytes(
+            Bytes32.leftPad(frame.readMutableMemory(location, UInt256.valueOf(32), true)));
 
     frame.pushStackItem(value);
     return new OperationResult(optionalCost, Optional.empty());

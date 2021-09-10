@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,22 +43,33 @@ public class GasLimitRangeAndDeltaValidationRuleTest {
   @Parameter(3)
   public boolean expectedResult;
 
+  @Parameter(4)
+  public Optional<Long> optionalBaseFee;
+
   @Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {4096, 4096, new GasLimitRangeAndDeltaValidationRule(4095, 4097), true},
+          {4096, 4096, new GasLimitRangeAndDeltaValidationRule(4095, 4097), true, Optional.empty()},
           // In Range, no change = valid,
-          {4096, 4096, new GasLimitRangeAndDeltaValidationRule(4094, 4095), false},
+          {
+            4096, 4096, new GasLimitRangeAndDeltaValidationRule(4094, 4095), false, Optional.empty()
+          },
           // Out of Range, no change = invalid,
-          {4099, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), true},
+          {4099, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), true, Optional.empty()},
           // In Range, <1/1024 change = valid,
-          {4093, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), true},
+          {4093, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), true, Optional.empty()},
           // In Range, ,1/1024 change = valid,
-          {4092, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), false},
-          // In Range, >1/1024 change = invalid,
-          {4100, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), false}
-          // In Range, >1/1024 change = invalid,
+          {
+            4092, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), false, Optional.empty()
+          },
+          // In Range, == 1/1024 change = invalid,
+          {
+            4100, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), false, Optional.empty()
+          },
+          // In Range, == 1/1024 change = invalid,
+          {4099, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), false, Optional.of(10L)}
+          // In Range, <1/1024 change, has basefee = invalid,
         });
   }
 
@@ -66,6 +78,7 @@ public class GasLimitRangeAndDeltaValidationRuleTest {
     final BlockHeaderTestFixture blockHeaderBuilder = new BlockHeaderTestFixture();
 
     blockHeaderBuilder.gasLimit(headerGasLimit);
+    optionalBaseFee.ifPresent(baseFee -> blockHeaderBuilder.baseFeePerGas(baseFee));
     final BlockHeader header = blockHeaderBuilder.buildHeader();
 
     blockHeaderBuilder.gasLimit(parentGasLimit);

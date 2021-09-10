@@ -22,7 +22,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
@@ -44,13 +43,12 @@ public class MainnetPrecompiledContractRegistriesTest {
     when(privacyParameters.isOnchainPrivacyGroupsEnabled()).thenReturn(false);
     when(privacyParameters.isEnabled()).thenReturn(true);
 
-    appendPrivacy(reg, config, Account.DEFAULT_VERSION);
+    appendPrivacy(reg, config);
     verify(privacyParameters).isEnabled();
     verify(privacyParameters).isOnchainPrivacyGroupsEnabled();
 
-    assertThat(reg.get(Address.DEFAULT_PRIVACY, Account.DEFAULT_VERSION))
-        .isInstanceOf(PrivacyPrecompiledContract.class);
-    assertThat(reg.get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION)).isNull();
+    assertThat(reg.get(Address.DEFAULT_PRIVACY)).isInstanceOf(PrivacyPrecompiledContract.class);
+    assertThat(reg.get(Address.ONCHAIN_PRIVACY)).isNull();
   }
 
   @Test
@@ -58,24 +56,24 @@ public class MainnetPrecompiledContractRegistriesTest {
     when(privacyParameters.isOnchainPrivacyGroupsEnabled()).thenReturn(true);
     when(privacyParameters.isEnabled()).thenReturn(true);
 
-    appendPrivacy(reg, config, Account.DEFAULT_VERSION);
+    appendPrivacy(reg, config);
     verify(privacyParameters).isEnabled();
     verify(privacyParameters).isOnchainPrivacyGroupsEnabled();
 
-    assertThat(reg.get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION))
+    assertThat(reg.get(Address.ONCHAIN_PRIVACY))
         .isInstanceOf(OnChainPrivacyPrecompiledContract.class);
-    assertThat(reg.get(Address.DEFAULT_PRIVACY, Account.DEFAULT_VERSION)).isNull();
+    assertThat(reg.get(Address.DEFAULT_PRIVACY)).isNull();
   }
 
   @Test
   public void whenPrivacyNotEnabled_noPrivacyPrecompileInRegistry() {
     when(privacyParameters.isEnabled()).thenReturn(false);
 
-    appendPrivacy(reg, config, Account.DEFAULT_VERSION);
+    appendPrivacy(reg, config);
     verify(privacyParameters).isEnabled();
     verifyNoMoreInteractions(privacyParameters);
 
-    assertThat(reg.get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION)).isNull();
-    assertThat(reg.get(Address.DEFAULT_PRIVACY, Account.DEFAULT_VERSION)).isNull();
+    assertThat(reg.get(Address.ONCHAIN_PRIVACY)).isNull();
+    assertThat(reg.get(Address.DEFAULT_PRIVACY)).isNull();
   }
 }

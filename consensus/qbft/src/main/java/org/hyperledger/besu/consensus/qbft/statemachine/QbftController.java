@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.statemachine;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
@@ -35,6 +36,7 @@ public class QbftController extends BaseBftController {
 
   private BaseQbftBlockHeightManager currentHeightManager;
   private final QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   public QbftController(
       final Blockchain blockchain,
@@ -43,7 +45,8 @@ public class QbftController extends BaseBftController {
       final Gossiper gossiper,
       final MessageTracker duplicateMessageTracker,
       final FutureMessageBuffer futureMessageBuffer,
-      final SynchronizerUpdater sychronizerUpdater) {
+      final SynchronizerUpdater sychronizerUpdater,
+      final BftExtraDataCodec bftExtraDataCodec) {
 
     super(
         blockchain,
@@ -53,6 +56,7 @@ public class QbftController extends BaseBftController {
         futureMessageBuffer,
         sychronizerUpdater);
     this.qbftBlockHeightManagerFactory = qbftBlockHeightManagerFactory;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   @Override
@@ -63,7 +67,7 @@ public class QbftController extends BaseBftController {
       case QbftV1.PROPOSAL:
         consumeMessage(
             message,
-            ProposalMessageData.fromMessageData(messageData).decode(),
+            ProposalMessageData.fromMessageData(messageData).decode(bftExtraDataCodec),
             currentHeightManager::handleProposalPayload);
         break;
 
@@ -84,7 +88,7 @@ public class QbftController extends BaseBftController {
       case QbftV1.ROUND_CHANGE:
         consumeMessage(
             message,
-            RoundChangeMessageData.fromMessageData(messageData).decode(),
+            RoundChangeMessageData.fromMessageData(messageData).decode(bftExtraDataCodec),
             currentHeightManager::handleRoundChangePayload);
         break;
 

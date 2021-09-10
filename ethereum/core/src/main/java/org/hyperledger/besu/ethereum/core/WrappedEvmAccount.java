@@ -78,11 +78,6 @@ public class WrappedEvmAccount implements EvmAccount {
   }
 
   @Override
-  public int getVersion() {
-    return mutableAccount.getVersion();
-  }
-
-  @Override
   public UInt256 getStorageValue(final UInt256 key) {
     return mutableAccount.getStorageValue(key);
   }

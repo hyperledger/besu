@@ -127,7 +127,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
 
   @Override
   public UInt256 getStorageValue(final Address address, final UInt256 key) {
-    return getStorageValueBySlotHash(address, Hash.hash(key.toBytes())).orElse(UInt256.ZERO);
+    return getStorageValueBySlotHash(address, Hash.hash(key)).orElse(UInt256.ZERO);
   }
 
   @Override
@@ -180,7 +180,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
                   if (!results.containsKey(entry.getKey())) {
                     final UInt256 value = entry.getValue().getUpdated();
                     // yes, store the nulls.  If it was deleted it should stay deleted
-                    results.put(entry.getKey(), value == null ? null : value.toBytes());
+                    results.put(entry.getKey(), value == null ? null : value);
                   }
                 });
       }
@@ -196,7 +196,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
               .forEach(
                   (k, v) -> {
                     if (!results.containsKey(k)) {
-                      results.put(k, v.getValue().toBytes());
+                      results.put(k, v.getValue());
                     }
                   });
         }

@@ -18,8 +18,6 @@ package org.hyperledger.besu.evmtool;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -159,11 +157,8 @@ public class EvmToolCommand implements Runnable {
     out = resultHandler.out();
     final CommandLine commandLine = new CommandLine(this);
     commandLine.addMixin("Dagger Options", daggerOptions);
-    // Usage of static command line flags is strictly reserved for experimental EIPs
-    commandLine.addMixin("Experimental EIPs", ExperimentalEIPs.class);
 
     // add sub commands here
-
     commandLine.registerConverter(Address.class, Address::fromHexString);
     commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
     commandLine.registerConverter(Gas.class, (arg) -> Gas.of(Long.parseUnsignedLong(arg)));
@@ -249,7 +244,6 @@ public class EvmToolCommand implements Runnable {
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new BlockHashLookup(blockHeader, component.getBlockchain()))
-                .contractAccountVersion(Account.DEFAULT_VERSION)
                 .build());
 
         final MainnetMessageCallProcessor mcp =
@@ -290,7 +284,7 @@ public class EvmToolCommand implements Runnable {
 
             final Gas intrinsicGasCost =
                 protocolSpec
-                    .getGasCalculator()
+                    .getTransactionGasCalculator()
                     .transactionIntrinsicGasCostAndAccessedState(tx)
                     .getGas();
             final Gas evmGas = gas.minus(messageFrame.getRemainingGas());

@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.vm.Words;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class ExtCodeSizeOperation extends AbstractOperation {
@@ -56,7 +55,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
       } else {
         final Account account = frame.getWorldState().get(address);
         frame.pushStackItem(
-            account == null ? Bytes32.ZERO : UInt256.valueOf(account.getCode().size()).toBytes());
+            account == null ? UInt256.ZERO : UInt256.valueOf(account.getCode().size()));
         return new OperationResult(optionalCost, Optional.empty());
       }
     } catch (final UnderflowException ufe) {

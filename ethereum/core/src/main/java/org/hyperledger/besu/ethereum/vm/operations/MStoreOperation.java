@@ -34,7 +34,7 @@ public class MStoreOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final UInt256 location = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 location = frame.popStackItem();
     final Bytes32 value = frame.popStackItem();
 
     final Gas cost = gasCalculator().mStoreOperationGasCost(frame, location);

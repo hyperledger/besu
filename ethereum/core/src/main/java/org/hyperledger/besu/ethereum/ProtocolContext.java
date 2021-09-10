@@ -14,12 +14,10 @@
  */
 package org.hyperledger.besu.ethereum;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-
-import java.util.function.BiFunction;
 
 /**
  * Holds the mutable state used to track the current context of the protocol. This is primarily the
@@ -44,7 +42,8 @@ public class ProtocolContext {
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final GenesisState genesisState,
-      final BiFunction<Blockchain, WorldStateArchive, Object> consensusContextFactory) {
+      final ProtocolSchedule protocolSchedule,
+      final ConsensusContextFactory consensusContextFactory) {
     if (blockchain.getChainHeadBlockNumber() < 1) {
       genesisState.writeStateTo(worldStateArchive.getMutable());
     }
@@ -52,7 +51,7 @@ public class ProtocolContext {
     return new ProtocolContext(
         blockchain,
         worldStateArchive,
-        consensusContextFactory.apply(blockchain, worldStateArchive));
+        consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule));
   }
 
   public MutableBlockchain getBlockchain() {

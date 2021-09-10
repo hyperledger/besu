@@ -5,6 +5,7 @@
     "atlantisBlock": 716617,
     "aghartaBlock": 1705549,
     "phoenixBlock": 2200013,
+    "magnetoBlock": 4368634,
     "clique":{
       "blockperiodseconds":15,
       "epochlength":30000

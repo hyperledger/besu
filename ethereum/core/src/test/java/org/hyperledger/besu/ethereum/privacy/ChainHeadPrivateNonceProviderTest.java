@@ -38,7 +38,7 @@ import org.junit.Test;
 public class ChainHeadPrivateNonceProviderTest {
   private static final Bytes32 PRIVACY_GROUP_ID =
       Bytes32.wrap(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="));
-  private static final Address ADDRESS = Address.fromHexString("55");;
+  private static final Address ADDRESS = Address.fromHexString("55");
 
   private Account account;
   private WorldState worldState;

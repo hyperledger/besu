@@ -19,10 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
+import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolTransactions;
 
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TxPoolConditions {
 
@@ -34,18 +35,16 @@ public class TxPoolConditions {
 
   public Condition inTransactionPool(final Hash txHash) {
     return node ->
-        WaitUtils.waitFor(
-            () -> {
-              List<Map<String, String>> poolContents =
-                  node.execute(txPoolTransactions.getTxPoolContents());
-              boolean found = false;
-              for (Map<String, String> txInfo : poolContents) {
-                if (Hash.fromHexString(txInfo.get("hash")).equals(txHash)) {
-                  found = true;
-                  break;
-                }
-              }
-              assertThat(found).isTrue();
-            });
+        WaitUtils.waitFor(() -> assertThat(nodeTransactionHashes(node)).contains(txHash));
+  }
+
+  public Condition notInTransactionPool(final Hash txHash) {
+    return node -> assertThat(nodeTransactionHashes(node)).doesNotContain(txHash);
+  }
+
+  private List<Hash> nodeTransactionHashes(final Node node) {
+    return node.execute(txPoolTransactions.getTxPoolContents()).stream()
+        .map((txInfo) -> Hash.fromHexString(txInfo.get("hash")))
+        .collect(Collectors.toList());
   }
 }

@@ -18,6 +18,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptySet;
 
+import org.hyperledger.besu.plugin.data.EnodeURL;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -72,7 +74,7 @@ public class StaticNodesParser {
   private static EnodeURL decodeString(
       final String input, final EnodeDnsConfiguration enodeDnsConfiguration) {
     try {
-      final EnodeURL enode = EnodeURL.fromString(input, enodeDnsConfiguration);
+      final EnodeURL enode = EnodeURLImpl.fromString(input, enodeDnsConfiguration);
       checkArgument(
           enode.isListening(), "Static node must be configured with a valid listening port.");
       return enode;

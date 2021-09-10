@@ -19,6 +19,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 /** Specification for the block gasLimit. */
 public abstract class AbstractGasLimitSpecification {
 
+  public static final long DEFAULT_MAX_CONSTANT_ADMUSTMENT_INCREMENT = 1024L;
+  public static final long DEFAULT_MIN_GAS_LIMIT = 5000L;
+  public static final long DEFAULT_MAX_GAS_LIMIT = Long.MAX_VALUE;
+
   private static final int GAS_LIMIT_BOUND_DIVISOR = 1024;
   protected final long minGasLimit;
   protected final long maxGasLimit;
@@ -33,7 +37,11 @@ public abstract class AbstractGasLimitSpecification {
     this.maxGasLimit = maxGasLimit;
   }
 
-  protected static long deltaBound(final long currentGasLimit) {
+  public static long deltaBound(final long currentGasLimit) {
     return Long.divideUnsigned(currentGasLimit, GAS_LIMIT_BOUND_DIVISOR);
+  }
+
+  public static boolean isValidTargetGasLimit(final long targetGasLimit) {
+    return DEFAULT_MIN_GAS_LIMIT <= targetGasLimit && DEFAULT_MAX_GAS_LIMIT >= targetGasLimit;
   }
 }

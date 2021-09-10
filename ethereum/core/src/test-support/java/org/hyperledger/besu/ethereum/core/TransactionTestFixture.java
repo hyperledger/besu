@@ -41,8 +41,8 @@ public class TransactionTestFixture {
 
   private Optional<BigInteger> chainId = Optional.of(BigInteger.valueOf(1337));
 
-  private Optional<Wei> gasPremium = Optional.empty();
-  private Optional<Wei> feeCap = Optional.empty();
+  private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
+  private Optional<Wei> maxFeePerGas = Optional.empty();
 
   public Transaction createTransaction(final KeyPair keys) {
     final Transaction.Builder builder = Transaction.builder();
@@ -58,8 +58,8 @@ public class TransactionTestFixture {
     to.ifPresent(builder::to);
     chainId.ifPresent(builder::chainId);
 
-    gasPremium.ifPresent(builder::gasPremium);
-    feeCap.ifPresent(builder::feeCap);
+    maxPriorityFeePerGas.ifPresent(builder::maxPriorityFeePerGas);
+    maxFeePerGas.ifPresent(builder::maxFeePerGas);
 
     return builder.signAndBuild(keys);
   }
@@ -109,13 +109,13 @@ public class TransactionTestFixture {
     return this;
   }
 
-  public TransactionTestFixture gasPremium(final Optional<Wei> gasPremium) {
-    this.gasPremium = gasPremium;
+  public TransactionTestFixture maxPriorityFeePerGas(final Optional<Wei> maxPriorityFeePerGas) {
+    this.maxPriorityFeePerGas = maxPriorityFeePerGas;
     return this;
   }
 
-  public TransactionTestFixture feeCap(final Optional<Wei> feeCap) {
-    this.feeCap = feeCap;
+  public TransactionTestFixture maxFeePerGas(final Optional<Wei> maxFeePerGas) {
+    this.maxFeePerGas = maxFeePerGas;
     return this;
   }
 }

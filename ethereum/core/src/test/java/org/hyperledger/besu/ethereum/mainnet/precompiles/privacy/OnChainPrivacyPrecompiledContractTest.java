@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -56,7 +57,6 @@ import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -81,6 +81,9 @@ public class OnChainPrivacyPrecompiledContractTest {
   final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
   final PrivateStateRootResolver privateStateRootResolver =
       new PrivateStateRootResolver(privateStateStorage);
+
+  PrivateStateGenesisAllocator privateStateGenesisAllocator =
+      mock(PrivateStateGenesisAllocator.class);
 
   private PrivateTransactionProcessor mockPrivateTxProcessor(
       final TransactionProcessingResult result) {
@@ -162,10 +165,9 @@ public class OnChainPrivacyPrecompiledContractTest {
     when(enclave.receive(any())).thenReturn(response);
 
     final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
-    Mockito.doNothing().when(contractSpy).maybeInjectDefaultManagementAndProxy(any(), any(), any());
     Mockito.doReturn(true)
         .when(contractSpy)
-        .canExecute(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        .canExecute(any(), any(), any(), any(), any(), any(), any(), any(), any());
 
     final Bytes actual = contractSpy.compute(privateTransactionLookupId, messageFrame);
 
@@ -231,23 +233,46 @@ public class OnChainPrivacyPrecompiledContractTest {
 
   @Test
   public void testPrivateFromNotMemberOfGroup() {
+    // array length too big
+    assertThatComputeReturnsEmptyGivenContractMembershipQueryReturns(
+        Bytes.concatenate(
+            Bytes32.fromHexStringLenient("0x0"),
+            // array length
+            Bytes32.fromHexStringLenient("0x1"),
+            // first array content
+            Bytes32.fromHexStringLenient("0x1")));
+  }
+
+  @Test
+  public void testInvalidResponseToMembershipQuery() {
+    // response shorter than empty array response
+    assertThatComputeReturnsEmptyGivenContractMembershipQueryReturns(
+        Bytes32.fromHexStringLenient("0x0"));
+
+    // array length too big
+    assertThatComputeReturnsEmptyGivenContractMembershipQueryReturns(
+        Bytes.concatenate(
+            // offset to start of array
+            Bytes32.fromHexStringLenient("0x0"),
+            // array length
+            Bytes32.fromHexStringLenient("0x2"),
+            // first array content
+            Bytes32.fromHexStringLenient("0x1")));
+  }
+
+  private void assertThatComputeReturnsEmptyGivenContractMembershipQueryReturns(
+      final Bytes memberList) {
     final Enclave enclave = mock(Enclave.class);
     final OnChainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
+
+    final List<Log> logs = new ArrayList<>();
+    contract.setPrivateTransactionProcessor(
+        mockPrivateTxProcessor(
+            TransactionProcessingResult.successful(logs, 0, 0, memberList, null)));
+
     final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
-    Mockito.doNothing().when(contractSpy).maybeInjectDefaultManagementAndProxy(any(), any(), any());
-    Mockito.doReturn(false)
-        .when(contractSpy)
-        .isContractLocked(any(), any(), any(), any(), any(), any(), any());
-    Mockito.doReturn(true)
-        .when(contractSpy)
-        .onChainPrivacyGroupVersionMatches(any(), any(), any(), any(), any(), any(), any(), any());
-    final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
-    Mockito.doReturn(mockResult)
-        .when(contractSpy)
-        .simulateTransaction(any(), any(), any(), any(), any(), any(), any(), any());
-    Mockito.doReturn(Arrays.asList(Bytes.ofUnsignedInt(1L)))
-        .when(contractSpy)
-        .getMembersFromResult(any());
+    Mockito.doReturn(false).when(contractSpy).isContractLocked(any(), any());
+    Mockito.doReturn(true).when(contractSpy).onChainPrivacyGroupVersionMatches(any(), any(), any());
 
     final VersionedPrivateTransaction privateTransaction = versionedPrivateTransactionBesu();
     final byte[] payload = convertVersionedPrivateTransactionToBytes(privateTransaction);
@@ -272,7 +297,8 @@ public class OnChainPrivacyPrecompiledContractTest {
             new SpuriousDragonGasCalculator(),
             enclave,
             worldStateArchive,
-            privateStateRootResolver);
+            privateStateRootResolver,
+            privateStateGenesisAllocator);
 
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
@@ -280,10 +306,9 @@ public class OnChainPrivacyPrecompiledContractTest {
                 ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE))));
 
     final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
-    Mockito.doNothing().when(contractSpy).maybeInjectDefaultManagementAndProxy(any(), any(), any());
     Mockito.doReturn(true)
         .when(contractSpy)
-        .canExecute(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        .canExecute(any(), any(), any(), any(), any(), any(), any(), any(), any());
 
     final VersionedPrivateTransaction privateTransaction = versionedPrivateTransactionBesu();
     final byte[] payload = convertVersionedPrivateTransactionToBytes(privateTransaction);
@@ -310,6 +335,10 @@ public class OnChainPrivacyPrecompiledContractTest {
 
   private OnChainPrivacyPrecompiledContract buildPrivacyPrecompiledContract(final Enclave enclave) {
     return new OnChainPrivacyPrecompiledContract(
-        new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateRootResolver);
+        new SpuriousDragonGasCalculator(),
+        enclave,
+        worldStateArchive,
+        privateStateRootResolver,
+        privateStateGenesisAllocator);
   }
 }

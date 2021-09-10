@@ -231,7 +231,7 @@ public class TransactionLogBloomCacherTest {
   private byte[] readLogBloomCache(final File logBloom, final long number) throws IOException {
     try (final RandomAccessFile randomAccessFile = new RandomAccessFile(logBloom, "r")) {
       randomAccessFile.seek(BLOOM_BITS_LENGTH * number);
-      byte[] retrievedLog = new byte[BLOOM_BITS_LENGTH];
+      final byte[] retrievedLog = new byte[BLOOM_BITS_LENGTH];
       randomAccessFile.read(retrievedLog);
       return retrievedLog;
     }

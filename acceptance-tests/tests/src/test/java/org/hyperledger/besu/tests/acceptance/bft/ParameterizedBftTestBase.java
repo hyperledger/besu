@@ -31,7 +31,7 @@ public abstract class ParameterizedBftTestBase extends AcceptanceTestBase {
 
   @Parameters(name = "{0}")
   public static Collection<Object[]> factoryFunctions() {
-    return BftAcceptanceTestParameterization.FACTORIES;
+    return BftAcceptanceTestParameterization.getFactories();
   }
 
   protected ParameterizedBftTestBase(

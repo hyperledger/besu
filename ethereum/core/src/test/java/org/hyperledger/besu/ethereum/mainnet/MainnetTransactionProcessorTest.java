@@ -19,13 +19,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -45,6 +44,7 @@ public class MainnetTransactionProcessorTest {
   private MainnetTransactionProcessor transactionProcessor;
 
   @Mock private GasCalculator gasCalculator;
+  @Mock private TransactionGasCalculator transactionGasCalculator;
   @Mock private MainnetTransactionValidator transactionValidator;
   @Mock private AbstractMessageProcessor contractCreationProcessor;
   @Mock private AbstractMessageProcessor messageCallProcessor;
@@ -60,13 +60,13 @@ public class MainnetTransactionProcessorTest {
     transactionProcessor =
         new MainnetTransactionProcessor(
             gasCalculator,
+            transactionGasCalculator,
             transactionValidator,
             contractCreationProcessor,
             messageCallProcessor,
             false,
             MAX_STACK_SIZE,
-            Account.DEFAULT_VERSION,
-            TransactionPriceCalculator.frontier(),
+            FeeMarket.legacy(),
             CoinbaseFeePriceCalculator.frontier());
   }
 
@@ -95,7 +95,7 @@ public class MainnetTransactionProcessorTest {
   private ArgumentCaptor<TransactionValidationParams> transactionValidationParamCaptor() {
     final ArgumentCaptor<TransactionValidationParams> txValidationParamCaptor =
         ArgumentCaptor.forClass(TransactionValidationParams.class);
-    when(transactionValidator.validate(any(), any())).thenReturn(ValidationResult.valid());
+    when(transactionValidator.validate(any(), any(), any())).thenReturn(ValidationResult.valid());
     // returning invalid transaction to halt method execution
     when(transactionValidator.validateForSender(any(), any(), txValidationParamCaptor.capture()))
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE));
