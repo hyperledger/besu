@@ -42,7 +42,7 @@ public abstract class BftProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
 
-  protected ProtocolSchedule createProtocolSchedule(
+  public ProtocolSchedule createProtocolSchedule(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,

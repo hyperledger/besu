@@ -21,7 +21,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
@@ -35,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -48,6 +51,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -78,11 +82,27 @@ public class BftBlockCreatorTest {
     }
 
     final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
+
+    final BftProtocolSchedule bftProtocolSchedule =
+        new BftProtocolSchedule() {
+          @Override
+          protected Supplier<BlockHeaderValidator.Builder> createForkBlockHeaderRuleset(
+              final GenesisConfigOptions config, final BftFork fork) {
+            return () -> IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5);
+          }
+
+          @Override
+          protected Supplier<BlockHeaderValidator.Builder> createGenesisBlockHeaderRuleset(
+              final GenesisConfigOptions config) {
+            return () -> IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5);
+          }
+        };
     final ProtocolSchedule protocolSchedule =
-        BftProtocolSchedule.create(
+        bftProtocolSchedule.createProtocolSchedule(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
                 .getConfigOptions(),
-            IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
+            PrivacyParameters.DEFAULT,
+            false,
             bftExtraDataEncoder);
     final ProtocolContext protContext =
         new ProtocolContext(
