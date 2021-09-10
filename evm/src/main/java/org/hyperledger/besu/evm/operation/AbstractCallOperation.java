@@ -97,7 +97,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * @param frame The current message frame
    * @return the memory offset the input data starts at
    */
-  protected abstract UInt256 inputDataOffset(MessageFrame frame);
+  protected abstract long inputDataOffset(MessageFrame frame);
 
   /**
    * Returns the length of the input data to read from memory.
@@ -105,7 +105,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * @param frame The current message frame
    * @return the length of the input data to read from memory.
    */
-  protected abstract UInt256 inputDataLength(MessageFrame frame);
+  protected abstract long inputDataLength(MessageFrame frame);
 
   /**
    * Returns the memory offset the offset data starts at.
@@ -113,7 +113,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * @param frame The current message frame
    * @return the memory offset the offset data starts at
    */
-  protected abstract UInt256 outputDataOffset(MessageFrame frame);
+  protected abstract long outputDataOffset(MessageFrame frame);
 
   /**
    * Returns the length of the output data to read from memory.
@@ -121,7 +121,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * @param frame The current message frame
    * @return the length of the output data to read from memory.
    */
-  protected abstract UInt256 outputDataLength(MessageFrame frame);
+  protected abstract long outputDataLength(MessageFrame frame);
 
   /**
    * Returns the account address the call operation is being performed on
@@ -228,14 +228,13 @@ public abstract class AbstractCallOperation extends AbstractOperation {
   public void complete(final MessageFrame frame, final MessageFrame childFrame) {
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 
-    final UInt256 outputOffset = outputDataOffset(frame);
-    final UInt256 outputSize = outputDataLength(frame);
+    final long outputOffset = outputDataOffset(frame);
+    final long outputSize = outputDataLength(frame);
     final Bytes outputData = childFrame.getOutputData();
-    final int outputSizeAsInt = outputSize.intValue();
 
-    if (outputSizeAsInt > outputData.size()) {
+    if (outputSize > outputData.size()) {
       frame.expandMemory(outputOffset, outputSize);
-      frame.writeMemory(outputOffset, UInt256.valueOf(outputData.size()), outputData, true);
+      frame.writeMemory(outputOffset, outputData.size(), outputData, true);
     } else {
       frame.writeMemory(outputOffset, outputSize, outputData, true);
     }

@@ -158,10 +158,10 @@ public interface GasCalculator {
   Gas callOperationGasCost(
       MessageFrame frame,
       Gas stipend,
-      UInt256 inputDataOffset,
-      UInt256 inputDataLength,
-      UInt256 outputDataOffset,
-      UInt256 outputDataLength,
+      long inputDataOffset,
+      long inputDataLength,
+      long outputDataOffset,
+      long outputDataLength,
       Wei transferValue,
       Account recipient,
       Address contract);
@@ -212,7 +212,7 @@ public interface GasCalculator {
    * @param length The length of the data being copied into memory
    * @return the amount of gas consumed by the data copy operation
    */
-  Gas dataCopyOperationGasCost(MessageFrame frame, UInt256 offset, UInt256 length);
+  Gas dataCopyOperationGasCost(MessageFrame frame, long offset, long length);
 
   /**
    * Returns the cost of expanding memory for the specified access.
@@ -222,7 +222,7 @@ public interface GasCalculator {
    * @param length the length of the memory access
    * @return The gas required to expand memory for the specified access
    */
-  Gas memoryExpansionGasCost(MessageFrame frame, UInt256 offset, UInt256 length);
+  Gas memoryExpansionGasCost(MessageFrame frame, long offset, long length);
 
   // Specific Non-call Operation Calculations
 
@@ -256,7 +256,7 @@ public interface GasCalculator {
    * @param length The length of the code being copied into memory
    * @return the cost for executing the external code size operation
    */
-  Gas extCodeCopyOperationGasCost(MessageFrame frame, UInt256 offset, UInt256 length);
+  Gas extCodeCopyOperationGasCost(MessageFrame frame, long offset, long length);
 
   /**
    * Returns the cost for executing a {@link ExtCodeHashOperation}.
@@ -288,8 +288,7 @@ public interface GasCalculator {
    * @param numTopics The number of topics in the log
    * @return the cost for executing the external code size operation
    */
-  Gas logOperationGasCost(
-      MessageFrame frame, UInt256 dataOffset, UInt256 dataLength, int numTopics);
+  Gas logOperationGasCost(MessageFrame frame, long dataOffset, long dataLength, int numTopics);
 
   /**
    * Returns the cost for executing a {@link MLoadOperation}.
@@ -298,7 +297,7 @@ public interface GasCalculator {
    * @param offset The offset in memory where the access takes place
    * @return the cost for executing the memory load operation
    */
-  Gas mLoadOperationGasCost(MessageFrame frame, UInt256 offset);
+  Gas mLoadOperationGasCost(MessageFrame frame, long offset);
 
   /**
    * Returns the cost for executing a {@link MStoreOperation}.
@@ -307,7 +306,7 @@ public interface GasCalculator {
    * @param offset The offset in memory where the access takes place
    * @return the cost for executing the memory store operation
    */
-  Gas mStoreOperationGasCost(MessageFrame frame, UInt256 offset);
+  Gas mStoreOperationGasCost(MessageFrame frame, long offset);
 
   /**
    * Returns the cost for executing a {@link MStore8Operation}.
@@ -316,7 +315,7 @@ public interface GasCalculator {
    * @param offset The offset in memory where the access takes place
    * @return the cost for executing the memory byte store operation
    */
-  Gas mStore8OperationGasCost(MessageFrame frame, UInt256 offset);
+  Gas mStore8OperationGasCost(MessageFrame frame, long offset);
 
   /**
    * Returns the cost for executing a {@link SelfDestructOperation}.
@@ -335,7 +334,7 @@ public interface GasCalculator {
    * @param length The hashed data length
    * @return the cost for executing the memory byte store operation
    */
-  Gas sha3OperationGasCost(MessageFrame frame, UInt256 offset, UInt256 length);
+  Gas sha3OperationGasCost(MessageFrame frame, long offset, long length);
 
   /**
    * Returns the cost for executing a {@link SLoadOperation}.

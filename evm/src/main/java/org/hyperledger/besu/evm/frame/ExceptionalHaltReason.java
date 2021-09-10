@@ -22,7 +22,8 @@ public enum ExceptionalHaltReason {
   INVALID_OPERATION("Bad instruction"),
   INVALID_RETURN_DATA_BUFFER_ACCESS("Out of bounds"),
   TOO_MANY_STACK_ITEMS("Out of stack"),
-  ILLEGAL_STATE_CHANGE("Illegal state change");
+  ILLEGAL_STATE_CHANGE("Illegal state change"),
+  OUT_OF_BOUNDS("Out of bounds");
 
   String description;
 

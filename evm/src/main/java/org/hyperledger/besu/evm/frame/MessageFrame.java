@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;
+import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -241,7 +242,7 @@ public class MessageFrame {
   private Optional<Gas> gasCost = Optional.empty();
   private final Consumer<MessageFrame> completer;
   private Optional<MemoryEntry> maybeUpdatedMemory = Optional.empty();
-  private Optional<MemoryEntry> maybeUpdatedStorage = Optional.empty();
+  private Optional<StorageEntry> maybeUpdatedStorage = Optional.empty();
 
   public static Builder builder() {
     return new Builder();
@@ -505,7 +506,7 @@ public class MessageFrame {
    * @param length The length of the memory access
    * @return the memory size for specified memory access
    */
-  public UInt256 calculateMemoryExpansion(final UInt256 offset, final UInt256 length) {
+  public long calculateMemoryExpansion(final long offset, final long length) {
     return memory.calculateNewActiveWords(offset, length);
   }
 
@@ -515,7 +516,7 @@ public class MessageFrame {
    * @param offset The offset in memory
    * @param length The length of the memory access
    */
-  public void expandMemory(final UInt256 offset, final UInt256 length) {
+  public void expandMemory(final long offset, final long length) {
     memory.ensureCapacityForBytes(offset, length);
   }
 
@@ -533,7 +534,7 @@ public class MessageFrame {
    *
    * @return the number of words in memory
    */
-  public UInt256 memoryWordSize() {
+  public int memoryWordSize() {
     return memory.getActiveWords();
   }
 
@@ -557,7 +558,7 @@ public class MessageFrame {
    * @param length The length of the bytes to read
    * @return The bytes in the specified range
    */
-  public Bytes readMemory(final UInt256 offset, final UInt256 length) {
+  public Bytes readMemory(final long offset, final long length) {
     return readMemory(offset, length, false);
   }
 
@@ -569,8 +570,7 @@ public class MessageFrame {
    * @param explicitMemoryRead true if triggered by a memory opcode, false otherwise
    * @return The bytes in the specified range
    */
-  public Bytes readMemory(
-      final UInt256 offset, final UInt256 length, final boolean explicitMemoryRead) {
+  public Bytes readMemory(final long offset, final long length, final boolean explicitMemoryRead) {
     final Bytes value = memory.getBytes(offset, length);
     if (explicitMemoryRead) {
       setUpdatedMemory(offset, value);
@@ -585,8 +585,7 @@ public class MessageFrame {
    * @param value The value to set in memory
    * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
    */
-  public void writeMemory(
-      final UInt256 offset, final byte value, final boolean explicitMemoryUpdate) {
+  public void writeMemory(final long offset, final byte value, final boolean explicitMemoryUpdate) {
     memory.setByte(offset, value);
     if (explicitMemoryUpdate) {
       setUpdatedMemory(offset, Bytes.of(value));
@@ -600,7 +599,7 @@ public class MessageFrame {
    * @param length The length of the bytes to write
    * @param value The value to write
    */
-  public void writeMemory(final UInt256 offset, final UInt256 length, final Bytes value) {
+  public void writeMemory(final long offset, final long length, final Bytes value) {
     writeMemory(offset, length, value, false);
   }
 
@@ -613,13 +612,10 @@ public class MessageFrame {
    * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
    */
   public void writeMemory(
-      final UInt256 offset,
-      final UInt256 length,
-      final Bytes value,
-      final boolean explicitMemoryUpdate) {
+      final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
     memory.setBytes(offset, length, value);
     if (explicitMemoryUpdate) {
-      setUpdatedMemory(offset, UInt256.ZERO, length, value);
+      setUpdatedMemory(offset, 0, length, value);
     }
   }
 
@@ -632,7 +628,7 @@ public class MessageFrame {
    * @param value The value to write
    */
   public void writeMemory(
-      final UInt256 offset, final UInt256 sourceOffset, final UInt256 length, final Bytes value) {
+      final long offset, final long sourceOffset, final long length, final Bytes value) {
     writeMemory(offset, sourceOffset, length, value, false);
   }
 
@@ -646,42 +642,40 @@ public class MessageFrame {
    * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
    */
   public void writeMemory(
-      final UInt256 offset,
-      final UInt256 sourceOffset,
-      final UInt256 length,
+      final long offset,
+      final long sourceOffset,
+      final long length,
       final Bytes value,
       final boolean explicitMemoryUpdate) {
     memory.setBytes(offset, sourceOffset, length, value);
-    if (explicitMemoryUpdate && length.toLong() > 0) {
+    if (explicitMemoryUpdate && length > 0) {
       setUpdatedMemory(offset, sourceOffset, length, value);
     }
   }
 
   private void setUpdatedMemory(
-      final UInt256 offset, final UInt256 sourceOffset, final UInt256 length, final Bytes value) {
-    final int srcOff = sourceOffset.fitsInt() ? sourceOffset.intValue() : Integer.MAX_VALUE;
-    final int len = length.fitsInt() ? length.intValue() : Integer.MAX_VALUE;
-    final int endIndex = srcOff + len;
-    if (srcOff >= 0 && endIndex > 0) {
+      final long offset, final long sourceOffset, final long length, final Bytes value) {
+    final long endIndex = sourceOffset + length;
+    if (sourceOffset >= 0 && endIndex > 0) {
       final int srcSize = value.size();
       if (endIndex > srcSize) {
-        final MutableBytes paddedAnswer = MutableBytes.create(len);
-        if (srcOff < srcSize) {
-          value.slice(srcOff, srcSize - srcOff).copyTo(paddedAnswer, 0);
+        final MutableBytes paddedAnswer = MutableBytes.create((int) length);
+        if (sourceOffset < srcSize) {
+          value.slice((int) sourceOffset, (int) (srcSize - sourceOffset)).copyTo(paddedAnswer, 0);
         }
         setUpdatedMemory(offset, paddedAnswer.copy());
       } else {
-        setUpdatedMemory(offset, value.slice(srcOff, len).copy());
+        setUpdatedMemory(offset, value.slice((int) sourceOffset, (int) length).copy());
       }
     }
   }
 
-  private void setUpdatedMemory(final UInt256 offset, final Bytes value) {
+  private void setUpdatedMemory(final long offset, final Bytes value) {
     maybeUpdatedMemory = Optional.of(new MemoryEntry(offset, value));
   }
 
   public void storageWasUpdated(final UInt256 storageAddress, final Bytes value) {
-    maybeUpdatedStorage = Optional.of(new MemoryEntry(storageAddress, value));
+    maybeUpdatedStorage = Optional.of(new StorageEntry(storageAddress, value));
   }
   /**
    * Accumulate a log.
@@ -1037,7 +1031,7 @@ public class MessageFrame {
     return maybeUpdatedMemory;
   }
 
-  public Optional<MemoryEntry> getMaybeUpdatedStorage() {
+  public Optional<StorageEntry> getMaybeUpdatedStorage() {
     return maybeUpdatedStorage;
   }
 

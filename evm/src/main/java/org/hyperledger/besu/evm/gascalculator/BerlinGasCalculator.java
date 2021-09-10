@@ -120,10 +120,10 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   public Gas callOperationGasCost(
       final MessageFrame frame,
       final Gas stipend,
-      final UInt256 inputDataOffset,
-      final UInt256 inputDataLength,
-      final UInt256 outputDataOffset,
-      final UInt256 outputDataLength,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
       final Wei transferValue,
       final Account recipient,
       final Address to) {
@@ -145,7 +145,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   // defined in Frontier, but re-implemented with no base cost.
   @Override
   public Gas extCodeCopyOperationGasCost(
-      final MessageFrame frame, final UInt256 offset, final UInt256 length) {
+      final MessageFrame frame, final long offset, final long length) {
     return copyWordsToMemoryGasCost(frame, Gas.ZERO, COPY_WORD_GAS_COST, offset, length);
   }
 

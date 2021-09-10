@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,23 +12,26 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 
-public class Mem {
+package org.hyperledger.besu.evm.internal;
 
-  private final String data;
-  private final long off;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
-  public Mem(final String data, final long off) {
-    this.data = data;
-    this.off = off;
+public class StorageEntry {
+  private final UInt256 offset;
+  private final Bytes value;
+
+  public StorageEntry(final UInt256 offset, final Bytes value) {
+    this.offset = offset;
+    this.value = value;
   }
 
-  public String getData() {
-    return data;
+  public UInt256 getOffset() {
+    return offset;
   }
 
-  public long getOff() {
-    return off;
+  public Bytes getValue() {
+    return value;
   }
 }

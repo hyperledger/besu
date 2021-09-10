@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Gas;
@@ -23,7 +25,6 @@ import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.ExpOperation;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class FrontierGasCalculator implements GasCalculator {
@@ -190,10 +191,10 @@ public class FrontierGasCalculator implements GasCalculator {
   public Gas callOperationGasCost(
       final MessageFrame frame,
       final Gas stipend,
-      final UInt256 inputDataOffset,
-      final UInt256 inputDataLength,
-      final UInt256 outputDataOffset,
-      final UInt256 outputDataLength,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
       final Wei transferValue,
       final Account recipient,
       final Address to) {
@@ -238,8 +239,8 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public Gas createOperationGasCost(final MessageFrame frame) {
-    final UInt256 initCodeOffset = UInt256.fromBytes(frame.getStackItem(1));
-    final UInt256 initCodeLength = UInt256.fromBytes(frame.getStackItem(2));
+    final long initCodeOffset = clampedToLong(frame.getStackItem(1));
+    final long initCodeLength = clampedToLong(frame.getStackItem(2));
 
     final Gas memoryGasCost = memoryExpansionGasCost(frame, initCodeOffset, initCodeLength);
     return CREATE_OPERATION_GAS_COST.plus(memoryGasCost);
@@ -252,14 +253,14 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public Gas dataCopyOperationGasCost(
-      final MessageFrame frame, final UInt256 offset, final UInt256 length) {
+      final MessageFrame frame, final long offset, final long length) {
     return copyWordsToMemoryGasCost(
         frame, VERY_LOW_TIER_GAS_COST, COPY_WORD_GAS_COST, offset, length);
   }
 
   @Override
   public Gas memoryExpansionGasCost(
-      final MessageFrame frame, final UInt256 offset, final UInt256 length) {
+      final MessageFrame frame, final long offset, final long length) {
 
     final Gas pre = memoryCost(frame.memoryWordSize());
     final Gas post = memoryCost(frame.calculateMemoryExpansion(offset, length));
@@ -302,7 +303,7 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public Gas extCodeCopyOperationGasCost(
-      final MessageFrame frame, final UInt256 offset, final UInt256 length) {
+      final MessageFrame frame, final long offset, final long length) {
     return copyWordsToMemoryGasCost(
         frame, extCodeBaseGasCost(), COPY_WORD_GAS_COST, offset, length);
   }
@@ -325,10 +326,7 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public Gas logOperationGasCost(
-      final MessageFrame frame,
-      final UInt256 dataOffset,
-      final UInt256 dataLength,
-      final int numTopics) {
+      final MessageFrame frame, final long dataOffset, final long dataLength, final int numTopics) {
     return Gas.ZERO
         .plus(LOG_OPERATION_BASE_GAS_COST)
         .plus(LOG_OPERATION_DATA_BYTE_GAS_COST.times(Gas.of(dataLength)))
@@ -337,18 +335,18 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public Gas mLoadOperationGasCost(final MessageFrame frame, final UInt256 offset) {
-    return VERY_LOW_TIER_GAS_COST.plus(memoryExpansionGasCost(frame, offset, UInt256.valueOf(32)));
+  public Gas mLoadOperationGasCost(final MessageFrame frame, final long offset) {
+    return VERY_LOW_TIER_GAS_COST.plus(memoryExpansionGasCost(frame, offset, 32));
   }
 
   @Override
-  public Gas mStoreOperationGasCost(final MessageFrame frame, final UInt256 offset) {
-    return VERY_LOW_TIER_GAS_COST.plus(memoryExpansionGasCost(frame, offset, UInt256.valueOf(32)));
+  public Gas mStoreOperationGasCost(final MessageFrame frame, final long offset) {
+    return VERY_LOW_TIER_GAS_COST.plus(memoryExpansionGasCost(frame, offset, 32));
   }
 
   @Override
-  public Gas mStore8OperationGasCost(final MessageFrame frame, final UInt256 offset) {
-    return VERY_LOW_TIER_GAS_COST.plus(memoryExpansionGasCost(frame, offset, UInt256.ONE));
+  public Gas mStore8OperationGasCost(final MessageFrame frame, final long offset) {
+    return VERY_LOW_TIER_GAS_COST.plus(memoryExpansionGasCost(frame, offset, 1));
   }
 
   @Override
@@ -357,8 +355,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public Gas sha3OperationGasCost(
-      final MessageFrame frame, final UInt256 offset, final UInt256 length) {
+  public Gas sha3OperationGasCost(final MessageFrame frame, final long offset, final long length) {
     return copyWordsToMemoryGasCost(
         frame, SHA3_OPERATION_BASE_GAS_COST, SHA3_OPERATION_WORD_GAS_COST, offset, length);
   }
@@ -399,9 +396,9 @@ public class FrontierGasCalculator implements GasCalculator {
       final MessageFrame frame,
       final Gas baseGasCost,
       final Gas wordGasCost,
-      final UInt256 offset,
-      final UInt256 length) {
-    final UInt256 numWords = length.divideCeil(Bytes32.SIZE);
+      final long offset,
+      final long length) {
+    final long numWords = length / 32 + (length % 32 == 0 ? 0 : 1);
 
     final Gas copyCost = wordGasCost.times(Gas.of(numWords)).plus(baseGasCost);
     final Gas memoryCost = memoryExpansionGasCost(frame, offset, length);
@@ -409,10 +406,7 @@ public class FrontierGasCalculator implements GasCalculator {
     return copyCost.plus(memoryCost);
   }
 
-  private static Gas memoryCost(final UInt256 length) {
-    if (!length.fitsInt()) {
-      return Gas.MAX_VALUE;
-    }
+  private static Gas memoryCost(final long length) {
     final Gas len = Gas.of(length);
     final Gas base = len.times(len).dividedBy(512);
 

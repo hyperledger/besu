@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.apache.tuweni.bytes.Bytes32.leftPad;
+import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
@@ -29,7 +30,6 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class LogOperation extends AbstractOperation {
 
@@ -42,8 +42,8 @@ public class LogOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final UInt256 dataLocation = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
+    final long dataLocation = clampedToLong(frame.popStackItem());
+    final long numBytes = clampedToLong(frame.popStackItem());
 
     final Gas cost = gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
     final Optional<Gas> optionalCost = Optional.of(cost);

@@ -291,7 +291,7 @@ public class EvmToolCommand implements Runnable {
                 new JsonObject()
                     .put("gasUser", evmGas.asUInt256().toShortHexString())
                     .put("timens", lastTime)
-                    .put("time", lastTime / 1000)
+                    //                    .put("time", lastTime / 1000)
                     .put("gasTotal", evmGas.plus(intrinsicGasCost).asUInt256().toShortHexString()));
           }
         }

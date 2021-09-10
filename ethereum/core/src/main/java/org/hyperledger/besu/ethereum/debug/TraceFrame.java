@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
+import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Map;
@@ -55,7 +56,7 @@ public class TraceFrame {
   private Gas gasRemainingPostExecution;
   private final boolean virtualOperation;
   private final Optional<MemoryEntry> maybeUpdatedMemory;
-  private final Optional<MemoryEntry> maybeUpdatedStorage;
+  private final Optional<StorageEntry> maybeUpdatedStorage;
   private Optional<Gas> precompiledGasCost;
 
   public TraceFrame(
@@ -81,7 +82,7 @@ public class TraceFrame {
       final Optional<Bytes[]> stackPostExecution,
       final boolean virtualOperation,
       final Optional<MemoryEntry> maybeUpdatedMemory,
-      final Optional<MemoryEntry> maybeUpdatedStorage) {
+      final Optional<StorageEntry> maybeUpdatedStorage) {
     this.pc = pc;
     this.opcode = opcode;
     this.gasRemaining = gasRemaining;
@@ -223,7 +224,7 @@ public class TraceFrame {
     return maybeUpdatedMemory;
   }
 
-  public Optional<MemoryEntry> getMaybeUpdatedStorage() {
+  public Optional<StorageEntry> getMaybeUpdatedStorage() {
     return maybeUpdatedStorage;
   }
 

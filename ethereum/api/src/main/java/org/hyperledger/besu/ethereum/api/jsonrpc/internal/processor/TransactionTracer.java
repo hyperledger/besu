@@ -187,7 +187,7 @@ public class TransactionTracer {
         "gasUsed",
         StandardJsonTracer.shortNumber(
             UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining())));
-    summaryLine.put("time", timer);
+    //    summaryLine.put("time", timer);
     return summaryLine.toString();
   }
 }

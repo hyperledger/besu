@@ -20,8 +20,6 @@ import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
-import org.apache.tuweni.units.bigints.UInt256;
-
 public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
 
   private static final Gas EXP_OPERATION_BYTE_GAS_COST = Gas.of(50L);
@@ -30,10 +28,10 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
   public Gas callOperationGasCost(
       final MessageFrame frame,
       final Gas stipend,
-      final UInt256 inputDataOffset,
-      final UInt256 inputDataLength,
-      final UInt256 outputDataOffset,
-      final UInt256 outputDataLength,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
       final Wei transferValue,
       final Account recipient,
       final Address to) {

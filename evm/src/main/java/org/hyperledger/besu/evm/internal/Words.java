@@ -37,7 +37,7 @@ public abstract class Words {
   }
 
   /**
-   * Extract an address from the the provided address.
+   * Extract an address from the provided address.
    *
    * @param bytes The word to extract the address from.
    * @return An address build from the right-most 160-bits of the {@code bytes} (as according to the
@@ -48,7 +48,7 @@ public abstract class Words {
   }
 
   /**
-   * Extract an address from the the provided address.
+   * Extract an address from the provided address.
    *
    * @param bytes The word to extract the address from.
    * @return An address build from the right-most 160-bits of the {@code bytes} (as according to the
@@ -70,7 +70,7 @@ public abstract class Words {
   /**
    * The number of words corresponding to the provided input.
    *
-   * <p>In other words, this compute {@code input.size() / 32} but rounded up.
+   * <p>In other words, this computes {@code input.size() / 32} but rounded up.
    *
    * @param input the input to check.
    * @return the number of (32 bytes) words that {@code input} spans.
@@ -78,5 +78,28 @@ public abstract class Words {
   public static int numWords(final Bytes input) {
     // m/n round up == (m + n - 1)/n: http://www.cs.nott.ac.uk/~psarb2/G51MPC/slides/NumberLogic.pdf
     return (input.size() + Bytes32.SIZE - 1) / Bytes32.SIZE;
+  }
+
+  /**
+   * The value of the bytes as though it was representing an unsigned integer, however if the value
+   * exceeds Integer.MAX_VALUE then Integer.MAX_VALUE will be returned.
+   *
+   * @param uint the unsigned integer
+   * @return the least of the integer value or Integer.MAX_VALUE
+   */
+  public static long clampedToLong(final Bytes uint) {
+    if (uint.size() <= 8) {
+      long result = uint.toLong();
+      return result < 0 ? Long.MAX_VALUE : result;
+    }
+
+    Bytes trimmed = uint.trimLeadingZeros();
+    if (trimmed.size() <= 8) {
+      long result = trimmed.toLong();
+      return result < 0 ? Long.MAX_VALUE : result;
+    } else {
+      // clamp to the largest int.
+      return Long.MAX_VALUE;
+    }
   }
 }

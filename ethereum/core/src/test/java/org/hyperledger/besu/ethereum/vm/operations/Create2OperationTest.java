@@ -157,9 +157,8 @@ public class Create2OperationTest {
     messageFrame.pushStackItem(memoryLength);
     messageFrame.pushStackItem(memoryOffset);
     messageFrame.pushStackItem(UInt256.ZERO);
-    messageFrame.expandMemory(UInt256.ZERO, UInt256.valueOf(500));
-    messageFrame.writeMemory(
-        UInt256.fromBytes(memoryOffset), UInt256.valueOf(code.length()), codeBytes);
+    messageFrame.expandMemory(0, 500);
+    messageFrame.writeMemory(memoryOffset.trimLeadingZeros().toInt(), code.length(), codeBytes);
 
     when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);

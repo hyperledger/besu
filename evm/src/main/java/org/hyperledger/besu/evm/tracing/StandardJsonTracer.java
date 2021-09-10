@@ -16,13 +16,14 @@
 
 package org.hyperledger.besu.evm.tracing;
 
+import static com.google.common.base.Strings.padStart;
+
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
 
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -90,12 +91,12 @@ public class StandardJsonTracer implements OperationTracer {
         .append(executeResult.getGasCost().map(gas -> shortNumber(gas.asUInt256())).orElse(""))
         .append("\",");
     if (showMemory) {
-      Bytes memory =
-          messageFrame.readMemory(UInt256.ZERO, messageFrame.memoryWordSize().multiply(32));
+      Bytes memory = messageFrame.readMemory(0, messageFrame.memoryWordSize() * 32L);
       sb.append("\"memory\":\"").append(memory.toHexString()).append("\",");
       sb.append("\"memSize\":").append(memory.size()).append(",");
     } else {
-      sb.append("\"memory\":\"\", \"memSize\":-1,").append(remainingGas).append("\",");
+      sb.append("\"memory\":\"0x\",");
+      sb.append("\"memSize\":").append(messageFrame.memoryByteSize()).append(",");
     }
     sb.append("\"stack\":[").append(commaJoiner.join(stack)).append("],");
     sb.append("\"returnData\":")
@@ -110,12 +111,40 @@ public class StandardJsonTracer implements OperationTracer {
                 .getHaltReason()
                 .map(ExceptionalHaltReason::getDescription)
                 .orElse(
-                    messageFrame
-                        .getRevertReason()
-                        .map(bytes -> new String(bytes.toArrayUnsafe(), StandardCharsets.UTF_8))
-                        .orElse("")))
+                    messageFrame.getRevertReason().map(StandardJsonTracer::quoteEscape).orElse("")))
         .append("\"}");
-    out.println(sb.toString());
+    out.println(sb);
+  }
+
+  static String quoteEscape(final Bytes bytes) {
+    StringBuilder result = new StringBuilder(bytes.size());
+    for (byte b : bytes.toArrayUnsafe()) {
+      int c = ((int) b) & 0xff;
+      // list from RFC-4627 section 2
+      if (c == '"') {
+        result.append("\\\"");
+      } else if (c == '\\') {
+        result.append("\\\\");
+      } else if (c == '/') {
+        result.append("\\/");
+      } else if (c == '\b') {
+        result.append("\\b");
+      } else if (c == '\f') {
+        result.append("\\f");
+      } else if (c == '\n') {
+        result.append("\\n");
+      } else if (c == '\r') {
+        result.append("\\r");
+      } else if (c == '\t') {
+        result.append("\\t");
+      } else if (c <= 0x1F) {
+        result.append("\\u");
+        result.append(padStart(Integer.toHexString(c), 4, '0'));
+      } else {
+        result.append((char) b);
+      }
+    }
+    return result.toString();
   }
 
   @Override

@@ -124,9 +124,9 @@ public class DebugOperationTracerTest {
     final Bytes32 word1 = Bytes32.fromHexString("0x01");
     final Bytes32 word2 = Bytes32.fromHexString("0x02");
     final Bytes32 word3 = Bytes32.fromHexString("0x03");
-    frame.writeMemory(UInt256.ZERO, UInt256.valueOf(32), word1);
-    frame.writeMemory(UInt256.valueOf(32), UInt256.valueOf(32), word2);
-    frame.writeMemory(UInt256.valueOf(64), UInt256.valueOf(32), word3);
+    frame.writeMemory(0, 32, word1);
+    frame.writeMemory(32, 32, word2);
+    frame.writeMemory(64, 32, word3);
     final TraceFrame traceFrame = traceFrame(frame, new TraceOptions(false, true, false));
     assertThat(traceFrame.getMemory()).isPresent();
     assertThat(traceFrame.getMemory().get()).containsExactly(word1, word2, word3);
@@ -221,9 +221,9 @@ public class DebugOperationTracerTest {
     final Bytes32 word1 = Bytes32.fromHexString("0x01");
     final Bytes32 word2 = Bytes32.fromHexString("0x02");
     final Bytes32 word3 = Bytes32.fromHexString("0x03");
-    frame.writeMemory(UInt256.ZERO, UInt256.valueOf(32), word1);
-    frame.writeMemory(UInt256.valueOf(32), UInt256.valueOf(32), word2);
-    frame.writeMemory(UInt256.valueOf(64), UInt256.valueOf(32), word3);
+    frame.writeMemory(0, 32, word1);
+    frame.writeMemory(32, 32, word2);
+    frame.writeMemory(64, 32, word3);
     return updatedStorage;
   }
 }

@@ -38,8 +38,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugOperationTracer implements OperationTracer {
 
-  private static final UInt256 UINT256_32 = UInt256.valueOf(32);
-
   private final TraceOptions options;
   private List<TraceFrame> traceFrames = new ArrayList<>();
   private TraceFrame lastFrame;
@@ -200,9 +198,9 @@ public class DebugOperationTracer implements OperationTracer {
     if (!options.isMemoryEnabled()) {
       return Optional.empty();
     }
-    final Bytes[] memoryContents = new Bytes32[frame.memoryWordSize().intValue()];
+    final Bytes[] memoryContents = new Bytes32[frame.memoryWordSize()];
     for (int i = 0; i < memoryContents.length; i++) {
-      memoryContents[i] = frame.readMemory(UInt256.valueOf(i * 32L), UINT256_32);
+      memoryContents[i] = frame.readMemory(i * 32, 32);
     }
     return Optional.of(memoryContents);
   }
