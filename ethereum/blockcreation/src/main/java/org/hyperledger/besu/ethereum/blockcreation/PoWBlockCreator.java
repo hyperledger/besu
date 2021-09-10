@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.config.experimental.RayonismOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
@@ -33,6 +35,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class PoWBlockCreator extends AbstractBlockCreator {
@@ -70,7 +73,11 @@ public class PoWBlockCreator extends AbstractBlockCreator {
     final PoWSolverInputs workDefinition = generateNonceSolverInputs(sealableBlockHeader);
     final PoWSolution solution;
     try {
-      solution = nonceSolver.solveFor(PoWSolver.PoWSolverJob.createFromInputs(workDefinition));
+      if (RayonismOptions.isMergeEnabled()) {
+        solution = new PoWSolution(0, Hash.ZERO, Bytes.EMPTY, Bytes.EMPTY);
+      } else {
+        solution = nonceSolver.solveFor(PoWSolver.PoWSolverJob.createFromInputs(workDefinition));
+      }
     } catch (final InterruptedException ex) {
       throw new CancellationException();
     } catch (final ExecutionException ex) {

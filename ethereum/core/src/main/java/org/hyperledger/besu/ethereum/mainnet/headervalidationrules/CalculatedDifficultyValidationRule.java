@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
+import org.hyperledger.besu.config.experimental.RayonismOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
@@ -35,6 +36,9 @@ public class CalculatedDifficultyValidationRule implements AttachedBlockHeaderVa
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext context) {
+    if (RayonismOptions.isMergeEnabled()) {
+      return true;
+    }
     final BigInteger actualDifficulty = new BigInteger(1, header.getDifficulty().toArray());
     final BigInteger expectedDifficulty =
         difficultyCalculator.nextDifficulty(header.getTimestamp(), parent, context);

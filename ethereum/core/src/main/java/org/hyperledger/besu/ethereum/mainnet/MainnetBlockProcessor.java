@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.config.experimental.RayonismOptions;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
@@ -53,7 +54,8 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
       final BlockHeader header,
       final List<BlockHeader> ommers,
       final boolean skipZeroBlockRewards) {
-    if (skipZeroBlockRewards && blockReward.isZero()) {
+    // TODO: rayonism, this is an inexpensive way to disable mining rewards.
+    if ((skipZeroBlockRewards && blockReward.isZero()) || RayonismOptions.isMergeEnabled()) {
       return true;
     }
 
