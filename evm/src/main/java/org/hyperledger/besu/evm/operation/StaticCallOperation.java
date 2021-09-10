@@ -31,7 +31,7 @@ public class StaticCallOperation extends AbstractCallOperation {
 
   @Override
   protected Gas gas(final MessageFrame frame) {
-    return Gas.of(frame.getStackItem(0));
+    return Gas.of(frame.getStackItem(0).trimLeadingZeros());
   }
 
   @Override

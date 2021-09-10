@@ -102,7 +102,7 @@ public class StandardJsonTracer implements OperationTracer {
         .append(returnData.size() > 0 ? '"' + returnData.toHexString() + '"' : "null")
         .append(",");
     sb.append("\"depth\":").append(depth).append(",");
-    sb.append("\"refund\":\"").append(messageFrame.getGasRefund().toLong()).append("\",");
+    sb.append("\"refund\":").append(messageFrame.getGasRefund().toLong()).append(",");
     sb.append("\"opName\":\"").append(currentOp.getName()).append("\",");
     sb.append("\"error\":\"")
         .append(

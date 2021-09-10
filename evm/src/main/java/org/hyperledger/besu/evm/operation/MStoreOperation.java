@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.apache.tuweni.bytes.Bytes32.leftPad;
+
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -34,7 +36,7 @@ public class MStoreOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     final UInt256 location = UInt256.fromBytes(frame.popStackItem());
-    final Bytes value = frame.popStackItem();
+    final Bytes value = leftPad(frame.popStackItem());
 
     final Gas cost = gasCalculator().mStoreOperationGasCost(frame, location);
     final Optional<Gas> optionalCost = Optional.of(cost);

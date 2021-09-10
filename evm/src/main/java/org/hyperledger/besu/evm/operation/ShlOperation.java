@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.apache.tuweni.bytes.Bytes32.leftPad;
+
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -35,12 +37,12 @@ public class ShlOperation extends AbstractFixedCostOperation {
       frame.pushStackItem(UInt256.ZERO);
     } else {
       final int shiftAmountInt = shiftAmount.toInt();
-      final Bytes value = frame.popStackItem();
+      final Bytes value = leftPad(frame.popStackItem());
 
       if (shiftAmountInt >= 256) {
         frame.pushStackItem(UInt256.ZERO);
       } else {
-        frame.pushStackItem(UInt256.fromBytes(value.shiftLeft(shiftAmountInt)));
+        frame.pushStackItem(value.shiftLeft(shiftAmountInt));
       }
     }
     return successResponse;

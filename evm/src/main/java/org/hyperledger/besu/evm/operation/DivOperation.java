@@ -42,7 +42,15 @@ public class DivOperation extends AbstractFixedCostOperation {
       var b2 = new BigInteger(1, value1.toArrayUnsafe());
       final BigInteger result = b1.divide(b2);
 
-      frame.pushStackItem(Bytes.wrap(result.toByteArray()));
+      // because it's unsigned there is a change a 33 byte result will occur
+      // there is no toByteArrayUnsigned so we have to check and trim
+      byte[] resultArray = result.toByteArray();
+      int length = resultArray.length;
+      if (length > 32) {
+        frame.pushStackItem(Bytes.wrap(resultArray, length - 32, 32));
+      } else {
+        frame.pushStackItem(Bytes.wrap(resultArray));
+      }
     }
 
     return successResponse;

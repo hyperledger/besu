@@ -36,7 +36,7 @@ public class ShrOperation extends AbstractFixedCostOperation {
     if (!shiftAmount.fitsInt() || shiftAmount.intValue() >= 256) {
       frame.pushStackItem(UInt256.ZERO);
     } else {
-      frame.pushStackItem(UInt256.fromBytes(value.shiftRight(shiftAmount.intValue())));
+      frame.pushStackItem(value.shiftRight(shiftAmount.intValue()));
     }
 
     return successResponse;
