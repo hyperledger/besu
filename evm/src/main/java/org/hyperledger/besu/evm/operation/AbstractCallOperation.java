@@ -215,7 +215,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
               .maxStackSize(frame.getMaxStackSize())
               .build();
       frame.incrementRemainingGas(cost);
-      childFrame.copyWarmedUpFields(frame);
 
       frame.getMessageFrameStack().addFirst(childFrame);
       frame.setState(MessageFrame.State.CODE_SUSPENDED);

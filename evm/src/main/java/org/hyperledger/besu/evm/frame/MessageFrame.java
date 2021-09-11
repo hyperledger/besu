@@ -215,8 +215,8 @@ public class MessageFrame {
   private Gas gasRefund;
   private final Set<Address> selfDestructs;
   private final Map<Address, Wei> refunds;
-  private Set<Address> warmedUpAddresses;
-  private Multimap<Address, Bytes32> warmedUpStorage;
+  private final Set<Address> warmedUpAddresses;
+  private final Multimap<Address, Bytes32> warmedUpStorage;
 
   // Execution Environment fields.
   private final Address recipient;
@@ -230,6 +230,7 @@ public class MessageFrame {
   private final Code code;
   private final BlockHeader blockHeader;
   private final int depth;
+  private final MessageFrame parentMessageFrame;
   private final Deque<MessageFrame> messageFrameStack;
   private final Address miningBeneficiary;
   private Optional<Bytes> revertReason;
@@ -275,6 +276,7 @@ public class MessageFrame {
       final Multimap<Address, Bytes32> accessListWarmStorage) {
     this.type = type;
     this.messageFrameStack = messageFrameStack;
+    this.parentMessageFrame = messageFrameStack.peek();
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
     this.blockHashLookup = blockHashLookup;
@@ -790,7 +792,22 @@ public class MessageFrame {
    * @return true if the address was already warmed up
    */
   public boolean warmUpAddress(final Address address) {
-    return !warmedUpAddresses.add(address);
+    if (warmedUpAddresses.add(address)) {
+      return parentMessageFrame != null && parentMessageFrame.isWarm(address);
+    } else {
+      return true;
+    }
+  }
+
+  private boolean isWarm(final Address address) {
+    MessageFrame frame = this;
+    while (frame != null) {
+      if (frame.warmedUpAddresses.contains(address)) {
+        return true;
+      }
+      frame = frame.parentMessageFrame;
+    }
+    return false;
   }
 
   /**
@@ -801,16 +818,22 @@ public class MessageFrame {
    * @return true if the storage slot was already warmed up
    */
   public boolean warmUpStorage(final Address address, final Bytes32 slot) {
-    return !warmedUpStorage.put(address, slot);
+    if (warmedUpStorage.put(address, slot)) {
+      return parentMessageFrame != null && parentMessageFrame.isWarm(address, slot);
+    } else {
+      return true;
+    }
   }
 
-  public void copyWarmedUpFields(final MessageFrame parentFrame) {
-    if (parentFrame == this) {
-      return;
+  private boolean isWarm(final Address address, final Bytes32 slot) {
+    MessageFrame frame = this;
+    while (frame != null) {
+      if (frame.warmedUpStorage.containsEntry(address, slot)) {
+        return true;
+      }
+      frame = frame.parentMessageFrame;
     }
-
-    warmedUpAddresses = new HashSet<>(parentFrame.warmedUpAddresses);
-    warmedUpStorage = HashMultimap.create(parentFrame.warmedUpStorage);
+    return false;
   }
 
   public void mergeWarmedUpFields(final MessageFrame childFrame) {
@@ -818,8 +841,8 @@ public class MessageFrame {
       return;
     }
 
-    warmedUpAddresses = childFrame.warmedUpAddresses;
-    warmedUpStorage = childFrame.warmedUpStorage;
+    warmedUpAddresses.addAll(childFrame.warmedUpAddresses);
+    warmedUpStorage.putAll(childFrame.warmedUpStorage);
   }
 
   /**
