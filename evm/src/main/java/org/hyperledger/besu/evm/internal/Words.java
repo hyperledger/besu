@@ -59,7 +59,9 @@ public abstract class Words {
     if (size < 20) {
       MutableBytes result = MutableBytes.create(20);
       bytes.copyTo(result, 20 - size);
-      return Address.wrap(result);
+      // Addresses get hashed alot in calls, and mutable bytes don't cache the `hashCode`
+      // so always return an immutable copy
+      return Address.wrap(result.copy());
     } else if (size == 20) {
       return Address.wrap(bytes);
     } else {

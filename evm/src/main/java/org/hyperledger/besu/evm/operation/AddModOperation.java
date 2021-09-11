@@ -18,6 +18,10 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import java.math.BigInteger;
+import java.util.Arrays;
+
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class AddModOperation extends AbstractFixedCostOperation {
@@ -29,15 +33,27 @@ public class AddModOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value2 = UInt256.fromBytes(frame.popStackItem());
+    final Bytes value0 = frame.popStackItem();
+    final Bytes value1 = frame.popStackItem();
+    final Bytes value2 = frame.popStackItem();
 
     if (value2.isZero()) {
       frame.pushStackItem(UInt256.ZERO);
     } else {
-      final UInt256 result = value0.addMod(value1, value2);
-      frame.pushStackItem(result);
+      var b0 = new BigInteger(1, value0.toArrayUnsafe());
+      var b1 = new BigInteger(1, value1.toArrayUnsafe());
+      var b2 = new BigInteger(1, value2.toArrayUnsafe());
+
+      BigInteger result = b0.add(b1).mod(b2);
+      Bytes resultBytes = Bytes.wrap(result.toByteArray());
+      if (resultBytes.size() > 32) {
+        resultBytes = resultBytes.slice(resultBytes.size() - 32, 32);
+      }
+
+      final byte[] padding = new byte[32 - resultBytes.size()];
+      Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
+
+      frame.pushStackItem(Bytes.concatenate(Bytes.wrap(padding), resultBytes));
     }
     return successResponse;
   }

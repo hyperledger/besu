@@ -46,7 +46,7 @@ public class PushOperation extends AbstractFixedCostOperation {
     final Bytes code = frame.getCode().getBytes();
 
     final int copyLength = min(length, code.size() - pc - 1);
-    frame.pushStackItem(code.slice(pc+1, copyLength));
+    frame.pushStackItem(code.slice(pc + 1, copyLength));
 
     return successResponse;
   }

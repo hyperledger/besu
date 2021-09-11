@@ -61,7 +61,7 @@ public final class Gas {
   }
 
   public static Gas of(final Bytes32 value) {
-    return Gas.of((Bytes)value);
+    return Gas.of((Bytes) value);
   }
 
   public static Gas of(final Bytes value) {

@@ -39,12 +39,14 @@ public class SModOperation extends AbstractFixedCostOperation {
     if (value1.isZero()) {
       frame.pushStackItem(UInt256.ZERO);
     } else {
-      final BigInteger b1 = value0.size() < 32 ?
-          new BigInteger(1, value0.toArrayUnsafe()) :
-          new BigInteger(value0.toArrayUnsafe());
-      final BigInteger b2 = value1.size() < 32 ?
-          new BigInteger(1, value1.toArrayUnsafe()) :
-          new BigInteger(value1.toArrayUnsafe());
+      final BigInteger b1 =
+          value0.size() < 32
+              ? new BigInteger(1, value0.toArrayUnsafe())
+              : new BigInteger(value0.toArrayUnsafe());
+      final BigInteger b2 =
+          value1.size() < 32
+              ? new BigInteger(1, value1.toArrayUnsafe())
+              : new BigInteger(value1.toArrayUnsafe());
       BigInteger result = b1.abs().mod(b2.abs());
       if (b1.signum() < 0) {
         result = result.negate();
@@ -58,7 +60,7 @@ public class SModOperation extends AbstractFixedCostOperation {
       final byte[] padding = new byte[32 - resultBytes.size()];
       Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
 
-      frame.pushStackItem(UInt256.fromBytes(Bytes.concatenate(Bytes.wrap(padding), resultBytes)));
+      frame.pushStackItem(Bytes.concatenate(Bytes.wrap(padding), resultBytes));
     }
 
     return successResponse;

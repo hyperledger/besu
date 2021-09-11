@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
+import static org.apache.tuweni.bytes.Bytes32.leftPad;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
@@ -54,9 +56,9 @@ public class DebugOperationTracer implements OperationTracer {
     final int pc = frame.getPC();
     final Gas gasRemaining = frame.getRemainingGas();
     final Bytes inputData = frame.getInputData();
-    final Optional<Bytes[]> stack = captureStack(frame);
+    final Optional<Bytes32[]> stack = captureStack(frame);
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
-    final Optional<Bytes[]> stackPostExecution;
+    final Optional<Bytes32[]> stackPostExecution;
     final Operation.OperationResult operationResult = executeOperation.execute();
     final Bytes outputData = frame.getOutputData();
     final Optional<Bytes[]> memory = captureMemory(frame);
@@ -198,22 +200,22 @@ public class DebugOperationTracer implements OperationTracer {
     if (!options.isMemoryEnabled()) {
       return Optional.empty();
     }
-    final Bytes[] memoryContents = new Bytes32[frame.memoryWordSize()];
+    final Bytes[] memoryContents = new Bytes[frame.memoryWordSize()];
     for (int i = 0; i < memoryContents.length; i++) {
-      memoryContents[i] = frame.readMemory(i * 32, 32);
+      memoryContents[i] = frame.readMemory(i * 32L, 32);
     }
     return Optional.of(memoryContents);
   }
 
-  private Optional<Bytes[]> captureStack(final MessageFrame frame) {
+  private Optional<Bytes32[]> captureStack(final MessageFrame frame) {
     if (!options.isStackEnabled()) {
       return Optional.empty();
     }
 
-    final Bytes[] stackContents = new Bytes32[frame.stackSize()];
+    final Bytes32[] stackContents = new Bytes32[frame.stackSize()];
     for (int i = 0; i < stackContents.length; i++) {
       // Record stack contents in reverse
-      stackContents[i] = frame.getStackItem(stackContents.length - i - 1);
+      stackContents[i] = leftPad(frame.getStackItem(stackContents.length - i - 1));
     }
     return Optional.of(stackContents);
   }

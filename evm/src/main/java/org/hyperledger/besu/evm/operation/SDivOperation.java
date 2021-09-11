@@ -39,12 +39,14 @@ public class SDivOperation extends AbstractFixedCostOperation {
     if (value1.isZero()) {
       frame.pushStackItem(UInt256.ZERO);
     } else {
-      final BigInteger b1 = value0.size() < 32 ?
-          new BigInteger(1, value0.toArrayUnsafe()) :
-          new BigInteger(value0.toArrayUnsafe());
-      final BigInteger b2 = value1.size() < 32 ?
-          new BigInteger(1, value1.toArrayUnsafe()) :
-          new BigInteger(value1.toArrayUnsafe());
+      final BigInteger b1 =
+          value0.size() < 32
+              ? new BigInteger(1, value0.toArrayUnsafe())
+              : new BigInteger(value0.toArrayUnsafe());
+      final BigInteger b2 =
+          value1.size() < 32
+              ? new BigInteger(1, value1.toArrayUnsafe())
+              : new BigInteger(value1.toArrayUnsafe());
       final BigInteger result = b1.divide(b2);
       Bytes resultBytes = Bytes.wrap(result.toByteArray());
       if (resultBytes.size() > 32) {

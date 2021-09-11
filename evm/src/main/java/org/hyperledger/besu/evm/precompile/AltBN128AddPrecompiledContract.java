@@ -76,7 +76,7 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
     x.copyTo(result, 32 - x.size());
     y.copyTo(result, 64 - y.size());
 
-    return result;
+    return result.copy();
   }
 
   private static BigInteger extractParameter(
