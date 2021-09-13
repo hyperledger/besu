@@ -12,11 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft;
+package org.hyperledger.besu.consensus.qbft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
-import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.QbftFork;
+import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -33,11 +36,14 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
-public class BftProtocolSchedule {
+/** Defines the protocol behaviours for a blockchain using a QBFT consensus mechanism. */
+// TODO-jf remove duplication with the BftProtocolSchedule
+public class QbftProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
 
@@ -45,7 +51,7 @@ public class BftProtocolSchedule {
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
+      final BiFunction<Integer, Boolean, BlockHeaderValidator.Builder> blockHeaderRuleset,
       final BftExtraDataCodec bftExtraDataCodec) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
 
@@ -58,17 +64,13 @@ public class BftProtocolSchedule {
                 config.isQuorum(),
                 blockHeaderRuleset,
                 bftExtraDataCodec,
-                config.getBftConfigOptions().getBlockRewardWei()));
+                Optional.of(config.getBftConfigOptions().getBlockRewardWei()),
+                config.getQbftConfigOptions().getValidatorContractAddress().isPresent()));
 
-    final Supplier<List<? extends BftFork>> forks;
-    if (config.isIbft2()) {
-      forks = () -> config.getTransitions().getIbftForks();
-    } else {
-      forks = () -> config.getTransitions().getQbftForks();
-    }
+    final Supplier<List<QbftFork>> forks = () -> config.getTransitions().getQbftForks();
 
-    forks.get().stream()
-        .filter(fork -> fork.getBlockRewardWei().isPresent())
+    forks
+        .get()
         .forEach(
             fork ->
                 specMap.put(
@@ -80,7 +82,10 @@ public class BftProtocolSchedule {
                             config.isQuorum(),
                             blockHeaderRuleset,
                             bftExtraDataCodec,
-                            fork.getBlockRewardWei().get())));
+                            fork.getBlockRewardWei(),
+                            fork.getValidatorSelectionMode()
+                                .filter(m -> m == VALIDATOR_SELECTION_MODE.CONTRACT)
+                                .isPresent())));
 
     final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
 
@@ -97,7 +102,7 @@ public class BftProtocolSchedule {
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
-      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
+      final BiFunction<Integer, Boolean, BlockHeaderValidator.Builder> blockHeaderRuleset,
       final BftExtraDataCodec bftExtraDataCodec) {
     return create(
         config,
@@ -109,7 +114,7 @@ public class BftProtocolSchedule {
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
-      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
+      final BiFunction<Integer, Boolean, BlockHeaderValidator.Builder> blockHeaderRuleset,
       final BftExtraDataCodec bftExtraDataCodec) {
     return create(config, PrivacyParameters.DEFAULT, false, blockHeaderRuleset, bftExtraDataCodec);
   }
@@ -118,30 +123,36 @@ public class BftProtocolSchedule {
       final BftConfigOptions configOptions,
       final ProtocolSpecBuilder builder,
       final boolean goQuorumMode,
-      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
+      final BiFunction<Integer, Boolean, BlockHeaderValidator.Builder> blockHeaderRuleset,
       final BftExtraDataCodec bftExtraDataCodec,
-      final BigInteger blockReward) {
+      final Optional<BigInteger> blockReward,
+      final boolean useValidatorContract) {
 
     if (configOptions.getEpochLength() <= 0) {
       throw new IllegalArgumentException("Epoch length in config must be greater than zero");
     }
 
-    if (blockReward.signum() < 0) {
+    if (blockReward.isPresent() && blockReward.get().signum() < 0) {
       throw new IllegalArgumentException("Bft Block reward in config cannot be negative");
     }
 
     builder
         .blockHeaderValidatorBuilder(
-            feeMarket -> blockHeaderRuleset.apply(configOptions.getBlockPeriodSeconds()))
+            feeMarket ->
+                blockHeaderRuleset.apply(
+                    configOptions.getBlockPeriodSeconds(), useValidatorContract))
         .ommerHeaderValidatorBuilder(
-            feeMarket -> blockHeaderRuleset.apply(configOptions.getBlockPeriodSeconds()))
+            feeMarket ->
+                blockHeaderRuleset.apply(
+                    configOptions.getBlockPeriodSeconds(), useValidatorContract))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
-        .blockReward(Wei.of(blockReward))
         .skipZeroBlockRewards(true)
         .blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec));
+
+    blockReward.ifPresent(bigInteger -> builder.blockReward(Wei.of(bigInteger)));
 
     if (configOptions.getMiningBeneficiary().isPresent()) {
       final Address miningBeneficiary;
