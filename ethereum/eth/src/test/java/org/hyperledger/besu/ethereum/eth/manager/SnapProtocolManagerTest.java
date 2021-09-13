@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -58,7 +59,7 @@ public final class SnapProtocolManagerTest {
   @Test
   public void disconnectOnUnsolicitedMessage() {
     try (final SnapProtocolManager snapManager = create()) {
-      final MessageData messageData = AccountRangeMessage.create();
+      final MessageData messageData = AccountRangeMessage.create().wrapMessageData(BigInteger.ONE);
       final MockPeerConnection peer =
           setupPeerWithoutStatusExchange(snapManager, (cap, msg, conn) -> {});
       snapManager.processMessage(SnapProtocol.SNAP1, new DefaultMessage(peer, messageData));

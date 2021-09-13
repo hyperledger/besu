@@ -89,7 +89,6 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
 
   @Value.Immutable
   public interface Range {
-    BigInteger id();
 
     Hash worldStateRootHash();
 

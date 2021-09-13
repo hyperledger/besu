@@ -34,7 +34,6 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
 
 public class SnapProtocolManager implements ProtocolManager {
   private static final Logger LOG = LogManager.getLogger();
@@ -152,25 +151,5 @@ public class SnapProtocolManager implements ProtocolManager {
         reason,
         connection.getPeerInfo(),
         ethPeers.peerCount());
-  }
-
-  static class RawSnapMessageData extends AbstractSnapMessageData {
-
-    private final MessageData originalMessageData;
-
-    public RawSnapMessageData(final MessageData data) {
-      super(data.getData());
-      this.originalMessageData = data;
-    }
-
-    @Override
-    public int getCode() {
-      return originalMessageData.getCode();
-    }
-
-    @Override
-    protected Bytes wrap(final BigInteger requestId) {
-      throw new UnsupportedOperationException("cannot wrap this message");
-    }
   }
 }
