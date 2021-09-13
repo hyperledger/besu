@@ -44,7 +44,6 @@ import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.Hash;
 
 import java.util.Base64;
@@ -275,18 +274,12 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   }
 
   boolean isMining(final MessageFrame messageFrame) {
-    boolean isMining = false;
-    final BlockHeader currentBlockHeader = messageFrame.getBlockHeader();
-    if (!BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())) {
-      if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
-        throw new IllegalArgumentException(
-            "The MessageFrame contains an illegal block header type. Cannot persist private block"
-                + " metadata without current block hash.");
-      } else {
-        isMining = true;
-      }
+    if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
+      throw new IllegalArgumentException(
+          "The MessageFrame contains an illegal block header type. Cannot persist private block"
+              + " metadata without current block hash.");
     }
-    return isMining;
+    return true;
   }
 
   protected boolean privateFromMatchesSenderKey(

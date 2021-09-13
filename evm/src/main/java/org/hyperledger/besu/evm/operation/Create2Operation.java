@@ -40,7 +40,7 @@ public class Create2Operation extends AbstractCreateOperation {
     final long offset = clampedToLong(frame.getStackItem(1));
     final long length = clampedToLong(frame.getStackItem(2));
     final Bytes32 salt = UInt256.fromBytes(frame.getStackItem(3));
-    final Bytes initCode = frame.readMemory(offset, length);
+    final Bytes initCode = frame.readMutableMemory(offset, length);
     final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, sender, salt, keccak256(initCode)));
     final Address address = Address.extract(hash);
     frame.warmUpAddress(address);

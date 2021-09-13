@@ -35,28 +35,29 @@ public class SarOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final UInt256 shiftAmount = UInt256.fromBytes(frame.popStackItem());
-    Bytes value = leftPad(frame.popStackItem());
 
-    final boolean negativeNumber = value.get(0) < 0;
+    Bytes shiftAmount = frame.popStackItem();
+    if (shiftAmount.size() > 4 && (shiftAmount = shiftAmount.trimLeadingZeros()).size() > 4) {
+      frame.pushStackItem(UInt256.ZERO);
+    } else {
+      final int shiftAmountInt = shiftAmount.toInt();
+      final Bytes value = leftPad(frame.popStackItem());
+      final boolean negativeNumber = value.get(0) < 0;
 
-    // short circuit result if we are shifting more than the width of the data.
-    if (!shiftAmount.fitsInt() || shiftAmount.intValue() >= 256) {
-      final UInt256 overflow = negativeNumber ? ALL_BITS : UInt256.ZERO;
-      frame.pushStackItem(overflow);
-      return successResponse;
+      if (shiftAmountInt >= 256) {
+        frame.pushStackItem(negativeNumber?ALL_BITS :UInt256.ZERO);
+      } else {
+        // first perform standard shift right.
+        Bytes result = value.shiftRight(shiftAmountInt);
+
+        // if a negative number, carry through the sign.
+        if (negativeNumber) {
+          final Bytes32 significantBits = ALL_BITS.shiftLeft(256 - shiftAmountInt);
+          result = result.or(significantBits);
+        }
+        frame.pushStackItem(result);
+      }
     }
-
-    // first perform standard shift right.
-    value = value.shiftRight(shiftAmount.intValue());
-
-    // if a negative number, carry through the sign.
-    if (negativeNumber) {
-      final Bytes32 significantBits = ALL_BITS.shiftLeft(256 - shiftAmount.intValue());
-      value = value.or(significantBits);
-    }
-    frame.pushStackItem(UInt256.fromBytes(value));
-
     return successResponse;
   }
 }

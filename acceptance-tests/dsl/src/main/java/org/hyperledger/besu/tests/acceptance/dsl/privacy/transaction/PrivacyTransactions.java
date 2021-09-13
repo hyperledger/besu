@@ -78,6 +78,11 @@ public class PrivacyTransactions {
     return new LockOnChainPrivacyGroupTransaction(privacyGroupId, locker, signer);
   }
 
+  public UnlockOnChainPrivacyGroupTransaction privxUnlockPrivacyGroupAndCheck(
+      final String privacyGroupId, final PrivacyNode locker, final Credentials signer) {
+    return new UnlockOnChainPrivacyGroupTransaction(privacyGroupId, locker, signer);
+  }
+
   public FindPrivacyGroupTransaction findPrivacyGroup(final List<String> nodes) {
     return new FindPrivacyGroupTransaction(nodes);
   }

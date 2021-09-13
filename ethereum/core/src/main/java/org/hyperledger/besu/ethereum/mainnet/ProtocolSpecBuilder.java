@@ -55,8 +55,8 @@ public class ProtocolSpecBuilder {
   private Function<GasCalculator, EVM> evmBuilder;
   private Function<TransactionGasCalculator, MainnetTransactionValidator>
       transactionValidatorBuilder;
-  private BlockHeaderValidator.Builder blockHeaderValidatorBuilder;
-  private BlockHeaderValidator.Builder ommerHeaderValidatorBuilder;
+  private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
+  private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
   private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
   private BiFunction<GasCalculator, EVM, AbstractMessageProcessor> contractCreationProcessorBuilder;
   private Function<PrecompiledContractConfiguration, PrecompileContractRegistry>
@@ -131,13 +131,13 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder blockHeaderValidatorBuilder(
-      final BlockHeaderValidator.Builder blockHeaderValidatorBuilder) {
+      final Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder) {
     this.blockHeaderValidatorBuilder = blockHeaderValidatorBuilder;
     return this;
   }
 
   public ProtocolSpecBuilder ommerHeaderValidatorBuilder(
-      final BlockHeaderValidator.Builder ommerHeaderValidatorBuilder) {
+      final Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder) {
     this.ommerHeaderValidatorBuilder = ommerHeaderValidatorBuilder;
     return this;
   }
@@ -293,10 +293,16 @@ public class ProtocolSpecBuilder {
             messageCallProcessor);
 
     final BlockHeaderValidator blockHeaderValidator =
-        blockHeaderValidatorBuilder.difficultyCalculator(difficultyCalculator).build();
+        blockHeaderValidatorBuilder
+            .apply(feeMarket)
+            .difficultyCalculator(difficultyCalculator)
+            .build();
 
     final BlockHeaderValidator ommerHeaderValidator =
-        ommerHeaderValidatorBuilder.difficultyCalculator(difficultyCalculator).build();
+        ommerHeaderValidatorBuilder
+            .apply(feeMarket)
+            .difficultyCalculator(difficultyCalculator)
+            .build();
     final BlockBodyValidator blockBodyValidator = blockBodyValidatorBuilder.apply(protocolSchedule);
 
     BlockProcessor blockProcessor =

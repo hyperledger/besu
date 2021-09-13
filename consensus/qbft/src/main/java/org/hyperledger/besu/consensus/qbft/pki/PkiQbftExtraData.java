@@ -27,7 +27,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class PkiQbftExtraData extends BftExtraData {
 
-  private final Optional<Bytes> cms;
+  private final Bytes cms;
 
   public PkiQbftExtraData(
       final Bytes vanityData,
@@ -35,12 +35,12 @@ public class PkiQbftExtraData extends BftExtraData {
       final Optional<Vote> vote,
       final int round,
       final Collection<Address> validators,
-      final Optional<Bytes> cms) {
+      final Bytes cms) {
     super(vanityData, seals, vote, round, validators);
     this.cms = cms;
   }
 
-  PkiQbftExtraData(final BftExtraData bftExtraData, final Optional<Bytes> cms) {
+  public PkiQbftExtraData(final BftExtraData bftExtraData, final Bytes cms) {
     this(
         bftExtraData.getVanityData(),
         bftExtraData.getSeals(),
@@ -50,7 +50,7 @@ public class PkiQbftExtraData extends BftExtraData {
         cms);
   }
 
-  public Optional<Bytes> getCms() {
+  public Bytes getCms() {
     return cms;
   }
 }

@@ -56,7 +56,7 @@ public class Bucket {
    * Returns the peer with the provided ID if it exists in the bucket.
    *
    * <p>This operation presupposes that the system has been in recent contact with this peer, hence
-   * it relocates it to to the head of the list.
+   * it relocates it to the head of the list.
    *
    * @param id The peer's ID (public key).
    * @return An empty optional if the peer was not a member of this bucket, or a filled optional if

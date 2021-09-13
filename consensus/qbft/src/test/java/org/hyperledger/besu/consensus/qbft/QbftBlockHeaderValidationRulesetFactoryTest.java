@@ -47,7 +47,10 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
     return new ProtocolContext(
-        null, null, setupContextWithBftExtraDataEncoder(validators, new QbftExtraDataCodec()));
+        null,
+        null,
+        setupContextWithBftExtraDataEncoder(
+            QbftContext.class, validators, new QbftExtraDataCodec()));
   }
 
   @Test
@@ -63,7 +66,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader).buildHeader();
 
     final BlockHeaderValidator validator =
-        new QbftBlockHeaderValidationRulesetFactory(false).blockHeaderValidator(5).build();
+        new QbftBlockHeaderValidationRulesetFactory().blockHeaderValidator(5, false).build();
 
     assertThat(
             validator.validateHeader(
@@ -84,7 +87,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, emptyList(), parentHeader).buildHeader();
 
     final BlockHeaderValidator validator =
-        new QbftBlockHeaderValidationRulesetFactory(false).blockHeaderValidator(5).build();
+        new QbftBlockHeaderValidationRulesetFactory().blockHeaderValidator(5, false).build();
 
     assertThat(
             validator.validateHeader(
@@ -110,7 +113,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        new QbftBlockHeaderValidationRulesetFactory(false).blockHeaderValidator(5).build();
+        new QbftBlockHeaderValidationRulesetFactory().blockHeaderValidator(5, false).build();
 
     assertThat(
             validator.validateHeader(
@@ -133,7 +136,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        new QbftBlockHeaderValidationRulesetFactory(false).blockHeaderValidator(5).build();
+        new QbftBlockHeaderValidationRulesetFactory().blockHeaderValidator(5, false).build();
 
     assertThat(
             validator.validateHeader(
@@ -156,7 +159,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        new QbftBlockHeaderValidationRulesetFactory(false).blockHeaderValidator(5).build();
+        new QbftBlockHeaderValidationRulesetFactory().blockHeaderValidator(5, false).build();
 
     assertThat(
             validator.validateHeader(
@@ -183,7 +186,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        new QbftBlockHeaderValidationRulesetFactory(false).blockHeaderValidator(5).build();
+        new QbftBlockHeaderValidationRulesetFactory().blockHeaderValidator(5, false).build();
 
     assertThat(
             validator.validateHeader(
@@ -210,7 +213,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        new QbftBlockHeaderValidationRulesetFactory(false).blockHeaderValidator(5).build();
+        new QbftBlockHeaderValidationRulesetFactory().blockHeaderValidator(5, false).build();
 
     assertThat(
             validator.validateHeader(
@@ -233,7 +236,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        new QbftBlockHeaderValidationRulesetFactory(false).blockHeaderValidator(5).build();
+        new QbftBlockHeaderValidationRulesetFactory().blockHeaderValidator(5, false).build();
 
     assertThat(
             validator.validateHeader(
@@ -254,7 +257,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, validators, null).buildHeader();
 
     final BlockHeaderValidator validator =
-        new QbftBlockHeaderValidationRulesetFactory(false).blockHeaderValidator(5).build();
+        new QbftBlockHeaderValidationRulesetFactory().blockHeaderValidator(5, false).build();
 
     assertThat(
             validator.validateHeader(
@@ -278,7 +281,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        new QbftBlockHeaderValidationRulesetFactory(false).blockHeaderValidator(5).build();
+        new QbftBlockHeaderValidationRulesetFactory().blockHeaderValidator(5, false).build();
 
     assertThat(
             validator.validateHeader(
@@ -301,7 +304,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        new QbftBlockHeaderValidationRulesetFactory(false).blockHeaderValidator(5).build();
+        new QbftBlockHeaderValidationRulesetFactory().blockHeaderValidator(5, false).build();
 
     assertThat(
             validator.validateHeader(

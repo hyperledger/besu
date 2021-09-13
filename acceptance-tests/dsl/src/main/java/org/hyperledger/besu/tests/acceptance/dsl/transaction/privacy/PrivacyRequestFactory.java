@@ -238,6 +238,29 @@ public class PrivacyRequestFactory {
   public String privxLockPrivacyGroup(
       final PrivacyNode locker, final Base64String privacyGroupId, final Credentials signer)
       throws IOException, TransactionException {
+    return privxLockOrUnlockPrivacyGroup(
+        locker,
+        privacyGroupId,
+        signer,
+        OnChainGroupManagement.LOCK_GROUP_METHOD_SIGNATURE.toHexString());
+  }
+
+  public String privxUnlockPrivacyGroup(
+      final PrivacyNode locker, final Base64String privacyGroupId, final Credentials signer)
+      throws IOException, TransactionException {
+    return privxLockOrUnlockPrivacyGroup(
+        locker,
+        privacyGroupId,
+        signer,
+        OnChainGroupManagement.UNLOCK_GROUP_METHOD_SIGNATURE.toHexString());
+  }
+
+  private String privxLockOrUnlockPrivacyGroup(
+      final PrivacyNode locker,
+      final Base64String privacyGroupId,
+      final Credentials signer,
+      final String callData)
+      throws IOException, TransactionException {
     final BigInteger nonce =
         besuClient
             .privGetTransactionCount(signer.getAddress(), privacyGroupId)
@@ -250,7 +273,7 @@ public class PrivacyRequestFactory {
             BigInteger.valueOf(1000),
             BigInteger.valueOf(3000000),
             ONCHAIN_PRIVACY_PROXY.toHexString(),
-            OnChainGroupManagement.LOCK_GROUP_METHOD_SIGNATURE.toHexString(),
+            callData,
             Base64String.wrap(locker.getEnclaveKey()),
             privacyGroupId,
             org.web3j.utils.Restriction.RESTRICTED);

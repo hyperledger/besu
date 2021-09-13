@@ -14,10 +14,9 @@
  */
 package org.hyperledger.besu.evm.frame;
 
-import java.util.Arrays;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 
 /**
  * An EVM memory implementation.
@@ -27,6 +26,9 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class Memory {
 
+  // See below.
+  private static final long MAX_BYTES = Integer.MAX_VALUE;
+
   /**
    * The data stored within the memory.
    *
@@ -34,17 +36,52 @@ public class Memory {
    * overflow this. A byte array implementation limits us to 2 GiB. But that would cost over 51
    * trillion gas. So this is likely a reasonable limitation, at least at first.
    */
-  private byte[] data;
+  private MutableBytes data;
 
   private int activeWords;
 
   public Memory() {
-    data = new byte[0];
+    data = MutableBytes.EMPTY;
     updateSize();
   }
 
   private void updateSize() {
-    activeWords = data.length / Bytes32.SIZE;
+    activeWords = data.size() / Bytes32.SIZE;
+  }
+
+  private static RuntimeException overflow(final long v) {
+    return overflow(String.valueOf(v));
+  }
+
+  private static RuntimeException overflow(final String v) {
+    // TODO: we should probably have another specific exception so this properly end up as an
+    // exceptional halt condition with a clear message (message that can indicate that if anyone
+    // runs into this, he should contact us so we know it's a case we do need to handle).
+    final String msg = "Memory index or length %s too large, cannot be larger than %d";
+    throw new IllegalStateException(String.format(msg, v, MAX_BYTES));
+  }
+
+  private void checkByteIndex(final long v) {
+    // We can have at most MAX_BYTES, so an index can only at most MAX_BYTES - 1.
+    if (v < 0 || v >= MAX_BYTES) throw overflow(v);
+  }
+
+  private int asByteIndex(final long w) {
+    try {
+      final long v = Math.toIntExact(w);
+      checkByteIndex(v);
+      return (int) v;
+    } catch (final IllegalStateException e) {
+      throw overflow(w);
+    }
+  }
+
+  private static int asByteLength(final long l) {
+    try {
+      return Math.toIntExact(l);
+    } catch (final ArithmeticException e) {
+      throw overflow(l);
+    }
   }
 
   /**
@@ -99,8 +136,8 @@ public class Memory {
     if (activeWords >= newActiveWords) return;
 
     // Require full capacity to guarantee we don't resize more than once.
-    final byte[] newData = new byte[newActiveWords * Bytes32.SIZE];
-    System.arraycopy(data, 0, newData, 0, data.length);
+    final MutableBytes newData = MutableBytes.create(newActiveWords * Bytes32.SIZE);
+    data.copyTo(newData, 0);
     data = newData;
     updateSize();
   }
@@ -118,12 +155,12 @@ public class Memory {
     if (!(other instanceof Memory)) return false;
 
     final Memory that = (Memory) other;
-    return Arrays.equals(this.data, that.data);
+    return this.data.equals(that.data);
   }
 
   @Override
   public int hashCode() {
-    return Arrays.hashCode(data);
+    return data.hashCode();
   }
 
   /**
@@ -132,7 +169,7 @@ public class Memory {
    * @return The current number of active bytes stored in memory.
    */
   int getActiveBytes() {
-    return data.length;
+    return data.size();
   }
 
   /**
@@ -147,22 +184,25 @@ public class Memory {
   /**
    * Returns a copy of bytes from memory.
    *
-   * @param start The location in memory to start with.
-   * @param length The number of bytes to get.
+   * @param location The location in memory to start with.
+   * @param numBytes The number of bytes to get.
    * @return A fresh copy of the bytes from memory starting at {@code location} and extending {@code
    *     numBytes}.
    */
-  public Bytes getBytes(final long start, final long length) {
+  public Bytes getBytes(final long location, final long numBytes) {
     // Note: if length == 0, we don't require any memory expansion, whatever location is. So
     // we must call asByteIndex(location) after this check so as it doesn't throw if the location
     // is too big but the length is 0 (which is somewhat nonsensical, but is exercise by some
     // tests).
+    final int length = asByteLength(numBytes);
     if (length == 0) {
       return Bytes.EMPTY;
     }
 
+    final int start = asByteIndex(location);
+
     ensureCapacityForBytes(start, length);
-    return Bytes.of(Arrays.copyOfRange(data, (int) start, (int) (start + length)));
+    return data.slice(start, length);
   }
 
   /**
@@ -203,8 +243,8 @@ public class Memory {
    * <p>Note that this method will extend memory to accommodate the location assigned and bytes
    * copied and so never fails.
    *
-   * @param start the location in memory at which to start copying the bytes of {@code value}.
-   * @param length the number of bytes to set in memory. Note that this value may differ from {@code
+   * @param location the location in memory at which to start copying the bytes of {@code value}.
+   * @param numBytes the number of bytes to set in memory. Note that this value may differ from {@code
    *     value.size()}: if {@code numBytes < value.size()} bytes, only {@code numBytes} will be
    *     copied from {@code value}; if {@code numBytes > value.size()}, then only the bytes in
    *     {@code value} will be copied, but the memory will be expanded if necessary to cover {@code
@@ -213,20 +253,22 @@ public class Memory {
    *     {@code value} being smaller).
    * @param taintedValue the bytes to copy to memory from {@code location}.
    */
-  public void setBytes(final long start, final long length, final Bytes taintedValue) {
-    if (length == 0) {
+  public void setBytes(final long location, final long numBytes, final Bytes taintedValue) {
+    if (numBytes == 0) {
       return;
     }
 
+    final int start = asByteIndex(location);
+    final int length = asByteLength(numBytes);
     final int srcLength = taintedValue.size();
-    final long end = Math.addExact(start, length);
+    final int end = Math.addExact(start, length);
 
     ensureCapacityForBytes(start, length);
     if (srcLength >= length) {
-      System.arraycopy(taintedValue.toArrayUnsafe(), 0, data, (int) start, (int) length);
+      data.set(start, taintedValue.slice(0, length));
     } else {
-      Arrays.fill(data, (int) start, (int) end, (byte) 0);
-      System.arraycopy(taintedValue.toArrayUnsafe(), 0, data, (int) start, srcLength);
+      data.set(start, Bytes.of(new byte[end - start]));
+      data.set(start, taintedValue.slice(0, srcLength));
     }
   }
 
@@ -237,34 +279,51 @@ public class Memory {
    * @param numBytes The number of bytes to clear.
    */
   private void clearBytes(final long location, final long numBytes) {
+    // See getBytes for why we check length == 0 first, before calling asByteIndex(location).
+    final int length = asByteLength(numBytes);
+    if (length == 0) {
+      return;
+    }
+    clearBytes(asByteIndex(location), length);
+  }
+
+  /**
+   * Clears (set to 0) some contiguous number of bytes in memory.
+   *
+   * @param location The location in memory from which to start clearing the bytes.
+   * @param numBytes The number of bytes to clear.
+   */
+  private void clearBytes(final int location, final int numBytes) {
     if (numBytes == 0) {
       return;
     }
 
     ensureCapacityForBytes(location, numBytes);
-    Arrays.fill(data, (int) location, (int) (location + numBytes), (byte) 0);
+    data.set(location, Bytes.of(new byte[numBytes]));
   }
 
   /**
    * Sets a single byte in memory at the provided location.
    *
-   * @param start the location of the byte to set.
+   * @param location the location of the byte to set.
    * @param value the value to set for the byte at {@code location}.
    */
-  void setByte(final long start, final byte value) {
+  void setByte(final long location, final byte value) {
+    final int start = asByteIndex(location);
     ensureCapacityForBytes(start, 1);
-    data[(int) start] = value;
+    data.set(start, value);
   }
 
   /**
    * Returns a copy of the 32-bytes word that begins at the specified memory location.
    *
-   * @param start The memory location the 256-bit word begins at.
+   * @param location The memory location the 256-bit word begins at.
    * @return a copy of the 32-bytes word that begins at the specified memory location.
    */
-  public Bytes32 getWord(final int start) {
+  public Bytes32 getWord(final long location) {
+    final int start = asByteIndex(location);
     ensureCapacityForBytes(start, Bytes32.SIZE);
-    return Bytes32.wrap(Arrays.copyOfRange(data, start, start + Bytes32.SIZE));
+    return Bytes32.wrap(data.slice(start, Bytes32.SIZE));
   }
 
   /**
@@ -273,17 +332,17 @@ public class Memory {
    * <p>Note that this method will extend memory to accommodate the location assigned and bytes
    * copied and so never fails.
    *
-   * @param start the location at which to start setting the bytes.
+   * @param location the location at which to start setting the bytes.
    * @param bytes the 32 bytes to copy at {@code location}.
    */
-  public void setWord(final int start, final Bytes32 bytes) {
+  public void setWord(final long location, final Bytes32 bytes) {
+    final int start = asByteIndex(location);
     ensureCapacityForBytes(start, Bytes32.SIZE);
-
-    System.arraycopy(bytes.toArrayUnsafe(), 0, data, start, Bytes32.SIZE);
+    data.set(start, bytes);
   }
 
   @Override
   public String toString() {
-    return Bytes.wrap(data).toHexString();
+    return data.toHexString();
   }
 }

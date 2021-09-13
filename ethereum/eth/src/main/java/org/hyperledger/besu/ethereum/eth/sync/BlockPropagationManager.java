@@ -127,6 +127,11 @@ public class BlockPropagationManager {
       readyForImport = pendingBlocksManager.childrenOf(newBlock.getHash());
     }
 
+    LOG.trace(
+        "Ready for import blocks found {} for {}",
+        readyForImport,
+        newBlock.getHeader().getNumber());
+
     if (!readyForImport.isEmpty()) {
       final Supplier<CompletableFuture<List<Block>>> importBlocksTask =
           PersistBlockTask.forUnorderedBlocks(
@@ -146,6 +151,9 @@ public class BlockPropagationManager {
                 }
               });
     } else {
+
+      LOG.trace("Not ready for import blocks found for {}", newBlock.getHeader().getNumber());
+
       pendingBlocksManager
           .lowestAnnouncedBlock()
           .map(ProcessableBlockHeader::getNumber)
@@ -154,6 +162,10 @@ public class BlockPropagationManager {
                 long distance =
                     minAnnouncedBlockNumber
                         - protocolContext.getBlockchain().getChainHeadBlockNumber();
+                LOG.trace(
+                    "Found lowest announced block {} with distance {}",
+                    minAnnouncedBlockNumber,
+                    distance);
                 if (distance < config.getBlockPropagationRange().upperEndpoint()
                     && minAnnouncedBlockNumber > newBlock.getHeader().getNumber()) {
                   retrieveMissingAnnouncedBlock(newBlock.getHeader().getNumber() + 1);
@@ -262,7 +274,7 @@ public class BlockPropagationManager {
   }
 
   private CompletableFuture<Block> retrieveMissingAnnouncedBlock(final long blockNumber) {
-    LOG.debug("Retrieve missing announced block {} from peer", blockNumber);
+    LOG.trace("Retrieve missing announced block {} from peer", blockNumber);
     final List<EthPeer> peers =
         ethContext.getEthPeers().streamBestPeers().collect(Collectors.toList());
     final GetBlockFromPeersTask getBlockTask =
@@ -303,6 +315,8 @@ public class BlockPropagationManager {
     // Synchronize to avoid race condition where block import event fires after the
     // blockchain.contains() check and before the block is registered, causing onBlockAdded() to be
     // invoked for the parent of this block before we are able to register it.
+    LOG.trace("Import or save pending block {}", block.getHeader().getNumber());
+
     synchronized (pendingBlocksManager) {
       if (!protocolContext.getBlockchain().contains(block.getHeader().getParentHash())) {
         // Block isn't connected to local chain, save it to pending blocks collection

@@ -207,14 +207,6 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
     }
   }
 
-  public boolean isGroupRemovalTransaction() {
-    return this.getTo().isPresent()
-        && this.getTo().get().equals(ONCHAIN_PRIVACY_PROXY)
-        && this.getPayload()
-            .toHexString()
-            .startsWith(REMOVE_PARTICIPANT_METHOD_SIGNATURE.toHexString());
-  }
-
   private static Object resolvePrivateForOrPrivacyGroupId(final RLPInput item) {
     return item.nextIsList() ? item.readList(RLPInput::readBytes) : item.readBytes();
   }

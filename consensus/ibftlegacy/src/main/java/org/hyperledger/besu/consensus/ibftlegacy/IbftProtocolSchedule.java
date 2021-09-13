@@ -67,8 +67,10 @@ public class IbftProtocolSchedule {
       final boolean goQuorumMode,
       final long ceil2nBy3Block) {
     return builder
-        .blockHeaderValidatorBuilder(ibftBlockHeaderValidator(secondsBetweenBlocks, ceil2nBy3Block))
-        .ommerHeaderValidatorBuilder(ibftBlockHeaderValidator(secondsBetweenBlocks, ceil2nBy3Block))
+        .blockHeaderValidatorBuilder(
+            feeMarket -> ibftBlockHeaderValidator(secondsBetweenBlocks, ceil2nBy3Block))
+        .ommerHeaderValidatorBuilder(
+            feeMarket -> ibftBlockHeaderValidator(secondsBetweenBlocks, ceil2nBy3Block))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)

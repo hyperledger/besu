@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.apache.tuweni.bytes.Bytes32.leftPad;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.evm.EVM;
@@ -43,7 +42,7 @@ public class MLoadOperation extends AbstractOperation {
       return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
-    final Bytes value = leftPad(frame.readMemory(location, 32, true));
+    final Bytes value = frame.readMutableMemory(location, 32, true).copy();
 
     frame.pushStackItem(value);
     return new OperationResult(optionalCost, Optional.empty());

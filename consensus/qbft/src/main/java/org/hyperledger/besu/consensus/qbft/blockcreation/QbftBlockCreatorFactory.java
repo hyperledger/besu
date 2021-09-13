@@ -14,12 +14,17 @@
  */
 package org.hyperledger.besu.consensus.qbft.blockcreation;
 
+import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.qbft.QbftContext;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorConfig;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
@@ -32,7 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** Supports contract based voters and validators in extra data */
 public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
-  private final boolean extraDataWithRoundInformationOnly;
+  private final ValidatorSelectorForksSchedule validatorSelectorForksSchedule;
 
   public QbftBlockCreatorFactory(
       final AbstractPendingTransactionsSorter pendingTransactions,
@@ -42,7 +47,7 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
       final Address localAddress,
       final Address miningBeneficiary,
       final BftExtraDataCodec bftExtraDataCodec,
-      final boolean extraDataWithRoundInformationOnly) {
+      final ValidatorSelectorForksSchedule validatorSelectorForksSchedule) {
     super(
         pendingTransactions,
         protocolContext,
@@ -51,12 +56,29 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
         localAddress,
         miningBeneficiary,
         bftExtraDataCodec);
-    this.extraDataWithRoundInformationOnly = extraDataWithRoundInformationOnly;
+    this.validatorSelectorForksSchedule = validatorSelectorForksSchedule;
+  }
+
+  @Override
+  public BlockCreator create(final BlockHeader parentHeader, final int round) {
+    final BlockCreator blockCreator = super.create(parentHeader, round);
+    final QbftContext qbftContext = protocolContext.getConsensusState(QbftContext.class);
+    if (qbftContext.getPkiBlockCreationConfiguration().isEmpty()) {
+      return blockCreator;
+    } else {
+      return new PkiQbftBlockCreator(
+          blockCreator, qbftContext.getPkiBlockCreationConfiguration().get(), bftExtraDataCodec);
+    }
   }
 
   @Override
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
-    if (extraDataWithRoundInformationOnly) {
+    final Optional<VALIDATOR_SELECTION_MODE> validatorSelectionMode =
+        validatorSelectorForksSchedule
+            .getFork(parentHeader.getNumber() + 1L)
+            .map(ValidatorSelectorConfig::getValidatorSelectionMode);
+    if (validatorSelectionMode.isPresent()
+        && validatorSelectionMode.get().equals(VALIDATOR_SELECTION_MODE.CONTRACT)) {
       // vote and validators will come from contract instead of block
       final BftExtraData extraData =
           new BftExtraData(

@@ -33,6 +33,6 @@ public class IDPrecompiledContract extends AbstractPrecompiledContract {
 
   @Override
   public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
-    return input;
+    return input.copy();
   }
 }

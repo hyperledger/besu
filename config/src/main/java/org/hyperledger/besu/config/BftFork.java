@@ -27,12 +27,12 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class BftFork {
 
-  private static final String FORK_BLOCK_KEY = "block";
-  private static final String VALIDATORS_KEY = "validators";
-  private static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
-  private static final String BLOCK_REWARD_KEY = "blockreward";
+  public static final String FORK_BLOCK_KEY = "block";
+  public static final String VALIDATORS_KEY = "validators";
+  public static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
+  public static final String BLOCK_REWARD_KEY = "blockreward";
 
-  private final ObjectNode forkConfigRoot;
+  protected final ObjectNode forkConfigRoot;
 
   @JsonCreator
   public BftFork(final ObjectNode forkConfigRoot) {
@@ -79,7 +79,7 @@ public class BftFork {
             value -> {
               if (!value.isTextual()) {
                 throw new IllegalArgumentException(
-                    "Bft Validator fork does not contain a string " + value.toString());
+                    "Bft Validator fork does not contain a string " + value);
               }
 
               validators.add(value.asText());

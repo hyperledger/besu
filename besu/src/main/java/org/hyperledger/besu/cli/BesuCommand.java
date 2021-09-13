@@ -453,7 +453,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--p2p-host"},
       paramLabel = MANDATORY_HOST_FORMAT_HELP,
-      description = "Ip address this node advertises to its peers (default: ${DEFAULT-VALUE})",
+      description = "IP address this node advertises to its peers (default: ${DEFAULT-VALUE})",
       arity = "1")
   private String p2pHost = autoDiscoverDefaultIP().getHostAddress();
 
@@ -1505,7 +1505,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       throw new ParameterException(
           this.commandLine,
           "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove --ethstats-contact"
-              + " or provide an url (via --ethstats=nodename:secret@host:port)");
+              + " or provide a URL (via --ethstats=nodename:secret@host:port)");
     }
   }
 
@@ -2138,8 +2138,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
           && privacyPluginPluginService.getPayloadProvider() == null) {
-        throw new ParameterException(
-            commandLine, "Privacy Plugin must be registered when enabling privacy plugin!");
+        // The plugin may register the payload provider in start or register.
+        // At this point we have only called start.
+        logger.warn(
+            "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
       }
 
       if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled() && isFlexiblePrivacyGroupsEnabled) {
@@ -2310,7 +2312,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return pruningEnabled;
   }
 
-  // Blockchain synchronisation from peers.
+  // Blockchain synchronization from peers.
   private void synchronize(
       final BesuController controller,
       final boolean p2pEnabled,
@@ -2644,7 +2646,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   /**
-   * Adds port in the passed list only if enabled.
+   * Adds port to the specified list only if enabled.
    *
    * @param ports The list of ports
    * @param port The port value

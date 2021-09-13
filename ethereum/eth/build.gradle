@@ -27,6 +27,12 @@ jar {
   }
 }
 
+configurations { testArtifacts }
+task testJar(type: Jar) {
+  archiveBaseName = "${project.name}-test"
+  from sourceSets.test.output
+}
+
 dependencies {
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
   implementation project(':config')
@@ -67,9 +73,20 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
 
+  testSupportImplementation 'junit:junit'
+  testSupportImplementation 'org.mockito:mockito-core'
+  testSupportImplementation project(':testutil')
+  testSupportImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
+  testSupportImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+
   jmhImplementation project(':besu')
   jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   jmhImplementation project(':plugins:rocksdb')
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
+}
+
+artifacts {
+  testArtifacts testJar
+  testSupportArtifacts testSupportJar
 }

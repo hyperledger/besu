@@ -15,12 +15,15 @@
 package org.hyperledger.besu.consensus.common.bft;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +33,22 @@ import java.util.stream.IntStream;
 import org.apache.tuweni.bytes.Bytes;
 
 public class BftExtraDataFixture {
+
+  public static BftExtraData createExtraData(
+      final BlockHeader header, final BftExtraDataCodec bftExtraDataCodec) {
+    final NodeKey proposerNodeKey = NodeKeyUtils.generate();
+    final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
+    final List<Address> validators = singletonList(proposerAddress);
+
+    return createExtraData(
+        header,
+        Bytes.wrap(new byte[BftExtraDataCodec.EXTRA_VANITY_LENGTH]),
+        Optional.of(Vote.authVote(Address.fromHexString("1"))),
+        validators,
+        singletonList(proposerNodeKey),
+        0x2A,
+        bftExtraDataCodec);
+  }
 
   public static BftExtraData createExtraData(
       final BlockHeader header,

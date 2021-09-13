@@ -14,18 +14,27 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
+import org.hyperledger.besu.consensus.qbft.pki.PkiQbftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraData;
+import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.pki.cms.CmsValidator;
 
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -38,16 +47,41 @@ public class ProposalPayloadValidator {
   private final ConsensusRoundIdentifier targetRound;
   private final BlockValidator blockValidator;
   private final ProtocolContext protocolContext;
+  private final BftExtraDataCodec bftExtraDataCodec;
+  private final Optional<CmsValidator> cmsValidator;
 
   public ProposalPayloadValidator(
       final Address expectedProposer,
       final ConsensusRoundIdentifier targetRound,
       final BlockValidator blockValidator,
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext,
+      final BftExtraDataCodec bftExtraDataCodec) {
+    this(
+        expectedProposer,
+        targetRound,
+        blockValidator,
+        protocolContext,
+        bftExtraDataCodec,
+        protocolContext
+            .getConsensusState(QbftContext.class)
+            .getPkiBlockCreationConfiguration()
+            .map(config -> new CmsValidator(config.getTrustStore())));
+  }
+
+  @VisibleForTesting
+  public ProposalPayloadValidator(
+      final Address expectedProposer,
+      final ConsensusRoundIdentifier targetRound,
+      final BlockValidator blockValidator,
+      final ProtocolContext protocolContext,
+      final BftExtraDataCodec bftExtraDataCodec,
+      final Optional<CmsValidator> cmsValidator) {
     this.expectedProposer = expectedProposer;
     this.targetRound = targetRound;
     this.blockValidator = blockValidator;
     this.protocolContext = protocolContext;
+    this.bftExtraDataCodec = bftExtraDataCodec;
+    this.cmsValidator = cmsValidator;
   }
 
   public boolean validate(final SignedData<ProposalPayload> signedPayload) {
@@ -74,6 +108,13 @@ public class ProposalPayloadValidator {
       return false;
     }
 
+    if (cmsValidator.isPresent()) {
+      return validateCms(
+          block,
+          protocolContext.getConsensusState(QbftContext.class).getBlockInterface(),
+          cmsValidator.get());
+    }
+
     return true;
   }
 
@@ -88,5 +129,27 @@ public class ProposalPayloadValidator {
     }
 
     return true;
+  }
+
+  private boolean validateCms(
+      final Block block,
+      final BftBlockInterface bftBlockInterface,
+      final CmsValidator cmsValidator) {
+    final PkiQbftExtraData pkiExtraData =
+        (PkiQbftExtraData) bftBlockInterface.getExtraData(block.getHeader());
+
+    final Hash hashWithoutCms =
+        PkiQbftBlockHeaderFunctions.forCmsSignature((PkiQbftExtraDataCodec) bftExtraDataCodec)
+            .hash(block.getHeader());
+
+    LOG.debug("Validating CMS with signed hash {} in block {}", hashWithoutCms, block.getHash());
+
+    if (!cmsValidator.validate(pkiExtraData.getCms(), hashWithoutCms)) {
+      LOG.info("{}: invalid CMS in block {}", ERROR_PREFIX, block.getHash());
+      return false;
+    } else {
+      LOG.trace("Valid CMS in block {}", block.getHash());
+      return true;
+    }
   }
 }

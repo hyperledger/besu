@@ -60,7 +60,7 @@ public class BftProtocolSchedule {
                 bftExtraDataCodec,
                 config.getBftConfigOptions().getBlockRewardWei()));
 
-    final Supplier<List<BftFork>> forks;
+    final Supplier<List<? extends BftFork>> forks;
     if (config.isIbft2()) {
       forks = () -> config.getTransitions().getIbftForks();
     } else {
@@ -132,9 +132,9 @@ public class BftProtocolSchedule {
 
     builder
         .blockHeaderValidatorBuilder(
-            blockHeaderRuleset.apply(configOptions.getBlockPeriodSeconds()))
+            feeMarket -> blockHeaderRuleset.apply(configOptions.getBlockPeriodSeconds()))
         .ommerHeaderValidatorBuilder(
-            blockHeaderRuleset.apply(configOptions.getBlockPeriodSeconds()))
+            feeMarket -> blockHeaderRuleset.apply(configOptions.getBlockPeriodSeconds()))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)

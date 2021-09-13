@@ -84,6 +84,7 @@ public class MetricsHttpService implements MetricsService {
             new HttpServerOptions()
                 .setHost(config.getHost())
                 .setPort(config.getPort())
+                .setIdleTimeout(config.getIdleTimeout())
                 .setHandle100ContinueAutomatically(true)
                 .setCompressionSupported(true));
 

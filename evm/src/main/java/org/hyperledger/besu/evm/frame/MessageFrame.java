@@ -554,25 +554,39 @@ public class MessageFrame {
   }
 
   /**
-   * Read bytes in memory.
+   * Read bytes in memory as mutable. Contents should not be considered stable outside the scope of
+   * the current operation.
+   *
+   * @param offset The offset in memory
+   * @param length The length of the bytes to read
+   * @return The bytes in the specified range
+   */
+  public Bytes readMutableMemory(final long offset, final long length) {
+    return readMutableMemory(offset, length, false);
+  }
+
+  /**
+   * Read bytes in memory .
    *
    * @param offset The offset in memory
    * @param length The length of the bytes to read
    * @return The bytes in the specified range
    */
   public Bytes readMemory(final long offset, final long length) {
-    return readMemory(offset, length, false);
+    return readMutableMemory(offset, length, false).copy();
   }
 
   /**
-   * Read bytes in memory.
+   * Read bytes in memory. Contents should not be considered stable outside the scope of the current
+   * operation.
    *
    * @param offset The offset in memory
    * @param length The length of the bytes to read
    * @param explicitMemoryRead true if triggered by a memory opcode, false otherwise
    * @return The bytes in the specified range
    */
-  public Bytes readMemory(final long offset, final long length, final boolean explicitMemoryRead) {
+  public Bytes readMutableMemory(
+      final long offset, final long length, final boolean explicitMemoryRead) {
     final Bytes value = memory.getBytes(offset, length);
     if (explicitMemoryRead) {
       setUpdatedMemory(offset, value);
