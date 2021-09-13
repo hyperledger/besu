@@ -31,6 +31,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
@@ -474,6 +476,71 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
     removeFromPrivacyGroup(privacyGroupId, bob, aliceCredentials, charlie);
 
     checkOnChainPrivacyGroupExists(privacyGroupId, alice, bob);
+  }
+
+  @Test
+  public void canOnlyCallProxyContractWhenGroupLocked() {
+    final String privacyGroupId = createOnChainPrivacyGroup(alice);
+    checkOnChainPrivacyGroupExists(privacyGroupId, alice);
+
+    final EventEmitter eventEmitter =
+        alice.execute(
+            privateContractTransactions.createSmartContractWithPrivacyGroupId(
+                EventEmitter.class,
+                alice.getTransactionSigningKey(),
+                alice.getEnclaveKey(),
+                privacyGroupId));
+
+    privateContractVerifier
+        .validPrivateContractDeployed(
+            eventEmitter.getContractAddress(), alice.getAddress().toString())
+        .verify(eventEmitter);
+
+    final Credentials aliceCredentials = Credentials.create(alice.getTransactionSigningKey());
+
+    final Supplier<String> callContract =
+        () -> {
+          return alice.execute(
+              privateContractTransactions.callOnChainPermissioningSmartContract(
+                  eventEmitter.getContractAddress(),
+                  eventEmitter.value().encodeFunctionCall(),
+                  alice.getTransactionSigningKey(),
+                  alice.getEnclaveKey(),
+                  privacyGroupId));
+        };
+
+    final String lockHash =
+        alice.execute(
+            privacyTransactions.privxLockPrivacyGroupAndCheck(
+                privacyGroupId, alice, aliceCredentials));
+
+    final String callWhileLockedHash = callContract.get();
+
+    final String unlockHash =
+        alice.execute(
+            privacyTransactions.privxUnlockPrivacyGroupAndCheck(
+                privacyGroupId, alice, aliceCredentials));
+
+    final String callAfterUnlockedHash = callContract.get();
+
+    alice.execute(minerTransactions.minerStart());
+    alice.getBesu().verify(ethConditions.miningStatus(true));
+
+    final BiConsumer<String, String> assertThatTransactionReceiptIs =
+        (String hash, String expectedResult) -> {
+          final PrivateTransactionReceipt receipt =
+              alice.execute(privacyTransactions.getPrivateTransactionReceipt(hash));
+          assertThat(receipt.getStatus()).isEqualTo(expectedResult);
+        };
+
+    // when locking a group succeeds ...
+    assertThatTransactionReceiptIs.accept(lockHash, "0x1");
+    // ... calls to contracts fail ...
+    assertThatTransactionReceiptIs.accept(callWhileLockedHash, "0x0");
+    // ... but unlock the group works ...
+    assertThatTransactionReceiptIs.accept(unlockHash, "0x1");
+    // ... and afterwards we can call contracts again
+    assertThatTransactionReceiptIs.accept(callAfterUnlockedHash, "0x1");
   }
 
   @Test
