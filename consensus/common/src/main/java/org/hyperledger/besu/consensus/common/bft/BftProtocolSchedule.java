@@ -117,8 +117,10 @@ public abstract class BftProtocolSchedule {
     }
 
     builder
-        .blockHeaderValidatorBuilder(blockHeaderRuleset.get())
-        .ommerHeaderValidatorBuilder(blockHeaderRuleset.get())
+        .blockHeaderValidatorBuilder(
+            feeMarket -> blockHeaderRuleset.apply(configOptions.getBlockPeriodSeconds()))
+        .ommerHeaderValidatorBuilder(
+            feeMarket -> blockHeaderRuleset.apply(configOptions.getBlockPeriodSeconds()))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)

@@ -17,35 +17,41 @@ package org.hyperledger.besu.metrics.opentelemetry;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import io.opentelemetry.api.metrics.DoubleValueRecorder;
-import io.opentelemetry.api.metrics.common.Labels;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.common.AttributesBuilder;
+import io.opentelemetry.api.metrics.Meter;
 
 public class OpenTelemetryTimer implements LabelledMetric<OperationTimer> {
 
-  private final DoubleValueRecorder recorder;
+  private final String help;
+  private final Meter meter;
+  private final String metricName;
   private final String[] labelNames;
 
-  public OpenTelemetryTimer(final DoubleValueRecorder recorder, final String... labelNames) {
-    this.recorder = recorder;
+  public OpenTelemetryTimer(
+      final String metricName, final String help, final Meter meter, final String... labelNames) {
+    this.metricName = metricName;
+    this.help = help;
+    this.meter = meter;
     this.labelNames = labelNames;
   }
 
   @Override
   public OperationTimer labels(final String... labelValues) {
-    List<String> labelKeysAndValues = new ArrayList<>();
+    AttributesBuilder builder = Attributes.builder();
     for (int i = 0; i < labelNames.length; i++) {
-      labelKeysAndValues.add(labelNames[i]);
-      labelKeysAndValues.add(labelValues[i]);
+      builder.put(labelNames[i], labelValues[i]);
     }
-    final Labels labels = Labels.of(labelKeysAndValues.toArray(new String[] {}));
+    final Attributes labels = builder.build();
+
     return () -> {
       final long startTime = System.nanoTime();
       return () -> {
         long elapsed = System.nanoTime() - startTime;
-        recorder.record(elapsed, labels);
+        meter
+            .gaugeBuilder(metricName)
+            .setDescription(help)
+            .buildWithCallback((measurement) -> measurement.observe(elapsed, labels));
         return elapsed / 1e9;
       };
     };

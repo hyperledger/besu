@@ -155,7 +155,6 @@ abstract class MainnetEvmRegistries {
   private static void registerFrontierOpcodes(
       final OperationRegistry registry, final GasCalculator gasCalculator) {
     registry.put(new AddOperation(gasCalculator));
-    registry.put(new AddOperation(gasCalculator));
     registry.put(new MulOperation(gasCalculator));
     registry.put(new SubOperation(gasCalculator));
     registry.put(new DivOperation(gasCalculator));

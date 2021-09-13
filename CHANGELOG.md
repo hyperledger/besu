@@ -12,10 +12,19 @@
 - Removed code supporting EIP-1702. [#2657](https://github.com/hyperledger/besu/pull/2657)
 - A native library was added for the alternative signature algorithm secp256r1, which will be used by default [#2630](https://github.com/hyperledger/besu/pull/2630)
 - The command line option --Xsecp-native-enabled was added as an alias for --Xsecp256k1-native-enabled [#2630](https://github.com/hyperledger/besu/pull/2630)
+- Added Labelled gauges for metrics [#2646](https://github.com/hyperledger/besu/pull/2646)
+- support for `eth/66` networking protocol [#2365](https://github.com/hyperledger/besu/pull/2365)
+- update RPC methods for post london 1559 transaction [#2535](https://github.com/hyperledger/besu/pull/2535)
+- \[EXPERIMENTAL\] Added support for using DNS host name in place of IP address in onchain node permissioning rules [#2667](https://github.com/hyperledger/besu/pull/2667)
+- Implement EIP-3607 Reject transactions from senders with deployed code. [#2676](https://github.com/hyperledger/besu/pull/2676)
+- Ignore all unknown fields when supplied to eth_estimateGas or eth_call. [\#2690](https://github.com/hyperledger/besu/pull/2690)
+- \[EXPERIMENTAL\] Added support for QBFT with PKI-backed Block Creation. [#2647](https://github.com/hyperledger/besu/issues/2647)
 
 ### Bug Fixes
 - Consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)
-- GetTransactionCount should return the latest transaction count if it is greater than the transaction pool [\#2633](https://github.com/hyperledger/besu/pull/2633) 
+- GetTransactionCount should return the latest transaction count if it is greater than the transaction pool [\#2633](https://github.com/hyperledger/besu/pull/2633)
+- Set an idle timeout for metrics connections, to clean up ports when no longer used [\#2748](https://github.com/hyperledger/besu/pull/2748)
+- Onchain privacy groups can be unlocked after being locked without having to add a participant [\#2693](https://github.com/hyperledger/besu/pull/2693)
 
 ### Early Access Features
 

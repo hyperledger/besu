@@ -21,11 +21,13 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorConfig;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorForksSchedule;
+import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collections;
@@ -38,7 +40,7 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
   private final ValidatorSelectorForksSchedule validatorSelectorForksSchedule;
 
   public QbftBlockCreatorFactory(
-      final PendingTransactions pendingTransactions,
+      final AbstractPendingTransactionsSorter pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final MiningParameters miningParams,
@@ -55,6 +57,18 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
         miningBeneficiary,
         bftExtraDataCodec);
     this.validatorSelectorForksSchedule = validatorSelectorForksSchedule;
+  }
+
+  @Override
+  public BlockCreator create(final BlockHeader parentHeader, final int round) {
+    final BlockCreator blockCreator = super.create(parentHeader, round);
+    final QbftContext qbftContext = protocolContext.getConsensusState(QbftContext.class);
+    if (qbftContext.getPkiBlockCreationConfiguration().isEmpty()) {
+      return blockCreator;
+    } else {
+      return new PkiQbftBlockCreator(
+          blockCreator, qbftContext.getPkiBlockCreationConfiguration().get(), bftExtraDataCodec);
+    }
   }
 
   @Override

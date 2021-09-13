@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.NodeConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
@@ -118,6 +119,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<String> staticNodes;
   private boolean isDnsEnabled = false;
   private Optional<Integer> exitCode = Optional.empty();
+  private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
 
   public BesuNode(
       final String name,
@@ -145,7 +147,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final boolean isDnsEnabled,
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
-      final Optional<KeyPair> keyPair)
+      final Optional<KeyPair> keyPair,
+      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     keyfilePath.ifPresent(
@@ -195,6 +198,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
     privacyParameters.ifPresent(this::setPrivacyParameters);
+    this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
     LOG.info("Created BesuNode {}", this.toString());
   }
 
@@ -654,6 +658,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public List<String> getRunCommand() {
     return runCommand;
+  }
+
+  public Optional<PkiKeyStoreConfiguration> getPkiKeyStoreConfiguration() {
+    return pkiKeyStoreConfiguration;
   }
 
   @Override

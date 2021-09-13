@@ -37,6 +37,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.pki.PkiKeystoreConfigurationFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,6 +55,8 @@ public class BesuNodeFactory {
 
   private final GenesisConfigurationFactory genesis = new GenesisConfigurationFactory();
   private final NodeConfigurationFactory node = new NodeConfigurationFactory();
+  private final PkiKeystoreConfigurationFactory pkiKeystoreConfigurationFactory =
+      new PkiKeystoreConfigurationFactory();
 
   public BesuNode create(final BesuNodeConfiguration config) throws IOException {
     return new BesuNode(
@@ -82,7 +85,8 @@ public class BesuNodeFactory {
         config.isDnsEnabled(),
         config.getPrivacyParameters(),
         config.getRunCommand(),
-        config.getKeyPair());
+        config.getKeyPair(),
+        config.getPkiKeyStoreConfiguration());
   }
 
   public BesuNode createMinerNode(final String name) throws IOException {
@@ -392,6 +396,19 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createPkiQbftNode(final String name) throws IOException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .genesisConfigProvider(genesis::createQbftGenesisConfig)
+            .pkiBlockCreationEnabled(pkiKeystoreConfigurationFactory.createPkiConfig())
+            .build());
+  }
+
   public BesuNode createCustomGenesisNode(
       final String name, final String genesisPath, final boolean canBeBootnode) throws IOException {
     return createCustomGenesisNode(name, genesisPath, canBeBootnode, false);
@@ -497,6 +514,24 @@ public class BesuNodeFactory {
             .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
+            .genesisConfigProvider(
+                nodes ->
+                    node.createGenesisConfigForValidators(
+                        asList(validators), nodes, genesis::createQbftGenesisConfig))
+            .build());
+  }
+
+  public BesuNode createPkiQbftNodeWithValidators(final String name, final String... validators)
+      throws IOException {
+
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .pkiBlockCreationEnabled(pkiKeystoreConfigurationFactory.createPkiConfig())
             .genesisConfigProvider(
                 nodes ->
                     node.createGenesisConfigForValidators(

@@ -163,7 +163,7 @@ jobs:
           at: ~/project
       - run:
           name: ReferenceTests
-          no_output_timeout: 20m
+          no_output_timeout: 30m
           command: |
             git submodule update --init --recursive
             ./gradlew --no-daemon referenceTest

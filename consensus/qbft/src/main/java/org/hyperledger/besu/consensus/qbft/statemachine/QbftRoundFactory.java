@@ -16,13 +16,13 @@ package org.hyperledger.besu.consensus.qbft.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -74,7 +74,7 @@ public class QbftRoundFactory {
   public QbftRound createNewRoundWithState(
       final BlockHeader parentHeader, final RoundState roundState) {
     final ConsensusRoundIdentifier roundIdentifier = roundState.getRoundIdentifier();
-    final BftBlockCreator blockCreator = blockCreatorFactory.create(parentHeader, 0);
+    final BlockCreator blockCreator = blockCreatorFactory.create(parentHeader, 0);
 
     // TODO(tmm): Why is this created everytime?!
     final QbftMessageTransmitter messageTransmitter =

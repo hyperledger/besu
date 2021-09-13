@@ -70,7 +70,7 @@ public class DebugTraceTransactionTest {
   @Test
   public void shouldTraceTheTransactionUsingTheTransactionTracer() {
     final TransactionWithMetadata transactionWithMetadata =
-        new TransactionWithMetadata(transaction, 12L, blockHash, 2);
+        new TransactionWithMetadata(transaction, 12L, Optional.empty(), blockHash, 2);
     final Map<String, Boolean> map = new HashMap<>();
     map.put("disableStorage", true);
     final Object[] params = new Object[] {transactionHash, map};

@@ -20,6 +20,7 @@ import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -40,11 +41,10 @@ import java.util.function.DoubleSupplier;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
+import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.api.metrics.DoubleValueRecorder;
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.Meter;
-import io.opentelemetry.api.metrics.common.Labels;
 import io.opentelemetry.sdk.metrics.SdkMeterProvider;
 import io.opentelemetry.sdk.metrics.data.DoubleHistogramPointData;
 import io.opentelemetry.sdk.metrics.data.DoublePointData;
@@ -140,7 +140,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
     for (Object ptObj : points) {
       PointData point = (PointData) ptObj;
       List<String> labels = new ArrayList<>();
-      point.getLabels().forEach((k, v) -> labels.add(v));
+      point.getAttributes().forEach((k, v) -> labels.add(v.toString()));
       observations.add(
           new Observation(
               category, metricData.getName(), extractValue(metricData.getType(), point), labels));
@@ -191,7 +191,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
           if (isCategoryEnabled(category)) {
             final Meter meter = meterSdkProvider.get(category.getName());
 
-            final LongCounter counter = meter.longCounterBuilder(name).setDescription(help).build();
+            final LongCounter counter = meter.counterBuilder(name).setDescription(help).build();
             return new OpenTelemetryCounter(counter, labelNames);
           } else {
             return NoOpMetricsSystem.getCounterLabelledMetric(labelNames.length);
@@ -211,10 +211,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
         (k) -> {
           if (timersEnabled && isCategoryEnabled(category)) {
             final Meter meter = meterSdkProvider.get(category.getName());
-
-            final DoubleValueRecorder recorder =
-                meter.doubleValueRecorderBuilder(name).setDescription(help).build();
-            return new OpenTelemetryTimer(recorder, labelNames);
+            return new OpenTelemetryTimer(name, help, meter, labelNames);
           } else {
             return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
           }
@@ -231,14 +228,24 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
     if (isCategoryEnabled(category)) {
       final Meter meter = meterSdkProvider.get(category.getName());
       meter
-          .doubleValueObserverBuilder(name)
+          .gaugeBuilder(name)
           .setDescription(help)
-          .setUpdater(
-              res -> {
-                res.observe(valueSupplier.getAsDouble(), Labels.empty());
-              })
-          .build();
+          .buildWithCallback(res -> res.observe(valueSupplier.getAsDouble(), Attributes.empty()));
     }
+  }
+
+  @Override
+  public LabelledGauge createLabelledGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    LOG.trace("Creating a labelled gauge {}", name);
+    if (isCategoryEnabled(category)) {
+      return new OpenTelemetryGauge(
+          name, help, meterSdkProvider.get(category.getName()), List.of(labelNames));
+    }
+    return NoOpMetricsSystem.getLabelledGauge(labelNames.length);
   }
 
   @Override
@@ -258,34 +265,35 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
     final MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
     final List<MemoryPoolMXBean> poolBeans = ManagementFactory.getMemoryPoolMXBeans();
     final Meter meter = meterSdkProvider.get(StandardMetricCategory.JVM.getName());
-    final List<Labels> labelSets = new ArrayList<>(garbageCollectors.size());
+    final List<Attributes> labelSets = new ArrayList<>(garbageCollectors.size());
     for (final GarbageCollectorMXBean gc : garbageCollectors) {
-      labelSets.add(Labels.of("gc", gc.getName()));
+      labelSets.add(Attributes.of(AttributeKey.stringKey("gc"), gc.getName()));
     }
     meter
-        .longSumObserverBuilder("jvm.gc.collection")
+        .gaugeBuilder("jvm.gc.collection")
         .setDescription("Time spent in a given JVM garbage collector in milliseconds.")
         .setUnit("ms")
-        .setUpdater(
+        .buildWithCallback(
             resultLongObserver -> {
               for (int i = 0; i < garbageCollectors.size(); i++) {
                 resultLongObserver.observe(
                     garbageCollectors.get(i).getCollectionTime(), labelSets.get(i));
               }
-            })
-        .build();
-    final Labels usedHeap = Labels.of(TYPE_LABEL_KEY, USED, AREA_LABEL_KEY, HEAP);
-    final Labels usedNonHeap = Labels.of(TYPE_LABEL_KEY, USED, AREA_LABEL_KEY, NON_HEAP);
-    final Labels committedHeap = Labels.of(TYPE_LABEL_KEY, COMMITTED, AREA_LABEL_KEY, HEAP);
-    final Labels committedNonHeap = Labels.of(TYPE_LABEL_KEY, COMMITTED, AREA_LABEL_KEY, NON_HEAP);
+            });
+    final AttributeKey<String> typeKey = AttributeKey.stringKey(TYPE_LABEL_KEY);
+    final AttributeKey<String> areaKey = AttributeKey.stringKey(AREA_LABEL_KEY);
+    final Attributes usedHeap = Attributes.of(typeKey, USED, areaKey, HEAP);
+    final Attributes usedNonHeap = Attributes.of(typeKey, USED, areaKey, NON_HEAP);
+    final Attributes committedHeap = Attributes.of(typeKey, COMMITTED, areaKey, HEAP);
+    final Attributes committedNonHeap = Attributes.of(typeKey, COMMITTED, areaKey, NON_HEAP);
     // TODO: Decide if max is needed or not. May be derived with some approximation from max(used).
-    final Labels maxHeap = Labels.of(TYPE_LABEL_KEY, MAX, AREA_LABEL_KEY, HEAP);
-    final Labels maxNonHeap = Labels.of(TYPE_LABEL_KEY, MAX, AREA_LABEL_KEY, NON_HEAP);
+    final Attributes maxHeap = Attributes.of(typeKey, MAX, areaKey, HEAP);
+    final Attributes maxNonHeap = Attributes.of(typeKey, MAX, areaKey, NON_HEAP);
     meter
-        .longUpDownSumObserverBuilder("jvm.memory.area")
+        .upDownCounterBuilder("jvm.memory.area")
         .setDescription("Bytes of a given JVM memory area.")
         .setUnit("By")
-        .setUpdater(
+        .buildWithCallback(
             resultLongObserver -> {
               MemoryUsage heapUsage = memoryBean.getHeapMemoryUsage();
               MemoryUsage nonHeapUsage = memoryBean.getNonHeapMemoryUsage();
@@ -295,22 +303,22 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
               resultLongObserver.observe(nonHeapUsage.getUsed(), committedNonHeap);
               resultLongObserver.observe(heapUsage.getUsed(), maxHeap);
               resultLongObserver.observe(nonHeapUsage.getUsed(), maxNonHeap);
-            })
-        .build();
-    final List<Labels> usedLabelSets = new ArrayList<>(poolBeans.size());
-    final List<Labels> committedLabelSets = new ArrayList<>(poolBeans.size());
-    final List<Labels> maxLabelSets = new ArrayList<>(poolBeans.size());
+            });
+    final List<Attributes> usedLabelSets = new ArrayList<>(poolBeans.size());
+    final List<Attributes> committedLabelSets = new ArrayList<>(poolBeans.size());
+    final List<Attributes> maxLabelSets = new ArrayList<>(poolBeans.size());
+    final AttributeKey<String> poolKey = AttributeKey.stringKey(POOL_LABEL_KEY);
     for (final MemoryPoolMXBean pool : poolBeans) {
-      usedLabelSets.add(Labels.of(TYPE_LABEL_KEY, USED, POOL_LABEL_KEY, pool.getName()));
-      committedLabelSets.add(Labels.of(TYPE_LABEL_KEY, COMMITTED, POOL_LABEL_KEY, pool.getName()));
-      maxLabelSets.add(Labels.of(TYPE_LABEL_KEY, MAX, POOL_LABEL_KEY, pool.getName()));
+      usedLabelSets.add(Attributes.of(typeKey, USED, poolKey, pool.getName()));
+      committedLabelSets.add(Attributes.of(typeKey, COMMITTED, poolKey, pool.getName()));
+      maxLabelSets.add(Attributes.of(typeKey, MAX, poolKey, pool.getName()));
     }
 
     meter
-        .longUpDownSumObserverBuilder("jvm.memory.pool")
+        .upDownCounterBuilder("jvm.memory.pool")
         .setDescription("Bytes of a given JVM memory pool.")
         .setUnit("By")
-        .setUpdater(
+        .buildWithCallback(
             resultLongObserver -> {
               for (int i = 0; i < poolBeans.size(); i++) {
                 MemoryUsage poolUsage = poolBeans.get(i).getUsage();
@@ -320,7 +328,6 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
                 //  max(used).
                 resultLongObserver.observe(poolUsage.getMax(), maxLabelSets.get(i));
               }
-            })
-        .build();
+            });
   }
 }

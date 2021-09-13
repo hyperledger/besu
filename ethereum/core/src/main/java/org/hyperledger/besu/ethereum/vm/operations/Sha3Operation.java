@@ -44,7 +44,7 @@ public class Sha3Operation extends AbstractOperation {
       return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
-    final Bytes bytes = frame.readMemory(from, length);
+    final Bytes bytes = frame.readMutableMemory(from, length);
     frame.pushStackItem(UInt256.fromBytes(Hash.hash(bytes)));
     return new OperationResult(optionalCost, Optional.empty());
   }

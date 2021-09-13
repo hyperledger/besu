@@ -23,6 +23,7 @@ dependencies {
   testImplementation project(':ethereum:api')
   testImplementation project(':ethereum:core')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':ethereum:p2p')
   testImplementation project(':ethereum:permissioning')
   testImplementation project(':ethereum:rlp')
   testImplementation project(':metrics:core')

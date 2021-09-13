@@ -70,6 +70,10 @@ public class CmsValidator {
    *     is trusted, otherwise returns false.
    */
   public boolean validate(final Bytes cms, final Bytes expectedContent) {
+    if (cms == null || cms == Bytes.EMPTY) {
+      return false;
+    }
+
     try {
       LOGGER.trace("Validating CMS message");
 
