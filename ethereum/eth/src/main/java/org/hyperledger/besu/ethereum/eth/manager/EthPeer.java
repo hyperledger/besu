@@ -87,10 +87,20 @@ public class EthPeer {
   private volatile long lastRequestTimestamp = 0;
 
   private final Map<String, Map<Integer, RequestManager>> requestManagers;
-  private final Map<Integer, Integer> linkedMessages;
   private final AtomicReference<Consumer<EthPeer>> onStatusesExchanged = new AtomicReference<>();
   private final PeerReputation reputation = new PeerReputation();
   private final Map<PeerValidator, Boolean> validationStatus = new ConcurrentHashMap<>();
+
+  private static final Map<Integer, Integer> roundMessages;
+
+  static {
+    roundMessages = new HashMap<>();
+    roundMessages.put(EthPV62.BLOCK_HEADERS, EthPV62.GET_BLOCK_HEADERS);
+    roundMessages.put(EthPV62.BLOCK_BODIES, EthPV62.GET_BLOCK_BODIES);
+    roundMessages.put(EthPV63.RECEIPTS, EthPV63.GET_RECEIPTS);
+    roundMessages.put(EthPV63.NODE_DATA, EthPV63.GET_NODE_DATA);
+    roundMessages.put(EthPV65.POOLED_TRANSACTIONS, EthPV65.GET_POOLED_TRANSACTIONS);
+  }
 
   @VisibleForTesting
   public EthPeer(
@@ -109,7 +119,6 @@ public class EthPeer {
     fullyValidated.set(peerValidators.isEmpty());
 
     this.requestManagers = new HashMap<>();
-    this.linkedMessages = new HashMap<>();
 
     initEthRequestManagers();
     if (connection.capability(SnapProtocol.NAME) != null) {
@@ -134,12 +143,6 @@ public class EthPeer {
         EthPV65.GET_POOLED_TRANSACTIONS,
         new RequestManager(this, supportsRequestId, EthProtocol.NAME));
     requestManagers.put(EthProtocol.NAME, ethRequestManagers);
-
-    linkedMessages.put(EthPV62.BLOCK_HEADERS, EthPV62.GET_BLOCK_HEADERS);
-    linkedMessages.put(EthPV62.BLOCK_BODIES, EthPV62.GET_BLOCK_BODIES);
-    linkedMessages.put(EthPV63.RECEIPTS, EthPV63.GET_RECEIPTS);
-    linkedMessages.put(EthPV63.NODE_DATA, EthPV63.GET_NODE_DATA);
-    linkedMessages.put(EthPV65.POOLED_TRANSACTIONS, EthPV65.GET_POOLED_TRANSACTIONS);
   }
 
   private void initSnapRequestManagers() {
@@ -149,7 +152,7 @@ public class EthPeer {
         SnapV1.GET_ACCOUNT_RANGE, new RequestManager(this, true, SnapProtocol.NAME));
     requestManagers.put(SnapProtocol.NAME, snapRequestManagers);
 
-    linkedMessages.put(SnapV1.ACCOUNT_RANGE, SnapV1.GET_ACCOUNT_RANGE);
+    roundMessages.put(SnapV1.ACCOUNT_RANGE, SnapV1.GET_ACCOUNT_RANGE);
   }
 
   public void markValidated(final PeerValidator validator) {
@@ -329,7 +332,7 @@ public class EthPeer {
   private Optional<RequestManager> getRequestManager(final String protocolName, final int code) {
     if (requestManagers.containsKey(protocolName)) {
       final Map<Integer, RequestManager> managers = requestManagers.get(protocolName);
-      final Integer requestCode = linkedMessages.getOrDefault(code, -1);
+      final Integer requestCode = roundMessages.getOrDefault(code, -1);
       if (managers.containsKey(requestCode)) {
         return Optional.of(managers.get(requestCode));
       }

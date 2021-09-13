@@ -42,7 +42,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.SnapProtocolManager;
-import org.hyperledger.besu.ethereum.eth.messages.SnapV1;
 import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
@@ -308,17 +307,6 @@ public abstract class BesuControllerBuilder {
             syncConfig.getComputationParallelism(),
             metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
-
-    ethContext
-        .getSnapMessages()
-        .ifPresent(
-            snapm ->
-                snapm.subscribe(
-                    SnapV1.ACCOUNT_RANGE,
-                    message -> {
-                      System.out.println("test" + message.getData().getData().toHexString());
-                    }));
-
     final SyncState syncState = new SyncState(blockchain, ethPeers);
     final boolean fastSyncEnabled = SyncMode.FAST.equals(syncConfig.getSyncMode());
 
@@ -347,8 +335,10 @@ public abstract class BesuControllerBuilder {
             scheduler,
             peerValidators);
 
-    final SnapProtocolManager snapProtocolManager =
-        createSnapProtocolManager(peerValidators, ethPeers, snapMessages);
+    final Optional<SnapProtocolManager> maybeSnapProtocolManager =
+        syncConfig.isSnapsyncEnabled()
+            ? Optional.of(createSnapProtocolManager(peerValidators, ethPeers, snapMessages))
+            : Optional.empty();
 
     final Synchronizer synchronizer =
         new DefaultSynchronizer(
@@ -377,7 +367,7 @@ public abstract class BesuControllerBuilder {
         createAdditionalPluginServices(blockchain, protocolContext);
 
     final SubProtocolConfiguration subProtocolConfiguration =
-        createSubProtocolConfiguration(ethProtocolManager, snapProtocolManager);
+        createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);
@@ -414,10 +404,15 @@ public abstract class BesuControllerBuilder {
   }
 
   protected SubProtocolConfiguration createSubProtocolConfiguration(
-      final EthProtocolManager ethProtocolManager, final SnapProtocolManager snapProtocolManager) {
-    return new SubProtocolConfiguration()
-        .withSubProtocol(EthProtocol.get(), ethProtocolManager)
-        .withSubProtocol(SnapProtocol.get(), snapProtocolManager);
+      final EthProtocolManager ethProtocolManager,
+      final Optional<SnapProtocolManager> maybeSnapProtocolManager) {
+    final SubProtocolConfiguration subProtocolConfiguration =
+        new SubProtocolConfiguration().withSubProtocol(EthProtocol.get(), ethProtocolManager);
+    maybeSnapProtocolManager.ifPresent(
+        snapProtocolManager -> {
+          subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager);
+        });
+    return subProtocolConfiguration;
   }
 
   protected abstract MiningCoordinator createMiningCoordinator(

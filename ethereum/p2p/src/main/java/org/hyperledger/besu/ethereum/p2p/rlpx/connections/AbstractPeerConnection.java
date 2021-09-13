@@ -72,6 +72,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
 
     this.agreedCapabilities = multiplexer.getAgreedCapabilities();
     for (final Capability cap : agreedCapabilities) {
+      System.out.println("cap " + cap.getName());
       protocolToCapability.put(cap.getName(), cap);
     }
     this.connectionEventDispatcher = connectionEventDispatcher;

@@ -81,6 +81,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -121,17 +122,23 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected SubProtocolConfiguration createSubProtocolConfiguration(
-      final EthProtocolManager ethProtocolManager, final SnapProtocolManager snapProtocolManager) {
-    return new SubProtocolConfiguration()
-        .withSubProtocol(EthProtocol.get(), ethProtocolManager)
-        .withSubProtocol(SnapProtocol.get(), snapProtocolManager)
-        .withSubProtocol(
-            Istanbul100SubProtocol.get(),
-            new BftProtocolManager(
-                bftEventQueue,
-                peers,
-                Istanbul100SubProtocol.ISTANBUL_100,
-                Istanbul100SubProtocol.get().getName()));
+      final EthProtocolManager ethProtocolManager,
+      final Optional<SnapProtocolManager> maybeSnapProtocolManager) {
+    final SubProtocolConfiguration subProtocolConfiguration =
+        new SubProtocolConfiguration()
+            .withSubProtocol(EthProtocol.get(), ethProtocolManager)
+            .withSubProtocol(
+                Istanbul100SubProtocol.get(),
+                new BftProtocolManager(
+                    bftEventQueue,
+                    peers,
+                    Istanbul100SubProtocol.ISTANBUL_100,
+                    Istanbul100SubProtocol.get().getName()));
+    maybeSnapProtocolManager.ifPresent(
+        snapProtocolManager -> {
+          subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager);
+        });
+    return subProtocolConfiguration;
   }
 
   @Override

@@ -4382,4 +4382,20 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(pkiKeyStoreConfig.getTrustStorePassword()).isEqualTo("foo");
     assertThat(pkiKeyStoreConfig.getCrlFilePath()).hasValue(Path.of("/tmp/crl"));
   }
+
+  @Test
+  public void snapsyncDefaultOptionValue() {
+    TestBesuCommand besuCommand = parseCommand();
+
+    assertThat(besuCommand.getSynchronizerOptions().toDomainObject().build().isSnapsyncEnabled())
+        .isFalse();
+  }
+
+  @Test
+  public void snapsyncOptionIsParsedCorrectly() {
+    final TestBesuCommand besuCommand = parseCommand("--Xsnap-enabled", "true");
+
+    assertThat(besuCommand.getSynchronizerOptions().toDomainObject().build().isSnapsyncEnabled())
+        .isTrue();
+  }
 }

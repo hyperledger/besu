@@ -58,6 +58,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsynchronizer-world-state-min-millis-before-stalling";
   private static final String WORLD_STATE_TASK_CACHE_SIZE_FLAG =
       "--Xsynchronizer-world-state-task-cache-size";
+  private final String SNAP_ENABLED_FLAG = "--Xsnap-enabled";
 
   @CommandLine.Option(
       names = BLOCK_PROPAGATION_RANGE_FLAG,
@@ -212,6 +213,13 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private int worldStateTaskCacheSize =
       SynchronizerConfiguration.DEFAULT_WORLD_STATE_TASK_CACHE_SIZE;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {SNAP_ENABLED_FLAG},
+      description = "Enabled Snapsync",
+      arity = "1")
+  private Boolean snapsyncEnabled = Boolean.FALSE;
+
   private SynchronizerOptions() {}
 
   public static SynchronizerOptions create() {
@@ -238,6 +246,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.worldStateMaxRequestsWithoutProgress = config.getWorldStateMaxRequestsWithoutProgress();
     options.worldStateMinMillisBeforeStalling = config.getWorldStateMinMillisBeforeStalling();
     options.worldStateTaskCacheSize = config.getWorldStateTaskCacheSize();
+    options.snapsyncEnabled = config.isSnapsyncEnabled();
     return options;
   }
 
@@ -260,6 +269,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.worldStateMaxRequestsWithoutProgress(worldStateMaxRequestsWithoutProgress);
     builder.worldStateMinMillisBeforeStalling(worldStateMinMillisBeforeStalling);
     builder.worldStateTaskCacheSize(worldStateTaskCacheSize);
+    builder.snapsyncEnabled(snapsyncEnabled);
     return builder;
   }
 
@@ -297,6 +307,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         WORLD_STATE_MIN_MILLIS_BEFORE_STALLING_FLAG,
         OptionParser.format(worldStateMinMillisBeforeStalling),
         WORLD_STATE_TASK_CACHE_SIZE_FLAG,
-        OptionParser.format(worldStateTaskCacheSize));
+        OptionParser.format(worldStateTaskCacheSize),
+        SNAP_ENABLED_FLAG,
+        String.valueOf(snapsyncEnabled));
   }
 }

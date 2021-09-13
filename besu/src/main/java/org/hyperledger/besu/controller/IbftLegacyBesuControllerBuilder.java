@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -46,6 +45,7 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,10 +57,10 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected SubProtocolConfiguration createSubProtocolConfiguration(
-      final EthProtocolManager ethProtocolManager, final SnapProtocolManager snapProtocolManager) {
+      final EthProtocolManager ethProtocolManager,
+      final Optional<SnapProtocolManager> snapProtocolManager) {
     return new SubProtocolConfiguration()
-        .withSubProtocol(Istanbul99Protocol.get(), ethProtocolManager)
-        .withSubProtocol(SnapProtocol.get(), snapProtocolManager);
+        .withSubProtocol(Istanbul99Protocol.get(), ethProtocolManager);
   }
 
   @Override
