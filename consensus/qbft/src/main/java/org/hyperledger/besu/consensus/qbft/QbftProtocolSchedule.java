@@ -138,9 +138,13 @@ public class QbftProtocolSchedule {
 
     builder
         .blockHeaderValidatorBuilder(
-            blockHeaderRuleset.apply(configOptions.getBlockPeriodSeconds(), useValidatorContract))
+            feeMarket ->
+                blockHeaderRuleset.apply(
+                    configOptions.getBlockPeriodSeconds(), useValidatorContract))
         .ommerHeaderValidatorBuilder(
-            blockHeaderRuleset.apply(configOptions.getBlockPeriodSeconds(), useValidatorContract))
+            feeMarket ->
+                blockHeaderRuleset.apply(
+                    configOptions.getBlockPeriodSeconds(), useValidatorContract))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)
