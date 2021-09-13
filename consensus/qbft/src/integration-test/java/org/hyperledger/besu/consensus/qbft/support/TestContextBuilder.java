@@ -19,7 +19,11 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.config.QbftConfigOptions;
+import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
@@ -29,7 +33,6 @@ import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
@@ -53,14 +56,18 @@ import org.hyperledger.besu.consensus.qbft.QbftBlockHeaderValidationRulesetFacto
 import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
+import org.hyperledger.besu.consensus.qbft.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
+import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorConfig;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorForksSchedule;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -181,6 +188,7 @@ public class TestContextBuilder {
   private boolean useGossip = false;
   private Optional<String> genesisFile = Optional.empty();
   private List<NodeParams> nodeParams = Collections.emptyList();
+  private List<QbftFork> qbftForks = Collections.emptyList();
 
   public TestContextBuilder clock(final Clock clock) {
     this.clock = clock;
@@ -220,6 +228,11 @@ public class TestContextBuilder {
 
   public TestContextBuilder useValidatorContract(final boolean useValidatorContract) {
     this.useValidatorContract = useValidatorContract;
+    return this;
+  }
+
+  public TestContextBuilder qbftForks(final List<QbftFork> qbftForks) {
+    this.qbftForks = qbftForks;
     return this;
   }
 
@@ -281,7 +294,8 @@ public class TestContextBuilder {
             bftEventQueue,
             gossiper,
             synchronizerUpdater,
-            useValidatorContract);
+            useValidatorContract,
+            qbftForks);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
     // NOTE: the remotePeers needs to be ordered based on Address (as this is used to determine
@@ -358,7 +372,8 @@ public class TestContextBuilder {
       final BftEventQueue bftEventQueue,
       final Gossiper gossiper,
       final SynchronizerUpdater synchronizerUpdater,
-      final boolean useValidatorContract) {
+      final boolean useValidatorContract,
+      final List<QbftFork> qbftForks) {
 
     final MiningParameters miningParams =
         new MiningParameters.Builder()
@@ -369,11 +384,22 @@ public class TestContextBuilder {
             .build();
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
+    final Map<String, Object> qbftConfigValues =
+        useValidatorContract
+            ? Map.of(
+                QbftConfigOptions.VALIDATOR_CONTRACT_ADDRESS,
+                VALIDATOR_CONTRACT_ADDRESS.toHexString())
+            : Collections.emptyMap();
+
     genesisConfigOptions.byzantiumBlock(0);
+    genesisConfigOptions.qbftConfigOptions(
+        new QbftConfigOptions(JsonUtil.objectNodeFromMap(qbftConfigValues)));
+    genesisConfigOptions.transitions(new TestTransitions(qbftForks));
+
     final QbftBlockHeaderValidationRulesetFactory qbftBlockHeaderValidationRulesetFactory =
-        new QbftBlockHeaderValidationRulesetFactory(useValidatorContract);
+        new QbftBlockHeaderValidationRulesetFactory();
     final ProtocolSchedule protocolSchedule =
-        BftProtocolSchedule.create(
+        QbftProtocolSchedule.create(
             genesisConfigOptions,
             qbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
             BFT_EXTRA_DATA_ENCODER);
@@ -384,18 +410,28 @@ public class TestContextBuilder {
 
     final BftBlockInterface blockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
 
-    final ValidatorProvider validatorProvider;
-    if (useValidatorContract) {
-      final TransactionSimulator transactionSimulator =
-          new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule);
-      final ValidatorContractController validatorContractController =
-          new ValidatorContractController(VALIDATOR_CONTRACT_ADDRESS, transactionSimulator);
-      validatorProvider = new TransactionValidatorProvider(blockChain, validatorContractController);
-    } else {
-      validatorProvider =
-          BlockValidatorProvider.nonForkingValidatorProvider(
-              blockChain, epochManager, blockInterface);
-    }
+    final BftValidatorOverrides validatorOverrides =
+        new BftValidatorOverrides(Collections.emptyMap());
+    final TransactionSimulator transactionSimulator =
+        new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule);
+
+    final ValidatorSelectorConfig genesisFork = createGenesisFork(useValidatorContract);
+    final List<ValidatorSelectorConfig> validatorSelectorForks =
+        qbftForks.stream()
+            .map(ValidatorSelectorConfig::fromQbftFork)
+            .flatMap(Optional::stream)
+            .collect(Collectors.toList());
+    final ValidatorSelectorForksSchedule forksSchedule =
+        new ValidatorSelectorForksSchedule(genesisFork, validatorSelectorForks);
+    final BlockValidatorProvider blockValidatorProvider =
+        BlockValidatorProvider.forkingValidatorProvider(
+            blockChain, epochManager, blockInterface, validatorOverrides);
+    final TransactionValidatorProvider transactionValidatorProvider =
+        new TransactionValidatorProvider(
+            blockChain, new ValidatorContractController(transactionSimulator, forksSchedule));
+    final ValidatorProvider validatorProvider =
+        new ForkingValidatorProvider(
+            blockChain, forksSchedule, blockValidatorProvider, transactionValidatorProvider);
 
     final ProtocolContext protocolContext =
         new ProtocolContext(
@@ -423,7 +459,7 @@ public class TestContextBuilder {
             localAddress,
             localAddress,
             BFT_EXTRA_DATA_ENCODER,
-            useValidatorContract);
+            forksSchedule);
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockChain, blockInterface, true, validatorProvider);
@@ -488,5 +524,11 @@ public class TestContextBuilder {
         eventMultiplexer,
         messageFactory,
         validatorProvider);
+  }
+
+  private static ValidatorSelectorConfig createGenesisFork(final boolean useValidatorContract) {
+    return useValidatorContract
+        ? ValidatorSelectorConfig.createContractConfig(0L, VALIDATOR_CONTRACT_ADDRESS.toHexString())
+        : ValidatorSelectorConfig.createBlockConfig(0L);
   }
 }

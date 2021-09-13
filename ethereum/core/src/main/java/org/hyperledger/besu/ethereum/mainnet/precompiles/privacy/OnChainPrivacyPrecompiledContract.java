@@ -19,6 +19,7 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -196,7 +197,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
   }
 
   private void sendParticipantRemovedEvent(final PrivateTransaction privateTransaction) {
-    if (privateTransaction.isGroupRemovalTransaction()) {
+    if (isRemovingParticipant(privateTransaction)) {
       // get first participant parameter - there is only one for removal transaction
       final String removedParticipant =
           getRemovedParticipantFromParameter(privateTransaction.getPayload());
@@ -228,16 +229,10 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
             privateWorldStateArchive,
             privateTransactionProcessor);
 
-    final boolean isAddingParticipant =
-        privateTransaction
-            .getPayload()
-            .toHexString()
-            .startsWith(OnChainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE.toHexString());
+    final boolean isAddingParticipant = isAddingParticipant(privateTransaction);
+    final boolean isContractLocked = isContractLocked(onchainPrivacyGroupContract, privacyGroupId);
 
-    final boolean isPrivacyGroupLocked =
-        isContractLocked(onchainPrivacyGroupContract, privacyGroupId);
-
-    if (isAddingParticipant && !isPrivacyGroupLocked) {
+    if (isAddingParticipant && !isContractLocked) {
       LOG.debug(
           "Privacy Group {} is not locked while trying to add to group with commitment {}",
           privacyGroupId.toHexString(),
@@ -245,7 +240,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       return false;
     }
 
-    if (!isAddingParticipant && isPrivacyGroupLocked) {
+    if (isContractLocked && !isTargettingOnchainPrivacyProxy(privateTransaction)) {
       LOG.debug(
           "Privacy Group {} is locked while trying to execute transaction with commitment {}",
           privacyGroupId.toHexString(),
@@ -313,6 +308,27 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
   private String getRemovedParticipantFromParameter(final Bytes input) {
     return input.slice(4).toBase64String();
+  }
+
+  private boolean isTargettingOnchainPrivacyProxy(final PrivateTransaction privateTransaction) {
+    return privateTransaction.getTo().isPresent()
+        && privateTransaction.getTo().get().equals(Address.ONCHAIN_PRIVACY_PROXY);
+  }
+
+  private boolean isAddingParticipant(final PrivateTransaction privateTransaction) {
+    return isTargettingOnchainPrivacyProxy(privateTransaction)
+        && privateTransaction
+            .getPayload()
+            .toHexString()
+            .startsWith(OnChainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE.toHexString());
+  }
+
+  private boolean isRemovingParticipant(final PrivateTransaction privateTransaction) {
+    return isTargettingOnchainPrivacyProxy(privateTransaction)
+        && privateTransaction
+            .getPayload()
+            .toHexString()
+            .startsWith(OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE.toHexString());
   }
 
   protected boolean isContractLocked(

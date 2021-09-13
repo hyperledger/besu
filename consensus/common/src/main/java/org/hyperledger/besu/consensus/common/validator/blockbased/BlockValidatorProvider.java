@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class BlockValidatorProvider implements ValidatorProvider {
 
@@ -32,7 +33,7 @@ public class BlockValidatorProvider implements ValidatorProvider {
   private final VoteProvider voteProvider;
   private final BlockInterface blockInterface;
 
-  public static ValidatorProvider forkingValidatorProvider(
+  public static BlockValidatorProvider forkingValidatorProvider(
       final Blockchain blockchain,
       final EpochManager epochManager,
       final BlockInterface blockInterface,
@@ -41,7 +42,7 @@ public class BlockValidatorProvider implements ValidatorProvider {
         blockchain, epochManager, blockInterface, Optional.of(bftValidatorOverrides));
   }
 
-  public static ValidatorProvider nonForkingValidatorProvider(
+  public static BlockValidatorProvider nonForkingValidatorProvider(
       final Blockchain blockchain,
       final EpochManager epochManager,
       final BlockInterface blockInterface) {
@@ -80,7 +81,7 @@ public class BlockValidatorProvider implements ValidatorProvider {
 
   @Override
   public Collection<Address> getValidatorsForBlock(final BlockHeader header) {
-    return blockInterface.validatorsInBlock(header);
+    return blockInterface.validatorsInBlock(header).stream().sorted().collect(Collectors.toList());
   }
 
   @Override

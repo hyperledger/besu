@@ -34,7 +34,8 @@ public class MetricsConfiguration {
   private static final MetricsProtocol DEFAULT_METRICS_PROTOCOL = MetricsProtocol.PROMETHEUS;
   private static final String DEFAULT_METRICS_PUSH_HOST = "127.0.0.1";
   public static final int DEFAULT_METRICS_PUSH_PORT = 9001;
-  public static final Boolean DEFAULT_TIMERS_ENABLED = true;
+  public static final Boolean DEFAULT_METRICS_TIMERS_ENABLED = true;
+  public static final int DEFAULT_METRICS_IDLE_TIMEOUT_SECONDS = 60;
 
   private final boolean enabled;
   private final MetricsProtocol protocol;
@@ -49,6 +50,7 @@ public class MetricsConfiguration {
   private final String prometheusJob;
   private final List<String> hostsAllowlist;
   private final boolean timersEnabled;
+  private final int idleTimeout;
 
   public static Builder builder() {
     return new Builder();
@@ -66,7 +68,8 @@ public class MetricsConfiguration {
       final int pushInterval,
       final String prometheusJob,
       final List<String> hostsAllowlist,
-      final boolean timersEnabled) {
+      final boolean timersEnabled,
+      final int idleTimeout) {
     this.enabled = enabled;
     this.port = port;
     this.protocol = protocol;
@@ -79,6 +82,7 @@ public class MetricsConfiguration {
     this.prometheusJob = prometheusJob;
     this.hostsAllowlist = hostsAllowlist;
     this.timersEnabled = timersEnabled;
+    this.idleTimeout = idleTimeout;
   }
 
   public boolean isEnabled() {
@@ -143,6 +147,10 @@ public class MetricsConfiguration {
     return timersEnabled;
   }
 
+  public int getIdleTimeout() {
+    return idleTimeout;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -157,6 +165,8 @@ public class MetricsConfiguration {
         .add("pushInterval", pushInterval)
         .add("prometheusJob", prometheusJob)
         .add("hostsAllowlist", hostsAllowlist)
+        .add("timersEnabled", timersEnabled)
+        .add("idleTimeout", idleTimeout)
         .toString();
   }
 
@@ -179,7 +189,9 @@ public class MetricsConfiguration {
         && Objects.equals(metricCategories, that.metricCategories)
         && Objects.equals(pushHost, that.pushHost)
         && Objects.equals(prometheusJob, that.prometheusJob)
-        && Objects.equals(hostsAllowlist, that.hostsAllowlist);
+        && Objects.equals(hostsAllowlist, that.hostsAllowlist)
+        && timersEnabled == that.timersEnabled
+        && idleTimeout == that.idleTimeout;
   }
 
   @Override
@@ -195,7 +207,9 @@ public class MetricsConfiguration {
         pushHost,
         pushInterval,
         prometheusJob,
-        hostsAllowlist);
+        hostsAllowlist,
+        timersEnabled,
+        idleTimeout);
   }
 
   public static class Builder {
@@ -210,7 +224,8 @@ public class MetricsConfiguration {
     private int pushInterval = 15;
     private String prometheusJob = "besu-client";
     private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
-    private boolean timersEnabled = DEFAULT_TIMERS_ENABLED;
+    private boolean timersEnabled = DEFAULT_METRICS_TIMERS_ENABLED;
+    private int idleTimeout = DEFAULT_METRICS_IDLE_TIMEOUT_SECONDS;
 
     private Builder() {}
 
@@ -281,6 +296,11 @@ public class MetricsConfiguration {
       return this;
     }
 
+    public Builder idleTimeout(final int idleTimeout) {
+      this.idleTimeout = idleTimeout;
+      return this;
+    }
+
     public MetricsConfiguration build() {
       return new MetricsConfiguration(
           enabled,
@@ -294,7 +314,8 @@ public class MetricsConfiguration {
           pushInterval,
           prometheusJob,
           hostsAllowlist,
-          timersEnabled);
+          timersEnabled,
+          idleTimeout);
     }
   }
 }
