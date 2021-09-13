@@ -296,7 +296,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     maybeResponseData.ifPresent(
         responseData -> {
           try {
-            ethPeer.send(responseData);
+            ethPeer.send(responseData, getSupportedProtocol());
           } catch (final PeerNotConnected __) {
             // Peer disconnected before we could respond - nothing to do
           }
@@ -326,7 +326,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             latestForkId);
     try {
       LOG.debug("Sending status message to {}.", peer);
-      peer.send(status);
+      peer.send(status, getSupportedProtocol());
       peer.registerStatusSent();
     } catch (final PeerNotConnected peerNotConnected) {
       // Nothing to do.
