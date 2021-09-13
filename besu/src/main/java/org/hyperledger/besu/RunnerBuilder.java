@@ -109,6 +109,7 @@ import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
+import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.io.IOException;
@@ -175,6 +176,7 @@ public class RunnerBuilder {
   private boolean randomPeerPriority;
   private StorageProvider storageProvider;
   private Supplier<List<Bytes>> forkIdSupplier;
+  private RpcEndpointServiceImpl rpcEndpointServiceImpl;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -365,6 +367,11 @@ public class RunnerBuilder {
 
   public RunnerBuilder forkIdSupplier(final Supplier<List<Bytes>> forkIdSupplier) {
     this.forkIdSupplier = forkIdSupplier;
+    return this;
+  }
+
+  public RunnerBuilder rpcEndpointService(final RpcEndpointServiceImpl rpcEndpointService) {
+    this.rpcEndpointServiceImpl = rpcEndpointService;
     return this;
   }
 
@@ -567,7 +574,8 @@ public class RunnerBuilder {
               metricsConfiguration,
               natService,
               besuPluginContext.getNamedPlugins(),
-              dataDir);
+              dataDir,
+              rpcEndpointServiceImpl);
       jsonRpcHttpService =
           Optional.of(
               new JsonRpcHttpService(
@@ -634,7 +642,8 @@ public class RunnerBuilder {
               metricsConfiguration,
               natService,
               besuPluginContext.getNamedPlugins(),
-              dataDir);
+              dataDir,
+              rpcEndpointServiceImpl);
 
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool, blockchainQueries);
@@ -826,7 +835,8 @@ public class RunnerBuilder {
       final MetricsConfiguration metricsConfiguration,
       final NatService natService,
       final Map<String, BesuPlugin> namedPlugins,
-      final Path dataDir) {
+      final Path dataDir,
+      final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -854,6 +864,7 @@ public class RunnerBuilder {
                 dataDir,
                 besuController.getProtocolManager().ethContext().getEthPeers());
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
+    methods.putAll(rpcEndpointServiceImpl.getPluginMethods());
     return methods;
   }
 

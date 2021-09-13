@@ -150,6 +150,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
+import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -163,6 +164,7 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
+import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
@@ -276,6 +278,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final SecurityModuleServiceImpl securityModuleService;
   private final PermissioningServiceImpl permissioningService;
   private final PrivacyPluginServiceImpl privacyPluginPluginService;
+  private final RpcEndpointServiceImpl rpcEndpointServiceImpl;
 
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
@@ -1143,7 +1146,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new SecurityModuleServiceImpl(),
         new PermissioningServiceImpl(),
         new PrivacyPluginServiceImpl(),
-        new PkiBlockCreationConfigurationProvider());
+        new PkiBlockCreationConfigurationProvider(),
+        new RpcEndpointServiceImpl());
   }
 
   @VisibleForTesting
@@ -1160,7 +1164,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final SecurityModuleServiceImpl securityModuleService,
       final PermissioningServiceImpl permissioningService,
       final PrivacyPluginServiceImpl privacyPluginPluginService,
-      final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider) {
+      final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
+      final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -1176,6 +1181,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     pluginCommonConfiguration = new BesuCommandConfigurationService();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
     this.pkiBlockCreationConfigProvider = pkiBlockCreationConfigProvider;
+    this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
   }
 
   public void parse(
@@ -1308,6 +1314,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
     besuPluginContext.addService(PermissioningService.class, permissioningService);
     besuPluginContext.addService(PrivacyPluginService.class, privacyPluginPluginService);
+    besuPluginContext.addService(RpcEndpointService.class, rpcEndpointServiceImpl);
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
@@ -2375,6 +2382,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .ethstatsContact(ethstatsOptions.getEthstatsContact())
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdAsBytesList())
+            .rpcEndpointService(rpcEndpointServiceImpl)
             .build();
 
     addShutdownHook(runner);

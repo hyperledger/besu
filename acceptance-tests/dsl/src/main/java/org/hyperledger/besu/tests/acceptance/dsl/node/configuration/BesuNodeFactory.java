@@ -255,6 +255,8 @@ public class BesuNodeFactory {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
+            .jsonRpcConfiguration(node.createJsonRpcWithIbft2AdminEnabledConfig())
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .plugins(plugins)
             .extraCLIOptions(extraCLIOptions)
             .build());
