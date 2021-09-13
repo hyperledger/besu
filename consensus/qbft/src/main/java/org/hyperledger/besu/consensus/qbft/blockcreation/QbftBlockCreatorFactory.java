@@ -22,6 +22,8 @@ import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFa
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorConfig;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorForksSchedule;
 import org.hyperledger.besu.consensus.qbft.QbftContext;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorConfig;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorForksSchedule;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Address;
