@@ -18,6 +18,7 @@ import static java.util.Collections.emptySet;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
 import java.util.Collection;
@@ -32,9 +33,10 @@ public class PeerPendingTransactionTracker implements EthPeer.DisconnectCallback
   private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 10_000;
   private final Map<EthPeer, Set<Hash>> seenTransactions = new ConcurrentHashMap<>();
   private final Map<EthPeer, Set<Hash>> transactionsToSend = new ConcurrentHashMap<>();
-  private final PendingTransactions pendingTransactions;
+  private final AbstractPendingTransactionsSorter pendingTransactions;
 
-  public PeerPendingTransactionTracker(final PendingTransactions pendingTransactions) {
+  public PeerPendingTransactionTracker(
+      final AbstractPendingTransactionsSorter pendingTransactions) {
     this.pendingTransactions = pendingTransactions;
   }
 

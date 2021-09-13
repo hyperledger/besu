@@ -214,7 +214,7 @@ allprojects {
       'java.base/java.util.concurrent=ALL-UNNAMED',
       '--add-opens',
       'java.base/java.util.concurrent.atomic=ALL-UNNAMED',
-      // errorpone tests need access to the javac compiler
+      // errorprone tests need access to the javac compiler
       '--add-exports',
       'jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED',
       '--add-exports',

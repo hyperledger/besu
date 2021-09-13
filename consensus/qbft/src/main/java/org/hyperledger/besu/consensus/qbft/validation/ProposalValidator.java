@@ -77,7 +77,7 @@ public class ProposalValidator {
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
-            expectedProposer, roundIdentifier, blockValidator, protocolContext);
+            expectedProposer, roundIdentifier, blockValidator, protocolContext, bftExtraDataCodec);
 
     if (!payloadValidator.validate(msg.getSignedPayload())) {
       LOG.info("{}: invalid proposal payload in proposal message", ERROR_PREFIX);

@@ -32,11 +32,13 @@ import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
@@ -94,6 +96,33 @@ public class PrometheusMetricsSystemTest {
         .containsExactlyInAnyOrder(
             new Observation(PEERS, "connected", 2.0, singletonList("value1")),
             new Observation(PEERS, "connected", 1.0, singletonList("value2")));
+  }
+
+  @Test
+  public void shouldCreateSeparateObservationsForEachLabelledGaugeValue() {
+    final LabelledGauge gauge =
+        metricsSystem.createLabelledGauge(PEERS, "test", "test help", "a", "b", "c");
+    final double value1 = 1.0;
+    final double value2 = 11.0;
+
+    gauge.labels(() -> value1, "a1", "b1", "c1");
+    gauge.labels(() -> value2, "a2", "b2", "c2");
+
+    assertThat(metricsSystem.streamObservations())
+        .containsExactlyInAnyOrder(
+            new Observation(PEERS, "test", 1.0, List.of("a1", "b1", "c1")),
+            new Observation(PEERS, "test", 11.0, List.of("a2", "b2", "c2")));
+  }
+
+  @Test
+  public void shouldNotUseSameLabelsTwiceOnSameGauge() {
+    final LabelledGauge gauge =
+        metricsSystem.createLabelledGauge(PEERS, "test", "test help", "a", "b", "c");
+    final double value1 = 1.0;
+
+    gauge.labels(() -> value1, "a1", "b1", "c1");
+    assertThatThrownBy(() -> gauge.labels(() -> value1, "a1", "b1", "c1"))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test

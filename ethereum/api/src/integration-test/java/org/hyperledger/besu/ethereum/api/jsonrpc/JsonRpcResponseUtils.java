@@ -145,9 +145,10 @@ public class JsonRpcResponseUtils {
   }
 
   public TransactionResult transaction(
+      final TransactionType transactionType,
       final String blockHash,
       final String blockNumber,
-      final String chainId,
+      final Long baseFee,
       final String fromAddress,
       final String gas,
       final String gasPrice,
@@ -164,7 +165,7 @@ public class JsonRpcResponseUtils {
       final String s) {
 
     final Transaction transaction = mock(Transaction.class);
-    when(transaction.getType()).thenReturn(TransactionType.FRONTIER);
+    when(transaction.getType()).thenReturn(transactionType);
     when(transaction.getGasPrice()).thenReturn(Optional.of(Wei.fromHexString(gasPrice)));
     when(transaction.getNonce()).thenReturn(unsignedLong(nonce));
     when(transaction.getV()).thenReturn(bigInteger(v));
@@ -176,7 +177,6 @@ public class JsonRpcResponseUtils {
     when(transaction.getPayload()).thenReturn(bytes(input));
     when(transaction.getValue()).thenReturn(wei(value));
     when(transaction.getGasLimit()).thenReturn(unsignedLong(gas));
-    when(transaction.getChainId()).thenReturn(Optional.ofNullable(bigInteger(chainId)));
     when(transaction.getPublicKey()).thenReturn(Optional.ofNullable(publicKey));
     when(transaction.getSignature())
         .thenReturn(
@@ -193,6 +193,7 @@ public class JsonRpcResponseUtils {
         new TransactionWithMetadata(
             transaction,
             unsignedLong(blockNumber),
+            Optional.ofNullable(baseFee),
             Hash.fromHexString(blockHash),
             unsignedInt(transactionIndex)));
   }

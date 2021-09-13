@@ -43,7 +43,8 @@ public class MLoadOperation extends AbstractOperation {
     }
 
     final UInt256 value =
-        UInt256.fromBytes(Bytes32.leftPad(frame.readMemory(location, UInt256.valueOf(32), true)));
+        UInt256.fromBytes(
+            Bytes32.leftPad(frame.readMutableMemory(location, UInt256.valueOf(32), true)));
 
     frame.pushStackItem(value);
     return new OperationResult(optionalCost, Optional.empty());

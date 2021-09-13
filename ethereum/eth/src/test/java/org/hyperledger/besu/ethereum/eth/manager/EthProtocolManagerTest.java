@@ -117,6 +117,24 @@ public final class EthProtocolManagerTest {
   }
 
   @Test
+  public void handleMalformedRequestIdMessage() {
+    try (final EthProtocolManager ethManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            () -> false,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig())) {
+      // this is a non-request id message, but we'll be processing it with eth66, make sure we
+      // disconnect the peer gracefully
+      final MessageData messageData = GetBlockHeadersMessage.create(1, 1, 0, false);
+      final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
+      ethManager.processMessage(EthProtocol.ETH66, new DefaultMessage(peer, messageData));
+      assertThat(peer.isDisconnected()).isTrue();
+    }
+  }
+
+  @Test
   public void disconnectOnUnsolicitedMessage() {
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(

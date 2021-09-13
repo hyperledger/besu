@@ -123,6 +123,7 @@ public class PrivacyNode implements AutoCloseable {
             besuConfig.isDnsEnabled(),
             besuConfig.getPrivacyParameters(),
             List.of(),
+            Optional.empty(),
             Optional.empty());
   }
 

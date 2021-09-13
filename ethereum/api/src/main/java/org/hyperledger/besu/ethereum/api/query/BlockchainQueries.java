@@ -386,7 +386,10 @@ public class BlockchainQueries {
                                       final List<Transaction> txs = body.getTransactions();
                                       final List<TransactionWithMetadata> formattedTxs =
                                           formatTransactions(
-                                              txs, header.getNumber(), blockHeaderHash);
+                                              txs,
+                                              header.getNumber(),
+                                              header.getBaseFee(),
+                                              blockHeaderHash);
                                       final List<Hash> ommers =
                                           body.getOmmers().stream()
                                               .map(BlockHeader::getHash)
@@ -504,7 +507,11 @@ public class BlockchainQueries {
     final Transaction transaction = blockchain.getTransactionByHash(transactionHash).orElseThrow();
     return Optional.of(
         new TransactionWithMetadata(
-            transaction, header.getNumber(), blockHash, loc.getTransactionIndex()));
+            transaction,
+            header.getNumber(),
+            header.getBaseFee(),
+            blockHash,
+            loc.getTransactionIndex()));
   }
 
   /**
@@ -555,7 +562,7 @@ public class BlockchainQueries {
       return null;
     }
     return new TransactionWithMetadata(
-        txs.get(txIndex), header.getNumber(), blockHeaderHash, txIndex);
+        txs.get(txIndex), header.getNumber(), header.getBaseFee(), blockHeaderHash, txIndex);
   }
 
   public Optional<TransactionLocation> transactionLocationByHash(final Hash transactionHash) {
@@ -854,11 +861,14 @@ public class BlockchainQueries {
   }
 
   private List<TransactionWithMetadata> formatTransactions(
-      final List<Transaction> txs, final long blockNumber, final Hash blockHash) {
+      final List<Transaction> txs,
+      final long blockNumber,
+      final Optional<Long> baseFee,
+      final Hash blockHash) {
     final int count = txs.size();
     final List<TransactionWithMetadata> result = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {
-      result.add(new TransactionWithMetadata(txs.get(i), blockNumber, blockHash, i));
+      result.add(new TransactionWithMetadata(txs.get(i), blockNumber, baseFee, blockHash, i));
     }
     return result;
   }

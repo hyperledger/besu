@@ -142,19 +142,24 @@ public class SECP256R1Test {
   }
 
   @Test
-  public void signatureGenerationAndVerification() {
+  public void signatureGenerationVerificationAndPubKeyRecovery() {
     signTestVectors.forEach(
         signTestVector -> {
           final SECPPrivateKey privateKey =
               secp256R1.createPrivateKey(new BigInteger(signTestVector.getPrivateKey(), 16));
-          final SECPPublicKey publicKey =
-              secp256R1.createPublicKey(new BigInteger(signTestVector.getPublicKey(), 16));
+          final BigInteger publicKeyBigInt = new BigInteger(signTestVector.getPublicKey(), 16);
+          final SECPPublicKey publicKey = secp256R1.createPublicKey(publicKeyBigInt);
           final KeyPair keyPair = secp256R1.createKeyPair(privateKey);
 
           final Bytes32 dataHash = keccak256(Bytes.wrap(signTestVector.getData().getBytes(UTF_8)));
 
           final SECPSignature signature = secp256R1.sign(dataHash, keyPair);
           assertThat(secp256R1.verify(dataHash, signature, publicKey)).isTrue();
+
+          final BigInteger recoveredPubKeyBigInt =
+              secp256R1.recoverFromSignature(
+                  signature.getRecId(), signature.getR(), signature.getS(), dataHash);
+          assertThat(recoveredPubKeyBigInt).isEqualTo(recoveredPubKeyBigInt);
         });
   }
 

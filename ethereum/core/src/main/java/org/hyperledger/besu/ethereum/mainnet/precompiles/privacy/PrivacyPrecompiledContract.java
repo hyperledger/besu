@@ -270,17 +270,15 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   }
 
   boolean isMining(final MessageFrame messageFrame) {
-    boolean isMining = false;
     final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
-    if (!BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())) {
-      if (!messageFrame.isPersistingPrivateState()) {
-        isMining = true;
-      } else {
-        throw new IllegalArgumentException(
-            "The MessageFrame contains an illegal block header type. Cannot persist private block"
-                + " metadata without current block hash.");
-      }
+    if (BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())) {
+      return false;
     }
-    return isMining;
+    if (messageFrame.isPersistingPrivateState()) {
+      throw new IllegalArgumentException(
+          "The MessageFrame contains an illegal block header type. Cannot persist private block"
+              + " metadata without current block hash.");
+    }
+    return true;
   }
 }
