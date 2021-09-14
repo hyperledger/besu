@@ -77,11 +77,13 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
   public Range range() {
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
+    input.skipNext();
     final ImmutableRange range =
         ImmutableRange.builder()
             .worldStateRootHash(Hash.wrap(Bytes32.wrap(input.readBytes())))
             .startKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes())))
             .endKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes())))
+            .responseBytes(input.readBigIntegerScalar())
             .build();
     input.leaveList();
     return range;
@@ -95,5 +97,7 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
     Hash startKeyHash();
 
     Hash endKeyHash();
+
+    BigInteger responseBytes();
   }
 }

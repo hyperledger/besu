@@ -22,7 +22,8 @@ import org.apache.tuweni.bytes.Bytes32;
 public class StorageEntriesCollector<V> implements TrieIterator.LeafHandler<V> {
 
   private final Bytes32 startKeyHash;
-  private final int limit;
+  private Bytes32 endKeyHash = null;
+  private int limit = 0;
   private final Map<Bytes32, V> values = new TreeMap<>();
 
   public StorageEntriesCollector(final Bytes32 startKeyHash, final int limit) {
@@ -30,10 +31,24 @@ public class StorageEntriesCollector<V> implements TrieIterator.LeafHandler<V> {
     this.limit = limit;
   }
 
+  public StorageEntriesCollector(final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
+    this.startKeyHash = startKeyHash;
+    this.endKeyHash = endKeyHash;
+  }
+
   public static <V> Map<Bytes32, V> collectEntries(
       final Node<V> root, final Bytes32 startKeyHash, final int limit) {
     final StorageEntriesCollector<V> entriesCollector =
         new StorageEntriesCollector<>(startKeyHash, limit);
+    final TrieIterator<V> visitor = new TrieIterator<>(entriesCollector, false);
+    root.accept(visitor, CompactEncoding.bytesToPath(startKeyHash));
+    return entriesCollector.getValues();
+  }
+
+  public static <V> Map<Bytes32, V> collectEntries(
+      final Node<V> root, final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
+    final StorageEntriesCollector<V> entriesCollector =
+        new StorageEntriesCollector<>(startKeyHash, endKeyHash);
     final TrieIterator<V> visitor = new TrieIterator<>(entriesCollector, false);
     root.accept(visitor, CompactEncoding.bytesToPath(startKeyHash));
     return entriesCollector.getValues();
@@ -47,6 +62,11 @@ public class StorageEntriesCollector<V> implements TrieIterator.LeafHandler<V> {
   public TrieIterator.State onLeaf(final Bytes32 keyHash, final Node<V> node) {
     if (keyHash.compareTo(startKeyHash) >= 0) {
       node.getValue().ifPresent(value -> values.put(keyHash, value));
+    }
+    if (endKeyHash != null) {
+      return (keyHash.compareTo(endKeyHash) > 0)
+          ? TrieIterator.State.STOP
+          : TrieIterator.State.CONTINUE;
     }
     return limitReached() ? TrieIterator.State.STOP : TrieIterator.State.CONTINUE;
   }

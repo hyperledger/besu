@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -46,13 +47,13 @@ public class SnapProtocolManager implements ProtocolManager {
   public SnapProtocolManager(
       final List<PeerValidator> peerValidators,
       final EthPeers ethPeers,
-      final EthMessages snapMessages) {
+      final EthMessages snapMessages,
+      final WorldStateArchive worldStateArchive) {
     this.peerValidators = peerValidators;
     this.ethPeers = ethPeers;
     this.snapMessages = snapMessages;
     this.supportedCapabilities = calculateCapabilities();
-
-    new SnapServer(snapMessages);
+    new SnapServer(snapMessages, worldStateArchive);
   }
 
   private List<Capability> calculateCapabilities() {

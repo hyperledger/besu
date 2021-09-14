@@ -48,6 +48,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class TrieLogLayer {
 
   private Hash blockHash;
+
   private final Map<Address, BonsaiValue<StateTrieAccountValue>> accounts;
   private final Map<Address, BonsaiValue<Bytes>> code;
   private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storage;

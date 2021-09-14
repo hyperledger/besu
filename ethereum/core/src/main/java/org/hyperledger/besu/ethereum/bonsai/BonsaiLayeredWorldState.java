@@ -253,7 +253,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
 
   @Override
   public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    throw new UnsupportedOperationException("Bonsai does not support pruning and debug RPCs");
+    throw new UnsupportedOperationException("Stream account not available");
   }
 
   @Override
@@ -267,7 +267,8 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
             bonsaiPersistedWorldState.getWorldStateStorage().codeStorage,
             bonsaiPersistedWorldState.getWorldStateStorage().storageStorage,
             bonsaiPersistedWorldState.getWorldStateStorage().trieBranchStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage));
+            bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().snapTrieBranchBucketStorage));
   }
 
   @Override

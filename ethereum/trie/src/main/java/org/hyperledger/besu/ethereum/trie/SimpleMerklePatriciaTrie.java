@@ -103,6 +103,11 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
+  public Map<Bytes32, V> entriesFrom(final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
+    return StorageEntriesCollector.collectEntries(root, startKeyHash, endKeyHash);
+  }
+
+  @Override
   public void visitAll(final Consumer<Node<V>> nodeConsumer) {
     root.accept(new AllNodesVisitor<>(nodeConsumer));
   }

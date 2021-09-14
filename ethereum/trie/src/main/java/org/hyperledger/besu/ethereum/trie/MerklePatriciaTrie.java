@@ -89,6 +89,8 @@ public interface MerklePatriciaTrie<K, V> {
    */
   Map<Bytes32, V> entriesFrom(Bytes32 startKeyHash, int limit);
 
+  Map<Bytes32, V> entriesFrom(Bytes32 startKeyHash, Bytes32 endKeyHash);
+
   void visitAll(Consumer<Node<V>> nodeConsumer);
 
   CompletableFuture<Void> visitAll(Consumer<Node<V>> nodeConsumer, ExecutorService executorService);

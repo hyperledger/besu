@@ -31,8 +31,15 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final KeyValueStorage codeStorage,
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
-      final KeyValueStorage trieLogStorage) {
-    super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
+      final KeyValueStorage trieLogStorage,
+      final KeyValueStorage snapTrieBranchBucketStorage) {
+    super(
+        accountStorage,
+        codeStorage,
+        storageStorage,
+        trieBranchStorage,
+        trieLogStorage,
+        snapTrieBranchBucketStorage);
   }
 
   @Override
@@ -42,7 +49,8 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
         codeStorage.startTransaction(),
         storageStorage.startTransaction(),
         trieBranchStorage.startTransaction(),
-        trieLogStorage.startTransaction());
+        trieLogStorage.startTransaction(),
+        snapTrieBranchBucketStorage.startTransaction());
   }
 
   public static class InMemoryUpdater extends BonsaiWorldStateKeyValueStorage.Updater
@@ -53,13 +61,15 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
         final KeyValueStorageTransaction codeStorageTransaction,
         final KeyValueStorageTransaction storageStorageTransaction,
         final KeyValueStorageTransaction trieBranchStorageTransaction,
-        final KeyValueStorageTransaction trieLogStorageTransaction) {
+        final KeyValueStorageTransaction trieLogStorageTransaction,
+        final KeyValueStorageTransaction snapTrieBranchBucketStorageTransaction) {
       super(
           accountStorageTransaction,
           codeStorageTransaction,
           storageStorageTransaction,
           trieBranchStorageTransaction,
-          trieLogStorageTransaction);
+          trieLogStorageTransaction,
+          snapTrieBranchBucketStorageTransaction);
     }
 
     @Override

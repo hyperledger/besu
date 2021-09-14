@@ -62,7 +62,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class BlockchainQueries {
   private static final Logger LOG = LogManager.getLogger();
 
-  private final WorldStateArchive worldStateArchive;
+  public final WorldStateArchive worldStateArchive;
   private final Blockchain blockchain;
   private final Optional<Path> cachePath;
   private final Optional<TransactionLogBloomCacher> transactionLogBloomCacher;

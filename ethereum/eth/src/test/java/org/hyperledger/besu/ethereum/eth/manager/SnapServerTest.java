@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.messages.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetAccountRangeMessage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -34,11 +35,12 @@ public class SnapServerTest {
   private static final Hash START_HASH = Hash.hash(VALUE2);
   private static final Hash END_HASH = Hash.hash(VALUE3);
   private final EthPeer ethPeer = mock(EthPeer.class);
+  private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
   private final EthMessages ethMessages = new EthMessages();
 
   @Before
   public void setUp() {
-    new SnapServer(ethMessages);
+    new SnapServer(ethMessages, worldStateArchive);
   }
 
   @Test
