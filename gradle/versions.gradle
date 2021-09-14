@@ -143,8 +143,8 @@ dependencyManagement {
 
     dependency 'org.mockito:mockito-core:3.11.2'
 
-    dependency 'org.openjdk.jmh:jmh-core:1.23'
-    dependency 'org.openjdk.jmh:jmh-generator-annprocess:1.23'
+    dependency 'org.openjdk.jmh:jmh-core:1.29'
+    dependency 'org.openjdk.jmh:jmh-generator-annprocess:1.29'
 
     dependency 'org.rocksdb:rocksdbjni:6.15.2'
 
