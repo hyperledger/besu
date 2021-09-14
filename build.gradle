@@ -25,7 +25,7 @@ plugins {
   id 'com.github.hierynomus.license' version '0.16.1'
   id 'com.jfrog.artifactory' version '4.24.14'
   id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-  id 'me.champeau.gradle.jmh' version '0.5.3' apply false
+  id 'me.champeau.jmh' version '0.6.6' apply false
   id 'net.ltgt.errorprone' version '2.0.2'
   id 'maven-publish'
 }
@@ -116,7 +116,8 @@ allprojects {
   spotless {
     java {
       // This path needs to be relative to each project
-      target '**/src/*/java/**/*.java'
+      target '**/*.java'
+      targetExclude '**/reference-test/resources/**/*.java'
       removeUnusedImports()
       googleJavaFormat('1.10.0')
       importOrder 'org.hyperledger', 'java', ''
@@ -424,7 +425,7 @@ subprojects {
   }
 
   if (file('src/jmh').directory) {
-    apply plugin: 'me.champeau.gradle.jmh'
+    apply plugin: 'me.champeau.jmh'
 
     jmh {
       // Allows to control JMH execution directly from the command line. I typical execution may look
@@ -437,10 +438,10 @@ subprojects {
       fork = _intCmdArg('f')
       iterations = _intCmdArg('i')
       benchmarkMode = _strListCmdArg('bm')
-      include = _strListCmdArg('include', [''])
+      includes = _strListCmdArg('include', [''])
       humanOutputFile = project.file("${project.buildDir}/reports/jmh/results.txt")
       resultFormat = 'JSON'
-      duplicateClassesStrategy = 'warn'
+      duplicateClassesStrategy = DuplicatesStrategy.WARN
     }
 
     dependencies { jmh 'org.apache.logging.log4j:log4j-api' }
