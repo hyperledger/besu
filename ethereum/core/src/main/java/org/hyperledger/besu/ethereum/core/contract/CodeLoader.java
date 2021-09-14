@@ -15,18 +15,13 @@
 
 package org.hyperledger.besu.ethereum.core.contract;
 
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.vm.Code;
 
-import com.google.common.cache.CacheLoader;
+import com.github.benmanes.caffeine.cache.CacheLoader;
 
-public class CodeLoader extends CacheLoader<WrappedAccount, Code> {
+public class CodeLoader implements CacheLoader<CodeHash, Code> {
   @Override
-  public Code load(final WrappedAccount key) throws RuntimeException {
-    Account account = key.getWrapped();
-    if (!account.hasCode()) {
-      throw new IllegalArgumentException("account " + key + " has no executable code");
-    }
-    return new Code(account.getCode());
+  public Code load(final CodeHash key) {
+    return new Code(key.getContract());
   }
 }
