@@ -17,11 +17,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ConsensusAssembleBlock;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ConsensusFinalizeBlock;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ConsensusNewBlock;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ConsensusSetHead;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineConsensusValidated;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineExecutePayload;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdated;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayload;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EnginePreparePayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -32,7 +33,7 @@ import java.util.Map;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 
-public class ConsensusJsonRpcMethods extends ApiGroupJsonRpcMethods {
+public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockResultFactory blockResultFactory = new BlockResultFactory();
 
@@ -41,7 +42,7 @@ public class ConsensusJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
 
-  ConsensusJsonRpcMethods(
+  ExecutionEngineJsonRpcMethods(
       final MutableBlockchain blockchain,
       final MiningCoordinator miningCoordinator,
       final ProtocolSchedule protocolSchedule,
@@ -61,9 +62,10 @@ public class ConsensusJsonRpcMethods extends ApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create() {
     Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
     return mapOf(
-        new ConsensusAssembleBlock(syncVertx, blockResultFactory, blockchain, miningCoordinator),
-        new ConsensusFinalizeBlock(syncVertx),
-        new ConsensusNewBlock(syncVertx, protocolSchedule, protocolContext),
-        new ConsensusSetHead(syncVertx, blockchain));
+        new EnginePreparePayload(syncVertx),
+        new EngineGetPayload(syncVertx, blockResultFactory, blockchain, miningCoordinator),
+        new EngineExecutePayload(syncVertx, protocolSchedule, protocolContext),
+        new EngineConsensusValidated(syncVertx),
+        new EngineForkchoiceUpdated(syncVertx));
   }
 }
