@@ -15,31 +15,36 @@
 
 package org.hyperledger.besu.ethereum.core.contract;
 
-import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.Hash;
 
-/** Wraps any Account for use by the CodeCache */
-public class WrappedAccount {
+import org.apache.tuweni.bytes.Bytes;
 
-  public Account getWrapped() {
-    return wrapped;
+/** key for use by the CodeCache */
+public class CodeHash {
+
+  private final Hash codeHash;
+  private final Bytes contract;
+
+  public CodeHash(final Bytes contract) {
+    this.contract = contract;
+    this.codeHash = Hash.hash(contract);
   }
 
-  private final Account wrapped;
-
-  public WrappedAccount(final Account wrapped) {
-    this.wrapped = wrapped;
+  public Bytes getContract() {
+    return contract;
   }
 
   @Override
   public int hashCode() {
-    return wrapped.getCode().hashCode();
+    return codeHash.toBigInteger().hashCode();
   }
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o) return true;
+
     if (o == null || getClass() != o.getClass()) return false;
-    WrappedAccount that = (WrappedAccount) o;
-    return wrapped.equals(that.wrapped);
+    CodeHash that = (CodeHash) o;
+    if (this.contract == that.contract) return true;
+    return this.contract.compareTo(that.contract) == 0;
   }
 }

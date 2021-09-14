@@ -20,22 +20,18 @@ import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.Optional;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.LoadingCache;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 
 public class CodeCache {
 
-  private final LoadingCache<WrappedAccount, Code> cache;
+  private final LoadingCache<CodeHash, Code> cache;
   private final long weight;
 
   public CodeCache(final long maxWeightBytes, final CodeLoader loader) {
     this.weight = maxWeightBytes;
     this.cache =
-        CacheBuilder.newBuilder()
-            .maximumWeight(maxWeightBytes)
-            .weigher(new CodeScale())
-            .build(loader);
+        Caffeine.newBuilder().maximumWeight(maxWeightBytes).weigher(new CodeScale()).build(loader);
   }
 
   public CodeCache(final long maxWeightBytes) {
@@ -44,15 +40,15 @@ public class CodeCache {
 
   public Optional<Code> getContract(final Account account) {
     if (account != null && account.hasCode()) {
-      return Optional.of(cache.getUnchecked(new WrappedAccount(account)));
+      return Optional.of(cache.get(new CodeHash(account.getCode())));
     } else {
       return Optional.empty();
     }
   }
 
   public void invalidate(final Account key) {
-    if (key != null) {
-      this.cache.invalidate(new WrappedAccount(key));
+    if (key != null && key.hasCode()) {
+      this.cache.invalidate(new CodeHash(key.getCode()));
     }
   }
 
@@ -60,15 +56,20 @@ public class CodeCache {
     this.cache.cleanUp();
   }
 
-  public long getWeight() {
-    return weight;
-  }
-
-  public @Nullable Code getIfPresent(final Account lruContract) {
-    return cache.getIfPresent(new WrappedAccount(lruContract));
+  public Code getIfPresent(final Account contract) {
+    if (contract != null && contract.hasCode()) {
+      return cache.getIfPresent(new CodeHash(contract.getCode()));
+    } else {
+      return null;
+    }
   }
 
   public long size() {
-    return cache.size();
+    cache.cleanUp();
+    return cache.estimatedSize();
+  }
+
+  public long getWeight() {
+    return weight;
   }
 }

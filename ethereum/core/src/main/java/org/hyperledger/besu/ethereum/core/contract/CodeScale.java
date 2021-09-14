@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.core.contract;
 
 import org.hyperledger.besu.ethereum.vm.Code;
 
-import com.google.common.cache.Weigher;
+import com.github.benmanes.caffeine.cache.Weigher;
 
-class CodeScale implements Weigher<WrappedAccount, Code> {
+class CodeScale implements Weigher<CodeHash, Code> {
   @Override
-  public int weigh(final WrappedAccount key, final Code value) {
-    return value.getSize();
+  public int weigh(final CodeHash key, final Code value) {
+    return value.getBytes().size();
   }
 }
