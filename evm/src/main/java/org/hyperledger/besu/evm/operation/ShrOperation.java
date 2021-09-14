@@ -34,6 +34,7 @@ public class ShrOperation extends AbstractFixedCostOperation {
       final MessageFrame frame, final EVM evm) {
     Bytes shiftAmount = frame.popStackItem();
     if (shiftAmount.size() > 4 && (shiftAmount = shiftAmount.trimLeadingZeros()).size() > 4) {
+      frame.popStackItem();
       frame.pushStackItem(UInt256.ZERO);
     } else {
       final int shiftAmountInt = shiftAmount.toInt();
