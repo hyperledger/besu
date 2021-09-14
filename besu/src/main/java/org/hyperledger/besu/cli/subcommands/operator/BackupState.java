@@ -40,7 +40,7 @@ import picocli.CommandLine.ParentCommand;
 
 @Command(
     name = "x-backup-state",
-    description = "Backups up the state and accounts of a specified block.",
+    description = "Backs up the state and accounts of a specified block.",
     mixinStandardHelpOptions = true)
 public class BackupState implements Runnable {
 
