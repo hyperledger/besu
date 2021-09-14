@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -29,10 +28,9 @@ public class RpcModules implements JsonRpcMethod {
 
   private final Map<String, String> moduleVersions;
 
-  public RpcModules(final Collection<RpcApi> modulesList) {
+  public RpcModules(final Collection<String> modulesList) {
     this.moduleVersions =
         modulesList.stream()
-            .map(RpcApi::getCliValue)
             .map(String::toLowerCase)
             .collect(Collectors.toMap(Function.identity(), s -> "1.0"));
   }

@@ -24,7 +24,7 @@ import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_JSON_RPC_APIS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
 import static org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration.QIP714_DEFAULT_BLOCK;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
@@ -43,7 +43,6 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
-import org.hyperledger.besu.cli.converter.RpcApisConverter;
 import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
@@ -96,7 +95,6 @@ import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
@@ -185,6 +183,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
@@ -554,12 +553,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--rpc-http-api", "--rpc-http-apis"},
       paramLabel = "<api name>",
-      split = ",",
+      split = " {0,1}, {0,1}",
       arity = "1..*",
-      converter = RpcApisConverter.class,
       description =
           "Comma separated list of APIs to enable on JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
-  private final Collection<RpcApi> rpcHttpApis = DEFAULT_JSON_RPC_APIS;
+  private final List<String> rpcHttpApis = DEFAULT_RPC_APIS;
 
   @Option(
       names = {"--rpc-http-authentication-enabled"},
@@ -651,12 +649,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--rpc-ws-api", "--rpc-ws-apis"},
       paramLabel = "<api name>",
-      split = ",",
+      split = " {0,1}, {0,1}",
       arity = "1..*",
-      converter = RpcApisConverter.class,
       description =
           "Comma separated list of APIs to enable on JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
-  private final List<RpcApi> rpcWsApis = DEFAULT_JSON_RPC_APIS;
+  private final List<String> rpcWsApis = DEFAULT_RPC_APIS;
 
   @Option(
       names = {"--rpc-ws-authentication-enabled"},
@@ -1456,6 +1453,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateNatParams();
     validateNetStatsParams();
     validateDnsOptionsParams();
+    validateRpcOptionsParams();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
   }
@@ -1522,6 +1520,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           this.commandLine,
           "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled"
               + " or specify dns is enabled (--Xdns-enabled)");
+    }
+  }
+
+  public void validateRpcOptionsParams() {
+    if (!rpcHttpApis.stream()
+        .allMatch(x -> Arrays.stream(RpcApis.values()).anyMatch(y -> x.equals(y.name())))) {
+      throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-http-apis'");
+    }
+
+    if (!rpcWsApis.stream()
+        .allMatch(x -> Arrays.stream(RpcApis.values()).anyMatch(y -> x.equals(y.name())))) {
+      throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-ws-apis'");
     }
   }
 
@@ -1994,7 +2004,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
     if (!(localPermissionsEnabled() || contractPermissionsEnabled())) {
-      if (rpcHttpApis.contains(RpcApis.PERM) || rpcWsApis.contains(RpcApis.PERM)) {
+      if (rpcHttpApis.contains(RpcApis.PERM.name()) || rpcWsApis.contains(RpcApis.PERM.name())) {
         logger.warn(
             "Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
       }
@@ -2226,7 +2236,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (!isGoQuorumCompatibilityMode
-        && (rpcHttpApis.contains(RpcApis.GOQUORUM) || rpcWsApis.contains(RpcApis.GOQUORUM))) {
+        && (rpcHttpApis.contains(RpcApis.GOQUORUM.name())
+            || rpcWsApis.contains(RpcApis.GOQUORUM.name()))) {
       logger.warn("Cannot use GOQUORUM API methods when not in GoQuorum mode.");
     }
     privacyParametersBuilder.setPrivacyService(privacyPluginPluginService);
@@ -2249,10 +2260,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private boolean anyPrivacyApiEnabled() {
-    return rpcHttpApis.contains(RpcApis.EEA)
-        || rpcWsApis.contains(RpcApis.EEA)
-        || rpcHttpApis.contains(RpcApis.PRIV)
-        || rpcWsApis.contains(RpcApis.PRIV);
+    return rpcHttpApis.contains(RpcApis.EEA.name())
+        || rpcWsApis.contains(RpcApis.EEA.name())
+        || rpcHttpApis.contains(RpcApis.PRIV.name())
+        || rpcWsApis.contains(RpcApis.PRIV.name());
   }
 
   private PrivacyKeyValueStorageProvider privacyKeyStorageProvider(final String name) {

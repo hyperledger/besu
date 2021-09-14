@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -43,7 +44,6 @@ import org.hyperledger.besu.nat.NatService;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -77,8 +77,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
-  private static final Collection<RpcApi> JSON_RPC_APIS =
-      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
+
   private final JsonRpcConfiguration jsonRpcConfig = createJsonRpcConfig();
   private final NatService natService = new NatService(Optional.empty());
 
@@ -113,7 +112,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
                     supportedCapabilities,
                     Optional.of(mock(AccountLocalConfigPermissioningController.class)),
                     Optional.of(mock(NodeLocalConfigPermissioningController.class)),
-                    JSON_RPC_APIS,
+                    DEFAULT_RPC_APIS,
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),

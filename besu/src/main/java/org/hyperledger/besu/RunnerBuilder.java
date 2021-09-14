@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.ReadinessCheck;
@@ -825,7 +824,7 @@ public class RunnerBuilder {
       final MiningCoordinator miningCoordinator,
       final ObservableMetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
-      final Collection<RpcApi> jsonRpcApis,
+      final Collection<String> jsonRpcApis,
       final FilterManager filterManager,
       final Optional<AccountLocalConfigPermissioningController> accountAllowlistController,
       final Optional<NodeLocalConfigPermissioningController> nodeAllowlistController,
