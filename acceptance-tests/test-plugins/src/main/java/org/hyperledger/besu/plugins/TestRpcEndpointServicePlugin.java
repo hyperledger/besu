@@ -28,31 +28,24 @@ import com.google.auto.service.AutoService;
 @AutoService(BesuPlugin.class)
 public class TestRpcEndpointServicePlugin implements BesuPlugin {
 
-  static class Bean {
-    final String value;
+  private final AtomicReference<String> stringStorage = new AtomicReference<>("InitialValue");
+  private final AtomicReference<Object[]> arrayStorage = new AtomicReference<>();
 
-    Bean(final String value) {
-      this.value = value;
-    }
-
-    public String getValue() {
-      return value;
-    }
-  }
-
-  private final AtomicReference<String> storage = new AtomicReference<>("InitialValue");
-
-  private String replaceValue(final PluginRpcRequest request) {
+  private String setValue(final PluginRpcRequest request) {
     checkArgument(request.getParams().length == 1, "Only one parameter accepted");
-    return storage.getAndSet(request.getParams()[0].toString());
+    return stringStorage.updateAndGet(x -> request.getParams()[0].toString());
   }
 
-  private String[] replaceValueArray(final PluginRpcRequest request) {
-    return new String[] {replaceValue(request)};
+  private String getValue(final PluginRpcRequest request) {
+    return stringStorage.get();
   }
 
-  private Bean replaceValueBean(final PluginRpcRequest request) {
-    return new Bean(replaceValue(request));
+  private Object[] replaceValueList(final PluginRpcRequest request) {
+    return arrayStorage.updateAndGet(x -> request.getParams());
+  }
+
+  private String throwException(final PluginRpcRequest request) {
+    throw new RuntimeException("Kaboom");
   }
 
   @Override
@@ -61,12 +54,12 @@ public class TestRpcEndpointServicePlugin implements BesuPlugin {
         .getService(RpcEndpointService.class)
         .ifPresent(
             rpcEndpointService -> {
+              rpcEndpointService.registerRPCEndpoint("unitTests", "getValue", this::getValue);
+              rpcEndpointService.registerRPCEndpoint("unitTests", "setValue", this::setValue);
               rpcEndpointService.registerRPCEndpoint(
-                  "unitTests", "replaceValue", this::replaceValue);
+                  "unitTests", "replaceValueList", this::replaceValueList);
               rpcEndpointService.registerRPCEndpoint(
-                  "unitTests", "replaceValueArray", this::replaceValueArray);
-              rpcEndpointService.registerRPCEndpoint(
-                  "unitTests", "replaceValueBean", this::replaceValueBean);
+                  "unitTests", "throwException", this::throwException);
             });
   }
 

@@ -22,7 +22,10 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -48,42 +51,59 @@ public class RpcEndpointServicePluginTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void rpcWorking() throws IOException {
-    final String firstCall = "FirstCall";
-    final String secondCall = "SecondCall";
-    final String thirdCall = "ThirdCall";
+  public void canUseRpcToSetValue() throws IOException {
+    String setValue = "secondCall";
 
-    ObjectNode resultJson = callTestMethod("unitTests_replaceValue", firstCall);
+    ObjectNode resultJson = callTestMethod("unitTests_getValue", List.of());
     assertThat(resultJson.get("result").asText()).isEqualTo("InitialValue");
 
-    resultJson = callTestMethod("unitTests_replaceValueArray", secondCall);
-    assertThat(resultJson.get("result").get(0).asText()).isEqualTo(firstCall);
+    resultJson = callTestMethod("unitTests_setValue", List.of(setValue));
+    assertThat(resultJson.get("result").asText()).isEqualTo(setValue);
 
-    resultJson = callTestMethod("unitTests_replaceValueBean", thirdCall);
-    assertThat(resultJson.get("result").get("value").asText()).isEqualTo(secondCall);
+    resultJson = callTestMethod("unitTests_getValue", List.of("ignored"));
+    assertThat(resultJson.get("result").asText()).isEqualTo(setValue);
   }
 
   @Test
-  public void throwsError() throws IOException {
-    ObjectNode resultJson = callTestMethod("unitTests_replaceValue", null);
+  public void canCheckArgumentInsideSetValue() throws IOException {
+    ObjectNode resultJson = callTestMethod("unitTests_setValue", List.of("one", "two"));
     assertThat(resultJson.get("error").get("message").asText()).isEqualTo("Internal error");
   }
 
-  private ObjectNode callTestMethod(final String method, final String value) throws IOException {
+  @Test
+  public void canThrowExceptions() throws IOException {
+    ObjectNode resultJson = callTestMethod("unitTests_throwException", List.of());
+    assertThat(resultJson.get("error").get("message").asText()).isEqualTo("Internal error");
+  }
+
+  @Test
+  public void mixedTypeArraysAreStringified() throws IOException {
+    ObjectNode resultJson = callTestMethod("unitTests_replaceValueList", List.of());
+    assertThat(resultJson.get("result")).isEmpty();
+
+    resultJson = callTestMethod("unitTests_replaceValueList", List.of("One", 2, true));
+    JsonNode result = resultJson.get("result");
+
+    assertThat(result.get(0).asText()).isEqualTo("One");
+    assertThat(result.get(1).asText()).isEqualTo("2");
+    assertThat(result.get(2).asText()).isEqualTo("true");
+  }
+
+  private ObjectNode callTestMethod(final String method, final List<Object> params)
+      throws IOException {
+    String format =
+        String.format(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"%s\",\"params\":[%s],\"id\":42}",
+            method,
+            params.stream().map(value -> "\"" + value + "\"").collect(Collectors.joining(",")));
+
+    RequestBody body = RequestBody.create(format, JSON);
+
     final String resultString =
         client
             .newCall(
                 new Request.Builder()
-                    .post(
-                        RequestBody.create(
-                            "{\"jsonrpc\":\"2.0\",\"method\":\""
-                                + method
-                                + "\",\"params\":["
-                                + "\""
-                                + value
-                                + "\""
-                                + "],\"id\":33}",
-                            JSON))
+                    .post(body)
                     .url(
                         "http://"
                             + node.getHostName()
