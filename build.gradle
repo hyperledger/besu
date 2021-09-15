@@ -502,6 +502,8 @@ def tweakStartScript(createScriptTask) {
 }
 
 startScripts {
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
   doLast {
     tweakStartScript(startScripts)
   }
@@ -515,6 +517,8 @@ task evmToolStartScripts(type: CreateStartScripts) {
   defaultJvmOpts = [
     "-Dsecp256k1.randomize=false"
   ]
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
   doLast {
     tweakStartScript(evmToolStartScripts)
   }
@@ -643,7 +647,7 @@ task testDocker {
     for (def variant in dockerVariants) {
       exec {
         def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
-        workingDir "docker/${variant}"
+        workingDir "${projectDir}/docker/${variant}"
         executable "sh"
         args "-c", "bash ../test.sh ${image}-${variant}"
       }
