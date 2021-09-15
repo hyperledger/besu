@@ -38,12 +38,8 @@ public enum RpcMethod {
   ENGINE_EXECUTE_PAYLOAD("engine_executePayload"),
   ENGINE_CONSENSUS_VALIDATED("engine_consensusValidated"),
   ENGINE_FORKCHOICE_UPDATED("engine_forkchoiceUpdated"),
-  // TODO: deprecated, remove:
-  ENGINE_ASSEMBLE_BLOCK("engine_assembleBlock"),
-  ENGINE_FINALIZE_BLOCK("engine_finalizeBlock"),
-  ENGINE_NEW_BLOCK("engine_newBlock"),
-  ENGINE_SET_HEAD("engine_setHead"),
-  // END deprecated
+  ENGINE_TERMINAL_TOTAL_DIFFICULTY_UPDATED("engine_terminalTotalDifficultyUpdated"),
+  ENGINE_SYNC_CHECKPOINT_SET("engine_syncCheckpointSet"),
 
   DEBUG_ACCOUNT_AT("debug_accountAt"),
   DEBUG_METRICS("debug_metrics"),

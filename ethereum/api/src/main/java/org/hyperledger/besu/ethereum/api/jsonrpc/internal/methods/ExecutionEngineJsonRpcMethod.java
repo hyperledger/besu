@@ -66,5 +66,5 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
     }
   }
 
-  public abstract JsonRpcResponse syncResponse(JsonRpcRequestContext request);
+  public abstract JsonRpcResponse syncResponse(final JsonRpcRequestContext request);
 }
