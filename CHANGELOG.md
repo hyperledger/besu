@@ -2,9 +2,14 @@
 
 ## 21.7.4
 ### Additions and Improvements
+- \[EXPERIMENTAL\] Added support for QBFT with PKI-backed Block Creation. [#2647](https://github.com/hyperledger/besu/issues/2647)
+- Added support for QBFT to use retrieve validators from a smart contract [#2574](https://github.com/hyperledger/besu/pull/2574)
 - Upgrade Gradle to 7.2, which supports building with Java 17 [#2761](https://github.com/hyperledger/besu/pull/2376) 
 
 ### Bug Fixes
+- Set an idle timeout for metrics connections, to clean up ports when no longer used [\#2748](https://github.com/hyperledger/besu/pull/2748)
+- Onchain privacy groups can be unlocked after being locked without having to add a participant [\#2693](https://github.com/hyperledger/besu/pull/2693)
+- Update Gas Schedule for Ethereum Classic [#2746](https://github.com/hyperledger/besu/pull/2746)
 
 ### Early Access Features
 
@@ -26,14 +31,10 @@
 - \[EXPERIMENTAL\] Added support for using DNS host name in place of IP address in onchain node permissioning rules [#2667](https://github.com/hyperledger/besu/pull/2667)
 - Implement EIP-3607 Reject transactions from senders with deployed code. [#2676](https://github.com/hyperledger/besu/pull/2676)
 - Ignore all unknown fields when supplied to eth_estimateGas or eth_call. [\#2690](https://github.com/hyperledger/besu/pull/2690)
-- \[EXPERIMENTAL\] Added support for QBFT with PKI-backed Block Creation. [#2647](https://github.com/hyperledger/besu/issues/2647)
-- Added support for QBFT to use retrieve validators from a smart contract [#2574](https://github.com/hyperledger/besu/pull/2574)
 
 ### Bug Fixes
 - Consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)
 - GetTransactionCount should return the latest transaction count if it is greater than the transaction pool [\#2633](https://github.com/hyperledger/besu/pull/2633)
-- Set an idle timeout for metrics connections, to clean up ports when no longer used [\#2748](https://github.com/hyperledger/besu/pull/2748)
-- Onchain privacy groups can be unlocked after being locked without having to add a participant [\#2693](https://github.com/hyperledger/besu/pull/2693)
 
 ### Early Access Features
 
