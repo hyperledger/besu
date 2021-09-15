@@ -15,11 +15,7 @@
 package org.hyperledger.besu.cli.options.unstable;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
-import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
-
-import java.util.Arrays;
-import java.util.List;
 
 import picocli.CommandLine;
 
@@ -70,14 +66,5 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
     config.setCheckMaintainedConnectionsFrequency(checkMaintainedConnectionsFrequencySec);
     config.setInitiateConnectionsFrequency(initiateConnectionsFrequencySec);
     return config;
-  }
-
-  @Override
-  public List<String> getCLIOptions() {
-    return Arrays.asList(
-        CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG,
-        OptionParser.format(checkMaintainedConnectionsFrequencySec),
-        INITIATE_CONNECTIONS_FREQUENCY_FLAG,
-        OptionParser.format(initiateConnectionsFrequencySec));
   }
 }

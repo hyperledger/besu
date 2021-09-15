@@ -15,12 +15,8 @@
 package org.hyperledger.besu.cli.options.unstable;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
-import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.util.number.PositiveNumber;
-
-import java.util.Arrays;
-import java.util.List;
 
 import picocli.CommandLine;
 
@@ -112,21 +108,5 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
         .maxGetPooledTransactions(maxGetPooledTransactions)
         .legacyEth64ForkIdEnabled(legacyEth64ForkIdEnabled)
         .build();
-  }
-
-  @Override
-  public List<String> getCLIOptions() {
-    return Arrays.asList(
-        MAX_GET_HEADERS_FLAG,
-        OptionParser.format(maxGetBlockHeaders.getValue()),
-        MAX_GET_BODIES_FLAG,
-        OptionParser.format(maxGetBlockBodies.getValue()),
-        MAX_GET_RECEIPTS_FLAG,
-        OptionParser.format(maxGetReceipts.getValue()),
-        MAX_GET_NODE_DATA_FLAG,
-        OptionParser.format(maxGetNodeData.getValue()),
-        MAX_GET_POOLED_TRANSACTIONS,
-        OptionParser.format(maxGetPooledTransactions.getValue()),
-        LEGACY_ETH_64_FORK_ID_ENABLED + "=" + legacyEth64ForkIdEnabled);
   }
 }

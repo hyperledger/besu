@@ -23,8 +23,6 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 
-import java.util.List;
-
 import picocli.CommandLine.Option;
 
 public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> {
@@ -61,14 +59,5 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         .dataStorageFormat(dataStorageFormat)
         .bonsaiMaxLayersToLoad(bonsaiMaxLayersToLoad)
         .build();
-  }
-
-  @Override
-  public List<String> getCLIOptions() {
-    return List.of(
-        DATA_STORAGE_FORMAT,
-        dataStorageFormat.toString(),
-        BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD,
-        bonsaiMaxLayersToLoad.toString());
   }
 }

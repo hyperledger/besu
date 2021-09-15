@@ -45,29 +45,6 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
   }
 
   @Test
-  public void getCLIOptions_default() {
-    getCLIOptions(createDefaultDomainObject());
-  }
-
-  @Test
-  public void getCLIOptions_custom() {
-    getCLIOptions(createCustomizedDomainObject());
-  }
-
-  private void getCLIOptions(final D domainObject) {
-    T options = optionsFromDomainObject(domainObject);
-    final String[] cliOptions = options.getCLIOptions().toArray(new String[0]);
-
-    final TestBesuCommand cmd = parseCommand(cliOptions);
-    final T optionsFromCommand = getOptionsFromBesuCommand(cmd);
-
-    assertThat(optionsFromCommand).isEqualToComparingFieldByField(options);
-
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
   public void defaultValues() {
     final TestBesuCommand cmd = parseCommand();
 

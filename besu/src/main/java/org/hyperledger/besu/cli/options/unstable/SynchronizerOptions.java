@@ -18,9 +18,6 @@ import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.google.common.collect.Range;
 import org.apache.tuweni.units.bigints.UInt256;
 import picocli.CommandLine;
@@ -261,42 +258,5 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.worldStateMinMillisBeforeStalling(worldStateMinMillisBeforeStalling);
     builder.worldStateTaskCacheSize(worldStateTaskCacheSize);
     return builder;
-  }
-
-  @Override
-  public List<String> getCLIOptions() {
-    return Arrays.asList(
-        BLOCK_PROPAGATION_RANGE_FLAG,
-        OptionParser.format(blockPropagationRange),
-        DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_HEIGHT_FLAG,
-        OptionParser.format(downloaderChangeTargetThresholdByHeight),
-        DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD_FLAG,
-        OptionParser.format(downloaderChangeTargetThresholdByTd),
-        DOWNLOADER_HEADER_REQUEST_SIZE_FLAG,
-        OptionParser.format(downloaderHeaderRequestSize),
-        DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG,
-        OptionParser.format(downloaderCheckpointTimeoutsPermitted),
-        DOWNLOADER_CHAIN_SEGMENT_SIZE_FLAG,
-        OptionParser.format(downloaderChainSegmentSize),
-        DOWNLOADER_PARALLELISM_FLAG,
-        OptionParser.format(downloaderParallelism),
-        TRANSACTIONS_PARALLELISM_FLAG,
-        OptionParser.format(transactionsParallelism),
-        COMPUTATION_PARALLELISM_FLAG,
-        OptionParser.format(computationParallelism),
-        PIVOT_DISTANCE_FROM_HEAD_FLAG,
-        OptionParser.format(fastSyncPivotDistance),
-        FULL_VALIDATION_RATE_FLAG,
-        OptionParser.format(fastSyncFullValidationRate),
-        WORLD_STATE_HASH_COUNT_PER_REQUEST_FLAG,
-        OptionParser.format(worldStateHashCountPerRequest),
-        WORLD_STATE_REQUEST_PARALLELISM_FLAG,
-        OptionParser.format(worldStateRequestParallelism),
-        WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS_FLAG,
-        OptionParser.format(worldStateMaxRequestsWithoutProgress),
-        WORLD_STATE_MIN_MILLIS_BEFORE_STALLING_FLAG,
-        OptionParser.format(worldStateMinMillisBeforeStalling),
-        WORLD_STATE_TASK_CACHE_SIZE_FLAG,
-        OptionParser.format(worldStateTaskCacheSize));
   }
 }

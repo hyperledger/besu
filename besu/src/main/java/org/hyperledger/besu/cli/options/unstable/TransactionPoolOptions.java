@@ -15,13 +15,10 @@
 package org.hyperledger.besu.cli.options.unstable;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
-import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
 
 import picocli.CommandLine;
 
@@ -72,14 +69,5 @@ public class TransactionPoolOptions
     return ImmutableTransactionPoolConfiguration.builder()
         .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
         .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod));
-  }
-
-  @Override
-  public List<String> getCLIOptions() {
-    return Arrays.asList(
-        TX_MESSAGE_KEEP_ALIVE_SEC_FLAG,
-        OptionParser.format(txMessageKeepAliveSeconds),
-        ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG,
-        OptionParser.format(eth65TrxAnnouncedBufferingPeriod));
   }
 }

@@ -18,15 +18,9 @@ import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 
-import java.util.Arrays;
-import java.util.List;
-
 import picocli.CommandLine;
 
 public class DnsOptions implements CLIOptions<EnodeDnsConfiguration> {
-
-  private final String DNS_ENABLED = "--Xdns-enabled";
-  private final String DNS_UPDATE_ENABLED = "--Xdns-update-enabled";
 
   @CommandLine.Option(
       hidden = true,
@@ -67,11 +61,5 @@ public class DnsOptions implements CLIOptions<EnodeDnsConfiguration> {
         .updateEnabled(dnsUpdateEnabled)
         .dnsEnabled(dnsEnabled)
         .build();
-  }
-
-  @Override
-  public List<String> getCLIOptions() {
-    return Arrays.asList(
-        DNS_ENABLED, dnsEnabled.toString(), DNS_UPDATE_ENABLED, dnsUpdateEnabled.toString());
   }
 }

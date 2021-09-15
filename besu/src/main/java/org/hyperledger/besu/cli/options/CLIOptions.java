@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.cli.options;
 
-import java.util.List;
-
 /**
  * This interface represents logic that translates between CLI options and a domain object.
  *
@@ -29,11 +27,4 @@ public interface CLIOptions<T> {
    * @return A domain object representing these CLI options.
    */
   T toDomainObject();
-
-  /**
-   * Return The list of CLI options corresponding to this class.
-   *
-   * @return The list of CLI options corresponding to this class.
-   */
-  List<String> getCLIOptions();
 }

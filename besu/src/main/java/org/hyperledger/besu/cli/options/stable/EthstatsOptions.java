@@ -17,9 +17,6 @@ package org.hyperledger.besu.cli.options.stable;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.ethstats.util.NetstatsUrl;
 
-import java.util.Arrays;
-import java.util.List;
-
 import picocli.CommandLine;
 
 public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
@@ -59,10 +56,5 @@ public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
 
   public String getEthstatsContact() {
     return ethstatsContact;
-  }
-
-  @Override
-  public List<String> getCLIOptions() {
-    return Arrays.asList(ETHSTATS + "=" + ethstatsUrl, ETHSTATS_CONTACT + "=" + ethstatsContact);
   }
 }

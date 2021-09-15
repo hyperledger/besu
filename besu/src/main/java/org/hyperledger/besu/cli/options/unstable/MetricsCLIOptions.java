@@ -17,9 +17,6 @@ package org.hyperledger.besu.cli.options.unstable;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
-import java.util.Arrays;
-import java.util.List;
-
 import picocli.CommandLine;
 
 public class MetricsCLIOptions implements CLIOptions<MetricsConfiguration.Builder> {
@@ -57,12 +54,5 @@ public class MetricsCLIOptions implements CLIOptions<MetricsConfiguration.Builde
   @Override
   public MetricsConfiguration.Builder toDomainObject() {
     return MetricsConfiguration.builder().timersEnabled(timersEnabled).idleTimeout(idleTimeout);
-  }
-
-  @Override
-  public List<String> getCLIOptions() {
-    return Arrays.asList(
-        TIMERS_ENABLED_FLAG + "=" + timersEnabled.toString(),
-        IDLE_TIMEOUT_FLAG + "=" + idleTimeout);
   }
 }

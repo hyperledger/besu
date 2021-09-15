@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node;
 import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
+import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
@@ -244,9 +244,17 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--p2p-enabled");
       params.add("false");
     } else {
-      final List<String> networkConfigParams =
-          NetworkingOptions.fromConfig(node.getNetworkingConfiguration()).getCLIOptions();
-      params.addAll(networkConfigParams);
+
+      params.add("--Xp2p-check-maintained-connections-frequency");
+      params.add(
+          OptionParser.format(
+              node.getNetworkingConfiguration().getCheckMaintainedConnectionsFrequencySec()));
+
+      params.add("--Xp2p-initiate-connections-frequency");
+      params.add(
+          OptionParser.format(
+              node.getNetworkingConfiguration().getInitiateConnectionsFrequencySec()));
+
       if (node.getTLSConfiguration().isPresent()) {
         final TLSConfiguration config = node.getTLSConfiguration().get();
         params.add("--Xp2p-tls-enabled");
