@@ -1,5 +1,13 @@
 # Changelog
 
+## 21.7.4
+### Additions and Improvements
+- Upgrade Gradle to 7.2, which supports building with Java 17 [#2761](https://github.com/hyperledger/besu/pull/2376) 
+
+### Bug Fixes
+
+### Early Access Features
+
 ## 21.7.3
 ### Additions and Improvements
 - Migration to Apache Tuweni 2.0 [\#2376](https://github.com/hyperledger/besu/pull/2376)
