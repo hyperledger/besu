@@ -130,6 +130,9 @@ public abstract class CommandTestAbstract {
   private final List<TestBesuCommand> besuCommands = new ArrayList<>();
   private KeyPair keyPair;
 
+  protected static final RpcEndpointServiceImpl rpcEndpointServiceImpl =
+      new RpcEndpointServiceImpl();
+
   @Mock protected RunnerBuilder mockRunnerBuilder;
   @Mock protected Runner mockRunner;
 
@@ -402,7 +405,7 @@ public abstract class CommandTestAbstract {
           new PermissioningServiceImpl(),
           new PrivacyPluginServiceImpl(),
           pkiBlockCreationConfigProvider,
-          new RpcEndpointServiceImpl());
+          rpcEndpointServiceImpl);
       this.mockNodeKey = mockNodeKey;
       this.keyPair = keyPair;
     }

@@ -75,6 +75,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -92,6 +93,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1924,6 +1926,24 @@ public class BesuCommandTest extends CommandTestAbstract {
     // PicoCLI uses longest option name for message when option has multiple names, so here plural.
     assertThat(commandErrorOutput.toString())
         .contains("Invalid value for option '--rpc-http-apis'");
+  }
+
+  @Test
+  public void rpcApisPropertyWithPluginNamespaceAreValid() {
+
+    rpcEndpointServiceImpl.registerRPCEndpoint(
+        "bob", "method", (Function<PluginRpcRequest, Object>) request -> "nothing");
+
+    parseCommand("--rpc-http-api", "BOB");
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
+        .containsExactlyInAnyOrder("BOB");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test

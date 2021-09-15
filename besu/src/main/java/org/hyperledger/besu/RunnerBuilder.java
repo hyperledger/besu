@@ -863,7 +863,7 @@ public class RunnerBuilder {
                 dataDir,
                 besuController.getProtocolManager().ethContext().getEthPeers());
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
-    methods.putAll(rpcEndpointServiceImpl.getPluginMethods());
+    methods.putAll(rpcEndpointServiceImpl.getPluginMethods(jsonRpcConfiguration.getRpcApis()));
     return methods;
   }
 
@@ -964,6 +964,11 @@ public class RunnerBuilder {
 
       privateWebSocketMethodsFactory.methods().forEach(websocketMethodsFactory::addMethods);
     }
+
+    rpcEndpointServiceImpl
+        .getPluginMethods(configuration.getRpcApis())
+        .values()
+        .forEach(websocketMethodsFactory::addMethods);
 
     final WebSocketRequestHandler websocketRequestHandler =
         new WebSocketRequestHandler(

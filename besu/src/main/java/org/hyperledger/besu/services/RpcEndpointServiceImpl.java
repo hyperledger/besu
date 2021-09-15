@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.PluginJsonRpcM
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -42,9 +43,21 @@ public class RpcEndpointServiceImpl implements RpcEndpointService {
     rpcMethods.put(namespace + "_" + functionName, function);
   }
 
-  public Map<String, ? extends JsonRpcMethod> getPluginMethods() {
+  public Map<String, ? extends JsonRpcMethod> getPluginMethods(
+      final Collection<String> namespaces) {
     return rpcMethods.entrySet().stream()
+        .filter(
+            entry ->
+                namespaces.stream()
+                    .anyMatch(
+                        namespace ->
+                            entry.getKey().toUpperCase().startsWith(namespace.toUpperCase())))
         .map(entry -> new PluginJsonRpcMethod(entry.getKey(), entry.getValue()))
         .collect(Collectors.toMap(PluginJsonRpcMethod::getName, e -> e));
+  }
+
+  public boolean hasNamespace(final String namespace) {
+    return rpcMethods.keySet().stream()
+        .anyMatch(key -> key.toUpperCase().startsWith(namespace.toUpperCase()));
   }
 }

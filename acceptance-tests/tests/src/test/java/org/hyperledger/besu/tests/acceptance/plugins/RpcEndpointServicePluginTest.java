@@ -21,7 +21,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,9 +42,7 @@ public class RpcEndpointServicePluginTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    node =
-        besu.createPluginsNode(
-            "node1", Collections.singletonList("testPlugins"), Collections.emptyList());
+    node = besu.createPluginsNode("node1", List.of("testPlugins"), List.of("--rpc-http-api=TESTS"));
     cluster.start(node);
     client = new OkHttpClient();
   }
@@ -54,34 +51,40 @@ public class RpcEndpointServicePluginTest extends AcceptanceTestBase {
   public void canUseRpcToSetValue() throws IOException {
     String setValue = "secondCall";
 
-    ObjectNode resultJson = callTestMethod("unitTests_getValue", List.of());
+    ObjectNode resultJson = callTestMethod("tests_getValue", List.of());
     assertThat(resultJson.get("result").asText()).isEqualTo("InitialValue");
 
-    resultJson = callTestMethod("unitTests_setValue", List.of(setValue));
+    resultJson = callTestMethod("tests_setValue", List.of(setValue));
     assertThat(resultJson.get("result").asText()).isEqualTo(setValue);
 
-    resultJson = callTestMethod("unitTests_getValue", List.of("ignored"));
+    resultJson = callTestMethod("tests_getValue", List.of("ignored"));
     assertThat(resultJson.get("result").asText()).isEqualTo(setValue);
   }
 
   @Test
   public void canCheckArgumentInsideSetValue() throws IOException {
-    ObjectNode resultJson = callTestMethod("unitTests_setValue", List.of("one", "two"));
+    ObjectNode resultJson = callTestMethod("tests_setValue", List.of("one", "two"));
     assertThat(resultJson.get("error").get("message").asText()).isEqualTo("Internal error");
   }
 
   @Test
   public void canThrowExceptions() throws IOException {
-    ObjectNode resultJson = callTestMethod("unitTests_throwException", List.of());
+    ObjectNode resultJson = callTestMethod("tests_throwException", List.of());
     assertThat(resultJson.get("error").get("message").asText()).isEqualTo("Internal error");
   }
 
   @Test
+  public void onlyEnabledMethodsReturn() throws IOException {
+    ObjectNode resultJson = callTestMethod("notEnabled_getValue", List.of());
+    assertThat(resultJson.get("error").get("message").asText()).isEqualTo("Method not found");
+  }
+
+  @Test
   public void mixedTypeArraysAreStringified() throws IOException {
-    ObjectNode resultJson = callTestMethod("unitTests_replaceValueList", List.of());
+    ObjectNode resultJson = callTestMethod("tests_replaceValueList", List.of());
     assertThat(resultJson.get("result")).isEmpty();
 
-    resultJson = callTestMethod("unitTests_replaceValueList", List.of("One", 2, true));
+    resultJson = callTestMethod("tests_replaceValueList", List.of("One", 2, true));
     JsonNode result = resultJson.get("result");
 
     assertThat(result.get(0).asText()).isEqualTo("One");

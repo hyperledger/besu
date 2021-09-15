@@ -196,6 +196,7 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -1524,13 +1525,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   public void validateRpcOptionsParams() {
-    if (!rpcHttpApis.stream()
-        .allMatch(x -> Arrays.stream(RpcApis.values()).anyMatch(y -> x.equals(y.name())))) {
+    Predicate<String> configuredApi =
+        apiName ->
+            Arrays.stream(RpcApis.values())
+                    .anyMatch(builtInApi -> apiName.equals(builtInApi.name()))
+                || rpcEndpointServiceImpl.hasNamespace(apiName);
+
+    if (!rpcHttpApis.stream().allMatch(configuredApi)) {
       throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-http-apis'");
     }
 
-    if (!rpcWsApis.stream()
-        .allMatch(x -> Arrays.stream(RpcApis.values()).anyMatch(y -> x.equals(y.name())))) {
+    if (!rpcWsApis.stream().allMatch(configuredApi)) {
       throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-ws-apis'");
     }
   }
