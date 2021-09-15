@@ -32,11 +32,20 @@ public enum RpcMethod {
   CLIQUE_GET_PROPOSALS("clique_proposals"),
   CLIQUE_PROPOSE("clique_propose"),
   CLIQUE_GET_SIGNER_METRICS("clique_getSignerMetrics"),
+
+  ENGINE_PREPARE_PAYLOAD("engine_preparePayload"),
+  ENGINE_GET_PAYLOAD("engine_getPayload"),
+  ENGINE_EXECUTE_PAYLOAD("engine_executePayload"),
+  ENGINE_CONSENSUS_VALIDATED("engine_consensusValidated"),
+  ENGINE_FORKCHOICE_UPDATED("engine_forkchoiceUpdated"),
+  // TODO: deprecated, remove:
+  ENGINE_ASSEMBLE_BLOCK("engine_assembleBlock"),
+  ENGINE_FINALIZE_BLOCK("engine_finalizeBlock"),
+  ENGINE_NEW_BLOCK("engine_newBlock"),
+  ENGINE_SET_HEAD("engine_setHead"),
+  // END deprecated
+
   DEBUG_ACCOUNT_AT("debug_accountAt"),
-  CONSENSUS_ASSEMBLE_BLOCK("consensus_assembleBlock"),
-  CONSENSUS_FINALIZE_BLOCK("consensus_finalizeBlock"),
-  CONSENSUS_NEW_BLOCK("consensus_newBlock"),
-  CONSENSUS_SET_HEAD("consensus_setHead"),
   DEBUG_METRICS("debug_metrics"),
   DEBUG_STORAGE_RANGE_AT("debug_storageRangeAt"),
   DEBUG_TRACE_BLOCK("debug_traceBlock"),

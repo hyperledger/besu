@@ -12,44 +12,32 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Hash;
 
-import com.google.common.collect.ImmutableMap;
 import io.vertx.core.Vertx;
 
-public class ConsensusSetHead extends SyncJsonRpcMethod {
-  private final MutableBlockchain blockchain;
+public class EngineConsensusValidated extends ExecutionEngineJsonRpcMethod {
 
-  public ConsensusSetHead(final Vertx vertx, final MutableBlockchain blockchain) {
+  public EngineConsensusValidated(final Vertx vertx) {
     super(vertx);
-    this.blockchain = blockchain;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.CONSENSUS_SET_HEAD.getMethodName();
+    return RpcMethod.ENGINE_CONSENSUS_VALIDATED.getMethodName();
   }
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    final Object id = requestContext.getRequest().getId();
-    try {
-      return new JsonRpcSuccessResponse(
-          id,
-          ImmutableMap.of(
-              "success",
-              blockchain.rewindToBlock(requestContext.getRequiredParameter(0, Hash.class))));
-    } catch (final IllegalStateException __) {
-      return new JsonRpcErrorResponse(id, JsonRpcError.INTERNAL_ERROR);
-    }
+    // final Hash blockHash = requestContext.getRequiredParameter(0, Hash.class);
+
+    // TODO: implement me https://github.com/ConsenSys/protocol-misc/issues/477
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
   }
 }
