@@ -117,6 +117,7 @@ allprojects {
     java {
       // This path needs to be relative to each project
       target '**/src/*/java/**/*.java'
+      targetExclude '**/src/reference-test/resources/**'
       removeUnusedImports()
       googleJavaFormat('1.10.0')
       importOrder 'org.hyperledger', 'java', ''
