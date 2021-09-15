@@ -213,6 +213,7 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             quorumCompatibilityMode)
         .gasCalculator(IstanbulGasCalculator::new)
+        .transactionGasCalculator(new IstanbulTransactionGasCalculator())
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
@@ -308,6 +309,7 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             quorumCompatibilityMode)
         .gasCalculator(BerlinGasCalculator::new)
+        .transactionGasCalculator(new BerlinTransactionGasCalculator())
         .transactionValidatorBuilder(
             transactionGasCalculator ->
                 new MainnetTransactionValidator(
