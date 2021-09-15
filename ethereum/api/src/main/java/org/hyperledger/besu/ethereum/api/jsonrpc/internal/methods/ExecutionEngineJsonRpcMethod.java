@@ -26,12 +26,12 @@ import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public abstract class SyncJsonRpcMethod implements JsonRpcMethod {
+public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
 
   private final Vertx syncVertx;
   private static final Logger LOG = LogManager.getLogger();
 
-  protected SyncJsonRpcMethod(final Vertx vertx) {
+  protected ExecutionEngineJsonRpcMethod(final Vertx vertx) {
     this.syncVertx = vertx;
   }
 

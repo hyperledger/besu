@@ -12,28 +12,32 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import io.vertx.core.Vertx;
 
-public class ConsensusFinalizeBlock extends SyncJsonRpcMethod {
-  public ConsensusFinalizeBlock(final Vertx vertx) {
+public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
+
+  public EngineForkchoiceUpdated(final Vertx vertx) {
     super(vertx);
   }
 
   @Override
   public String getName() {
-    return RpcMethod.CONSENSUS_FINALIZE_BLOCK.getMethodName();
+    return RpcMethod.ENGINE_FORKCHOICE_UPDATED.getMethodName();
   }
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    // For now, just return success.
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Boolean.TRUE);
+    // final Hash blockHash = requestContext.getRequiredParameter(0, Hash.class);
+
+    // TODO: implement me https://github.com/ConsenSys/protocol-misc/issues/478
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
   }
 }
