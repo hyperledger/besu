@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
 import org.hyperledger.besu.ethereum.core.contract.CodeLoader;
+import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -97,7 +98,8 @@ public class MainnetTransactionProcessorTest {
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(70L));
 
     this.loader = spy(new CodeLoader());
-    this.cache = new CodeCache(ContractCacheOptions.getContractCacheWeight(), loader);
+    this.cache =
+        new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight(), loader);
     this.worldState = spy(createInMemoryWorldStateUsingCache(this.cache).updater());
 
     transactionProcessor =
