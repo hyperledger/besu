@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.BesuService;
 import org.hyperledger.besu.plugin.services.PluginVersionsProvider;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -30,7 +31,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -41,7 +41,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,6 +49,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
   private static final Logger LOG = LogManager.getLogger();
 
   private enum Lifecycle {
+    LOADING,
     UNINITIALIZED,
     REGISTERING,
     REGISTERED,
@@ -59,10 +59,31 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     STOPPED
   }
 
-  private Lifecycle state = Lifecycle.UNINITIALIZED;
+  private Lifecycle state;
   private final Map<Class<?>, ? super BesuService> serviceRegistry = new HashMap<>();
   private final List<BesuPlugin> plugins = new ArrayList<>();
-  private final List<String> pluginVersions = new ArrayList<>();
+  private final ServiceLoader<BesuPlugin> serviceLoader;
+
+  public BesuPluginContextImpl() {
+    this(System.getProperty("besu.plugins.dir"));
+  }
+
+  public BesuPluginContextImpl(final String pluginsDir) {
+    Path pluginsDirPath;
+    if (pluginsDir == null) {
+      pluginsDirPath = new File(System.getProperty("besu.home", "."), "plugins").toPath();
+    } else {
+      pluginsDirPath = new File(pluginsDir).toPath();
+    }
+
+    final ClassLoader pluginLoader =
+        pluginDirectoryLoader(pluginsDirPath).orElse(this.getClass().getClassLoader());
+
+    serviceLoader = ServiceLoader.load(BesuPlugin.class, pluginLoader);
+    serviceLoader.forEach(plugins::add);
+
+    state = Lifecycle.UNINITIALIZED;
+  }
 
   public <T extends BesuService> void addService(final Class<T> serviceType, final T service) {
     checkArgument(serviceType.isInterface(), "Services must be Java interfaces.");
@@ -78,24 +99,17 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     return Optional.ofNullable((T) serviceRegistry.get(serviceType));
   }
 
-  public void registerPlugins(final Path pluginsDir) {
+  public void registerPlugins() {
     checkState(
         state == Lifecycle.UNINITIALIZED,
         "Besu plugins have already been registered.  Cannot register additional plugins.");
 
-    final ClassLoader pluginLoader =
-        pluginDirectoryLoader(pluginsDir).orElse(this.getClass().getClassLoader());
-
     state = Lifecycle.REGISTERING;
-
-    final ServiceLoader<BesuPlugin> serviceLoader =
-        ServiceLoader.load(BesuPlugin.class, pluginLoader);
 
     for (final BesuPlugin plugin : serviceLoader) {
       try {
         plugin.register(this);
         LOG.debug("Registered plugin of type {}.", plugin.getClass().getName());
-        addPluginVersion(plugin);
       } catch (final Exception e) {
         LOG.error(
             "Error registering plugin of type "
@@ -104,26 +118,11 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
             e);
         continue;
       }
-      plugins.add(plugin);
     }
 
     LOG.debug("Plugin registration complete.");
 
     state = Lifecycle.REGISTERED;
-  }
-
-  private void addPluginVersion(final BesuPlugin plugin) {
-    final Package pluginPackage = plugin.getClass().getPackage();
-    final String implTitle =
-        Optional.ofNullable(pluginPackage.getImplementationTitle())
-            .filter(Predicate.not(String::isBlank))
-            .orElse(plugin.getClass().getSimpleName());
-    final String implVersion =
-        Optional.ofNullable(pluginPackage.getImplementationVersion())
-            .filter(Predicate.not(String::isBlank))
-            .orElse("<Unknown Version>");
-    final String pluginVersion = implTitle + "/v" + implVersion;
-    pluginVersions.add(pluginVersion);
   }
 
   public void startPlugins() {
@@ -176,9 +175,22 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     state = Lifecycle.STOPPED;
   }
 
+  private String getPluginVersion(final BesuPlugin plugin) {
+    final Package pluginPackage = plugin.getClass().getPackage();
+    final String implTitle =
+        Optional.ofNullable(pluginPackage.getImplementationTitle())
+            .filter(Predicate.not(String::isBlank))
+            .orElse(plugin.getClass().getSimpleName());
+    final String implVersion =
+        Optional.ofNullable(pluginPackage.getImplementationVersion())
+            .filter(Predicate.not(String::isBlank))
+            .orElse("<Unknown Version>");
+    return implTitle + "/v" + implVersion;
+  }
+
   @Override
   public Collection<String> getPluginVersions() {
-    return Collections.unmodifiableList(pluginVersions);
+    return plugins.stream().map(this::getPluginVersion).collect(Collectors.toList());
   }
 
   private static URL pathToURIOrNull(final Path p) {
@@ -187,11 +199,6 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     } catch (final MalformedURLException e) {
       return null;
     }
-  }
-
-  @VisibleForTesting
-  List<BesuPlugin> getPlugins() {
-    return Collections.unmodifiableList(plugins);
   }
 
   private Optional<ClassLoader> pluginDirectoryLoader(final Path pluginsDir) {

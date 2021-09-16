@@ -81,10 +81,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       final SecurityModuleServiceImpl securityModuleService,
       final BesuConfiguration commonPluginConfiguration) {
     final CommandLine commandLine = new CommandLine(CommandSpec.create());
-    final BesuPluginContextImpl besuPluginContext = new BesuPluginContextImpl();
-    besuPluginContext.addService(StorageService.class, storageService);
-    besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
-    besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
 
     final Path pluginsPath = node.homeDirectory().resolve("plugins");
     final File pluginsDirFile = pluginsPath.toFile();
@@ -92,8 +88,14 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       pluginsDirFile.mkdirs();
       pluginsDirFile.deleteOnExit();
     }
-    System.setProperty("besu.plugins.dir", pluginsPath.toString());
-    besuPluginContext.registerPlugins(pluginsPath);
+    final BesuPluginContextImpl besuPluginContext =
+        new BesuPluginContextImpl(pluginsPath.toString());
+
+    besuPluginContext.addService(StorageService.class, storageService);
+    besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
+    besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
+
+    besuPluginContext.registerPlugins();
 
     commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
 

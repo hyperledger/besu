@@ -1313,7 +1313,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     new RocksDBPlugin().register(besuPluginContext);
     new InMemoryStoragePlugin().register(besuPluginContext);
 
-    besuPluginContext.registerPlugins(pluginsDir());
+    besuPluginContext.registerPlugins();
 
     metricCategoryRegistry
         .getMetricCategories()
@@ -2529,15 +2529,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   // dataDir() is public because it is accessed by subcommands
   public Path dataDir() {
     return dataPath.toAbsolutePath();
-  }
-
-  private Path pluginsDir() {
-    final String pluginsDir = System.getProperty("besu.plugins.dir");
-    if (pluginsDir == null) {
-      return new File(System.getProperty("besu.home", "."), "plugins").toPath();
-    } else {
-      return new File(pluginsDir).toPath();
-    }
   }
 
   @VisibleForTesting
