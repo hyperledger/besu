@@ -25,7 +25,7 @@ public class ContractCacheConfiguration {
   private static ContractCacheConfiguration INSTANCE;
   private static final Logger LOG = LogManager.getLogger(ContractCacheConfiguration.class);
 
-  public ContractCacheConfiguration(final long contractCacheWeightKilobytes) {
+  private ContractCacheConfiguration(final long contractCacheWeightKilobytes) {
     this.contractCacheWeightKilobytes = contractCacheWeightKilobytes;
   }
 
@@ -33,6 +33,10 @@ public class ContractCacheConfiguration {
     if (INSTANCE == null) {
       INSTANCE = new ContractCacheConfiguration(contractCacheWeightKilobytes);
     }
+  }
+
+  public static void destroy() {
+    INSTANCE = null;
   }
 
   public static ContractCacheConfiguration getInstance() {

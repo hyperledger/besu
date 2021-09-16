@@ -20,9 +20,15 @@ import org.hyperledger.besu.cli.CommandTestAbstract;
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
 import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ContractCacheOptionsTest extends CommandTestAbstract {
+
+  @BeforeClass
+  public static void resetConfig() {
+    ContractCacheConfiguration.destroy(); // tests run in parallel, often with defaults
+  }
 
   @Test
   public void providedValueGoesToCodeCache() {
