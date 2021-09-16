@@ -42,12 +42,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new HashMap<>();
   protected Set<Address> deletedAccounts = new HashSet<>();
-  protected final CodeCache codeCache;
-
-  protected AbstractWorldUpdater(final W world, final CodeCache cache) {
-    this.world = world;
-    this.codeCache = cache;
-  }
 
   protected AbstractWorldUpdater(final W world) {
     this.world = world;
@@ -84,11 +78,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   }
 
   @Override
-  public Optional<Code> getContract(final Account account) {
-    return this.codeCache.getContract(account);
-  }
-
-  @Override
   public EvmAccount getAccount(final Address address) {
     // We may have updated it already, so check that first.
     final MutableAccount existing = updatedAccounts.get(address);
@@ -110,7 +99,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   @Override
   public void deleteAccount(final Address address) {
-    this.codeCache.invalidate(get(address));
     deletedAccounts.add(address);
     updatedAccounts.remove(address);
   }

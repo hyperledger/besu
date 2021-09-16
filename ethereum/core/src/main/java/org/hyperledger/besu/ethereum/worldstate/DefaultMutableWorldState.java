@@ -30,7 +30,6 @@ import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -135,11 +134,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
         .orElse(null);
   }
 
-  @Override
-  public Optional<Code> getContract(final Account account) {
-    return this.codeCache.getContract(account);
-  }
-
   private WorldStateAccount deserializeAccount(
       final Address address, final Hash addressHash, final Bytes encoded) throws RLPException {
     final RLPInput in = RLP.input(encoded);
@@ -156,7 +150,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   @Override
   public WorldUpdater updater() {
-    return new Updater(this, this.codeCache);
+    return new Updater(this);
   }
 
   @Override

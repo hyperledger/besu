@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.contract.CodeCache;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -360,11 +359,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         .getAccount(Hash.hash(address))
         .map(bytes -> fromRLP(updater, address, bytes, true))
         .orElse(null);
-  }
-
-  @Override
-  public Optional<Code> getContract(final Account account) {
-    return this.codeCache.getContract(account);
   }
 
   private Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core.contract;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
+import org.hyperledger.besu.cli.options.unstable.ContractCacheOptions;
 
 import org.junit.Test;
 
@@ -25,8 +26,10 @@ public class ContractCacheOptionsTest extends CommandTestAbstract {
   @Test
   public void providedValueGoesToCodeCache() {
     parseCommand(ContractCacheOptions.CONTRACT_CACHE_WEIGHT, "13");
-    assertThat(ContractCacheOptions.getContractCacheWeightKilobytes()).isEqualTo(13l);
-    CodeCache cache = new CodeCache(13 * 1024);
+
+    ContractCacheConfiguration config = ContractCacheConfiguration.getInstance();
+    assertThat(config.getContractCacheWeightKilobytes()).isEqualTo(13l);
+    CodeCache cache = new CodeCache(config.getContractCacheWeight());
     assertThat(cache.getWeight()).isEqualTo(13L * 1024);
   }
 }

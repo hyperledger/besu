@@ -22,7 +22,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 import org.hyperledger.besu.ethereum.core.CodeCache;
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
-import org.hyperledger.besu.ethereum.core.contract.ContractCacheOptions;
+import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.Collection;
@@ -35,7 +35,8 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
 
   protected final WorldUpdater publicWorldUpdater;
   protected final WorldUpdater privateWorldUpdater;
-  private final CodeCache codeCache = new CodeCache(ContractCacheOptions.getContractCacheWeight());
+  private final CodeCache codeCache =
+      new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight());
 
   public DefaultMutablePrivateWorldStateUpdater(
       final WorldUpdater publicWorldUpdater, final WorldUpdater privateWorldUpdater) {

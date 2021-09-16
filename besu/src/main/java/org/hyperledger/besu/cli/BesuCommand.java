@@ -50,6 +50,7 @@ import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
+import org.hyperledger.besu.cli.options.unstable.ContractCacheOptions;
 import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
@@ -1590,7 +1591,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     : SyncMode.FULL);
 
     ethNetworkConfig = updateNetworkConfig(getNetwork());
-
+    unstableContractCacheOptions.initConfig();
     checkGoQuorumCompatibilityConfig(ethNetworkConfig);
 
     jsonRpcConfiguration = jsonRpcConfiguration();
