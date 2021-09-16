@@ -1,5 +1,13 @@
 # Changelog
 
+## 21.10.0-RC1
+### Additions and Improvements
+
+### Bug Fixes
+
+### Early Access Features
+
+
 ## 21.7.4
 ### Additions and Improvements
 - Upgrade Gradle to 7.2, which supports building with Java 17 [#2761](https://github.com/hyperledger/besu/pull/2376) 
@@ -12,6 +20,10 @@
 ### Early Access Features
 - \[EXPERIMENTAL\] Added support for QBFT with PKI-backed Block Creation. [#2647](https://github.com/hyperledger/besu/issues/2647)
 - \[EXPERIMENTAL\] Added support for QBFT to use retrieve validators from a smart contract [#2574](https://github.com/hyperledger/besu/pull/2574)
+
+### Download Link
+https://hyperledger.jfrog.io/native/besu-binaries/besu/21.7.4/besu-21.7.4.zip \
+SHA256: 778d3c42851db11fec9171f77b22662f2baeb9b2ce913d7cfaaf1042ec19b7f9
 
 ## 21.7.3
 ### Additions and Improvements
