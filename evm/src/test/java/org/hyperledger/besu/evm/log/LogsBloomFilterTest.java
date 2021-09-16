@@ -12,18 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core;
-
-import static org.assertj.core.api.Assertions.assertThat;
+package org.hyperledger.besu.evm.log;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class LogsBloomFilterTest {
@@ -40,7 +37,7 @@ public class LogsBloomFilterTest {
     final Log log = new Log(address, data, topics);
     final LogsBloomFilter bloom = LogsBloomFilter.builder().insertLog(log).build();
 
-    assertThat(bloom)
+    Assertions.assertThat(bloom)
         .isEqualTo(
             Bytes.fromHexString(
                 "0x00000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000040000000000000000000000000000000000000000000000000000000"));

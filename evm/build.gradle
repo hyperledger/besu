@@ -43,6 +43,8 @@ dependencies {
   implementation 'net.java.dev.jna:jna'
 
   testImplementation 'info.picocli:picocli'
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
 }
 
 publishing {
