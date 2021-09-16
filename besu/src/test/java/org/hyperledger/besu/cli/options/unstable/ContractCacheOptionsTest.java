@@ -12,12 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.contract;
+package org.hyperledger.besu.cli.options.unstable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
-import org.hyperledger.besu.cli.options.unstable.ContractCacheOptions;
+import org.hyperledger.besu.ethereum.core.contract.CodeCache;
+import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
 
 import org.junit.Test;
 
