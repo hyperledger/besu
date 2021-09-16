@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
-import org.hyperledger.besu.ethereum.core.contract.ContractCacheOptions;
+import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -72,7 +72,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH,
         storage,
         preimageStorage,
-        new CodeCache(ContractCacheOptions.getContractCacheWeight()));
+        new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight()));
   }
 
   public DefaultMutableWorldState(
@@ -84,7 +84,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         rootHash,
         worldStateStorage,
         preimageStorage,
-        new CodeCache(ContractCacheOptions.getContractCacheWeight()));
+        new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight()));
   }
 
   public DefaultMutableWorldState(
@@ -110,7 +110,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
     this.worldStateStorage = other.worldStateStorage;
     this.preimageStorage = other.preimageStorage;
     this.accountStateTrie = newAccountStateTrie(other.accountStateTrie.getRootHash());
-    this.codeCache = new CodeCache(ContractCacheOptions.getContractCacheWeight());
+    this.codeCache =
+        new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight());
   }
 
   private MerklePatriciaTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
@@ -142,7 +143,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         rootHash(),
         worldStateStorage,
         preimageStorage,
-        new CodeCache(ContractCacheOptions.getContractCacheWeight()));
+        new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight()));
   }
 
   @Override

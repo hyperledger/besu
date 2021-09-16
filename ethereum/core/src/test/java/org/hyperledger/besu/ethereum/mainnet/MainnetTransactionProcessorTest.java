@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
 import org.hyperledger.besu.ethereum.core.contract.CodeLoader;
-import org.hyperledger.besu.ethereum.core.contract.ContractCacheOptions;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;

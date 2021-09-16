@@ -17,23 +17,17 @@ package org.hyperledger.besu.cli.options.unstable;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
-import picocli.CommandLine;
 
 import java.util.Arrays;
 import java.util.List;
+
+import picocli.CommandLine;
 
 public class ContractCacheOptions implements CLIOptions<ContractCacheConfiguration> {
 
   public static final String CONTRACT_CACHE_WEIGHT = "--Xcontract-code-cache-weight-kb";
 
-  public long getContractCacheWeightKilobytes() {
-    return contractCacheWeightKilobytes;
-  }
-
-  public long getContractCacheWeight() {
-    return contractCacheWeightKilobytes * 1024;
-  }
-
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
       names = {CONTRACT_CACHE_WEIGHT},
       description =
@@ -43,11 +37,15 @@ public class ContractCacheOptions implements CLIOptions<ContractCacheConfigurati
       defaultValue = "250000",
       hidden = true,
       arity = "1")
-  public long contractCacheWeightKilobytes = 250000l;
+  private Long contractCacheWeightKilobytes = 250000l;
+
+  public void initConfig() {
+    ContractCacheConfiguration.init(contractCacheWeightKilobytes);
+  }
 
   @Override
   public ContractCacheConfiguration toDomainObject() {
-    return new ContractCacheConfiguration(contractCacheWeightKilobytes);
+    return ContractCacheConfiguration.getInstance();
   }
 
   @Override

@@ -18,7 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
-import org.hyperledger.besu.ethereum.core.contract.ContractCacheOptions;
+import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.ArrayList;
@@ -51,7 +51,8 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   protected AbstractWorldUpdater(final W world) {
     this.world = world;
-    this.codeCache = new CodeCache(ContractCacheOptions.getContractCacheWeight());
+    this.codeCache =
+        new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight());
   }
 
   protected abstract A getForMutation(Address address);
@@ -173,7 +174,8 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       extends AbstractWorldUpdater<AbstractWorldUpdater<W, A>, UpdateTrackingAccount<A>> {
 
     StackedUpdater(final AbstractWorldUpdater<W, A> world) {
-      super(world, new CodeCache(ContractCacheOptions.getContractCacheWeight()));
+      super(
+          world, new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight()));
     }
 
     @Override
