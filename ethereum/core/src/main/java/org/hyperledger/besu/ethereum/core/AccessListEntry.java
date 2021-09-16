@@ -15,32 +15,43 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.json.AccessListEntryDeserializer;
-import org.hyperledger.besu.ethereum.core.json.AccessListEntrySerializer;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-@JsonSerialize(using = AccessListEntrySerializer.class)
-@JsonDeserialize(using = AccessListEntryDeserializer.class)
 public class AccessListEntry {
   private final Address address;
   private final List<Bytes32> storageKeys;
 
   public AccessListEntry(final Address address, final List<Bytes32> storageKeys) {
-
     this.address = address;
     this.storageKeys = storageKeys;
+  }
+
+  @JsonCreator
+  public static AccessListEntry createAccessListEntry(
+      @JsonProperty("address") final Address address,
+      @JsonProperty("storageKeys") final List<String> storageKeys) {
+    return new AccessListEntry(address,
+        storageKeys.stream().map(Bytes32::fromHexString).collect(Collectors.toList()));
   }
 
   public Address getAddress() {
     return address;
   }
 
-  public List<Bytes32> getStorageKeys() {
+  @JsonIgnore
+  public List<Bytes32> getStorageKeysBytes() {
     return storageKeys;
+  }
+
+  public List<String> getStorageKeys() {
+    return storageKeys.stream().map(Bytes::toHexString).collect(Collectors.toList());
   }
 }

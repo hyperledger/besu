@@ -50,7 +50,7 @@ public class BerlinTransactionGasCalculator extends IstanbulTransactionGasCalcul
       final Address address = accessListEntry.getAddress();
 
       accessedAddresses.add(address);
-      for (final Bytes32 storageKeyBytes : accessListEntry.getStorageKeys()) {
+      for (final Bytes32 storageKeyBytes : accessListEntry.getStorageKeysBytes()) {
         accessedStorage.put(address, storageKeyBytes);
         ++accessedStorageCount;
       }
