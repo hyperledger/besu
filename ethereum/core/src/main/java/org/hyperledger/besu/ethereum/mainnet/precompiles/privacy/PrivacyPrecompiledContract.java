@@ -26,6 +26,7 @@ import org.hyperledger.besu.enclave.EnclaveConfigurationException;
 import org.hyperledger.besu.enclave.EnclaveIOException;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
@@ -274,12 +275,18 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   }
 
   boolean isMining(final MessageFrame messageFrame) {
-    if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
-      throw new IllegalArgumentException(
-          "The MessageFrame contains an illegal block header type. Cannot persist private block"
-              + " metadata without current block hash.");
+    boolean isMining = false;
+    final var currentBlockHeader = messageFrame.getBlockHeader();
+    if (!BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())) {
+      if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
+        throw new IllegalArgumentException(
+            "The MessageFrame contains an illegal block header type. Cannot persist private block"
+                + " metadata without current block hash.");
+      } else {
+        isMining = true;
+      }
     }
-    return true;
+    return isMining;
   }
 
   protected boolean privateFromMatchesSenderKey(
