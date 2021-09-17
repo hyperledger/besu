@@ -54,9 +54,8 @@ public class PicoCLIOptionsPluginTest extends AcceptanceTestBase {
         node.homeDirectory().resolve("plugins/pluginLifecycle.registered");
     waitForFile(registrationFile);
 
-    // this assert is false as CLI will not be parsed at this point
     assertThat(Files.readAllLines(registrationFile).stream().anyMatch(s -> s.contains(MAGIC_WORDS)))
-        .isFalse();
+        .isTrue();
   }
 
   @Test

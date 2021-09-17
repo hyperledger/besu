@@ -62,7 +62,6 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
   private Lifecycle state;
   private final Map<Class<?>, ? super BesuService> serviceRegistry = new HashMap<>();
   private final List<BesuPlugin> plugins = new ArrayList<>();
-  private final ServiceLoader<BesuPlugin> serviceLoader;
 
   public BesuPluginContextImpl() {
     this(System.getProperty("besu.plugins.dir"));
@@ -79,7 +78,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     final ClassLoader pluginLoader =
         pluginDirectoryLoader(pluginsDirPath).orElse(this.getClass().getClassLoader());
 
-    serviceLoader = ServiceLoader.load(BesuPlugin.class, pluginLoader);
+    ServiceLoader<BesuPlugin> serviceLoader = ServiceLoader.load(BesuPlugin.class, pluginLoader);
     serviceLoader.forEach(plugins::add);
 
     state = Lifecycle.UNINITIALIZED;
@@ -106,7 +105,10 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
     state = Lifecycle.REGISTERING;
 
-    for (final BesuPlugin plugin : serviceLoader) {
+    final Iterator<BesuPlugin> pluginsIterator = plugins.iterator();
+
+    while (pluginsIterator.hasNext()) {
+      final BesuPlugin plugin = pluginsIterator.next();
       try {
         plugin.register(this);
         LOG.debug("Registered plugin of type {}.", plugin.getClass().getName());
@@ -116,7 +118,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
                 + plugin.getClass().getName()
                 + ", start and stop will not be called.",
             e);
-        continue;
+        pluginsIterator.remove();
       }
     }
 

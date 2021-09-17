@@ -34,9 +34,16 @@ public class PicoCLIOptionsImpl implements PicoCLIOptions {
 
   @Override
   public void addPicoCLIOptions(final String namespace, final Object optionObject) {
+    addPicoCLIOptions(commandLine, namespace, optionObject);
+  }
+
+  public static void addPicoCLIOptions(
+      final CommandLine commandLine, final String namespace, final Object optionObject) {
     final String pluginPrefix = "--plugin-" + namespace + "-";
     final String unstablePrefix = "--Xplugin-" + namespace + "-";
+
     final CommandSpec mixin = CommandSpec.forAnnotatedObject(optionObject);
+
     boolean badOptionName = false;
 
     for (final OptionSpec optionSpec : mixin.options()) {
@@ -49,7 +56,7 @@ public class PicoCLIOptionsImpl implements PicoCLIOptions {
       }
     }
     if (badOptionName) {
-      throw new RuntimeException("Error loading CLI options");
+      LOG.error("Error loading CLI options");
     } else {
       commandLine.getCommandSpec().addMixin("Plugin " + namespace, mixin);
     }

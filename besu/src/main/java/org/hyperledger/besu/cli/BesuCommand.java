@@ -1190,15 +1190,35 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     handleStableOptions();
     addSubCommands(resultHandler, in);
+    addPluginCommands(commandLine);
     registerConverters();
     handleUnstableOptions();
-    preparePlugins();
+
+    // register default security module
+    securityModuleService.register(
+        DEFAULT_SECURITY_MODULE, Suppliers.memoize(this::defaultSecurityModule));
+
     parse(resultHandler, exceptionHandler, args);
+  }
+
+  private void addPluginCommands(final CommandLine commandLine) {
+    besuPluginContext
+        .getNamedPlugins()
+        .forEach(
+            (name, plugin) -> {
+              try {
+
+                PicoCLIOptionsImpl.addPicoCLIOptions(commandLine, name, plugin);
+              } catch (Exception ex) {
+                logger.info(
+                    "No automatic CLI options found in plugin " + plugin.getClass().getName(), ex);
+              }
+            });
   }
 
   @Override
   public void run() {
-
+    preparePlugins();
     try {
       configureLogging(true);
 
@@ -1318,10 +1338,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     metricCategoryRegistry
         .getMetricCategories()
         .forEach(metricCategoryConverter::addRegistryCategory);
-
-    // register default security module
-    securityModuleService.register(
-        DEFAULT_SECURITY_MODULE, Suppliers.memoize(this::defaultSecurityModule));
   }
 
   private SecurityModule defaultSecurityModule() {
@@ -1337,6 +1353,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final AbstractParseResultHandler<List<Object>> resultHandler,
       final BesuExceptionHandler exceptionHandler,
       final String... args) {
+
     // Create a handler that will search for a config file option and use it for
     // default values
     // and eventually it will run regular parsing of the remaining options.
@@ -1355,6 +1372,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .addCommandClasses(this, unstableNatOptions, ethstatsOptions, unstableMiningOptions)
                 .isLauncherForced(unstableLauncherOptions.isLauncherModeForced())
                 .build();
+
         final File file = new LauncherManager(launcherConfig).run();
         logger.info("Config file location : {}", file.getAbsolutePath());
         commandLine.parseWithHandlers(
@@ -1687,6 +1705,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public BesuController buildController() {
     try {
+      preparePlugins();
       return getControllerBuilder().build();
     } catch (final Exception e) {
       throw new ExecutionException(this.commandLine, e.getMessage(), e);
@@ -1695,6 +1714,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public BesuControllerBuilder getControllerBuilder() {
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
+
     return controllerBuilderFactory
         .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
         .synchronizerConfiguration(buildSyncConfig())

@@ -49,16 +49,14 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void verifyEverythingGoesSmoothly() {
-    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl(".");
-
-    assertThat(contextImpl.getNamedPlugins()).isEmpty();
-    contextImpl.registerPlugins();
-    assertThat(contextImpl.getNamedPlugins()).isNotEmpty();
+    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
 
     final Optional<TestPicoCLIPlugin> testPluginOptional =
         findTestPlugin(contextImpl.getNamedPlugins());
     assertThat(testPluginOptional).isPresent();
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
+
+    contextImpl.registerPlugins();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
 
     contextImpl.startPlugins();
@@ -70,10 +68,10 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void registrationErrorsHandledSmoothly() {
-    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl(".");
     System.setProperty("testPicoCLIPlugin.testOption", "FAILREGISTER");
 
-    assertThat(contextImpl.getNamedPlugins()).isEmpty();
+    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
+
     contextImpl.registerPlugins();
     assertThat(contextImpl.getNamedPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
 
@@ -86,10 +84,10 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void startErrorsHandledSmoothly() {
-    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl(".");
     System.setProperty("testPicoCLIPlugin.testOption", "FAILSTART");
 
-    assertThat(contextImpl.getNamedPlugins()).isEmpty();
+    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
+
     contextImpl.registerPlugins();
     assertThat(contextImpl.getNamedPlugins().values())
         .extracting("class")
@@ -111,10 +109,10 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void stopErrorsHandledSmoothly() {
-    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl(".");
     System.setProperty("testPicoCLIPlugin.testOption", "FAILSTOP");
 
-    assertThat(contextImpl.getNamedPlugins()).isEmpty();
+    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
+
     contextImpl.registerPlugins();
     assertThat(contextImpl.getNamedPlugins().values())
         .extracting("class")
@@ -135,7 +133,7 @@ public class BesuPluginContextImplTest {
 
   @Test
   public void lifecycleExceptions() throws Throwable {
-    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl(".");
+    final BesuPluginContextImpl contextImpl = new BesuPluginContextImpl();
     final ThrowableAssert.ThrowingCallable registerPlugins = () -> contextImpl.registerPlugins();
 
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(contextImpl::startPlugins);

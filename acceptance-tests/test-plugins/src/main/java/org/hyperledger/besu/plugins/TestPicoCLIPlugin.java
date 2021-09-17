@@ -16,12 +16,12 @@ package org.hyperledger.besu.plugins;
 
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
-import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Collections;
+import java.util.Optional;
 
 import com.google.auto.service.AutoService;
 import org.apache.logging.log4j.LogManager;
@@ -56,11 +56,6 @@ public class TestPicoCLIPlugin implements BesuPlugin {
       state = "failregister";
       throw new RuntimeException("I was told to fail at registration");
     }
-
-    context
-        .getService(PicoCLIOptions.class)
-        .ifPresent(
-            picoCLIOptions -> picoCLIOptions.addPicoCLIOptions("test", TestPicoCLIPlugin.this));
 
     callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
     writeSignal("registered");
@@ -117,5 +112,10 @@ public class TestPicoCLIPlugin implements BesuPlugin {
     } catch (final IOException ioe) {
       throw new RuntimeException(ioe);
     }
+  }
+
+  @Override
+  public Optional<String> getName() {
+    return Optional.of("test");
   }
 }
