@@ -15,29 +15,30 @@
 
 package org.hyperledger.besu.ethereum.core.contract;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.junit.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.hyperledger.besu.ethereum.vm.Code;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.Test;
 
 public class CodeCacheTest {
 
   @Test
-  public void testScale(){
-      Bytes contractCode = Bytes.fromHexString("0xDEADBEEF");
+  public void testScale() {
+    Bytes contractCode = Bytes.fromHexString("0xDEADBEEF");
     CodeScale scale = new CodeScale();
     int weight = scale.weigh(new CodeHash(contractCode), new Code(contractCode));
     assertThat(weight).isEqualTo(4);
   }
 
   @Test
-  public void testLoader(){
-      Bytes contractCode = Bytes.fromHexString("0xDEADBEEF");
-      CodeLoader loader = new CodeLoader();
-      CodeHash key = new CodeHash(contractCode);
-      Code loaded = loader.load(key);
-      assertThat(loaded).isNotNull();
-      assertThat(loaded.getBytes()).isEqualTo(key.getContract());
+  public void testLoader() {
+    Bytes contractCode = Bytes.fromHexString("0xDEADBEEF");
+    CodeLoader loader = new CodeLoader();
+    CodeHash key = new CodeHash(contractCode);
+    Code loaded = loader.load(key);
+    assertThat(loaded).isNotNull();
+    assertThat(loaded.getBytes()).isEqualTo(key.getContract());
   }
 }
