@@ -15,52 +15,29 @@
 
 package org.hyperledger.besu.ethereum.core.contract;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
-import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
-import org.hyperledger.besu.ethereum.vm.Code;
-
-import java.util.Optional;
-import java.util.stream.IntStream;
-
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.vm.Code;
 import org.junit.Test;
 
-public class CodeCacheTest {
-  private final String dummyContract = "0x010203040506070809";
+import static org.assertj.core.api.Assertions.assertThat;
 
-  final BlockDataGenerator gen = new BlockDataGenerator();
+public class CodeCacheTest {
 
   @Test
-  public void overflowCacheAndEvictLRU() {
+  public void testScale(){
+      Bytes contractCode = Bytes.fromHexString("0xDEADBEEF");
+    CodeScale scale = new CodeScale();
+    int weight = scale.weigh(new CodeHash(contractCode), new Code(contractCode));
+    assertThat(weight).isEqualTo(4);
+  }
 
-    // put a contract in expecting it to be the LRU
-    final UpdateTrackingAccount<EvmAccount> lruContract =
-        new UpdateTrackingAccount<>(gen.address());
-    Bytes lruCode = Bytes.concatenate(Bytes.of(0), Bytes.fromHexString(dummyContract));
-    lruContract.setCode(lruCode);
-    final CodeCache cache = new CodeCache(4 * lruCode.size(), new CodeLoader());
-    Optional<Code> lookedUp = cache.getContract(lruContract);
-    assertThat(lookedUp).isNotEmpty();
-    assertThat(cache.getIfPresent(lruContract)).isNotNull();
-    assertThat(cache.size()).isEqualTo(1);
-    assertThat(lookedUp.get().getBytes()).isEqualTo(lruCode);
-    IntStream.range(1, 5)
-        .forEach(
-            index -> {
-              final UpdateTrackingAccount<EvmAccount> mruContract =
-                  new UpdateTrackingAccount<>(gen.address());
-              Bytes otherContractCode =
-                  Bytes.concatenate(Bytes.of(index), Bytes.fromHexString(dummyContract));
-              mruContract.setCode(otherContractCode);
-              Optional<Code> notNull = cache.getContract(mruContract);
-              assertThat(notNull).isNotEmpty();
-              assertThat(notNull.get().getBytes()).isEqualTo(otherContractCode);
-            });
-    cache.cleanUp();
-    assertThat(cache.size()).isEqualTo(4);
-    assertThat(cache.getIfPresent(lruContract)).isNull();
+  @Test
+  public void testLoader(){
+      Bytes contractCode = Bytes.fromHexString("0xDEADBEEF");
+      CodeLoader loader = new CodeLoader();
+      CodeHash key = new CodeHash(contractCode);
+      Code loaded = loader.load(key);
+      assertThat(loaded).isNotNull();
+      assertThat(loaded.getBytes()).isEqualTo(key.getContract());
   }
 }
