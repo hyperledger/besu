@@ -50,16 +50,16 @@ public class VMReferenceTest extends AbstractRetryingTest {
   /** The path where all of the VM test configuration files live. */
   private static final String[] TEST_CONFIG_FILE_DIR_PATHS = {
     "LegacyTests/Constantinople/VMTests/vmArithmeticTest",
-//    "LegacyTests/Constantinople/VMTests/vmBitwiseLogicOperation",
-//    "LegacyTests/Constantinople/VMTests/vmBlockInfoTest",
-//    "LegacyTests/Constantinople/VMTests/vmEnvironmentalInfo",
-//    "LegacyTests/Constantinople/VMTests/vmIOandFlowOperations",
-//    "LegacyTests/Constantinople/VMTests/vmLogTest",
-//    "LegacyTests/Constantinople/VMTests/vmPushDupSwapTest",
-//    "LegacyTests/Constantinople/VMTests/vmRandomTest",
-//    "LegacyTests/Constantinople/VMTests/vmSha3Test",
-//    "LegacyTests/Constantinople/VMTests/vmTests",
-//    "LegacyTests/Constantinople/VMTests/vmSystemOperations"
+    //    "LegacyTests/Constantinople/VMTests/vmBitwiseLogicOperation",
+    //    "LegacyTests/Constantinople/VMTests/vmBlockInfoTest",
+    //    "LegacyTests/Constantinople/VMTests/vmEnvironmentalInfo",
+    //    "LegacyTests/Constantinople/VMTests/vmIOandFlowOperations",
+    //    "LegacyTests/Constantinople/VMTests/vmLogTest",
+    //    "LegacyTests/Constantinople/VMTests/vmPushDupSwapTest",
+    //    "LegacyTests/Constantinople/VMTests/vmRandomTest",
+    //    "LegacyTests/Constantinople/VMTests/vmSha3Test",
+    //    "LegacyTests/Constantinople/VMTests/vmTests",
+    //    "LegacyTests/Constantinople/VMTests/vmSystemOperations"
   };
 
   // The ignored test cases fall into two categories:

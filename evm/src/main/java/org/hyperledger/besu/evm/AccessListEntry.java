@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core;
+package org.hyperledger.besu.evm;
 
 import org.hyperledger.besu.datatypes.Address;
 
@@ -38,20 +38,27 @@ public class AccessListEntry {
   public static AccessListEntry createAccessListEntry(
       @JsonProperty("address") final Address address,
       @JsonProperty("storageKeys") final List<String> storageKeys) {
-    return new AccessListEntry(address,
-        storageKeys.stream().map(Bytes32::fromHexString).collect(Collectors.toList()));
+    return new AccessListEntry(
+        address, storageKeys.stream().map(Bytes32::fromHexString).collect(Collectors.toList()));
   }
 
+  @JsonIgnore
   public Address getAddress() {
     return address;
   }
 
   @JsonIgnore
-  public List<Bytes32> getStorageKeysBytes() {
+  public List<Bytes32> getStorageKeys() {
     return storageKeys;
   }
 
-  public List<String> getStorageKeys() {
+  @JsonProperty("address")
+  public String getAddressString() {
+    return address.toHexString();
+  }
+
+  @JsonProperty("storageKeys")
+  public List<String> getStorageKeysString() {
     return storageKeys.stream().map(Bytes::toHexString).collect(Collectors.toList());
   }
 }

@@ -50,6 +50,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -216,7 +217,7 @@ public class StateTestSubCommand implements Runnable {
       summaryLine.put("output", result.getOutput().toUnprefixedHexString());
       UInt256 gasUsed = UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining());
       summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
-      //      summaryLine.put("time", timer.elapsed(TimeUnit.NANOSECONDS));
+      summaryLine.put("time", timer.elapsed(TimeUnit.NANOSECONDS));
 
       // Check the world state root hash.
       summaryLine.put("test", test);

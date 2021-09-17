@@ -169,13 +169,11 @@ public class ClassicProtocolSpecs {
                     1))
         .transactionProcessorBuilder(
             (gasCalculator,
-                transactionGasCalculator,
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
-                    transactionGasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,

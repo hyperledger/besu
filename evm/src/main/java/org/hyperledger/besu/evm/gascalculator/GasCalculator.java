@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -38,6 +39,8 @@ import org.hyperledger.besu.evm.precompile.IDPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.RIPEMD160PrecompiledContract;
 import org.hyperledger.besu.evm.precompile.SHA256PrecompiledContract;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
+
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -420,4 +423,55 @@ public interface GasCalculator {
    * @return the code deposit cost
    */
   Gas codeDepositGasCost(int codeSize);
+
+  /**
+   * Returns the intrinsic gas cost of a transaction pauload, i.e. the cost deriving from its
+   * encoded binary representation when stored on-chain.
+   *
+   * @param transactionPayload The encoded transaction, as bytes
+   * @param isContractCreate Is this transaction a contract creation transaction?
+   * @return the transaction's intrinsic gas cost
+   */
+  Gas transactionIntrinsicGasCost(Bytes transactionPayload, boolean isContractCreate);
+
+  /**
+   * Returns the gas cost of the explicitly declared access list.
+   *
+   * @param accessListEntries The access list entries
+   * @return the access list's gas cost
+   */
+  default Gas accessListGasCost(final List<AccessListEntry> accessListEntries) {
+    return accessListGasCost(
+        accessListEntries.size(),
+        accessListEntries.stream().mapToInt(e -> e.getStorageKeys().size()).sum());
+  }
+
+  /**
+   * Returns the gas cost of the explicitly declared access list.
+   *
+   * @param addresses The count of addresses accessed
+   * @param storageSlots The count of storage slots accessed
+   * @return the access list's gas cost
+   */
+  default Gas accessListGasCost(final int addresses, final int storageSlots) {
+    return Gas.ZERO;
+  }
+
+  /**
+   * A measure of the maximum amount of refunded gas a transaction will be credited with.
+   *
+   * @return the quotient of the equation `txGasCost / refundQuotient`.
+   */
+  default long getMaxRefundQuotient() {
+    return 2;
+  }
+
+  /**
+   * Maximum Cost of a Transaction of a certain length.
+   *
+   * @param size the length of the transaction, in bytes
+   * @return the maximum gas cost
+   */
+  // what would be the gas for a PMT with hash of all non-zeros
+  Gas getMaximumTransactionCost(int size);
 }

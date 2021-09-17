@@ -20,7 +20,7 @@ import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
-public class TangerineWhistleGasCalculator extends FrontierGasCalculator {
+public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
 
   private static final Gas BALANCE_OPERATION_GAS_COST = Gas.of(400L);
 

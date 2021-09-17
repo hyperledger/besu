@@ -34,6 +34,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   private static final Gas COLD_SLOAD_COST = Gas.of(2100);
   private static final Gas COLD_ACCOUNT_ACCESS_COST = Gas.of(2600);
   private static final Gas WARM_STORAGE_READ_COST = Gas.of(100);
+  private static final Gas ACCESS_LIST_ADDRESS_COST = Gas.of(2400);
   protected static final Gas ACCESS_LIST_STORAGE_COST = Gas.of(1900);
 
   // redefinitions for EIP-2929
@@ -59,6 +60,13 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   public BerlinGasCalculator() {
     this(BLAKE2B_F_COMPRESSION.toArrayUnsafe()[19]);
+  }
+
+  @Override
+  public Gas accessListGasCost(final int addresses, final int storageSlots) {
+    return ACCESS_LIST_ADDRESS_COST
+        .times(addresses)
+        .plus(ACCESS_LIST_STORAGE_COST.times(storageSlots));
   }
 
   @Override

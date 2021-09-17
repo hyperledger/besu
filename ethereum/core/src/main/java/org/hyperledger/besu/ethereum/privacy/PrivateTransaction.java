@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE;
 import static org.hyperledger.besu.plugin.data.Restriction.RESTRICTED;
 import static org.hyperledger.besu.plugin.data.Restriction.UNRESTRICTED;
 import static org.hyperledger.besu.plugin.data.Restriction.UNSUPPORTED;

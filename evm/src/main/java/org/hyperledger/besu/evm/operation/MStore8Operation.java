@@ -36,7 +36,7 @@ public class MStore8Operation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     final long location = clampedToLong(frame.popStackItem());
     final Bytes value = frame.popStackItem();
-    final byte theByte =  (value.size() > 0) ? value.get(value.size() - 1) : 0;
+    final byte theByte = (value.size() > 0) ? value.get(value.size() - 1) : 0;
 
     final Gas cost = gasCalculator().mStore8OperationGasCost(frame, location);
     final Optional<Gas> optionalCost = Optional.of(cost);

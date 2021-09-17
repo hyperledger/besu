@@ -346,8 +346,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final Bytes32 version) {
     final Optional<Bytes32> contractVersionResult =
         onchainPrivacyGroupContract.getVersion(privacyGroupId.toBase64String(), Optional.empty());
-    final boolean versionEqual =
-        contractVersionResult.map(version::equals).orElse(false);
+    final boolean versionEqual = contractVersionResult.map(version::equals).orElse(false);
 
     if (!versionEqual) {
       LOG.debug(

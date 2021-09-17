@@ -244,9 +244,9 @@ public class Memory {
    * copied and so never fails.
    *
    * @param location the location in memory at which to start copying the bytes of {@code value}.
-   * @param numBytes the number of bytes to set in memory. Note that this value may differ from {@code
-   *     value.size()}: if {@code numBytes < value.size()} bytes, only {@code numBytes} will be
-   *     copied from {@code value}; if {@code numBytes > value.size()}, then only the bytes in
+   * @param numBytes the number of bytes to set in memory. Note that this value may differ from
+   *     {@code value.size()}: if {@code numBytes < value.size()} bytes, only {@code numBytes} will
+   *     be copied from {@code value}; if {@code numBytes > value.size()}, then only the bytes in
    *     {@code value} will be copied, but the memory will be expanded if necessary to cover {@code
    *     numBytes} (in other words, {@link #getActiveWords()} will return a value consistent with
    *     having set {@code numBytes} bytes, even if less than that have been concretely set due to

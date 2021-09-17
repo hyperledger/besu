@@ -45,7 +45,6 @@ public class MainnetTransactionProcessorTest {
   private MainnetTransactionProcessor transactionProcessor;
 
   @Mock private GasCalculator gasCalculator;
-  @Mock private TransactionGasCalculator transactionGasCalculator;
   @Mock private MainnetTransactionValidator transactionValidator;
   @Mock private AbstractMessageProcessor contractCreationProcessor;
   @Mock private AbstractMessageProcessor messageCallProcessor;
@@ -61,7 +60,6 @@ public class MainnetTransactionProcessorTest {
     transactionProcessor =
         new MainnetTransactionProcessor(
             gasCalculator,
-            transactionGasCalculator,
             transactionValidator,
             contractCreationProcessor,
             messageCallProcessor,

@@ -29,6 +29,16 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class FrontierGasCalculator implements GasCalculator {
 
+  private static final Gas TX_DATA_ZERO_COST = Gas.of(4L);
+
+  private static final Gas TX_DATA_NON_ZERO_COST = Gas.of(68L);
+
+  private static final Gas TX_BASE_COST = Gas.of(21_000L);
+
+  private static final Gas TX_CREATE_EXTRA_COST = Gas.of(0L);
+
+  private static final Gas CODE_DEPOSIT_BYTE_COST = Gas.of(200L);
+
   private static final Gas ID_PRECOMPILED_BASE_GAS_COST = Gas.of(15L);
 
   private static final Gas ID_PRECOMPILED_WORD_GAS_COST = Gas.of(3L);
@@ -101,7 +111,37 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final Gas SELF_DESTRUCT_REFUND_AMOUNT = Gas.of(24_000L);
 
-  private static final Gas CODE_DEPOSIT_BYTE_COST = Gas.of(200L);
+  @Override
+  public Gas transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreate) {
+    int zeros = 0;
+    for (int i = 0; i < payload.size(); i++) {
+      if (payload.get(i) == 0) {
+        ++zeros;
+      }
+    }
+    final int nonZeros = payload.size() - zeros;
+
+    Gas cost =
+        TX_BASE_COST
+            .plus(TX_DATA_ZERO_COST.times(zeros))
+            .plus(TX_DATA_NON_ZERO_COST.times(nonZeros));
+
+    return isContractCreate ? cost.plus(txCreateExtraGasCost()) : cost;
+  }
+
+  /**
+   * Returns the additional gas cost for contract creation transactions
+   *
+   * @return the additional gas cost for contract creation transactions
+   */
+  protected Gas txCreateExtraGasCost() {
+    return TX_CREATE_EXTRA_COST;
+  }
+
+  @Override
+  public Gas codeDepositGasCost(final int codeSize) {
+    return CODE_DEPOSIT_BYTE_COST.times(codeSize);
+  }
 
   @Override
   public Gas idPrecompiledContractGasCost(final Bytes input) {
@@ -414,7 +454,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public Gas codeDepositGasCost(final int codeSize) {
-    return CODE_DEPOSIT_BYTE_COST.times(codeSize);
+  public Gas getMaximumTransactionCost(final int size) {
+    return TX_BASE_COST.plus(TX_DATA_NON_ZERO_COST.times(size));
   }
 }

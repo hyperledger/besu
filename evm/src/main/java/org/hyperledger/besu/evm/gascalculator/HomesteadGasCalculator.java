@@ -12,11 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.evm.Gas;
 
-public class HomesteadTransactionGasCalculator extends FrontierTransactionGasCalculator {
+public class HomesteadGasCalculator extends FrontierGasCalculator {
 
   private static final Gas TX_CREATE_EXTRA = Gas.of(32_000L);
 
