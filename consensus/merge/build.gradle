@@ -32,14 +32,8 @@ repositories { mavenCentral() }
 dependencies {
   implementation project(':config')
   implementation project(':consensus:common')
-  implementation project(':crypto')
-  implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
-  implementation project(':ethereum:eth')
-  implementation project(':ethereum:p2p')
-  implementation project(':ethereum:rlp')
-  implementation project(':services:kvstore')
   implementation project(':util')
 
   implementation 'com.google.guava:guava'
@@ -47,13 +41,6 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
 
-  testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
-  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
-  testImplementation project(':metrics:core')
-  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project(':testutil')
-
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.mockito:mockito-core'
 }

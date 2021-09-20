@@ -91,7 +91,6 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
     try {
       LOG.trace("blockparam: " + Json.encodePrettily(blockParam));
     } catch (EncodeException e) {
-      e.printStackTrace();
       throw new RuntimeException(e);
     }
 
@@ -104,7 +103,6 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
               .collect(Collectors.toList());
     } catch (final RLPException | IllegalArgumentException e) {
       LOG.warn("failed to decode transactions from newBlock RPC");
-      e.printStackTrace();
       return respondWith(reqId, blockParam.getBlockHash(), INVALID);
     }
 

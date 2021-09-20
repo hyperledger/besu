@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
+import static org.hyperledger.besu.config.experimental.MergeOptions.setMergeEnabled;
+
 import java.util.Stack;
 
 import net.consensys.quorum.mainnet.launcher.options.Options;
@@ -49,8 +51,7 @@ public class MergeOptions implements Options {
         final Stack<String> args,
         final CommandLine.Model.ArgSpec argSpec,
         final CommandLine.Model.CommandSpec commandSpec) {
-      org.hyperledger.besu.config.experimental.MergeOptions.setMergeEnabled(
-          Boolean.parseBoolean(args.pop()));
+      setMergeEnabled(Boolean.parseBoolean(args.pop()));
     }
   }
 }
