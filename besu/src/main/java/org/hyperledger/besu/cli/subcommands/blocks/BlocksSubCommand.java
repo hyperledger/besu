@@ -368,6 +368,7 @@ public class BlocksSubCommand implements Runnable {
     }
 
     private BesuController createBesuController() {
+      parentCommand.parentCommand.preparePlugins();
       return parentCommand.parentCommand.buildController();
     }
 

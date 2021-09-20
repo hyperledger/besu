@@ -1321,7 +1321,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
   }
 
-  private void preparePlugins() {
+  public void preparePlugins() {
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
     besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
@@ -1705,7 +1705,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public BesuController buildController() {
     try {
-      preparePlugins();
       return getControllerBuilder().build();
     } catch (final Exception e) {
       throw new ExecutionException(this.commandLine, e.getMessage(), e);

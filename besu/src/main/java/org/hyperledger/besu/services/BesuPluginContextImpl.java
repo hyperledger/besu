@@ -101,7 +101,8 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
   public void registerPlugins() {
     checkState(
         state == Lifecycle.UNINITIALIZED,
-        "Besu plugins have already been registered.  Cannot register additional plugins.");
+        "Besu plugins have already been registered {}.  Cannot register additional plugins.",
+        state);
 
     state = Lifecycle.REGISTERING;
 

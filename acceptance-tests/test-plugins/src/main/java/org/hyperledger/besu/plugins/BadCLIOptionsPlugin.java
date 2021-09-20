@@ -19,11 +19,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
-import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Optional;
 
 import com.google.auto.service.AutoService;
 import org.apache.logging.log4j.LogManager;
@@ -44,12 +44,6 @@ public class BadCLIOptionsPlugin implements BesuPlugin {
     LOG.info("Registering BadCliOptionsPlugin");
     callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
     writeStatus("init");
-
-    context
-        .getService(PicoCLIOptions.class)
-        .ifPresent(
-            picoCLIOptions ->
-                picoCLIOptions.addPicoCLIOptions("bad-cli", BadCLIOptionsPlugin.this));
 
     writeStatus("register");
   }
@@ -80,5 +74,10 @@ public class BadCLIOptionsPlugin implements BesuPlugin {
     } catch (final IOException ioe) {
       throw new RuntimeException(ioe);
     }
+  }
+
+  @Override
+  public Optional<String> getName() {
+    return Optional.of("bad-cli");
   }
 }

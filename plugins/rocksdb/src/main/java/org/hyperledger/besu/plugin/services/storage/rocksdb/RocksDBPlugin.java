@@ -16,7 +16,6 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
-import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
@@ -50,14 +49,6 @@ public class RocksDBPlugin implements BesuPlugin {
     LOG.debug("Registering plugin");
     this.context = context;
 
-    final Optional<PicoCLIOptions> cmdlineOptions = context.getService(PicoCLIOptions.class);
-
-    if (cmdlineOptions.isEmpty()) {
-      throw new IllegalStateException(
-          "Expecting a PicoCLIO options to register CLI options with, but none found.");
-    }
-
-    cmdlineOptions.get().addPicoCLIOptions(NAME, options);
     createFactoriesAndRegisterWithStorageService();
 
     LOG.debug("Plugin registered.");
@@ -115,5 +106,10 @@ public class RocksDBPlugin implements BesuPlugin {
         .ifPresentOrElse(
             this::createAndRegister,
             () -> LOG.error("Failed to register KeyValueFactory due to missing StorageService."));
+  }
+
+  @Override
+  public Optional<String> getName() {
+    return Optional.of(NAME);
   }
 }

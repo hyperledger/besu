@@ -18,7 +18,8 @@ package org.hyperledger.besu.plugins;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.PermissioningService;
-import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+
+import java.util.Optional;
 
 import com.google.auto.service.AutoService;
 import org.apache.logging.log4j.LogManager;
@@ -42,7 +43,6 @@ public class TestPermissioningPlugin implements BesuPlugin {
 
   @Override
   public void register(final BesuContext context) {
-    context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("permissioning", this);
     service = context.getService(PermissioningService.class).get();
   }
 
@@ -88,4 +88,9 @@ public class TestPermissioningPlugin implements BesuPlugin {
 
   @Option(names = "--plugin-permissioning-test-enabled")
   boolean enabled = false;
+
+  @Override
+  public Optional<String> getName() {
+    return Optional.of("permissioning");
+  }
 }

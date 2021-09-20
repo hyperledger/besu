@@ -16,11 +16,12 @@ package org.hyperledger.besu.plugins;
 
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
-import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugins.privacy.TestPrivacyGroupGenesisProvider;
 import org.hyperledger.besu.plugins.privacy.TestPrivacyPluginPayloadProvider;
 import org.hyperledger.besu.plugins.privacy.TestSigningPrivateMarkerTransactionFactory;
+
+import java.util.Optional;
 
 import com.google.auto.service.AutoService;
 import org.apache.logging.log4j.LogManager;
@@ -31,43 +32,31 @@ import picocli.CommandLine.Option;
 public class TestPrivacyServicePlugin implements BesuPlugin {
   private static final Logger LOG = LogManager.getLogger();
 
-  PrivacyPluginService pluginService;
-  BesuContext context;
-
-  TestPrivacyPluginPayloadProvider payloadProvider = new TestPrivacyPluginPayloadProvider();
-  TestPrivacyGroupGenesisProvider privacyGroupGenesisProvider =
-      new TestPrivacyGroupGenesisProvider();
-  TestSigningPrivateMarkerTransactionFactory privateMarkerTransactionFactory =
-      new TestSigningPrivateMarkerTransactionFactory();
-
   @Override
   public void register(final BesuContext context) {
-    this.context = context;
+    LOG.info("Register Plugins with options " + this);
 
-    context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("privacy-service", this);
-    pluginService = context.getService(PrivacyPluginService.class).get();
+    PrivacyPluginService pluginService = context.getService(PrivacyPluginService.class).get();
 
+    TestPrivacyPluginPayloadProvider payloadProvider = new TestPrivacyPluginPayloadProvider(prefix);
     pluginService.setPayloadProvider(payloadProvider);
-    pluginService.setPrivacyGroupGenesisProvider(privacyGroupGenesisProvider);
-
-    LOG.info("Registering Plugins with options " + this);
-  }
-
-  @Override
-  public void start() {
-    LOG.info("Start Plugins with options " + this);
-
-    payloadProvider.setPluginPayloadPrefix(prefix);
 
     if (genesisEnabled) {
-      privacyGroupGenesisProvider.setGenesisEnabled();
+      TestPrivacyGroupGenesisProvider privacyGroupGenesisProvider =
+          new TestPrivacyGroupGenesisProvider();
+      pluginService.setPrivacyGroupGenesisProvider(privacyGroupGenesisProvider);
     }
 
     if (signingEnabled) {
+      TestSigningPrivateMarkerTransactionFactory privateMarkerTransactionFactory =
+          new TestSigningPrivateMarkerTransactionFactory();
       pluginService.setPrivateMarkerTransactionFactory(privateMarkerTransactionFactory);
       privateMarkerTransactionFactory.setSigningKeyEnbaled(signingKey);
     }
   }
+
+  @Override
+  public void start() {}
 
   @Override
   public void stop() {}
@@ -98,5 +87,10 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
         + signingKey
         + '\''
         + '}';
+  }
+
+  @Override
+  public Optional<String> getName() {
+    return Optional.of("privacy-service");
   }
 }

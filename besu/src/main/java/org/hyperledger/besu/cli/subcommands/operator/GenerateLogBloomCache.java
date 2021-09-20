@@ -91,6 +91,7 @@ public class GenerateLogBloomCache implements Runnable {
   }
 
   private BesuController createBesuController() {
+    parentCommand.parentCommand.preparePlugins();
     return parentCommand.parentCommand.buildController();
   }
 }

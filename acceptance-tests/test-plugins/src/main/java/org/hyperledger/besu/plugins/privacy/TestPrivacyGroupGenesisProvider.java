@@ -30,16 +30,9 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class TestPrivacyGroupGenesisProvider implements PrivacyGroupGenesisProvider {
-  private boolean genesisEnabled = false;
-
-  public void setGenesisEnabled() {
-    this.genesisEnabled = true;
-  }
 
   @Override
   public PrivacyGenesis getPrivacyGenesis(final Bytes privacyGroupId, final long blockNumber) {
-    if (!genesisEnabled) return Collections::emptyList;
-
     return () ->
         List.of(
             new PrivacyGenesisAccount() {

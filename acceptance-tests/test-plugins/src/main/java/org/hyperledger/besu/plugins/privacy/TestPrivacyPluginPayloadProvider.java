@@ -31,9 +31,9 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class TestPrivacyPluginPayloadProvider implements PrivacyPluginPayloadProvider {
   private static final Logger LOG = LogManager.getLogger();
-  private String prefix;
+  private final String prefix;
 
-  public void setPluginPayloadPrefix(final String prefix) {
+  public TestPrivacyPluginPayloadProvider(final String prefix) {
     this.prefix = prefix;
   }
 
