@@ -53,10 +53,10 @@ public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final MutableBlockchain blockchain = context.getBlockchain();
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, context.getWorldStateArchive());
-    final BftContext bftContext = context.getConsensusState(BftContext.class);
+    final BftContext bftContext = context.getConsensusContext(BftContext.class);
     final BlockInterface blockInterface = bftContext.getBlockInterface();
     final ValidatorProvider validatorProvider =
-        context.getConsensusState(BftContext.class).getValidatorProvider();
+        context.getConsensusContext(BftContext.class).getValidatorProvider();
 
     // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
     final ValidatorProvider readOnlyValidatorProvider =
@@ -73,7 +73,7 @@ public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private ValidatorProvider createValidatorProvider(
       final ProtocolContext context, final MutableBlockchain blockchain) {
-    final BftContext bftContext = context.getConsensusState(BftContext.class);
+    final BftContext bftContext = context.getConsensusContext(BftContext.class);
     final EpochManager epochManager = bftContext.getEpochManager();
     final BftBlockInterface bftBlockInterface = bftContext.getBlockInterface();
     return BlockValidatorProvider.nonForkingValidatorProvider(

@@ -18,7 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import org.hyperledger.besu.config.experimental.RayonismOptions;
+import org.hyperledger.besu.config.experimental.MergeOptions;
 
 import java.time.Instant;
 import java.util.OptionalLong;
@@ -210,7 +210,7 @@ public class BlockHeaderBuilder {
     receiptsRoot(sealableBlockHeader.getReceiptsRoot());
     logsBloom(sealableBlockHeader.getLogsBloom());
     difficulty(
-        RayonismOptions.isMergeEnabled() ? Difficulty.ONE : sealableBlockHeader.getDifficulty());
+        MergeOptions.isMergeEnabled() ? Difficulty.ONE : sealableBlockHeader.getDifficulty());
     number(sealableBlockHeader.getNumber());
     gasLimit(sealableBlockHeader.getGasLimit());
     gasUsed(sealableBlockHeader.getGasUsed());

@@ -55,7 +55,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   @Override
   protected RpcApi getApiGroup() {
-    return RpcApis.CONSENSUS;
+    return RpcApis.ENGINE;
   }
 
   @Override

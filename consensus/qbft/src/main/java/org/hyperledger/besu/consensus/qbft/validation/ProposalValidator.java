@@ -123,7 +123,7 @@ public class ProposalValidator {
         // Need to check that if we substitute the LatestPrepareCert round number into the supplied
         // block that we get the SAME hash as PreparedCert.
         final BftBlockInterface bftBlockInterface =
-            protocolContext.getConsensusState(BftContext.class).getBlockInterface();
+            protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
         final Block currentBlockWithOldRound =
             bftBlockInterface.replaceRoundInBlock(
                 proposal.getBlock(),

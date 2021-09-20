@@ -42,7 +42,7 @@ public class BftValidatorsValidationRule implements AttachedBlockHeaderValidatio
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext context) {
     try {
-      final BftContext bftContext = context.getConsensusState(BftContext.class);
+      final BftContext bftContext = context.getConsensusContext(BftContext.class);
       final BftExtraData bftExtraData = bftContext.getBlockInterface().getExtraData(header);
 
       final NavigableSet<Address> sortedReportedValidators =

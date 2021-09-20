@@ -43,7 +43,7 @@ public class BftCommitSealsValidationRule implements AttachedBlockHeaderValidati
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
-    final BftContext bftContext = protocolContext.getConsensusState(BftContext.class);
+    final BftContext bftContext = protocolContext.getConsensusContext(BftContext.class);
     final Collection<Address> storedValidators =
         bftContext.getValidatorProvider().getValidatorsAfterBlock(parent);
 

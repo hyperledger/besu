@@ -57,7 +57,7 @@ public class CliqueExtraDataValidationRule implements AttachedBlockHeaderValidat
     try {
       final Collection<Address> storedValidators =
           protocolContext
-              .getConsensusState(CliqueContext.class)
+              .getConsensusContext(CliqueContext.class)
               .getValidatorProvider()
               .getValidatorsAfterBlock(parent);
 

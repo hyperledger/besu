@@ -31,6 +31,12 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   private final Vertx syncVertx;
   private static final Logger LOG = LogManager.getLogger();
 
+  public enum ExecutionStatus {
+    VALID,
+    INVALID,
+    KNOWN;
+  }
+
   protected ExecutionEngineJsonRpcMethod(final Vertx vertx) {
     this.syncVertx = vertx;
   }

@@ -14,16 +14,14 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
-import org.hyperledger.besu.config.experimental.RayonismOptions;
-
 import java.util.Stack;
 
 import net.consensys.quorum.mainnet.launcher.options.Options;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
-/** Unstable support for eth1/2 merge, rayonism hackathon: https://rayonism.io/ */
-public class RayonismMergeOptions implements Options {
+/** Unstable support for eth1/2 merge */
+public class MergeOptions implements Options {
   // To make it easier for tests to reset the value to default
   public static final boolean MERGE_ENABLED_DEFAULT_VALUE = false;
 
@@ -36,8 +34,8 @@ public class RayonismMergeOptions implements Options {
   @SuppressWarnings({"FieldCanBeFinal"})
   private static boolean mergeEnabled = MERGE_ENABLED_DEFAULT_VALUE;
 
-  public static RayonismMergeOptions create() {
-    return new RayonismMergeOptions();
+  public static MergeOptions create() {
+    return new MergeOptions();
   }
 
   public Boolean isMergeEnabled() {
@@ -51,7 +49,8 @@ public class RayonismMergeOptions implements Options {
         final Stack<String> args,
         final CommandLine.Model.ArgSpec argSpec,
         final CommandLine.Model.CommandSpec commandSpec) {
-      RayonismOptions.setMergeEnabled(Boolean.parseBoolean(args.pop()));
+      org.hyperledger.besu.config.experimental.MergeOptions.setMergeEnabled(
+          Boolean.parseBoolean(args.pop()));
     }
   }
 }

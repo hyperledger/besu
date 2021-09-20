@@ -46,7 +46,7 @@ public class ForestBlockPropagationManagerTest extends AbstractBlockPropagationM
         new ProtocolContext(
             blockchain,
             tempProtocolContext.getWorldStateArchive(),
-            tempProtocolContext.getConsensusState(Object.class));
+            tempProtocolContext.getConsensusContext(Object.class));
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             blockchain,
