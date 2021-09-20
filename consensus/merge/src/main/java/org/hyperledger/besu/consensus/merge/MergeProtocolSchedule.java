@@ -54,9 +54,6 @@ public class MergeProtocolSchedule {
       final ProtocolSpecBuilder specBuilder) {
 
     return specBuilder
-        // TODO: do we need a merge specific blockheader validator?
-        // .blockHeaderValidatorBuilder()
-
         // TODO: merge doesn't have or need ommers, but the blockImporter will need it for sync,
         // override or leave?
         // .ommerHeaderValidatorBuilder()
