@@ -15,6 +15,10 @@ public class MergeUnfinalizedValidationRule implements AttachedBlockHeaderValida
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
 
+    // TODO: see if there is a more appropriate mechanism to enforce this at block import time.
+    //       Otherwise if we validate existing blocks that are already finalized then we are
+    //       going to unnecessarily fail them.
+
     MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     if (header.getNumber() <= mergeContext.getFinalized()) {
       LOG.warn("BlockHeader failed validation due to block number already finalized");
