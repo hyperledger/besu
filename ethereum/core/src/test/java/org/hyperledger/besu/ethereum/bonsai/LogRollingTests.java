@@ -52,6 +52,8 @@ public class LogRollingTests {
   private InMemoryKeyValueStorage storageStorage;
   private InMemoryKeyValueStorage trieBranchStorage;
   private InMemoryKeyValueStorage trieLogStorage;
+  private InMemoryKeyValueStorage trieBucketLogStorage;
+  private InMemoryKeyValueStorage trieBucket2LogStorage;
 
   private BonsaiWorldStateArchive secondArchive;
   private InMemoryKeyValueStorage secondAccountStorage;
@@ -59,6 +61,9 @@ public class LogRollingTests {
   private InMemoryKeyValueStorage secondStorageStorage;
   private InMemoryKeyValueStorage secondTrieBranchStorage;
   private InMemoryKeyValueStorage secondTrieLogStorage;
+  private InMemoryKeyValueStorage secondTrieBucketLogStorage;
+  private InMemoryKeyValueStorage secondTrieBucket2LogStorage;
+
   private final Blockchain blockchain = mock(Blockchain.class);
 
   private static final Address addressOne =
@@ -123,6 +128,12 @@ public class LogRollingTests {
     trieLogStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+    trieBucketLogStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BUCKET_1);
+    trieBucket2LogStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BUCKET_2);
 
     final InMemoryKeyValueStorageProvider secondProvider = new InMemoryKeyValueStorageProvider();
     secondArchive = new BonsaiWorldStateArchive(secondProvider, blockchain);
@@ -145,6 +156,12 @@ public class LogRollingTests {
         (InMemoryKeyValueStorage)
             secondProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+    secondTrieBucketLogStorage =
+        (InMemoryKeyValueStorage)
+            secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BUCKET_1);
+    secondTrieBucket2LogStorage =
+        (InMemoryKeyValueStorage)
+            secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BUCKET_2);
   }
 
   @Test
@@ -154,7 +171,13 @@ public class LogRollingTests {
         new BonsaiPersistedWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                trieBucketLogStorage,
+                trieBucket2LogStorage));
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount mutableAccount =
@@ -172,7 +195,9 @@ public class LogRollingTests {
                 secondCodeStorage,
                 secondStorageStorage,
                 secondTrieBranchStorage,
-                secondTrieLogStorage));
+                secondTrieLogStorage,
+                secondTrieBucketLogStorage,
+                secondTrieBucket2LogStorage));
     final BonsaiWorldStateUpdater secondUpdater =
         (BonsaiWorldStateUpdater) secondWorldState.updater();
 
@@ -203,7 +228,13 @@ public class LogRollingTests {
         new BonsaiPersistedWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                trieBucketLogStorage,
+                trieBucket2LogStorage));
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -229,7 +260,9 @@ public class LogRollingTests {
                 secondCodeStorage,
                 secondStorageStorage,
                 secondTrieBranchStorage,
-                secondTrieLogStorage));
+                secondTrieLogStorage,
+                secondTrieBucketLogStorage,
+                secondTrieBucket2LogStorage));
     final BonsaiWorldStateUpdater secondUpdater =
         (BonsaiWorldStateUpdater) secondWorldState.updater();
 
@@ -261,7 +294,13 @@ public class LogRollingTests {
         new BonsaiPersistedWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                trieBucketLogStorage,
+                trieBucket2LogStorage));
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -294,7 +333,9 @@ public class LogRollingTests {
                 secondCodeStorage,
                 secondStorageStorage,
                 secondTrieBranchStorage,
-                secondTrieLogStorage));
+                secondTrieLogStorage,
+                secondTrieBucketLogStorage,
+                secondTrieBucket2LogStorage));
 
     final WorldUpdater secondUpdater = secondWorldState.updater();
     final MutableAccount secondMutableAccount =

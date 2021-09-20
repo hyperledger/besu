@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.eth.messages.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetAccountRangeMessage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.math.BigInteger;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +50,9 @@ public class SnapServerTest {
     assertThat(
             ethMessages.dispatch(
                 new EthMessage(
-                    ethPeer, GetAccountRangeMessage.create(STATEROOT, START_HASH, END_HASH))))
+                    ethPeer,
+                    GetAccountRangeMessage.create(
+                        STATEROOT, START_HASH, END_HASH, BigInteger.ONE))))
         .contains(AccountRangeMessage.create());
   }
 }

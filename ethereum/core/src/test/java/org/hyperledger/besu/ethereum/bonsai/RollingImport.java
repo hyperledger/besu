@@ -55,11 +55,23 @@ public class RollingImport {
     final InMemoryKeyValueStorage trieLogStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+    final InMemoryKeyValueStorage trieBucketStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BUCKET_1);
+    final InMemoryKeyValueStorage trieBucket2Storage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BUCKET_2);
     final BonsaiPersistedWorldState bonsaiState =
         new BonsaiPersistedWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                trieBucketStorage,
+                trieBucket2Storage));
 
     int count = 0;
     while (!reader.isDone()) {

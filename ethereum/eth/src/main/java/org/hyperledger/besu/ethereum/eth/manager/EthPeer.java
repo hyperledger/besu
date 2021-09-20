@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
+import java.math.BigInteger;
 import java.time.Clock;
 import java.util.Collections;
 import java.util.HashMap;
@@ -282,9 +283,13 @@ public class EthPeer {
   }
 
   public RequestManager.ResponseStream getAccountRange(
-      final Hash rootHash, final Hash startingHash, final Hash endingHash) throws PeerNotConnected {
+      final Hash rootHash,
+      final Hash startingHash,
+      final Hash endingHash,
+      final BigInteger responseBytes)
+      throws PeerNotConnected {
     final GetAccountRangeMessage message =
-        GetAccountRangeMessage.create(rootHash, startingHash, endingHash);
+        GetAccountRangeMessage.create(rootHash, startingHash, endingHash, responseBytes);
     return sendRequest(
         requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_ACCOUNT_RANGE), message);
   }

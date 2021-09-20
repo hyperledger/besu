@@ -15,7 +15,11 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
@@ -27,11 +31,13 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -42,10 +48,12 @@ import org.junit.Test;
 
 public final class SnapProtocolManagerTest {
 
-  public static SnapProtocolManager create() {
+  private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
+
+  public static SnapProtocolManager create(final WorldStateArchive worldStateArchive) {
     EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
     EthMessages snapMessages = new EthMessages();
-    return new SnapProtocolManager(Collections.emptyList(), peers, snapMessages);
+    return new SnapProtocolManager(Collections.emptyList(), peers, snapMessages, worldStateArchive);
   }
 
   private MockPeerConnection setupPeerWithoutStatusExchange(
@@ -58,7 +66,7 @@ public final class SnapProtocolManagerTest {
 
   @Test
   public void disconnectOnUnsolicitedMessage() {
-    try (final SnapProtocolManager snapManager = create()) {
+    try (final SnapProtocolManager snapManager = create(worldStateArchive)) {
       final MessageData messageData = AccountRangeMessage.create().wrapMessageData(BigInteger.ONE);
       final MockPeerConnection peer =
           setupPeerWithoutStatusExchange(snapManager, (cap, msg, conn) -> {});
@@ -69,13 +77,18 @@ public final class SnapProtocolManagerTest {
 
   @Test
   public void respondToGetAccountRange() throws ExecutionException, InterruptedException {
+    final BonsaiPersistedWorldState bonsaiPersistedWorldState =
+        mock(BonsaiPersistedWorldState.class);
+    when(worldStateArchive.getMutable()).thenReturn(bonsaiPersistedWorldState);
+    when(bonsaiPersistedWorldState.streamAccounts(any(), any(), any())).thenReturn(new HashMap<>());
     final CompletableFuture<Void> done = new CompletableFuture<>();
-    try (final SnapProtocolManager snapManager = create()) {
+    try (final SnapProtocolManager snapManager = create(worldStateArchive)) {
       final Hash worldStateRoot = Hash.hash(Bytes.wrap(new byte[] {0x01}));
       final Hash startKeyHash = Hash.hash(Bytes.wrap(new byte[] {0x02}));
       final Hash endKeyHash = Hash.hash(Bytes.wrap(new byte[] {0x03}));
       final MessageData messageData =
-          GetAccountRangeMessage.create(worldStateRoot, startKeyHash, endKeyHash);
+          GetAccountRangeMessage.create(worldStateRoot, startKeyHash, endKeyHash, BigInteger.ONE)
+              .wrapMessageData(BigInteger.TEN);
       final PeerSendHandler onSend =
           (cap, message, conn) -> {
             assertThat(message.getCode()).isEqualTo(SnapV1.ACCOUNT_RANGE);

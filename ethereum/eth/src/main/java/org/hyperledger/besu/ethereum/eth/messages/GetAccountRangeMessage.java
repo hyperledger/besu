@@ -42,12 +42,16 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
   }
 
   public static GetAccountRangeMessage create(
-      final Hash worldStateRootHash, final Hash startKeyHash, final Hash endKeyHash) {
+      final Hash worldStateRootHash,
+      final Hash startKeyHash,
+      final Hash endKeyHash,
+      final BigInteger responseBytes) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     tmp.writeBytes(worldStateRootHash);
     tmp.writeBytes(startKeyHash);
     tmp.writeBytes(endKeyHash);
+    tmp.writeBigIntegerScalar(responseBytes);
     tmp.endList();
     return new GetAccountRangeMessage(tmp.encoded());
   }
@@ -58,13 +62,15 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
 
   @Override
   protected Bytes wrap(final BigInteger requestId) {
-    final Range range = range();
+    System.out.println("plouf");
+    final Range range = range(false);
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     tmp.writeBigIntegerScalar(requestId);
     tmp.writeBytes(range.worldStateRootHash());
     tmp.writeBytes(range.startKeyHash());
     tmp.writeBytes(range.endKeyHash());
+    tmp.writeBigIntegerScalar(range.responseBytes());
     tmp.endList();
     return tmp.encoded();
   }
@@ -74,15 +80,15 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
     return SnapV1.GET_ACCOUNT_RANGE;
   }
 
-  public Range range() {
+  public Range range(final boolean withRequestId) {
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
-    input.skipNext();
+    if (withRequestId) input.skipNext();
     final ImmutableRange range =
         ImmutableRange.builder()
-            .worldStateRootHash(Hash.wrap(Bytes32.wrap(input.readBytes())))
-            .startKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes())))
-            .endKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes())))
+            .worldStateRootHash(Hash.wrap(Bytes32.wrap(input.readBytes32())))
+            .startKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())))
+            .endKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())))
             .responseBytes(input.readBigIntegerScalar())
             .build();
     input.leaveList();

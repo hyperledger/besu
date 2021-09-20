@@ -18,6 +18,8 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 
+import java.math.BigInteger;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -39,14 +41,15 @@ public final class GetAccountRangeMessageTest {
     // Create GetAccountRangeMessage, copy it to a generic message, then read back into a
     // GetAccountRangeMessage message
     final MessageData initialMessage =
-        GetAccountRangeMessage.create(STATEROOT, START_HASH, END_HASH);
+        GetAccountRangeMessage.create(STATEROOT, START_HASH, END_HASH, BigInteger.ONE);
     final MessageData raw = new RawMessage(SnapV1.GET_ACCOUNT_RANGE, initialMessage.getData());
     final GetAccountRangeMessage message = GetAccountRangeMessage.readFrom(raw);
 
     // Read range back out after round trip and check they match originals.
-    final GetAccountRangeMessage.Range range = message.range();
+    final GetAccountRangeMessage.Range range = message.range(false);
     Assertions.assertThat(range.worldStateRootHash().toArray()).isEqualTo(STATEROOT.toArray());
     Assertions.assertThat(range.startKeyHash().toArray()).isEqualTo(START_HASH.toArray());
     Assertions.assertThat(range.endKeyHash().toArray()).isEqualTo(END_HASH.toArray());
+    Assertions.assertThat(range.responseBytes()).isEqualTo(BigInteger.ONE);
   }
 }
