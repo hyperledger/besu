@@ -82,7 +82,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             worldStateStorage.storageStorage,
             worldStateStorage.trieBranchStorage,
             worldStateStorage.trieLogStorage,
-            worldStateStorage.snapTrieBranchBucketStorage));
+            worldStateStorage.snapTrieBranchBucketStorage,
+            worldStateStorage.snapTrieBranchBucket2Storage));
   }
 
   @Override
@@ -232,14 +233,18 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     // TODO write to a cache and then generate a layer update from that and the
     // DB tx updates.  Right now it is just DB updates.
     accountTrie.commit(
-        (location, hash, value) -> writeTrieNode(hash, stateUpdater, location, value));
+        (location, hash, value) -> writeTrieNode(blockHeader, hash, stateUpdater, location, value));
     final Bytes32 rootHash = accountTrie.getRootHash();
+
+    System.out.println("new rootHash " + rootHash.toHexString());
     return Hash.wrap(rootHash);
   }
 
   @Override
   public void persist(final BlockHeader blockHeader) {
     boolean success = false;
+
+    worldStateStorage.cleanBucket(blockHeader.getNumber());
 
     final BonsaiWorldStateUpdater localUpdater = updater.copy();
 
@@ -352,7 +357,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   public Hash frontierRootHash() {
     return calculateRootHash(
         new BonsaiWorldStateKeyValueStorage.Updater(
-            noOpTx, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx));
+            noOpTx, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx));
   }
 
   public Hash blockHash() {
@@ -377,6 +382,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   private void writeTrieNode(
+      final Optional<BlockHeader> blockHeader,
       final Bytes32 nodeHash,
       final BonsaiWorldStateKeyValueStorage.Updater stateUpdater,
       final Bytes location,
@@ -386,9 +392,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         .put(location.toArrayUnsafe(), value.toArrayUnsafe());
 
     System.out.println("write " + nodeHash + " " + location);
-    stateUpdater
-        .getSnapTrieBranchBucketStorageTransaction()
-        .put(nodeHash.toArrayUnsafe(), value.toArrayUnsafe());
+    blockHeader.ifPresent(
+        header ->
+            stateUpdater
+                .getSnapTrieBranchBucketStorageTransaction(header.getNumber())
+                .put(nodeHash.toArrayUnsafe(), value.toArrayUnsafe()));
   }
 
   private void writeStorageTrieNode(

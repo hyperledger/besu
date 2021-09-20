@@ -32,14 +32,16 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage,
-      final KeyValueStorage snapTrieBranchBucketStorage) {
+      final KeyValueStorage snapTrieBranchBucketStorage,
+      final KeyValueStorage snapTrieBranchBucket2Storage) {
     super(
         accountStorage,
         codeStorage,
         storageStorage,
         trieBranchStorage,
         trieLogStorage,
-        snapTrieBranchBucketStorage);
+        snapTrieBranchBucketStorage,
+        snapTrieBranchBucket2Storage);
   }
 
   @Override
@@ -50,7 +52,8 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
         storageStorage.startTransaction(),
         trieBranchStorage.startTransaction(),
         trieLogStorage.startTransaction(),
-        snapTrieBranchBucketStorage.startTransaction());
+        snapTrieBranchBucketStorage.startTransaction(),
+        snapTrieBranchBucket2Storage.startTransaction());
   }
 
   public static class InMemoryUpdater extends BonsaiWorldStateKeyValueStorage.Updater
@@ -62,14 +65,16 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
         final KeyValueStorageTransaction storageStorageTransaction,
         final KeyValueStorageTransaction trieBranchStorageTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction,
-        final KeyValueStorageTransaction snapTrieBranchBucketStorageTransaction) {
+        final KeyValueStorageTransaction snapTrieBranchBucketStorageTransaction,
+        final KeyValueStorageTransaction snapTrieBranchBucket2StorageTransaction) {
       super(
           accountStorageTransaction,
           codeStorageTransaction,
           storageStorageTransaction,
           trieBranchStorageTransaction,
           trieLogStorageTransaction,
-          snapTrieBranchBucketStorageTransaction);
+          snapTrieBranchBucketStorageTransaction,
+          snapTrieBranchBucket2StorageTransaction);
     }
 
     @Override

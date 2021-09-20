@@ -139,7 +139,7 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
 
   @Override
   public Map<Bytes32, V> entriesFrom(final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
-    return StorageEntriesCollector.collectEntries(root, startKeyHash, endKeyHash);
+    return StorageEntriesCollector.collectEntries(root, startKeyHash, 100);
   }
 
   @Override

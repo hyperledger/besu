@@ -21,6 +21,12 @@ import org.hyperledger.besu.ethereum.eth.messages.SnapV1;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.util.Iterator;
+import java.util.Map;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 class SnapServer {
   private final EthMessages snapMessages;
   private final WorldStateArchive worldStateArchive;
@@ -44,8 +50,14 @@ class SnapServer {
     final BonsaiPersistedWorldState worldState =
         (BonsaiPersistedWorldState) worldStateArchive.getMutable();
     final GetAccountRangeMessage.Range range = getAccountRangeMessage.range();
-    worldState.streamAccounts(range.worldStateRootHash(), range.startKeyHash(), range.endKeyHash());
-
+    Map<Bytes32, Bytes> bytes32BytesMap =
+        worldState.streamAccounts(
+            range.worldStateRootHash(), range.startKeyHash(), range.endKeyHash());
+    Iterator<Map.Entry<Bytes32, Bytes>> iterator = bytes32BytesMap.entrySet().iterator();
+    while (iterator.hasNext()) {
+      System.out.println(
+          "for " + range.worldStateRootHash().toHexString() + " Entry " + iterator.next().getKey());
+    }
     // TODO RETRIEVE ACCOUNT RANGE
     return AccountRangeMessage.create();
   }

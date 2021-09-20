@@ -51,11 +51,11 @@ import org.rocksdb.ColumnFamilyOptions;
 import org.rocksdb.DBOptions;
 import org.rocksdb.Env;
 import org.rocksdb.LRUCache;
+import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
 import org.rocksdb.Status;
-import org.rocksdb.TransactionDB;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
 
@@ -72,7 +72,7 @@ public class RocksDBColumnarKeyValueStorage
 
   private final DBOptions options;
   private final TransactionDBOptions txOptions;
-  private final TransactionDB db;
+  private final OptimisticTransactionDB db;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Map<String, ColumnFamilyHandle> columnHandlesByName;
   private final RocksDBMetrics metrics;
@@ -109,13 +109,10 @@ public class RocksDBColumnarKeyValueStorage
 
       txOptions = new TransactionDBOptions();
       final List<ColumnFamilyHandle> columnHandles = new ArrayList<>(columnDescriptors.size());
+
       db =
-          TransactionDB.open(
-              options,
-              txOptions,
-              configuration.getDatabaseDir().toString(),
-              columnDescriptors,
-              columnHandles);
+          OptimisticTransactionDB.open(
+              options, configuration.getDatabaseDir().toString(), columnDescriptors, columnHandles);
       metrics = rocksDBMetricsFactory.create(metricsSystem, configuration, db, stats);
       final Map<Bytes, String> segmentsById =
           segments.stream()
@@ -207,6 +204,7 @@ public class RocksDBColumnarKeyValueStorage
           db.delete(segmentHandle, lastKey);
         }
       }
+      System.out.println("aalo");
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
