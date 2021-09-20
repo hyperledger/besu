@@ -45,15 +45,11 @@ class SnapServer {
 
   static MessageData constructGetAccountRangeResponse(
       final WorldStateArchive worldStateArchive, final MessageData message) {
-    System.out.println("icicic");
     @SuppressWarnings("unused")
     final GetAccountRangeMessage getAccountRangeMessage = GetAccountRangeMessage.readFrom(message);
-    System.out.println("ici");
     final BonsaiPersistedWorldState worldState =
         (BonsaiPersistedWorldState) worldStateArchive.getMutable();
-    System.out.println("ici");
     final GetAccountRangeMessage.Range range = getAccountRangeMessage.range(true);
-    System.out.println("ici");
 
     Map<Bytes32, Bytes> bytes32BytesMap =
         worldState.streamAccounts(

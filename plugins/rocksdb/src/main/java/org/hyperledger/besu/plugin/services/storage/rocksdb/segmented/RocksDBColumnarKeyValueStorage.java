@@ -204,7 +204,6 @@ public class RocksDBColumnarKeyValueStorage
           db.delete(segmentHandle, lastKey);
         }
       }
-      System.out.println("aalo");
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }

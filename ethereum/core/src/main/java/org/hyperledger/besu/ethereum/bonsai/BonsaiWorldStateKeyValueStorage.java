@@ -256,7 +256,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         // Don't save empty values
         return this;
       }
-      System.out.println("Save " + accountHash.toHexString());
+      // System.out.println("Save " + accountHash.toHexString());
       accountStorageTransaction.put(accountHash.toArrayUnsafe(), accountValue.toArrayUnsafe());
       return this;
     }

@@ -62,7 +62,6 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
 
   @Override
   protected Bytes wrap(final BigInteger requestId) {
-    System.out.println("plouf");
     final Range range = range(false);
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();

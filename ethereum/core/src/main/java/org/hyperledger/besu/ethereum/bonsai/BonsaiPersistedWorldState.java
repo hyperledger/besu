@@ -236,7 +236,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         (location, hash, value) -> writeTrieNode(blockHeader, hash, stateUpdater, location, value));
     final Bytes32 rootHash = accountTrie.getRootHash();
 
-    System.out.println("new rootHash " + rootHash.toHexString());
+    // System.out.println("new rootHash " + rootHash.toHexString());
     return Hash.wrap(rootHash);
   }
 
@@ -391,7 +391,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         .getTrieBranchStorageTransaction()
         .put(location.toArrayUnsafe(), value.toArrayUnsafe());
 
-    System.out.println("write " + nodeHash + " " + location);
+    // System.out.println("write " + nodeHash + " " + location);
     blockHeader.ifPresent(
         header ->
             stateUpdater
@@ -408,7 +408,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final Bytes value) {
     stateUpdater.putAccountStorageTrieNode(accountHash, location, nodeHash, value);
 
-    System.out.println("write " + blockHeader + " " + location);
+    // System.out.println("write " + blockHeader + " " + location);
   }
 
   private Optional<Bytes> getStorageTrieNode(
