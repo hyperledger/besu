@@ -39,7 +39,7 @@ public class BftCoinbaseValidationRule implements AttachedBlockHeaderValidationR
 
     final Collection<Address> storedValidators =
         context
-            .getConsensusState(BftContext.class)
+            .getConsensusContext(BftContext.class)
             .getValidatorProvider()
             .getValidatorsAfterBlock(parent);
     final Address proposer = header.getCoinbase();

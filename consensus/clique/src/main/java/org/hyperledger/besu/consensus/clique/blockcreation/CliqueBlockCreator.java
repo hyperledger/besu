@@ -106,7 +106,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
     if (epochManager.isEpochBlock(sealableBlockHeader.getNumber())) {
       return Optional.empty();
     } else {
-      final CliqueContext cliqueContext = protocolContext.getConsensusState(CliqueContext.class);
+      final CliqueContext cliqueContext = protocolContext.getConsensusContext(CliqueContext.class);
       checkState(
           cliqueContext.getValidatorProvider().getVoteProvider().isPresent(),
           "Clique requires a vote provider");

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.config.experimental.RayonismOptions;
+import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -160,7 +160,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(processableBlockHeader.getNumber());
 
-      if (!RayonismOptions.isMergeEnabled()
+      if (!MergeOptions.isMergeEnabled()
           && !rewardBeneficiary(
               disposableWorldState,
               processableBlockHeader,
@@ -178,7 +178,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .populateFrom(processableBlockHeader)
               .ommersHash(
                   BodyValidation.ommersHash(
-                      RayonismOptions.isMergeEnabled() ? Collections.emptyList() : ommers))
+                      MergeOptions.isMergeEnabled() ? Collections.emptyList() : ommers))
               .stateRoot(disposableWorldState.rootHash())
               .transactionsRoot(
                   BodyValidation.transactionsRoot(transactionResults.getTransactions()))
@@ -187,7 +187,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .gasUsed(transactionResults.getCumulativeGasUsed())
               .extraData(
                   // TODO: FROMRAYONISM is extraData still deprecated for the merge?
-                  RayonismOptions.isMergeEnabled()
+                  MergeOptions.isMergeEnabled()
                       ? Bytes.EMPTY
                       : extraDataCalculator.get(parentHeader))
               .buildSealableBlockHeader();
@@ -296,7 +296,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                 .orElseGet(
                     () ->
                         // supply a ZERO coinbase if unspecified AND merge is enabled:
-                        RayonismOptions.isMergeEnabled() ? Address.ZERO : null))
+                        MergeOptions.isMergeEnabled() ? Address.ZERO : null))
         .difficulty(Difficulty.of(difficulty))
         .number(newBlockNumber)
         .gasLimit(gasLimit)

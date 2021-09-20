@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.config.experimental.RayonismOptions;
+import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -73,7 +73,7 @@ public class PoWBlockCreator extends AbstractBlockCreator {
     final PoWSolverInputs workDefinition = generateNonceSolverInputs(sealableBlockHeader);
     final PoWSolution solution;
     try {
-      if (RayonismOptions.isMergeEnabled()) {
+      if (MergeOptions.isMergeEnabled()) {
         solution = new PoWSolution(0, Hash.ZERO, Bytes.EMPTY, Bytes.EMPTY);
       } else {
         solution = nonceSolver.solveFor(PoWSolver.PoWSolverJob.createFromInputs(workDefinition));

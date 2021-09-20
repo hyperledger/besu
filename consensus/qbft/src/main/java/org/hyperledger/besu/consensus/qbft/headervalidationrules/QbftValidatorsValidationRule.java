@@ -50,7 +50,7 @@ public class QbftValidatorsValidationRule implements AttachedBlockHeaderValidati
 
     // validators and votes must be empty if they are supplied by a contract.
     try {
-      final BftContext bftContext = context.getConsensusState(BftContext.class);
+      final BftContext bftContext = context.getConsensusContext(BftContext.class);
       final BftExtraData bftExtraData = bftContext.getBlockInterface().getExtraData(header);
 
       if (!bftExtraData.getValidators().isEmpty()) {

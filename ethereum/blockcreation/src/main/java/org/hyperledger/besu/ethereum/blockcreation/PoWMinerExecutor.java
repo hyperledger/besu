@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.config.experimental.RayonismOptions;
+import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
@@ -89,7 +89,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
                     () ->
                         // TODO: FROMRAYONISM does this still apply to the merge?
                         //  supply a ZERO coinbase if unspecified AND merge is enabled
-                        RayonismOptions.isMergeEnabled() ? Address.ZERO : null),
+                        MergeOptions.isMergeEnabled() ? Address.ZERO : null),
                 () -> targetGasLimit.map(AtomicLong::longValue),
                 parent -> extraData,
                 pendingTransactions,

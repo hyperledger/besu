@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import static java.lang.Boolean.FALSE;
 
-import org.hyperledger.besu.config.experimental.RayonismOptions;
+import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
@@ -59,7 +59,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
-    if (RayonismOptions.isMergeEnabled()) {
+    if (MergeOptions.isMergeEnabled()) {
       return true;
     }
     if (imlementsBaseFeeMarket()) {

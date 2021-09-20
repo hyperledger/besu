@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth;
 
 import static java.util.stream.Collectors.toUnmodifiableList;
 
-import org.hyperledger.besu.config.experimental.RayonismOptions;
+import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
@@ -177,7 +177,7 @@ public class EthProtocol implements SubProtocol {
     if (INSTANCE == null) {
       INSTANCE =
           new EthProtocol(
-              RayonismOptions.isMergeEnabled() ? mergeSupportExcludedMessages : new ArrayList<>());
+              MergeOptions.isMergeEnabled() ? mergeSupportExcludedMessages : new ArrayList<>());
     }
     return INSTANCE;
   }

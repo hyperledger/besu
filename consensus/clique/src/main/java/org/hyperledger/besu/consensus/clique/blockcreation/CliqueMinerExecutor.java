@@ -108,7 +108,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
 
       final Collection<Address> storedValidators =
           protocolContext
-              .getConsensusState(CliqueContext.class)
+              .getConsensusContext(CliqueContext.class)
               .getValidatorProvider()
               .getValidatorsAfterBlock(parentHeader);
       validators.addAll(storedValidators);
