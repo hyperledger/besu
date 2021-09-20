@@ -82,6 +82,7 @@ public class BesuNodeConfigurationBuilder {
   private List<String> runCommand = new ArrayList<>();
   private Optional<KeyPair> keyPair = Optional.empty();
   private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
+  private boolean signPmtWithPlugin;
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -410,6 +411,11 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder signPmtWithPlugin() {
+    signPmtWithPlugin = true;
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder run(final String... commands) {
     this.runCommand = List.of(commands);
     return this;
@@ -443,6 +449,7 @@ public class BesuNodeConfigurationBuilder {
         privacyParameters,
         runCommand,
         keyPair,
-        pkiKeyStoreConfiguration);
+        pkiKeyStoreConfiguration,
+        signPmtWithPlugin);
   }
 }

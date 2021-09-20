@@ -120,6 +120,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private boolean isDnsEnabled = false;
   private Optional<Integer> exitCode = Optional.empty();
   private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
+  private final boolean signPmtWithPlugin;
 
   public BesuNode(
       final String name,
@@ -148,9 +149,11 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
-      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration)
+      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
+      final boolean signPmtWithPlugin)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
+    this.signPmtWithPlugin = signPmtWithPlugin;
     keyfilePath.ifPresent(
         path -> {
           try {
@@ -597,6 +600,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public void setPrivacyParameters(final PrivacyParameters privacyParameters) {
     this.privacyParameters = privacyParameters;
+  }
+
+  public boolean getSignPmtWithPlugin() {
+    return signPmtWithPlugin;
   }
 
   public boolean isDevMode() {

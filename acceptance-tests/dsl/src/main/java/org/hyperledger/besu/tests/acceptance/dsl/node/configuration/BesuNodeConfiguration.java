@@ -60,6 +60,7 @@ public class BesuNodeConfiguration {
   private final NetworkName network;
   private final Optional<KeyPair> keyPair;
   private final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration;
+  private final boolean signPmtWithPlugin;
 
   BesuNodeConfiguration(
       final String name,
@@ -88,7 +89,8 @@ public class BesuNodeConfiguration {
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
-      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration) {
+      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
+      final boolean signPmtWithPlugin) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -116,6 +118,7 @@ public class BesuNodeConfiguration {
     this.runCommand = runCommand;
     this.keyPair = keyPair;
     this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
+    this.signPmtWithPlugin = signPmtWithPlugin;
   }
 
   public String getName() {
@@ -224,5 +227,9 @@ public class BesuNodeConfiguration {
 
   public Optional<PkiKeyStoreConfiguration> getPkiKeyStoreConfiguration() {
     return pkiKeyStoreConfiguration;
+  }
+
+  public boolean getSignPmtWithPlugin() {
+    return signPmtWithPlugin;
   }
 }

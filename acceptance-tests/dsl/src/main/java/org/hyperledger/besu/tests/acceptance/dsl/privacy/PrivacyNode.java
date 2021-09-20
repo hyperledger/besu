@@ -124,7 +124,8 @@ public class PrivacyNode implements AutoCloseable {
             besuConfig.getPrivacyParameters(),
             List.of(),
             Optional.empty(),
-            Optional.empty());
+            Optional.empty(),
+            config.getSignPmtWithPlugin());
   }
 
   public void testEnclaveConnection(final List<PrivacyNode> otherNodes) {

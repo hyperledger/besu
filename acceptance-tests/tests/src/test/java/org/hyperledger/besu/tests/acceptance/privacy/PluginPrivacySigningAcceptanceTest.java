@@ -53,6 +53,7 @@ public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBas
                     .enablePrivateTransactions()
                     .keyFilePath(BOB.getPrivateKeyPath())
                     .plugins(Collections.singletonList("testPlugins"))
+                    .signPmtWithPlugin()
                     .extraCLIOptions(
                         List.of(
                             "--plugin-privacy-service-encryption-prefix=0xAA",
