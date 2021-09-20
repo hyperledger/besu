@@ -17,9 +17,11 @@ package org.hyperledger.besu.ethereum.core.contract;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 
 public class CodeCacheTest {
@@ -28,7 +30,9 @@ public class CodeCacheTest {
   public void testScale() {
     Bytes contractCode = Bytes.fromHexString("0xDEADBEEF");
     CodeScale scale = new CodeScale();
-    int weight = scale.weigh(new CodeHash(contractCode), new Code(contractCode));
+    Bytes32 address = Bytes32.fromHexString("0xB0B0FACE");
+    int weight =
+        scale.weigh(new CodeHash(Hash.hash(address), contractCode), new Code(contractCode));
     assertThat(weight).isEqualTo(4);
   }
 
@@ -36,7 +40,8 @@ public class CodeCacheTest {
   public void testLoader() {
     Bytes contractCode = Bytes.fromHexString("0xDEADBEEF");
     CodeLoader loader = new CodeLoader();
-    CodeHash key = new CodeHash(contractCode);
+    Bytes32 address = Bytes32.fromHexString("0xB0B0FACE");
+    CodeHash key = new CodeHash(Hash.hash(address), contractCode);
     Code loaded = loader.load(key);
     assertThat(loaded).isNotNull();
     assertThat(loaded.getBytes()).isEqualTo(key.getContract());
