@@ -181,8 +181,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         if (accountUpdated != null) {
           storageTrie.commit(
               (location, key, value) ->
-                  writeStorageTrieNode(
-                      blockHeader, stateUpdater, updatedAddressHash, location, key, value));
+                  writeStorageTrieNode(stateUpdater, updatedAddressHash, location, key, value));
           final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
           accountUpdated.setStorageRoot(newStorageRoot);
         }
@@ -400,7 +399,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   private void writeStorageTrieNode(
-      final Optional<BlockHeader> blockHeader,
       final BonsaiWorldStateKeyValueStorage.Updater stateUpdater,
       final Hash accountHash,
       final Bytes location,
