@@ -16,6 +16,8 @@ package org.hyperledger.besu.evm;
 
 import org.hyperledger.besu.datatypes.Wei;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.math.BigInteger;
 import javax.annotation.concurrent.Immutable;
 

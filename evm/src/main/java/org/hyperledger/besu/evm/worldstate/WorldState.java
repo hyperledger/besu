@@ -20,6 +20,10 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.stream.Stream;

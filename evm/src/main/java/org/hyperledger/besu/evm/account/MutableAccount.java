@@ -16,6 +16,8 @@ package org.hyperledger.besu.evm.account;
 
 import org.hyperledger.besu.datatypes.Wei;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
