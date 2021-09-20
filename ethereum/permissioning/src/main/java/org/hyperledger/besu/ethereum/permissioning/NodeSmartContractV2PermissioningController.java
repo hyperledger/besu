@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;

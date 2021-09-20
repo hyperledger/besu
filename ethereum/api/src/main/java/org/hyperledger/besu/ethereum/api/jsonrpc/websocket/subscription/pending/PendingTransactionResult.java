@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.pending;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.JsonRpcResult;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 

@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import graphql.language.IntValue;
 import graphql.language.StringValue;

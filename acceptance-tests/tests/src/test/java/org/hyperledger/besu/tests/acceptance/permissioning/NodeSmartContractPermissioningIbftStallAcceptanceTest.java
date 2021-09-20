@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;

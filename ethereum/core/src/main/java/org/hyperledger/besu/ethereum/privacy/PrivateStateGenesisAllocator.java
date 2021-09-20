@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;

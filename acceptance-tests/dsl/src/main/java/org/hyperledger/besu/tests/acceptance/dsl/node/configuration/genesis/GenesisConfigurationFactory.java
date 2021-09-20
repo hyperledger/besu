@@ -19,7 +19,7 @@ import static java.util.stream.Collectors.toList;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 
 import java.io.IOException;
