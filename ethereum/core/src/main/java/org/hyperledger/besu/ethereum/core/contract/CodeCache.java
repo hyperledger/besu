@@ -40,7 +40,7 @@ public class CodeCache {
 
   public Optional<Code> getContract(final Account account) {
     if (account != null && account.hasCode()) {
-      return Optional.of(cache.get(new CodeHash(account.getCode())));
+      return Optional.of(cache.get(new CodeHash(account.getAddressHash(), account.getCode())));
     } else {
       return Optional.empty();
     }
@@ -48,7 +48,7 @@ public class CodeCache {
 
   public void invalidate(final Account key) {
     if (key != null && key.hasCode()) {
-      this.cache.invalidate(new CodeHash(key.getCode()));
+      this.cache.invalidate(new CodeHash(key.getAddressHash(), key.getCode()));
     }
   }
 
@@ -58,7 +58,7 @@ public class CodeCache {
 
   public Code getIfPresent(final Account contract) {
     if (contract != null && contract.hasCode()) {
-      return cache.getIfPresent(new CodeHash(contract.getCode()));
+      return cache.getIfPresent(new CodeHash(contract.getAddressHash(), contract.getCode()));
     } else {
       return null;
     }

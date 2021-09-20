@@ -25,9 +25,9 @@ public class CodeHash {
   private final Hash codeHash;
   private final Bytes contract;
 
-  public CodeHash(final Bytes contract) {
+  public CodeHash(final Hash addressHash, final Bytes contract) {
     this.contract = contract;
-    this.codeHash = Hash.hash(contract);
+    this.codeHash = addressHash;
   }
 
   public Bytes getContract() {
@@ -45,6 +45,6 @@ public class CodeHash {
     if (o == null || getClass() != o.getClass()) return false;
     CodeHash that = (CodeHash) o;
     if (this.contract == that.contract) return true;
-    return this.contract.compareTo(that.contract) == 0;
+    return this.codeHash.equals(that.codeHash);
   }
 }
