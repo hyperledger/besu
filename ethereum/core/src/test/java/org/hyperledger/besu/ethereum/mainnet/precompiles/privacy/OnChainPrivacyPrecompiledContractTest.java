@@ -90,15 +90,15 @@ public class OnChainPrivacyPrecompiledContractTest {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
-        nullable(WorldUpdater.class),
-        nullable(WorldUpdater.class),
-        nullable(ProcessableBlockHeader.class),
-        nullable((Hash.class)),
-        nullable(PrivateTransaction.class),
-        nullable(Address.class),
-        nullable(OperationTracer.class),
-        nullable(BlockHashLookup.class),
-        nullable(Bytes.class)))
+            nullable(WorldUpdater.class),
+            nullable(WorldUpdater.class),
+            nullable(ProcessableBlockHeader.class),
+            nullable((Hash.class)),
+            nullable(PrivateTransaction.class),
+            nullable(Address.class),
+            nullable(OperationTracer.class),
+            nullable(BlockHashLookup.class),
+            nullable(Bytes.class)))
         .thenReturn(result);
 
     return mockPrivateTransactionProcessor;
@@ -116,12 +116,12 @@ public class OnChainPrivacyPrecompiledContractTest {
         .thenReturn(Optional.of(PrivacyGroupHeadBlockMap.empty()));
     when(privateStateStorage.getPrivateBlockMetadata(any(), any())).thenReturn(Optional.empty());
     when(storageUpdater.putPrivateBlockMetadata(
-        nullable(Bytes32.class), nullable(Bytes32.class), any()))
+            nullable(Bytes32.class), nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(storageUpdater.putPrivacyGroupHeadBlockMap(nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(storageUpdater.putTransactionReceipt(
-        nullable(Bytes32.class), nullable(Bytes32.class), any()))
+            nullable(Bytes32.class), nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(privateStateStorage.updater()).thenReturn(storageUpdater);
 

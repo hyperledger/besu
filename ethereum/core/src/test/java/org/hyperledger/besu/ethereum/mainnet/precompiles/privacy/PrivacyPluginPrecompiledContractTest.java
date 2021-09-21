@@ -124,8 +124,8 @@ public class PrivacyPluginPrecompiledContractTest {
 
                           @Override
                           public Optional<org.hyperledger.besu.plugin.data.PrivateTransaction>
-                          getPrivateTransactionFromPayload(
-                              final org.hyperledger.besu.plugin.data.Transaction transaction) {
+                              getPrivateTransactionFromPayload(
+                                  final org.hyperledger.besu.plugin.data.Transaction transaction) {
                             final BytesValueRLPInput bytesValueRLPInput =
                                 new BytesValueRLPInput(transaction.getPayload(), false);
                             return Optional.of(readFrom(bytesValueRLPInput));
@@ -198,15 +198,15 @@ public class PrivacyPluginPrecompiledContractTest {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
-        nullable(WorldUpdater.class),
-        nullable(WorldUpdater.class),
-        nullable(ProcessableBlockHeader.class),
-        nullable((Hash.class)),
-        nullable(PrivateTransaction.class),
-        nullable(Address.class),
-        nullable(OperationTracer.class),
-        nullable(BlockHashLookup.class),
-        nullable(Bytes.class)))
+            nullable(WorldUpdater.class),
+            nullable(WorldUpdater.class),
+            nullable(ProcessableBlockHeader.class),
+            nullable((Hash.class)),
+            nullable(PrivateTransaction.class),
+            nullable(Address.class),
+            nullable(OperationTracer.class),
+            nullable(BlockHashLookup.class),
+            nullable(Bytes.class)))
         .thenReturn(result);
 
     return mockPrivateTransactionProcessor;

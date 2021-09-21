@@ -100,15 +100,15 @@ public class PrivacyPrecompiledContractIntegrationTest {
         TransactionProcessingResult.successful(
             null, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null);
     when(mockPrivateTransactionProcessor.processTransaction(
-        nullable(WorldUpdater.class),
-        nullable(WorldUpdater.class),
-        nullable(ProcessableBlockHeader.class),
-        nullable(Hash.class),
-        nullable(PrivateTransaction.class),
-        nullable(Address.class),
-        nullable(OperationTracer.class),
-        nullable(BlockHashLookup.class),
-        nullable(Bytes.class)))
+            nullable(WorldUpdater.class),
+            nullable(WorldUpdater.class),
+            nullable(ProcessableBlockHeader.class),
+            nullable(Hash.class),
+            nullable(PrivateTransaction.class),
+            nullable(Address.class),
+            nullable(OperationTracer.class),
+            nullable(BlockHashLookup.class),
+            nullable(Bytes.class)))
         .thenReturn(result);
 
     return mockPrivateTransactionProcessor;
@@ -140,7 +140,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
         .thenReturn(PrivacyGroupHeadBlockMap.empty());
     when(messageFrame.getContextVariable(
-        eq(PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE), anyBoolean()))
+            eq(PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE), anyBoolean()))
         .thenReturn(false);
     when(messageFrame.getContextVariable(eq(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER)))
         .thenReturn(privateMetadataUpdater);
@@ -158,10 +158,10 @@ public class PrivacyPrecompiledContractIntegrationTest {
     when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
         .thenReturn(Optional.of(PrivacyGroupHeadBlockMap.empty()));
     when(storageUpdater.putPrivateBlockMetadata(
-        nullable(Bytes32.class), nullable(Bytes32.class), any()))
+            nullable(Bytes32.class), nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(storageUpdater.putTransactionReceipt(
-        nullable(Bytes32.class), nullable(Bytes32.class), any()))
+            nullable(Bytes32.class), nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(privateStateStorage.updater()).thenReturn(storageUpdater);
   }

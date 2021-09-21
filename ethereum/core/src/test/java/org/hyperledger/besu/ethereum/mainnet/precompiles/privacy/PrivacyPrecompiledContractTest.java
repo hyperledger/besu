@@ -97,15 +97,15 @@ public class PrivacyPrecompiledContractTest {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
-        nullable(WorldUpdater.class),
-        nullable(WorldUpdater.class),
-        nullable(ProcessableBlockHeader.class),
-        nullable((Hash.class)),
-        nullable(PrivateTransaction.class),
-        nullable(Address.class),
-        nullable(OperationTracer.class),
-        nullable(BlockHashLookup.class),
-        nullable(Bytes.class)))
+            nullable(WorldUpdater.class),
+            nullable(WorldUpdater.class),
+            nullable(ProcessableBlockHeader.class),
+            nullable((Hash.class)),
+            nullable(PrivateTransaction.class),
+            nullable(Address.class),
+            nullable(OperationTracer.class),
+            nullable(BlockHashLookup.class),
+            nullable(Bytes.class)))
         .thenReturn(result);
 
     return mockPrivateTransactionProcessor;
