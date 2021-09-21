@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.util.NavigableMap;
 
 import org.apache.tuweni.bytes.Bytes;

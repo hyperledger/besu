@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.powHasher;
 
 import org.hyperledger.besu.config.PowAlgorithm;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
@@ -213,6 +213,7 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             quorumCompatibilityMode)
         .gasCalculator(IstanbulGasCalculator::new)
+        .transactionGasCalculator(new IstanbulTransactionGasCalculator())
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
@@ -308,6 +309,7 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             quorumCompatibilityMode)
         .gasCalculator(BerlinGasCalculator::new)
+        .transactionGasCalculator(new BerlinTransactionGasCalculator())
         .transactionValidatorBuilder(
             transactionGasCalculator ->
                 new MainnetTransactionValidator(

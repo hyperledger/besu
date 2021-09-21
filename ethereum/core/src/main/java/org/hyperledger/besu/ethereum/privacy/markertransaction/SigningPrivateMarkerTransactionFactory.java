@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.privacy.markertransaction;
 
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction;
@@ -36,7 +36,7 @@ public class SigningPrivateMarkerTransactionFactory {
                 unsignedPrivateMarkerTransaction.getGasPrice().map(Wei::fromQuantity).orElse(null))
             .gasLimit(unsignedPrivateMarkerTransaction.getGasLimit())
             .to(
-                org.hyperledger.besu.ethereum.core.Address.fromPlugin(
+                org.hyperledger.besu.datatypes.Address.fromPlugin(
                     unsignedPrivateMarkerTransaction.getTo().get()))
             .value(Wei.fromQuantity(unsignedPrivateMarkerTransaction.getValue()))
             .payload(unsignedPrivateMarkerTransaction.getPayload())

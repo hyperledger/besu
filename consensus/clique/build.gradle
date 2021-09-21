@@ -33,6 +33,7 @@ dependencies {
   implementation project(':config')
   implementation project(':consensus:common')
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.ibft.payload;
 
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 
 import org.apache.tuweni.bytes.Bytes;
 

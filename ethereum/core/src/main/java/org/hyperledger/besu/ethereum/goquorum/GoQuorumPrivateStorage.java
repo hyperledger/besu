@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.goquorum;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Optional;
 

@@ -18,6 +18,10 @@ package org.hyperledger.besu.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;

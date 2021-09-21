@@ -19,8 +19,8 @@ package org.hyperledger.besu.ethereum.api.query;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TopicsDeserializer;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;

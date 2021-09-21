@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 

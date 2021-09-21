@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.datatypes.Address;
+
 /** Generic interface for a view over the accounts of the world state. */
 public interface WorldView {
   WorldView EMPTY = address -> null;

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.NodeConfiguration;
 

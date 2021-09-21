@@ -15,10 +15,10 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
