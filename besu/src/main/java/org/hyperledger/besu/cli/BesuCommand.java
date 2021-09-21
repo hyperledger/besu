@@ -1327,7 +1327,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @VisibleForTesting
   KeyPair loadKeyPair() {
-    return KeyPairUtil.loadKeyPair(nodePrivateKeyFile());
+    return KeyPairUtil.loadKeyPair(resolveNodePrivateKeyFile());
   }
 
   private void parse(
@@ -2549,7 +2549,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .get();
   }
 
-  private File nodePrivateKeyFile() {
+  private File resolveNodePrivateKeyFile() {
     return Optional.ofNullable(nodePrivateKeyFileOption.getNodePrivateKeyFile())
         .orElseGet(() -> KeyPairUtil.getDefaultKeyFile(dataDir()));
   }
