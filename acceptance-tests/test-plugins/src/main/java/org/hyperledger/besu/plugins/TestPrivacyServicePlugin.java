@@ -41,10 +41,14 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
       new TestSigningPrivateMarkerTransactionFactory();
 
   @Override
+  public void registerPicoCLIOptions(final PicoCLIOptions cliOptions) {
+    cliOptions.addPicoCLIOptions("privacy-service", this);
+  }
+
+  @Override
   public void register(final BesuContext context) {
     this.context = context;
 
-    context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("privacy-service", this);
     pluginService = context.getService(PrivacyPluginService.class).get();
 
     pluginService.setPayloadProvider(payloadProvider);

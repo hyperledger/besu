@@ -148,7 +148,6 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PermissioningService;
-import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
@@ -1192,13 +1191,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addSubCommands(resultHandler, in);
     registerConverters();
     handleUnstableOptions();
-    preparePlugins();
+    besuPluginContext.initialize(new PicoCLIOptionsImpl(commandLine));
     parse(resultHandler, exceptionHandler, args);
   }
 
   @Override
   public void run() {
-
+    preparePlugins();
     try {
       configureLogging(true);
 
@@ -1302,7 +1301,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void preparePlugins() {
-    besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
     besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
@@ -1313,7 +1311,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     new RocksDBPlugin().register(besuPluginContext);
     new InMemoryStoragePlugin().register(besuPluginContext);
 
-    besuPluginContext.registerPlugins(pluginsDir());
+    besuPluginContext.registerPlugins();
 
     metricCategoryRegistry
         .getMetricCategories()
@@ -2529,15 +2527,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   // dataDir() is public because it is accessed by subcommands
   public Path dataDir() {
     return dataPath.toAbsolutePath();
-  }
-
-  private Path pluginsDir() {
-    final String pluginsDir = System.getProperty("besu.plugins.dir");
-    if (pluginsDir == null) {
-      return new File(System.getProperty("besu.home", "."), "plugins").toPath();
-    } else {
-      return new File(pluginsDir).toPath();
-    }
   }
 
   @VisibleForTesting

@@ -41,8 +41,12 @@ public class TestPermissioningPlugin implements BesuPlugin {
   PermissioningService service;
 
   @Override
+  public void registerPicoCLIOptions(final PicoCLIOptions cliOptions) {
+    cliOptions.addPicoCLIOptions("permissioning", this);
+  }
+
+  @Override
   public void register(final BesuContext context) {
-    context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("permissioning", this);
     service = context.getService(PermissioningService.class).get();
   }
 

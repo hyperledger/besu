@@ -24,7 +24,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -46,18 +45,15 @@ public class RocksDBPlugin implements BesuPlugin {
   }
 
   @Override
+  public void registerPicoCLIOptions(final PicoCLIOptions cliOptions) {
+    cliOptions.addPicoCLIOptions(NAME, options);
+  }
+
+  @Override
   public void register(final BesuContext context) {
     LOG.debug("Registering plugin");
     this.context = context;
 
-    final Optional<PicoCLIOptions> cmdlineOptions = context.getService(PicoCLIOptions.class);
-
-    if (cmdlineOptions.isEmpty()) {
-      throw new IllegalStateException(
-          "Expecting a PicoCLIO options to register CLI options with, but none found.");
-    }
-
-    cmdlineOptions.get().addPicoCLIOptions(NAME, options);
     createFactoriesAndRegisterWithStorageService();
 
     LOG.debug("Plugin registered.");

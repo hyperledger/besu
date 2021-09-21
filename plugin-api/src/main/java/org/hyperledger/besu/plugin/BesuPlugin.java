@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin;
 
+import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -34,6 +36,16 @@ public interface BesuPlugin {
    */
   default Optional<String> getName() {
     return Optional.of(this.getClass().getName());
+  }
+
+  /**
+   * Called when the plugin is loaded so that you can register cli options to be parsed
+   *
+   * @param cliOptions the hook to register PicoCLIOptions.
+   */
+  default void registerPicoCLIOptions(final PicoCLIOptions cliOptions) {
+    //    maybe do something like this as a default?
+    //    cliOptions.addPicoCLIOptions(getName().get(), this);
   }
 
   /**

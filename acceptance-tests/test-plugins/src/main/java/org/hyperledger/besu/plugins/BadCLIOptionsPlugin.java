@@ -40,17 +40,14 @@ public class BadCLIOptionsPlugin implements BesuPlugin {
   private File callbackDir;
 
   @Override
+  public void registerPicoCLIOptions(final PicoCLIOptions cliOptions) {
+    cliOptions.addPicoCLIOptions("bad-cli", this);
+  }
+
+  @Override
   public void register(final BesuContext context) {
     LOG.info("Registering BadCliOptionsPlugin");
     callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
-    writeStatus("init");
-
-    context
-        .getService(PicoCLIOptions.class)
-        .ifPresent(
-            picoCLIOptions ->
-                picoCLIOptions.addPicoCLIOptions("bad-cli", BadCLIOptionsPlugin.this));
-
     writeStatus("register");
   }
 
