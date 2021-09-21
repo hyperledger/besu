@@ -1241,8 +1241,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             rlpBlockExporterFactory,
             resultHandler.out()));
     commandLine.addSubcommand(
-        PublicKeySubCommand.COMMAND_NAME,
-        new PublicKeySubCommand(resultHandler.out(), this::buildNodeKey));
+        PublicKeySubCommand.COMMAND_NAME, new PublicKeySubCommand(resultHandler.out()));
     commandLine.addSubcommand(
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(resultHandler.out()));
     commandLine.addSubcommand(RetestethSubCommand.COMMAND_NAME, new RetestethSubCommand());
@@ -1325,9 +1324,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return new KeyPairSecurityModule(loadKeyPair());
   }
 
-  @VisibleForTesting
-  KeyPair loadKeyPair() {
-    return KeyPairUtil.loadKeyPair(resolveNodePrivateKeyFile());
+  // loadKeyPair() is public because it is accessed by subcommands
+  public KeyPair loadKeyPair() {
+    return KeyPairUtil.loadKeyPair(resolveNodePrivateKeyFile(nodePrivateKeyFileOption.getNodePrivateKeyFile()));
   }
 
   private void parse(
@@ -1715,7 +1714,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .maxOmmerDepth(unstableMiningOptions.getMaxOmmersDepth())
                 .build())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
-        .nodeKey(buildNodeKey())
+        .nodeKey(new NodeKey(securityModule()))
         .metricsSystem(metricsSystem.get())
         .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
         .privacyParameters(privacyParameters(storageProvider))
@@ -2537,11 +2536,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  @VisibleForTesting
-  NodeKey buildNodeKey() {
-    return new NodeKey(securityModule());
-  }
-
   private SecurityModule securityModule() {
     return securityModuleService
         .getByName(securityModuleName)
@@ -2549,8 +2543,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .get();
   }
 
-  private File resolveNodePrivateKeyFile() {
-    return Optional.ofNullable(nodePrivateKeyFileOption.getNodePrivateKeyFile())
+  private File resolveNodePrivateKeyFile(final File nodePrivateKeyFile) {
+    return Optional.ofNullable(nodePrivateKeyFile)
         .orElseGet(() -> KeyPairUtil.getDefaultKeyFile(dataDir()));
   }
 

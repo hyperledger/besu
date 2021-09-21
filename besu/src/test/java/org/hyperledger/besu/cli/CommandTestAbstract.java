@@ -68,6 +68,7 @@ import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -145,6 +146,7 @@ public abstract class CommandTestAbstract {
   @Mock protected RlpBlockImporter rlpBlockImporter;
   @Mock protected StorageServiceImpl storageService;
   @Mock protected SecurityModuleServiceImpl securityModuleService;
+  @Mock protected SecurityModule securityModule;
   @Mock protected BesuConfiguration commonPluginConfiguration;
   @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
   @Mock protected PrivacyKeyValueStorageFactory rocksDBSPrivacyStorageFactory;
@@ -286,6 +288,9 @@ public abstract class CommandTestAbstract {
         .when(storageService.getByName(eq("rocksdb-privacy")))
         .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
     lenient()
+        .when(securityModuleService.getByName(eq("localfile")))
+        .thenReturn(Optional.of(() -> securityModule));
+    lenient()
         .when(rocksDBSPrivacyStorageFactory.create(any(), any(), any()))
         .thenReturn(new InMemoryKeyValueStorage());
 
@@ -339,8 +344,7 @@ public abstract class CommandTestAbstract {
     final TestBesuCommand besuCommand =
         new TestBesuCommand(
             mockLogger,
-            nodeKey,
-            keyPair,
+                keyPair,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -369,12 +373,10 @@ public abstract class CommandTestAbstract {
 
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
     private Vertx vertx;
-    private final NodeKey mockNodeKey;
     private final KeyPair keyPair;
 
     TestBesuCommand(
         final Logger mockLogger,
-        final NodeKey mockNodeKey,
         final KeyPair keyPair,
         final Supplier<RlpBlockImporter> mockBlockImporter,
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
@@ -400,7 +402,6 @@ public abstract class CommandTestAbstract {
           new PermissioningServiceImpl(),
           new PrivacyPluginServiceImpl(),
           pkiBlockCreationConfigProvider);
-      this.mockNodeKey = mockNodeKey;
       this.keyPair = keyPair;
     }
 
@@ -416,13 +417,7 @@ public abstract class CommandTestAbstract {
     }
 
     @Override
-    NodeKey buildNodeKey() {
-      // for testing.
-      return mockNodeKey;
-    }
-
-    @Override
-    KeyPair loadKeyPair() {
+    public KeyPair loadKeyPair() {
       // for testing.
       return keyPair;
     }
