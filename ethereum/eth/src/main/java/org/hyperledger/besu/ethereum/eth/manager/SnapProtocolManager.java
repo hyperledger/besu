@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData.create;
+
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -87,13 +88,7 @@ public class SnapProtocolManager implements ProtocolManager {
    */
   @Override
   public void processMessage(final Capability cap, final Message message) {
-    final MessageData messageData =
-        new AbstractSnapMessageData(message.getData().getData()) {
-          @Override
-          public int getCode() {
-            return message.getData().getCode();
-          }
-        };
+    final MessageData messageData = create(message);
     final int code = messageData.getCode();
     LOG.trace("Process snap message {}, {}", cap, code);
     final EthPeer ethPeer = ethPeers.peer(message.getConnection());

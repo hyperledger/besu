@@ -39,7 +39,8 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
   public static AccountRangeMessage create() {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
-    // TODO COMPLETE
+    // TODO In a following PR it will be necessary to create the AccountRange message correctly as
+    // it is described in the snapsync specification
     tmp.endList();
     return new AccountRangeMessage(tmp.encoded());
   }

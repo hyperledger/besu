@@ -242,8 +242,9 @@ public class EthPeer {
       throws PeerNotConnected {
     final GetBlockHeadersMessage message =
         GetBlockHeadersMessage.create(hash, maxHeaders, skip, reverse);
-    return sendRequest(
-        requestManagers.get(EthProtocol.NAME).get(EthPV62.GET_BLOCK_HEADERS), message);
+    final RequestManager requestManager =
+        requestManagers.get(EthProtocol.NAME).get(EthPV62.GET_BLOCK_HEADERS);
+    return sendRequest(requestManager, message);
   }
 
   public RequestManager.ResponseStream getHeadersByNumber(
@@ -317,7 +318,14 @@ public class EthPeer {
     reputation.resetTimeoutCount(messageCode);
 
     getRequestManager(protocolName, messageCode)
-        .ifPresent(requestManager -> requestManager.dispatchResponse(ethMessage));
+        .ifPresentOrElse(
+            requestManager -> requestManager.dispatchResponse(ethMessage),
+            () -> {
+              LOG.trace(
+                  "Message {} not expected has just been received for {} ",
+                  messageCode,
+                  protocolName);
+            });
   }
 
   /**

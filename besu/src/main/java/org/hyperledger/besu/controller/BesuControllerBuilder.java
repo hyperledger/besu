@@ -336,9 +336,7 @@ public abstract class BesuControllerBuilder {
             peerValidators);
 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
-        syncConfig.isSnapsyncEnabled()
-            ? Optional.of(createSnapProtocolManager(peerValidators, ethPeers, snapMessages))
-            : Optional.empty();
+        createSnapProtocolManager(peerValidators, ethPeers, snapMessages);
 
     final Synchronizer synchronizer =
         new DefaultSynchronizer(
@@ -461,11 +459,13 @@ public abstract class BesuControllerBuilder {
         genesisConfig.getForks());
   }
 
-  private SnapProtocolManager createSnapProtocolManager(
+  private Optional<SnapProtocolManager> createSnapProtocolManager(
       final List<PeerValidator> peerValidators,
       final EthPeers ethPeers,
       final EthMessages snapMessages) {
-    return new SnapProtocolManager(peerValidators, ethPeers, snapMessages);
+    return syncConfig.isSnapsyncEnabled()
+        ? Optional.of(new SnapProtocolManager(peerValidators, ethPeers, snapMessages))
+        : Optional.empty();
   }
 
   private WorldStateArchive createWorldStateArchive(
