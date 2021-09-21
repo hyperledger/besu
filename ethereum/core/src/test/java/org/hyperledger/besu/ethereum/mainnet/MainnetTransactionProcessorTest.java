@@ -30,7 +30,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.AccountState;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -180,8 +179,7 @@ public class MainnetTransactionProcessorTest {
         ImmutableTransactionValidationParams.builder().build());
 
     EvmAccount contractAccount = worldState.getAccount(contractAddr);
-    Mockito.verify(worldState, times(1))
-        .getContract(argThat(new AccountMatcher(contractAccount)));
+    Mockito.verify(worldState, times(1)).getContract(argThat(new AccountMatcher(contractAccount)));
     Mockito.verify(loader, times(1)).load(any());
 
     transactionProcessor.processTransaction(
@@ -194,8 +192,7 @@ public class MainnetTransactionProcessorTest {
         false,
         ImmutableTransactionValidationParams.builder().build());
 
-    Mockito.verify(worldState, times(2))
-        .getContract(argThat(new AccountMatcher(contractAccount)));
+    Mockito.verify(worldState, times(2)).getContract(argThat(new AccountMatcher(contractAccount)));
     Mockito.verify(loader, times(1)).load(any());
   }
 
