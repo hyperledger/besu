@@ -27,10 +27,18 @@ public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidat
 
   private static final Logger LOG = LogManager.getLogger();
   private final long minimumSecondsSinceParent;
+  private final long acceptableClockDriftSeconds;
 
   public TimestampMoreRecentThanParent(final long minimumSecondsSinceParent) {
+    this(minimumSecondsSinceParent, 0);
+  }
+
+  public TimestampMoreRecentThanParent(
+      final long minimumSecondsSinceParent, final long acceptableClockDriftSeconds) {
     checkArgument(minimumSecondsSinceParent >= 0, "minimumSecondsSinceParent must be positive");
+    checkArgument(acceptableClockDriftSeconds >= 0, "acceptableClockDriftSeconds must be positive");
     this.minimumSecondsSinceParent = minimumSecondsSinceParent;
+    this.acceptableClockDriftSeconds = acceptableClockDriftSeconds;
   }
 
   @Override
@@ -44,8 +52,9 @@ public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidat
 
   private boolean validateHeaderSufficientlyAheadOfParent(
       final long timestamp, final long parentTimestamp) {
-    final long secondsSinceParent = timestamp - parentTimestamp;
-    if (secondsSinceParent < minimumSecondsSinceParent) {
+    final long secondsSinceParent = timestamp - minimumSecondsSinceParent;
+    final long timestampMargin = secondsSinceParent + acceptableClockDriftSeconds;
+    if (Long.compareUnsigned(timestampMargin, parentTimestamp) < 0) {
       LOG.info(
           "Invalid block header: timestamp {} is only {} seconds newer than parent timestamp {}. Minimum {} seconds",
           timestamp,
