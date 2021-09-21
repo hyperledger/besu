@@ -25,16 +25,17 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.MutableWorldState;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.Restriction;
 
 import java.util.ArrayList;
@@ -96,7 +97,7 @@ public class OnchainPrivacyGroupContract {
 
   public OnchainPrivacyGroupContract(
       final MessageFrame messageFrame,
-      final ProcessableBlockHeader currentBlockHeader,
+      final BlockHeader currentBlockHeader,
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater,
       final WorldStateArchive privateWorldStateArchive,
@@ -115,11 +116,10 @@ public class OnchainPrivacyGroupContract {
 
           return Optional.of(
               privateTransactionProcessor.processTransaction(
-                  messageFrame.getBlockchain(),
-                  messageFrame.getWorldState(),
+                  messageFrame.getWorldUpdater(),
                   updater,
                   currentBlockHeader,
-                  messageFrame.getTransactionHash(),
+                  messageFrame.getContextVariable(PrivateStateUtils.KEY_TRANSACTION_HASH),
                   privateTransaction,
                   messageFrame.getMiningBeneficiary(),
                   OperationTracer.NO_TRACING,

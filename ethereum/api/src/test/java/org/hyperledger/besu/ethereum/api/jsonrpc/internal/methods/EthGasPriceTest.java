@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;

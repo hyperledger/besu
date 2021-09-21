@@ -14,28 +14,34 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.AccessListEntry;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.AccountState;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
+import org.hyperledger.besu.evm.AccessListEntry;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountState;
+import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -46,6 +52,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -90,7 +97,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
+      final BlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
@@ -129,7 +136,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
+      final BlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
@@ -165,7 +172,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
+      final BlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
@@ -201,7 +208,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
+      final BlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
@@ -243,7 +250,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final ProcessableBlockHeader blockHeader,
+      final BlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
@@ -323,12 +330,20 @@ public class MainnetTransactionProcessor {
 
       final WorldUpdater worldUpdater = worldState.updater();
       final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
+      final var contextVariablesBuilder =
+          ImmutableMap.<String, Object>builder()
+              .put(KEY_IS_PERSISTING_PRIVATE_STATE, isPersistingPrivateState)
+              .put(KEY_TRANSACTION, transaction)
+              .put(KEY_TRANSACTION_HASH, transaction.getHash());
+      if (privateMetadataUpdater != null) {
+        contextVariablesBuilder.put(KEY_PRIVATE_METADATA_UPDATER, privateMetadataUpdater);
+      }
+
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
               .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
-              .blockchain(blockchain)
-              .worldState(worldUpdater.updater())
+              .worldUpdater(worldUpdater.updater())
               .initialGas(gasAvailable)
               .originator(senderAddress)
               .gasPrice(transactionGasPrice)
@@ -340,12 +355,9 @@ public class MainnetTransactionProcessor {
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
-              .isPersistingPrivateState(isPersistingPrivateState)
-              .transactionHash(transaction.getHash())
-              .transaction(transaction)
+              .contextVariables(contextVariablesBuilder.build())
               .accessListWarmAddresses(addressList)
-              .accessListWarmStorage(storageList)
-              .privateMetadataUpdater(privateMetadataUpdater);
+              .accessListWarmStorage(storageList);
 
       final MessageFrame initialFrame;
       if (transaction.isContractCreation()) {

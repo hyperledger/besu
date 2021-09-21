@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 
 import org.apache.tuweni.bytes.Bytes;

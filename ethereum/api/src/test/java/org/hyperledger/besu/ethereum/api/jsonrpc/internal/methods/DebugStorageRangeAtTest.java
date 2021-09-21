@@ -32,13 +32,13 @@ import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -152,6 +152,7 @@ public class DebugStorageRangeAtTest {
   }
 
   private Object callAction(final InvocationOnMock invocation) {
+    //noinspection rawtypes
     return Optional.of(
         ((BlockReplay.TransactionAction) invocation.getArgument(2))
             .performAction(transaction, blockHeader, blockchain, worldState, transactionProcessor));

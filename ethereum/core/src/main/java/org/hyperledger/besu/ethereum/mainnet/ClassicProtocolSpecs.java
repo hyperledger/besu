@@ -19,12 +19,20 @@ import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.powHash
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.DieHardGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
+import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
+import org.hyperledger.besu.evm.processor.MessageCallProcessor;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -143,7 +151,7 @@ public class ClassicProtocolSpecs {
         .skipZeroBlockRewards(true)
         .messageCallProcessorBuilder(
             (evm, precompileContractRegistry) ->
-                new MainnetMessageCallProcessor(evm, precompileContractRegistry))
+                new MessageCallProcessor(evm, precompileContractRegistry))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
         .difficultyCalculator(ClassicDifficultyCalculators.EIP100)
         .transactionReceiptFactory(
@@ -152,7 +160,7 @@ public class ClassicProtocolSpecs {
                 : ClassicProtocolSpecs::byzantiumTransactionReceiptFactory)
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
-                new MainnetContractCreationProcessor(
+                new ContractCreationProcessor(
                     gasCalculator,
                     evm,
                     true,

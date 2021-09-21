@@ -20,8 +20,8 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.AccessListEntry;
-import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.evm.AccessListEntry;
+import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.math.BigInteger;

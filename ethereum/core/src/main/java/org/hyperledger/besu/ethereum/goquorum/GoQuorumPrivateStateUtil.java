@@ -20,7 +20,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;

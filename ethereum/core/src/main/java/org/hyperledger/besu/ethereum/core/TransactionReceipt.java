@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;

@@ -19,8 +19,10 @@ import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+
 /** A block header capable of being processed. */
-public class ProcessableBlockHeader {
+public class ProcessableBlockHeader implements org.hyperledger.besu.plugin.data.BlockHeader {
 
   protected final Hash parentHash;
 
@@ -59,8 +61,14 @@ public class ProcessableBlockHeader {
    *
    * @return the block parent block hash
    */
+  @Override
   public Hash getParentHash() {
     return parentHash;
+  }
+
+  @Override
+  public Hash getOmmersHash() {
+    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
   }
 
   /**
@@ -68,8 +76,29 @@ public class ProcessableBlockHeader {
    *
    * @return the block coinbase address
    */
+  @Override
   public Address getCoinbase() {
     return coinbase;
+  }
+
+  @Override
+  public Hash getStateRoot() {
+    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
+  }
+
+  @Override
+  public Hash getTransactionsRoot() {
+    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
+  }
+
+  @Override
+  public Hash getReceiptsRoot() {
+    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
+  }
+
+  @Override
+  public Bytes getLogsBloom() {
+    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
   }
 
   /**
@@ -77,6 +106,7 @@ public class ProcessableBlockHeader {
    *
    * @return the block difficulty
    */
+  @Override
   public Difficulty getDifficulty() {
     return difficulty;
   }
@@ -86,6 +116,7 @@ public class ProcessableBlockHeader {
    *
    * @return the block number
    */
+  @Override
   public long getNumber() {
     return number;
   }
@@ -95,8 +126,14 @@ public class ProcessableBlockHeader {
    *
    * @return the block gas limit
    */
+  @Override
   public long getGasLimit() {
     return gasLimit;
+  }
+
+  @Override
+  public long getGasUsed() {
+    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
   }
 
   /**
@@ -104,8 +141,29 @@ public class ProcessableBlockHeader {
    *
    * @return the block timestamp
    */
+  @Override
   public long getTimestamp() {
     return timestamp;
+  }
+
+  @Override
+  public Bytes getExtraData() {
+    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
+  }
+
+  @Override
+  public Hash getMixHash() {
+    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
+  }
+
+  @Override
+  public long getNonce() {
+    return 0;
+  }
+
+  @Override
+  public Hash getBlockHash() {
+    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
   }
 
   /**
@@ -113,6 +171,7 @@ public class ProcessableBlockHeader {
    *
    * @return the raw bytes of the extra data field
    */
+  @Override
   public Optional<Long> getBaseFee() {
     return Optional.ofNullable(baseFee);
   }

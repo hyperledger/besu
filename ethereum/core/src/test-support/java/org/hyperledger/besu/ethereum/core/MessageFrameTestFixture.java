@@ -14,14 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static org.hyperledger.besu.ethereum.vm.MessageFrame.DEFAULT_MAX_STACK_SIZE;
+import static org.hyperledger.besu.evm.frame.MessageFrame.DEFAULT_MAX_STACK_SIZE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.worldstate.MutableWorldState;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -77,12 +80,12 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  public MessageFrameTestFixture worldState(final WorldUpdater worldState) {
-    this.worldState = Optional.of(worldState);
+  public MessageFrameTestFixture worldUpdater(final WorldUpdater worldUpdater) {
+    this.worldState = Optional.of(worldUpdater);
     return this;
   }
 
-  public MessageFrameTestFixture worldState(final MutableWorldState worldState) {
+  public MessageFrameTestFixture worldUpdater(final MutableWorldState worldState) {
     this.worldState = Optional.of(worldState.updater());
     return this;
   }
@@ -160,8 +163,7 @@ public class MessageFrameTestFixture {
         MessageFrame.builder()
             .type(type)
             .messageFrameStack(messageFrameStack)
-            .blockchain(blockchain)
-            .worldState(worldState.orElseGet(this::createDefaultWorldState))
+            .worldUpdater(worldState.orElseGet(this::createDefaultWorldState))
             .initialGas(initialGas)
             .address(address)
             .originator(originator)

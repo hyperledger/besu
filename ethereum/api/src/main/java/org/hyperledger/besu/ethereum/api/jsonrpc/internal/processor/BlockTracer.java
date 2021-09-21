@@ -15,10 +15,10 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater;
-import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater.StackedUpdater;
+import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
+import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater.StackedUpdater;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;

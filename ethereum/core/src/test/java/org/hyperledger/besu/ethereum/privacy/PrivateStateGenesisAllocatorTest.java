@@ -24,10 +24,10 @@ import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.MutableWorldState;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 import org.hyperledger.besu.plugin.data.PrivacyGenesisAccount;

@@ -15,8 +15,8 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

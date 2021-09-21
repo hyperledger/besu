@@ -14,33 +14,32 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.AccountState;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -83,24 +82,22 @@ public class PrivateTransactionProcessor {
     this.privateTransactionValidator = privateTransactionValidator;
   }
 
-  @SuppressWarnings("unused")
   public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
       final WorldUpdater publicWorldState,
       final WorldUpdater privateWorldState,
-      final ProcessableBlockHeader blockHeader,
+      final BlockHeader blockHeader,
       final Hash pmtHash,
       final PrivateTransaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
-      final BlockHashLookup blockHashLookup,
+      final Function<Long, Hash> blockHashLookup,
       final Bytes privacyGroupId) {
     try {
       LOG.trace("Starting private execution of {}", transaction);
 
       final Address senderAddress = transaction.getSender();
-      final EvmAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
-      final MutableAccount sender =
+      final var maybePrivateSender = privateWorldState.getAccount(senderAddress);
+      final var sender =
           maybePrivateSender != null
               ? maybePrivateSender.getMutable()
               : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO).getMutable();
@@ -125,8 +122,7 @@ public class PrivateTransactionProcessor {
           MessageFrame.builder()
               .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
-              .blockchain(blockchain)
-              .worldState(mutablePrivateWorldStateUpdater)
+              .worldUpdater(mutablePrivateWorldStateUpdater)
               .initialGas(Gas.MAX_VALUE)
               .originator(senderAddress)
               .gasPrice(transaction.getGasPrice())
@@ -138,7 +134,7 @@ public class PrivateTransactionProcessor {
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
-              .transactionHash(pmtHash);
+              .contextVariables(Map.of(KEY_TRANSACTION_HASH, pmtHash));
 
       final MessageFrame initialFrame;
       if (transaction.isContractCreation()) {
@@ -169,7 +165,7 @@ public class PrivateTransactionProcessor {
                 .address(to)
                 .contract(to)
                 .inputData(transaction.getPayload())
-                .code(new Code(maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY)))
+                .code(new Code(maybeContract.map(Account::getCode).orElse(Bytes.EMPTY)))
                 .build();
       }
 
@@ -197,8 +193,7 @@ public class PrivateTransactionProcessor {
       LOG.error("Critical Exception Processing Transaction", re);
       return TransactionProcessingResult.invalid(
           ValidationResult.invalid(
-              TransactionInvalidReason.INTERNAL_ERROR,
-              "Internal Error in Besu - " + re.toString()));
+              TransactionInvalidReason.INTERNAL_ERROR, "Internal Error in Besu - " + re));
     }
   }
 

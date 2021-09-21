@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.ethereum.mainnet.PetersburgGasCalculator;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Param;
@@ -31,9 +33,9 @@ import org.openjdk.jmh.annotations.TearDown;
 public class BlockHashOperationBenchmark {
 
   @Param({
-    "1", // Worst-case scenario
-    "125", // Must iterate up the chain
-    "255" // Hash available directly via current header's parentHash
+      "1", // Worst-case scenario
+      "125", // Must iterate up the chain
+      "255" // Hash available directly via current header's parentHash
   })
   public long blockNumber;
 
@@ -54,18 +56,21 @@ public class BlockHashOperationBenchmark {
   }
 
   @Benchmark
-  public Bytes32 executeOperation() {
+  public Bytes executeOperation() {
     frame.pushStackItem(UInt256.valueOf(blockNumber));
     operation.execute(frame, null);
     return frame.popStackItem();
   }
 
   @Benchmark
-  public Bytes32 executeOperationWithEmptyHashCache() {
+  public Bytes executeOperationWithEmptyHashCache() {
     final MessageFrame cleanFrame =
         operationBenchmarkHelper
             .createMessageFrameBuilder()
-            .blockHashLookup(new BlockHashLookup(frame.getBlockHeader(), frame.getBlockchain()))
+            .blockHashLookup(
+                new BlockHashLookup(
+                    (ProcessableBlockHeader) frame.getBlockHeader(),
+                    operationBenchmarkHelper.getBlockchain()))
             .build();
     cleanFrame.pushStackItem(UInt256.valueOf(blockNumber));
     operation.execute(cleanFrame, null);

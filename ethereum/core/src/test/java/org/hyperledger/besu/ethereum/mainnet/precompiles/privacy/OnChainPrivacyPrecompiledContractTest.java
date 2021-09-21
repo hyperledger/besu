@@ -34,11 +34,12 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
@@ -52,8 +53,8 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.ArrayList;
@@ -90,7 +91,6 @@ public class OnChainPrivacyPrecompiledContractTest {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
-            nullable(Blockchain.class),
             nullable(WorldUpdater.class),
             nullable(WorldUpdater.class),
             nullable(ProcessableBlockHeader.class),
@@ -136,11 +136,10 @@ public class OnChainPrivacyPrecompiledContractTest {
     when(blockchain.getGenesisBlock()).thenReturn(genesis);
     when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
     when(blockchain.getBlockByHash(genesis.getHash())).thenReturn(Optional.of(genesis));
-    when(messageFrame.getBlockchain()).thenReturn(blockchain);
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
     final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap = mock(PrivacyGroupHeadBlockMap.class);
-    when(messageFrame.getPrivateMetadataUpdater()).thenReturn(privateMetadataUpdater);
+    when(messageFrame.getContextVariable(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER)).thenReturn(privateMetadataUpdater);
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap()).thenReturn(privacyGroupHeadBlockMap);
   }
 
@@ -167,7 +166,7 @@ public class OnChainPrivacyPrecompiledContractTest {
     final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
     Mockito.doReturn(true)
         .when(contractSpy)
-        .canExecute(any(), any(), any(), any(), any(), any(), any(), any(), any());
+        .canExecute(any(), any(), any(), any(), any(), any(), any(), any());
 
     final Bytes actual = contractSpy.compute(privateTransactionLookupId, messageFrame);
 
@@ -308,7 +307,7 @@ public class OnChainPrivacyPrecompiledContractTest {
     final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
     Mockito.doReturn(true)
         .when(contractSpy)
-        .canExecute(any(), any(), any(), any(), any(), any(), any(), any(), any());
+        .canExecute(any(), any(), any(), any(), any(), any(), any(), any());
 
     final VersionedPrivateTransaction privateTransaction = versionedPrivateTransactionBesu();
     final byte[] payload = convertVersionedPrivateTransactionToBytes(privateTransaction);

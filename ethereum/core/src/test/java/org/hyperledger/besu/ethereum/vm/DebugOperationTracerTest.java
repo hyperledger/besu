@@ -21,15 +21,20 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
-import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
+import org.hyperledger.besu.evm.operation.AbstractOperation;
+import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Map;
 import java.util.Optional;
@@ -196,7 +201,7 @@ public class DebugOperationTracerTest {
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
     return new MessageFrameTestFixture()
         .initialGas(INITIAL_GAS)
-        .worldState(worldUpdater)
+        .worldUpdater(worldUpdater)
         .gasPrice(Wei.of(25))
         .blockHeader(blockHeader)
         .blockchain(blockchain)
