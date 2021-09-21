@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.VALID_BASE64_ENCLAVE_KEY;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privateTransactionBesu;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -37,7 +39,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
@@ -96,15 +97,15 @@ public class PrivacyPrecompiledContractTest {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
-            nullable(WorldUpdater.class),
-            nullable(WorldUpdater.class),
-            nullable(ProcessableBlockHeader.class),
-            nullable((Hash.class)),
-            nullable(PrivateTransaction.class),
-            nullable(Address.class),
-            nullable(OperationTracer.class),
-            nullable(BlockHashLookup.class),
-            nullable(Bytes.class)))
+        nullable(WorldUpdater.class),
+        nullable(WorldUpdater.class),
+        nullable(ProcessableBlockHeader.class),
+        nullable((Hash.class)),
+        nullable(PrivateTransaction.class),
+        nullable(Address.class),
+        nullable(OperationTracer.class),
+        nullable(BlockHashLookup.class),
+        nullable(Bytes.class)))
         .thenReturn(result);
 
     return mockPrivateTransactionProcessor;
@@ -134,7 +135,9 @@ public class PrivacyPrecompiledContractTest {
     when(blockchain.getBlockByHash(genesis.getHash())).thenReturn(Optional.of(genesis));
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
     final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
-    when(messageFrame.getContextVariable(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER))
+    when(messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)).thenReturn(false);
+    when(messageFrame.hasContextVariable(KEY_PRIVATE_METADATA_UPDATER)).thenReturn(true);
+    when(messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER))
         .thenReturn(privateMetadataUpdater);
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
         .thenReturn(PrivacyGroupHeadBlockMap.empty());
@@ -319,7 +322,7 @@ public class PrivacyPrecompiledContractTest {
 
     // A simulated public transaction doesn't contain a PrivateMetadataUpdater
     final MessageFrame frame = mock(MessageFrame.class);
-    when(frame.getContextVariable(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER)).thenReturn(null);
+    when(frame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER)).thenReturn(null);
 
     final Bytes result = emptyContract.compute(null, frame);
     assertThat(result).isEqualTo(Bytes.EMPTY);

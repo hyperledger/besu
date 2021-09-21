@@ -18,6 +18,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.versionedPrivateTransactionBesu;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -31,11 +33,9 @@ import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.EnclaveConfigurationException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
@@ -75,7 +75,6 @@ public class OnChainPrivacyPrecompiledContractTest {
 
   private final Bytes privateTransactionLookupId = Bytes.random(32);
   private MessageFrame messageFrame;
-  private Blockchain blockchain;
   private final String DEFAULT_OUTPUT = "0x01";
   final String PAYLOAD_TEST_PRIVACY_GROUP_ID = "8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=";
   private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
@@ -91,15 +90,15 @@ public class OnChainPrivacyPrecompiledContractTest {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
-            nullable(WorldUpdater.class),
-            nullable(WorldUpdater.class),
-            nullable(ProcessableBlockHeader.class),
-            nullable((Hash.class)),
-            nullable(PrivateTransaction.class),
-            nullable(Address.class),
-            nullable(OperationTracer.class),
-            nullable(BlockHashLookup.class),
-            nullable(Bytes.class)))
+        nullable(WorldUpdater.class),
+        nullable(WorldUpdater.class),
+        nullable(ProcessableBlockHeader.class),
+        nullable((Hash.class)),
+        nullable(PrivateTransaction.class),
+        nullable(Address.class),
+        nullable(OperationTracer.class),
+        nullable(BlockHashLookup.class),
+        nullable(Bytes.class)))
         .thenReturn(result);
 
     return mockPrivateTransactionProcessor;
@@ -117,30 +116,28 @@ public class OnChainPrivacyPrecompiledContractTest {
         .thenReturn(Optional.of(PrivacyGroupHeadBlockMap.empty()));
     when(privateStateStorage.getPrivateBlockMetadata(any(), any())).thenReturn(Optional.empty());
     when(storageUpdater.putPrivateBlockMetadata(
-            nullable(Bytes32.class), nullable(Bytes32.class), any()))
+        nullable(Bytes32.class), nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(storageUpdater.putPrivacyGroupHeadBlockMap(nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(storageUpdater.putTransactionReceipt(
-            nullable(Bytes32.class), nullable(Bytes32.class), any()))
+        nullable(Bytes32.class), nullable(Bytes32.class), any()))
         .thenReturn(storageUpdater);
     when(privateStateStorage.updater()).thenReturn(storageUpdater);
 
     messageFrame = mock(MessageFrame.class);
-    blockchain = mock(Blockchain.class);
     final BlockDataGenerator blockGenerator = new BlockDataGenerator();
     final Block genesis = blockGenerator.genesisBlock();
     final Block block =
         blockGenerator.block(
             new BlockDataGenerator.BlockOptions().setParentHash(genesis.getHeader().getHash()));
-    when(blockchain.getGenesisBlock()).thenReturn(genesis);
-    when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
-    when(blockchain.getBlockByHash(genesis.getHash())).thenReturn(Optional.of(genesis));
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
     final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap = mock(PrivacyGroupHeadBlockMap.class);
-    when(messageFrame.getContextVariable(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER))
+    when(messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER))
         .thenReturn(privateMetadataUpdater);
+    when(messageFrame.hasContextVariable(KEY_PRIVATE_METADATA_UPDATER)).thenReturn(true);
+    when(messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)).thenReturn(false);
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap()).thenReturn(privacyGroupHeadBlockMap);
   }
 

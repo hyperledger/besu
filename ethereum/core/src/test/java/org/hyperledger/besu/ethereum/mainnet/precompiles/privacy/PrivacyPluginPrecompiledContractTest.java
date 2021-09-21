@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privateTransactionBesu;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
 import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.readFrom;
 import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.serialize;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
@@ -82,14 +84,17 @@ public class PrivacyPluginPrecompiledContractTest {
         blockGenerator.block(
             new BlockDataGenerator.BlockOptions().setParentHash(genesis.getHeader().getHash()));
 
-    when(messageFrame.getContextVariable(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER))
+    when(messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)).thenReturn(false);
+    when(messageFrame.hasContextVariable(KEY_PRIVATE_METADATA_UPDATER)).thenReturn(true);
+    when(messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER))
         .thenReturn(mock(PrivateMetadataUpdater.class));
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
     when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
         .thenReturn(Optional.of(PrivacyGroupHeadBlockMap.empty()));
 
     final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
-    when(messageFrame.getContextVariable(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER))
+    when(messageFrame.hasContextVariable(KEY_PRIVATE_METADATA_UPDATER)).thenReturn(true);
+    when(messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER))
         .thenReturn(privateMetadataUpdater);
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
         .thenReturn(PrivacyGroupHeadBlockMap.empty());
@@ -119,8 +124,8 @@ public class PrivacyPluginPrecompiledContractTest {
 
                           @Override
                           public Optional<org.hyperledger.besu.plugin.data.PrivateTransaction>
-                              getPrivateTransactionFromPayload(
-                                  final org.hyperledger.besu.plugin.data.Transaction transaction) {
+                          getPrivateTransactionFromPayload(
+                              final org.hyperledger.besu.plugin.data.Transaction transaction) {
                             final BytesValueRLPInput bytesValueRLPInput =
                                 new BytesValueRLPInput(transaction.getPayload(), false);
                             return Optional.of(readFrom(bytesValueRLPInput));
@@ -174,8 +179,7 @@ public class PrivacyPluginPrecompiledContractTest {
 
     final Transaction transaction = Transaction.builder().payload(payload).build();
 
-    when(messageFrame.getContextVariable(PrivateStateUtils.KEY_TRANSACTION))
-        .thenReturn(transaction);
+    when(messageFrame.getContextVariable(KEY_TRANSACTION)).thenReturn(transaction);
 
     final Bytes actual = contract.compute(payload, messageFrame);
 
@@ -194,15 +198,15 @@ public class PrivacyPluginPrecompiledContractTest {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
-            nullable(WorldUpdater.class),
-            nullable(WorldUpdater.class),
-            nullable(ProcessableBlockHeader.class),
-            nullable((Hash.class)),
-            nullable(PrivateTransaction.class),
-            nullable(Address.class),
-            nullable(OperationTracer.class),
-            nullable(BlockHashLookup.class),
-            nullable(Bytes.class)))
+        nullable(WorldUpdater.class),
+        nullable(WorldUpdater.class),
+        nullable(ProcessableBlockHeader.class),
+        nullable((Hash.class)),
+        nullable(PrivateTransaction.class),
+        nullable(Address.class),
+        nullable(OperationTracer.class),
+        nullable(BlockHashLookup.class),
+        nullable(Bytes.class)))
         .thenReturn(result);
 
     return mockPrivateTransactionProcessor;
