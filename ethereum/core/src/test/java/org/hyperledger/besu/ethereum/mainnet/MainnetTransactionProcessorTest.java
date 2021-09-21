@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateUsingCache;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -28,7 +29,8 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.AccountState;
+import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -52,6 +54,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -165,8 +168,9 @@ public class MainnetTransactionProcessorTest {
         false,
         ImmutableTransactionValidationParams.builder().build());
 
-    Account contractAccount = worldState.get(contractAddr);
-    Mockito.verify(worldState, times(1)).getContract(contractAccount);
+    EvmAccount contractAccount = worldState.getAccount(contractAddr);
+    Mockito.verify(worldState, times(1))
+        .getContract(argThat(new AccountMatcher<>(contractAccount)));
     Mockito.verify(loader, times(1)).load(any());
 
     transactionProcessor.processTransaction(
@@ -179,7 +183,8 @@ public class MainnetTransactionProcessorTest {
         false,
         ImmutableTransactionValidationParams.builder().build());
 
-    Mockito.verify(worldState, times(2)).getContract(contractAccount);
+    Mockito.verify(worldState, times(2))
+        .getContract(argThat(new AccountMatcher<>(contractAccount)));
     Mockito.verify(loader, times(1)).load(any());
   }
 
@@ -215,8 +220,9 @@ public class MainnetTransactionProcessorTest {
         false,
         ImmutableTransactionValidationParams.builder().build());
 
-    Account contractAccount = this.worldState.get(contractAddr);
-    Mockito.verify(this.worldState, times(1)).getContract(contractAccount);
+    EvmAccount contractAccount = this.worldState.getAccount(contractAddr);
+    Mockito.verify(this.worldState, times(1))
+        .getContract(argThat(new AccountMatcher<>(contractAccount)));
     Mockito.verify(loader, times(1)).load(any());
 
     this.worldState.deleteAccount(contractAccount.getAddress());
@@ -233,5 +239,19 @@ public class MainnetTransactionProcessorTest {
     when(transactionValidator.validateForSender(any(), any(), txValidationParamCaptor.capture()))
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE));
     return txValidationParamCaptor;
+  }
+
+  private static class AccountMatcher<T extends AccountState> implements ArgumentMatcher<T> {
+
+    private final T left;
+
+    private AccountMatcher(final T left) {
+      this.left = left;
+    }
+
+    @Override
+    public boolean matches(final T right) {
+      return left.getAddressHash().equals(right.getAddressHash());
+    }
   }
 }

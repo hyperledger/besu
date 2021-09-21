@@ -362,7 +362,7 @@ public class MainnetTransactionProcessor {
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
-        final Optional<Account> maybeAccount = Optional.ofNullable(worldState.get(to));
+        final Optional<EvmAccount> maybeAccount = Optional.ofNullable(worldState.getAccount(to));
         final Optional<Code> maybeContract =
             maybeAccount.isPresent()
                 ? worldState.getContract(maybeAccount.get())

@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.AccountState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -242,7 +243,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   @Override
-  public Optional<Code> getContract(final Account account) {
+  public <T extends AccountState> Optional<Code> getContract(final T account) {
     return this.codeCache.getContract(account);
   }
 

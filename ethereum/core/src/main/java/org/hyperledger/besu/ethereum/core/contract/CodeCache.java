@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.core.contract;
 
 import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.AccountState;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.Optional;
@@ -38,17 +39,17 @@ public class CodeCache {
     this(maxWeightBytes, new CodeLoader());
   }
 
-  public Optional<Code> getContract(final Account account) {
+  public <T extends AccountState> Optional<Code> getContract(final T account) {
     if (account != null && account.hasCode()) {
-      return Optional.of(cache.get(new CodeHash(account.getAddressHash(), account.getCode())));
+      return Optional.of(cache.get(new CodeHash(account.getCodeHash(), account.getCode())));
     } else {
       return Optional.empty();
     }
   }
 
-  public void invalidate(final Account key) {
+  public <T extends AccountState> void invalidate(final T key) {
     if (key != null && key.hasCode()) {
-      this.cache.invalidate(new CodeHash(key.getAddressHash(), key.getCode()));
+      this.cache.invalidate(new CodeHash(key.getCodeHash(), key.getCode()));
     }
   }
 
