@@ -26,11 +26,9 @@ import java.util.stream.Stream;
 
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
-@Ignore
 public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest {
 
   private static final String config = "/keystore/partner1client1/nss.cfg";
