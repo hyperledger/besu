@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl;
 
-import static org.hyperledger.besu.ethereum.core.Hash.fromHexString;
+import static org.hyperledger.besu.datatypes.Hash.fromHexString;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 
 import org.apache.tuweni.bytes.Bytes;

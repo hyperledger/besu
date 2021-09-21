@@ -18,7 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.account.TransactionPermissioningProvider;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -108,7 +108,7 @@ public class TransactionSmartContractPermissioningController
    */
   @Override
   public boolean isPermitted(final Transaction transaction) {
-    final org.hyperledger.besu.ethereum.core.Hash transactionHash = transaction.getHash();
+    final org.hyperledger.besu.datatypes.Hash transactionHash = transaction.getHash();
     final Address sender = transaction.getSender();
 
     LOG.trace("Account permissioning - Smart Contract : Checking transaction {}", transactionHash);

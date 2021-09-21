@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.qbft.pki;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 public class PkiQbftBlockHashing {
 

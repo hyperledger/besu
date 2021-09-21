@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.core.Address.BLAKE2B_F_COMPRESSION;
+import static org.hyperledger.besu.datatypes.Address.BLAKE2B_F_COMPRESSION;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 

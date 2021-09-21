@@ -15,7 +15,7 @@
  */
 package org.hyperledger.besu.plugins.privacy;
 
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 import org.hyperledger.besu.plugin.data.PrivacyGenesisAccount;
@@ -45,7 +45,7 @@ public class TestPrivacyGroupGenesisProvider implements PrivacyGroupGenesisProvi
             new PrivacyGenesisAccount() {
               @Override
               public Address getAddress() {
-                return org.hyperledger.besu.ethereum.core.Address.fromHexString(
+                return org.hyperledger.besu.datatypes.Address.fromHexString(
                     "0x1000000000000000000000000000000000000001");
               }
 

@@ -23,12 +23,12 @@ import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraData;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.pki.cms.CmsValidator;
 

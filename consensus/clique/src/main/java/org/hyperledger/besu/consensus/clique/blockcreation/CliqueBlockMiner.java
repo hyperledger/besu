@@ -15,11 +15,11 @@
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
 import org.hyperledger.besu.consensus.clique.CliqueHelpers;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.BlockMiner;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;

@@ -27,6 +27,7 @@ jar {
 
 dependencies {
   implementation project(':config')
+  implementation project(':datatypes')
   implementation project(':ethereum:api')
   implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
