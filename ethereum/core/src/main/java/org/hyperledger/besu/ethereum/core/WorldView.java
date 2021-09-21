@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.Optional;

@@ -15,7 +15,7 @@
 
 package org.hyperledger.besu.ethereum.core.contract;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 
 import org.apache.tuweni.bytes.Bytes;
 
