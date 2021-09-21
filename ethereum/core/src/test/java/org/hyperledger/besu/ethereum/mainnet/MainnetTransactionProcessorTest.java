@@ -29,6 +29,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.AccountState;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -72,7 +73,7 @@ public class MainnetTransactionProcessorTest {
 
   private MainnetTransactionProcessor transactionProcessor;
 
-  @Mock private GasCalculator gasCalculator;
+  private final GasCalculator gasCalculator = new LondonGasCalculator();
   @Mock private MainnetTransactionValidator transactionValidator;
   @Mock private AbstractMessageProcessor contractCreationProcessor;
   private MainnetMessageCallProcessor messageCallProcessor;
@@ -180,7 +181,7 @@ public class MainnetTransactionProcessorTest {
 
     EvmAccount contractAccount = worldState.getAccount(contractAddr);
     Mockito.verify(worldState, times(1))
-        .getContract(argThat(new AccountMatcher<>(contractAccount)));
+        .getContract(argThat(new AccountMatcher(contractAccount)));
     Mockito.verify(loader, times(1)).load(any());
 
     transactionProcessor.processTransaction(
@@ -194,7 +195,7 @@ public class MainnetTransactionProcessorTest {
         ImmutableTransactionValidationParams.builder().build());
 
     Mockito.verify(worldState, times(2))
-        .getContract(argThat(new AccountMatcher<>(contractAccount)));
+        .getContract(argThat(new AccountMatcher(contractAccount)));
     Mockito.verify(loader, times(1)).load(any());
   }
 
@@ -232,7 +233,7 @@ public class MainnetTransactionProcessorTest {
 
     EvmAccount contractAccount = this.worldState.getAccount(contractAddr);
     Mockito.verify(this.worldState, times(1))
-        .getContract(argThat(new AccountMatcher<>(contractAccount)));
+        .getContract(argThat(new AccountMatcher(contractAccount)));
     Mockito.verify(loader, times(1)).load(any());
 
     this.worldState.deleteAccount(contractAccount.getAddress());
@@ -251,16 +252,16 @@ public class MainnetTransactionProcessorTest {
     return txValidationParamCaptor;
   }
 
-  private static class AccountMatcher<T extends AccountState> implements ArgumentMatcher<T> {
+  private static class AccountMatcher implements ArgumentMatcher<Account> {
 
-    private final T left;
+    private final Account left;
 
-    private AccountMatcher(final T left) {
+    private AccountMatcher(final Account left) {
       this.left = left;
     }
 
     @Override
-    public boolean matches(final T right) {
+    public boolean matches(final Account right) {
       return left.getAddressHash().equals(right.getAddressHash());
     }
   }
