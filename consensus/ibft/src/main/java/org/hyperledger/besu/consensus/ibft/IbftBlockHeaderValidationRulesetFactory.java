@@ -49,7 +49,7 @@ public class IbftBlockHeaderValidationRulesetFactory {
         .addRule(
             new GasLimitRangeAndDeltaValidationRule(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT))
         .addRule(new TimestampBoundedByFutureParameter(1))
-        .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
+        .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks, 1))
         .addRule(
             new ConstantFieldValidationRule<>(
                 "MixHash", BlockHeader::getMixHash, BftHelpers.EXPECTED_MIX_HASH))
