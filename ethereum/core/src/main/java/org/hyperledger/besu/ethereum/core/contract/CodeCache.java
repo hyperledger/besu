@@ -39,7 +39,7 @@ public class CodeCache {
     this(maxWeightBytes, new CodeLoader());
   }
 
-  public <T extends AccountState> Optional<Code> getContract(final T account) {
+  public Optional<Code> getContract(final Account account) {
     if (account != null && account.hasCode()) {
       return Optional.of(cache.get(new CodeHash(account.getCodeHash(), account.getCode())));
     } else {

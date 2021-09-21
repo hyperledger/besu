@@ -70,7 +70,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
       final WorldStateStorage worldStateStorage,
       final WorldStatePreimageStorage preimageStorage) {
 
-    this(rootHash, worldStateStorage, preimageStorage, new CodeCache());
+    this(rootHash, worldStateStorage, preimageStorage);
   }
 
   public DefaultMutableWorldState(
