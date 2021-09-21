@@ -39,9 +39,7 @@ public class IntrinsicGasTest {
   private final String txRlp;
 
   public IntrinsicGasTest(
-      final GasCalculator gasCalculator,
-      final Gas expectedGas,
-      final String txRlp) {
+      final GasCalculator gasCalculator, final Gas expectedGas, final String txRlp) {
     this.gasCalculator = gasCalculator;
     this.expectedGas = expectedGas;
     this.txRlp = txRlp;

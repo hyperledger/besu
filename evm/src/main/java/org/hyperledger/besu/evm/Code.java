@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.evm;
 
-import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 
 import java.util.BitSet;

@@ -15,16 +15,16 @@
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
-import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.worldstate.MutableWorldState;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Optional;
 
@@ -54,7 +54,8 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
         privacyParameters
             .getPrivacyService()
             .getPayloadProvider()
-            .getPrivateTransactionFromPayload(messageFrame.getContextVariable(PrivateStateUtils.KEY_TRANSACTION));
+            .getPrivateTransactionFromPayload(
+                messageFrame.getContextVariable(PrivateStateUtils.KEY_TRANSACTION));
 
     if (pluginPrivateTransaction.isEmpty()) {
       return Bytes.EMPTY;
@@ -71,7 +72,8 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
         pmtHash,
         privacyGroupId);
 
-    final PrivateMetadataUpdater privateMetadataUpdater = messageFrame.getContextVariable(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER);
+    final PrivateMetadataUpdater privateMetadataUpdater =
+        messageFrame.getContextVariable(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER);
     final Hash lastRootHash =
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 

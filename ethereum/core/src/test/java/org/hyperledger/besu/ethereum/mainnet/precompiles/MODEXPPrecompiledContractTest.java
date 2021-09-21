@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
-import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 
 import org.apache.tuweni.bytes.Bytes;

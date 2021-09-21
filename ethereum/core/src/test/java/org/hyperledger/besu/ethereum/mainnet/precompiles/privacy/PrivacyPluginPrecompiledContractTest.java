@@ -82,13 +82,15 @@ public class PrivacyPluginPrecompiledContractTest {
         blockGenerator.block(
             new BlockDataGenerator.BlockOptions().setParentHash(genesis.getHeader().getHash()));
 
-    when(messageFrame.getContextVariable(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER)).thenReturn(mock(PrivateMetadataUpdater.class));
+    when(messageFrame.getContextVariable(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER))
+        .thenReturn(mock(PrivateMetadataUpdater.class));
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
     when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
         .thenReturn(Optional.of(PrivacyGroupHeadBlockMap.empty()));
 
     final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
-    when(messageFrame.getContextVariable(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER)).thenReturn(privateMetadataUpdater);
+    when(messageFrame.getContextVariable(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER))
+        .thenReturn(privateMetadataUpdater);
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
         .thenReturn(PrivacyGroupHeadBlockMap.empty());
 
@@ -172,7 +174,8 @@ public class PrivacyPluginPrecompiledContractTest {
 
     final Transaction transaction = Transaction.builder().payload(payload).build();
 
-    when(messageFrame.getContextVariable(PrivateStateUtils.KEY_TRANSACTION)).thenReturn(transaction);
+    when(messageFrame.getContextVariable(PrivateStateUtils.KEY_TRANSACTION))
+        .thenReturn(transaction);
 
     final Bytes actual = contract.compute(payload, messageFrame);
 

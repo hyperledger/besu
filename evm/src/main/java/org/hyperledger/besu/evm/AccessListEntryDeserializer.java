@@ -18,7 +18,6 @@ package org.hyperledger.besu.evm;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.io.IOException;
 import java.util.ArrayList;

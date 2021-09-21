@@ -33,9 +33,9 @@ import org.openjdk.jmh.annotations.TearDown;
 public class BlockHashOperationBenchmark {
 
   @Param({
-      "1", // Worst-case scenario
-      "125", // Must iterate up the chain
-      "255" // Hash available directly via current header's parentHash
+    "1", // Worst-case scenario
+    "125", // Must iterate up the chain
+    "255" // Hash available directly via current header's parentHash
   })
   public long blockNumber;
 

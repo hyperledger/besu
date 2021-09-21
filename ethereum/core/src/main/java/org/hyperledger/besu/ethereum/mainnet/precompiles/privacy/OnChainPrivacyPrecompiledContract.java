@@ -319,17 +319,17 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
   private boolean isAddingParticipant(final PrivateTransaction privateTransaction) {
     return isTargettingOnchainPrivacyProxy(privateTransaction)
         && privateTransaction
-        .getPayload()
-        .toHexString()
-        .startsWith(OnChainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE.toHexString());
+            .getPayload()
+            .toHexString()
+            .startsWith(OnChainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE.toHexString());
   }
 
   private boolean isRemovingParticipant(final PrivateTransaction privateTransaction) {
     return isTargettingOnchainPrivacyProxy(privateTransaction)
         && privateTransaction
-        .getPayload()
-        .toHexString()
-        .startsWith(OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE.toHexString());
+            .getPayload()
+            .toHexString()
+            .startsWith(OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE.toHexString());
   }
 
   protected boolean isContractLocked(
