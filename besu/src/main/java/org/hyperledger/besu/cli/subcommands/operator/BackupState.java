@@ -75,7 +75,7 @@ public class BackupState implements Runnable {
     checkArgument(
         backupDir.exists() || backupDir.mkdirs(),
         "Backup directory does not exist and cannot be created.");
-
+    parentCommand.parentCommand.preparePlugins();
     final BesuController besuController = createBesuController();
     final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
     final WorldStateStorage worldStateStorage =

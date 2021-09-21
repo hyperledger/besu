@@ -1300,7 +1300,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
   }
 
-  private void preparePlugins() {
+  public void preparePlugins() {
     besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);

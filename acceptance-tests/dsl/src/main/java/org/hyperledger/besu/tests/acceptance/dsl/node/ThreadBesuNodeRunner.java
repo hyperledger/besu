@@ -39,7 +39,6 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
-import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
@@ -91,9 +90,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final BesuPluginContextImpl besuPluginContext =
         new BesuPluginContextImpl(pluginsPath.toString());
+    besuPluginContext.initialize(new PicoCLIOptionsImpl(commandLine));
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
-    besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
 
     besuPluginContext.registerPlugins();
 

@@ -61,9 +61,11 @@ public class GenerateLogBloomCache implements Runnable {
   @SuppressWarnings("ResultOfMethodCallIgnored")
   @Override
   public void run() {
+    parentCommand.parentCommand.preparePlugins();
     checkPreconditions();
     final Path cacheDir = parentCommand.parentCommand.dataDir().resolve(BesuController.CACHE_PATH);
     cacheDir.toFile().mkdirs();
+
     final MutableBlockchain blockchain =
         createBesuController().getProtocolContext().getBlockchain();
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());

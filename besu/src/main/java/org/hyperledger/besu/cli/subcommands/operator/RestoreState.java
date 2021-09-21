@@ -278,6 +278,7 @@ public class RestoreState implements Runnable {
   }
 
   private BesuController createBesuController() {
+    parentCommand.parentCommand.preparePlugins();
     return parentCommand.parentCommand.buildController();
   }
 }

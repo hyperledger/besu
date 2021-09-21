@@ -13,6 +13,7 @@ dependencies {
 
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'junit:junit'
+  testImplementation 'org.mockito:mockito-core'
 }
 
 task testPluginsJar(type: Jar) {
