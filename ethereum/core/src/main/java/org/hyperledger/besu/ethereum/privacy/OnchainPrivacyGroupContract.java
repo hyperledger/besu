@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.CAN_EXECUTE_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
@@ -27,6 +26,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
+import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -42,8 +42,8 @@ import org.hyperledger.besu.plugin.data.Restriction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
+import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -105,8 +105,8 @@ public class OnchainPrivacyGroupContract {
       final PrivateTransactionProcessor privateTransactionProcessor) {
     transactionSimulator =
         (base64privacyGroupId, callData, blockHash, blockNumber) -> {
-          assert blockHash.isEmpty();
-          assert blockNumber.isEmpty();
+          assert !blockHash.isPresent();
+          assert !blockNumber.isPresent();
 
           final Bytes privacyGroupId = Bytes.fromBase64String(base64privacyGroupId);
           final MutableWorldState localMutableState =
@@ -120,7 +120,7 @@ public class OnchainPrivacyGroupContract {
                   messageFrame.getWorldUpdater(),
                   updater,
                   currentBlockHeader,
-                  messageFrame.getContextVariable(KEY_TRANSACTION_HASH),
+                  messageFrame.getContextVariable(PrivateStateUtils.KEY_TRANSACTION_HASH),
                   privateTransaction,
                   messageFrame.getMiningBeneficiary(),
                   OperationTracer.NO_TRACING,

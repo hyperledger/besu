@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVA
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
@@ -73,7 +74,8 @@ public class PrivateStateGenesisAllocator {
                       "Genesis address {} is in reserved range and may be overwritten", address);
                 }
 
-                final var account = privateWorldStateUpdater.createAccount(address).getMutable();
+                final MutableAccount account =
+                    privateWorldStateUpdater.createAccount(address).getMutable();
 
                 LOG.debug("{} applied to genesis", address.toHexString());
 
@@ -87,14 +89,14 @@ public class PrivateStateGenesisAllocator {
 
     if (isOnchainPrivacyEnabled) {
       // inject management
-      final var managementContract =
+      final MutableAccount managementContract =
           privateWorldStateUpdater.createAccount(DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT).getMutable();
 
       // this is the code for the simple management contract
       managementContract.setCode(OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
 
       // inject proxy
-      final var procyContract =
+      final MutableAccount procyContract =
           privateWorldStateUpdater.createAccount(ONCHAIN_PRIVACY_PROXY).getMutable();
 
       // this is the code for the proxy contract
