@@ -27,18 +27,17 @@ public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidat
 
   private static final Logger LOG = LogManager.getLogger();
   private final long minimumSecondsSinceParent;
-  private final long acceptableClockDriftSeconds;
+  private final long tolerance;
 
   public TimestampMoreRecentThanParent(final long minimumSecondsSinceParent) {
     this(minimumSecondsSinceParent, 0);
   }
 
-  public TimestampMoreRecentThanParent(
-      final long minimumSecondsSinceParent, final long acceptableClockDriftSeconds) {
+  public TimestampMoreRecentThanParent(final long minimumSecondsSinceParent, final long tolerance) {
     checkArgument(minimumSecondsSinceParent >= 0, "minimumSecondsSinceParent must be positive");
-    checkArgument(acceptableClockDriftSeconds >= 0, "acceptableClockDriftSeconds must be positive");
+    checkArgument(tolerance >= 0, "tolerance must be positive");
     this.minimumSecondsSinceParent = minimumSecondsSinceParent;
-    this.acceptableClockDriftSeconds = acceptableClockDriftSeconds;
+    this.tolerance = tolerance;
   }
 
   @Override
@@ -53,14 +52,15 @@ public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidat
   private boolean validateHeaderSufficientlyAheadOfParent(
       final long timestamp, final long parentTimestamp) {
     final long secondsSinceParent = timestamp - minimumSecondsSinceParent;
-    final long timestampMargin = secondsSinceParent + acceptableClockDriftSeconds;
-    if (Long.compareUnsigned(timestampMargin, parentTimestamp) < 0) {
+    final long secondsSinceParentWithTolerance = secondsSinceParent + tolerance;
+    if (Long.compareUnsigned(secondsSinceParentWithTolerance, parentTimestamp) < 0) {
       LOG.info(
-          "Invalid block header: timestamp {} is only {} seconds newer than parent timestamp {}. Minimum {} seconds",
+          "Invalid block header: timestamp {} is only {} seconds newer than parent timestamp {}. Minimum {} seconds. Tolerance of {} seconds",
           timestamp,
           secondsSinceParent,
           parentTimestamp,
-          minimumSecondsSinceParent);
+          minimumSecondsSinceParent,
+          tolerance);
       return false;
     }
 

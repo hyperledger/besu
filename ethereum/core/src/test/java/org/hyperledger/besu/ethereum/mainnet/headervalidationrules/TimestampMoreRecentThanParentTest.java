@@ -23,68 +23,33 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.junit.Test;
 
 public class TimestampMoreRecentThanParentTest {
+  final BlockHeader parentHeader = new BlockHeaderTestFixture().timestamp(10).buildHeader();
 
   @Test
   public void timestampLessThanMinimumFails() {
-    final BlockHeader parentHeader = new BlockHeaderTestFixture().timestamp(10).buildHeader();
-
-    final BlockHeader header =
-        new BlockHeaderTestFixture()
-            .parentHash(parentHeader.getHash())
-            .number(parentHeader.getNumber() + 1)
-            .timestamp(11)
-            .buildHeader();
-
-    final TimestampMoreRecentThanParent timestampMoreRecentThanParent =
-        new TimestampMoreRecentThanParent(5, 1);
-    assertThat(timestampMoreRecentThanParent.validate(header, parentHeader)).isFalse();
+    final BlockHeader header = new BlockHeaderTestFixture().timestamp(11).buildHeader();
+    final TimestampMoreRecentThanParent headerRule = new TimestampMoreRecentThanParent(5);
+    assertThat(headerRule.validate(header, parentHeader)).isFalse();
   }
 
   @Test
   public void timestampLessButWithinTolerancePasses() {
-    final BlockHeader parentHeader = new BlockHeaderTestFixture().timestamp(10).buildHeader();
-
-    final BlockHeader header =
-        new BlockHeaderTestFixture()
-            .parentHash(parentHeader.getHash())
-            .number(parentHeader.getNumber() + 1)
-            .timestamp(14)
-            .buildHeader();
-
-    final TimestampMoreRecentThanParent timestampMoreRecentThanParent =
-        new TimestampMoreRecentThanParent(5, 1);
-    assertThat(timestampMoreRecentThanParent.validate(header, parentHeader)).isTrue();
+    final BlockHeader header = new BlockHeaderTestFixture().timestamp(14).buildHeader();
+    final TimestampMoreRecentThanParent headerRule = new TimestampMoreRecentThanParent(5, 1);
+    assertThat(headerRule.validate(header, parentHeader)).isTrue();
   }
 
   @Test
   public void timestampSameAsMinimumPasses() {
-    final BlockHeader parentHeader = new BlockHeaderTestFixture().timestamp(10).buildHeader();
-
-    final BlockHeader header =
-        new BlockHeaderTestFixture()
-            .parentHash(parentHeader.getHash())
-            .number(parentHeader.getNumber() + 1)
-            .timestamp(15)
-            .buildHeader();
-
-    final TimestampMoreRecentThanParent timestampMoreRecentThanParent =
-        new TimestampMoreRecentThanParent(5, 1);
-    assertThat(timestampMoreRecentThanParent.validate(header, parentHeader)).isTrue();
+    final BlockHeader header = new BlockHeaderTestFixture().timestamp(15).buildHeader();
+    final TimestampMoreRecentThanParent headerRule = new TimestampMoreRecentThanParent(5);
+    assertThat(headerRule.validate(header, parentHeader)).isTrue();
   }
 
   @Test
   public void timestampGreaterThanMinimumPasses() {
-    final BlockHeader parentHeader = new BlockHeaderTestFixture().timestamp(10).buildHeader();
-
-    final BlockHeader header =
-        new BlockHeaderTestFixture()
-            .parentHash(parentHeader.getHash())
-            .number(parentHeader.getNumber() + 1)
-            .timestamp(17)
-            .buildHeader();
-
-    final TimestampMoreRecentThanParent timestampMoreRecentThanParent =
-        new TimestampMoreRecentThanParent(5, 1);
-    assertThat(timestampMoreRecentThanParent.validate(header, parentHeader)).isTrue();
+    final BlockHeader header = new BlockHeaderTestFixture().timestamp(17).buildHeader();
+    final TimestampMoreRecentThanParent headerRule = new TimestampMoreRecentThanParent(5);
+    assertThat(headerRule.validate(header, parentHeader)).isTrue();
   }
 }
