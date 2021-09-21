@@ -386,8 +386,6 @@ public class MainnetTransactionProcessor {
                 .type(MessageFrame.Type.MESSAGE_CALL)
                 .address(to)
                 .contract(to)
-                .contractAccountVersion(
-                    maybeAccount.map(AccountState::getVersion).orElse(Account.DEFAULT_VERSION))
                 .inputData(transaction.getPayload())
                 .code(maybeContract.orElse(new Code(Bytes.EMPTY)))
                 .build();

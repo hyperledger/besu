@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.worldstate;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.account.Account;
 
-import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.Optional;
 
@@ -32,6 +31,4 @@ public interface WorldView {
    *     such account.
    */
   Account get(Address address);
-
-  Optional<Code> getContract(final Account account);
 }

@@ -20,10 +20,8 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
-import org.hyperledger.besu.ethereum.core.CodeCache;
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
 import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
-import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -105,11 +103,6 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
       return privateAccount;
     }
     return publicWorldUpdater.get(address);
-  }
-
-  @Override
-  public Optional<Code> getContract(final Account account) {
-    return this.codeCache.getContract(account);
   }
 
   @Override
