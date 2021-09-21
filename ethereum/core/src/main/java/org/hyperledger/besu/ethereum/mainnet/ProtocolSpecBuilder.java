@@ -48,13 +48,11 @@ public class ProtocolSpecBuilder {
   private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private DifficultyCalculator difficultyCalculator;
   private Function<GasCalculator, EVM> evmBuilder;
-  private Function<GasCalculator, MainnetTransactionValidator>
-      transactionValidatorBuilder;
+  private Function<GasCalculator, MainnetTransactionValidator> transactionValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
   private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
-  private BiFunction<GasCalculator, EVM, AbstractMessageProcessor>
-      contractCreationProcessorBuilder;
+  private BiFunction<GasCalculator, EVM, AbstractMessageProcessor> contractCreationProcessorBuilder;
   private Function<PrecompiledContractConfiguration, PrecompileContractRegistry>
       precompileContractRegistryBuilder;
   private BiFunction<EVM, PrecompileContractRegistry, AbstractMessageProcessor>
@@ -114,8 +112,7 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder transactionValidatorBuilder(
-      final Function<GasCalculator, MainnetTransactionValidator>
-          transactionValidatorBuilder) {
+      final Function<GasCalculator, MainnetTransactionValidator> transactionValidatorBuilder) {
     this.transactionValidatorBuilder = transactionValidatorBuilder;
     return this;
   }
@@ -275,10 +272,7 @@ public class ProtocolSpecBuilder {
         messageCallProcessorBuilder.apply(evm, precompileContractRegistry);
     final MainnetTransactionProcessor transactionProcessor =
         transactionProcessorBuilder.apply(
-            gasCalculator,
-            transactionValidator,
-            contractCreationProcessor,
-            messageCallProcessor);
+            gasCalculator, transactionValidator, contractCreationProcessor, messageCallProcessor);
 
     final BlockHeaderValidator blockHeaderValidator =
         blockHeaderValidatorBuilder

@@ -38,8 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MainnetContractCreationProcessorTest {
 
-  @Mock
-  GasCalculator gasCalculator;
+  @Mock GasCalculator gasCalculator;
   @Mock EVM evm;
 
   private MainnetContractCreationProcessor processor;
@@ -88,12 +87,7 @@ public class MainnetContractCreationProcessorTest {
   public void shouldNotThrowAnExceptionWhenPrefixCodeRuleNotAdded() {
     processor =
         new MainnetContractCreationProcessor(
-            gasCalculator,
-            evm,
-            true,
-            Collections.emptyList(),
-            1,
-            Collections.emptyList());
+            gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
     final Bytes contractCode = Bytes.fromHexString("0F01010101010101");
     MessageFrame messageFrame = new MessageFrameTestFixture().build();
     messageFrame.setOutputData(contractCode);
