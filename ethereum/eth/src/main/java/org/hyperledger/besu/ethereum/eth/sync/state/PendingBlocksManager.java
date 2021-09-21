@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.eth.sync.state;
 
 import static java.util.Collections.newSetFromMap;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.cache.ImmutablePendingBlock;
 import org.hyperledger.besu.ethereum.eth.sync.state.cache.PendingBlockCache;

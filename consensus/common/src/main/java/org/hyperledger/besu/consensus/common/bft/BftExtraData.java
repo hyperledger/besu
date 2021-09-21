@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.common.bft;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.crypto.SECPSignature;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 
 import java.util.Collection;

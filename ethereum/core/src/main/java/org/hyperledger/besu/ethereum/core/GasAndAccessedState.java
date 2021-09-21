@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.util.Collections.emptySet;
 
+import org.hyperledger.besu.datatypes.Address;
+
 import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
