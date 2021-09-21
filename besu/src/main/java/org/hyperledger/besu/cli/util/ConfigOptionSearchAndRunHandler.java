@@ -31,17 +31,14 @@ import picocli.CommandLine.ParseResult;
 public class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<List<Object>> {
   private final AbstractParseResultHandler<List<Object>> resultHandler;
   private final CommandLine.IExceptionHandler2<List<Object>> exceptionHandler;
-  private final String configFileOptionName;
   private final Map<String, String> environment;
 
   public ConfigOptionSearchAndRunHandler(
       final AbstractParseResultHandler<List<Object>> resultHandler,
       final CommandLine.IExceptionHandler2<List<Object>> exceptionHandler,
-      final String configFileOptionName,
       final Map<String, String> environment) {
     this.resultHandler = resultHandler;
     this.exceptionHandler = exceptionHandler;
-    this.configFileOptionName = configFileOptionName;
     this.environment = environment;
     // use the same output as the regular options handler to ensure that outputs are all going
     // in the same place. No need to do this for the exception handler as we reuse it directly.
@@ -60,8 +57,8 @@ public class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<
 
   private Optional<File> findConfigFile(
       final ParseResult parseResult, final CommandLine commandLine) {
-    if (parseResult.hasMatchedOption(configFileOptionName)) {
-      final OptionSpec configFileOption = parseResult.matchedOption(configFileOptionName);
+    if (parseResult.hasMatchedOption("--config-file")) {
+      final OptionSpec configFileOption = parseResult.matchedOption("--config-file");
       try {
         return Optional.of(configFileOption.getter().get());
       } catch (final Exception e) {

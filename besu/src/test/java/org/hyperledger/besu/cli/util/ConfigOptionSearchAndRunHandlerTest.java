@@ -68,8 +68,7 @@ public class ConfigOptionSearchAndRunHandlerTest {
       new DefaultExceptionHandler<List<Object>>().useErr(errPrintStream).useAnsi(Ansi.OFF);
   private final Map<String, String> environment = singletonMap("BESU_LOGGING", "ERROR");
   private final ConfigOptionSearchAndRunHandler configParsingHandler =
-      new ConfigOptionSearchAndRunHandler(
-          resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment);
+      new ConfigOptionSearchAndRunHandler(resultHandler, exceptionHandler, environment);
 
   @Mock ParseResult mockParseResult;
   @Mock CommandLine mockCommandLine;
@@ -104,7 +103,6 @@ public class ConfigOptionSearchAndRunHandlerTest {
         new ConfigOptionSearchAndRunHandler(
             resultHandler,
             exceptionHandler,
-            CONFIG_FILE_OPTION_NAME,
             singletonMap("BESU_CONFIG_FILE", temp.newFile().getAbsolutePath()));
 
     when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(false);
@@ -126,10 +124,7 @@ public class ConfigOptionSearchAndRunHandlerTest {
     exceptionRule.expect(CommandLine.ExecutionException.class);
     final ConfigOptionSearchAndRunHandler environmentConfigFileParsingHandler =
         new ConfigOptionSearchAndRunHandler(
-            resultHandler,
-            exceptionHandler,
-            CONFIG_FILE_OPTION_NAME,
-            singletonMap("BESU_CONFIG_FILE", "not_found.toml"));
+            resultHandler, exceptionHandler, singletonMap("BESU_CONFIG_FILE", "not_found.toml"));
 
     when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(false);
 
