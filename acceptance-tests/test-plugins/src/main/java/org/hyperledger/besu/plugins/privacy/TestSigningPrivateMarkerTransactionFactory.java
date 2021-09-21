@@ -15,15 +15,15 @@
 package org.hyperledger.besu.plugins.privacy;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.core.Address.extract;
+import static org.hyperledger.besu.datatypes.Address.extract;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
@@ -65,7 +65,7 @@ public class TestSigningPrivateMarkerTransactionFactory implements PrivateMarker
                 unsignedPrivateMarkerTransaction.getGasPrice().map(Wei::fromQuantity).orElse(null))
             .gasLimit(unsignedPrivateMarkerTransaction.getGasLimit())
             .to(
-                org.hyperledger.besu.ethereum.core.Address.fromPlugin(
+                org.hyperledger.besu.datatypes.Address.fromPlugin(
                     unsignedPrivateMarkerTransaction.getTo().get()))
             .value(Wei.fromQuantity(unsignedPrivateMarkerTransaction.getValue()))
             .payload(unsignedPrivateMarkerTransaction.getPayload())

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -307,7 +309,7 @@ public class BlockHeader extends SealableBlockHeader
     return new org.hyperledger.besu.ethereum.core.BlockHeader(
         Hash.fromHexString(pluginBlockHeader.getParentHash().toHexString()),
         Hash.fromHexString(pluginBlockHeader.getOmmersHash().toHexString()),
-        org.hyperledger.besu.ethereum.core.Address.fromHexString(
+        org.hyperledger.besu.datatypes.Address.fromHexString(
             pluginBlockHeader.getCoinbase().toHexString()),
         Hash.fromHexString(pluginBlockHeader.getStateRoot().toHexString()),
         Hash.fromHexString(pluginBlockHeader.getTransactionsRoot().toHexString()),

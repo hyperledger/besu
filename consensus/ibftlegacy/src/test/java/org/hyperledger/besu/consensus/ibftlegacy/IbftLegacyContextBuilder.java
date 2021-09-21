@@ -21,7 +21,7 @@ import static org.mockito.Mockito.withSettings;
 
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.ibft.IbftLegacyContext;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;
 

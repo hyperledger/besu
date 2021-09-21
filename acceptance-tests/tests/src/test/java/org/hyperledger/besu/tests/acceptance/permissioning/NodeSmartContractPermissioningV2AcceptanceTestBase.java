@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;

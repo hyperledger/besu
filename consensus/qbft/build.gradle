@@ -59,6 +59,7 @@ dependencies {
   implementation project(':config')
   implementation project(':consensus:common')
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
@@ -74,47 +75,49 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.web3j:abi'
 
-  integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
-  integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-
-  testImplementation 'junit:junit'
-  testImplementation 'org.awaitility:awaitility'
-  testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.mockito:mockito-core'
   testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
   testImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
+  testImplementation project(':crypto')
+  testImplementation project(':ethereum:core')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':metrics:core')
   testImplementation project(':testutil')
-  testImplementation project(':crypto')
-  testImplementation project(':ethereum:core')
 
-  integrationTestImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.mockito:mockito-core'
+
+  integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
+  integrationTestImplementation project(':crypto')
+  integrationTestImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
+  integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(':metrics:core')
   integrationTestImplementation project(':testutil')
-  integrationTestImplementation project(':crypto')
 
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-core'
 
-  referenceTestImplementation 'junit:junit'
-  referenceTestImplementation 'com.google.guava:guava'
-  referenceTestImplementation 'org.assertj:assertj-core'
-  referenceTestImplementation 'org.mockito:mockito-core'
-  referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
-  referenceTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
-  referenceTestImplementation 'org.apache.tuweni:tuweni-bytes'
   referenceTestImplementation project(':crypto')
   referenceTestImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   referenceTestImplementation project(':consensus:common')
+  referenceTestImplementation project(':datatypes')
   referenceTestImplementation project(':ethereum:core')
   referenceTestImplementation project(':ethereum:rlp')
   referenceTestImplementation project(':config')
   referenceTestImplementation project(':testutil')
+
+  referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
+  referenceTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
+  referenceTestImplementation 'com.google.guava:guava'
+  referenceTestImplementation 'junit:junit'
+  referenceTestImplementation 'org.apache.tuweni:tuweni-bytes'
+  referenceTestImplementation 'org.assertj:assertj-core'
+  referenceTestImplementation 'org.mockito:mockito-core'
 
   testSupportImplementation 'org.mockito:mockito-core'
 }
