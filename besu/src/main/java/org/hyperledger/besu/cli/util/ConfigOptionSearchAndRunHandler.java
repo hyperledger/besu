@@ -68,12 +68,12 @@ public class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<
         throw new ExecutionException(commandLine, e.getMessage(), e);
       }
     } else if (environment.containsKey("BESU_CONFIG_FILE")) {
-      File toml = new File(environment.get("BESU_CONFIG_FILE"));
+      final File toml = new File(environment.get("BESU_CONFIG_FILE"));
       if (!toml.exists()) {
         throw new ExecutionException(
             commandLine,
             String.format(
-                "toml file %s specified in environment variable BESU_CONFIG_FILE not found",
+                "TOML file %s specified in environment variable BESU_CONFIG_FILE not found",
                 environment.get("BESU_CONFIG_FILE")));
       }
       return Optional.of(toml);
