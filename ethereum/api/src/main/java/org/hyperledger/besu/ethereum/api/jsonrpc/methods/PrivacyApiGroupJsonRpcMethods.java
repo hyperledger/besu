@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.TransactionGasCalculator;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PluginPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
@@ -91,12 +90,6 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     return protocolSchedule
         .getByBlockNumber(blockchainQueries.headBlockNumber())
         .getGasCalculator();
-  }
-
-  public TransactionGasCalculator getTransactionGasCalculator() {
-    return protocolSchedule
-        .getByBlockNumber(blockchainQueries.headBlockNumber())
-        .getTransactionGasCalculator();
   }
 
   @Override

@@ -234,7 +234,7 @@ public class TransactionSimulator {
     // fail.
     if (GoQuorumOptions.goQuorumCompatibilityMode && value.isZero()) {
       Gas privateGasEstimateAndState =
-          protocolSpec.getTransactionGasCalculator().getMaximumPmtCost();
+          protocolSpec.getGasCalculator().getMaximumTransactionCost(32);
       if (privateGasEstimateAndState.toLong() > result.getEstimateGasUsedByTransaction()) {
         // modify the result to have the larger estimate
         TransactionProcessingResult resultPmt =
