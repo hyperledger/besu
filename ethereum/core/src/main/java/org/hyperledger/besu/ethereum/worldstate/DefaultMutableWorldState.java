@@ -155,7 +155,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   @Override
-  public <T extends AccountState> Optional<Code> getContract(final T account) {
+  public Optional<Code> getContract(final Account account) {
     return this.codeCache.getContract(account);
   }
 

@@ -31,5 +31,5 @@ public interface WorldView {
    */
   Account get(Address address);
 
-  <T extends AccountState> Optional<Code> getContract(final T account);
+  Optional<Code> getContract(final Account account);
 }
