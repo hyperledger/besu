@@ -76,7 +76,7 @@ public class TestCodeExecutor {
         new MessageFrameTestFixture()
             .messageFrameStack(messageFrameStack)
             .blockchain(fixture.getBlockchain())
-            .worldState(worldState)
+            .worldUpdater(worldState)
             .initialGas(Gas.of(gasLimit))
             .address(SENDER_ADDRESS)
             .originator(SENDER_ADDRESS)

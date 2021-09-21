@@ -16,8 +16,6 @@ package org.hyperledger.besu.evm.account;
 
 import org.hyperledger.besu.datatypes.Hash;
 
-import org.hyperledger.besu.datatypes.Hash;
-
 import java.util.Objects;
 import java.util.Optional;
 

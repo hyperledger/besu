@@ -383,7 +383,7 @@ public class ProtocolSpecBuilder {
 
   public interface PrivateTransactionProcessorBuilder {
     PrivateTransactionProcessor apply(
-        GasCalculator transactionGasCalculator,
+        GasCalculator gasCalculator,
         MainnetTransactionValidator transactionValidator,
         AbstractMessageProcessor contractCreationProcessor,
         AbstractMessageProcessor messageCallProcessor,

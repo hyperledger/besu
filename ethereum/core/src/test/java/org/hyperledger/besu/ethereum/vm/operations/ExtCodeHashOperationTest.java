@@ -136,7 +136,7 @@ public class ExtCodeHashOperationTest {
     final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
     final MessageFrame frame =
         new MessageFrameTestFixture()
-            .worldState(worldStateUpdater)
+            .worldUpdater(worldStateUpdater)
             .blockHeader(blockHeader)
             .blockchain(blockchain)
             .build();

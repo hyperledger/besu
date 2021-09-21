@@ -101,7 +101,7 @@ public class SStoreOperationTest {
     final MessageFrame frame =
         new MessageFrameTestFixture()
             .address(address)
-            .worldState(worldStateUpdater)
+            .worldUpdater(worldStateUpdater)
             .blockHeader(blockHeader)
             .blockchain(blockchain)
             .initialGas(initialGas)

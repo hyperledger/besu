@@ -37,6 +37,9 @@ dependencies {
 
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
+
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
 }
 
 configurations { testArtifacts }
@@ -47,8 +50,8 @@ publishing {
       groupId 'org.hyperledger.besu'
       artifactId 'besu-datatypes'
       pom {
-        name = 'Besu EVM'
-        description = 'EVM Engine component'
+        name = 'Besu Datatypes'
+        description = 'Cross-module datatypes'
       }
     }
   }

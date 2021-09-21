@@ -2,6 +2,7 @@
 
 ## 21.10.0-RC1
 ### Additions and Improvements
+* The EVM has been factored out into a standalone module, suitable for inclusion as a library. [#2790](https://github.com/hyperledger/besu/pull/2376)
 
 ### Bug Fixes
 

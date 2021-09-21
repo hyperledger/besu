@@ -65,7 +65,7 @@ public class BaseEeaSendRawTransaction {
   final PrivateMarkerTransactionFactory privateMarkerTransactionFactory =
       new FixedKeySigningPrivateMarkerTransactionFactory(keyPair);
 
-  final GasCalculator transactionGasCalculator = new BerlinGasCalculator();
+  final GasCalculator gasCalculator = new BerlinGasCalculator();
 
   final Transaction PUBLIC_ONCHAIN_TRANSACTION =
       new Transaction(

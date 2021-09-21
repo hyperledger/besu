@@ -17,8 +17,6 @@ package org.hyperledger.besu.evm.worldstate;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.account.Account;
 
-import org.hyperledger.besu.datatypes.Address;
-
 /** Generic interface for a view over the accounts of the world state. */
 public interface WorldView {
   WorldView EMPTY = address -> null;

@@ -220,9 +220,9 @@ public abstract class MainnetProtocolSpecs {
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     0))
         .transactionValidatorBuilder(
-            transactionGasCalculator ->
+            gasCalculator ->
                 new MainnetTransactionValidator(
-                    transactionGasCalculator, true, Optional.empty(), quorumCompatibilityMode))
+                    gasCalculator, true, Optional.empty(), quorumCompatibilityMode))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
         .name("Homestead");
   }
@@ -299,9 +299,9 @@ public abstract class MainnetProtocolSpecs {
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .transactionValidatorBuilder(
-            transactionGasCalculator ->
+            gasCalculator ->
                 new MainnetTransactionValidator(
-                    transactionGasCalculator, true, chainId, quorumCompatibilityMode))
+                    gasCalculator, true, chainId, quorumCompatibilityMode))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -339,13 +339,13 @@ public abstract class MainnetProtocolSpecs {
         .blockReward(BYZANTIUM_BLOCK_REWARD)
         .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(chainId))
         .privateTransactionProcessorBuilder(
-            (transactionGasCalculator,
+            (gasCalculator,
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor,
                 privateTransactionValidator) ->
                 new PrivateTransactionProcessor(
-                    transactionGasCalculator,
+                    gasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
@@ -450,9 +450,9 @@ public abstract class MainnetProtocolSpecs {
             quorumCompatibilityMode)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
-            transactionGasCalculator ->
+            gasCalculator ->
                 new MainnetTransactionValidator(
-                    transactionGasCalculator,
+                    gasCalculator,
                     true,
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),
@@ -487,9 +487,9 @@ public abstract class MainnetProtocolSpecs {
         .gasLimitCalculator(
             new LondonTargetingGasLimitCalculator(londonForkBlockNumber, londonFeeMarket))
         .transactionValidatorBuilder(
-            transactionGasCalculator ->
+            gasCalculator ->
                 new MainnetTransactionValidator(
-                    transactionGasCalculator,
+                    gasCalculator,
                     londonFeeMarket,
                     true,
                     chainId,

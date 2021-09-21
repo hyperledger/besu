@@ -201,7 +201,7 @@ public class DebugOperationTracerTest {
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
     return new MessageFrameTestFixture()
         .initialGas(INITIAL_GAS)
-        .worldState(worldUpdater)
+        .worldUpdater(worldUpdater)
         .gasPrice(Wei.of(25))
         .blockHeader(blockHeader)
         .blockchain(blockchain)

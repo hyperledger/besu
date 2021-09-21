@@ -16,8 +16,6 @@ package org.hyperledger.besu.datatypes;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.datatypes.Hash;
-
 import org.junit.Test;
 
 public class HashTest {

@@ -80,12 +80,12 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  public MessageFrameTestFixture worldState(final WorldUpdater worldState) {
-    this.worldState = Optional.of(worldState);
+  public MessageFrameTestFixture worldUpdater(final WorldUpdater worldUpdater) {
+    this.worldState = Optional.of(worldUpdater);
     return this;
   }
 
-  public MessageFrameTestFixture worldState(final MutableWorldState worldState) {
+  public MessageFrameTestFixture worldUpdater(final MutableWorldState worldState) {
     this.worldState = Optional.of(worldState.updater());
     return this;
   }

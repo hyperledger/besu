@@ -66,9 +66,9 @@ public class ClassicProtocolSpecs {
             contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorBuilder(
-            transactionGasCalculator ->
+            gasCalculator ->
                 new MainnetTransactionValidator(
-                    transactionGasCalculator, true, chainId, quorumCompatibilityMode))
+                    gasCalculator, true, chainId, quorumCompatibilityMode))
         .name("ClassicTangerineWhistle");
   }
 
@@ -125,9 +125,9 @@ public class ClassicProtocolSpecs {
             quorumCompatibilityMode)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorBuilder(
-            transactionGasCalculator ->
+            gasCalculator ->
                 new MainnetTransactionValidator(
-                    transactionGasCalculator, true, chainId, quorumCompatibilityMode))
+                    gasCalculator, true, chainId, quorumCompatibilityMode))
         .name("DefuseDifficultyBomb");
   }
 
@@ -219,7 +219,6 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             quorumCompatibilityMode)
         .gasCalculator(IstanbulGasCalculator::new)
-        .transactionGasCalculator(new IstanbulTransactionGasCalculator())
         .evmBuilder(
             gasCalculator -> MainnetEVMs.istanbul(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
@@ -314,11 +313,10 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             quorumCompatibilityMode)
         .gasCalculator(BerlinGasCalculator::new)
-        .transactionGasCalculator(new BerlinTransactionGasCalculator())
         .transactionValidatorBuilder(
-            transactionGasCalculator ->
+            gasCalculator ->
                 new MainnetTransactionValidator(
-                    transactionGasCalculator,
+                    gasCalculator,
                     true,
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),

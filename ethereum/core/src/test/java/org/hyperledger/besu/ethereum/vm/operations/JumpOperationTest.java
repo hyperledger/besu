@@ -57,7 +57,7 @@ public class JumpOperationTest {
     final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
     return new MessageFrameTestFixture()
         .address(address)
-        .worldState(worldStateUpdater)
+        .worldUpdater(worldStateUpdater)
         .blockHeader(blockHeader)
         .blockchain(blockchain)
         .initialGas(initialGas);

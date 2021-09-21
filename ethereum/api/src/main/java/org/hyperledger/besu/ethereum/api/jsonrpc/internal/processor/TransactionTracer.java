@@ -105,8 +105,7 @@ public class TransactionTracer {
               WorldUpdater stackedUpdater = worldState.updater().updater();
               final List<String> traces = new ArrayList<>();
               for (int i = 0; i < body.getTransactions().size(); i++) {
-                ((StackedUpdater<?, ?>) stackedUpdater)
-                    .markTransactionBoundary();
+                ((StackedUpdater<?, ?>) stackedUpdater).markTransactionBoundary();
                 final Transaction transaction = body.getTransactions().get(i);
                 if (selectedHash.isEmpty()
                     || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {
