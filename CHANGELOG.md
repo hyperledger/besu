@@ -4,6 +4,7 @@
 ### Additions and Improvements
 
 ### Bug Fixes
+- Bft header validation to allow for a tolerance when validating the minimum timestamps between blocks [\#2788](https://github.com/hyperledger/besu/pull/2788)
 
 ### Early Access Features
 
