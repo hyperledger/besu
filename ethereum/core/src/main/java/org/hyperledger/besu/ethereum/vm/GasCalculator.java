@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,8 +16,10 @@ package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.ECRECPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.IDPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.RIPEMD160PrecompiledContract;
@@ -37,17 +39,21 @@ import org.hyperledger.besu.ethereum.vm.operations.SLoadOperation;
 import org.hyperledger.besu.ethereum.vm.operations.SelfDestructOperation;
 import org.hyperledger.besu.ethereum.vm.operations.Sha3Operation;
 
+import java.util.List;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
- * Provides various gas cost lookups and calculations used during EVM Execution.
+ * Provides various gas cost lookups and calculations used during block processing.
  *
- * <p>The {@code GasCalculator} is meant to encapsulate all {@link Gas}-related calculations needed
- * during EVM execution or caused by EVM execution. Hence, refund calculation is part of this as the
- * EVM should report the refund counter at the end of execution. However, the amount to apply to a
- * transaction is out of scope and part of the {@link
- * org.hyperledger.besu.ethereum.mainnet.TransactionGasCalculator}.
+ * <p>The {@code GasCalculator} is meant to encapsulate all {@link Gas}-related calculations except
+ * for the following "safe" operations:
+ *
+ * <ul>
+ *   <li><b>Operation Gas Deductions:</b> Deducting the operation's gas cost from the VM's current
+ *       message frame because the
+ * </ul>
  */
 public interface GasCalculator {
 
@@ -409,4 +415,63 @@ public interface GasCalculator {
   default Gas modExpGasCost(final Bytes input) {
     return Gas.ZERO;
   }
+
+  /**
+   * Returns the cost for a {@link AbstractMessageProcessor} to deposit the code in storage
+   *
+   * @param codeSize The size of the code in bytes
+   * @return the code deposit cost
+   */
+  Gas codeDepositGasCost(int codeSize);
+
+  /**
+   * Returns the intrinsic gas cost of a transaction pauload, i.e. the cost deriving from its
+   * encoded binary representation when stored on-chain.
+   *
+   * @param transactionPayload The encoded transaction, as bytes
+   * @param isContractCreate Is this transaction a contract creation transaction?
+   * @return the transaction's intrinsic gas cost
+   */
+  Gas transactionIntrinsicGasCost(Bytes transactionPayload, boolean isContractCreate);
+
+  /**
+   * Returns the gas cost of the explicitly declared access list.
+   *
+   * @param accessListEntries The access list entries
+   * @return the access list's gas cost
+   */
+  default Gas accessListGasCost(final List<AccessListEntry> accessListEntries) {
+    return accessListGasCost(
+        accessListEntries.size(),
+        accessListEntries.stream().mapToInt(e -> e.getStorageKeys().size()).sum());
+  }
+
+  /**
+   * Returns the gas cost of the explicitly declared access list.
+   *
+   * @param addresses The count of addresses accessed
+   * @param storageSlots The count of storage slots accessed
+   * @return the access list's gas cost
+   */
+  default Gas accessListGasCost(final int addresses, final int storageSlots) {
+    return Gas.ZERO;
+  }
+
+  /**
+   * A measure of the maximum amount of refunded gas a transaction will be credited with.
+   *
+   * @return the quotient of the equation `txGasCost / refundQuotient`.
+   */
+  default long getMaxRefundQuotient() {
+    return 2;
+  }
+
+  /**
+   * Maximum Cost of a Transaction of a certain length.
+   *
+   * @param size the length of the transaction, in bytes
+   * @return the maximum gas cost
+   */
+  // what would be the gas for a PMT with hash of all non-zeros
+  Gas getMaximumTransactionCost(int size);
 }

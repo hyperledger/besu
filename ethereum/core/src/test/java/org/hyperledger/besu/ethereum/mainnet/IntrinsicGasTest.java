@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,23 +32,23 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class IntrinsicGasTest {
 
-  private final TransactionGasCalculator transactionGasCalculator;
+  private final GasCalculator gasCalculator;
   private final Gas expectedGas;
   private final String txRlp;
 
   public IntrinsicGasTest(
-      final TransactionGasCalculator transactionGasCalculator,
+      final GasCalculator gasCalculator,
       final Gas expectedGas,
       final String txRlp) {
-    this.transactionGasCalculator = transactionGasCalculator;
+    this.gasCalculator = gasCalculator;
     this.expectedGas = expectedGas;
     this.txRlp = txRlp;
   }
 
   @Parameters
   public static Collection<Object[]> data() {
-    final TransactionGasCalculator frontier = new FrontierTransactionGasCalculator();
-    final TransactionGasCalculator istanbul = new IstanbulTransactionGasCalculator();
+    final GasCalculator frontier = new FrontierGasCalculator();
+    final GasCalculator istanbul = new IstanbulGasCalculator();
     return Arrays.asList(
         new Object[][] {
           // EnoughGAS
@@ -112,7 +113,7 @@ public class IntrinsicGasTest {
   public void validateGasCost() {
     Transaction t = Transaction.readFrom(RLP.input(Bytes.fromHexString(txRlp)));
     Assertions.assertThat(
-            transactionGasCalculator.transactionIntrinsicGasCostAndAccessedState(t).getGas())
+            gasCalculator.transactionIntrinsicGasCost(t.getPayload(), t.isContractCreation()))
         .isEqualTo(expectedGas);
   }
 }
