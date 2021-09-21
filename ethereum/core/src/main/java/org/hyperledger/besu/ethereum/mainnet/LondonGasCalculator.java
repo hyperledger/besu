@@ -26,7 +26,10 @@ public class LondonGasCalculator extends BerlinGasCalculator {
 
   private static final Gas NEGATIVE_SSTORE_CLEARS_SCHEDULE = Gas.ZERO.minus(SSTORE_CLEARS_SCHEDULE);
 
-  protected LondonGasCalculator() {}
+  // redefinitions for EIP-3529
+  private static final int NEW_MAX_REFUND_QUOTIENT = 5;
+
+  public LondonGasCalculator() {}
 
   // Redefined refund amount from EIP-3529
   @Override
@@ -72,5 +75,10 @@ public class LondonGasCalculator extends BerlinGasCalculator {
         return refund;
       }
     }
+  }
+
+  @Override
+  public long getMaxRefundQuotient() {
+    return NEW_MAX_REFUND_QUOTIENT;
   }
 }

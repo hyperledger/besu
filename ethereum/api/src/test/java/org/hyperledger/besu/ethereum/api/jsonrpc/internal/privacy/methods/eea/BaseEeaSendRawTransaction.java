@@ -23,12 +23,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.BerlinTransactionGasCalculator;
-import org.hyperledger.besu.ethereum.mainnet.TransactionGasCalculator;
+import org.hyperledger.besu.ethereum.mainnet.BerlinGasCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
@@ -61,7 +61,7 @@ public class BaseEeaSendRawTransaction {
   final PrivateMarkerTransactionFactory privateMarkerTransactionFactory =
       new FixedKeySigningPrivateMarkerTransactionFactory(keyPair);
 
-  final TransactionGasCalculator transactionGasCalculator = new BerlinTransactionGasCalculator();
+  final GasCalculator gasCalculator = new BerlinGasCalculator();
 
   final Transaction PUBLIC_ONCHAIN_TRANSACTION =
       new Transaction(
