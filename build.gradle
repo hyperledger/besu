@@ -248,15 +248,8 @@ allprojects {
   }
 
   javadoc {
-    options.addStringOption('-Xdoclint:all')
-    //    options.addStringOption('Xdoclint:accessibility')
-    options.addStringOption('-Xdoclint:-html')
-    options.addStringOption('-Xdoclint:-missing')
-    //    options.addStringOption('Xdoclint:reference')
-    //    options.addStringOption('Xdoclint:syntax')
-    options.addStringOption('-quiet')
-    options.addStringOption('-Xwerror')
-    options.addStringOption('-html5')
+    options.addStringOption('Xdoclint:all', '-quiet')
+    options.addStringOption('Xwerror', '-html5')
     options.encoding = 'UTF-8'
   }
 

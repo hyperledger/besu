@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -24,11 +24,13 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class PushOperation extends AbstractFixedCostOperation {
 
+  public static final int PUSH_BASE = 0x5F;
+
   private final int length;
 
   public PushOperation(final int length, final GasCalculator gasCalculator) {
     super(
-        0x60 + length - 1,
+        PUSH_BASE + length,
         "PUSH" + length,
         0,
         1,

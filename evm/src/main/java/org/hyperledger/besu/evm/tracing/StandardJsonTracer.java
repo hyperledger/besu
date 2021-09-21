@@ -51,19 +51,6 @@ public class StandardJsonTracer implements OperationTracer {
     return bytes.isZero() ? "0x0" : bytes.toShortHexString();
   }
 
-  //    public static String summaryTrace(
-  //        final Transaction transaction, final long timer, final TransactionProcessingResult
-  // result)
-  //   {
-  //      final StringBuilder summaryLine = new StringBuilder(1024);
-  //      summaryLine.append("{ \"output\":", result.getOutput().toUnprefixedHexString());
-  //      summaryLine.put(
-  //          "gasUsed",
-  //          StandardJsonTracer.shortNumber(
-  //              UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining())));
-  //      summaryLine.put("time", timer);
-  //      return summaryLine.toString();
-  //    }
   Joiner commaJoiner = Joiner.on(',');
 
   @Override

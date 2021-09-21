@@ -237,12 +237,6 @@ public class StateTestSubCommand implements Runnable {
         summaryLine.put("validationError", result.getValidationResult().getErrorMessage());
       }
 
-      //      summaryLine.put(
-      //          "gas/sec",
-      //          String.format(
-      //              "%,d", gasUsed.toLong() * 1_000_000_000 /
-      // timer.elapsed(TimeUnit.NANOSECONDS)));
-
       System.out.println(summaryLine);
     }
   }

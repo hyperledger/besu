@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -313,19 +313,19 @@ public class MessageFrame {
     this.warmedUpAddresses.add(contract);
     this.warmedUpStorage = HashMultimap.create(accessListWarmStorage);
 
-    //    // the warmed up addresses will always be a superset of the address keys in the warmed up
-    //    // storage so we can do both warm ups in one pass
-    //    accessListWarmAddresses.parallelStream()
-    //        .forEach(
-    //            address ->
-    //                Optional.ofNullable(worldState.get(address))
-    //                    .ifPresent(
-    //                        account ->
-    //                            warmedUpStorage.get(address).parallelStream()
-    //                                .forEach(
-    //                                    storageKeyBytes ->
-    //                                        account.getStorageValue(
-    //                                            UInt256.fromBytes(storageKeyBytes)))));
+        // the warmed up addresses will always be a superset of the address keys in the warmed up
+        // storage so we can do both warm ups in one pass
+        accessListWarmAddresses.parallelStream()
+            .forEach(
+                address ->
+                    Optional.ofNullable(worldUpdater.get(address))
+                        .ifPresent(
+                            account ->
+                                warmedUpStorage.get(address).parallelStream()
+                                    .forEach(
+                                        storageKeyBytes ->
+                                            account.getStorageValue(
+                                                UInt256.fromBytes(storageKeyBytes)))));
   }
 
   /**

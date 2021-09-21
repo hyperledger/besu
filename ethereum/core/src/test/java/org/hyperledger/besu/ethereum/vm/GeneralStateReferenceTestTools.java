@@ -145,8 +145,9 @@ public class GeneralStateReferenceTestTools {
     // Check the world state root hash.
     final Hash expectedRootHash = spec.getExpectedRootHash();
     assertThat(worldState.rootHash())
-        //        .withFailMessage("Unexpected world state root hash; computed state: %s",
-        // worldState.rootHash())
+        .withFailMessage(
+            "Unexpected world state root hash; expected state: %s, computed state: %s",
+            spec.getExpectedRootHash(), worldState.rootHash())
         .isEqualTo(expectedRootHash);
 
     // Check the logs.
