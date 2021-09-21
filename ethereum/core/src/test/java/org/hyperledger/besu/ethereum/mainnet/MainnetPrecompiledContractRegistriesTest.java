@@ -16,13 +16,14 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
 import static org.hyperledger.besu.ethereum.mainnet.MainnetPrecompiledContractRegistries.appendPrivacy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
@@ -48,8 +49,8 @@ public class MainnetPrecompiledContractRegistriesTest {
     verify(privacyParameters).isEnabled();
     verify(privacyParameters).isOnchainPrivacyGroupsEnabled();
 
-    assertThat(reg.get(Address.DEFAULT_PRIVACY)).isInstanceOf(PrivacyPrecompiledContract.class);
-    assertThat(reg.get(Address.ONCHAIN_PRIVACY)).isNull();
+    assertThat(reg.get(DEFAULT_PRIVACY)).isInstanceOf(PrivacyPrecompiledContract.class);
+    assertThat(reg.get(ONCHAIN_PRIVACY)).isNull();
   }
 
   @Test
@@ -61,9 +62,8 @@ public class MainnetPrecompiledContractRegistriesTest {
     verify(privacyParameters).isEnabled();
     verify(privacyParameters).isOnchainPrivacyGroupsEnabled();
 
-    assertThat(reg.get(Address.ONCHAIN_PRIVACY))
-        .isInstanceOf(OnChainPrivacyPrecompiledContract.class);
-    assertThat(reg.get(Address.DEFAULT_PRIVACY)).isNull();
+    assertThat(reg.get(ONCHAIN_PRIVACY)).isInstanceOf(OnChainPrivacyPrecompiledContract.class);
+    assertThat(reg.get(DEFAULT_PRIVACY)).isNull();
   }
 
   @Test
@@ -74,7 +74,7 @@ public class MainnetPrecompiledContractRegistriesTest {
     verify(privacyParameters).isEnabled();
     verifyNoMoreInteractions(privacyParameters);
 
-    assertThat(reg.get(Address.ONCHAIN_PRIVACY)).isNull();
-    assertThat(reg.get(Address.DEFAULT_PRIVACY)).isNull();
+    assertThat(reg.get(ONCHAIN_PRIVACY)).isNull();
+    assertThat(reg.get(DEFAULT_PRIVACY)).isNull();
   }
 }

@@ -15,6 +15,8 @@
 package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
@@ -72,8 +74,7 @@ public class PrivacyTest {
   public void defaultPrivacy() throws IOException, URISyntaxException {
     final BesuController besuController = setUpControllerWithPrivacyEnabled(false);
 
-    final PrecompiledContract precompiledContract =
-        getPrecompile(besuController, Address.DEFAULT_PRIVACY);
+    final PrecompiledContract precompiledContract = getPrecompile(besuController, DEFAULT_PRIVACY);
 
     assertThat(precompiledContract.getName()).isEqualTo("Privacy");
   }
@@ -83,7 +84,7 @@ public class PrivacyTest {
     final BesuController besuController = setUpControllerWithPrivacyEnabled(true);
 
     final PrecompiledContract onchainPrecompiledContract =
-        getPrecompile(besuController, Address.ONCHAIN_PRIVACY);
+        getPrecompile(besuController, ONCHAIN_PRIVACY);
 
     assertThat(onchainPrecompiledContract.getName()).isEqualTo("OnChainPrivacy");
   }

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.CAN_EXECUTE_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
@@ -215,7 +216,7 @@ public class OnchainPrivacyGroupContract {
                 : 0)
         .gasPrice(Wei.of(1000))
         .gasLimit(3000000)
-        .to(Address.ONCHAIN_PRIVACY_PROXY)
+        .to(ONCHAIN_PRIVACY_PROXY)
         .sender(Address.ZERO)
         .value(Wei.ZERO)
         .payload(payload)
@@ -225,7 +226,7 @@ public class OnchainPrivacyGroupContract {
 
   private CallParameter buildCallParams(final Bytes methodCall) {
     return new CallParameter(
-        Address.ZERO, Address.ONCHAIN_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
+        Address.ZERO, ONCHAIN_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
   }
 
   private List<String> decodeList(final Bytes rlpEncodedList) {

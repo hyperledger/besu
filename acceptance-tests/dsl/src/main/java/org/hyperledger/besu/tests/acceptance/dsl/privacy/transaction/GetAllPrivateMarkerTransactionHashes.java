@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
 
-import org.hyperledger.besu.datatypes.Address;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
+
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
@@ -41,9 +42,7 @@ public class GetAllPrivateMarkerTransactionHashes implements Transaction<List<St
             .getTransactions()
             .forEach(
                 t -> {
-                  if (((EthBlock.TransactionObject) t)
-                      .getTo()
-                      .equals(Address.DEFAULT_PRIVACY.toString())) {
+                  if (((EthBlock.TransactionObject) t).getTo().equals(DEFAULT_PRIVACY.toString())) {
                     toReturn.add(((EthBlock.TransactionObject) t).getHash());
                   }
                 });

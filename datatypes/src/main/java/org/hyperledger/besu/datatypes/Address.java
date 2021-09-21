@@ -51,17 +51,6 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   public static final Address BLS12_MAP_FP_TO_G1 = Address.precompiled(0x11);
   public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x12);
 
-  // Last address that can be generated for a pre-compiled contract
-  public static final Integer PRIVACY = Byte.MAX_VALUE - 1;
-  public static final Address DEFAULT_PRIVACY = Address.precompiled(PRIVACY);
-  public static final Address ONCHAIN_PRIVACY = Address.precompiled(PRIVACY - 1);
-
-  // Onchain privacy management contracts (injected in private state)
-  public static final Address ONCHAIN_PRIVACY_PROXY = Address.precompiled(PRIVACY - 2);
-  public static final Address DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT = Address.precompiled(PRIVACY - 3);
-
-  public static final Address PLUGIN_PRIVACY = Address.precompiled(PRIVACY - 4);
-
   public static final Address ZERO = Address.fromHexString("0x0");
 
   protected Address(final Bytes bytes) {

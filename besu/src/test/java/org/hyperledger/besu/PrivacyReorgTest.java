@@ -15,6 +15,7 @@
 package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -26,7 +27,6 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
@@ -461,7 +461,7 @@ public class PrivacyReorgTest {
         .gasPrice(Wei.of(1000))
         .nonce(0)
         .payload(payload)
-        .to(Address.DEFAULT_PRIVACY)
+        .to(DEFAULT_PRIVACY)
         .value(Wei.ZERO)
         .signAndBuild(KEY_PAIR);
   }

@@ -15,8 +15,10 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -312,19 +314,17 @@ public class ProtocolSpecBuilder {
 
       if (privacyParameters.isPrivacyPluginEnabled()) {
         final PrivacyPluginPrecompiledContract privacyPluginPrecompiledContract =
-            (PrivacyPluginPrecompiledContract)
-                precompileContractRegistry.get(Address.PLUGIN_PRIVACY);
+            (PrivacyPluginPrecompiledContract) precompileContractRegistry.get(PLUGIN_PRIVACY);
         privacyPluginPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
         final OnChainPrivacyPrecompiledContract onChainPrivacyPrecompiledContract =
-            (OnChainPrivacyPrecompiledContract)
-                precompileContractRegistry.get(Address.ONCHAIN_PRIVACY);
+            (OnChainPrivacyPrecompiledContract) precompileContractRegistry.get(ONCHAIN_PRIVACY);
         onChainPrivacyPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else {
         final PrivacyPrecompiledContract privacyPrecompiledContract =
-            (PrivacyPrecompiledContract) precompileContractRegistry.get(Address.DEFAULT_PRIVACY);
+            (PrivacyPrecompiledContract) precompileContractRegistry.get(DEFAULT_PRIVACY);
         privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
       }
 
