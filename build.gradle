@@ -632,6 +632,11 @@ task distDocker {
       executable "sh"
       args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:${dockerBuildVersion}'"
     }
+    // create a static tag for the benchmark target
+    exec {
+      executable "sh"
+      args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:benchmark'"
+    }
   }
 }
 
