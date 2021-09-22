@@ -18,33 +18,14 @@ package org.hyperledger.besu.ethereum.core.contract;
 import org.hyperledger.besu.datatypes.Hash;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.immutables.value.Value;
 
 /** key for use by the CodeCache */
-public class CodeHash {
+@Value.Immutable(builder = false)
+public abstract class CodeHash {
+  @Value.Parameter
+  public abstract Hash codeHash();
 
-  private final Hash codeHash;
-  private final Bytes contract;
-
-  public CodeHash(final Hash addressHash, final Bytes contract) {
-    this.contract = contract;
-    this.codeHash = addressHash;
-  }
-
-  public Bytes getContract() {
-    return contract;
-  }
-
-  @Override
-  public int hashCode() {
-    return codeHash.toBigInteger().hashCode();
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-
-    if (o == null || getClass() != o.getClass()) return false;
-    CodeHash that = (CodeHash) o;
-    if (this.contract == that.contract) return true;
-    return this.codeHash.equals(that.codeHash);
-  }
+  @Value.Parameter
+  public abstract Bytes contract();
 }

@@ -19,9 +19,9 @@ import org.hyperledger.besu.ethereum.vm.Code;
 
 import com.github.benmanes.caffeine.cache.CacheLoader;
 
-public class CodeLoader implements CacheLoader<CodeHash, Code> {
+public class CodeLoader implements CacheLoader<ImmutableCodeHash, Code> {
   @Override
-  public Code load(final CodeHash key) {
-    return new Code(key.getContract());
+  public Code load(final ImmutableCodeHash key) {
+    return new Code(key.contract());
   }
 }

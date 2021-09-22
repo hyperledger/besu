@@ -32,7 +32,7 @@ public class CodeCacheTest {
     CodeScale scale = new CodeScale();
     Bytes32 address = Bytes32.fromHexString("0xB0B0FACE");
     int weight =
-        scale.weigh(new CodeHash(Hash.hash(address), contractCode), new Code(contractCode));
+        scale.weigh(ImmutableCodeHash.of(Hash.hash(address), contractCode), new Code(contractCode));
     assertThat(weight).isEqualTo(4);
   }
 
@@ -41,9 +41,9 @@ public class CodeCacheTest {
     Bytes contractCode = Bytes.fromHexString("0xDEADBEEF");
     CodeLoader loader = new CodeLoader();
     Bytes32 address = Bytes32.fromHexString("0xB0B0FACE");
-    CodeHash key = new CodeHash(Hash.hash(address), contractCode);
+    ImmutableCodeHash key = ImmutableCodeHash.of(Hash.hash(address), contractCode);
     Code loaded = loader.load(key);
     assertThat(loaded).isNotNull();
-    assertThat(loaded.getBytes()).isEqualTo(key.getContract());
+    assertThat(loaded.getBytes()).isEqualTo(key.contract());
   }
 }
