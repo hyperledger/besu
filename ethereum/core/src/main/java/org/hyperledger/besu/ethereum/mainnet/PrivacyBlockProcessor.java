@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.datatypes.Address;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
@@ -160,7 +161,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
 
   private boolean onChainAddToGroupPrivateMarkerTransactions(final Transaction t) {
     return t.getTo().isPresent()
-        && t.getTo().equals(Optional.of(Address.ONCHAIN_PRIVACY))
+        && t.getTo().equals(Optional.of(ONCHAIN_PRIVACY))
         && t.getPayload().size() == 64;
   }
 

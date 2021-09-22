@@ -16,9 +16,9 @@ package org.hyperledger.besu.tests.web3j.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
 import static org.junit.runners.Parameterized.Parameters;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
@@ -412,7 +412,7 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
         new PrivateTransactionReceipt(
             null,
             alice.getAddress().toHexString(),
-            Address.ONCHAIN_PRIVACY_PROXY.toHexString(),
+            ONCHAIN_PRIVACY_PROXY.toHexString(),
             "0x",
             Collections.emptyList(),
             null,
