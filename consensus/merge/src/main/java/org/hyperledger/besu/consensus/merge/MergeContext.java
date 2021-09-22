@@ -22,7 +22,11 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class MergeContext {
+  private static final Logger LOG = LogManager.getLogger();
 
   // TODO: configure static terminal total difficulty,
   //      a value of 0 means we will be unable to sync PoW blocks
@@ -63,7 +67,24 @@ public class MergeContext {
   }
 
   public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
-    candidateBlock.get().updateForkChoice(headBlockHash, finalizedBlockHash);
+    BlockHeader newFinalized =
+        candidateBlock.get().updateForkChoice(headBlockHash, finalizedBlockHash);
+    Optional.ofNullable(lastFinalized.get())
+        .ifPresentOrElse(
+            last -> {
+              if (last.getNumber() < newFinalized.getNumber()) {
+                lastFinalized.set(newFinalized);
+              } else {
+                LOG.error(
+                    "Attempted to set finalized head {}:{} earlier tha existing finalized head {}:{}",
+                    newFinalized.getHash(),
+                    newFinalized.getNumber(),
+                    last.getHash(),
+                    last.getNumber());
+              }
+            },
+            // no existing finalized block, set it:
+            () -> lastFinalized.set(newFinalized));
   }
 
   public Optional<BlockHeader> getFinalized() {

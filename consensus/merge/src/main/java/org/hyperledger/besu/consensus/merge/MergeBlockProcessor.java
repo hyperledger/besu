@@ -17,8 +17,9 @@ package org.hyperledger.besu.consensus.merge;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
@@ -80,14 +81,14 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
    * This is a post-merge specific method to execute a block using the BlockProcessor, but not
    * commit.
    *
-   * @param blockchain the Blockchain
+   * @param blockchain a MutableBlockchain
    * @param worldState a MutableWorldState
    * @param blockHeader blockHeader to execute
    * @param transactions list of Transaction to execute
    * @return CandidateBlock response.
    */
   public CandidateBlock executeBlock(
-      final Blockchain blockchain,
+      final MutableBlockchain blockchain,
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
       final List<Transaction> transactions) {
@@ -109,21 +110,24 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
             // fail any block that takes longer than a slot to execute:
             .orTimeout(12000, TimeUnit.MILLISECONDS);
 
-    return new CandidateBlock(blockHeader, result, candidateUpdater);
+    return new CandidateBlock(blockHeader, result, candidateUpdater, blockchain);
   }
 
   public static class CandidateBlock {
     final BlockHeader blockHeader;
     final CompletableFuture<? extends BlockProcessor.Result> result;
     final CandidateUpdateWrapper candidateUpdateWrapper;
+    final MutableBlockchain blockchain;
 
     CandidateBlock(
         final BlockHeader blockHeader,
         final CompletableFuture<? extends BlockProcessor.Result> result,
-        final CandidateUpdateWrapper candidateUpdater) {
+        final CandidateUpdateWrapper candidateUpdater,
+        final MutableBlockchain blockchain) {
       this.blockHeader = blockHeader;
       this.result = result;
       this.candidateUpdateWrapper = candidateUpdater;
+      this.blockchain = blockchain;
     }
 
     public CompletableFuture<? extends BlockProcessor.Result> getResult() {
@@ -139,13 +143,39 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
     }
 
     /**
-     * update the blockchain head and latest finalized block.
+     * update the blockchain head and fetch the specified new finalized block. We do both atomically
+     * to ensure we do not get head and finalized on different forks.
      *
      * @return BlockHeader of finalized block on success.
      */
     public BlockHeader updateForkChoice(final Hash headBlockhash, final Hash finalizedBlockHash) {
-      // TODO: left off with setting head
-      return null;
+
+      // first ensure we have the new finalized block:
+      Block newFinalized = blockchain.getBlockByHash(finalizedBlockHash).orElseThrow();
+
+      // ensure we have headBlock:
+      Block newHead =
+          blockchain
+              .getBlockByHash(headBlockhash)
+              .orElseGet(
+                  () -> {
+                    Optional<Block> flushedBlock = Optional.empty();
+                    // if new head is candidateBlock, flush and do not wait on consensusValidated:
+                    if (getBlockhash().equals(headBlockhash)) {
+                      candidateUpdateWrapper.flush();
+                      flushedBlock = blockchain.getBlockByHash(headBlockhash);
+                    }
+                    // if we still can't find it, throw.
+                    return flushedBlock.orElseThrow();
+                  });
+
+      // TODO: ensure head is a descendant of finalized
+
+      // set the new head
+      blockchain.rewindToBlock(newHead.getHash());
+
+      // return the finalized block's header
+      return newFinalized.getHeader();
     }
   }
 
@@ -234,7 +264,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
       }
 
       if (shouldCommit) {
-        wrappedUpdater.commit();
+        flush();
         LOG.trace("Committed blockhash {}: consensus validated}", blockhash.toShortHexString());
       } else {
         LOG.trace(
@@ -243,6 +273,10 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
             blockExecuted.get(),
             consensusValidated.get());
       }
+    }
+
+    void flush() {
+      wrappedUpdater.commit();
     }
 
     @Override
