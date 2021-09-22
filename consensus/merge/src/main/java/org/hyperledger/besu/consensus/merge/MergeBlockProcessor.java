@@ -146,6 +146,8 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
      * update the blockchain head and fetch the specified new finalized block. We do both atomically
      * to ensure we do not get head and finalized on different forks.
      *
+     * @param headBlockhash hash of new head block.
+     * @param finalizedBlockHash hash of new finalized block.
      * @return BlockHeader of finalized block on success.
      */
     public BlockHeader updateForkChoice(final Hash headBlockhash, final Hash finalizedBlockHash) {
