@@ -238,7 +238,7 @@ public class EvmToolCommand implements Runnable {
                 .value(ethValue)
                 .apparentValue(ethValue)
                 .code(new Code(codeHexString))
-                .blockHeader(blockHeader)
+                .blockValues(blockHeader)
                 .depth(0)
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())

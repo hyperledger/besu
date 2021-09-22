@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -23,7 +24,6 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Optional;
@@ -87,7 +87,7 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
         disposablePrivateState,
         privateWorldStateUpdater,
         privacyGroupId,
-        messageFrame.getBlockHeader().getNumber());
+        messageFrame.getBlockValues().getNumber());
 
     final TransactionProcessingResult result =
         processPrivateTransaction(

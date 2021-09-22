@@ -31,7 +31,7 @@ public class GasLimitOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final Gas gasLimit = Gas.of(frame.getBlockHeader().getGasLimit());
+    final Gas gasLimit = Gas.of(frame.getBlockValues().getGasLimit());
     final UInt256 value = UInt256.fromBytes(Bytes32.leftPad(Bytes.of(gasLimit.getBytes())));
     frame.pushStackItem(value);
 

@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSA
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -36,12 +37,12 @@ import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -97,7 +98,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final BlockHeader blockHeader,
+      final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
@@ -136,7 +137,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final BlockHeader blockHeader,
+      final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final BlockHashLookup blockHashLookup,
@@ -172,7 +173,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final BlockHeader blockHeader,
+      final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
@@ -208,7 +209,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final BlockHeader blockHeader,
+      final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
@@ -250,7 +251,7 @@ public class MainnetTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final Blockchain blockchain,
       final WorldUpdater worldState,
-      final BlockHeader blockHeader,
+      final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
@@ -282,7 +283,7 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
-      final var senderMutableAccount = sender.getMutable();
+      final MutableAccount senderMutableAccount = sender.getMutable();
       final long previousNonce = senderMutableAccount.incrementNonce();
       final Wei transactionGasPrice =
           feeMarket.getTransactionPriceCalculator().price(transaction, blockHeader.getBaseFee());
@@ -330,7 +331,7 @@ public class MainnetTransactionProcessor {
 
       final WorldUpdater worldUpdater = worldState.updater();
       final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-      final var contextVariablesBuilder =
+      final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
           ImmutableMap.<String, Object>builder()
               .put(KEY_IS_PERSISTING_PRIVATE_STATE, isPersistingPrivateState)
               .put(KEY_TRANSACTION, transaction)
@@ -350,7 +351,7 @@ public class MainnetTransactionProcessor {
               .sender(senderAddress)
               .value(transaction.getValue())
               .apparentValue(transaction.getValue())
-              .blockHeader(blockHeader)
+              .blockValues(blockHeader)
               .depth(0)
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)

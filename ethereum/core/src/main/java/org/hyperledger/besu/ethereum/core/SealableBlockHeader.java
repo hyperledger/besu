@@ -66,7 +66,6 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    *
    * @return the block ommers list hash
    */
-  @Override
   public Hash getOmmersHash() {
     return ommersHash;
   }
@@ -76,7 +75,6 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    *
    * @return the block world state root hash
    */
-  @Override
   public Hash getStateRoot() {
     return stateRoot;
   }
@@ -86,7 +84,6 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    *
    * @return the block transaction root hash
    */
-  @Override
   public Hash getTransactionsRoot() {
     return transactionsRoot;
   }
@@ -96,7 +93,6 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    *
    * @return the block transaction receipt root hash
    */
-  @Override
   public Hash getReceiptsRoot() {
     return receiptsRoot;
   }
@@ -106,7 +102,6 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    *
    * @return the block logs bloom filter
    */
-  @Override
   public LogsBloomFilter getLogsBloom() {
     return logsBloom;
   }
@@ -116,7 +111,6 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    *
    * @return the total gas consumed by the executing the block
    */
-  @Override
   public long getGasUsed() {
     return gasUsed;
   }
@@ -126,7 +120,6 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    *
    * @return the raw bytes of the extra data field
    */
-  @Override
   public Bytes getExtraData() {
     return extraData;
   }

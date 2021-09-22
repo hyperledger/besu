@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayDeque;
@@ -43,7 +42,7 @@ public class MessageFrameTestFixture {
   private MessageFrame.Type type = MessageFrame.Type.MESSAGE_CALL;
   private Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
   private Optional<Blockchain> blockchain = Optional.empty();
-  private Optional<WorldUpdater> worldState = Optional.empty();
+  private Optional<WorldUpdater> worldUpdater = Optional.empty();
   private Gas initialGas = Gas.MAX_VALUE;
   private Address address = DEFAUT_ADDRESS;
   private Address sender = DEFAUT_ADDRESS;
@@ -81,12 +80,12 @@ public class MessageFrameTestFixture {
   }
 
   public MessageFrameTestFixture worldUpdater(final WorldUpdater worldUpdater) {
-    this.worldState = Optional.of(worldUpdater);
+    this.worldUpdater = Optional.of(worldUpdater);
     return this;
   }
 
   public MessageFrameTestFixture worldUpdater(final MutableWorldState worldState) {
-    this.worldState = Optional.of(worldState.updater());
+    this.worldUpdater = Optional.of(worldState.updater());
     return this;
   }
 
@@ -163,7 +162,7 @@ public class MessageFrameTestFixture {
         MessageFrame.builder()
             .type(type)
             .messageFrameStack(messageFrameStack)
-            .worldUpdater(worldState.orElseGet(this::createDefaultWorldState))
+            .worldUpdater(worldUpdater.orElseGet(this::createDefaultWorldUpdater))
             .initialGas(initialGas)
             .address(address)
             .originator(originator)
@@ -174,7 +173,7 @@ public class MessageFrameTestFixture {
             .apparentValue(value)
             .contract(contract)
             .code(code)
-            .blockHeader(blockHeader)
+            .blockValues(blockHeader)
             .depth(depth)
             .completer(c -> {})
             .miningBeneficiary(blockHeader.getCoinbase())
@@ -186,7 +185,7 @@ public class MessageFrameTestFixture {
     return frame;
   }
 
-  private WorldUpdater createDefaultWorldState() {
+  private WorldUpdater createDefaultWorldUpdater() {
     return getOrCreateExecutionContextTestFixture().getStateArchive().getMutable().updater();
   }
 

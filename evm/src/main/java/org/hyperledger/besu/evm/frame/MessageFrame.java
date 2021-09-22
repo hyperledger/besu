@@ -28,8 +28,6 @@ import org.hyperledger.besu.evm.internal.OperandStack;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.data.BlockHeader;
-import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -52,9 +50,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 /**
  * A container object for all of the state associated with a message.
  *
- * <p>A message corresponds to an interaction between two accounts. A {@link Transaction} spawns at
- * least one message when its processed. Messages can also spawn messages depending on the code
- * executed within a message.
+ * <p>A message corresponds to an interaction between two accounts. A Transaction spawns at least
+ * one message when its processed. Messages can also spawn messages depending on the code executed
+ * within a message.
  *
  * <p>Note that there is no specific Message object in the code base. Instead message executions
  * correspond to a {@code MessageFrame} and a specific AbstractMessageProcessor. Currently there are
@@ -227,7 +225,7 @@ public class MessageFrame {
   private final Wei value;
   private final Wei apparentValue;
   private final Code code;
-  private final BlockHeader blockHeader;
+  private final BlockValues blockValues;
   private final int depth;
   private final Deque<MessageFrame> messageFrameStack;
   private final Address miningBeneficiary;
@@ -261,7 +259,7 @@ public class MessageFrame {
       final Wei value,
       final Wei apparentValue,
       final Code code,
-      final BlockHeader blockHeader,
+      final BlockValues blockValues,
       final int depth,
       final boolean isStatic,
       final Consumer<MessageFrame> completer,
@@ -296,7 +294,7 @@ public class MessageFrame {
     this.value = value;
     this.apparentValue = apparentValue;
     this.code = code;
-    this.blockHeader = blockHeader;
+    this.blockValues = blockValues;
     this.depth = depth;
     this.state = State.NOT_STARTED;
     this.isStatic = isStatic;
@@ -972,8 +970,8 @@ public class MessageFrame {
    *
    * @return the current block header
    */
-  public BlockHeader getBlockHeader() {
-    return blockHeader;
+  public BlockValues getBlockValues() {
+    return blockValues;
   }
 
   /** Performs updates based on the message frame's execution. */
@@ -1074,7 +1072,7 @@ public class MessageFrame {
     private Wei value;
     private Wei apparentValue;
     private Code code;
-    private BlockHeader blockHeader;
+    private BlockValues blockValues;
     private int depth = -1;
     private int maxStackSize = DEFAULT_MAX_STACK_SIZE;
     private boolean isStatic = false;
@@ -1151,8 +1149,8 @@ public class MessageFrame {
       return this;
     }
 
-    public Builder blockHeader(final BlockHeader blockHeader) {
-      this.blockHeader = blockHeader;
+    public Builder blockValues(final BlockValues blockValues) {
+      this.blockValues = blockValues;
       return this;
     }
 
@@ -1220,7 +1218,7 @@ public class MessageFrame {
       checkState(value != null, "Missing message frame value");
       checkState(apparentValue != null, "Missing message frame apparent value");
       checkState(code != null, "Missing message frame code");
-      checkState(blockHeader != null, "Missing message frame block header");
+      checkState(blockValues != null, "Missing message frame block header");
       checkState(depth > -1, "Missing message frame depth");
       checkState(completer != null, "Missing message frame completer");
       checkState(miningBeneficiary != null, "Missing mining beneficiary");
@@ -1244,7 +1242,7 @@ public class MessageFrame {
           value,
           apparentValue,
           code,
-          blockHeader,
+          blockValues,
           depth,
           isStatic,
           completer,

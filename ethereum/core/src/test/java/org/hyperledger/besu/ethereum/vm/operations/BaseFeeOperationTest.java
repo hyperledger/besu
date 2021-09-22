@@ -86,7 +86,7 @@ public class BaseFeeOperationTest {
     when(frame.getRemainingGas()).thenReturn(initialGas);
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(baseFee);
-    when(frame.getBlockHeader()).thenReturn(blockHeader);
+    when(frame.getBlockValues()).thenReturn(blockHeader);
     return frame;
   }
 }

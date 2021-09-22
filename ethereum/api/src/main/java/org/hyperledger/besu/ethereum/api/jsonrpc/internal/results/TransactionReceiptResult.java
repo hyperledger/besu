@@ -78,7 +78,7 @@ public abstract class TransactionReceiptResult {
 
     this.logs =
         logReceipts(
-            receipt.getLogs(),
+            receipt.getLogsList(),
             receiptWithMetadata.getBlockNumber(),
             txn.getHash(),
             receiptWithMetadata.getBlockHash(),

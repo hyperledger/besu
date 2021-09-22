@@ -13,20 +13,18 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.mainnet.precompiles;
+package org.hyperledger.besu.evm.precompile;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.mainnet.MainnetPrecompiledContractRegistries;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.google.common.io.CharStreams;
@@ -35,13 +33,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 @RunWith(Parameterized.class)
-public class BLS12G2MulPrecompiledContractTest extends AbstractPrecompiledContractTest {
+public class BLS12G1AddPrecompiledContractTest {
 
-  public BLS12G2MulPrecompiledContractTest() {
-    super(MainnetPrecompiledContractRegistries::bls12, Address.BLS12_G2MUL);
-  }
+  BLS12G1AddPrecompiledContract contract = new BLS12G1AddPrecompiledContract();
 
   private final MessageFrame messageFrame = mock(MessageFrame.class);
 
@@ -49,7 +46,9 @@ public class BLS12G2MulPrecompiledContractTest extends AbstractPrecompiledContra
   public static Iterable<String[]> parameters() throws IOException {
     return CharStreams.readLines(
             new InputStreamReader(
-                BLS12G2MulPrecompiledContractTest.class.getResourceAsStream("g2_mul.csv"), UTF_8))
+                Objects.requireNonNull(
+                    BLS12G1AddPrecompiledContractTest.class.getResourceAsStream("g1_add.csv")),
+                UTF_8))
         .stream()
         .map(line -> line.split(",", 4))
         .collect(Collectors.toList());
@@ -79,7 +78,7 @@ public class BLS12G2MulPrecompiledContractTest extends AbstractPrecompiledContra
     final Bytes actualComputation = contract.compute(input, messageFrame);
     if (actualComputation == null) {
       final ArgumentCaptor<Bytes> revertReason = ArgumentCaptor.forClass(Bytes.class);
-      verify(messageFrame).setRevertReason(revertReason.capture());
+      Mockito.verify(messageFrame).setRevertReason(revertReason.capture());
       assertThat(new String(revertReason.getValue().toArrayUnsafe(), UTF_8)).isEqualTo(notes);
 
       assertThat(expectedComputation.size()).isZero();

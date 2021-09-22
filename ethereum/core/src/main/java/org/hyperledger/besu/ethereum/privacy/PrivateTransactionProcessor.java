@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSA
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -28,12 +29,13 @@ import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateU
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -85,7 +87,7 @@ public class PrivateTransactionProcessor {
   public TransactionProcessingResult processTransaction(
       final WorldUpdater publicWorldState,
       final WorldUpdater privateWorldState,
-      final BlockHeader blockHeader,
+      final ProcessableBlockHeader blockHeader,
       final Hash pmtHash,
       final PrivateTransaction transaction,
       final Address miningBeneficiary,
@@ -96,8 +98,8 @@ public class PrivateTransactionProcessor {
       LOG.trace("Starting private execution of {}", transaction);
 
       final Address senderAddress = transaction.getSender();
-      final var maybePrivateSender = privateWorldState.getAccount(senderAddress);
-      final var sender =
+      final EvmAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
+      final MutableAccount sender =
           maybePrivateSender != null
               ? maybePrivateSender.getMutable()
               : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO).getMutable();
@@ -129,7 +131,7 @@ public class PrivateTransactionProcessor {
               .sender(senderAddress)
               .value(transaction.getValue())
               .apparentValue(transaction.getValue())
-              .blockHeader(blockHeader)
+              .blockValues(blockHeader)
               .depth(0)
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)

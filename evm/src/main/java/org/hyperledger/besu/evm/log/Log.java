@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
  * A log entry is a tuple of a logger’s address (the address of the contract that added the logs), a
  * series of 32-bytes log topics, and some number of bytes of data.
  */
-public class Log implements org.hyperledger.besu.plugin.data.Log {
+public class Log {
 
   private final Address logger;
   private final Bytes data;
@@ -74,17 +74,14 @@ public class Log implements org.hyperledger.besu.plugin.data.Log {
     return new Log(logger, data, topics);
   }
 
-  @Override
   public Address getLogger() {
     return logger;
   }
 
-  @Override
   public Bytes getData() {
     return data;
   }
 
-  @Override
   public List<LogTopic> getTopics() {
     return topics;
   }

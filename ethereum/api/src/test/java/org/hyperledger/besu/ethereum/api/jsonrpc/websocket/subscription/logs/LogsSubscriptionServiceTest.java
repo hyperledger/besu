@@ -91,7 +91,7 @@ public class LogsSubscriptionServiceTest {
 
     final int txIndex = 1;
     final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logIndex);
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
@@ -116,7 +116,7 @@ public class LogsSubscriptionServiceTest {
 
     final int txIndex = 1;
     final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logIndex);
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
@@ -152,7 +152,7 @@ public class LogsSubscriptionServiceTest {
 
     final int txIndex = 1;
     final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logIndex);
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
@@ -241,7 +241,7 @@ public class LogsSubscriptionServiceTest {
 
     final int txIndex = 1;
     final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logIndex);
 
     final List<LogsSubscription> subscriptions =
         Stream.generate(() -> createSubscription(targetLog.getLogger()))
@@ -335,7 +335,7 @@ public class LogsSubscriptionServiceTest {
       final int logIndex,
       final boolean isRemoved) {
     final Transaction expectedTransaction = block.getBody().getTransactions().get(txIndex);
-    final Log expectedLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final Log expectedLog = receipts.get(txIndex).getLogsList().get(logIndex);
 
     assertThat(result.getLogIndex()).isEqualTo(Quantity.create(logIndex));
     assertThat(result.getTransactionIndex()).isEqualTo(Quantity.create(txIndex));
@@ -380,7 +380,7 @@ public class LogsSubscriptionServiceTest {
       final TransactionReceipt receipt = gen.receipt(logsSupplier.get());
 
       receipts.add(receipt);
-      receipt.getLogs().forEach(logs::add);
+      receipt.getLogsList().forEach(logs::add);
       blockOptions.addTransaction(tx);
     }
 

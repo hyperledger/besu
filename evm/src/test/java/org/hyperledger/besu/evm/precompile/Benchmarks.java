@@ -14,7 +14,7 @@
  *
  */
 
-package org.hyperledger.besu.ethereum.mainnet.precompiles;
+package org.hyperledger.besu.evm.precompile;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
@@ -28,29 +28,12 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
-import org.hyperledger.besu.evm.precompile.AltBN128AddPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.AltBN128MulPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.AltBN128PairingPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12G1AddPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12G1MulPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12G1MultiExpPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12G2AddPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12G2MulPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12G2MultiExpPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12MapFp2ToG2PrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12MapFpToG1PrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BLS12PairingPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
-import org.hyperledger.besu.evm.precompile.PrecompiledContract;
-import org.hyperledger.besu.evm.precompile.RIPEMD160PrecompiledContract;
-import org.hyperledger.besu.evm.precompile.SHA256PrecompiledContract;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
@@ -87,8 +70,8 @@ public class Benchmarks {
           .depth(1)
           .completer(__ -> {})
           .address(Address.ZERO)
-          .blockHashLookup(mock(BlockHashLookup.class))
-          .blockHeader(mock(ProcessableBlockHeader.class))
+          .blockHashLookup(n -> null)
+          .blockValues(mock(BlockValues.class))
           .gasPrice(Wei.ZERO)
           .messageFrameStack(new ArrayDeque<>())
           .miningBeneficiary(Address.ZERO)
