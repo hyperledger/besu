@@ -33,7 +33,6 @@ dependencies {
   implementation project(':crypto')
   implementation project(':datatypes')
   implementation project(':ethereum:rlp')
-  implementation project(':plugin-api')
 
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
 
@@ -45,6 +44,7 @@ dependencies {
   testImplementation 'info.picocli:picocli'
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-core'
 }
 
 publishing {

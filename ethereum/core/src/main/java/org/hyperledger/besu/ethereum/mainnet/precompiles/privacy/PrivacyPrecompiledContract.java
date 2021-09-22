@@ -27,7 +27,9 @@ import org.hyperledger.besu.enclave.EnclaveIOException;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -39,11 +41,11 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.Hash;
 
@@ -169,7 +171,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         disposablePrivateState,
         privateWorldStateUpdater,
         privacyGroupId,
-        messageFrame.getBlockHeader().getNumber());
+        messageFrame.getBlockValues().getNumber());
 
     final TransactionProcessingResult result =
         processPrivateTransaction(
@@ -240,7 +242,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     return privateTransactionProcessor.processTransaction(
         messageFrame.getWorldUpdater(),
         privateWorldStateUpdater,
-        messageFrame.getBlockHeader(),
+        (ProcessableBlockHeader) messageFrame.getBlockValues(),
         messageFrame.getContextVariable(KEY_TRANSACTION_HASH),
         privateTransaction,
         messageFrame.getMiningBeneficiary(),
@@ -276,7 +278,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
   boolean isMining(final MessageFrame messageFrame) {
     boolean isMining = false;
-    final var currentBlockHeader = messageFrame.getBlockHeader();
+    final BlockValues currentBlockHeader = messageFrame.getBlockValues();
     if (!BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())) {
       if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
         throw new IllegalArgumentException(

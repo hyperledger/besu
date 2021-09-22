@@ -21,12 +21,12 @@ import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 import org.hyperledger.besu.evm.worldstate.WorldState;
-import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -194,10 +194,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
           BlockHeader targetHeader = blockchain.getBlockHeader(blockHash).get();
           BlockHeader persistedHeader = maybePersistedHeader.get();
           // roll back from persisted to even with target
-          Hash persistedBlockHAsh = fromPlugin(persistedHeader.getBlockHash());
+          Hash persistedBlockHash = fromPlugin(persistedHeader.getBlockHash());
           while (persistedHeader.getNumber() > targetHeader.getNumber()) {
-            LOG.debug("Rollback {}", persistedBlockHAsh);
-            rollBacks.add(getTrieLogLayer(persistedBlockHAsh).get());
+            LOG.debug("Rollback {}", persistedBlockHash);
+            rollBacks.add(getTrieLogLayer(persistedBlockHash).get());
             persistedHeader =
                 blockchain.getBlockHeader(fromPlugin(persistedHeader.getParentHash())).get();
           }
@@ -212,14 +212,14 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
           }
 
           // roll back in tandem until we hit a shared state
-          while (!persistedBlockHAsh.equals(targetBlockHash)) {
-            LOG.debug("Paired Rollback {}", persistedBlockHAsh);
+          while (!persistedBlockHash.equals(targetBlockHash)) {
+            LOG.debug("Paired Rollback {}", persistedBlockHash);
             LOG.debug("Paired Rollforward {}", targetBlockHash);
             rollForwards.add(getTrieLogLayer(targetBlockHash).get());
             targetHeader =
                 blockchain.getBlockHeader(fromPlugin(targetHeader.getParentHash())).get();
 
-            rollBacks.add(getTrieLogLayer(persistedBlockHAsh).get());
+            rollBacks.add(getTrieLogLayer(persistedBlockHash).get());
             persistedHeader =
                 blockchain.getBlockHeader(fromPlugin(persistedHeader.getParentHash())).get();
           }

@@ -17,7 +17,7 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 

@@ -13,22 +13,22 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.mainnet.precompiles;
+package org.hyperledger.besu.evm.precompile;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.mainnet.MainnetPrecompiledContractRegistries;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Streams;
 import com.google.common.io.CharStreams;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -37,21 +37,29 @@ import org.junit.runners.Parameterized;
 import org.mockito.ArgumentCaptor;
 
 @RunWith(Parameterized.class)
-public class BLS12G2MultiExpPrecompiledContractTest extends AbstractPrecompiledContractTest {
+public class BLS12PairingPrecompiledContractTest {
 
-  public BLS12G2MultiExpPrecompiledContractTest() {
-    super(MainnetPrecompiledContractRegistries::bls12, Address.BLS12_G2MULTIEXP);
-  }
+  BLS12PairingPrecompiledContract contract = new BLS12PairingPrecompiledContract();
 
   private final MessageFrame messageFrame = mock(MessageFrame.class);
 
   @Parameterized.Parameters
   public static Iterable<String[]> parameters() throws IOException {
-    return CharStreams.readLines(
-            new InputStreamReader(
-                BLS12G2MultiExpPrecompiledContractTest.class.getResourceAsStream("g2_multiexp.csv"),
-                UTF_8))
-        .stream()
+    return Streams.concat(
+            CharStreams.readLines(
+                new InputStreamReader(
+                    Objects.requireNonNull(
+                        BLS12PairingPrecompiledContractTest.class.getResourceAsStream(
+                            "pairing.csv")),
+                    UTF_8))
+                .stream(),
+            CharStreams.readLines(
+                new InputStreamReader(
+                    Objects.requireNonNull(
+                        BLS12PairingPrecompiledContractTest.class.getResourceAsStream(
+                            "invalid_subgroup_for_pairing.csv")),
+                    UTF_8))
+                .stream())
         .map(line -> line.split(",", 4))
         .collect(Collectors.toList());
   }

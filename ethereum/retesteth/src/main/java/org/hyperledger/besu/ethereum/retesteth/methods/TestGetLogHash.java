@@ -55,6 +55,6 @@ public class TestGetLogHash implements JsonRpcMethod {
         RLP.encode(
             out ->
                 out.writeList(
-                    transactionReceiptWithMetadata.getReceipt().getLogs(), Log::writeTo)));
+                    transactionReceiptWithMetadata.getReceipt().getLogsList(), Log::writeTo)));
   }
 }

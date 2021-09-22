@@ -29,7 +29,7 @@ public class TimestampOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final long timestamp = frame.getBlockHeader().getTimestamp();
+    final long timestamp = frame.getBlockValues().getTimestamp();
     frame.pushStackItem(UInt256.valueOf(timestamp));
 
     return successResponse;

@@ -32,7 +32,6 @@ import com.google.common.base.Joiner;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-@SuppressWarnings("unused")
 public class StandardJsonTracer implements OperationTracer {
 
   private final PrintStream out;

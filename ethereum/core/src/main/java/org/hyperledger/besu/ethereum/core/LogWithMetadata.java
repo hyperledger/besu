@@ -66,7 +66,7 @@ public class LogWithMetadata extends Log
       final int transactionIndex,
       final boolean removed) {
     return generate(
-        receipt.getLogs(), number, blockHash, transactionHash, transactionIndex, removed);
+        receipt.getLogsList(), number, blockHash, transactionHash, transactionIndex, removed);
   }
 
   public static List<LogWithMetadata> generate(

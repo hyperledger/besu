@@ -16,13 +16,14 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.frame.BlockValues;
 
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
 /** A block header capable of being processed. */
-public class ProcessableBlockHeader implements org.hyperledger.besu.plugin.data.BlockHeader {
+public class ProcessableBlockHeader implements BlockValues {
 
   protected final Hash parentHash;
 
@@ -61,14 +62,8 @@ public class ProcessableBlockHeader implements org.hyperledger.besu.plugin.data.
    *
    * @return the block parent block hash
    */
-  @Override
   public Hash getParentHash() {
     return parentHash;
-  }
-
-  @Override
-  public Hash getOmmersHash() {
-    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
   }
 
   /**
@@ -76,29 +71,17 @@ public class ProcessableBlockHeader implements org.hyperledger.besu.plugin.data.
    *
    * @return the block coinbase address
    */
-  @Override
   public Address getCoinbase() {
     return coinbase;
   }
 
-  @Override
-  public Hash getStateRoot() {
-    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
-  }
-
-  @Override
-  public Hash getTransactionsRoot() {
-    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
-  }
-
-  @Override
-  public Hash getReceiptsRoot() {
-    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
-  }
-
-  @Override
-  public Bytes getLogsBloom() {
-    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
+  /**
+   * Returns the block difficulty.
+   *
+   * @return the block difficulty
+   */
+  public Difficulty getDifficulty() {
+    return difficulty;
   }
 
   /**
@@ -107,8 +90,8 @@ public class ProcessableBlockHeader implements org.hyperledger.besu.plugin.data.
    * @return the block difficulty
    */
   @Override
-  public Difficulty getDifficulty() {
-    return difficulty;
+  public Bytes getDifficultyBytes() {
+    return difficulty.getAsBytes32();
   }
 
   /**
@@ -131,11 +114,6 @@ public class ProcessableBlockHeader implements org.hyperledger.besu.plugin.data.
     return gasLimit;
   }
 
-  @Override
-  public long getGasUsed() {
-    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
-  }
-
   /**
    * Return the block timestamp.
    *
@@ -144,26 +122,6 @@ public class ProcessableBlockHeader implements org.hyperledger.besu.plugin.data.
   @Override
   public long getTimestamp() {
     return timestamp;
-  }
-
-  @Override
-  public Bytes getExtraData() {
-    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
-  }
-
-  @Override
-  public Hash getMixHash() {
-    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
-  }
-
-  @Override
-  public long getNonce() {
-    return 0;
-  }
-
-  @Override
-  public Hash getBlockHash() {
-    throw new UnsupportedOperationException("Not available in ProcessableBlockHeader");
   }
 
   /**

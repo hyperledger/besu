@@ -27,7 +27,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -51,7 +50,7 @@ public class TestCodeExecutor {
   public MessageFrame executeCode(
       final String code, final long gasLimit, final Consumer<MutableAccount> accountSetup) {
     final ProtocolSpec protocolSpec = fixture.getProtocolSchedule().getByBlockNumber(0);
-    final WorldUpdater worldState =
+    final WorldUpdater worldUpdater =
         createInitialWorldState(accountSetup, fixture.getStateArchive());
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
 
@@ -76,7 +75,7 @@ public class TestCodeExecutor {
         new MessageFrameTestFixture()
             .messageFrameStack(messageFrameStack)
             .blockchain(fixture.getBlockchain())
-            .worldUpdater(worldState)
+            .worldUpdater(worldUpdater)
             .initialGas(Gas.of(gasLimit))
             .address(SENDER_ADDRESS)
             .originator(SENDER_ADDRESS)

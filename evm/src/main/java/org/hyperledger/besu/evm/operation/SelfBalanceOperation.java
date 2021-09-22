@@ -33,7 +33,7 @@ public class SelfBalanceOperation extends AbstractFixedCostOperation {
     final Address accountAddress = frame.getRecipientAddress();
     final var account = frame.getWorldUpdater().get(accountAddress);
     frame.pushStackItem(
-        account == null ? UInt256.ZERO : UInt256.fromBytes(account.getBalance().getAsBytes32()));
+        account == null ? UInt256.ZERO : account.getBalance());
 
     return successResponse;
   }

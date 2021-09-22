@@ -69,7 +69,7 @@ public class BlockHashOperationBenchmark {
             .createMessageFrameBuilder()
             .blockHashLookup(
                 new BlockHashLookup(
-                    (ProcessableBlockHeader) frame.getBlockHeader(),
+                    (ProcessableBlockHeader) frame.getBlockValues(),
                     operationBenchmarkHelper.getBlockchain()))
             .build();
     cleanFrame.pushStackItem(UInt256.valueOf(blockNumber));

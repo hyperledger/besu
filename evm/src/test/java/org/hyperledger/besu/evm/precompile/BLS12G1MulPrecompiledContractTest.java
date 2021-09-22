@@ -13,20 +13,19 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.mainnet.precompiles;
+package org.hyperledger.besu.evm.precompile;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.mainnet.MainnetPrecompiledContractRegistries;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.google.common.io.CharStreams;
@@ -37,11 +36,9 @@ import org.junit.runners.Parameterized;
 import org.mockito.ArgumentCaptor;
 
 @RunWith(Parameterized.class)
-public class BLS12G2AddPrecompiledContractTest extends AbstractPrecompiledContractTest {
+public class BLS12G1MulPrecompiledContractTest {
 
-  public BLS12G2AddPrecompiledContractTest() {
-    super(MainnetPrecompiledContractRegistries::bls12, Address.BLS12_G2ADD);
-  }
+  BLS12G1MulPrecompiledContract contract = new BLS12G1MulPrecompiledContract();
 
   private final MessageFrame messageFrame = mock(MessageFrame.class);
 
@@ -49,7 +46,9 @@ public class BLS12G2AddPrecompiledContractTest extends AbstractPrecompiledContra
   public static Iterable<String[]> parameters() throws IOException {
     return CharStreams.readLines(
             new InputStreamReader(
-                BLS12G2AddPrecompiledContractTest.class.getResourceAsStream("g2_add.csv"), UTF_8))
+                Objects.requireNonNull(
+                    BLS12G1MulPrecompiledContractTest.class.getResourceAsStream("g1_mul.csv")),
+                UTF_8))
         .stream()
         .map(line -> line.split(",", 4))
         .collect(Collectors.toList());

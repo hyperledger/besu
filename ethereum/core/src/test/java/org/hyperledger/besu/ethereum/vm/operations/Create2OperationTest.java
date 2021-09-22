@@ -145,7 +145,7 @@ public class Create2OperationTest {
             .completer(__ -> {})
             .address(Address.fromHexString(sender))
             .blockHashLookup(mock(BlockHashLookup.class))
-            .blockHeader(mock(ProcessableBlockHeader.class))
+            .blockValues(mock(ProcessableBlockHeader.class))
             .gasPrice(Wei.ZERO)
             .messageFrameStack(new ArrayDeque<>())
             .miningBeneficiary(Address.ZERO)

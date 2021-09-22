@@ -11,24 +11,41 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.evm.operation;
+package org.hyperledger.besu.evm.toy;
 
-import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.frame.BlockValues;
 
-public class DifficultyOperation extends AbstractFixedCostOperation {
+import java.util.Optional;
 
-  public DifficultyOperation(final GasCalculator gasCalculator) {
-    super(0x44, "DIFFICULTY", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
+
+public class ToyBlockValues implements BlockValues {
+
+  @Override
+  public Bytes getDifficultyBytes() {
+    return UInt256.ZERO;
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(frame.getBlockValues().getDifficultyBytes());
+  public Optional<Long> getBaseFee() {
+    return Optional.empty();
+  }
 
-    return successResponse;
+  @Override
+  public long getNumber() {
+    return 0;
+  }
+
+  @Override
+  public long getGasLimit() {
+    return 0;
+  }
+
+  @Override
+  public long getTimestamp() {
+    return 0;
   }
 }

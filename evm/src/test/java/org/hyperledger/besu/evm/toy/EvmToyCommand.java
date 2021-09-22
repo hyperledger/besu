@@ -171,7 +171,7 @@ public class EvmToyCommand implements Runnable {
               .value(ethValue)
               .apparentValue(ethValue)
               .code(new Code(codeBytes))
-              .blockHeader(new ToyBlockHeader())
+              .blockValues(new ToyBlockValues())
               .depth(0)
               .completer(c -> {})
               .miningBeneficiary(Address.ZERO)

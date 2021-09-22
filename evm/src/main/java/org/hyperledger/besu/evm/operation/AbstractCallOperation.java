@@ -207,7 +207,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
               .value(value(frame))
               .apparentValue(apparentValue(frame))
               .code(new Code(contract != null ? contract.getCode() : Bytes.EMPTY))
-              .blockHeader(frame.getBlockHeader())
+              .blockValues(frame.getBlockValues())
               .depth(frame.getMessageStackDepth() + 1)
               .isStatic(isStatic(frame))
               .completer(child -> complete(frame, child))

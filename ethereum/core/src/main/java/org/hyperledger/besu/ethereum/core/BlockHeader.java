@@ -28,7 +28,8 @@ import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
 /** A mined Ethereum block header. */
-public class BlockHeader extends SealableBlockHeader {
+public class BlockHeader extends SealableBlockHeader
+    implements org.hyperledger.besu.plugin.data.BlockHeader {
 
   public static final int MAX_EXTRA_DATA_BYTES = 32;
 

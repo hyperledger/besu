@@ -16,9 +16,9 @@ package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.function.Function;
 
@@ -52,8 +52,8 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
     }
 
     final long soughtBlock = blockArg.toLong();
-    final BlockHeader blockHeader = frame.getBlockHeader();
-    final long currentBlockNumber = blockHeader.getNumber();
+    final BlockValues blockValues = frame.getBlockValues();
+    final long currentBlockNumber = blockValues.getNumber();
     final long mostRecentBlockNumber = currentBlockNumber - 1;
 
     // If the current block is the genesis block or the sought block is

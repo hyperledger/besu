@@ -88,7 +88,7 @@ public class PrivacyPluginPrecompiledContractTest {
     when(messageFrame.hasContextVariable(KEY_PRIVATE_METADATA_UPDATER)).thenReturn(true);
     when(messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER))
         .thenReturn(mock(PrivateMetadataUpdater.class));
-    when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
+    when(messageFrame.getBlockValues()).thenReturn(block.getHeader());
     when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
         .thenReturn(Optional.of(PrivacyGroupHeadBlockMap.empty()));
 

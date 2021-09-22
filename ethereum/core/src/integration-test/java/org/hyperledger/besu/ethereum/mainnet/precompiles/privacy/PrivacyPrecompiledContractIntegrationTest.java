@@ -30,6 +30,7 @@ import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
@@ -47,7 +48,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 import org.hyperledger.enclave.testutil.OrionTestHarness;
@@ -134,7 +134,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
     final Block block =
         blockGenerator.block(
             new BlockDataGenerator.BlockOptions().setParentHash(genesis.getHeader().getHash()));
-    when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
+    when(messageFrame.getBlockValues()).thenReturn(block.getHeader());
     final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
     when(privateMetadataUpdater.getPrivateBlockMetadata(any())).thenReturn(null);
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())

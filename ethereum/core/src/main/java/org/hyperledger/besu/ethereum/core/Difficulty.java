@@ -77,7 +77,6 @@ public final class Difficulty extends BaseUInt256Value<Difficulty> implements Qu
     return toBigInteger();
   }
 
-  @Override
   public Bytes32 getAsBytes32() {
     return this;
   }

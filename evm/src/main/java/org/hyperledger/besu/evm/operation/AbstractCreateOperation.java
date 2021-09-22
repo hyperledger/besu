@@ -137,7 +137,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .value(value)
             .apparentValue(value)
             .code(new Code(inputData))
-            .blockHeader(frame.getBlockHeader())
+            .blockValues(frame.getBlockValues())
             .depth(frame.getMessageStackDepth() + 1)
             .completer(child -> complete(frame, child))
             .miningBeneficiary(frame.getMiningBeneficiary())

@@ -116,7 +116,7 @@ public class OperationBenchmarkHelper {
         .value(messageFrame.getValue())
         .apparentValue(messageFrame.getApparentValue())
         .code(messageFrame.getCode())
-        .blockHeader(messageFrame.getBlockHeader())
+        .blockValues(messageFrame.getBlockValues())
         .depth(messageFrame.getMessageStackDepth())
         .isStatic(messageFrame.isStatic())
         .completer(messageFrame -> {})

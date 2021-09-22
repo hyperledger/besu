@@ -24,7 +24,9 @@ import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.privacy.OnchainPrivacyGroupContract;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
@@ -40,9 +42,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.worldstate.MutableWorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -138,7 +138,8 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
     LOG.debug("Processing private transaction {} in privacy group {}", pmtHash, privacyGroupId);
 
-    final BlockHeader currentBlockHeader = messageFrame.getBlockHeader();
+    final ProcessableBlockHeader currentBlockHeader =
+        (ProcessableBlockHeader) messageFrame.getBlockValues();
 
     final PrivateMetadataUpdater privateMetadataUpdater =
         messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER);
@@ -214,7 +215,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
   boolean canExecute(
       final MessageFrame messageFrame,
-      final BlockHeader currentBlockHeader,
+      final ProcessableBlockHeader currentBlockHeader,
       final PrivateTransaction privateTransaction,
       final Bytes32 version,
       final Bytes32 privacyGroupId,

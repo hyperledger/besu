@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.contractvalidation.ContractValidationRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -30,7 +31,6 @@ import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -57,7 +57,7 @@ public class EVMExecutor {
   private Bytes callData = Bytes.EMPTY;
   private Wei ethValue = Wei.ZERO;
   private Code code = new Code(Bytes.EMPTY);
-  private BlockHeader blockHeader = new SimpleBlockHeader();
+  private BlockValues blockValues = new SimpleBlockValues();
   private OperationTracer tracer = OperationTracer.NO_TRACING;
   private boolean requireDeposit = true;
   private List<ContractValidationRule> contractValidationRules =
@@ -222,7 +222,7 @@ public class EVMExecutor {
             .value(ethValue)
             .apparentValue(ethValue)
             .code(code)
-            .blockHeader(blockHeader)
+            .blockValues(blockValues)
             .depth(0)
             .completer(c -> {})
             .miningBeneficiary(Address.ZERO)
@@ -304,8 +304,8 @@ public class EVMExecutor {
     return this;
   }
 
-  public EVMExecutor blockHeader(final BlockHeader blockHeader) {
-    this.blockHeader = blockHeader;
+  public EVMExecutor blockValues(final BlockValues blockValues) {
+    this.blockValues = blockValues;
     return this;
   }
 

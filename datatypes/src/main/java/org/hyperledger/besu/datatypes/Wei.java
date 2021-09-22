@@ -19,7 +19,6 @@ import org.hyperledger.besu.plugin.data.Quantity;
 import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.BaseUInt256Value;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -85,11 +84,6 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
   }
 
   @Override
-  public Bytes32 getAsBytes32() {
-    return this;
-  }
-
-  @Override
   public String toHexString() {
     return super.toHexString();
   }
@@ -100,6 +94,6 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
   }
 
   public static Wei fromQuantity(final Quantity quantity) {
-    return Wei.wrap(quantity.getAsBytes32());
+    return Wei.wrap((Bytes)quantity);
   }
 }

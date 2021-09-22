@@ -56,7 +56,7 @@ public class BalanceOperation extends AbstractOperation {
         frame.pushStackItem(
             account == null
                 ? UInt256.ZERO
-                : UInt256.fromBytes(account.getBalance().getAsBytes32()));
+                : account.getBalance());
         return new OperationResult(optionalCost, Optional.empty());
       }
     } catch (final UnderflowException ufe) {
