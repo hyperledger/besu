@@ -16,8 +16,6 @@ package org.hyperledger.besu.plugin.data;
 
 import java.math.BigInteger;
 
-import org.apache.tuweni.bytes.Bytes32;
-
 /**
  * An interface to mark objects that also represents a discrete quantity, such as an unsigned
  * integer value.
@@ -38,8 +36,6 @@ public interface Quantity {
   Number getValue();
 
   BigInteger getAsBigInteger();
-
-  Bytes32 getAsBytes32();
 
   /**
    * The value as a hexadecimal string.
