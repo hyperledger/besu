@@ -99,6 +99,8 @@ public class ConfigOptionSearchAndRunHandlerTest {
 
   @Test
   public void handleWithEnvironmentVariable() throws IOException {
+    when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(false);
+
     final ConfigOptionSearchAndRunHandler environmentConfigFileParsingHandler =
         new ConfigOptionSearchAndRunHandler(
             resultHandler,
@@ -121,7 +123,7 @@ public class ConfigOptionSearchAndRunHandlerTest {
 
   @Test
   public void handleWithEnvironmentVariableOptionShouldRaiseExceptionIfNoFileParam() {
-    exceptionRule.expect(CommandLine.ExecutionException.class);
+    exceptionRule.expect(CommandLine.ParameterException.class);
     final ConfigOptionSearchAndRunHandler environmentConfigFileParsingHandler =
         new ConfigOptionSearchAndRunHandler(
             resultHandler, exceptionHandler, singletonMap("BESU_CONFIG_FILE", "not_found.toml"));
@@ -151,5 +153,21 @@ public class ConfigOptionSearchAndRunHandlerTest {
         configParsingHandler.createDefaultValueProvider(mockCommandLine, Optional.empty());
     final String value = defaultValueProvider.defaultValue(OptionSpec.builder("--logging").build());
     assertThat(value).isEqualTo("ERROR");
+  }
+
+  @Test
+  public void handleThrowsErrorWithWithEnvironmentVariableAndCommandLineSpecified()
+      throws IOException {
+    exceptionRule.expect(CommandLine.ParameterException.class);
+
+    final ConfigOptionSearchAndRunHandler environmentConfigFileParsingHandler =
+        new ConfigOptionSearchAndRunHandler(
+            resultHandler,
+            exceptionHandler,
+            singletonMap("BESU_CONFIG_FILE", temp.newFile().getAbsolutePath()));
+
+    when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(true);
+
+    environmentConfigFileParsingHandler.handle(mockParseResult);
   }
 }
