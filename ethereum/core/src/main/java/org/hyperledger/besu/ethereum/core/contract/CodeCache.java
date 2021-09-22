@@ -16,7 +16,6 @@
 package org.hyperledger.besu.ethereum.core.contract;
 
 import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.AccountState;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.Optional;
@@ -26,7 +25,7 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 
 public class CodeCache {
 
-  private final LoadingCache<CodeHash, Code> cache;
+  private final LoadingCache<ImmutableCodeHash, Code> cache;
   private final long weight;
 
   public CodeCache(final long maxWeightBytes, final CodeLoader loader) {
@@ -41,15 +40,15 @@ public class CodeCache {
 
   public Optional<Code> getContract(final Account account) {
     if (account != null && account.hasCode()) {
-      return Optional.of(cache.get(new CodeHash(account.getCodeHash(), account.getCode())));
+      return Optional.of(cache.get(ImmutableCodeHash.of(account.getCodeHash(), account.getCode())));
     } else {
       return Optional.empty();
     }
   }
 
-  public <T extends AccountState> void invalidate(final T key) {
+  public void invalidate(final Account key) {
     if (key != null && key.hasCode()) {
-      this.cache.invalidate(new CodeHash(key.getCodeHash(), key.getCode()));
+      this.cache.invalidate(ImmutableCodeHash.of(key.getCodeHash(), key.getCode()));
     }
   }
 
@@ -59,7 +58,8 @@ public class CodeCache {
 
   public Code getIfPresent(final Account contract) {
     if (contract != null && contract.hasCode()) {
-      return cache.getIfPresent(new CodeHash(contract.getAddressHash(), contract.getCode()));
+      return cache.getIfPresent(
+          ImmutableCodeHash.of(contract.getAddressHash(), contract.getCode()));
     } else {
       return null;
     }
