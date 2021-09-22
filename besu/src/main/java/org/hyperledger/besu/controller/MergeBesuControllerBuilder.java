@@ -15,6 +15,7 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.MergeContextFactory;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -53,7 +54,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    return new MergeContext();
+    return MergeContextFactory.get();
   }
 
   @Override

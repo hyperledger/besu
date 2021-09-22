@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -54,9 +53,7 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
       final BlockHeader header,
       final List<BlockHeader> ommers,
       final boolean skipZeroBlockRewards) {
-    // TODO: rayonism, this is an inexpensive way to disable mining rewards.
-    // TODO: this only works in a merge-from-genesis test-net.  should fix
-    if ((skipZeroBlockRewards && blockReward.isZero()) || MergeOptions.isMergeEnabled()) {
+    if ((skipZeroBlockRewards && blockReward.isZero())) {
       return true;
     }
 

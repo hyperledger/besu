@@ -44,6 +44,7 @@ public class ExecutionEngineNewBlockParameter {
   private final long gasLimit;
   private final long gasUsed;
   private final long timestamp;
+  private final String extraData;
   private final Hash receiptsRoot;
   private final LogsBloomFilter logsBloom;
   private final List<String> transactions;
@@ -59,6 +60,7 @@ public class ExecutionEngineNewBlockParameter {
       @JsonProperty("gasLimit") final UnsignedLongParameter gasLimit,
       @JsonProperty("gasUsed") final UnsignedLongParameter gasUsed,
       @JsonProperty("timestamp") final UnsignedLongParameter timestamp,
+      @JsonProperty("extraData") final String extraData,
       @JsonProperty("receiptsRoot") final Hash receiptsRoot,
       @JsonProperty("logsBloom") final LogsBloomFilter logsBloom,
       @JsonProperty("random") final String random,
@@ -72,6 +74,7 @@ public class ExecutionEngineNewBlockParameter {
     this.gasLimit = gasLimit.getValue();
     this.gasUsed = gasUsed.getValue();
     this.timestamp = timestamp.getValue();
+    this.extraData = extraData;
     this.receiptsRoot = receiptsRoot;
     this.logsBloom = logsBloom;
     this.random = Bytes32.fromHexString(random);
@@ -112,6 +115,10 @@ public class ExecutionEngineNewBlockParameter {
 
   public long getTimestamp() {
     return timestamp;
+  }
+
+  public String getExtraData() {
+    return extraData;
   }
 
   public Hash getReceiptsRoot() {

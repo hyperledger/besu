@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
@@ -24,12 +25,13 @@ import io.vertx.core.Vertx;
 
 public class EngineSyncCheckpointSet extends ExecutionEngineJsonRpcMethod {
 
-  protected EngineSyncCheckpointSet(final Vertx vertx) {
-    super(vertx);
+  protected EngineSyncCheckpointSet(final Vertx vertx, final ProtocolContext protocolContext) {
+    super(vertx, protocolContext);
   }
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
+    // TODO: write me
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
   }
 

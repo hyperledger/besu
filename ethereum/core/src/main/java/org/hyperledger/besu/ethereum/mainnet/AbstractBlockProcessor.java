@@ -145,6 +145,24 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
       final PrivateMetadataUpdater privateMetadataUpdater) {
+    return processBlock(
+        blockchain,
+        worldState,
+        worldState.updater(),
+        blockHeader,
+        transactions,
+        ommers,
+        privateMetadataUpdater);
+  }
+
+  protected AbstractBlockProcessor.Result processBlock(
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final WorldUpdater worldStateUpdater,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
     for (final Transaction transaction : transactions) {
@@ -152,7 +170,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return AbstractBlockProcessor.Result.failed();
       }
 
-      final WorldUpdater worldStateUpdater = worldState.updater();
       final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);

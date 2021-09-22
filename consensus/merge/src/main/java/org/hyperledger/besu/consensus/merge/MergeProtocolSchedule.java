@@ -54,11 +54,9 @@ public class MergeProtocolSchedule {
       final ProtocolSpecBuilder specBuilder) {
 
     return specBuilder
-        // TODO: merge doesn't have or need ommers, but the blockImporter will need it for sync,
-        // override or leave?
-        // .ommerHeaderValidatorBuilder()
-
-        .blockHeaderValidatorBuilder(feeMarket -> getBlockHeaderValidator(feeMarket))
+        .blockProcessorBuilder(MergeBlockProcessor::new)
+        .blockValidatorBuilder(MergeBlockValidator::new)
+        .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
         .blockReward(Wei.ZERO)
         .skipZeroBlockRewards(true);
   }

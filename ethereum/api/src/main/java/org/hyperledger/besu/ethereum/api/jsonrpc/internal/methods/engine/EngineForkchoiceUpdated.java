@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
@@ -24,8 +25,8 @@ import io.vertx.core.Vertx;
 
 public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
-  public EngineForkchoiceUpdated(final Vertx vertx) {
-    super(vertx);
+  public EngineForkchoiceUpdated(final Vertx vertx, final ProtocolContext protocolContext) {
+    super(vertx, protocolContext);
   }
 
   @Override

@@ -31,7 +31,6 @@ repositories { mavenCentral() }
 
 dependencies {
   implementation project(':config')
-  implementation project(':consensus:common')
   implementation project(':datatypes')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')

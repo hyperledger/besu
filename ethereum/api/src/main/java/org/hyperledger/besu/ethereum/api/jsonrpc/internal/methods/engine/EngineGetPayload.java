@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
@@ -43,13 +44,13 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
 
   public EngineGetPayload(
       final Vertx vertx,
+      final ProtocolContext protocolContext,
       final BlockResultFactory blockResultFactory,
-      final Blockchain blockchain,
       final MiningCoordinator miningCoordinator) {
-    super(vertx);
+    super(vertx, protocolContext);
     this.blockResultFactory = blockResultFactory;
     this.miningCoordinator = miningCoordinator;
-    this.blockchain = blockchain;
+    this.blockchain = protocolContext.getBlockchain();
   }
 
   @Override
