@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
 import static java.lang.Math.max;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.feemarket.BaseFee;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
 

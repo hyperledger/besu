@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class TangerineWhistleGasCalculator extends FrontierGasCalculator {
+public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
 
   private static final Gas BALANCE_OPERATION_GAS_COST = Gas.of(400L);
 

@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.vm.AbstractOperation;
 import org.hyperledger.besu.ethereum.vm.EVM;

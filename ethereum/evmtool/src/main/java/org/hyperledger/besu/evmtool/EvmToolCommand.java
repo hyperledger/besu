@@ -18,15 +18,15 @@ package org.hyperledger.besu.evmtool;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetMessageCallProcessor;
 import org.hyperledger.besu.ethereum.mainnet.PrecompileContractRegistry;
@@ -284,9 +284,8 @@ public class EvmToolCommand implements Runnable {
 
             final Gas intrinsicGasCost =
                 protocolSpec
-                    .getTransactionGasCalculator()
-                    .transactionIntrinsicGasCostAndAccessedState(tx)
-                    .getGas();
+                    .getGasCalculator()
+                    .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
             final Gas evmGas = gas.minus(messageFrame.getRemainingGas());
             out.println();
             out.println(

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,16 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.datatypes;
 
-import org.hyperledger.besu.ethereum.core.Gas;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class HomesteadTransactionGasCalculator extends FrontierTransactionGasCalculator {
+import org.junit.Test;
 
-  private static final Gas TX_CREATE_EXTRA = Gas.of(32_000L);
+public class HashTest {
 
-  @Override
-  protected Gas txCreateExtraGasCost() {
-    return TX_CREATE_EXTRA;
+  @Test
+  public void shouldGetExpectedValueForEmptyHash() {
+    assertThat(Hash.EMPTY)
+        .isEqualTo(
+            Hash.fromHexString("c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"));
   }
 }

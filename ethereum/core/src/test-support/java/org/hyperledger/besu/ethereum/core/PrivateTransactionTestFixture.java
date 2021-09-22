@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
 import org.hyperledger.besu.plugin.data.Restriction;

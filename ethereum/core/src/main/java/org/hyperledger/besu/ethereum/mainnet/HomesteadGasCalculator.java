@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-public class LondonTransactionGasCalculator extends BerlinTransactionGasCalculator {
+import org.hyperledger.besu.ethereum.core.Gas;
 
-  // redefinitions for EIP-3529
-  private static final int NEW_MAX_REFUND_QUOTIENT = 5;
+public class HomesteadGasCalculator extends FrontierGasCalculator {
+
+  private static final Gas TX_CREATE_EXTRA = Gas.of(32_000L);
 
   @Override
-  public long getMaxRefundQuotient() {
-    return NEW_MAX_REFUND_QUOTIENT;
+  protected Gas txCreateExtraGasCost() {
+    return TX_CREATE_EXTRA;
   }
 }

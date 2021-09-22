@@ -14,17 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.AccountState;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -41,19 +40,23 @@ import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldState
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class MainnetTransactionProcessor {
 
   private static final Logger LOG = LogManager.getLogger();
 
   protected final GasCalculator gasCalculator;
-
-  protected final TransactionGasCalculator transactionGasCalculator;
 
   protected final MainnetTransactionValidator transactionValidator;
 
@@ -220,7 +223,6 @@ public class MainnetTransactionProcessor {
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
-      final TransactionGasCalculator transacitonGasCalculator,
       final MainnetTransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
@@ -229,7 +231,6 @@ public class MainnetTransactionProcessor {
       final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
     this.gasCalculator = gasCalculator;
-    this.transactionGasCalculator = transacitonGasCalculator;
     this.transactionValidator = transactionValidator;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
@@ -274,7 +275,7 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
-      final MutableAccount senderMutableAccount = sender.getMutable();
+      final var senderMutableAccount = sender.getMutable();
       final long previousNonce = senderMutableAccount.incrementNonce();
       final Wei transactionGasPrice =
           feeMarket.getTransactionPriceCalculator().price(transaction, blockHeader.getBaseFee());
@@ -293,10 +294,27 @@ public class MainnetTransactionProcessor {
           previousBalance,
           sender.getBalance());
 
-      final GasAndAccessedState gasAndAccessedState =
-          transactionGasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction);
-      final Gas intrinsicGas = gasAndAccessedState.getGas();
-      final Gas gasAvailable = Gas.of(transaction.getGasLimit()).minus(intrinsicGas);
+      List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
+      // we need to keep a separate hash set of addresses in case they specify no storage.
+      // No-storage is a common pattern, especially for Externally Owned Accounts
+      Set<Address> addressList = new HashSet<>();
+      Multimap<Address, Bytes32> storageList = HashMultimap.create();
+      int accessListStorageCount = 0;
+      for (var entry : accessListEntries) {
+        Address address = entry.getAddress();
+        addressList.add(address);
+        List<Bytes32> storageKeys = entry.getStorageKeys();
+        storageList.putAll(address, storageKeys);
+        accessListStorageCount += storageKeys.size();
+      }
+
+      final Gas intrinsicGas =
+          gasCalculator.transactionIntrinsicGasCost(
+              transaction.getPayload(), transaction.isContractCreation());
+      final Gas accessListGas =
+          gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
+      final Gas gasAvailable =
+          Gas.of(transaction.getGasLimit()).minus(intrinsicGas).minus(accessListGas);
       LOG.trace(
           "Gas available for execution {} = {} - {} (limit - intrinsic)",
           gasAvailable,
@@ -325,8 +343,8 @@ public class MainnetTransactionProcessor {
               .isPersistingPrivateState(isPersistingPrivateState)
               .transactionHash(transaction.getHash())
               .transaction(transaction)
-              .accessListWarmAddresses(gasAndAccessedState.getAccessListAddressSet())
-              .accessListWarmStorage(gasAndAccessedState.getAccessListStorageByAddress())
+              .accessListWarmAddresses(addressList)
+              .accessListWarmStorage(storageList)
               .privateMetadataUpdater(privateMetadataUpdater);
 
       final MessageFrame initialFrame;
@@ -343,6 +361,7 @@ public class MainnetTransactionProcessor {
                 .code(new Code(transaction.getPayload()))
                 .build();
       } else {
+        @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
         final Optional<Account> maybeContract = Optional.ofNullable(worldState.get(to));
         initialFrame =
@@ -386,7 +405,7 @@ public class MainnetTransactionProcessor {
 
       if (!worldState.getClass().equals(GoQuorumMutablePrivateWorldStateUpdater.class)) {
         // if this is not a private GoQuorum transaction we have to update the coinbase
-        final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
+        final var coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
         final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
         if (blockHeader.getBaseFee().isPresent()) {
           final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
@@ -434,8 +453,7 @@ public class MainnetTransactionProcessor {
       LOG.error("Critical Exception Processing Transaction", re);
       return TransactionProcessingResult.invalid(
           ValidationResult.invalid(
-              TransactionInvalidReason.INTERNAL_ERROR,
-              "Internal Error in Besu - " + re.toString()));
+              TransactionInvalidReason.INTERNAL_ERROR, "Internal Error in Besu - " + re));
     }
   }
 
@@ -471,7 +489,7 @@ public class MainnetTransactionProcessor {
     final Gas maxRefundAllowance =
         Gas.of(transaction.getGasLimit())
             .minus(gasRemaining)
-            .dividedBy(transactionGasCalculator.getMaxRefundQuotient());
+            .dividedBy(gasCalculator.getMaxRefundQuotient());
     final Gas refundAllowance = maxRefundAllowance.min(gasRefund);
     return gasRemaining.plus(refundAllowance);
   }

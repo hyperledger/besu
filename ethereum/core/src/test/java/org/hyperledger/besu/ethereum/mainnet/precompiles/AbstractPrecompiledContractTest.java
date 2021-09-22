@@ -16,7 +16,7 @@
 
 package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PrecompileContractRegistry;

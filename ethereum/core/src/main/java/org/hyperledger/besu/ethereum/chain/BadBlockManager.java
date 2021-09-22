@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Collection;
 import java.util.Optional;

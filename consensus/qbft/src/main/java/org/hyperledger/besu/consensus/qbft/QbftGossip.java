@@ -23,7 +23,7 @@ import org.hyperledger.besu.consensus.qbft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.messagedata.RoundChangeMessageData;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 

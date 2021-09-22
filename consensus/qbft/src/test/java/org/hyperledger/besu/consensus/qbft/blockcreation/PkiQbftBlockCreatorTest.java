@@ -29,12 +29,12 @@ import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraData;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.pki.cms.CmsCreator;
 
 import java.util.Collections;

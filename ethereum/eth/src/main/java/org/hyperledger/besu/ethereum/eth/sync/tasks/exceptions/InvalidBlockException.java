@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 
 public class InvalidBlockException extends RuntimeException {
 
