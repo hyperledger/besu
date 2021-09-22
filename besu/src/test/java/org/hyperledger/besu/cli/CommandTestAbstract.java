@@ -43,6 +43,7 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -79,9 +80,11 @@ import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -344,7 +347,6 @@ public abstract class CommandTestAbstract {
     final TestBesuCommand besuCommand =
         new TestBesuCommand(
             mockLogger,
-                keyPair,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -357,6 +359,13 @@ public abstract class CommandTestAbstract {
             mockPkiBlockCreationConfigProvider);
     besuCommands.add(besuCommand);
 
+    File defaultKeyFile =
+        KeyPairUtil.getDefaultKeyFile(DefaultCommandValues.getDefaultBesuDataPath(besuCommand));
+    try {
+      Files.writeString(defaultKeyFile.toPath(), keyPair.getPrivateKey().toString());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     besuCommand.setBesuConfiguration(commonPluginConfiguration);
 
     // parse using Ansi.OFF to be able to assert on non formatted output results
@@ -373,11 +382,9 @@ public abstract class CommandTestAbstract {
 
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
     private Vertx vertx;
-    private final KeyPair keyPair;
 
     TestBesuCommand(
         final Logger mockLogger,
-        final KeyPair keyPair,
         final Supplier<RlpBlockImporter> mockBlockImporter,
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -402,7 +409,6 @@ public abstract class CommandTestAbstract {
           new PermissioningServiceImpl(),
           new PrivacyPluginServiceImpl(),
           pkiBlockCreationConfigProvider);
-      this.keyPair = keyPair;
     }
 
     @Override
@@ -414,12 +420,6 @@ public abstract class CommandTestAbstract {
     protected Vertx createVertx(final VertxOptions vertxOptions) {
       vertx = super.createVertx(vertxOptions);
       return vertx;
-    }
-
-    @Override
-    public KeyPair loadKeyPair() {
-      // for testing.
-      return keyPair;
     }
 
     public CommandSpec getSpec() {
