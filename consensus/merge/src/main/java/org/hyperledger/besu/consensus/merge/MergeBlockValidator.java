@@ -66,9 +66,7 @@ public class MergeBlockValidator extends MainnetBlockValidator {
               context.getBlockchain(),
               worldState,
               block.getHeader(),
-              block.getBody().getTransactions(),
-              Collections.emptyList(),
-              null);
+              block.getBody().getTransactions());
 
       // set our candidate block now so an async consensusValidated request will find it
       mergeContext.setCandidateBlock(newCandidate);

@@ -29,9 +29,9 @@ import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -79,14 +79,18 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
   /**
    * This is a post-merge specific method to execute a block using the BlockProcessor, but not
    * commit.
+   *
+   * @param blockchain the Blockchain
+   * @param worldState a MutableWorldState
+   * @param blockHeader blockHeader to execute
+   * @param transactions list of Transaction to execute
+   * @return CandidateBlock response.
    */
   public CandidateBlock executeBlock(
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
+      final List<Transaction> transactions) {
 
     CandidateUpdateWrapper candidateUpdater =
         new CandidateUpdateWrapper(worldState.updater(), blockHeader.getHash());
@@ -100,24 +104,24 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
                         candidateUpdater,
                         blockHeader,
                         transactions,
-                        ommers,
-                        privateMetadataUpdater))
+                        Collections.emptyList(), // no ommers for merge blocks
+                        null))
             // fail any block that takes longer than a slot to execute:
             .orTimeout(12000, TimeUnit.MILLISECONDS);
 
-    return new CandidateBlock(blockHeader.getHash(), result, candidateUpdater);
+    return new CandidateBlock(blockHeader, result, candidateUpdater);
   }
 
   public static class CandidateBlock {
-    final Hash blockhash;
+    final BlockHeader blockHeader;
     final CompletableFuture<? extends BlockProcessor.Result> result;
     final CandidateUpdateWrapper candidateUpdateWrapper;
 
     CandidateBlock(
-        final Hash blockhash,
+        final BlockHeader blockHeader,
         final CompletableFuture<? extends BlockProcessor.Result> result,
         final CandidateUpdateWrapper candidateUpdater) {
-      this.blockhash = blockhash;
+      this.blockHeader = blockHeader;
       this.result = result;
       this.candidateUpdateWrapper = candidateUpdater;
     }
@@ -127,11 +131,21 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
     }
 
     public Hash getBlockhash() {
-      return blockhash;
+      return blockHeader.getHash();
     }
 
     public void setConsensusValidated() {
       candidateUpdateWrapper.setConsensusValidated();
+    }
+
+    /**
+     * update the blockchain head and latest finalized block.
+     *
+     * @return BlockHeader of finalized block on success.
+     */
+    public BlockHeader updateForkChoice(final Hash headBlockhash, final Hash finalizedBlockHash) {
+      // TODO: left off with setting head
+      return null;
     }
   }
 

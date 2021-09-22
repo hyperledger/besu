@@ -62,8 +62,8 @@ public class MergeContext {
     return terminalTotalDifficulty.get().lessOrEqualThan(blockheader.getDifficulty());
   }
 
-  public void setFinalized(final BlockHeader finalized) {
-    lastFinalized.set(finalized);
+  public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
+    candidateBlock.get().updateForkChoice(headBlockHash, finalizedBlockHash);
   }
 
   public Optional<BlockHeader> getFinalized() {
