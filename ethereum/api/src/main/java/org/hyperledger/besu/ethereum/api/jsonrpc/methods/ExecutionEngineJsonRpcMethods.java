@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.merge.MergeBlockValidator;
+import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
@@ -39,7 +39,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final MiningCoordinator miningCoordinator;
   private final ProtocolContext protocolContext;
-  private final MergeBlockValidator blockValidator;
+  private final BlockValidator blockValidator;
 
   ExecutionEngineJsonRpcMethods(
       final MiningCoordinator miningCoordinator,
@@ -48,8 +48,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.miningCoordinator = miningCoordinator;
     this.protocolContext = protocolContext;
     // MergeBlockValidator is required for merge consensus
-    this.blockValidator =
-        (MergeBlockValidator) protocolSchedule.getByBlockNumber(0).getBlockValidator();
+    this.blockValidator = protocolSchedule.getByBlockNumber(0).getBlockValidator();
   }
 
   @Override
