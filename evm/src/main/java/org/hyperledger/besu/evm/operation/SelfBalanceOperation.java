@@ -32,8 +32,7 @@ public class SelfBalanceOperation extends AbstractFixedCostOperation {
       final MessageFrame frame, final EVM evm) {
     final Address accountAddress = frame.getRecipientAddress();
     final var account = frame.getWorldUpdater().get(accountAddress);
-    frame.pushStackItem(
-        account == null ? UInt256.ZERO : account.getBalance());
+    frame.pushStackItem(account == null ? UInt256.ZERO : account.getBalance());
 
     return successResponse;
   }

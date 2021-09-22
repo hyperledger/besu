@@ -96,10 +96,10 @@ public class Code {
       validJumpDestinations = new long[(size >> 6) + 1];
       byte[] rawCode = getBytes().toArrayUnsafe();
       int length = rawCode.length;
-      for (int i = 0; i < length;) {
+      for (int i = 0; i < length; ) {
         long thisEntry = 0L;
         int entryPos = i >> 6;
-        int max = Math.min(64, length - (entryPos<<6));
+        int max = Math.min(64, length - (entryPos << 6));
         int j = i & 0x3F;
         for (; j < max; i++, j++) {
           byte operationNum = rawCode[i];

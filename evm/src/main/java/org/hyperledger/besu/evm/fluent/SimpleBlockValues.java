@@ -17,7 +17,5 @@ package org.hyperledger.besu.evm.fluent;
 
 import org.hyperledger.besu.evm.frame.BlockValues;
 
-/**
- * A concrete BlockValues object that takes all the defaults
- */
+/** A concrete BlockValues object that takes all the defaults */
 public class SimpleBlockValues implements BlockValues {}
