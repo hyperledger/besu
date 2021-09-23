@@ -222,12 +222,16 @@ public class EvmToolCommand implements Runnable {
                 ? new StandardJsonTracer(System.out, !noMemory)
                 : OperationTracer.NO_TRACING;
 
+        var updater = component.getWorldUpdater();
+        updater.getOrCreate(sender);
+        updater.getOrCreate(receiver);
+
         final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
         messageFrameStack.add(
             MessageFrame.builder()
                 .type(MessageFrame.Type.MESSAGE_CALL)
                 .messageFrameStack(messageFrameStack)
-                .worldUpdater(component.getWorldUpdater())
+                .worldUpdater(updater)
                 .initialGas(gas)
                 .contract(Address.ZERO)
                 .address(receiver)

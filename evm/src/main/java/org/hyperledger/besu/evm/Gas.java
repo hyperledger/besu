@@ -16,8 +16,8 @@ package org.hyperledger.besu.evm;
 
 import org.hyperledger.besu.datatypes.Wei;
 
-import java.math.BigInteger;
 import javax.annotation.concurrent.Immutable;
+import java.math.BigInteger;
 
 import com.google.common.primitives.Longs;
 import org.apache.tuweni.bytes.Bytes;
@@ -80,7 +80,7 @@ public final class Gas {
   public static Gas fromHexString(final String str) {
     try {
       final long value = Long.decode(str);
-      return of(value);
+      return Gas.of(value);
     } catch (final NumberFormatException e) {
       return MAX_VALUE;
     }
