@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.CAN_EXECUTE_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
@@ -21,20 +22,21 @@ import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.Restriction;
 
 import java.util.ArrayList;
@@ -115,11 +117,10 @@ public class OnchainPrivacyGroupContract {
 
           return Optional.of(
               privateTransactionProcessor.processTransaction(
-                  messageFrame.getBlockchain(),
-                  messageFrame.getWorldState(),
+                  messageFrame.getWorldUpdater(),
                   updater,
                   currentBlockHeader,
-                  messageFrame.getTransactionHash(),
+                  messageFrame.getContextVariable(PrivateStateUtils.KEY_TRANSACTION_HASH),
                   privateTransaction,
                   messageFrame.getMiningBeneficiary(),
                   OperationTracer.NO_TRACING,
@@ -215,7 +216,7 @@ public class OnchainPrivacyGroupContract {
                 : 0)
         .gasPrice(Wei.of(1000))
         .gasLimit(3000000)
-        .to(Address.ONCHAIN_PRIVACY_PROXY)
+        .to(ONCHAIN_PRIVACY_PROXY)
         .sender(Address.ZERO)
         .value(Wei.ZERO)
         .payload(payload)
@@ -225,7 +226,7 @@ public class OnchainPrivacyGroupContract {
 
   private CallParameter buildCallParams(final Bytes methodCall) {
     return new CallParameter(
-        Address.ZERO, Address.ONCHAIN_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
+        Address.ZERO, ONCHAIN_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
   }
 
   private List<String> decodeList(final Bytes rlpEncodedList) {

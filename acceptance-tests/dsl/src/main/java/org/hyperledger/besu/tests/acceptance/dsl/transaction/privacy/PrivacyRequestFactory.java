@@ -17,12 +17,13 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
 
 import org.hyperledger.besu.crypto.SecureRandomProvider;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivateTransactionGroupResponse;
@@ -184,7 +185,7 @@ public class PrivacyRequestFactory {
             nonce,
             BigInteger.valueOf(1000),
             BigInteger.valueOf(3000000),
-            Address.ONCHAIN_PRIVACY_PROXY.toHexString(),
+            ONCHAIN_PRIVACY_PROXY.toHexString(),
             payload.toHexString(),
             Base64String.wrap(adder.getEnclaveKey()),
             privacyGroupId,
@@ -217,7 +218,7 @@ public class PrivacyRequestFactory {
             nonce,
             BigInteger.valueOf(1000),
             BigInteger.valueOf(3000000),
-            Address.ONCHAIN_PRIVACY_PROXY.toHexString(),
+            ONCHAIN_PRIVACY_PROXY.toHexString(),
             payload.toHexString(),
             Base64String.wrap(removerTenant),
             privacyGroupId,
@@ -271,7 +272,7 @@ public class PrivacyRequestFactory {
             nonce,
             BigInteger.valueOf(1000),
             BigInteger.valueOf(3000000),
-            Address.ONCHAIN_PRIVACY_PROXY.toHexString(),
+            ONCHAIN_PRIVACY_PROXY.toHexString(),
             callData,
             Base64String.wrap(locker.getEnclaveKey()),
             privacyGroupId,
@@ -311,7 +312,7 @@ public class PrivacyRequestFactory {
             BigInteger.ZERO,
             BigInteger.valueOf(1000),
             BigInteger.valueOf(3000000),
-            Address.ONCHAIN_PRIVACY_PROXY.toHexString(),
+            ONCHAIN_PRIVACY_PROXY.toHexString(),
             payload.toHexString(),
             Base64String.wrap(privateFrom),
             Base64String.wrap(privacyGroupId.toArrayUnsafe()),

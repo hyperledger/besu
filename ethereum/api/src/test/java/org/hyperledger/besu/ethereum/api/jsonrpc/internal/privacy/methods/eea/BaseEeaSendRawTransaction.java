@@ -14,21 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
+
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.BerlinTransactionGasCalculator;
-import org.hyperledger.besu.ethereum.mainnet.TransactionGasCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
@@ -61,14 +65,14 @@ public class BaseEeaSendRawTransaction {
   final PrivateMarkerTransactionFactory privateMarkerTransactionFactory =
       new FixedKeySigningPrivateMarkerTransactionFactory(keyPair);
 
-  final TransactionGasCalculator transactionGasCalculator = new BerlinTransactionGasCalculator();
+  final GasCalculator gasCalculator = new BerlinGasCalculator();
 
   final Transaction PUBLIC_ONCHAIN_TRANSACTION =
       new Transaction(
           0L,
           Wei.of(1),
           21000L,
-          Optional.of(Address.ONCHAIN_PRIVACY),
+          Optional.of(ONCHAIN_PRIVACY),
           Wei.ZERO,
           SIGNATURE_ALGORITHM_SUPPLIER
               .get()
@@ -87,7 +91,7 @@ public class BaseEeaSendRawTransaction {
           0L,
           Wei.of(1),
           21112L,
-          Optional.of(Address.PLUGIN_PRIVACY),
+          Optional.of(PLUGIN_PRIVACY),
           Wei.ZERO,
           SIGNATURE_ALGORITHM_SUPPLIER
               .get()
@@ -106,7 +110,7 @@ public class BaseEeaSendRawTransaction {
           0L,
           Wei.of(1),
           21000L,
-          Optional.of(Address.DEFAULT_PRIVACY),
+          Optional.of(DEFAULT_PRIVACY),
           Wei.ZERO,
           SIGNATURE_ALGORITHM_SUPPLIER
               .get()

@@ -42,9 +42,11 @@ dependencies {
 
   implementation project(':config')
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':enclave')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
+  implementation project(':evm')
   implementation project(':metrics:core')
   implementation project(':plugin-api')
   implementation project(':services:kvstore')

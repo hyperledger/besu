@@ -39,11 +39,13 @@ dependencies {
   implementation project(':consensus:clique')
   implementation project(':config')
   implementation project(':util')
+  implementation project(':datatypes')
   implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
   implementation project(':ethereum:p2p')
+  implementation project(':evm')
   implementation project(':plugin-api')
 
   annotationProcessor "org.immutables:value"
