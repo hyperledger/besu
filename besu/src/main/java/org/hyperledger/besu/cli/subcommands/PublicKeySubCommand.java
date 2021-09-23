@@ -20,6 +20,7 @@ import static org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.COMMAND_N
 
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
+import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.AddressSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.ExportSubCommand;
 import org.hyperledger.besu.crypto.KeyPair;
@@ -35,7 +36,9 @@ import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -133,13 +136,29 @@ public class PublicKeySubCommand implements Runnable {
     @ParentCommand
     private PublicKeySubCommand parentCommand; // Picocli injects reference to parent command
 
+    @Mixin private final NodePrivateKeyFileOption nodePrivateKeyFileOption = null;
+
+    @Spec private final CommandSpec spec = null;
+
     protected final void run(
         final File exportFile, final Function<KeyPair, String> outputFunction) {
       checkNotNull(parentCommand);
       final BesuCommand besuCommand = parentCommand.parentCommand;
       checkNotNull(besuCommand);
 
-      final KeyPair keyPair = besuCommand.loadKeyPair();
+      final File nodePrivateKeyFile = nodePrivateKeyFileOption.getNodePrivateKeyFile();
+      if (nodePrivateKeyFile != null && !nodePrivateKeyFile.exists()) {
+        throw new CommandLine.ParameterException(
+            spec.commandLine(), "Private key file doesn't exist");
+      }
+
+      final KeyPair keyPair;
+      try {
+        keyPair = besuCommand.loadKeyPair(nodePrivateKeyFileOption.getNodePrivateKeyFile());
+      } catch (IllegalArgumentException e) {
+        throw new CommandLine.ParameterException(
+            spec.commandLine(), "Private key cannot be loaded from file", e);
+      }
       final String output = outputFunction.apply(keyPair);
       if (exportFile != null) {
         final Path path = exportFile.toPath();

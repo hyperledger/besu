@@ -1321,12 +1321,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private SecurityModule defaultSecurityModule() {
-    return new KeyPairSecurityModule(loadKeyPair());
+    return new KeyPairSecurityModule(loadKeyPair(nodePrivateKeyFileOption.getNodePrivateKeyFile()));
   }
 
   // loadKeyPair() is public because it is accessed by subcommands
-  public KeyPair loadKeyPair() {
-    return KeyPairUtil.loadKeyPair(resolveNodePrivateKeyFile(nodePrivateKeyFileOption.getNodePrivateKeyFile()));
+  public KeyPair loadKeyPair(final File nodePrivateKeyFile) {
+    return KeyPairUtil.loadKeyPair(resolveNodePrivateKeyFile(nodePrivateKeyFile));
   }
 
   private void parse(
