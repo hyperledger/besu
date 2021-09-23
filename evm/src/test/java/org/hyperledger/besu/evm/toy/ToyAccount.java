@@ -116,7 +116,7 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   @Override
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
-    throw new UnsupportedOperationException("NGMI");
+    throw new UnsupportedOperationException("Storage iteration not supported in toy evm");
   }
 
   @Override
