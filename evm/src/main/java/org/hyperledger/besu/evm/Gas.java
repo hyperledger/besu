@@ -80,7 +80,7 @@ public final class Gas {
   public static Gas fromHexString(final String str) {
     try {
       final long value = Long.decode(str);
-      return Gas.of(value);
+      return of(value);
     } catch (final NumberFormatException e) {
       return MAX_VALUE;
     }
