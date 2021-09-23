@@ -150,9 +150,7 @@ public class ClassicProtocolSpecs {
         .evmBuilder(MainnetEVMs::byzantium)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
-        .messageCallProcessorBuilder(
-            (evm, precompileContractRegistry) ->
-                new MessageCallProcessor(evm, precompileContractRegistry))
+        .messageCallProcessorBuilder(MessageCallProcessor::new)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
         .difficultyCalculator(ClassicDifficultyCalculators.EIP100)
         .transactionReceiptFactory(
@@ -200,6 +198,7 @@ public class ClassicProtocolSpecs {
             quorumCompatibilityMode)
         .evmBuilder(MainnetEVMs::constantinople)
         .gasCalculator(PetersburgGasCalculator::new)
+        .evmBuilder(MainnetEVMs::constantinople)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .name("Agharta");
   }
