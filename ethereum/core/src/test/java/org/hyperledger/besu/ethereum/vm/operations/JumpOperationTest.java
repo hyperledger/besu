@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -42,6 +44,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class JumpOperationTest {
 
@@ -152,5 +155,35 @@ public class JumpOperationTest {
 
     final OperationResult result = operation.execute(longContract, null);
     assertThat(result.getHaltReason()).isEmpty();
+  }
+
+  @Test
+  public void shouldReuseJumpDestMap() {
+    final JumpOperation operation = new JumpOperation(gasCalculator);
+    Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
+    Code toRun = spy(new Code(jumpBytes, Hash.hash(jumpBytes)));
+    MessageFrame frame =
+        createMessageFrameBuilder(Gas.of(10_000))
+            .pushStackItem(UInt256.fromHexString("0x03"))
+            .code(toRun)
+            .build();
+    frame.setPC(CURRENT_PC);
+
+    OperationResult result = operation.execute(frame, evm);
+    assertThat(result.getHaltReason()).isEmpty();
+    Mockito.verify(toRun, times(1)).calculateJumpDests(evm);
+
+    // do it again to prove we don't recalc
+
+    frame =
+        createMessageFrameBuilder(Gas.of(10_000))
+            .pushStackItem(UInt256.fromHexString("0x03"))
+            .code(toRun)
+            .build();
+    frame.setPC(CURRENT_PC);
+
+    result = operation.execute(frame, evm);
+    assertThat(result.getHaltReason()).isEmpty();
+    Mockito.verify(toRun, times(1)).calculateJumpDests(evm);
   }
 }

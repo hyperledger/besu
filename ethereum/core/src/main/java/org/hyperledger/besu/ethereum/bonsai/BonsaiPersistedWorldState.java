@@ -57,7 +57,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   private Hash worldStateRootHash;
   private Hash worldStateBlockHash;
 
-
   public BonsaiPersistedWorldState(
       final BonsaiWorldStateArchive archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage) {
@@ -360,7 +359,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         .map(bytes -> fromRLP(updater, address, bytes, true))
         .orElse(null);
   }
-
 
   private Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
     return worldStateStorage.getAccountStateTrieNode(location, nodeHash);

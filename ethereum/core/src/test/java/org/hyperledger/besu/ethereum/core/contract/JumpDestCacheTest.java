@@ -19,18 +19,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.vm.Code;
-
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.vm.operations.JumpDestOperation;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 import java.util.BitSet;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class JumpDestCacheTest {
 
   private final String op = Bytes.of(JumpDestOperation.OPCODE).toUnprefixedHexString();
+
   @BeforeClass
   public static void resetConfig() {
     JumpDestCache.destroy(); // tests run in parallel, often with defaults
@@ -38,7 +38,8 @@ public class JumpDestCacheTest {
 
   @Test
   public void testScale() {
-    Bytes contractBytes = Bytes.fromHexString("0xDEAD"+op+"BEEF"+op+"B0B0"+op+"C0DE"+op+"FACE");
+    Bytes contractBytes =
+        Bytes.fromHexString("0xDEAD" + op + "BEEF" + op + "B0B0" + op + "C0DE" + op + "FACE");
     BitSet jumpDests = new BitSet(contractBytes.size());
     jumpDests.set(2);
     jumpDests.set(4);
@@ -46,9 +47,7 @@ public class JumpDestCacheTest {
     jumpDests.set(8);
     CodeScale scale = new CodeScale();
     Code contractCode = new Code(contractBytes, Hash.hash(contractBytes), jumpDests);
-    int weight =
-        scale.weigh(contractCode.getCodeHash(), contractCode.getValidJumpDestinations());
-    assertThat(weight).isEqualTo(contractCode.getCodeHash().size() + jumpDests.size()/8);
+    int weight = scale.weigh(contractCode.getCodeHash(), contractCode.getValidJumpDestinations());
+    assertThat(weight).isEqualTo(contractCode.getCodeHash().size() + jumpDests.size() / 8);
   }
-
 }

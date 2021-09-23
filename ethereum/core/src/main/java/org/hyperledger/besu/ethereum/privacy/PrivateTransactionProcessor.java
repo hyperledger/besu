@@ -168,8 +168,10 @@ public class PrivateTransactionProcessor {
                 .address(to)
                 .contract(to)
                 .inputData(transaction.getPayload())
-                .code(new Code(maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY),
-                                maybeContract.map(AccountState::getCodeHash).orElse(Hash.EMPTY)))
+                .code(
+                    new Code(
+                        maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY),
+                        maybeContract.map(AccountState::getCodeHash).orElse(Hash.EMPTY)))
                 .build();
       }
 

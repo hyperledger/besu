@@ -31,5 +31,4 @@ public interface WorldView {
    *     such account.
    */
   Account get(Address address);
-
 }

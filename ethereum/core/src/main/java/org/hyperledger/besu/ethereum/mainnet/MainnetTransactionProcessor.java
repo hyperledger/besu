@@ -387,7 +387,7 @@ public class MainnetTransactionProcessor {
                 .code(
                     new Code(
                         maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY),
-                            maybeContract.map(AccountState::getCodeHash).orElse(Hash.EMPTY)))
+                        maybeContract.map(AccountState::getCodeHash).orElse(Hash.EMPTY)))
                 .build();
       }
 

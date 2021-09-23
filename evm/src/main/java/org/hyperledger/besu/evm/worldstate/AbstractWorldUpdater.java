@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.ethereum.core.contract.JumpDestCache;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -98,7 +99,10 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   @Override
   public void deleteAccount(final Address address) {
-    JumpDestCache.getInstance().invalidate(get(address).getCodeHash());
+    Account removed = get(address);
+    if (removed != null && removed.hasCode()) {
+      JumpDestCache.getInstance().invalidate(removed.getCodeHash());
+    }
     deletedAccounts.add(address);
     updatedAccounts.remove(address);
   }

@@ -15,13 +15,12 @@
 
 package org.hyperledger.besu.ethereum.core.contract;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.BitSet;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-
 
 public class JumpDestCache {
 
@@ -53,7 +52,7 @@ public class JumpDestCache {
   }
 
   public void invalidate(final Hash key) {
-      this.cache.invalidate(key);
+    this.cache.invalidate(key);
   }
 
   public void cleanUp() {

@@ -17,11 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldState;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -29,10 +27,13 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+
 import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
+import org.hyperledger.besu.ethereum.core.contract.JumpDestCache;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.core.contract.JumpDestCache;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -109,7 +110,6 @@ public class MainnetTransactionProcessorTest {
     when(transactionValidator.validate(any(), any(), any())).thenReturn(ValidationResult.valid());
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(70L));
 
-
     JumpDestCache.destroy();
     JumpDestCache.init(ContractCacheConfiguration.DEFAULT_CONFIG);
     this.cache = spy(JumpDestCache.getInstance());
@@ -166,10 +166,7 @@ public class MainnetTransactionProcessorTest {
 
     this.worldState.getOrCreateSenderAccount(sending).getMutable().setBalance(Wei.fromEth(1000L));
     Code toRun = spy(new Code(Bytes.fromHexString(manyJumps), manyJumpsHash));
-    this.worldState
-        .createAccount(contractAddr)
-        .getMutable()
-        .setCode(toRun.getBytes());
+    this.worldState.createAccount(contractAddr).getMutable().setCode(toRun.getBytes());
     this.worldState.commit();
 
     transactionProcessor.processTransaction(
