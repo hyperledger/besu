@@ -6,6 +6,7 @@
 * Low level performance improvements changes to cut worst-case EVM performance in half. [#2796](https://github.com/hyperledger/besu/pull/2796)
 
 ### Bug Fixes
+*  Allow BESU_CONFIG_FILE environment to specify TOML file [#2455](https://github.com/hyperledger/besu/issues/2455)
 
 ### Early Access Features
 
