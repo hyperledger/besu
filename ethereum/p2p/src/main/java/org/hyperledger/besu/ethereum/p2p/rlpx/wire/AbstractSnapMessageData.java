@@ -46,4 +46,13 @@ public abstract class AbstractSnapMessageData extends AbstractMessageData {
   protected Bytes wrap(final BigInteger requestId) {
     throw new UnsupportedOperationException("cannot wrap this message");
   }
+
+  public static MessageData create(final Message message) {
+    return new AbstractSnapMessageData(message.getData().getData()) {
+      @Override
+      public int getCode() {
+        return message.getData().getCode();
+      }
+    };
+  }
 }

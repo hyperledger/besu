@@ -16,8 +16,8 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.perm;
 
 import static org.web3j.utils.Numeric.toHexString;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;

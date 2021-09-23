@@ -15,6 +15,7 @@ jar {
 dependencies {
   implementation project(':config')
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
   implementation project(':services:kvstore')

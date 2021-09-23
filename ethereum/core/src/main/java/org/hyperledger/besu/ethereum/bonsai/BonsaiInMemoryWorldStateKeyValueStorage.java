@@ -53,7 +53,7 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
         trieBranchStorage.startTransaction(),
         trieLogStorage.startTransaction(),
         snapTrieBranchBucketStorage.startTransaction(),
-        snapTrieBranchBucket2Storage.startTransaction());
+        snapTrieBranchSecondBucketStorage.startTransaction());
   }
 
   public static class InMemoryUpdater extends BonsaiWorldStateKeyValueStorage.Updater

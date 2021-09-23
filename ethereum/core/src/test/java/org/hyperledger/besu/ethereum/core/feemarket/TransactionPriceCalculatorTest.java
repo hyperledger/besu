@@ -19,8 +19,8 @@ import static org.hyperledger.besu.plugin.data.TransactionType.ACCESS_LIST;
 import static org.hyperledger.besu.plugin.data.TransactionType.EIP1559;
 import static org.hyperledger.besu.plugin.data.TransactionType.FRONTIER;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;

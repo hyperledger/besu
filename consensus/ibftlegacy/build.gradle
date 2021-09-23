@@ -17,6 +17,7 @@ dependencies {
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')

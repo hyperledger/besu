@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -21,19 +22,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugAccountRangeAtResult;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.WorldState;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class DebugAccountRange implements JsonRpcMethod {
 
@@ -69,20 +64,6 @@ public class DebugAccountRange implements JsonRpcMethod {
     if (blockHeaderOptional.isEmpty()) {
       return emptyResponse(requestContext);
     }
-
-    // TODO deal with mid-block locations
-    System.out.println("Started to search ");
-    final WorldState state = blockchainQueries.get().getWorldStateArchive().getMutable();
-    Map<Bytes32, Bytes> bytes32BytesMap =
-        ((BonsaiPersistedWorldState) state)
-            .streamAccounts(
-                blockHeaderOptional.get().getStateRoot(),
-                Bytes32.fromHexString(
-                    "0x0000000000000000000000000000000000000000000000000000000000000000"),
-                Bytes32.fromHexString(
-                    "0x0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
-    System.out.println("Result " + bytes32BytesMap.size());
-
     return emptyResponse(requestContext);
   }
 

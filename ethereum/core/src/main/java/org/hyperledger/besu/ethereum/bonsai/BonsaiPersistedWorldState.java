@@ -20,10 +20,10 @@ import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -83,7 +83,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             worldStateStorage.trieBranchStorage,
             worldStateStorage.trieLogStorage,
             worldStateStorage.snapTrieBranchBucketStorage,
-            worldStateStorage.snapTrieBranchBucket2Storage));
+            worldStateStorage.snapTrieBranchSecondBucketStorage));
   }
 
   @Override
@@ -234,8 +234,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     accountTrie.commit(
         (location, hash, value) -> writeTrieNode(blockHeader, hash, stateUpdater, location, value));
     final Bytes32 rootHash = accountTrie.getRootHash();
-
-    // System.out.println("new rootHash " + rootHash.toHexString());
     return Hash.wrap(rootHash);
   }
 

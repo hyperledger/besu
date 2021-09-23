@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -42,8 +42,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   protected final KeyValueStorage trieBranchStorage;
   protected final KeyValueStorage trieLogStorage;
 
+  /**
+   * Two buckets in order to temporarily store the trie nodes of previous blocks, each store 128.
+   * When we are at 128 in the current bucket we empty the other bucket then switch to the other
+   * bucket. We use two tables and alternate which ones we insert into so we don't need to track
+   * what block the trie nodes were in or whether they were in an orphan or not when we switch
+   * buckets we empty out the old one. i.e. pick the bucket based on blocknum (int div) 128 (mod) 2.
+   */
   private static final int BUCKET_SIZE = 128;
-  protected final KeyValueStorage snapTrieBranchBucketStorage, snapTrieBranchBucket2Storage;
+
+  protected final KeyValueStorage snapTrieBranchBucketStorage, snapTrieBranchSecondBucketStorage;
 
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
     accountStorage =
@@ -56,9 +64,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
     snapTrieBranchBucketStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BUCKET_1);
-    snapTrieBranchBucket2Storage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BUCKET_2);
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_SNAP_FIRST_BUCKET);
+    snapTrieBranchSecondBucketStorage =
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_SNAP_SECOND_BUCKET);
   }
 
   public BonsaiWorldStateKeyValueStorage(
@@ -75,7 +83,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
     this.snapTrieBranchBucketStorage = snapTrieBranchBucketStorage;
-    this.snapTrieBranchBucket2Storage = snapTrieBranchBucket2Storage;
+    this.snapTrieBranchSecondBucketStorage = snapTrieBranchBucket2Storage;
   }
 
   @Override
@@ -102,7 +110,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       return snapTrieBranchBucketStorage
           .get(nodeHash.toArrayUnsafe())
           .map(Bytes::wrap)
-          .or(() -> snapTrieBranchBucket2Storage.get(nodeHash.toArrayUnsafe()).map(Bytes::wrap))
+          .or(
+              () ->
+                  snapTrieBranchSecondBucketStorage.get(nodeHash.toArrayUnsafe()).map(Bytes::wrap))
           .or(() -> trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap));
     }
   }
@@ -164,7 +174,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     trieBranchStorage.clear();
     trieLogStorage.clear();
     snapTrieBranchBucketStorage.clear();
-    snapTrieBranchBucket2Storage.clear();
+    snapTrieBranchSecondBucketStorage.clear();
   }
 
   @Override
@@ -176,15 +186,15 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         trieBranchStorage.startTransaction(),
         trieLogStorage.startTransaction(),
         snapTrieBranchBucketStorage.startTransaction(),
-        snapTrieBranchBucket2Storage.startTransaction());
+        snapTrieBranchSecondBucketStorage.startTransaction());
   }
 
   public void cleanBucket(final long blockNumber) {
     final int bucketNumber = (int) ((blockNumber / BUCKET_SIZE) % 2);
     final int cleanBucketCounter = BUCKET_SIZE - (int) (blockNumber % BUCKET_SIZE);
     if (cleanBucketCounter == 1) {
-      System.out.println("need clean bucket " + bucketNumber);
-      ((bucketNumber == 0) ? snapTrieBranchBucket2Storage : snapTrieBranchBucketStorage).clear();
+      ((bucketNumber == 0) ? snapTrieBranchSecondBucketStorage : snapTrieBranchBucketStorage)
+          .clear();
     }
   }
 
@@ -211,7 +221,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     private final KeyValueStorageTransaction trieBranchStorageTransaction;
     private final KeyValueStorageTransaction trieLogStorageTransaction;
     private final KeyValueStorageTransaction snapTrieBranchBucketStorageTransaction;
-    private final KeyValueStorageTransaction snapTrieBranchBucket2StorageTransaction;
+    private final KeyValueStorageTransaction snapTrieBranchSecondBucketStorageTransaction;
 
     public Updater(
         final KeyValueStorageTransaction accountStorageTransaction,
@@ -220,7 +230,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         final KeyValueStorageTransaction trieBranchStorageTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction,
         final KeyValueStorageTransaction snapTrieBranchBucketStorageTransaction,
-        final KeyValueStorageTransaction snapTrieBranchBucket2StorageTransaction) {
+        final KeyValueStorageTransaction snapTrieBranchSecondBucketStorageTransaction) {
 
       this.accountStorageTransaction = accountStorageTransaction;
       this.codeStorageTransaction = codeStorageTransaction;
@@ -228,7 +238,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       this.trieBranchStorageTransaction = trieBranchStorageTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;
       this.snapTrieBranchBucketStorageTransaction = snapTrieBranchBucketStorageTransaction;
-      this.snapTrieBranchBucket2StorageTransaction = snapTrieBranchBucket2StorageTransaction;
+      this.snapTrieBranchSecondBucketStorageTransaction =
+          snapTrieBranchSecondBucketStorageTransaction;
     }
 
     public Updater removeCode(final Hash accountHash) {
@@ -256,7 +267,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         // Don't save empty values
         return this;
       }
-      // System.out.println("Save " + accountHash.toHexString());
       accountStorageTransaction.put(accountHash.toArrayUnsafe(), accountValue.toArrayUnsafe());
       return this;
     }
@@ -319,11 +329,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     public KeyValueStorageTransaction getSnapTrieBranchBucketStorageTransaction(
         final long blockNumber) {
       final int bucketNumber = (int) ((blockNumber / BUCKET_SIZE) % 2);
-
-      System.out.println("get bucket " + bucketNumber);
       return (bucketNumber == 0)
           ? snapTrieBranchBucketStorageTransaction
-          : snapTrieBranchBucket2StorageTransaction;
+          : snapTrieBranchSecondBucketStorageTransaction;
     }
 
     @Override
@@ -334,7 +342,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       trieBranchStorageTransaction.commit();
       trieLogStorageTransaction.commit();
       snapTrieBranchBucketStorageTransaction.commit();
-      snapTrieBranchBucket2StorageTransaction.commit();
+      snapTrieBranchSecondBucketStorageTransaction.commit();
     }
 
     @Override
@@ -345,7 +353,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       trieBranchStorageTransaction.rollback();
       trieLogStorageTransaction.rollback();
       snapTrieBranchBucketStorageTransaction.rollback();
-      snapTrieBranchBucket2StorageTransaction.rollback();
+      snapTrieBranchSecondBucketStorageTransaction.rollback();
     }
   }
 }

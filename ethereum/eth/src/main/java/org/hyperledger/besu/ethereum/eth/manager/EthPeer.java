@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
@@ -243,8 +243,9 @@ public class EthPeer {
       throws PeerNotConnected {
     final GetBlockHeadersMessage message =
         GetBlockHeadersMessage.create(hash, maxHeaders, skip, reverse);
-    return sendRequest(
-        requestManagers.get(EthProtocol.NAME).get(EthPV62.GET_BLOCK_HEADERS), message);
+    final RequestManager requestManager =
+        requestManagers.get(EthProtocol.NAME).get(EthPV62.GET_BLOCK_HEADERS);
+    return sendRequest(requestManager, message);
   }
 
   public RequestManager.ResponseStream getHeadersByNumber(
@@ -322,7 +323,14 @@ public class EthPeer {
     reputation.resetTimeoutCount(messageCode);
 
     getRequestManager(protocolName, messageCode)
-        .ifPresent(requestManager -> requestManager.dispatchResponse(ethMessage));
+        .ifPresentOrElse(
+            requestManager -> requestManager.dispatchResponse(ethMessage),
+            () -> {
+              LOG.trace(
+                  "Message {} not expected has just been received for {} ",
+                  messageCode,
+                  protocolName);
+            });
   }
 
   /**

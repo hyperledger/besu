@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.snap;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetAccountRangeMessage;
@@ -73,10 +73,8 @@ class SnapServer {
         range.endKeyHash().toHexString());
     final StoredMerklePatriciaTrie<Bytes, Bytes> trie =
         new StoredMerklePatriciaTrie<>(
-            (location, key) -> {
-              System.out.println("ici");
-              return worldState.getWorldStateStorage().getAccountStateTrieNode(location, key);
-            },
+            (location, key) ->
+                worldState.getWorldStateStorage().getAccountStateTrieNode(location, key),
             range.worldStateRootHash(),
             Function.identity(),
             Function.identity());

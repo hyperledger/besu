@@ -93,13 +93,7 @@ public class SnapProtocolManager implements ProtocolManager {
    */
   @Override
   public void processMessage(final Capability cap, final Message message) {
-    final MessageData messageData =
-        new AbstractSnapMessageData(message.getData().getData()) {
-          @Override
-          public int getCode() {
-            return message.getData().getCode();
-          }
-        };
+    final MessageData messageData = AbstractSnapMessageData.create(message);
     final int code = messageData.getCode();
     LOG.trace("Process snap message {}, {}", cap, code);
     final EthPeer ethPeer = ethPeers.peer(message.getConnection());

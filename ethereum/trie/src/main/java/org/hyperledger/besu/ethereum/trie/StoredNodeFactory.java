@@ -112,7 +112,6 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   private Node<V> decode(final Bytes location, final Bytes rlp, final Supplier<String> errMessage)
       throws MerkleTrieException {
     try {
-      System.out.println(rlp.toHexString());
       return decode(location, RLP.input(rlp), errMessage);
     } catch (final RLPException ex) {
       throw new MerkleTrieException(errMessage.get(), ex);

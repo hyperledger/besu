@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -29,7 +30,6 @@ import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -336,11 +336,7 @@ public abstract class BesuControllerBuilder {
             peerValidators);
 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
-        syncConfig.isSnapsyncEnabled()
-            ? Optional.of(
-                createSnapProtocolManager(
-                    peerValidators, ethPeers, snapMessages, worldStateArchive))
-            : Optional.empty();
+        createSnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive);
 
     final Synchronizer synchronizer =
         new DefaultSynchronizer(
@@ -463,12 +459,15 @@ public abstract class BesuControllerBuilder {
         genesisConfig.getForks());
   }
 
-  private SnapProtocolManager createSnapProtocolManager(
+  private Optional<SnapProtocolManager> createSnapProtocolManager(
       final List<PeerValidator> peerValidators,
       final EthPeers ethPeers,
       final EthMessages snapMessages,
       final WorldStateArchive worldStateArchive) {
-    return new SnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive);
+    return syncConfig.isSnapsyncEnabled()
+        ? Optional.of(
+            new SnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive))
+        : Optional.empty();
   }
 
   private WorldStateArchive createWorldStateArchive(

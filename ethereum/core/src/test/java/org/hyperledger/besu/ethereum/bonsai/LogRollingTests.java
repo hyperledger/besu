@@ -19,15 +19,15 @@ package org.hyperledger.besu.ethereum.bonsai;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -130,10 +130,12 @@ public class LogRollingTests {
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
     trieBucketLogStorage =
         (InMemoryKeyValueStorage)
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BUCKET_1);
+            provider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.TRIE_SNAP_FIRST_BUCKET);
     trieBucket2LogStorage =
         (InMemoryKeyValueStorage)
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BUCKET_2);
+            provider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.TRIE_SNAP_SECOND_BUCKET);
 
     final InMemoryKeyValueStorageProvider secondProvider = new InMemoryKeyValueStorageProvider();
     secondArchive = new BonsaiWorldStateArchive(secondProvider, blockchain);
@@ -158,10 +160,12 @@ public class LogRollingTests {
                 KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
     secondTrieBucketLogStorage =
         (InMemoryKeyValueStorage)
-            secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BUCKET_1);
+            secondProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.TRIE_SNAP_FIRST_BUCKET);
     secondTrieBucket2LogStorage =
         (InMemoryKeyValueStorage)
-            secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BUCKET_2);
+            secondProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.TRIE_SNAP_SECOND_BUCKET);
   }
 
   @Test

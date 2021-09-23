@@ -16,11 +16,11 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -269,7 +269,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
             bonsaiPersistedWorldState.getWorldStateStorage().trieBranchStorage,
             bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage,
             bonsaiPersistedWorldState.getWorldStateStorage().snapTrieBranchBucketStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().snapTrieBranchBucket2Storage));
+            bonsaiPersistedWorldState.getWorldStateStorage().snapTrieBranchSecondBucketStorage));
   }
 
   @Override

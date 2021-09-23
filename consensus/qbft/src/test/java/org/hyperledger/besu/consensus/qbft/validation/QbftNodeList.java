@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.qbft.validation;
 
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;
 import java.util.List;

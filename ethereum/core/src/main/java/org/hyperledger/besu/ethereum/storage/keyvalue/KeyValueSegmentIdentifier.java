@@ -31,8 +31,8 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   TRIE_LOG_STORAGE(new byte[] {10}, new int[] {2}),
   GOQUORUM_PRIVATE_WORLD_STATE(new byte[] {11}),
   GOQUORUM_PRIVATE_STORAGE(new byte[] {12}),
-  TRIE_BUCKET_1(new byte[] {13}),
-  TRIE_BUCKET_2(new byte[] {14});
+  TRIE_SNAP_FIRST_BUCKET(new byte[] {13}),
+  TRIE_SNAP_SECOND_BUCKET(new byte[] {14});
 
   private final byte[] id;
   private final int[] versionList;

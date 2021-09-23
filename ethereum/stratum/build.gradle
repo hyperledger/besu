@@ -31,6 +31,7 @@ dependencies {
   api project(':plugin-api')
   api project(':util')
 
+  implementation project(':datatypes')
   implementation project(':ethereum:api')
   implementation project(':ethereum:core')
   implementation project(':ethereum:blockcreation')

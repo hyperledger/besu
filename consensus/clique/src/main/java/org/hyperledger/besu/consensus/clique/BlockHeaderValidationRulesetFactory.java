@@ -23,8 +23,8 @@ import org.hyperledger.besu.consensus.clique.headervalidationrules.CoinbaseHeade
 import org.hyperledger.besu.consensus.clique.headervalidationrules.SignerRateLimitValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.VoteValidationRule;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;

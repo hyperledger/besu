@@ -24,7 +24,7 @@ public final class BesuProvider extends Provider {
 
   public static final String PROVIDER_NAME = "Besu";
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "removal"})
   public BesuProvider() {
     super(PROVIDER_NAME, "1.0", info);
     AccessController.doPrivileged(
