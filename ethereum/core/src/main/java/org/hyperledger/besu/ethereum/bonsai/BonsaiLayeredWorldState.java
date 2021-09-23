@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
-import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
 import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
@@ -45,9 +44,6 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   protected final long height;
   protected final TrieLogLayer trieLog;
   private final Hash worldStateRootHash;
-  private final CodeCache codeCache =
-      new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight());
-
   private final Blockchain blockchain;
   private final BonsaiWorldStateArchive archive;
 
@@ -243,7 +239,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
 
   @Override
   public Optional<Code> getContract(final Account account) {
-    return this.codeCache.getContract(account);
+    return CodeCache.getInstance().getContract(account);
   }
 
   @Override

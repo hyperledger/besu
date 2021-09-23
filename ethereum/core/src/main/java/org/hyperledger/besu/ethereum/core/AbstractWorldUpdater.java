@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
-import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
 import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.ArrayList;
@@ -41,17 +40,9 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new HashMap<>();
   protected Set<Address> deletedAccounts = new HashSet<>();
-  protected final CodeCache codeCache;
-
-  protected AbstractWorldUpdater(final W world, final CodeCache cache) {
-    this.world = world;
-    this.codeCache = cache;
-  }
 
   protected AbstractWorldUpdater(final W world) {
     this.world = world;
-    this.codeCache =
-        new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight());
   }
 
   protected abstract A getForMutation(Address address);
@@ -86,7 +77,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   @Override
   public Optional<Code> getContract(final Account account) {
-    return this.codeCache.getContract(account);
+    return CodeCache.getInstance().getContract(account);
   }
 
   @Override
@@ -111,7 +102,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   @Override
   public void deleteAccount(final Address address) {
-    this.codeCache.invalidate(get(address));
+    CodeCache.getInstance().invalidate(get(address));
     deletedAccounts.add(address);
     updatedAccounts.remove(address);
   }
@@ -173,8 +164,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       extends AbstractWorldUpdater<AbstractWorldUpdater<W, A>, UpdateTrackingAccount<A>> {
 
     StackedUpdater(final AbstractWorldUpdater<W, A> world) {
-      super(
-          world, new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight()));
+      super(world);
     }
 
     @Override

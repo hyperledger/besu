@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
-import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.vm.Code;
@@ -58,8 +57,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   private Hash worldStateRootHash;
   private Hash worldStateBlockHash;
-  private final CodeCache codeCache =
-      new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight());
 
   public BonsaiPersistedWorldState(
       final BonsaiWorldStateArchive archive,
@@ -366,7 +363,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public Optional<Code> getContract(final Account account) {
-    return this.codeCache.getContract(account);
+    return CodeCache.getInstance().getContract(account);
   }
 
   private Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {

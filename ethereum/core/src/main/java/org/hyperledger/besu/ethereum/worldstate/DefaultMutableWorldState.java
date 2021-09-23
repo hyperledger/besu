@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
-import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -63,38 +62,19 @@ public class DefaultMutableWorldState implements MutableWorldState {
   private final Map<Address, Bytes> updatedAccountCode = new HashMap<>();
   private final Map<Bytes32, UInt256> newStorageKeyPreimages = new HashMap<>();
   private final Map<Bytes32, Address> newAccountKeyPreimages = new HashMap<>();
-  private final CodeCache codeCache;
 
   public DefaultMutableWorldState(
       final WorldStateStorage storage, final WorldStatePreimageStorage preimageStorage) {
-    this(
-        MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH,
-        storage,
-        preimageStorage,
-        new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight()));
+    this(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, storage, preimageStorage);
   }
 
   public DefaultMutableWorldState(
       final Bytes32 rootHash,
       final WorldStateStorage worldStateStorage,
       final WorldStatePreimageStorage preimageStorage) {
-
-    this(
-        rootHash,
-        worldStateStorage,
-        preimageStorage,
-        new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight()));
-  }
-
-  public DefaultMutableWorldState(
-      final Bytes32 rootHash,
-      final WorldStateStorage worldStateStorage,
-      final WorldStatePreimageStorage preimageStorage,
-      final CodeCache cache) {
     this.worldStateStorage = worldStateStorage;
     this.accountStateTrie = newAccountStateTrie(rootHash);
     this.preimageStorage = preimageStorage;
-    this.codeCache = cache;
   }
 
   public DefaultMutableWorldState(final WorldState worldState) {
@@ -109,8 +89,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
     this.worldStateStorage = other.worldStateStorage;
     this.preimageStorage = other.preimageStorage;
     this.accountStateTrie = newAccountStateTrie(other.accountStateTrie.getRootHash());
-    this.codeCache =
-        new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight());
   }
 
   private MerklePatriciaTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
@@ -138,11 +116,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   @Override
   public MutableWorldState copy() {
-    return new DefaultMutableWorldState(
-        rootHash(),
-        worldStateStorage,
-        preimageStorage,
-        new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight()));
+    return new DefaultMutableWorldState(rootHash(), worldStateStorage, preimageStorage);
   }
 
   @Override
@@ -156,7 +130,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   @Override
   public Optional<Code> getContract(final Account account) {
-    return this.codeCache.getContract(account);
+    return CodeCache.getInstance().getContract(account);
   }
 
   private WorldStateAccount deserializeAccount(
@@ -175,7 +149,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   @Override
   public WorldUpdater updater() {
-    return new Updater(this, this.codeCache);
+    return new Updater(this);
   }
 
   @Override
@@ -377,8 +351,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
   protected static class Updater
       extends AbstractWorldUpdater<DefaultMutableWorldState, WorldStateAccount> {
 
-    protected Updater(final DefaultMutableWorldState world, final CodeCache cache) {
-      super(world, cache);
+    protected Updater(final DefaultMutableWorldState world) {
+      super(world);
     }
 
     @Override

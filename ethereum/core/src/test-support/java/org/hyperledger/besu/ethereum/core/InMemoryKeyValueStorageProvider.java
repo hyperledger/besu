@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.contract.CodeCache;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
@@ -26,7 +25,6 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKey
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
@@ -73,15 +71,6 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     return new DefaultMutableWorldState(
         provider.createWorldStateStorage(DataStorageFormat.FOREST),
         provider.createWorldStatePreimageStorage());
-  }
-
-  public static MutableWorldState createInMemoryWorldStateUsingCache(final CodeCache cache) {
-    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
-    return new DefaultMutableWorldState(
-        MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH,
-        provider.createWorldStateStorage(DataStorageFormat.FOREST),
-        provider.createWorldStatePreimageStorage(),
-        cache);
   }
 
   public static PrivateStateStorage createInMemoryPrivateStateStorage() {

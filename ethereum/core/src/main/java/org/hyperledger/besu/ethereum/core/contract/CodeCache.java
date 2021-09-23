@@ -27,14 +27,38 @@ public class CodeCache {
 
   private final LoadingCache<ImmutableCodeHash, Code> cache;
   private final long weight;
+  private static CodeCache INSTANCE = null;
 
-  public CodeCache(final long maxWeightBytes, final CodeLoader loader) {
+  public static void init(final ContractCacheConfiguration config, final CodeLoader loader) {
+    if (INSTANCE == null) {
+      INSTANCE = new CodeCache(config.getContractCacheWeightBytes(), loader);
+    }
+  }
+
+  public static void init(final ContractCacheConfiguration config) {
+    if (INSTANCE == null) {
+      INSTANCE = new CodeCache(config.getContractCacheWeightBytes(), new CodeLoader());
+    }
+  }
+
+  public static void destroy() {
+    INSTANCE = null;
+  }
+
+  public static CodeCache getInstance() {
+    if (INSTANCE == null) {
+      CodeCache.init(ContractCacheConfiguration.DEFAULT_CONFIG);
+    }
+    return INSTANCE;
+  }
+
+  private CodeCache(final long maxWeightBytes, final CodeLoader loader) {
     this.weight = maxWeightBytes;
     this.cache =
         Caffeine.newBuilder().maximumWeight(maxWeightBytes).weigher(new CodeScale()).build(loader);
   }
 
-  public CodeCache(final long maxWeightBytes) {
+  private CodeCache(final long maxWeightBytes) {
     this(maxWeightBytes, new CodeLoader());
   }
 

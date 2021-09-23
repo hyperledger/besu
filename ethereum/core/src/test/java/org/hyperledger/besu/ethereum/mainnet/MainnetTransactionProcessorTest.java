@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateUsingCache;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldState;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
@@ -111,9 +111,10 @@ public class MainnetTransactionProcessorTest {
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(70L));
 
     this.loader = spy(new CodeLoader());
-    this.cache =
-        new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight(), loader);
-    this.worldState = spy(createInMemoryWorldStateUsingCache(this.cache).updater());
+    CodeCache.destroy();
+    CodeCache.init(ContractCacheConfiguration.DEFAULT_CONFIG, loader);
+    this.cache = CodeCache.getInstance();
+    this.worldState = spy(createInMemoryWorldState().updater());
 
     transactionProcessor =
         new MainnetTransactionProcessor(
