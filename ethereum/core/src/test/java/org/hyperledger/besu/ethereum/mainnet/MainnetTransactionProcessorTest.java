@@ -27,11 +27,14 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.core.contract.JumpDestCache;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
@@ -71,18 +74,20 @@ public class MainnetTransactionProcessorTest {
   @Mock private MainnetTransactionValidator transactionValidator;
   @Mock private AbstractMessageProcessor contractCreationProcessor;
   @Mock private AbstractMessageProcessor messageCallProcessor;
-
+  private JumpDestCache cache;
   @Mock private Blockchain blockchain;
   @Mock private WorldUpdater worldState;
   @Mock private ProcessableBlockHeader blockHeader;
   @Mock private Transaction transaction;
   @Mock private BlockHashLookup blockHashLookup;
   private static String manyJumps;
+  private static Hash manyJumpsHash;
 
   @BeforeClass
   public static void init() throws IOException {
     URL manyJumpsURL = MainnetTransactionProcessorTest.class.getResource("manyJumps.hex");
     manyJumps = Resources.toString(manyJumpsURL, Charsets.UTF_8);
+    manyJumpsHash = Hash.hash(Bytes.fromHexString(manyJumps));
   }
 
   @Before
@@ -104,7 +109,11 @@ public class MainnetTransactionProcessorTest {
     when(transactionValidator.validate(any(), any(), any())).thenReturn(ValidationResult.valid());
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(70L));
 
-    this.worldState = spy(createInMemoryWorldStateUsingCache(this.cache).updater());
+
+    JumpDestCache.destroy();
+    JumpDestCache.init(ContractCacheConfiguration.DEFAULT_CONFIG);
+    this.cache = spy(JumpDestCache.getInstance());
+    this.worldState = spy(createInMemoryWorldState().updater());
 
     transactionProcessor =
         new MainnetTransactionProcessor(
@@ -156,10 +165,11 @@ public class MainnetTransactionProcessorTest {
     ;
 
     this.worldState.getOrCreateSenderAccount(sending).getMutable().setBalance(Wei.fromEth(1000L));
+    Code toRun = spy(new Code(Bytes.fromHexString(manyJumps), manyJumpsHash));
     this.worldState
         .createAccount(contractAddr)
         .getMutable()
-        .setCode(Bytes.fromHexString(manyJumps));
+        .setCode(toRun.getBytes());
     this.worldState.commit();
 
     transactionProcessor.processTransaction(
@@ -172,8 +182,7 @@ public class MainnetTransactionProcessorTest {
         false,
         ImmutableTransactionValidationParams.builder().build());
 
-    Account contractAccount = this.worldState.get(contractAddr);
-    Mockito.verify(this.worldState, times(1)).getContract(contractAccount);
+    EvmAccount contractAccount = this.worldState.getAccount(contractAddr);
 
     this.worldState.deleteAccount(contractAccount.getAddress());
     this.worldState.commit();

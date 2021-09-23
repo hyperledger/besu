@@ -22,34 +22,33 @@ import org.hyperledger.besu.ethereum.vm.Code;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.vm.operations.JumpDestOperation;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class CodeCacheTest {
+import java.util.BitSet;
 
+public class JumpDestCacheTest {
+
+  private final String op = Bytes.of(JumpDestOperation.OPCODE).toUnprefixedHexString();
   @BeforeClass
   public static void resetConfig() {
-    CodeCache.destroy(); // tests run in parallel, often with defaults
+    JumpDestCache.destroy(); // tests run in parallel, often with defaults
   }
 
   @Test
   public void testScale() {
-    Bytes contractCode = Bytes.fromHexString("0xDEADBEEF");
+    Bytes contractBytes = Bytes.fromHexString("0xDEAD"+op+"BEEF"+op+"B0B0"+op+"C0DE"+op+"FACE");
+    BitSet jumpDests = new BitSet(contractBytes.size());
+    jumpDests.set(2);
+    jumpDests.set(4);
+    jumpDests.set(6);
+    jumpDests.set(8);
     CodeScale scale = new CodeScale();
-    Bytes32 address = Bytes32.fromHexString("0xB0B0FACE");
+    Code contractCode = new Code(contractBytes, Hash.hash(contractBytes), jumpDests);
     int weight =
-        scale.weigh(ImmutableCodeHash.of(Hash.hash(address), contractCode), new Code(contractCode));
-    assertThat(weight).isEqualTo(4);
+        scale.weigh(contractCode.getCodeHash(), contractCode.getValidJumpDestinations());
+    assertThat(weight).isEqualTo(contractCode.getCodeHash().size() + jumpDests.size()/8);
   }
 
-  @Test
-  public void testLoader() {
-    Bytes contractCode = Bytes.fromHexString("0xDEADBEEF");
-    CodeLoader loader = new CodeLoader();
-    Bytes32 address = Bytes32.fromHexString("0xB0B0FACE");
-    ImmutableCodeHash key = ImmutableCodeHash.of(Hash.hash(address), contractCode);
-    Code loaded = loader.load(key);
-    assertThat(loaded).isNotNull();
-    assertThat(loaded.getBytes()).isEqualTo(key.contract());
-  }
 }

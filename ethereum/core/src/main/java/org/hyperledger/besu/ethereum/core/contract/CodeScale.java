@@ -15,13 +15,15 @@
 
 package org.hyperledger.besu.ethereum.core.contract;
 
-import org.hyperledger.besu.ethereum.vm.Code;
+import org.hyperledger.besu.datatypes.Hash;
 
 import com.github.benmanes.caffeine.cache.Weigher;
 
-class CodeScale implements Weigher<CodeHash, Code> {
+import java.util.BitSet;
+
+class CodeScale implements Weigher<Hash, BitSet> {
   @Override
-  public int weigh(final CodeHash key, final Code value) {
-    return value.getBytes().size();
+  public int weigh(final Hash key, final BitSet value) {
+    return (value.size()/8) + key.size();
   }
 }

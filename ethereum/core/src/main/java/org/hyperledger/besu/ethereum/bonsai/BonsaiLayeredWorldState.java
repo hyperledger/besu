@@ -21,9 +21,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.contract.CodeCache;
-import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
-import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -236,11 +233,6 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
       }
     }
     return null;
-  }
-
-  @Override
-  public Optional<Code> getContract(final Account account) {
-    return CodeCache.getInstance().getContract(account);
   }
 
   @Override

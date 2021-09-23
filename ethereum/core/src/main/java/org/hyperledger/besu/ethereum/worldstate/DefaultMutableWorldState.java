@@ -126,11 +126,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
         .orElse(null);
   }
 
-  @Override
-  public Optional<Code> getContract(final Account account) {
-    return CodeCache.getInstance().getContract(account);
-  }
-
   private WorldStateAccount deserializeAccount(
       final Address address, final Hash addressHash, final Bytes encoded) throws RLPException {
     final RLPInput in = RLP.input(encoded);

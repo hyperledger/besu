@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -206,7 +207,8 @@ public abstract class AbstractCallOperation extends AbstractOperation {
               .sender(sender(frame))
               .value(value(frame))
               .apparentValue(apparentValue(frame))
-              .code(new Code(contract != null ? contract.getCode() : Bytes.EMPTY))
+              .code(new Code(contract != null ? contract.getCode() : Bytes.EMPTY,
+                            contract != null ? contract.getCodeHash() : Hash.EMPTY))
               .blockValues(frame.getBlockValues())
               .depth(frame.getMessageStackDepth() + 1)
               .isStatic(isStatic(frame))

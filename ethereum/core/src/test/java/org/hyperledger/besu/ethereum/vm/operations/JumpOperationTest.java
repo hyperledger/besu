@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -84,10 +85,11 @@ public class JumpOperationTest {
   @Test
   public void shouldJumpWhenLocationIsJumpDest() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
+    Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(10_000))
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(new Code(Bytes.fromHexString("0x6003565b00")))
+            .code(new Code(jumpBytes, Hash.hash(jumpBytes)))
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -98,10 +100,11 @@ public class JumpOperationTest {
   @Test
   public void shouldJumpWhenLocationIsJumpDestAndAtEndOfCode() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
+    Bytes jumpBytes = Bytes.fromHexString("0x6003565b");
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(10_000))
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(new Code(Bytes.fromHexString("0x6003565b")))
+            .code(new Code(jumpBytes, Hash.hash(jumpBytes)))
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -112,20 +115,21 @@ public class JumpOperationTest {
   @Test
   public void shouldHaltWithInvalidJumDestinationWhenLocationIsOutsideOfCodeRange() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
+    Bytes jumpBytes = Bytes.fromHexString("0x6801000000000000000c565b00");
     final MessageFrame frameDestinationGreaterThanCodeSize =
         createMessageFrameBuilder(Gas.of(100))
             .pushStackItem(UInt256.fromHexString("0xFFFFFFFF"))
-            .code(new Code(Bytes.fromHexString("0x6801000000000000000c565b00")))
+            .code(new Code(jumpBytes, Hash.hash(jumpBytes)))
             .build();
     frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
 
     final OperationResult result = operation.execute(frameDestinationGreaterThanCodeSize, null);
     assertThat(result.getHaltReason()).contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
-
+    Bytes badJump = Bytes.fromHexString("0x60045600");
     final MessageFrame frameDestinationEqualsToCodeSize =
         createMessageFrameBuilder(Gas.of(100))
             .pushStackItem(UInt256.fromHexString("0x04"))
-            .code(new Code(Bytes.fromHexString("0x60045600")))
+            .code(new Code(badJump, Hash.hash(badJump)))
             .build();
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
 

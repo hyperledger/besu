@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -136,7 +137,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .sender(frame.getRecipientAddress())
             .value(value)
             .apparentValue(value)
-            .code(new Code(inputData))
+            .code(new Code(inputData, Hash.EMPTY))
             .blockValues(frame.getBlockValues())
             .depth(frame.getMessageStackDepth() + 1)
             .completer(child -> complete(frame, child))
