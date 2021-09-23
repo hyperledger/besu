@@ -24,8 +24,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugAccountRa
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.ethereum.core.WorldState.StreamableAccount;
+import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.evm.worldstate.WorldState.StreamableAccount;
 
 import java.util.Collections;
 import java.util.List;

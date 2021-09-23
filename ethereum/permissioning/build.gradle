@@ -32,6 +32,7 @@ dependencies {
   implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(':ethereum:p2p')
+  implementation project(':evm')
   implementation project(':metrics:core')
   implementation project(':util')
 

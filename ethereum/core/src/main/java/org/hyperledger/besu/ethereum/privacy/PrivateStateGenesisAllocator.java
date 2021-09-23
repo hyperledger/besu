@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
 
@@ -87,23 +90,20 @@ public class PrivateStateGenesisAllocator {
     if (isOnchainPrivacyEnabled) {
       // inject management
       final MutableAccount managementContract =
-          privateWorldStateUpdater
-              .createAccount(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)
-              .getMutable();
+          privateWorldStateUpdater.createAccount(DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT).getMutable();
 
       // this is the code for the simple management contract
       managementContract.setCode(OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
 
       // inject proxy
       final MutableAccount procyContract =
-          privateWorldStateUpdater.createAccount(Address.ONCHAIN_PRIVACY_PROXY).getMutable();
+          privateWorldStateUpdater.createAccount(ONCHAIN_PRIVACY_PROXY).getMutable();
 
       // this is the code for the proxy contract
       procyContract.setCode(OnChainGroupManagement.PROXY_RUNTIME_BYTECODE);
       // manually set the management contract address so the proxy can trust it
       procyContract.setStorageValue(
-          UInt256.ZERO,
-          UInt256.fromBytes(Bytes32.leftPad(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)));
+          UInt256.ZERO, UInt256.fromBytes(Bytes32.leftPad(DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)));
     }
 
     privateWorldStateUpdater.commit();

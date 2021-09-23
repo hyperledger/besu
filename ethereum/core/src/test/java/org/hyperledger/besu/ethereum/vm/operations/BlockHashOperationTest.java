@@ -24,9 +24,10 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
-import org.hyperledger.besu.ethereum.mainnet.FrontierGasCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 
 import com.google.common.base.Strings;
 import org.apache.tuweni.bytes.Bytes;
@@ -83,9 +84,9 @@ public class BlockHashOperationTest {
   @Test
   public void shouldReturnBlockHashUsingLookupFromFrameWhenItIsWithinTheAllowedRange() {
     final Hash blockHash = Hash.hash(Bytes.fromHexString("0x1293487297"));
-    when(blockHashLookup.getBlockHash(100)).thenReturn(blockHash);
+    when(blockHashLookup.apply(100L)).thenReturn(blockHash);
     assertBlockHash(100, blockHash, 200);
-    verify(blockHashLookup).getBlockHash(100);
+    verify(blockHashLookup).apply(100L);
   }
 
   private void assertBlockHash(

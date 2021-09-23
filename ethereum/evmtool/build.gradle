@@ -42,6 +42,7 @@ dependencies {
   implementation project(':ethereum:core')
   implementation project(':ethereum:referencetests')
   implementation project(':ethereum:rlp')
+  implementation project(':evm')
   implementation project(':metrics:core')
   implementation project(':plugins:rocksdb')
   implementation project(':services:kvstore')

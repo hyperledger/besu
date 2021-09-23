@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.core;
 import static java.util.Collections.emptySet;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.Gas;
 
 import java.util.Set;
 
