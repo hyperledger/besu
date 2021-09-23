@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 import org.hyperledger.besu.ethereum.core.contract.CodeCache;
 import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
+import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -33,8 +34,6 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
 
   protected final WorldUpdater publicWorldUpdater;
   protected final WorldUpdater privateWorldUpdater;
-  private final CodeCache codeCache =
-      new CodeCache(ContractCacheConfiguration.getInstance().getContractCacheWeight());
 
   public DefaultMutablePrivateWorldStateUpdater(
       final WorldUpdater publicWorldUpdater, final WorldUpdater privateWorldUpdater) {
@@ -103,6 +102,11 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
       return privateAccount;
     }
     return publicWorldUpdater.get(address);
+  }
+
+  @Override
+  public Optional<Code> getContract(final Account account) {
+    return CodeCache.getInstance().getContract(account);
   }
 
   @Override

@@ -361,6 +361,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         .orElse(null);
   }
 
+  @Override
+  public Optional<Code> getContract(final Account account) {
+    return CodeCache.getInstance().getContract(account);
+  }
+
   private Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
     return worldStateStorage.getAccountStateTrieNode(location, nodeHash);
   }

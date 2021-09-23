@@ -20,6 +20,8 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
+import org.hyperledger.besu.ethereum.core.contract.CodeCache;
+import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -78,6 +80,11 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   }
 
   @Override
+  public Optional<Code> getContract(final Account account) {
+    return CodeCache.getInstance().getContract(account);
+  }
+
+  @Override
   public EvmAccount getAccount(final Address address) {
     // We may have updated it already, so check that first.
     final MutableAccount existing = updatedAccounts.get(address);
@@ -99,7 +106,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   @Override
   public void deleteAccount(final Address address) {
-    this.codeCache.invalidate(get(address));
+    CodeCache.getInstance().invalidate(get(address));
     deletedAccounts.add(address);
     updatedAccounts.remove(address);
   }

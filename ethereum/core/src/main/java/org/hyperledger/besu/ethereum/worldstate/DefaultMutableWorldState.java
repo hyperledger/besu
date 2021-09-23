@@ -62,15 +62,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   public DefaultMutableWorldState(
       final WorldStateStorage storage, final WorldStatePreimageStorage preimageStorage) {
-    this(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, storage, preimageStorage, new CodeCache());
-  }
-
-  public DefaultMutableWorldState(
-      final Bytes32 rootHash,
-      final WorldStateStorage worldStateStorage,
-      final WorldStatePreimageStorage preimageStorage) {
-
-    this(rootHash, worldStateStorage, preimageStorage);
+    this(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH, storage, preimageStorage);
   }
 
   public DefaultMutableWorldState(
@@ -132,6 +124,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
         .get(addressHash)
         .map(bytes -> deserializeAccount(address, addressHash, bytes))
         .orElse(null);
+  }
+
+  @Override
+  public Optional<Code> getContract(final Account account) {
+    return CodeCache.getInstance().getContract(account);
   }
 
   private WorldStateAccount deserializeAccount(
@@ -352,8 +349,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
   protected static class Updater
       extends AbstractWorldUpdater<DefaultMutableWorldState, WorldStateAccount> {
 
-    protected Updater(final DefaultMutableWorldState world, final CodeCache cache) {
-      super(world, cache);
+    protected Updater(final DefaultMutableWorldState world) {
+      super(world);
     }
 
     @Override

@@ -39,13 +39,9 @@ public class ContractCacheOptions implements CLIOptions<ContractCacheConfigurati
       arity = "1")
   private Long contractCacheWeightKilobytes = 250000l;
 
-  public void initConfig() {
-    ContractCacheConfiguration.init(contractCacheWeightKilobytes);
-  }
-
   @Override
   public ContractCacheConfiguration toDomainObject() {
-    return ContractCacheConfiguration.getInstance();
+    return new ContractCacheConfiguration(contractCacheWeightKilobytes);
   }
 
   @Override

@@ -22,9 +22,15 @@ import org.hyperledger.besu.ethereum.vm.Code;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class CodeCacheTest {
+
+  @BeforeClass
+  public static void resetConfig() {
+    CodeCache.destroy(); // tests run in parallel, often with defaults
+  }
 
   @Test
   public void testScale() {

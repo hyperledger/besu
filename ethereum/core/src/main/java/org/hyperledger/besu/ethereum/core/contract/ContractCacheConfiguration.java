@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,39 +15,16 @@
 
 package org.hyperledger.besu.ethereum.core.contract;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class ContractCacheConfiguration {
   public static final ContractCacheConfiguration DEFAULT_CONFIG =
       new ContractCacheConfiguration(250_000L);
   private final long contractCacheWeightKilobytes;
-  private static ContractCacheConfiguration INSTANCE;
-  private static final Logger LOG = LogManager.getLogger(ContractCacheConfiguration.class);
 
-  private ContractCacheConfiguration(final long contractCacheWeightKilobytes) {
+  public ContractCacheConfiguration(final long contractCacheWeightKilobytes) {
     this.contractCacheWeightKilobytes = contractCacheWeightKilobytes;
   }
 
-  public static void init(final long contractCacheWeightKilobytes) {
-    if (INSTANCE == null) {
-      INSTANCE = new ContractCacheConfiguration(contractCacheWeightKilobytes);
-    }
-  }
-
-  public static void destroy() {
-    INSTANCE = null;
-  }
-
-  public static ContractCacheConfiguration getInstance() {
-    if (INSTANCE == null) {
-      LOG.debug("no instance, setting singleton to default");
-      INSTANCE = DEFAULT_CONFIG;
-    }
-    return INSTANCE;
-  }
-
-  public long getContractCacheWeight() {
+  public long getContractCacheWeightBytes() {
     return contractCacheWeightKilobytes * 1024L;
   }
 
