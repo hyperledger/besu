@@ -12,9 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm;
-
-import org.hyperledger.besu.evm.operation.Operation;
+package org.hyperledger.besu.evm.operation;
 
 /** Encapsulates a group of {@link Operation}s used together. */
 public class OperationRegistry {

@@ -22,24 +22,25 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class JumpiOperation extends AbstractFixedCostOperation {
 
-  private final OperationResult invalidJumpResponse;
+  private final Operation.OperationResult invalidJumpResponse;
 
   public JumpiOperation(final GasCalculator gasCalculator) {
     super(0x57, "JUMPI", 2, 0, true, 1, gasCalculator, gasCalculator.getHighTierGasCost());
     invalidJumpResponse =
-        new OperationResult(
+        new Operation.OperationResult(
             Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final UInt256 jumpDestination = frame.popStackItem();
-    final Bytes32 condition = frame.popStackItem();
+  public Operation.OperationResult executeFixedCostOperation(
+      final MessageFrame frame, final EVM evm) {
+    final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
+    final Bytes condition = frame.popStackItem();
 
     // If condition is zero (false), no jump is will be performed. Therefore skip the test.
     if (condition.isZero()) {

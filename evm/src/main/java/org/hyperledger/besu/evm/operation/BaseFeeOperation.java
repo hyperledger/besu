@@ -32,15 +32,15 @@ public class BaseFeeOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    if (frame.getBlockValues().getBaseFee().isEmpty()) {
+  public Operation.OperationResult executeFixedCostOperation(
+      final MessageFrame frame, final EVM evm) {
+    Optional<Long> maybeBaseFee = frame.getBlockValues().getBaseFee();
+    if (maybeBaseFee.isEmpty()) {
       return new Operation.OperationResult(
           Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_OPERATION));
     }
     frame.pushStackItem(
-        frame
-            .getBlockValues()
-            .getBaseFee()
+        maybeBaseFee
             .map(Bytes::ofUnsignedLong)
             .map(Bytes32::leftPad)
             .map(UInt256::fromBytes)

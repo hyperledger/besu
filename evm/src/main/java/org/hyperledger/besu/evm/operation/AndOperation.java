@@ -27,9 +27,10 @@ public class AndOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final UInt256 value0 = frame.popStackItem();
-    final UInt256 value1 = frame.popStackItem();
+  public Operation.OperationResult executeFixedCostOperation(
+      final MessageFrame frame, final EVM evm) {
+    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
     final UInt256 result = value0.and(value1);
     frame.pushStackItem(result);

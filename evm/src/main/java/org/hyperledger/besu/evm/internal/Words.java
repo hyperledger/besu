@@ -81,4 +81,27 @@ public abstract class Words {
     // m/n round up == (m + n - 1)/n: http://www.cs.nott.ac.uk/~psarb2/G51MPC/slides/NumberLogic.pdf
     return (input.size() + Bytes32.SIZE - 1) / Bytes32.SIZE;
   }
+
+  /**
+   * The value of the bytes as though it was representing an unsigned integer, however if the value
+   * exceeds Long.MAX_VALUE then Long.MAX_VALUE will be returned.
+   *
+   * @param uint the unsigned integer
+   * @return the least of the integer value or Long.MAX_VALUE
+   */
+  public static long clampedToLong(final Bytes uint) {
+    if (uint.size() <= 8) {
+      long result = uint.toLong();
+      return result < 0 ? Long.MAX_VALUE : result;
+    }
+
+    Bytes trimmed = uint.trimLeadingZeros();
+    if (trimmed.size() <= 8) {
+      long result = trimmed.toLong();
+      return result < 0 ? Long.MAX_VALUE : result;
+    } else {
+      // clamp to the largest int.
+      return Long.MAX_VALUE;
+    }
+  }
 }

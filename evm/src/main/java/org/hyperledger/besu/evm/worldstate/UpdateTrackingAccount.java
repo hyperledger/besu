@@ -225,6 +225,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
     final NavigableMap<Bytes32, AccountStorageEntry> entries;

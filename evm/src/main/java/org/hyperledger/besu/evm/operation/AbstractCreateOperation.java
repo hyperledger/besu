@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
@@ -93,8 +95,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected abstract Address targetContractAddress(MessageFrame frame);
 
   private void fail(final MessageFrame frame) {
-    final UInt256 inputOffset = frame.getStackItem(1);
-    final UInt256 inputSize = frame.getStackItem(2);
+    final long inputOffset = clampedToLong(frame.getStackItem(1));
+    final long inputSize = clampedToLong(frame.getStackItem(2));
     frame.readMutableMemory(inputOffset, inputSize);
     frame.popStackItems(getStackItemsConsumed());
     frame.pushStackItem(UInt256.ZERO);
@@ -111,8 +113,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     account.incrementNonce();
 
     final Wei value = Wei.wrap(frame.getStackItem(0));
-    final UInt256 inputOffset = frame.getStackItem(1);
-    final UInt256 inputSize = frame.getStackItem(2);
+    final long inputOffset = clampedToLong(frame.getStackItem(1));
+    final long inputSize = clampedToLong(frame.getStackItem(2));
     final Bytes inputData = frame.readMutableMemory(inputOffset, inputSize);
 
     final Address contractAddress = targetContractAddress(frame);
@@ -144,7 +146,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .build();
 
     frame.incrementRemainingGas(cost);
-    childFrame.copyWarmedUpFields(frame);
 
     frame.getMessageFrameStack().addFirst(childFrame);
     frame.setState(MessageFrame.State.CODE_SUSPENDED);

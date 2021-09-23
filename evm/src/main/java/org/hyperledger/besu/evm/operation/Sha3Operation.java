@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.hyperledger.besu.datatypes.Hash;
+import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -34,8 +36,8 @@ public class Sha3Operation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final UInt256 from = frame.popStackItem();
-    final UInt256 length = frame.popStackItem();
+    final long from = clampedToLong(frame.popStackItem());
+    final long length = clampedToLong(frame.popStackItem());
 
     final Gas cost = gasCalculator().sha3OperationGasCost(frame, from, length);
     final Optional<Gas> optionalCost = Optional.of(cost);
@@ -44,7 +46,7 @@ public class Sha3Operation extends AbstractOperation {
     }
 
     final Bytes bytes = frame.readMutableMemory(from, length);
-    frame.pushStackItem(UInt256.fromBytes(Hash.hash(bytes)));
+    frame.pushStackItem(UInt256.fromBytes(keccak256(bytes)));
     return new OperationResult(optionalCost, Optional.empty());
   }
 }

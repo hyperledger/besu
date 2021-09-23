@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
@@ -64,7 +65,7 @@ public abstract class AbstractMessageProcessor {
 
   // List of addresses to force delete when they are touched but empty
   // when the state changes in the message are were not meant to be committed.
-  private final Collection<Address> forceDeleteAccountsWhenEmpty;
+  private final Collection<? super Address> forceDeleteAccountsWhenEmpty;
   private final EVM evm;
 
   AbstractMessageProcessor(final EVM evm, final Collection<Address> forceDeleteAccountsWhenEmpty) {
@@ -83,17 +84,18 @@ public abstract class AbstractMessageProcessor {
   protected abstract void codeSuccess(MessageFrame frame, final OperationTracer operationTracer);
 
   private void clearAccumulatedStateBesidesGasAndOutput(final MessageFrame frame) {
-    final Collection<Address> addressesToForceCommit =
+    ArrayList<Address> addresses =
         frame.getWorldUpdater().getTouchedAccounts().stream()
-            .filter(a -> forceDeleteAccountsWhenEmpty.contains(a.getAddress()) && a.isEmpty())
+            .filter(AccountState::isEmpty)
             .map(Account::getAddress)
+            .filter(forceDeleteAccountsWhenEmpty::contains)
             .collect(Collectors.toCollection(ArrayList::new));
 
     // Clear any pending changes.
     frame.getWorldUpdater().revert();
 
     // Force delete any requested accounts and commit the changes.
-    addressesToForceCommit.forEach(h -> frame.getWorldUpdater().deleteAccount(h));
+    ((Collection<Address>) addresses).forEach(h -> frame.getWorldUpdater().deleteAccount(h));
     frame.getWorldUpdater().commit();
 
     frame.clearLogs();

@@ -16,9 +16,7 @@ package org.hyperledger.besu.evm;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
-import org.hyperledger.besu.evm.operation.Operation;
-
-import java.util.BitSet;
+import org.hyperledger.besu.evm.operation.PushOperation;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
@@ -31,7 +29,8 @@ public class Code {
   private final Bytes bytes;
 
   /** Used to cache valid jump destinations. */
-  private BitSet validJumpDestinations;
+  //  private BitSet validJumpDestinations;
+  long[] validJumpDestinations;
 
   /**
    * Public constructor.
@@ -93,16 +92,34 @@ public class Code {
 
     if (validJumpDestinations == null) {
       // Calculate valid jump destinations
-      validJumpDestinations = new BitSet(getSize());
-      evm.forEachOperation(
-          this,
-          (final Operation op, final Integer offset) -> {
-            if (op.getOpcode() == JumpDestOperation.OPCODE) {
-              validJumpDestinations.set(offset);
-            }
-          });
+      int size = getSize();
+      validJumpDestinations = new long[(size >> 6) + 1];
+      byte[] rawCode = getBytes().toArrayUnsafe();
+      int length = rawCode.length;
+      for (int i = 0; i < length; ) {
+        long thisEntry = 0L;
+        int entryPos = i >> 6;
+        int max = Math.min(64, length - (entryPos << 6));
+        int j = i & 0x3F;
+        for (; j < max; i++, j++) {
+          byte operationNum = rawCode[i];
+          if (operationNum == JumpDestOperation.OPCODE) {
+            thisEntry |= 1L << j;
+          } else if (operationNum > PushOperation.PUSH_BASE) {
+            // not needed - && operationNum <= PushOperation.PUSH_MAX
+            // Java quirk, all bytes are signed, and PUSH32 is 127, which is Byte.MAX_VALUE
+            // so we don't need to check the upper bound as it will never be violated
+            int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
+            j += multiByteDataLen;
+            i += multiByteDataLen;
+          }
+        }
+        validJumpDestinations[entryPos] = thisEntry;
+      }
     }
-    return validJumpDestinations.get(jumpDestination);
+    long targetLong = validJumpDestinations[jumpDestination >> 6];
+    long targetBit = 1L << (jumpDestination & 0x3F);
+    return (targetLong & targetBit) != 0L;
   }
 
   public Bytes getBytes() {

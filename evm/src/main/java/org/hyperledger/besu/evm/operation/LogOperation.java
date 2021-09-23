@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.apache.tuweni.bytes.Bytes32.leftPad;
+import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.Gas;
@@ -27,7 +30,6 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class LogOperation extends AbstractOperation {
 
@@ -40,8 +42,8 @@ public class LogOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final UInt256 dataLocation = frame.popStackItem();
-    final UInt256 numBytes = frame.popStackItem();
+    final long dataLocation = clampedToLong(frame.popStackItem());
+    final long numBytes = clampedToLong(frame.popStackItem());
 
     final Gas cost = gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
     final Optional<Gas> optionalCost = Optional.of(cost);
@@ -59,7 +61,7 @@ public class LogOperation extends AbstractOperation {
     final ImmutableList.Builder<LogTopic> builder =
         ImmutableList.builderWithExpectedSize(numTopics);
     for (int i = 0; i < numTopics; i++) {
-      builder.add(LogTopic.create(frame.popStackItem()));
+      builder.add(LogTopic.create(leftPad(frame.popStackItem())));
     }
 
     frame.addLog(new Log(address, data, builder.build()));

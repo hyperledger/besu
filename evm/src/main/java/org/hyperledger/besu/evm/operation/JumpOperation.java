@@ -26,18 +26,19 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class JumpOperation extends AbstractFixedCostOperation {
 
-  private final OperationResult invalidJumpResponse;
+  private final Operation.OperationResult invalidJumpResponse;
 
   public JumpOperation(final GasCalculator gasCalculator) {
     super(0x56, "JUMP", 2, 0, true, 1, gasCalculator, gasCalculator.getMidTierGasCost());
     invalidJumpResponse =
-        new OperationResult(
+        new Operation.OperationResult(
             Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final UInt256 jumpDestination = frame.popStackItem();
+  public Operation.OperationResult executeFixedCostOperation(
+      final MessageFrame frame, final EVM evm) {
+    final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
     final Code code = frame.getCode();
     if (!code.isValidJumpDestination(evm, frame, jumpDestination)) {
       return invalidJumpResponse;

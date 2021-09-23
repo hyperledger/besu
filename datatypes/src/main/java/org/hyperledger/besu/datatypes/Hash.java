@@ -28,10 +28,22 @@ public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plug
 
   public static final Hash ZERO = new Hash(Bytes32.ZERO);
 
+  /**
+   * Hash of an RLP encoded trie hash with no content, or
+   * "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
+   */
   public static final Hash EMPTY_TRIE_HASH = Hash.hash(RLP.NULL);
 
+  /**
+   * Hash of a zero length RLP list, or
+   * "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+   */
   public static final Hash EMPTY_LIST_HASH = Hash.hash(RLP.EMPTY_LIST);
 
+  /**
+   * Hash of an empty string, or
+   * "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+   */
   public static final Hash EMPTY = hash(Bytes.EMPTY);
 
   private Hash(final Bytes32 bytes) {

@@ -20,6 +20,7 @@ import java.math.BigInteger;
 import javax.annotation.concurrent.Immutable;
 
 import com.google.common.primitives.Longs;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -31,7 +32,7 @@ public final class Gas {
 
   public static final Gas ZERO = of(0);
 
-  public static final Gas MAX_VALUE = Gas.of(Long.MAX_VALUE);
+  public static final Gas MAX_VALUE = of(Long.MAX_VALUE);
 
   private static final BigInteger MAX_VALUE_BIGINT = BigInteger.valueOf(Long.MAX_VALUE);
 
@@ -60,13 +61,26 @@ public final class Gas {
   }
 
   public static Gas of(final Bytes32 value) {
-    return Gas.of(UInt256.fromBytes(value));
+    return Gas.of((Bytes) value);
+  }
+
+  public static Gas of(final Bytes value) {
+    if (value.size() > 8 && value.trimLeadingZeros().size() > 8) {
+      return MAX_VALUE;
+    } else {
+      long gas = value.toLong();
+      if (gas < 0) {
+        return MAX_VALUE;
+      } else {
+        return Gas.of(gas);
+      }
+    }
   }
 
   public static Gas fromHexString(final String str) {
     try {
       final long value = Long.decode(str);
-      return of(value);
+      return Gas.of(value);
     } catch (final NumberFormatException e) {
       return MAX_VALUE;
     }

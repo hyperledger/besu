@@ -21,16 +21,16 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.MutableBytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class PushOperation extends AbstractFixedCostOperation {
+
+  public static final int PUSH_BASE = 0x5F;
 
   private final int length;
 
   public PushOperation(final int length, final GasCalculator gasCalculator) {
     super(
-        0x60 + length - 1,
+        PUSH_BASE + length,
         "PUSH" + length,
         0,
         1,
@@ -42,14 +42,13 @@ public class PushOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
+  public Operation.OperationResult executeFixedCostOperation(
+      final MessageFrame frame, final EVM evm) {
     final int pc = frame.getPC();
     final Bytes code = frame.getCode().getBytes();
 
     final int copyLength = min(length, code.size() - pc - 1);
-    final MutableBytes32 bytes = MutableBytes32.create();
-    code.slice(pc + 1, copyLength).copyTo(bytes, bytes.size() - length);
-    frame.pushStackItem(UInt256.fromBytes(bytes));
+    frame.pushStackItem(code.slice(pc + 1, copyLength));
 
     return successResponse;
   }

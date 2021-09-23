@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;
+import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -212,8 +213,8 @@ public class MessageFrame {
   private Gas gasRefund;
   private final Set<Address> selfDestructs;
   private final Map<Address, Wei> refunds;
-  private Set<Address> warmedUpAddresses;
-  private Multimap<Address, Bytes32> warmedUpStorage;
+  private final Set<Address> warmedUpAddresses;
+  private final Multimap<Address, Bytes32> warmedUpStorage;
 
   // Execution Environment fields.
   private final Address recipient;
@@ -227,6 +228,7 @@ public class MessageFrame {
   private final Code code;
   private final BlockValues blockValues;
   private final int depth;
+  private final MessageFrame parentMessageFrame;
   private final Deque<MessageFrame> messageFrameStack;
   private final Address miningBeneficiary;
   private Optional<Bytes> revertReason;
@@ -239,7 +241,7 @@ public class MessageFrame {
   private Optional<Gas> gasCost = Optional.empty();
   private final Consumer<MessageFrame> completer;
   private Optional<MemoryEntry> maybeUpdatedMemory = Optional.empty();
-  private Optional<MemoryEntry> maybeUpdatedStorage = Optional.empty();
+  private Optional<StorageEntry> maybeUpdatedStorage = Optional.empty();
 
   public static Builder builder() {
     return new Builder();
@@ -272,6 +274,7 @@ public class MessageFrame {
       final Multimap<Address, Bytes32> accessListWarmStorage) {
     this.type = type;
     this.messageFrameStack = messageFrameStack;
+    this.parentMessageFrame = messageFrameStack.peek();
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
     this.blockHashLookup = blockHashLookup;
@@ -435,7 +438,7 @@ public class MessageFrame {
    * @return The item at the specified offset in the stack
    * @throws UnderflowException if the offset is out of range
    */
-  public UInt256 getStackItem(final int offset) {
+  public Bytes getStackItem(final int offset) {
     return stack.get(offset);
   }
 
@@ -445,7 +448,7 @@ public class MessageFrame {
    * @return the item at the top of the stack
    * @throws UnderflowException if the stack is empty
    */
-  public UInt256 popStackItem() {
+  public Bytes popStackItem() {
     return stack.pop();
   }
 
@@ -463,7 +466,7 @@ public class MessageFrame {
    *
    * @param value The value to push onto the stack.
    */
-  public void pushStackItem(final UInt256 value) {
+  public void pushStackItem(final Bytes value) {
     stack.push(value);
   }
 
@@ -474,7 +477,7 @@ public class MessageFrame {
    * @param value The value to set the stack item to
    * @throws IllegalStateException if the stack is too small
    */
-  public void setStackItem(final int offset, final UInt256 value) {
+  public void setStackItem(final int offset, final Bytes value) {
     stack.set(offset, value);
   }
 
@@ -503,7 +506,7 @@ public class MessageFrame {
    * @param length The length of the memory access
    * @return the memory size for specified memory access
    */
-  public UInt256 calculateMemoryExpansion(final UInt256 offset, final UInt256 length) {
+  public long calculateMemoryExpansion(final long offset, final long length) {
     return memory.calculateNewActiveWords(offset, length);
   }
 
@@ -513,7 +516,7 @@ public class MessageFrame {
    * @param offset The offset in memory
    * @param length The length of the memory access
    */
-  public void expandMemory(final UInt256 offset, final UInt256 length) {
+  public void expandMemory(final long offset, final long length) {
     memory.ensureCapacityForBytes(offset, length);
   }
 
@@ -531,7 +534,7 @@ public class MessageFrame {
    *
    * @return the number of words in memory
    */
-  public UInt256 memoryWordSize() {
+  public int memoryWordSize() {
     return memory.getActiveWords();
   }
 
@@ -556,7 +559,7 @@ public class MessageFrame {
    * @param length The length of the bytes to read
    * @return The bytes in the specified range
    */
-  public Bytes readMutableMemory(final UInt256 offset, final UInt256 length) {
+  public Bytes readMutableMemory(final long offset, final long length) {
     return readMutableMemory(offset, length, false);
   }
 
@@ -567,7 +570,7 @@ public class MessageFrame {
    * @param length The length of the bytes to read
    * @return The bytes in the specified range
    */
-  public Bytes readMemory(final UInt256 offset, final UInt256 length) {
+  public Bytes readMemory(final long offset, final long length) {
     return readMutableMemory(offset, length, false).copy();
   }
 
@@ -581,7 +584,7 @@ public class MessageFrame {
    * @return The bytes in the specified range
    */
   public Bytes readMutableMemory(
-      final UInt256 offset, final UInt256 length, final boolean explicitMemoryRead) {
+      final long offset, final long length, final boolean explicitMemoryRead) {
     final Bytes value = memory.getBytes(offset, length);
     if (explicitMemoryRead) {
       setUpdatedMemory(offset, value);
@@ -596,8 +599,7 @@ public class MessageFrame {
    * @param value The value to set in memory
    * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
    */
-  public void writeMemory(
-      final UInt256 offset, final byte value, final boolean explicitMemoryUpdate) {
+  public void writeMemory(final long offset, final byte value, final boolean explicitMemoryUpdate) {
     memory.setByte(offset, value);
     if (explicitMemoryUpdate) {
       setUpdatedMemory(offset, Bytes.of(value));
@@ -611,7 +613,7 @@ public class MessageFrame {
    * @param length The length of the bytes to write
    * @param value The value to write
    */
-  public void writeMemory(final UInt256 offset, final UInt256 length, final Bytes value) {
+  public void writeMemory(final long offset, final long length, final Bytes value) {
     writeMemory(offset, length, value, false);
   }
 
@@ -624,13 +626,10 @@ public class MessageFrame {
    * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
    */
   public void writeMemory(
-      final UInt256 offset,
-      final UInt256 length,
-      final Bytes value,
-      final boolean explicitMemoryUpdate) {
+      final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
     memory.setBytes(offset, length, value);
     if (explicitMemoryUpdate) {
-      setUpdatedMemory(offset, UInt256.ZERO, length, value);
+      setUpdatedMemory(offset, 0, length, value);
     }
   }
 
@@ -643,7 +642,7 @@ public class MessageFrame {
    * @param value The value to write
    */
   public void writeMemory(
-      final UInt256 offset, final UInt256 sourceOffset, final UInt256 length, final Bytes value) {
+      final long offset, final long sourceOffset, final long length, final Bytes value) {
     writeMemory(offset, sourceOffset, length, value, false);
   }
 
@@ -657,42 +656,40 @@ public class MessageFrame {
    * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
    */
   public void writeMemory(
-      final UInt256 offset,
-      final UInt256 sourceOffset,
-      final UInt256 length,
+      final long offset,
+      final long sourceOffset,
+      final long length,
       final Bytes value,
       final boolean explicitMemoryUpdate) {
     memory.setBytes(offset, sourceOffset, length, value);
-    if (explicitMemoryUpdate && length.toLong() > 0) {
+    if (explicitMemoryUpdate && length > 0) {
       setUpdatedMemory(offset, sourceOffset, length, value);
     }
   }
 
   private void setUpdatedMemory(
-      final UInt256 offset, final UInt256 sourceOffset, final UInt256 length, final Bytes value) {
-    final int srcOff = sourceOffset.fitsInt() ? sourceOffset.intValue() : Integer.MAX_VALUE;
-    final int len = length.fitsInt() ? length.intValue() : Integer.MAX_VALUE;
-    final int endIndex = srcOff + len;
-    if (srcOff >= 0 && endIndex > 0) {
+      final long offset, final long sourceOffset, final long length, final Bytes value) {
+    final long endIndex = sourceOffset + length;
+    if (sourceOffset >= 0 && endIndex > 0) {
       final int srcSize = value.size();
       if (endIndex > srcSize) {
-        final MutableBytes paddedAnswer = MutableBytes.create(len);
-        if (srcOff < srcSize) {
-          value.slice(srcOff, srcSize - srcOff).copyTo(paddedAnswer, 0);
+        final MutableBytes paddedAnswer = MutableBytes.create((int) length);
+        if (sourceOffset < srcSize) {
+          value.slice((int) sourceOffset, (int) (srcSize - sourceOffset)).copyTo(paddedAnswer, 0);
         }
         setUpdatedMemory(offset, paddedAnswer.copy());
       } else {
-        setUpdatedMemory(offset, value.slice(srcOff, len).copy());
+        setUpdatedMemory(offset, value.slice((int) sourceOffset, (int) length).copy());
       }
     }
   }
 
-  private void setUpdatedMemory(final UInt256 offset, final Bytes value) {
+  private void setUpdatedMemory(final long offset, final Bytes value) {
     maybeUpdatedMemory = Optional.of(new MemoryEntry(offset, value));
   }
 
   public void storageWasUpdated(final UInt256 storageAddress, final Bytes value) {
-    maybeUpdatedStorage = Optional.of(new MemoryEntry(storageAddress, value));
+    maybeUpdatedStorage = Optional.of(new StorageEntry(storageAddress, value));
   }
   /**
    * Accumulate a log.
@@ -807,7 +804,22 @@ public class MessageFrame {
    * @return true if the address was already warmed up
    */
   public boolean warmUpAddress(final Address address) {
-    return !warmedUpAddresses.add(address);
+    if (warmedUpAddresses.add(address)) {
+      return parentMessageFrame != null && parentMessageFrame.isWarm(address);
+    } else {
+      return true;
+    }
+  }
+
+  private boolean isWarm(final Address address) {
+    MessageFrame frame = this;
+    while (frame != null) {
+      if (frame.warmedUpAddresses.contains(address)) {
+        return true;
+      }
+      frame = frame.parentMessageFrame;
+    }
+    return false;
   }
 
   /**
@@ -818,16 +830,22 @@ public class MessageFrame {
    * @return true if the storage slot was already warmed up
    */
   public boolean warmUpStorage(final Address address, final Bytes32 slot) {
-    return !warmedUpStorage.put(address, slot);
+    if (warmedUpStorage.put(address, slot)) {
+      return parentMessageFrame != null && parentMessageFrame.isWarm(address, slot);
+    } else {
+      return true;
+    }
   }
 
-  public void copyWarmedUpFields(final MessageFrame parentFrame) {
-    if (parentFrame == this) {
-      return;
+  private boolean isWarm(final Address address, final Bytes32 slot) {
+    MessageFrame frame = this;
+    while (frame != null) {
+      if (frame.warmedUpStorage.containsEntry(address, slot)) {
+        return true;
+      }
+      frame = frame.parentMessageFrame;
     }
-
-    warmedUpAddresses = new HashSet<>(parentFrame.warmedUpAddresses);
-    warmedUpStorage = HashMultimap.create(parentFrame.warmedUpStorage);
+    return false;
   }
 
   public void mergeWarmedUpFields(final MessageFrame childFrame) {
@@ -835,8 +853,8 @@ public class MessageFrame {
       return;
     }
 
-    warmedUpAddresses = childFrame.warmedUpAddresses;
-    warmedUpStorage = childFrame.warmedUpStorage;
+    warmedUpAddresses.addAll(childFrame.warmedUpAddresses);
+    warmedUpStorage.putAll(childFrame.warmedUpStorage);
   }
 
   /**
@@ -1048,7 +1066,7 @@ public class MessageFrame {
     return maybeUpdatedMemory;
   }
 
-  public Optional<MemoryEntry> getMaybeUpdatedStorage() {
+  public Optional<StorageEntry> getMaybeUpdatedStorage() {
     return maybeUpdatedStorage;
   }
 

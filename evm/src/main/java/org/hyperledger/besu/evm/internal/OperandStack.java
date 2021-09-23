@@ -16,11 +16,11 @@
 
 package org.hyperledger.besu.evm.internal;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes;
 
-public class OperandStack extends FixedStack<UInt256> {
+public class OperandStack extends FixedStack<Bytes> {
 
   public OperandStack(final int maxSize) {
-    super(maxSize, UInt256.class);
+    super(maxSize, Bytes.class);
   }
 }

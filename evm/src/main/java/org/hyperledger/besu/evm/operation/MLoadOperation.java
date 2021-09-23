@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -22,8 +24,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes;
 
 public class MLoadOperation extends AbstractOperation {
 
@@ -33,7 +34,7 @@ public class MLoadOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final UInt256 location = frame.popStackItem();
+    final long location = clampedToLong(frame.popStackItem());
 
     final Gas cost = gasCalculator().mLoadOperationGasCost(frame, location);
     final Optional<Gas> optionalCost = Optional.of(cost);
@@ -41,9 +42,7 @@ public class MLoadOperation extends AbstractOperation {
       return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
-    final UInt256 value =
-        UInt256.fromBytes(
-            Bytes32.leftPad(frame.readMutableMemory(location, UInt256.valueOf(32), true)));
+    final Bytes value = frame.readMutableMemory(location, 32, true).copy();
 
     frame.pushStackItem(value);
     return new OperationResult(optionalCost, Optional.empty());

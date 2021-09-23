@@ -67,8 +67,8 @@ public class TransactionEIP1559Test {
     final String raw = out.encoded().toHexString();
     final Transaction decoded = Transaction.readFrom(RLP.input(Bytes.fromHexString(raw)));
     System.out.println(decoded);
-    System.out.println(decoded.getAccessList().orElseThrow().get(0).getAddress().toHexString());
-    System.out.println(decoded.getAccessList().orElseThrow().get(0).getStorageKeys());
+    System.out.println(decoded.getAccessList().orElseThrow().get(0).getAddressString());
+    System.out.println(decoded.getAccessList().orElseThrow().get(0).getStorageKeysString());
   }
 
   private static KeyPair keyPair(final String privateKey) {

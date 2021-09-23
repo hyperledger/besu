@@ -83,7 +83,7 @@ public class MainnetTransactionValidatorTest {
             .gasLimit(10)
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
-    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(Gas.of(50L));
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(Gas.of(50));
 
     assertThat(validator.validate(transaction, Optional.empty(), transactionValidationParams))
         .isEqualTo(
@@ -365,7 +365,7 @@ public class MainnetTransactionValidatorTest {
             frontierValidator.validate(transaction, Optional.empty(), transactionValidationParams))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
 
-    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(Gas.of(0L));
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(Gas.of(0));
 
     assertThat(eip1559Validator.validate(transaction, Optional.of(1L), transactionValidationParams))
         .isEqualTo(ValidationResult.valid());
@@ -411,7 +411,7 @@ public class MainnetTransactionValidatorTest {
             .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
     final Optional<Long> basefee = Optional.of(150000L);
-    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(Gas.of(50L));
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(Gas.of(50));
 
     assertThat(validator.validate(transaction, basefee, transactionValidationParams))
         .isEqualTo(ValidationResult.valid());
@@ -434,7 +434,7 @@ public class MainnetTransactionValidatorTest {
             .type(TransactionType.EIP1559)
             .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
-    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(Gas.of(50L));
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(Gas.of(50));
 
     assertThat(
             validator.validate(
@@ -474,7 +474,7 @@ public class MainnetTransactionValidatorTest {
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
 
-    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(Gas.of(50L));
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(Gas.of(50));
 
     assertThat(
             validator

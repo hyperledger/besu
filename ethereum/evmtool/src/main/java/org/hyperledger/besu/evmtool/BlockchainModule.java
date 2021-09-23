@@ -64,9 +64,10 @@ public class BlockchainModule {
       final MutableWorldState mutableWorldState =
           new DefaultMutableWorldState(worldStateStorage, worldStatePreimageStorage);
       genesisState.writeStateTo(mutableWorldState);
-      return mutableWorldState;
+      return (MutableWorldView) mutableWorldState;
     } else {
-      return new DefaultMutableWorldState(stateRoot, worldStateStorage, worldStatePreimageStorage);
+      return (MutableWorldView)
+          new DefaultMutableWorldState(stateRoot, worldStateStorage, worldStatePreimageStorage);
     }
   }
 

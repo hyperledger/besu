@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
-import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.io.IOException;
@@ -256,7 +256,7 @@ public class TransactionTracerTest {
 
     final WorldUpdater updater = mock(WorldUpdater.class);
     when(mutableWorldState.updater()).thenReturn(updater);
-    final WorldUpdater stackedUpdater = mock(AbstractWorldUpdater.StackedUpdater.class);
+    final WorldUpdater stackedUpdater = mock(StackedUpdater.class);
     when(updater.updater()).thenReturn(stackedUpdater);
     final Address coinbase = blockHeader.getCoinbase();
     when(transactionProcessor.processTransaction(

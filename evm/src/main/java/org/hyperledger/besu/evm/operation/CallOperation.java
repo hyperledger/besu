@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
@@ -26,8 +28,6 @@ import org.hyperledger.besu.evm.internal.Words;
 
 import java.util.Optional;
 
-import org.apache.tuweni.units.bigints.UInt256;
-
 public class CallOperation extends AbstractCallOperation {
 
   public CallOperation(final GasCalculator gasCalculator) {
@@ -36,7 +36,7 @@ public class CallOperation extends AbstractCallOperation {
 
   @Override
   protected Gas gas(final MessageFrame frame) {
-    return Gas.of(frame.getStackItem(0));
+    return Gas.of(frame.getStackItem(0).trimLeadingZeros());
   }
 
   @Override
@@ -55,23 +55,23 @@ public class CallOperation extends AbstractCallOperation {
   }
 
   @Override
-  protected UInt256 inputDataOffset(final MessageFrame frame) {
-    return frame.getStackItem(3);
+  protected long inputDataOffset(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(3));
   }
 
   @Override
-  protected UInt256 inputDataLength(final MessageFrame frame) {
-    return frame.getStackItem(4);
+  protected long inputDataLength(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(4));
   }
 
   @Override
-  protected UInt256 outputDataOffset(final MessageFrame frame) {
-    return frame.getStackItem(5);
+  protected long outputDataOffset(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(5));
   }
 
   @Override
-  protected UInt256 outputDataLength(final MessageFrame frame) {
-    return frame.getStackItem(6);
+  protected long outputDataLength(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(6));
   }
 
   @Override
@@ -97,10 +97,10 @@ public class CallOperation extends AbstractCallOperation {
   @Override
   public Gas cost(final MessageFrame frame) {
     final Gas stipend = gas(frame);
-    final UInt256 inputDataOffset = inputDataOffset(frame);
-    final UInt256 inputDataLength = inputDataLength(frame);
-    final UInt256 outputDataOffset = outputDataOffset(frame);
-    final UInt256 outputDataLength = outputDataLength(frame);
+    final long inputDataOffset = inputDataOffset(frame);
+    final long inputDataLength = inputDataLength(frame);
+    final long outputDataOffset = outputDataOffset(frame);
+    final long outputDataLength = outputDataLength(frame);
     final Account recipient = frame.getWorldUpdater().get(address(frame));
 
     return gasCalculator()

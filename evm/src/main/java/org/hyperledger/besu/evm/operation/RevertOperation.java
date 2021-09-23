@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -23,7 +25,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class RevertOperation extends AbstractOperation {
 
@@ -33,8 +34,8 @@ public class RevertOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final UInt256 from = frame.popStackItem();
-    final UInt256 length = frame.popStackItem();
+    final long from = clampedToLong(frame.popStackItem());
+    final long length = clampedToLong(frame.popStackItem());
 
     final Gas cost = gasCalculator().memoryExpansionGasCost(frame, from, length);
     final Optional<Gas> optionalCost = Optional.of(cost);
