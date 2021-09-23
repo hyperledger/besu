@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.Gas;
@@ -48,7 +48,7 @@ public class RevertOperationTest {
         .thenReturn(UInt256.fromHexString("0x0e"));
     when(messageFrame.readMemory(0, 14)).thenReturn(revertReasonBytes);
     when(messageFrame.memoryWordSize()).thenReturn(0);
-    when(messageFrame.calculateMemoryExpansion(any(), any())).thenReturn(14L);
+    when(messageFrame.calculateMemoryExpansion(anyLong(), anyLong())).thenReturn(14L);
     when(messageFrame.getRemainingGas()).thenReturn(Gas.of(10_000));
   }
 
