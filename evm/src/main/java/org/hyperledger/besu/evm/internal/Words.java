@@ -84,10 +84,10 @@ public abstract class Words {
 
   /**
    * The value of the bytes as though it was representing an unsigned integer, however if the value
-   * exceeds Integer.MAX_VALUE then Integer.MAX_VALUE will be returned.
+   * exceeds Long.MAX_VALUE then Long.MAX_VALUE will be returned.
    *
    * @param uint the unsigned integer
-   * @return the least of the integer value or Integer.MAX_VALUE
+   * @return the least of the integer value or Long.MAX_VALUE
    */
   public static long clampedToLong(final Bytes uint) {
     if (uint.size() <= 8) {
