@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.MutableBytes;
  * <p>This message must be sent by the party who responded to the RLPX connection, in response to
  * the initiator message.
  *
- * <p><B>Message structure</B>
+ * <h3>Message structure</h3>
  *
  * <p>The following describes the message structure:
  *

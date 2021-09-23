@@ -70,7 +70,7 @@ import org.ethereum.beacon.discovery.schema.NodeRecord;
  * <p>When necessary, it updates the underlying {@link PeerTable}, particularly with additions which
  * may succeed or not depending on the contents of the target bucket for the peer.
  *
- * <p><B>Peer state machine</B>
+ * <h3>Peer state machine</h3>
  *
  * <pre>{@code
  *                                                                +--------------------+
