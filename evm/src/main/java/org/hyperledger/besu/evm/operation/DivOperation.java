@@ -38,8 +38,8 @@ public class DivOperation extends AbstractFixedCostOperation {
     if (value1.isZero()) {
       frame.pushStackItem(UInt256.ZERO);
     } else {
-      var b1 = new BigInteger(1, value0.toArrayUnsafe());
-      var b2 = new BigInteger(1, value1.toArrayUnsafe());
+      BigInteger b1 = new BigInteger(1, value0.toArrayUnsafe());
+      BigInteger b2 = new BigInteger(1, value1.toArrayUnsafe());
       final BigInteger result = b1.divide(b2);
 
       // because it's unsigned there is a change a 33 byte result will occur

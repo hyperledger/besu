@@ -174,7 +174,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       frame.clearReturnData();
 
       final Address to = to(frame);
-      final var contract = frame.getWorldUpdater().get(to);
+      final Account contract = frame.getWorldUpdater().get(to);
 
       final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
       final Wei balance = account == null ? Wei.ZERO : account.getBalance();

@@ -150,7 +150,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         .map(
             entry -> {
               final Optional<Address> address = getAccountTrieKeyPreimage(entry.getKey());
-              final var account =
+              final WorldStateAccount account =
                   deserializeAccount(
                       address.orElse(Address.ZERO), Hash.wrap(entry.getKey()), entry.getValue());
               return new StreamableAccount(address, account);

@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -37,7 +38,7 @@ public class SelfDestructOperation extends AbstractOperation {
     final Address recipientAddress = Words.toAddress(frame.popStackItem());
 
     // because of weird EIP150/158 reasons we care about a null account so we can't merge this.
-    final var recipientNullable = frame.getWorldUpdater().get(recipientAddress);
+    final Account recipientNullable = frame.getWorldUpdater().get(recipientAddress);
     final Wei inheritance = frame.getWorldUpdater().get(frame.getRecipientAddress()).getBalance();
 
     final boolean accountIsWarm =

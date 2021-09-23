@@ -38,8 +38,8 @@ public class ModOperation extends AbstractFixedCostOperation {
     if (value1.isZero()) {
       frame.pushStackItem(Bytes32.ZERO);
     } else {
-      var b1 = new BigInteger(1, value0.toArrayUnsafe());
-      var b2 = new BigInteger(1, value1.toArrayUnsafe());
+      BigInteger b1 = new BigInteger(1, value0.toArrayUnsafe());
+      BigInteger b2 = new BigInteger(1, value1.toArrayUnsafe());
       final BigInteger result = b1.mod(b2);
 
       Bytes resultBytes = Bytes.wrap(result.toByteArray());

@@ -40,9 +40,9 @@ public class AddModOperation extends AbstractFixedCostOperation {
     if (value2.isZero()) {
       frame.pushStackItem(UInt256.ZERO);
     } else {
-      var b0 = new BigInteger(1, value0.toArrayUnsafe());
-      var b1 = new BigInteger(1, value1.toArrayUnsafe());
-      var b2 = new BigInteger(1, value2.toArrayUnsafe());
+      BigInteger b0 = new BigInteger(1, value0.toArrayUnsafe());
+      BigInteger b1 = new BigInteger(1, value1.toArrayUnsafe());
+      BigInteger b2 = new BigInteger(1, value2.toArrayUnsafe());
 
       BigInteger result = b0.add(b1).mod(b2);
       Bytes resultBytes = Bytes.wrap(result.toByteArray());

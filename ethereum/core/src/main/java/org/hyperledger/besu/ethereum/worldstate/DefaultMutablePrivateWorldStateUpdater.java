@@ -59,7 +59,7 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
     if (privateAccount != null && !privateAccount.isEmpty()) {
       return privateAccount;
     }
-    final var publicAccount = publicWorldUpdater.getAccount(address);
+    final EvmAccount publicAccount = publicWorldUpdater.getAccount(address);
     if (publicAccount != null && !publicAccount.isEmpty()) {
       ((WrappedEvmAccount) publicAccount).setImmutable(true); // FIXME
       return publicAccount;
