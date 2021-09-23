@@ -76,14 +76,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       final KeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage,
       final KeyValueStorage snapTrieBranchBucketStorage,
-      final KeyValueStorage snapTrieBranchBucket2Storage) {
+      final KeyValueStorage snapTrieBranchSecondBucketStorage) {
     this.accountStorage = accountStorage;
     this.codeStorage = codeStorage;
     this.storageStorage = storageStorage;
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
     this.snapTrieBranchBucketStorage = snapTrieBranchBucketStorage;
-    this.snapTrieBranchSecondBucketStorage = snapTrieBranchBucket2Storage;
+    this.snapTrieBranchSecondBucketStorage = snapTrieBranchSecondBucketStorage;
   }
 
   @Override
