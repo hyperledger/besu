@@ -38,7 +38,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
-public abstract class BftProtocolSchedule {
+public abstract class BaseBftProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
 

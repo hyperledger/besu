@@ -40,7 +40,7 @@ import java.util.function.Supplier;
 
 import org.junit.Test;
 
-public class BftProtocolScheduleTest {
+public class BaseBftProtocolScheduleTest {
 
   private final GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
   private final BftExtraDataCodec bftExtraDataCodec = mock(BftExtraDataCodec.class);
@@ -178,8 +178,8 @@ public class BftProtocolScheduleTest {
   }
 
   private ProtocolSchedule createProtocolSchedule() {
-    final BftProtocolSchedule bftProtocolSchedule =
-        new BftProtocolSchedule() {
+    final BaseBftProtocolSchedule bftProtocolSchedule =
+        new BaseBftProtocolSchedule() {
           @Override
           protected Supplier<BlockHeaderValidator.Builder> createForkBlockHeaderRuleset(
               final GenesisConfigOptions config, final BftFork fork) {

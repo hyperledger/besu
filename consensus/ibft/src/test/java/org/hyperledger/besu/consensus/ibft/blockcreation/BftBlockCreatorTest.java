@@ -24,9 +24,9 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
@@ -84,8 +84,8 @@ public class BftBlockCreatorTest {
 
     final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
 
-    final BftProtocolSchedule bftProtocolSchedule =
-        new BftProtocolSchedule() {
+    final BaseBftProtocolSchedule bftProtocolSchedule =
+        new BaseBftProtocolSchedule() {
           @Override
           protected Supplier<BlockHeaderValidator.Builder> createForkBlockHeaderRuleset(
               final GenesisConfigOptions config, final BftFork fork) {

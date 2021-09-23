@@ -16,8 +16,8 @@ package org.hyperledger.besu.consensus.ibft;
 
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import java.util.function.Supplier;
 
 /** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
-public class IbftProtocolSchedule extends BftProtocolSchedule {
+public class IbftProtocolSchedule extends BaseBftProtocolSchedule {
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
