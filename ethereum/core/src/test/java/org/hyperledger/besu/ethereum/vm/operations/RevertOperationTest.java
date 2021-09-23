@@ -15,12 +15,13 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
+import org.hyperledger.besu.evm.operation.RevertOperation;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -45,10 +46,9 @@ public class RevertOperationTest {
     when(messageFrame.popStackItem())
         .thenReturn(UInt256.fromHexString("0x00"))
         .thenReturn(UInt256.fromHexString("0x0e"));
-    final UInt256 uint256_14 = UInt256.valueOf(0x0e);
-    when(messageFrame.readMemory(UInt256.ZERO, uint256_14)).thenReturn(revertReasonBytes);
-    when(messageFrame.memoryWordSize()).thenReturn(UInt256.ZERO);
-    when(messageFrame.calculateMemoryExpansion(any(), any())).thenReturn(uint256_14);
+    when(messageFrame.readMemory(0, 14)).thenReturn(revertReasonBytes);
+    when(messageFrame.memoryWordSize()).thenReturn(0);
+    when(messageFrame.calculateMemoryExpansion(anyLong(), anyLong())).thenReturn(14L);
     when(messageFrame.getRemainingGas()).thenReturn(Gas.of(10_000));
   }
 

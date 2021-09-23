@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import static java.util.Collections.emptyList;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -23,7 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
@@ -42,14 +43,17 @@ public class OperationBenchmarkHelper {
   private final Path storageDirectory;
   private final KeyValueStorage keyValueStorage;
   private final MessageFrame messageFrame;
+  private final Blockchain blockchain;
 
   private OperationBenchmarkHelper(
       final Path storageDirectory,
       final KeyValueStorage keyValueStorage,
-      final MessageFrame messageFrame) {
+      final MessageFrame messageFrame,
+      final Blockchain blockchain) {
     this.storageDirectory = storageDirectory;
     this.keyValueStorage = keyValueStorage;
     this.messageFrame = messageFrame;
+    this.blockchain = blockchain;
   }
 
   public static OperationBenchmarkHelper create() throws IOException {
@@ -85,7 +89,12 @@ public class OperationBenchmarkHelper {
                     .difficulty(Difficulty.ONE)
                     .buildHeader())
             .build();
-    return new OperationBenchmarkHelper(storageDirectory, keyValueStorage, messageFrame);
+    return new OperationBenchmarkHelper(
+        storageDirectory, keyValueStorage, messageFrame, blockchain);
+  }
+
+  public Blockchain getBlockchain() {
+    return blockchain;
   }
 
   public MessageFrame createMessageFrame() {
@@ -96,8 +105,7 @@ public class OperationBenchmarkHelper {
     return MessageFrame.builder()
         .type(MessageFrame.Type.MESSAGE_CALL)
         .messageFrameStack(messageFrame.getMessageFrameStack())
-        .blockchain(messageFrame.getBlockchain())
-        .worldState(messageFrame.getWorldState())
+        .worldUpdater(messageFrame.getWorldUpdater())
         .initialGas(messageFrame.getRemainingGas())
         .address(messageFrame.getContractAddress())
         .originator(messageFrame.getOriginatorAddress())
@@ -108,13 +116,12 @@ public class OperationBenchmarkHelper {
         .value(messageFrame.getValue())
         .apparentValue(messageFrame.getApparentValue())
         .code(messageFrame.getCode())
-        .blockHeader(messageFrame.getBlockHeader())
+        .blockValues(messageFrame.getBlockValues())
         .depth(messageFrame.getMessageStackDepth())
         .isStatic(messageFrame.isStatic())
         .completer(messageFrame -> {})
         .miningBeneficiary(messageFrame.getMiningBeneficiary())
-        .maxStackSize(messageFrame.getMaxStackSize())
-        .blockHashLookup(messageFrame.getBlockHashLookup());
+        .maxStackSize(messageFrame.getMaxStackSize());
   }
 
   public void cleanUp() throws IOException {

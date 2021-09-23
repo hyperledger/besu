@@ -17,13 +17,14 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Optional;
 
@@ -53,7 +54,8 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
         privacyParameters
             .getPrivacyService()
             .getPayloadProvider()
-            .getPrivateTransactionFromPayload(messageFrame.getTransaction());
+            .getPrivateTransactionFromPayload(
+                messageFrame.getContextVariable(PrivateStateUtils.KEY_TRANSACTION));
 
     if (pluginPrivateTransaction.isEmpty()) {
       return Bytes.EMPTY;
@@ -63,14 +65,15 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
         PrivateTransaction.readFrom(pluginPrivateTransaction.get());
 
     final Bytes32 privacyGroupId = privateTransaction.determinePrivacyGroupId();
-    final Hash pmtHash = messageFrame.getTransactionHash();
+    final Hash pmtHash = messageFrame.getContextVariable(PrivateStateUtils.KEY_TRANSACTION_HASH);
 
     LOG.debug(
         "Processing unrestricted private transaction {} in privacy group {}",
         pmtHash,
         privacyGroupId);
 
-    final PrivateMetadataUpdater privateMetadataUpdater = messageFrame.getPrivateMetadataUpdater();
+    final PrivateMetadataUpdater privateMetadataUpdater =
+        messageFrame.getContextVariable(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER);
     final Hash lastRootHash =
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
@@ -84,7 +87,7 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
         disposablePrivateState,
         privateWorldStateUpdater,
         privacyGroupId,
-        messageFrame.getBlockHeader().getNumber());
+        messageFrame.getBlockValues().getNumber());
 
     final TransactionProcessingResult result =
         processPrivateTransaction(
@@ -101,7 +104,7 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
       return Bytes.EMPTY;
     }
 
-    if (messageFrame.isPersistingPrivateState()) {
+    if (messageFrame.getContextVariable(PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
 
       privateWorldStateUpdater.commit();
       disposablePrivateState.persist(null);

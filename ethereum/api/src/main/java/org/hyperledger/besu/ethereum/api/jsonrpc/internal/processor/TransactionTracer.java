@@ -19,18 +19,18 @@ import static java.util.function.Predicate.isEqual;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -43,12 +43,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** Used to produce debug traces of transactions */
 public class TransactionTracer {
 
   public static final String TRACE_PATH = "traces";
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final BlockReplay blockReplay;
 
@@ -101,7 +105,7 @@ public class TransactionTracer {
               WorldUpdater stackedUpdater = worldState.updater().updater();
               final List<String> traces = new ArrayList<>();
               for (int i = 0; i < body.getTransactions().size(); i++) {
-                ((AbstractWorldUpdater.StackedUpdater) stackedUpdater).markTransactionBoundary();
+                ((StackedUpdater<?, ?>) stackedUpdater).markTransactionBoundary();
                 final Transaction transaction = body.getTransactions().get(i);
                 if (selectedHash.isEmpty()
                     || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {
@@ -117,7 +121,7 @@ public class TransactionTracer {
                             transactionProcessor,
                             new StandardJsonTracer(out, showMemory));
                     out.println(
-                        StandardJsonTracer.summaryTrace(
+                        summaryTrace(
                             transaction, timer.stop().elapsed(TimeUnit.NANOSECONDS), result));
                     traces.add(traceFile.getPath());
                   } catch (FileNotFoundException e) {
@@ -172,5 +176,17 @@ public class TransactionTracer {
         new BlockHashLookup(header, blockchain),
         false,
         ImmutableTransactionValidationParams.builder().isAllowFutureNonce(true).build());
+  }
+
+  public static String summaryTrace(
+      final Transaction transaction, final long timer, final TransactionProcessingResult result) {
+    final ObjectNode summaryLine = OBJECT_MAPPER.createObjectNode();
+    summaryLine.put("output", result.getOutput().toUnprefixedHexString());
+    summaryLine.put(
+        "gasUsed",
+        StandardJsonTracer.shortNumber(
+            UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining())));
+    summaryLine.put("time", timer);
+    return summaryLine.toString();
   }
 }
