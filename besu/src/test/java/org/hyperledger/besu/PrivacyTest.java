@@ -15,6 +15,8 @@
 package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
@@ -28,10 +30,10 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.PrecompiledContract;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValuePrivacyStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
@@ -72,8 +74,7 @@ public class PrivacyTest {
   public void defaultPrivacy() throws IOException, URISyntaxException {
     final BesuController besuController = setUpControllerWithPrivacyEnabled(false);
 
-    final PrecompiledContract precompiledContract =
-        getPrecompile(besuController, Address.DEFAULT_PRIVACY);
+    final PrecompiledContract precompiledContract = getPrecompile(besuController, DEFAULT_PRIVACY);
 
     assertThat(precompiledContract.getName()).isEqualTo("Privacy");
   }
@@ -83,7 +84,7 @@ public class PrivacyTest {
     final BesuController besuController = setUpControllerWithPrivacyEnabled(true);
 
     final PrecompiledContract onchainPrecompiledContract =
-        getPrecompile(besuController, Address.ONCHAIN_PRIVACY);
+        getPrecompile(besuController, ONCHAIN_PRIVACY);
 
     assertThat(onchainPrecompiledContract.getName()).isEqualTo("OnChainPrivacy");
   }

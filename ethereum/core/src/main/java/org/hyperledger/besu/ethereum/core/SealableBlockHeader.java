@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import org.apache.tuweni.bytes.Bytes;
 

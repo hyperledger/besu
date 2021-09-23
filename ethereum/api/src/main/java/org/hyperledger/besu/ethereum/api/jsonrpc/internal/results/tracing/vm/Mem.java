@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 public class Mem {
 
   private final String data;
-  private final int off;
+  private final long off;
 
-  public Mem(final String data, final int off) {
+  public Mem(final String data, final long off) {
     this.data = data;
     this.off = off;
   }
@@ -28,7 +28,7 @@ public class Mem {
     return data;
   }
 
-  public int getOff() {
+  public long getOff() {
     return off;
   }
 }

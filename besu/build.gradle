@@ -49,6 +49,7 @@ dependencies {
   implementation project(':ethereum:trie')
   implementation project(':ethereum:stratum')
   implementation project(':ethereum:ethstats')
+  implementation project(':evm')
   implementation project(':metrics:core')
   implementation project(':nat')
   implementation project(':plugin-api')

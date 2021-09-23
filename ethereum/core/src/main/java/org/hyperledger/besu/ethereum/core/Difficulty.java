@@ -77,6 +77,10 @@ public final class Difficulty extends BaseUInt256Value<Difficulty> implements Qu
     return toBigInteger();
   }
 
+  public Bytes32 getAsBytes32() {
+    return this;
+  }
+
   @Override
   public String toHexString() {
     return super.toHexString();
