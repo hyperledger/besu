@@ -12,9 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager;
+
+package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -119,7 +124,9 @@ public class SnapProtocolManager implements ProtocolManager {
       final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
           ethMessage.getData().unwrapMessageData();
       maybeResponseData =
-          snapMessages.dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()));
+          snapMessages
+              .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()))
+              .map(responseData -> responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
     } catch (final RLPException e) {
       LOG.debug(
           "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);

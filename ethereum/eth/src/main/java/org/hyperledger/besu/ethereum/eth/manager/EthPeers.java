@@ -75,7 +75,7 @@ public class EthPeers {
         pendingRequests::size);
   }
 
-  void registerConnection(
+  public void registerConnection(
       final PeerConnection peerConnection, final List<PeerValidator> peerValidators) {
     final EthPeer peer =
         new EthPeer(
@@ -88,7 +88,7 @@ public class EthPeers {
     connections.putIfAbsent(peerConnection, peer);
   }
 
-  void registerDisconnect(final PeerConnection connection) {
+  public void registerDisconnect(final PeerConnection connection) {
     final EthPeer peer = connections.remove(connection);
     if (peer != null) {
       disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));

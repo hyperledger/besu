@@ -101,6 +101,8 @@ public class EthPeer {
     roundMessages.put(EthPV63.RECEIPTS, EthPV63.GET_RECEIPTS);
     roundMessages.put(EthPV63.NODE_DATA, EthPV63.GET_NODE_DATA);
     roundMessages.put(EthPV65.POOLED_TRANSACTIONS, EthPV65.GET_POOLED_TRANSACTIONS);
+
+    roundMessages.put(SnapV1.ACCOUNT_RANGE, SnapV1.GET_ACCOUNT_RANGE);
   }
 
   @VisibleForTesting
@@ -152,8 +154,6 @@ public class EthPeer {
     snapRequestManagers.put(
         SnapV1.GET_ACCOUNT_RANGE, new RequestManager(this, true, SnapProtocol.NAME));
     requestManagers.put(SnapProtocol.NAME, snapRequestManagers);
-
-    roundMessages.put(SnapV1.ACCOUNT_RANGE, SnapV1.GET_ACCOUNT_RANGE);
   }
 
   public void markValidated(final PeerValidator validator) {
@@ -302,7 +302,7 @@ public class EthPeer {
         messageData);
   }
 
-  boolean validateReceivedMessage(final EthMessage message, final String protocolName) {
+  public boolean validateReceivedMessage(final EthMessage message, final String protocolName) {
     checkArgument(message.getPeer().equals(this), "Mismatched message sent to peer for dispatch");
     return getRequestManager(EthProtocol.NAME, message.getData().getCode())
         .map(requestManager -> requestManager.outstandingRequests() != 0)

@@ -102,4 +102,10 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
       final List<UInt256> accountStorageKeys) {
     return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
   }
+
+  @Override
+  public List<Bytes> getAccountProofRelatedNodes(
+      final Hash worldStateRoot, final Hash accountHash) {
+    return worldStateProof.getProofRelatedNodes(worldStateRoot, accountHash);
+  }
 }

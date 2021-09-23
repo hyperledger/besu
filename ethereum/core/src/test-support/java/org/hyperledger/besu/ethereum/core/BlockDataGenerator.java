@@ -137,6 +137,7 @@ public class BlockDataGenerator {
             });
         stateUpdater.commit();
       }
+      System.out.println(worldState.rootHash());
       final BlockOptions options =
           blockOptionsSupplier
               .get()

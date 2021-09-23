@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager;
+package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,6 +23,9 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection.PeerSendHandler;
 import org.hyperledger.besu.ethereum.eth.messages.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetAccountRangeMessage;
@@ -36,10 +39,12 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -67,7 +72,9 @@ public final class SnapProtocolManagerTest {
   @Test
   public void disconnectOnUnsolicitedMessage() {
     try (final SnapProtocolManager snapManager = create(worldStateArchive)) {
-      final MessageData messageData = AccountRangeMessage.create().wrapMessageData(BigInteger.ONE);
+      final MessageData messageData =
+          AccountRangeMessage.create(new TreeMap<>(), new ArrayList<>())
+              .wrapMessageData(BigInteger.ONE);
       final MockPeerConnection peer =
           setupPeerWithoutStatusExchange(snapManager, (cap, msg, conn) -> {});
       snapManager.processMessage(SnapProtocol.SNAP1, new DefaultMessage(peer, messageData));

@@ -307,17 +307,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     }
   }
 
-  public Map<Bytes32, Bytes> streamAccounts(
-      final Hash rootHash, final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
-    final StoredMerklePatriciaTrie<Bytes, Bytes> trie =
-        new StoredMerklePatriciaTrie<>(
-            (location, key) -> getWorldStateStorage().getAccountStateTrieNode(location, key),
-            rootHash,
-            Function.identity(),
-            Function.identity());
-    return trie.entriesFrom(startKeyHash, endKeyHash);
-  }
-
   @Override
   public WorldUpdater updater() {
     return updater;
@@ -389,8 +378,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     stateUpdater
         .getTrieBranchStorageTransaction()
         .put(location.toArrayUnsafe(), value.toArrayUnsafe());
-
-    // System.out.println("write " + nodeHash + " " + location);
     blockHeader.ifPresent(
         header ->
             stateUpdater
@@ -405,8 +392,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final Bytes32 nodeHash,
       final Bytes value) {
     stateUpdater.putAccountStorageTrieNode(accountHash, location, nodeHash, value);
-
-    // System.out.println("write " + blockHeader + " " + location);
   }
 
   private Optional<Bytes> getStorageTrieNode(

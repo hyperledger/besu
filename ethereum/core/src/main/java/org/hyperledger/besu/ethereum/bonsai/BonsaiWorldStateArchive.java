@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
+import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -49,6 +50,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   private final BonsaiPersistedWorldState persistedState;
   private final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStatesByHash;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
+  private final WorldStateProofProvider worldStateProof;
   private final long maxLayersToLoad;
 
   public BonsaiWorldStateArchive(final StorageProvider provider, final Blockchain blockchain) {
@@ -86,6 +88,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
                 });
           }
         });
+    this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
   }
 
   @Override
@@ -263,8 +266,13 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final Hash worldStateRoot,
       final Address accountAddress,
       final List<UInt256> accountStorageKeys) {
-    // FIXME we can do proofs for layered tries and the persisted trie
-    return Optional.empty();
+    return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
+  }
+
+  @Override
+  public List<Bytes> getAccountProofRelatedNodes(
+      final Hash worldStateRoot, final Hash accountHash) {
+    return worldStateProof.getProofRelatedNodes(worldStateRoot, accountHash);
   }
 
   void scrubLayeredCache(final long newMaxHeight) {

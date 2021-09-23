@@ -12,22 +12,36 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager;
+package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
+import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetAccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.SnapV1;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.Iterator;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
+import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 class SnapServer {
+
+  private static final Logger LOGGER = LogManager.getLogger();
+
+  private static final int MAX_ENTRIES_PER_REQUEST = 100000;
+
+  private static final int MAX_RESPONSE_SIZE = 2 * 1024 * 1024;
+
   private final EthMessages snapMessages;
   private final WorldStateArchive worldStateArchive;
 
@@ -51,15 +65,40 @@ class SnapServer {
         (BonsaiPersistedWorldState) worldStateArchive.getMutable();
     final GetAccountRangeMessage.Range range = getAccountRangeMessage.range(true);
 
-    Map<Bytes32, Bytes> bytes32BytesMap =
-        worldState.streamAccounts(
-            range.worldStateRootHash(), range.startKeyHash(), range.endKeyHash());
-    Iterator<Map.Entry<Bytes32, Bytes>> iterator = bytes32BytesMap.entrySet().iterator();
-    while (iterator.hasNext()) {
-      System.out.println(
-          "for " + range.worldStateRootHash().toHexString() + " Entry " + iterator.next().getKey());
+    final int maxResponseBytes = Math.min(range.responseBytes().intValue(), MAX_RESPONSE_SIZE);
+
+    LOGGER.info(
+        "Receive get account range message from {} to {}",
+        range.startKeyHash().toHexString(),
+        range.endKeyHash().toHexString());
+    final StoredMerklePatriciaTrie<Bytes, Bytes> trie =
+        new StoredMerklePatriciaTrie<>(
+            (location, key) -> {
+              System.out.println("ici");
+              return worldState.getWorldStateStorage().getAccountStateTrieNode(location, key);
+            },
+            range.worldStateRootHash(),
+            Function.identity(),
+            Function.identity());
+    final TreeMap<Bytes32, Bytes> accounts =
+        (TreeMap<Bytes32, Bytes>)
+            trie.entriesFrom(
+                root ->
+                    SnapStorageEntriesCollector.collectEntries(
+                        root,
+                        range.startKeyHash(),
+                        range.endKeyHash(),
+                        MAX_ENTRIES_PER_REQUEST,
+                        maxResponseBytes));
+    final List<Bytes> proof =
+        new ArrayList<>(
+            worldStateArchive.getAccountProofRelatedNodes(
+                range.worldStateRootHash(), Hash.wrap(range.startKeyHash())));
+    if (!accounts.isEmpty()) {
+      proof.addAll(
+          worldStateArchive.getAccountProofRelatedNodes(
+              range.worldStateRootHash(), Hash.wrap(accounts.lastKey())));
     }
-    // TODO RETRIEVE ACCOUNT RANGE
-    return AccountRangeMessage.create();
+    return AccountRangeMessage.create(accounts, proof);
   }
 }

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -63,6 +64,16 @@ public class WorldStateProofProvider {
                     getStorageProofs(accountHash, account, accountStorageKeys);
                 return new WorldStateProof(account, accountProof, storageProofs);
               });
+    }
+  }
+
+  public List<Bytes> getProofRelatedNodes(final Hash worldStateRoot, final Hash accountHash) {
+    if (!worldStateStorage.isWorldStateAvailable(worldStateRoot, null)) {
+      return new ArrayList<>();
+    } else {
+      final Proof<Bytes> accountProof =
+          newAccountStateTrie(worldStateRoot).getValueWithProof(accountHash);
+      return accountProof.getProofRelatedNodes();
     }
   }
 
