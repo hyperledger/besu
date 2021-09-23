@@ -111,7 +111,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.FrontierTargetingGasLimitCalculator;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -132,6 +131,7 @@ import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.MetricsProtocol;
@@ -1347,8 +1347,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // and eventually it will run regular parsing of the remaining options.
 
     final ConfigOptionSearchAndRunHandler configParsingHandler =
-        new ConfigOptionSearchAndRunHandler(
-            resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment);
+        new ConfigOptionSearchAndRunHandler(resultHandler, exceptionHandler, environment);
 
     ParseArgsHelper.getLauncherOptions(unstableLauncherOptions, args);
     if (unstableLauncherOptions.isLauncherMode()

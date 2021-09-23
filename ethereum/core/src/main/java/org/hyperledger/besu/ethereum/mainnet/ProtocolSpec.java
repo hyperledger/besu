@@ -22,8 +22,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
-import org.hyperledger.besu.ethereum.vm.EVM;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 import java.util.Optional;
 

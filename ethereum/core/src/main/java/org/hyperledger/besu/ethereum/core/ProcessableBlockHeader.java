@@ -16,11 +16,14 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.frame.BlockValues;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+
 /** A block header capable of being processed. */
-public class ProcessableBlockHeader {
+public class ProcessableBlockHeader implements BlockValues {
 
   protected final Hash parentHash;
 
@@ -82,10 +85,21 @@ public class ProcessableBlockHeader {
   }
 
   /**
+   * Returns the block difficulty.
+   *
+   * @return the block difficulty
+   */
+  @Override
+  public Bytes getDifficultyBytes() {
+    return difficulty.getAsBytes32();
+  }
+
+  /**
    * Returns the block number.
    *
    * @return the block number
    */
+  @Override
   public long getNumber() {
     return number;
   }
@@ -95,6 +109,7 @@ public class ProcessableBlockHeader {
    *
    * @return the block gas limit
    */
+  @Override
   public long getGasLimit() {
     return gasLimit;
   }
@@ -104,6 +119,7 @@ public class ProcessableBlockHeader {
    *
    * @return the block timestamp
    */
+  @Override
   public long getTimestamp() {
     return timestamp;
   }
@@ -113,6 +129,7 @@ public class ProcessableBlockHeader {
    *
    * @return the raw bytes of the extra data field
    */
+  @Override
   public Optional<Long> getBaseFee() {
     return Optional.ofNullable(baseFee);
   }

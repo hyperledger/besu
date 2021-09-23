@@ -22,12 +22,10 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
@@ -37,8 +35,10 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -139,7 +139,6 @@ public class PrivateGroupRehydrationBlockProcessor {
 
         final TransactionProcessingResult privateResult =
             privateTransactionProcessor.processTransaction(
-                blockchain,
                 worldStateUpdater.updater(),
                 privateWorldStateUpdater,
                 blockHeader,

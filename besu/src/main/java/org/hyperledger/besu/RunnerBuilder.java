@@ -19,11 +19,11 @@ import static java.util.Objects.isNull;
 import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 import static org.hyperledger.besu.controller.BesuController.CACHE_PATH;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -925,7 +925,7 @@ public class RunnerBuilder {
                   .getProtocolSchedule()
                   .getByBlockNumber(1)
                   .getPrecompileContractRegistry()
-                  .get(Address.ONCHAIN_PRIVACY);
+                  .get(ONCHAIN_PRIVACY);
       onchainPrivacyPrecompiledContract.addPrivateTransactionObserver(privateTransactionObserver);
     }
   }

@@ -23,7 +23,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.core.LogTopic;
+import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.Arrays;
 import java.util.HashMap;
