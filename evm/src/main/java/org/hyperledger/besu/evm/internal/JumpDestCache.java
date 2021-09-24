@@ -13,22 +13,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.ethereum.core.contract;
+package org.hyperledger.besu.evm.internal;
 
 import org.hyperledger.besu.datatypes.Hash;
-
-import java.util.BitSet;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 public class JumpDestCache {
 
-  private final Cache<Hash, BitSet> cache;
+  private final Cache<Hash, long[]> cache;
   private final long weightLimit;
   private static JumpDestCache INSTANCE = null;
 
-  public static void init(final ContractCacheConfiguration config) {
+  public static void init(final JumpdestCacheConfiguration config) {
     if (INSTANCE == null) {
       INSTANCE = new JumpDestCache(config.getContractCacheWeightBytes());
     }
@@ -40,7 +38,7 @@ public class JumpDestCache {
 
   public static JumpDestCache getInstance() {
     if (INSTANCE == null) {
-      JumpDestCache.init(ContractCacheConfiguration.DEFAULT_CONFIG);
+      JumpDestCache.init(JumpdestCacheConfiguration.DEFAULT_CONFIG);
     }
     return INSTANCE;
   }
@@ -59,11 +57,11 @@ public class JumpDestCache {
     this.cache.cleanUp();
   }
 
-  public BitSet getIfPresent(final Hash codeHash) {
+  public long[] getIfPresent(final Hash codeHash) {
     return cache.getIfPresent(codeHash);
   }
 
-  public void put(final Hash key, final BitSet value) {
+  public void put(final Hash key, final long[] value) {
     cache.put(key, value);
   }
 

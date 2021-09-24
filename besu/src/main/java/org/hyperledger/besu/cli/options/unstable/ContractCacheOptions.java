@@ -16,14 +16,14 @@
 package org.hyperledger.besu.cli.options.unstable;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
-import org.hyperledger.besu.ethereum.core.contract.ContractCacheConfiguration;
+import org.hyperledger.besu.evm.internal.JumpdestCacheConfiguration;
 
 import java.util.Arrays;
 import java.util.List;
 
 import picocli.CommandLine;
 
-public class ContractCacheOptions implements CLIOptions<ContractCacheConfiguration> {
+public class ContractCacheOptions implements CLIOptions<JumpdestCacheConfiguration> {
 
   public static final String CONTRACT_CACHE_WEIGHT = "--Xcontract-code-cache-weight-kb";
 
@@ -40,8 +40,8 @@ public class ContractCacheOptions implements CLIOptions<ContractCacheConfigurati
   private Long contractCacheWeightKilobytes = 250000l;
 
   @Override
-  public ContractCacheConfiguration toDomainObject() {
-    return new ContractCacheConfiguration(contractCacheWeightKilobytes);
+  public JumpdestCacheConfiguration toDomainObject() {
+    return new JumpdestCacheConfiguration(contractCacheWeightKilobytes);
   }
 
   @Override

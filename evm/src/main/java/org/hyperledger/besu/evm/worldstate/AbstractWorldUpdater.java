@@ -19,7 +19,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.ethereum.core.contract.JumpDestCache;
+import org.hyperledger.besu.evm.internal.JumpDestCache;
 
 import java.util.ArrayList;
 import java.util.Collection;

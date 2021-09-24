@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.fluent;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -56,7 +57,7 @@ public class EVMExecutor {
   private Wei gasPriceGWei = Wei.ZERO;
   private Bytes callData = Bytes.EMPTY;
   private Wei ethValue = Wei.ZERO;
-  private Code code = new Code(Bytes.EMPTY);
+  private Code code = new Code(Bytes.EMPTY, Hash.EMPTY);
   private BlockValues blockValues = new SimpleBlockValues();
   private OperationTracer tracer = OperationTracer.NO_TRACING;
   private boolean requireDeposit = true;
@@ -196,7 +197,7 @@ public class EVMExecutor {
 
   public Bytes execute(
       final Bytes codeBytes, final Bytes inputData, final Wei value, final Address receiver) {
-    this.code = new Code(codeBytes);
+    this.code = new Code(codeBytes, Hash.EMPTY);
     this.callData = inputData;
     this.ethValue = value;
     this.receiver = receiver;
@@ -299,8 +300,8 @@ public class EVMExecutor {
     return this;
   }
 
-  public EVMExecutor code(final Bytes codeBytes) {
-    this.code = new Code(codeBytes);
+  public EVMExecutor code(final Bytes codeBytes, final Hash hash) {
+    this.code = new Code(codeBytes, hash);
     return this;
   }
 

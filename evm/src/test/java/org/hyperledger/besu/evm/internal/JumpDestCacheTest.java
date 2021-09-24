@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -13,17 +13,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.ethereum.core.contract;
+package org.hyperledger.besu.evm.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.operations.JumpDestOperation;
-
-import java.util.BitSet;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -40,14 +38,11 @@ public class JumpDestCacheTest {
   public void testScale() {
     Bytes contractBytes =
         Bytes.fromHexString("0xDEAD" + op + "BEEF" + op + "B0B0" + op + "C0DE" + op + "FACE");
-    BitSet jumpDests = new BitSet(contractBytes.size());
-    jumpDests.set(2);
-    jumpDests.set(4);
-    jumpDests.set(6);
-    jumpDests.set(8);
+    //3rd bit, 6th bit, 9th bit, 12th bit
+    long[] jumpDests = {4+32+256+2048};
     CodeScale scale = new CodeScale();
     Code contractCode = new Code(contractBytes, Hash.hash(contractBytes), jumpDests);
     int weight = scale.weigh(contractCode.getCodeHash(), contractCode.getValidJumpDestinations());
-    assertThat(weight).isEqualTo(contractCode.getCodeHash().size() + jumpDests.size() / 8);
+    assertThat(weight).isEqualTo(contractCode.getCodeHash().size() + jumpDests.length * 8);
   }
 }

@@ -24,8 +24,12 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.internal.JumpDestCache;
+import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldState.StreamableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -134,6 +138,33 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
     assertThat(updater.get(ADDRESS)).isNull();
 
+    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+  }
+
+  @Test
+  public void removeAccount_ContractJumpdestMapPurged() {
+    // Create a world state with one account
+    Bytes contractBytes =
+            Bytes.fromHexString("0xDEAD5BBEEF5BB0B05BC0DE5BFACE");
+    Code contractCode = new Code(contractBytes, Hash.hash(contractBytes));
+    final MutableWorldState worldState = createEmpty();
+    WorldUpdater updater = worldState.updater();
+    EvmAccount contract = updater.createAccount(ADDRESS);
+    contract.getMutable().setCode(contractBytes);
+
+    JumpDestCache.getInstance().put(contractCode.getCodeHash(), contractCode.calculateJumpDests());
+    updater.commit();
+    assertThat(worldState.get(ADDRESS)).isNotNull();
+    assertThat(worldState.rootHash()).isNotEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+
+    // Delete account
+    updater = worldState.updater();
+    updater.deleteAccount(ADDRESS);
+    assertThat(updater.get(ADDRESS)).isNull();
+    assertThat(updater.getAccount(ADDRESS)).isNull();
+    updater.commit();
+    assertThat(updater.get(ADDRESS)).isNull();
+    assertThat(JumpDestCache.getInstance().getIfPresent(Hash.hash(contractBytes))).isNull();
     assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
   }
 

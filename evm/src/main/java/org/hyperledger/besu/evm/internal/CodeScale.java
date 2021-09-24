@@ -13,7 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.ethereum.core.contract;
+package org.hyperledger.besu.evm.internal;
 
 import org.hyperledger.besu.datatypes.Hash;
 
@@ -21,9 +21,9 @@ import java.util.BitSet;
 
 import com.github.benmanes.caffeine.cache.Weigher;
 
-class CodeScale implements Weigher<Hash, BitSet> {
+class CodeScale implements Weigher<Hash, long[]> {
   @Override
-  public int weigh(final Hash key, final BitSet value) {
-    return (value.size() / 8) + key.size();
+  public int weigh(final Hash key, final long[] value) {
+    return (value.length * 8) + key.size();
   }
 }

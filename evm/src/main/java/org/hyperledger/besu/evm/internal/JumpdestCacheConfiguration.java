@@ -13,14 +13,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.ethereum.core.contract;
+package org.hyperledger.besu.evm.internal;
 
-public class ContractCacheConfiguration {
-  public static final ContractCacheConfiguration DEFAULT_CONFIG =
-      new ContractCacheConfiguration(250_000L);
+public class JumpdestCacheConfiguration {
+  public static final JumpdestCacheConfiguration DEFAULT_CONFIG =
+      new JumpdestCacheConfiguration(250_000L);
   private final long contractCacheWeightKilobytes;
 
-  public ContractCacheConfiguration(final long contractCacheWeightKilobytes) {
+  public JumpdestCacheConfiguration(final long contractCacheWeightKilobytes) {
     this.contractCacheWeightKilobytes = contractCacheWeightKilobytes;
   }
 

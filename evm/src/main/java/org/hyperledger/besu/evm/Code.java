@@ -18,10 +18,11 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
+import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.PushOperation;
 import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.contract.JumpDestCache;
+import org.hyperledger.besu.evm.internal.JumpDestCache;
 
 import java.util.BitSet;
 
@@ -99,6 +100,7 @@ public class Code {
     return bytes.size();
   }
 
+
   /**
    * Determine whether a specified destination is a valid jump target.
    *
@@ -115,29 +117,45 @@ public class Code {
     if (validJumpDestinations == null) {
       validJumpDestinations = JumpDestCache.getInstance().getIfPresent(this.codeHash);
       if (validJumpDestinations == null) {
-        validJumpDestinations = calculateJumpDests();
+        validJumpDestinations = this.calculateJumpDests();
         if (this.codeHash != null && !this.codeHash.equals(Hash.EMPTY)) {
           JumpDestCache.getInstance().put(this.codeHash, validJumpDestinations);
         } else {
           LOG.debug("not caching jumpdest for unhashed contract code");
         }
       }
-      // Calculate valid jump destinations
-
     }
-    return validJumpDestinations.get(jumpDestination);
+    long targetLong = validJumpDestinations[jumpDestination >> 6];
+    long targetBit = 1L << (jumpDestination & 0x3F);
+    return (targetLong & targetBit) != 0L;
   }
 
-  public BitSet calculateJumpDests(final EVM evm) {
-    BitSet retval  = new BitSet(this.getSize());
-    evm.forEachOperation(
-            this,
-        (final Operation op, final Integer offset) -> {
-          if (op.getOpcode() == JumpDestOperation.OPCODE) {
-            retval.set(offset);
-          }
-        });
-    return retval;
+  public long[] calculateJumpDests() {
+    int size = getSize();
+    long[] bitmap = new long[(size >> 6) + 1];
+    byte[] rawCode = getBytes().toArrayUnsafe();
+    int length = rawCode.length;
+    for (int i = 0; i < length; ) {
+      long thisEntry = 0L;
+      int entryPos = i >> 6;
+      int max = Math.min(64, length - (entryPos << 6));
+      int j = i & 0x3F;
+      for (; j < max; i++, j++) {
+        byte operationNum = rawCode[i];
+        if (operationNum == JumpDestOperation.OPCODE) {
+          thisEntry |= 1L << j;
+        } else if (operationNum > PushOperation.PUSH_BASE) {
+          // not needed - && operationNum <= PushOperation.PUSH_MAX
+          // Java quirk, all bytes are signed, and PUSH32 is 127, which is Byte.MAX_VALUE
+          // so we don't need to check the upper bound as it will never be violated
+          int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
+          j += multiByteDataLen;
+          i += multiByteDataLen;
+        }
+      }
+      bitmap[entryPos] = thisEntry;
+    }
+    return bitmap;
   }
 
   public Bytes getBytes() {

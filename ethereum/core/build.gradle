@@ -53,7 +53,6 @@ dependencies {
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
-  implementation 'com.github.ben-manes.caffeine:caffeine:3.0.4'
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.vertx:vertx-core'
   implementation 'net.java.dev.jna:jna'
