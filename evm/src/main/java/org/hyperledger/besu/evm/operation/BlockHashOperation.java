@@ -41,8 +41,9 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final UInt256 blockArg = frame.popStackItem();
+  public Operation.OperationResult executeFixedCostOperation(
+      final MessageFrame frame, final EVM evm) {
+    final UInt256 blockArg = UInt256.fromBytes(frame.popStackItem());
 
     // Short-circuit if value is unreasonably large
     if (!blockArg.fitsLong()) {
@@ -51,8 +52,8 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
     }
 
     final long soughtBlock = blockArg.toLong();
-    final BlockValues blockHeader = frame.getBlockValues();
-    final long currentBlockNumber = blockHeader.getNumber();
+    final BlockValues blockValues = frame.getBlockValues();
+    final long currentBlockNumber = blockValues.getNumber();
     final long mostRecentBlockNumber = currentBlockNumber - 1;
 
     // If the current block is the genesis block or the sought block is

@@ -31,15 +31,22 @@ public class SModOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final UInt256 value0 = frame.popStackItem();
-    final UInt256 value1 = frame.popStackItem();
+  public Operation.OperationResult executeFixedCostOperation(
+      final MessageFrame frame, final EVM evm) {
+    final Bytes value0 = frame.popStackItem();
+    final Bytes value1 = frame.popStackItem();
 
     if (value1.isZero()) {
       frame.pushStackItem(UInt256.ZERO);
     } else {
-      final BigInteger b1 = value0.toSignedBigInteger();
-      final BigInteger b2 = value1.toSignedBigInteger();
+      final BigInteger b1 =
+          value0.size() < 32
+              ? new BigInteger(1, value0.toArrayUnsafe())
+              : new BigInteger(value0.toArrayUnsafe());
+      final BigInteger b2 =
+          value1.size() < 32
+              ? new BigInteger(1, value1.toArrayUnsafe())
+              : new BigInteger(value1.toArrayUnsafe());
       BigInteger result = b1.abs().mod(b2.abs());
       if (b1.signum() < 0) {
         result = result.negate();
@@ -53,7 +60,7 @@ public class SModOperation extends AbstractFixedCostOperation {
       final byte[] padding = new byte[32 - resultBytes.size()];
       Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
 
-      frame.pushStackItem(UInt256.fromBytes(Bytes.concatenate(Bytes.wrap(padding), resultBytes)));
+      frame.pushStackItem(Bytes.concatenate(Bytes.wrap(padding), resultBytes));
     }
 
     return successResponse;

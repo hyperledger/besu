@@ -14,16 +14,12 @@
  */
 package org.hyperledger.besu.evm.frame;
 
-import java.math.BigInteger;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
-import org.apache.tuweni.units.bigints.UInt256;
-import org.apache.tuweni.units.bigints.UInt256s;
 
 /**
- * A EVM memory implementation.
+ * An EVM memory implementation.
  *
  * <p>Note: this is meant to map to I in Section 9.1 "Basics" and Section 9.4.1 "Machine State" in
  * the Yellow Paper Revision 59dccd.
@@ -37,13 +33,12 @@ public class Memory {
    * The data stored within the memory.
    *
    * <p>Note that the current Ethereum spec don't put a limit on memory, so we could theoretically
-   * overflow this. A byte array implementation limits us to 2GiB. But that would cost over 51
+   * overflow this. A byte array implementation limits us to 2 GiB. But that would cost over 51
    * trillion gas. So this is likely a reasonable limitation, at least at first.
    */
   private MutableBytes data;
 
-  private UInt256 activeWords;
-  private int dataSize256;
+  private int activeWords;
 
   public Memory() {
     data = MutableBytes.EMPTY;
@@ -51,8 +46,7 @@ public class Memory {
   }
 
   private void updateSize() {
-    dataSize256 = data.size() / Bytes32.SIZE;
-    activeWords = UInt256.valueOf(dataSize256);
+    activeWords = data.size() / Bytes32.SIZE;
   }
 
   private static RuntimeException overflow(final long v) {
@@ -72,63 +66,47 @@ public class Memory {
     if (v < 0 || v >= MAX_BYTES) throw overflow(v);
   }
 
-  private int asByteIndex(final UInt256 w) {
+  private int asByteIndex(final long w) {
     try {
-      final long v = w.toLong();
+      final long v = Math.toIntExact(w);
       checkByteIndex(v);
       return (int) v;
     } catch (final IllegalStateException e) {
-      throw overflow(w.toString());
+      throw overflow(w);
     }
   }
 
-  private static int asByteLength(final UInt256 l) {
+  private static int asByteLength(final long l) {
     try {
-      // While we can theoretically support up to 32 * Integer.MAX_VALUE due to storing words, and
-      // so an index in memory need to be a long internally, we simply cannot load/store more than
-      // Integer.MAX_VALUE bytes at a time (Bytes has an int size).
-      return l.intValue();
-    } catch (final IllegalStateException e) {
-      throw overflow(l.toString());
+      return Math.toIntExact(l);
+    } catch (final ArithmeticException e) {
+      throw overflow(l);
     }
   }
 
   /**
    * For use in memoryExpansionGasCost() of GasCost. Returns the number of new active words that
-   * accommodate at least the number of specified bytes from the provide memory offset.
+   * accommodate at least the number of specified bytes from the provided memory offset.
    *
    * <p>Not that this has to return a UInt256 for Gas calculation, in case someone writes code that
-   * require a crazy amount of data. Such allocation should get prohibitive however and we will end
+   * require a crazy amount of data. Such allocation should get prohibitive however, and we will end
    * up with an Out-of-Gas error.
    *
    * @param location The offset in memory from which we want to accommodate {@code numBytes}.
    * @param numBytes The minimum number of bytes in memory.
    * @return The number of active words that accommodate at least the number of specified bytes.
    */
-  UInt256 calculateNewActiveWords(final UInt256 location, final UInt256 numBytes) {
-    if (numBytes.isZero()) {
+  long calculateNewActiveWords(final long location, final long numBytes) {
+    if (numBytes == 0) {
       return activeWords;
     }
 
-    if (location.fitsInt() && numBytes.fitsInt()) {
-      // Fast common path (note that we work on int but use long arithmetic to avoid issues)
-      final long byteSize = location.toLong() + numBytes.toLong();
-      int wordSize = Math.toIntExact(byteSize / Bytes32.SIZE);
-      if (byteSize % Bytes32.SIZE != 0) wordSize += 1;
-      return wordSize > dataSize256 ? UInt256.valueOf(wordSize) : activeWords;
-    } else {
-      // Slow, rare path
-
-      // Note that this is one place where, while the result will fit UInt256, we should compute
-      // without modulo for extreme cases.
-      final BigInteger byteSize =
-          location.toUnsignedBigInteger().add(numBytes.toUnsignedBigInteger());
-      final BigInteger[] result = byteSize.divideAndRemainder(BigInteger.valueOf(Bytes32.SIZE));
-      BigInteger wordSize = result[0];
-      if (!result[1].equals(BigInteger.ZERO)) {
-        wordSize = wordSize.add(BigInteger.ONE);
-      }
-      return UInt256s.max(activeWords, UInt256.valueOf(wordSize));
+    try {
+      final long byteSize = Math.addExact(Math.addExact(location, numBytes), 31);
+      long wordSize = byteSize / 32;
+      return Math.max(wordSize, activeWords);
+    } catch (ArithmeticException ae) {
+      return Long.MAX_VALUE >> 5;
     }
   }
 
@@ -138,27 +116,15 @@ public class Memory {
    * @param offset The location in memory to start with.
    * @param numBytes The number of bytes to get.
    */
-  void ensureCapacityForBytes(final UInt256 offset, final UInt256 numBytes) {
-    if (!offset.fitsInt()) return;
-    if (!numBytes.fitsInt()) return;
-    ensureCapacityForBytes(offset.intValue(), numBytes.intValue());
-  }
-
-  /**
-   * Expands the active words to accommodate the specified byte position.
-   *
-   * @param offset The location in memory to start with.
-   * @param numBytes The number of bytes to get.
-   */
-  void ensureCapacityForBytes(final int offset, final int numBytes) {
+  void ensureCapacityForBytes(final long offset, final long numBytes) {
     // Do not increase the memory capacity if no bytes are being written
     // regardless of what the address may be.
     if (numBytes == 0) {
       return;
     }
-    final int lastByteIndex = Math.addExact(offset, numBytes);
-    final int lastWordRequired = ((lastByteIndex - 1) / Bytes32.SIZE);
-    maybeExpandCapacity(lastWordRequired + 1);
+    final long lastByteIndex = Math.addExact(offset, numBytes);
+    final long lastWordRequired = ((lastByteIndex - 1) / Bytes32.SIZE);
+    maybeExpandCapacity((int) lastWordRequired + 1);
   }
 
   /**
@@ -167,7 +133,7 @@ public class Memory {
    * @param newActiveWords The new number of active words to expand to.
    */
   private void maybeExpandCapacity(final int newActiveWords) {
-    if (dataSize256 >= newActiveWords) return;
+    if (activeWords >= newActiveWords) return;
 
     // Require full capacity to guarantee we don't resize more than once.
     final MutableBytes newData = MutableBytes.create(newActiveWords * Bytes32.SIZE);
@@ -211,7 +177,7 @@ public class Memory {
    *
    * @return The current number of active words stored in memory.
    */
-  UInt256 getActiveWords() {
+  int getActiveWords() {
     return activeWords;
   }
 
@@ -223,9 +189,9 @@ public class Memory {
    * @return A fresh copy of the bytes from memory starting at {@code location} and extending {@code
    *     numBytes}.
    */
-  public Bytes getBytes(final UInt256 location, final UInt256 numBytes) {
+  public Bytes getBytes(final long location, final long numBytes) {
     // Note: if length == 0, we don't require any memory expansion, whatever location is. So
-    // we we must call asByteIndex(location) after this check so as it doesn't throw if the location
+    // we must call asByteIndex(location) after this check so as it doesn't throw if the location
     // is too big but the length is 0 (which is somewhat nonsensical, but is exercise by some
     // tests).
     final int length = asByteLength(numBytes);
@@ -236,7 +202,7 @@ public class Memory {
     final int start = asByteIndex(location);
 
     ensureCapacityForBytes(start, length);
-    return data.slice(start, numBytes.intValue());
+    return data.slice(start, length);
   }
 
   /**
@@ -247,10 +213,10 @@ public class Memory {
    * copied and so never fails.
    *
    * @param memOffset the location in memory at which to start copying the bytes of {@code value}.
-   * @param sourceOffset the location in the source to start copying.
-   * @param numBytes the number of bytes to set in memory. Note that this value may differ from
-   *     {@code value.size()}: if {@code numBytes < value.size()} bytes, only {@code numBytes} will
-   *     be copied from {@code value}; if {@code numBytes < value.size()}, then only the bytes in
+   * @param offset the location in the source to start copying.
+   * @param length the number of bytes to set in memory. Note that this value may differ from {@code
+   *     value.size()}: if {@code numBytes < value.size()} bytes, only {@code numBytes} will be
+   *     copied from {@code value}; if {@code numBytes < value.size()}, then only the bytes in
    *     {@code value} will be copied, but the memory will be expanded if necessary to cover {@code
    *     numBytes} (in other words, {@link #getActiveWords()} will return a value consistent with
    *     having set {@code numBytes} bytes, even if less than that have been concretely set due to
@@ -258,20 +224,16 @@ public class Memory {
    * @param bytes the bytes to copy to memory from {@code location}.
    */
   public void setBytes(
-      final UInt256 memOffset,
-      final UInt256 sourceOffset,
-      final UInt256 numBytes,
-      final Bytes bytes) {
-    final int offset = sourceOffset.fitsInt() ? sourceOffset.intValue() : Integer.MAX_VALUE;
-    final int length = numBytes.fitsInt() ? numBytes.intValue() : Integer.MAX_VALUE;
+      final long memOffset, final long offset, final long length, final Bytes bytes) {
 
     if (offset >= bytes.size()) {
-      clearBytes(memOffset, numBytes);
+      clearBytes(memOffset, length);
       return;
     }
 
-    final Bytes toCopy = bytes.slice(offset, Math.min(length, bytes.size() - offset));
-    setBytes(memOffset, numBytes, toCopy);
+    final Bytes toCopy =
+        bytes.slice((int) offset, Math.min((int) length, bytes.size() - (int) offset));
+    setBytes(memOffset, length, toCopy);
   }
 
   /**
@@ -291,8 +253,8 @@ public class Memory {
    *     {@code value} being smaller).
    * @param taintedValue the bytes to copy to memory from {@code location}.
    */
-  public void setBytes(final UInt256 location, final UInt256 numBytes, final Bytes taintedValue) {
-    if (numBytes.isZero()) {
+  public void setBytes(final long location, final long numBytes, final Bytes taintedValue) {
+    if (numBytes == 0) {
       return;
     }
 
@@ -316,7 +278,7 @@ public class Memory {
    * @param location The location in memory from which to start clearing the bytes.
    * @param numBytes The number of bytes to clear.
    */
-  private void clearBytes(final UInt256 location, final UInt256 numBytes) {
+  private void clearBytes(final long location, final long numBytes) {
     // See getBytes for why we check length == 0 first, before calling asByteIndex(location).
     final int length = asByteLength(numBytes);
     if (length == 0) {
@@ -346,7 +308,7 @@ public class Memory {
    * @param location the location of the byte to set.
    * @param value the value to set for the byte at {@code location}.
    */
-  void setByte(final UInt256 location, final byte value) {
+  void setByte(final long location, final byte value) {
     final int start = asByteIndex(location);
     ensureCapacityForBytes(start, 1);
     data.set(start, value);
@@ -358,7 +320,7 @@ public class Memory {
    * @param location The memory location the 256-bit word begins at.
    * @return a copy of the 32-bytes word that begins at the specified memory location.
    */
-  public Bytes32 getWord(final UInt256 location) {
+  public Bytes32 getWord(final long location) {
     final int start = asByteIndex(location);
     ensureCapacityForBytes(start, Bytes32.SIZE);
     return Bytes32.wrap(data.slice(start, Bytes32.SIZE));
@@ -373,7 +335,7 @@ public class Memory {
    * @param location the location at which to start setting the bytes.
    * @param bytes the 32 bytes to copy at {@code location}.
    */
-  public void setWord(final UInt256 location, final Bytes32 bytes) {
+  public void setWord(final long location, final Bytes32 bytes) {
     final int start = asByteIndex(location);
     ensureCapacityForBytes(start, Bytes32.SIZE);
     data.set(start, bytes);

@@ -53,6 +53,7 @@ dependencies {
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
   testImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
+  testImplementation project(':evm')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':metrics:core')
   testImplementation project(':testutil')

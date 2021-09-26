@@ -103,7 +103,7 @@ public class BlockHashOperationTest {
             .pushStackItem(UInt256.fromBytes(input))
             .build();
     blockHashOperation.execute(frame, null);
-    final Bytes32 result = frame.popStackItem();
+    final Bytes result = frame.popStackItem();
     assertThat(result).isEqualTo(expectedOutput);
     assertThat(frame.stackSize()).isZero();
   }

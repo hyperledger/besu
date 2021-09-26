@@ -17,28 +17,48 @@ package org.hyperledger.besu.evm;
 import org.hyperledger.besu.datatypes.Address;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-@JsonSerialize(using = AccessListEntrySerializer.class)
-@JsonDeserialize(using = AccessListEntryDeserializer.class)
 public class AccessListEntry {
   private final Address address;
   private final List<Bytes32> storageKeys;
 
   public AccessListEntry(final Address address, final List<Bytes32> storageKeys) {
-
     this.address = address;
     this.storageKeys = storageKeys;
   }
 
+  @JsonCreator
+  public static AccessListEntry createAccessListEntry(
+      @JsonProperty("address") final Address address,
+      @JsonProperty("storageKeys") final List<String> storageKeys) {
+    return new AccessListEntry(
+        address, storageKeys.stream().map(Bytes32::fromHexString).collect(Collectors.toList()));
+  }
+
+  @JsonIgnore
   public Address getAddress() {
     return address;
   }
 
+  @JsonIgnore
   public List<Bytes32> getStorageKeys() {
     return storageKeys;
+  }
+
+  @JsonProperty("address")
+  public String getAddressString() {
+    return address.toHexString();
+  }
+
+  @JsonProperty("storageKeys")
+  public List<String> getStorageKeysString() {
+    return storageKeys.stream().map(Bytes::toHexString).collect(Collectors.toList());
   }
 }

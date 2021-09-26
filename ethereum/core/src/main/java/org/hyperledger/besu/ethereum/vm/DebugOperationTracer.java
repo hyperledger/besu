@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
+import static org.apache.tuweni.bytes.Bytes32.leftPad;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
@@ -37,8 +39,6 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugOperationTracer implements OperationTracer {
-
-  private static final UInt256 UINT256_32 = UInt256.valueOf(32);
 
   private final TraceOptions options;
   private List<TraceFrame> traceFrames = new ArrayList<>();
@@ -200,9 +200,9 @@ public class DebugOperationTracer implements OperationTracer {
     if (!options.isMemoryEnabled()) {
       return Optional.empty();
     }
-    final Bytes[] memoryContents = new Bytes32[frame.memoryWordSize().intValue()];
+    final Bytes[] memoryContents = new Bytes[frame.memoryWordSize()];
     for (int i = 0; i < memoryContents.length; i++) {
-      memoryContents[i] = frame.readMemory(UInt256.valueOf(i * 32L), UINT256_32);
+      memoryContents[i] = frame.readMemory(i * 32L, 32);
     }
     return Optional.of(memoryContents);
   }
@@ -215,7 +215,7 @@ public class DebugOperationTracer implements OperationTracer {
     final Bytes32[] stackContents = new Bytes32[frame.stackSize()];
     for (int i = 0; i < stackContents.length; i++) {
       // Record stack contents in reverse
-      stackContents[i] = frame.getStackItem(stackContents.length - i - 1);
+      stackContents[i] = leftPad(frame.getStackItem(stackContents.length - i - 1));
     }
     return Optional.of(stackContents);
   }

@@ -74,20 +74,20 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
   }
 
   /**
-   * Returns the block number that the message requests or {@link OptionalLong#EMPTY} if the request
-   * specifies a block hash.
+   * Returns the block number that the message requests or {@link OptionalLong#empty()} if the
+   * request specifies a block hash.
    *
-   * @return Block Number Requested or {@link OptionalLong#EMPTY}
+   * @return Block Number Requested or {@link OptionalLong#empty()}
    */
   public OptionalLong blockNumber() {
     return getBlockHeadersData().blockNumber;
   }
 
   /**
-   * Returns the block hash that the message requests or {@link Optional#EMPTY} if the request
+   * Returns the block hash that the message requests or {@link Optional#empty()} if the request
    * specifies a block number.
    *
-   * @return Block Hash Requested or {@link Optional#EMPTY}
+   * @return Block Hash Requested or {@link Optional#empty()}
    */
   public Optional<Hash> hash() {
     return getBlockHeadersData().blockHash;

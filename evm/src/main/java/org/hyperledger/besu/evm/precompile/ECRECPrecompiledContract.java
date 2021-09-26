@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
+import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -80,7 +80,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
         return Bytes.EMPTY;
       }
 
-      final Bytes32 hashed = Hash.hash(recovered.get().getEncodedBytes());
+      final Bytes32 hashed = Hash.keccak256(recovered.get().getEncodedBytes());
       final MutableBytes32 result = MutableBytes32.create();
       hashed.slice(12).copyTo(result, 12);
       return result;

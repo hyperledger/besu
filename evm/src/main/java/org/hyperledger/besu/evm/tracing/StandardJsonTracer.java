@@ -77,8 +77,7 @@ public class StandardJsonTracer implements OperationTracer {
         .append(executeResult.getGasCost().map(gas -> shortNumber(gas.asUInt256())).orElse(""))
         .append("\",");
     if (showMemory) {
-      Bytes memory =
-          messageFrame.readMemory(UInt256.ZERO, messageFrame.memoryWordSize().multiply(32L));
+      Bytes memory = messageFrame.readMemory(0, messageFrame.memoryWordSize() * 32L);
       sb.append("\"memory\":\"").append(memory.toHexString()).append("\",");
       sb.append("\"memSize\":").append(memory.size()).append(",");
     } else {

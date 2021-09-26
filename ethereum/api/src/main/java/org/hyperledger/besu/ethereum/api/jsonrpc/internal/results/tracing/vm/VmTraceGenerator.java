@@ -160,9 +160,7 @@ public class VmTraceGenerator {
                   if (!currentOperation.startsWith("CREATE")) {
                     lastFrameInCall
                         .getMaybeUpdatedMemory()
-                        .map(
-                            mem ->
-                                new Mem(mem.getValue().toHexString(), mem.getOffset().intValue()))
+                        .map(mem -> new Mem(mem.getValue().toHexString(), mem.getOffset()))
                         .ifPresent(report::setMem);
                   }
                 });
@@ -231,9 +229,7 @@ public class VmTraceGenerator {
             .getMaybeUpdatedMemory()
             .map(
                 updatedMemory ->
-                    new Mem(
-                        updatedMemory.getValue().toHexString(),
-                        updatedMemory.getOffset().intValue()))
+                    new Mem(updatedMemory.getValue().toHexString(), updatedMemory.getOffset()))
             .ifPresent(report::setMem);
         break;
       default:

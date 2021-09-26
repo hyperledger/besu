@@ -36,8 +36,8 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
 
   @Override
   public Gas create2OperationGasCost(final MessageFrame frame) {
-    final UInt256 initCodeLength = frame.getStackItem(2);
-    final UInt256 numWords = initCodeLength.divideCeil(Bytes32.SIZE);
+    final UInt256 initCodeLength = UInt256.fromBytes(frame.getStackItem(2));
+    final UInt256 numWords = UInt256.fromBytes(initCodeLength.divideCeil(Bytes32.SIZE));
     final Gas initCodeHashCost = SHA3_OPERATION_WORD_GAS_COST.times(Gas.of(numWords));
     return createOperationGasCost(frame).plus(initCodeHashCost);
   }

@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.VirtualOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -47,11 +48,17 @@ public class EVM {
           Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
 
   private final OperationRegistry operations;
+  private final GasCalculator gasCalculator;
   private final Operation endOfScriptStop;
 
   public EVM(final OperationRegistry operations, final GasCalculator gasCalculator) {
     this.operations = operations;
+    this.gasCalculator = gasCalculator;
     this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
+  }
+
+  public GasCalculator getGasCalculator() {
+    return gasCalculator;
   }
 
   public void runToHalt(final MessageFrame frame, final OperationTracer operationTracer) {

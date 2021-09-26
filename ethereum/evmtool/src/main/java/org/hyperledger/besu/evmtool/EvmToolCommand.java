@@ -222,12 +222,16 @@ public class EvmToolCommand implements Runnable {
                 ? new StandardJsonTracer(System.out, !noMemory)
                 : OperationTracer.NO_TRACING;
 
+        var updater = component.getWorldUpdater();
+        updater.getOrCreate(sender);
+        updater.getOrCreate(receiver);
+
         final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
         messageFrameStack.add(
             MessageFrame.builder()
                 .type(MessageFrame.Type.MESSAGE_CALL)
                 .messageFrameStack(messageFrameStack)
-                .worldUpdater(component.getWorldUpdater())
+                .worldUpdater(updater)
                 .initialGas(gas)
                 .contract(Address.ZERO)
                 .address(receiver)
@@ -284,6 +288,10 @@ public class EvmToolCommand implements Runnable {
                 protocolSpec
                     .getGasCalculator()
                     .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
+            final Gas accessListCost =
+                tx.getAccessList()
+                    .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
+                    .orElse(Gas.ZERO);
             final Gas evmGas = gas.minus(messageFrame.getRemainingGas());
             out.println();
             out.println(
@@ -291,7 +299,13 @@ public class EvmToolCommand implements Runnable {
                     .put("gasUser", evmGas.asUInt256().toShortHexString())
                     .put("timens", lastTime)
                     .put("time", lastTime / 1000)
-                    .put("gasTotal", evmGas.plus(intrinsicGasCost).asUInt256().toShortHexString()));
+                    .put(
+                        "gasTotal",
+                        evmGas
+                            .plus(intrinsicGasCost)
+                            .plus(accessListCost)
+                            .asUInt256()
+                            .toShortHexString()));
           }
         }
         lastTime = stopwatch.elapsed().toNanos();

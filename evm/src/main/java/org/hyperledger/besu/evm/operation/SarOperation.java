@@ -14,10 +14,13 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.apache.tuweni.bytes.Bytes32.leftPad;
+
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -30,29 +33,31 @@ public class SarOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final UInt256 shiftAmount = frame.popStackItem();
-    Bytes32 value = frame.popStackItem();
+  public Operation.OperationResult executeFixedCostOperation(
+      final MessageFrame frame, final EVM evm) {
 
+    Bytes shiftAmount = frame.popStackItem();
+    final Bytes value = leftPad(frame.popStackItem());
     final boolean negativeNumber = value.get(0) < 0;
+    if (shiftAmount.size() > 4 && (shiftAmount = shiftAmount.trimLeadingZeros()).size() > 4) {
+      frame.pushStackItem(negativeNumber ? ALL_BITS : UInt256.ZERO);
+    } else {
+      final int shiftAmountInt = shiftAmount.toInt();
 
-    // short circuit result if we are shifting more than the width of the data.
-    if (!shiftAmount.fitsInt() || shiftAmount.intValue() >= 256) {
-      final UInt256 overflow = negativeNumber ? ALL_BITS : UInt256.ZERO;
-      frame.pushStackItem(overflow);
-      return successResponse;
+      if (shiftAmountInt >= 256) {
+        frame.pushStackItem(negativeNumber ? ALL_BITS : UInt256.ZERO);
+      } else {
+        // first perform standard shift right.
+        Bytes result = value.shiftRight(shiftAmountInt);
+
+        // if a negative number, carry through the sign.
+        if (negativeNumber) {
+          final Bytes32 significantBits = ALL_BITS.shiftLeft(256 - shiftAmountInt);
+          result = result.or(significantBits);
+        }
+        frame.pushStackItem(result);
+      }
     }
-
-    // first perform standard shift right.
-    value = value.shiftRight(shiftAmount.intValue());
-
-    // if a negative number, carry through the sign.
-    if (negativeNumber) {
-      final Bytes32 significantBits = ALL_BITS.shiftLeft(256 - shiftAmount.intValue());
-      value = value.or(significantBits);
-    }
-    frame.pushStackItem(UInt256.fromBytes(value));
-
     return successResponse;
   }
 }

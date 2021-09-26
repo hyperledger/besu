@@ -23,7 +23,7 @@ import java.util.Optional;
 
 public class DupOperation extends AbstractFixedCostOperation {
 
-  protected final OperationResult underflowResponse;
+  protected final Operation.OperationResult underflowResponse;
 
   private final int index;
 
@@ -39,12 +39,13 @@ public class DupOperation extends AbstractFixedCostOperation {
         gasCalculator.getVeryLowTierGasCost());
     this.index = index;
     this.underflowResponse =
-        new OperationResult(
+        new Operation.OperationResult(
             Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
+  public Operation.OperationResult executeFixedCostOperation(
+      final MessageFrame frame, final EVM evm) {
     // getStackItem won't throw under/overflows.  Check explicitly.
     if (frame.stackSize() < getStackItemsConsumed()) {
       return underflowResponse;
