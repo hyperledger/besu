@@ -1,0 +1,109 @@
+version: '2'
+
+x-besu:
+  &besu
+  container_name: besu
+  image: "hyperledger/besu:develop"
+  cpuset: 4-5
+  environment:
+    - NODE_INGRESS_CONTRACT_ADDRESS=0x0000000000000000000000000000000000009999
+    - ACCOUNT_INGRESS_CONTRACT_ADDRESS=0x0000000000000000000000000000000000008888
+    - BESU_NODE_PERM_ACCOUNT=D1cf9D73a91DE6630c2bb068Ba5fDdF9F0DEac09
+    - BESU_NODE_PERM_KEY=797c13f7235c627f6bd013dc17fff4c12213ab49abcf091f77c83f16db10e90b
+    - CHAIN_ID=48122
+  volumes:
+    - ./config:/config:ro
+
+x-caliper:
+  &caliper
+  container_name: caliper
+  # TODO: this image is build using the custom branch
+  # https://github.com/taccatisid/caliper/tree/besu-performance-benchmark-container. Once
+  # all the changes of this branch are merged into the caliper main
+  # branch, we should use the official caliper image here.
+  image: "taccatisid/caliper"
+  cpuset: 0-3
+  entrypoint: caliper launch manager
+  volumes:
+    - ./config:/config:ro
+    - ./caliper-benchmarks:/hyperledger/caliper/workspace
+
+services:
+  caliper-offchain:
+    << : *caliper
+    environment:
+      - CALIPER_PROJECTCONFIG=/config/caliper-offchain.yaml
+      - CALIPER_BIND_SUT=besu:latest
+      - CALIPER_BENCHCONFIG=/config/caliper-benchconfig-offchain.yaml
+      - CALIPER_NETWORKCONFIG=/config/caliper-networkconfig-offchain.json
+    depends_on:
+      besu-offchain:
+        condition: service_started
+      tessera:
+        condition: service_healthy
+
+  caliper-onchain:
+    << : *caliper
+    environment:
+      - CALIPER_PROJECTCONFIG=/config/caliper-onchain.yaml
+      - CALIPER_BIND_SUT=besu:latest
+      - CALIPER_BENCHCONFIG=/config/caliper-benchconfig-onchain.yaml
+      - CALIPER_NETWORKCONFIG=/config/caliper-networkconfig-onchain.json
+    depends_on:
+      besu-onchain:
+        condition: service_started
+      tessera:
+        condition: service_healthy
+
+  besu-offchain:
+    << : *besu
+    entrypoint:
+    - /opt/besu/bin/besu
+    - --genesis-file=/config/genesis.json
+    - --node-private-key-file=/config/besu-keystore/key
+    - --min-gas-price=0
+    - --revert-reason-enabled
+    - --rpc-ws-enabled
+    - --rpc-ws-apis=admin,eth,miner,web3,net,priv,eea
+    - --rpc-ws-host=0.0.0.0
+    - --host-whitelist=*
+    - --graphql-http-enabled
+    - --discovery-enabled=false
+    - --privacy-enabled=true
+    - --privacy-url=http://tessera:9101
+    - --privacy-public-key-file=/config/orion/key/orion.pub
+
+  besu-onchain:
+    << : *besu
+    entrypoint:
+    - /opt/besu/bin/besu
+    - --genesis-file=/config/genesis.json
+    - --node-private-key-file=/config/besu-keystore/key
+    - --min-gas-price=0
+    - --revert-reason-enabled
+    - --rpc-ws-enabled
+    - --rpc-ws-apis=admin,eth,miner,web3,net,priv,eea
+    - --rpc-ws-host=0.0.0.0
+    - --host-whitelist=*
+    - --graphql-http-enabled
+    - --discovery-enabled=false
+    - --privacy-enabled=true
+    - --privacy-url=http://tessera:9101
+    - --privacy-public-key-file=/config/orion/key/orion.pub
+    - --privacy-flexible-groups-enabled
+  tessera:
+    container_name: tessera
+    image: quorumengineering/tessera:latest
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "--proxy", "off", "http://localhost:9000/upcheck"]
+      interval: 1s
+      timeout: 1s
+      retries: 10
+    volumes:
+      - ./config/tessera:/config:ro
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /data/tm/;
+        /tessera/bin/tessera -configfile /config/config.json
