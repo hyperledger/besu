@@ -36,12 +36,12 @@ import java.util.Optional;
 import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes;
 
-public class RestrictedOffChainEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
+public class RestrictedOffchainEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
   final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
-  public RestrictedOffChainEeaSendRawTransaction(
+  public RestrictedOffchainEeaSendRawTransaction(
       final TransactionPool transactionPool,
       final PrivacyIdProvider privacyIdProvider,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
