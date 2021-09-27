@@ -48,6 +48,7 @@ public class Code {
    * Public constructor.
    *
    * @param bytes The byte representation of the code.
+   * @param codeHash the Hash of the bytes in the code.
    */
   public Code(final Bytes bytes, final Hash codeHash) {
     this.bytes = bytes;
