@@ -30,6 +30,7 @@ public interface ExceptionalHaltReason {
   ExceptionalHaltReason OUT_OF_BOUNDS = DefaultExceptionalHaltReason.OUT_OF_BOUNDS;
 
   String name();
+
   String getDescription();
 
   enum DefaultExceptionalHaltReason implements ExceptionalHaltReason {
