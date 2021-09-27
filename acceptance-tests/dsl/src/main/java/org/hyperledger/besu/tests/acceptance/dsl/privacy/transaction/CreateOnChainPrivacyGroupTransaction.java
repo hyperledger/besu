@@ -22,13 +22,13 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequ
 import java.io.IOException;
 import java.util.List;
 
-public class CreateOnChainPrivacyGroupTransaction
+public class CreateOnchainPrivacyGroupTransaction
     implements Transaction<PrivxCreatePrivacyGroupResponse> {
   private final PrivacyNode creator;
   private final List<String> addresses;
   private final String privateFrom;
 
-  CreateOnChainPrivacyGroupTransaction(
+  CreateOnchainPrivacyGroupTransaction(
       final PrivacyNode creator, final String privateFrom, final List<String> addresses) {
     this.creator = creator;
     this.addresses = addresses;

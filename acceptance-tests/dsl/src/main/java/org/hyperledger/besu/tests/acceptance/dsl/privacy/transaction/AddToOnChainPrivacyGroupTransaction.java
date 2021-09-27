@@ -26,13 +26,13 @@ import java.util.stream.Collectors;
 import org.web3j.crypto.Credentials;
 import org.web3j.utils.Base64String;
 
-public class AddToOnChainPrivacyGroupTransaction implements Transaction<String> {
+public class AddToOnchainPrivacyGroupTransaction implements Transaction<String> {
   private final Base64String privacyGroupId;
   private final PrivacyNode adder;
   private final List<String> addresses;
   private final Credentials signer;
 
-  public AddToOnChainPrivacyGroupTransaction(
+  public AddToOnchainPrivacyGroupTransaction(
       final String privacyGroupId,
       final PrivacyNode adder,
       final Credentials signer,

@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
+import org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -57,14 +57,14 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContract {
+public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContract {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final Subscribers<PrivateTransactionObserver> privateTransactionEventObservers =
       Subscribers.create();
 
-  public OnChainPrivacyPrecompiledContract(
+  public OnchainPrivacyPrecompiledContract(
       final GasCalculator gasCalculator,
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
@@ -76,10 +76,10 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         worldStateArchive,
         privateStateRootResolver,
         privateStateGenesisAllocator,
-        "OnChainPrivacy");
+        "OnchainPrivacy");
   }
 
-  public OnChainPrivacyPrecompiledContract(
+  public OnchainPrivacyPrecompiledContract(
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
     this(
         gasCalculator,
@@ -322,7 +322,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         && privateTransaction
             .getPayload()
             .toHexString()
-            .startsWith(OnChainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE.toHexString());
+            .startsWith(OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE.toHexString());
   }
 
   private boolean isRemovingParticipant(final PrivateTransaction privateTransaction) {
@@ -330,7 +330,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         && privateTransaction
             .getPayload()
             .toHexString()
-            .startsWith(OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE.toHexString());
+            .startsWith(OnchainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE.toHexString());
   }
 
   protected boolean isContractLocked(

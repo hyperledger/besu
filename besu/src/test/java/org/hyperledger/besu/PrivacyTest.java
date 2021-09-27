@@ -86,7 +86,7 @@ public class PrivacyTest {
     final PrecompiledContract onchainPrecompiledContract =
         getPrecompile(besuController, ONCHAIN_PRIVACY);
 
-    assertThat(onchainPrecompiledContract.getName()).isEqualTo("OnChainPrivacy");
+    assertThat(onchainPrecompiledContract.getName()).isEqualTo("OnchainPrivacy");
   }
 
   private BesuController setUpControllerWithPrivacyEnabled(final boolean onchainEnabled)

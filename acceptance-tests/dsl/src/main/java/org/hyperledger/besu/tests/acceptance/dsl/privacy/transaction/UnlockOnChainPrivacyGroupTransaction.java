@@ -24,12 +24,12 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.utils.Base64String;
 
-public class UnlockOnChainPrivacyGroupTransaction implements Transaction<String> {
+public class UnlockOnchainPrivacyGroupTransaction implements Transaction<String> {
   private final Base64String privacyGroupId;
   private final PrivacyNode locker;
   private final Credentials signer;
 
-  public UnlockOnChainPrivacyGroupTransaction(
+  public UnlockOnchainPrivacyGroupTransaction(
       final String privacyGroupId, final PrivacyNode locker, final Credentials signer) {
     this.privacyGroupId = Base64String.wrap(privacyGroupId);
     this.locker = locker;

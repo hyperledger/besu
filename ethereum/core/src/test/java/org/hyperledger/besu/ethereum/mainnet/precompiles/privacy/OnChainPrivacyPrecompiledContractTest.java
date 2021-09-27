@@ -69,7 +69,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
-public class OnChainPrivacyPrecompiledContractTest {
+public class OnchainPrivacyPrecompiledContractTest {
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
@@ -144,7 +144,7 @@ public class OnChainPrivacyPrecompiledContractTest {
   @Test
   public void testPayloadFoundInEnclave() {
     final Enclave enclave = mock(Enclave.class);
-    final OnChainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
+    final OnchainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
     final List<Log> logs = new ArrayList<>();
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
@@ -161,7 +161,7 @@ public class OnChainPrivacyPrecompiledContractTest {
         new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, privateFrom);
     when(enclave.receive(any())).thenReturn(response);
 
-    final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
+    final OnchainPrivacyPrecompiledContract contractSpy = spy(contract);
     Mockito.doReturn(true)
         .when(contractSpy)
         .canExecute(any(), any(), any(), any(), any(), any(), any(), any());
@@ -195,7 +195,7 @@ public class OnChainPrivacyPrecompiledContractTest {
   @Test
   public void testEnclaveBelowRequiredVersion() {
     final Enclave enclave = mock(Enclave.class);
-    final OnChainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
+    final OnchainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
     final VersionedPrivateTransaction versionedPrivateTransaction =
         versionedPrivateTransactionBesu();
     final byte[] payload = convertVersionedPrivateTransactionToBytes(versionedPrivateTransaction);
@@ -213,7 +213,7 @@ public class OnChainPrivacyPrecompiledContractTest {
   @Test
   public void testPayloadNotMatchingPrivateFrom() {
     final Enclave enclave = mock(Enclave.class);
-    final OnChainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
+    final OnchainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
     final VersionedPrivateTransaction versionedPrivateTransaction =
         versionedPrivateTransactionBesu();
     final byte[] payload = convertVersionedPrivateTransactionToBytes(versionedPrivateTransaction);
@@ -260,14 +260,14 @@ public class OnChainPrivacyPrecompiledContractTest {
   private void assertThatComputeReturnsEmptyGivenContractMembershipQueryReturns(
       final Bytes memberList) {
     final Enclave enclave = mock(Enclave.class);
-    final OnChainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
+    final OnchainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
 
     final List<Log> logs = new ArrayList<>();
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
             TransactionProcessingResult.successful(logs, 0, 0, memberList, null)));
 
-    final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
+    final OnchainPrivacyPrecompiledContract contractSpy = spy(contract);
     Mockito.doReturn(false).when(contractSpy).isContractLocked(any(), any());
     Mockito.doReturn(true).when(contractSpy).onchainPrivacyGroupVersionMatches(any(), any(), any());
 
@@ -289,8 +289,8 @@ public class OnChainPrivacyPrecompiledContractTest {
   public void testInvalidPrivateTransaction() {
     final Enclave enclave = mock(Enclave.class);
 
-    final OnChainPrivacyPrecompiledContract contract =
-        new OnChainPrivacyPrecompiledContract(
+    final OnchainPrivacyPrecompiledContract contract =
+        new OnchainPrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(),
             enclave,
             worldStateArchive,
@@ -302,7 +302,7 @@ public class OnChainPrivacyPrecompiledContractTest {
             TransactionProcessingResult.invalid(
                 ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE))));
 
-    final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
+    final OnchainPrivacyPrecompiledContract contractSpy = spy(contract);
     Mockito.doReturn(true)
         .when(contractSpy)
         .canExecute(any(), any(), any(), any(), any(), any(), any(), any());
@@ -330,8 +330,8 @@ public class OnChainPrivacyPrecompiledContractTest {
     return bytesValueRLPOutput.encoded().toBase64String().getBytes(UTF_8);
   }
 
-  private OnChainPrivacyPrecompiledContract buildPrivacyPrecompiledContract(final Enclave enclave) {
-    return new OnChainPrivacyPrecompiledContract(
+  private OnchainPrivacyPrecompiledContract buildPrivacyPrecompiledContract(final Enclave enclave) {
+    return new OnchainPrivacyPrecompiledContract(
         new SpuriousDragonGasCalculator(),
         enclave,
         worldStateArchive,

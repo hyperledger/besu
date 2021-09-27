@@ -17,8 +17,8 @@ package org.hyperledger.besu.tests.web3j.privacy.contracts;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.hyperledger.besu.privacy.contracts.generated.DefaultOnChainPrivacyGroupManagementContract;
-import org.hyperledger.besu.privacy.contracts.generated.OnChainPrivacyGroupManagementProxy;
+import org.hyperledger.besu.privacy.contracts.generated.DefaultOnchainPrivacyGroupManagementContract;
+import org.hyperledger.besu.privacy.contracts.generated.OnchainPrivacyGroupManagementProxy;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
@@ -45,28 +45,28 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
       Base64String.wrap("9iaJ6OObl6TUWYjXAOyZsL0VaDPwF+tRFkMwwYSeqqw=");
   private final Base64String thirdParticipant =
       Base64String.wrap("Jo2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=");
-  private OnChainPrivacyGroupManagementProxy onchainPrivacyGroupManagementProxy;
+  private OnchainPrivacyGroupManagementProxy onchainPrivacyGroupManagementProxy;
 
   private static final String RAW_GET_PARTICIPANTS = "0x5aa68ac0";
   private static final String RAW_ADD_PARTICIPANT =
       "0xb4926e2500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001f772b2ee55f016431cefe724a05814324bb96e9afdb73e338665a693d4653678";
 
   private BesuNode minerNode;
-  private DefaultOnChainPrivacyGroupManagementContract defaultOnChainPrivacyGroupManagementContract;
+  private DefaultOnchainPrivacyGroupManagementContract defaultOnchainPrivacyGroupManagementContract;
 
   @Before
   public void setUp() throws Exception {
     minerNode = besu.createMinerNode("node");
     cluster.start(minerNode);
-    defaultOnChainPrivacyGroupManagementContract =
+    defaultOnchainPrivacyGroupManagementContract =
         minerNode.execute(
             contractTransactions.createSmartContract(
-                DefaultOnChainPrivacyGroupManagementContract.class));
+                DefaultOnchainPrivacyGroupManagementContract.class));
     onchainPrivacyGroupManagementProxy =
         minerNode.execute(
             contractTransactions.createSmartContract(
-                OnChainPrivacyGroupManagementProxy.class,
-                defaultOnChainPrivacyGroupManagementContract.getContractAddress()));
+                OnchainPrivacyGroupManagementProxy.class,
+                defaultOnchainPrivacyGroupManagementContract.getContractAddress()));
   }
 
   @Test
@@ -112,10 +112,10 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
     assertThat(firstParticipant.raw()).isEqualTo(participants.get(0));
     assertThat(secondParticipant.raw()).isEqualTo(participants.get(1));
 
-    final DefaultOnChainPrivacyGroupManagementContract upgradedContract =
+    final DefaultOnchainPrivacyGroupManagementContract upgradedContract =
         minerNode.execute(
             contractTransactions.createSmartContract(
-                DefaultOnChainPrivacyGroupManagementContract.class));
+                DefaultOnchainPrivacyGroupManagementContract.class));
 
     final HttpService httpService =
         new HttpService(
@@ -123,8 +123,8 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
     final Web3j web3j = Web3j.build(httpService);
 
     // load the proxy contract, use it with another signer
-    final OnChainPrivacyGroupManagementProxy proxyContractAccount2 =
-        OnChainPrivacyGroupManagementProxy.load(
+    final OnchainPrivacyGroupManagementProxy proxyContractAccount2 =
+        OnchainPrivacyGroupManagementProxy.load(
             onchainPrivacyGroupManagementProxy.getContractAddress(),
             web3j,
             Credentials.create(Accounts.GENESIS_ACCOUNT_TWO_PRIVATE_KEY),
@@ -146,10 +146,10 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
     assertThat(firstParticipant.raw()).isEqualTo(participants.get(0));
     assertThat(secondParticipant.raw()).isEqualTo(participants.get(1));
 
-    final DefaultOnChainPrivacyGroupManagementContract upgradedContract =
+    final DefaultOnchainPrivacyGroupManagementContract upgradedContract =
         minerNode.execute(
             contractTransactions.createSmartContract(
-                DefaultOnChainPrivacyGroupManagementContract.class));
+                DefaultOnchainPrivacyGroupManagementContract.class));
 
     onchainPrivacyGroupManagementProxy.upgradeTo(upgradedContract.getContractAddress()).send();
     final List<byte[]> participantsAfterUpgrade =

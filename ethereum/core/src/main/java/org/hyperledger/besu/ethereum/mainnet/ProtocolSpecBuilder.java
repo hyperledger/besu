@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnchainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -318,8 +318,8 @@ public class ProtocolSpecBuilder {
         privacyPluginPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
-        final OnChainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
-            (OnChainPrivacyPrecompiledContract) precompileContractRegistry.get(ONCHAIN_PRIVACY);
+        final OnchainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
+            (OnchainPrivacyPrecompiledContract) precompileContractRegistry.get(ONCHAIN_PRIVACY);
         onchainPrivacyPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else {

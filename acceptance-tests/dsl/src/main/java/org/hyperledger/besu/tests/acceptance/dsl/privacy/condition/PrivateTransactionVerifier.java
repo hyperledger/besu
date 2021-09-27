@@ -16,7 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.privacy.condition;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PrivacyTransactions;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory.OnChainPrivacyGroup;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory.OnchainPrivacyGroup;
 
 import java.util.Arrays;
 import java.util.List;
@@ -53,7 +53,7 @@ public class PrivateTransactionVerifier {
     return new ExpectValidPrivacyGroupCreated(transactions, expected);
   }
 
-  public ExpectValidOnChainPrivacyGroupCreated onchainPrivacyGroupExists(
+  public ExpectValidOnchainPrivacyGroupCreated onchainPrivacyGroupExists(
       final String privacyGroupId, final PrivacyNode... members) {
 
     final List<Base64String> membersEnclaveKeys =
@@ -64,13 +64,13 @@ public class PrivateTransactionVerifier {
     return onchainPrivacyGroupExists(privacyGroupId, membersEnclaveKeys);
   }
 
-  public ExpectValidOnChainPrivacyGroupCreated onchainPrivacyGroupExists(
+  public ExpectValidOnchainPrivacyGroupCreated onchainPrivacyGroupExists(
       final String privacyGroupId, final List<Base64String> membersEnclaveKeys) {
 
-    final OnChainPrivacyGroup expectedGroup =
-        new OnChainPrivacyGroup(privacyGroupId, membersEnclaveKeys);
+    final OnchainPrivacyGroup expectedGroup =
+        new OnchainPrivacyGroup(privacyGroupId, membersEnclaveKeys);
 
-    return new ExpectValidOnChainPrivacyGroupCreated(transactions, expectedGroup);
+    return new ExpectValidOnchainPrivacyGroupCreated(transactions, expectedGroup);
   }
 
   public ExpectInternalErrorPrivateTransactionReceipt internalErrorPrivateTransactionReceipt(

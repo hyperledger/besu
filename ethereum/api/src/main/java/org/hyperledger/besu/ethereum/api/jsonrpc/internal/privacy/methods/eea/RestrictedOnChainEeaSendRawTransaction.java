@@ -37,12 +37,12 @@ import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class RestrictedOnChainEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
+public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
-  public RestrictedOnChainEeaSendRawTransaction(
+  public RestrictedOnchainEeaSendRawTransaction(
       final TransactionPool transactionPool,
       final PrivacyIdProvider privacyIdProvider,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,

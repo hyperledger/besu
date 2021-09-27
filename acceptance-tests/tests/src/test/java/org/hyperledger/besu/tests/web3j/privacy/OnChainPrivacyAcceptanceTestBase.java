@@ -16,13 +16,13 @@ package org.hyperledger.besu.tests.web3j.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.ExpectValidOnChainPrivacyGroupCreated;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreateOnChainPrivacyGroupTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.ExpectValidOnchainPrivacyGroupCreated;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreateOnchainPrivacyGroupTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 
 import java.util.Arrays;
@@ -37,12 +37,12 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 import org.web3j.utils.Base64String;
 
-public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase {
+public class OnchainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase {
 
-  protected String createOnChainPrivacyGroup(final PrivacyNode... members) {
+  protected String createOnchainPrivacyGroup(final PrivacyNode... members) {
     final List<String> addresses =
         Arrays.stream(members).map(PrivacyNode::getEnclaveKey).collect(Collectors.toList());
-    return createOnChainPrivacyGroup(members[0].getEnclaveKey(), addresses, members);
+    return createOnchainPrivacyGroup(members[0].getEnclaveKey(), addresses, members);
   }
 
   /**
@@ -55,13 +55,13 @@ public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
    *     the creator of the group.
    * @return the id of the privacy group
    */
-  protected String createOnChainPrivacyGroup(
+  protected String createOnchainPrivacyGroup(
       final String privateFrom, final List<String> addresses, final PrivacyNode... members) {
 
     final PrivacyNode groupCreator = members[0];
 
-    final CreateOnChainPrivacyGroupTransaction createTx =
-        privacyTransactions.createOnChainPrivacyGroup(groupCreator, privateFrom, addresses);
+    final CreateOnchainPrivacyGroupTransaction createTx =
+        privacyTransactions.createOnchainPrivacyGroup(groupCreator, privateFrom, addresses);
 
     final PrivacyRequestFactory.PrivxCreatePrivacyGroupResponse createResponse =
         groupCreator.execute(createTx);
@@ -94,7 +94,7 @@ public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
   protected String callGetParticipantsMethodAndReturnCommitmentHash(
       final String privacyGroupId, final PrivacyNode groupCreator, final String privateFrom) {
     return groupCreator.execute(
-        privateContractTransactions.callOnChainPermissioningSmartContract(
+        privateContractTransactions.callOnchainPermissioningSmartContract(
             ONCHAIN_PRIVACY_PROXY.toHexString(),
             GET_PARTICIPANTS_METHOD_SIGNATURE.toString(),
             groupCreator.getTransactionSigningKey(),
@@ -140,7 +140,7 @@ public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
         null);
   }
 
-  protected ExpectValidOnChainPrivacyGroupCreated onchainPrivacyGroupExists(
+  protected ExpectValidOnchainPrivacyGroupCreated onchainPrivacyGroupExists(
       final String privacyGroupId, final List<Base64String> members) {
     return privateTransactionVerifier.onchainPrivacyGroupExists(privacyGroupId, members);
   }
@@ -161,7 +161,7 @@ public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
    * @param privacyGroupId the id of the privacy group
    * @param members the list of member in the privacy group
    */
-  protected void checkOnChainPrivacyGroupExists(
+  protected void checkOnchainPrivacyGroupExists(
       final String privacyGroupId, final PrivacyNode... members) {
     final List<Base64String> membersEnclaveKeys =
         Arrays.stream(members)

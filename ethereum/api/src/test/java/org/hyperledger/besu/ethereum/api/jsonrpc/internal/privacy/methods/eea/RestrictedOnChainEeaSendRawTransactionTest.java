@@ -37,17 +37,17 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
+public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
 
   final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
-  RestrictedOnChainEeaSendRawTransaction method;
+  RestrictedOnchainEeaSendRawTransaction method;
 
   @Before
   public void before() {
     method =
-        new RestrictedOnChainEeaSendRawTransaction(
+        new RestrictedOnchainEeaSendRawTransaction(
             transactionPool,
             privacyIdProvider,
             privateMarkerTransactionFactory,
@@ -56,7 +56,7 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
   }
 
   @Test
-  public void validOnChainTransactionPrivacyGroupIsSentToTransactionPool() {
+  public void validOnchainTransactionPrivacyGroupIsSentToTransactionPool() {
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
@@ -70,7 +70,7 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
             new PrivacyGroup(
                 "", PrivacyGroup.Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY)));
 
-    when(privacyController.findOnChainPrivacyGroupAndAddNewMembers(any(), any(), any()))
+    when(privacyController.findOnchainPrivacyGroupAndAddNewMembers(any(), any(), any()))
         .thenReturn(onchainPrivacyGroup);
 
     final JsonRpcSuccessResponse expectedResponse =
@@ -104,7 +104,7 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
 
-    when(privacyController.findOnChainPrivacyGroupAndAddNewMembers(any(), any(), any()))
+    when(privacyController.findOnchainPrivacyGroupAndAddNewMembers(any(), any(), any()))
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse expectedResponse =
