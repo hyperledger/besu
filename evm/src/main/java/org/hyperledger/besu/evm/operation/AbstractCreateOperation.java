@@ -38,7 +38,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       new OperationResult(
           Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
 
-  AbstractCreateOperation(
+  protected AbstractCreateOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,
