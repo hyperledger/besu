@@ -113,8 +113,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   @Override
   public MutableWorldState copy() {
-    return new DefaultMutableWorldState(
-        rootHash(), worldStateStorage, preimageStorage);
+    return new DefaultMutableWorldState(rootHash(), worldStateStorage, preimageStorage);
   }
 
   @Override

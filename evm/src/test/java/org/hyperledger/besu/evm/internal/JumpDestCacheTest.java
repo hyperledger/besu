@@ -18,10 +18,10 @@ package org.hyperledger.besu.evm.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
-
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
+
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -38,8 +38,8 @@ public class JumpDestCacheTest {
   public void testScale() {
     Bytes contractBytes =
         Bytes.fromHexString("0xDEAD" + op + "BEEF" + op + "B0B0" + op + "C0DE" + op + "FACE");
-    //3rd bit, 6th bit, 9th bit, 12th bit
-    long[] jumpDests = {4+32+256+2048};
+    // 3rd bit, 6th bit, 9th bit, 12th bit
+    long[] jumpDests = {4 + 32 + 256 + 2048};
     CodeScale scale = new CodeScale();
     Code contractCode = new Code(contractBytes, Hash.hash(contractBytes), jumpDests);
     int weight = scale.weigh(contractCode.getCodeHash(), contractCode.getValidJumpDestinations());

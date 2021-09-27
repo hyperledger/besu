@@ -16,6 +16,7 @@
 package org.hyperledger.besu.evm.toy;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -170,7 +171,7 @@ public class EvmToyCommand implements Runnable {
               .inputData(callData)
               .value(ethValue)
               .apparentValue(ethValue)
-              .code(new Code(codeBytes))
+              .code(new Code(codeBytes, Hash.hash(codeBytes)))
               .blockValues(new ToyBlockValues())
               .depth(0)
               .completer(c -> {})

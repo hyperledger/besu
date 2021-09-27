@@ -17,7 +17,7 @@ package org.hyperledger.besu.evm.internal;
 
 public class JumpdestCacheConfiguration {
   public static final JumpdestCacheConfiguration DEFAULT_CONFIG =
-      new JumpdestCacheConfiguration(250_000L);
+      new JumpdestCacheConfiguration(32_000L);
   private final long contractCacheWeightKilobytes;
 
   public JumpdestCacheConfiguration(final long contractCacheWeightKilobytes) {

@@ -33,11 +33,12 @@ public class ContractCacheOptions implements CLIOptions<JumpdestCacheConfigurati
       description =
           "size in kilobytes to allow the cached"
               + "contract bytecode to grow to before evicting the least recently used contract",
-      fallbackValue = "250000",
-      defaultValue = "250000",
+      fallbackValue = "32000",
+      defaultValue = "32000",
       hidden = true,
       arity = "1")
-  private Long contractCacheWeightKilobytes = 250000l;
+  private Long contractCacheWeightKilobytes =
+      32_000L; // 10k contracts, (25k max contract size / 8 bit) + 32byte hash
 
   @Override
   public JumpdestCacheConfiguration toDomainObject() {

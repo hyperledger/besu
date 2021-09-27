@@ -16,15 +16,10 @@ package org.hyperledger.besu.evm;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.operation.JumpDestOperation;
-import org.hyperledger.besu.evm.operation.Operation;
-import org.hyperledger.besu.evm.operation.PushOperation;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.internal.JumpDestCache;
-
-import java.util.BitSet;
+import org.hyperledger.besu.evm.operation.JumpDestOperation;
+import org.hyperledger.besu.evm.operation.PushOperation;
 
 import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Logger;
@@ -100,7 +95,6 @@ public class Code {
     return bytes.size();
   }
 
-
   /**
    * Determine whether a specified destination is a valid jump target.
    *
@@ -108,7 +102,7 @@ public class Code {
    * @param destination The destination we're checking for validity.
    * @return Whether or not this location is a valid jump destination.
    */
-  public boolean isValidJumpDestination(final EVM evm, final UInt256 destination) {
+  public boolean isValidJumpDestination(final UInt256 destination) {
     if (!destination.fitsInt()) return false;
 
     final int jumpDestination = destination.intValue();

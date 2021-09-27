@@ -17,8 +17,6 @@ package org.hyperledger.besu.evm.internal;
 
 import org.hyperledger.besu.datatypes.Hash;
 
-import java.util.BitSet;
-
 import com.github.benmanes.caffeine.cache.Weigher;
 
 class CodeScale implements Weigher<Hash, long[]> {

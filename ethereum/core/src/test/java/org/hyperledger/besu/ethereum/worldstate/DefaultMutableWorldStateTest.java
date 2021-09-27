@@ -29,7 +29,6 @@ import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.JumpDestCache;
-import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldState.StreamableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -144,8 +143,7 @@ public class DefaultMutableWorldStateTest {
   @Test
   public void removeAccount_ContractJumpdestMapPurged() {
     // Create a world state with one account
-    Bytes contractBytes =
-            Bytes.fromHexString("0xDEAD5BBEEF5BB0B05BC0DE5BFACE");
+    Bytes contractBytes = Bytes.fromHexString("0xDEAD5BBEEF5BB0B05BC0DE5BFACE");
     Code contractCode = new Code(contractBytes, Hash.hash(contractBytes));
     final MutableWorldState worldState = createEmpty();
     WorldUpdater updater = worldState.updater();

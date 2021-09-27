@@ -72,9 +72,7 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
     if (!worldStateStorage.isWorldStateAvailable(rootHash, blockHash)) {
       return Optional.empty();
     }
-    return Optional.of(
-        new DefaultMutableWorldState(
-            rootHash, worldStateStorage, preimageStorage));
+    return Optional.of(new DefaultMutableWorldState(rootHash, worldStateStorage, preimageStorage));
   }
 
   @Override
