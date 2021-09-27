@@ -73,7 +73,7 @@ public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
             .collect(Collectors.toList());
 
     for (final PrivacyNode member : members) {
-      member.verify(onChainPrivacyGroupExists(privacyGroupId, membersEnclaveKeys));
+      member.verify(onchainPrivacyGroupExists(privacyGroupId, membersEnclaveKeys));
     }
 
     final String commitmentHash =
@@ -140,9 +140,9 @@ public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
         null);
   }
 
-  protected ExpectValidOnChainPrivacyGroupCreated onChainPrivacyGroupExists(
+  protected ExpectValidOnChainPrivacyGroupCreated onchainPrivacyGroupExists(
       final String privacyGroupId, final List<Base64String> members) {
-    return privateTransactionVerifier.onChainPrivacyGroupExists(privacyGroupId, members);
+    return privateTransactionVerifier.onchainPrivacyGroupExists(privacyGroupId, members);
   }
 
   protected String getContractDeploymentCommitmentHash(final Contract contract) {
@@ -170,7 +170,7 @@ public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
             .collect(Collectors.toList());
 
     for (final PrivacyNode member : members) {
-      member.verify(onChainPrivacyGroupExists(privacyGroupId, membersEnclaveKeys));
+      member.verify(onchainPrivacyGroupExists(privacyGroupId, membersEnclaveKeys));
     }
   }
 }

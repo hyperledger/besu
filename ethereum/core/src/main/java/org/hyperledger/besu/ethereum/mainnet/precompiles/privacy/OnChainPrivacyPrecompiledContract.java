@@ -250,7 +250,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       return false;
     }
 
-    if (!onChainPrivacyGroupVersionMatches(onchainPrivacyGroupContract, privacyGroupId, version)) {
+    if (!onchainPrivacyGroupVersionMatches(onchainPrivacyGroupContract, privacyGroupId, version)) {
       LOG.debug(
           "Privacy group version mismatch while trying to execute transaction with commitment {}",
           (Hash) messageFrame.getContextVariable(KEY_TRANSACTION_HASH));
@@ -341,7 +341,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     return canExecuteResult.map(Bytes::isZero).orElse(true);
   }
 
-  protected boolean onChainPrivacyGroupVersionMatches(
+  protected boolean onchainPrivacyGroupVersionMatches(
       final OnchainPrivacyGroupContract onchainPrivacyGroupContract,
       final Bytes32 privacyGroupId,
       final Bytes32 version) {

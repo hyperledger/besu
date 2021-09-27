@@ -481,11 +481,11 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
                 privateTransaction.getPrivacyGroupId().get().toBase64String(),
                 buildCallParams(GET_VERSION_METHOD_SIGNATURE));
         new VersionedPrivateTransaction(privateTransaction, result).writeTo(rlpOutput);
-        final List<String> onChainPrivateFor = privacyGroup.getMembers();
+        final List<String> onchainPrivateFor = privacyGroup.getMembers();
         return enclave.send(
             rlpOutput.encoded().toBase64String(),
             privateTransaction.getPrivateFrom().toBase64String(),
-            onChainPrivateFor);
+            onchainPrivateFor);
       } else if (privacyGroup.getType() == PrivacyGroup.Type.PANTHEON) {
         // offchain privacy group
         privateTransaction.writeTo(rlpOutput);

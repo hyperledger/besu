@@ -51,7 +51,7 @@ public class AccountLocalAndOnChainPermissioningAcceptanceTest
     node.execute(accountTransactions.createTransfer(senderC, 10));
     node.verify(senderC.balanceEquals(10));
 
-    // add accounts to onChain allowlist
+    // add accounts to onchain allowlist
     node.execute(allowAccount(accounts.getPrimaryBenefactor()));
     node.verify(accountIsAllowed(accounts.getPrimaryBenefactor()));
 
@@ -86,7 +86,7 @@ public class AccountLocalAndOnChainPermissioningAcceptanceTest
     node.execute(accountTransactions.createTransfer(senderC, 10));
     node.verify(senderC.balanceEquals(10));
 
-    // add accounts to onChain allowlist
+    // add accounts to onchain allowlist
     node.execute(allowAccount(accounts.getPrimaryBenefactor()));
     node.verify(accountIsAllowed(accounts.getPrimaryBenefactor()));
 

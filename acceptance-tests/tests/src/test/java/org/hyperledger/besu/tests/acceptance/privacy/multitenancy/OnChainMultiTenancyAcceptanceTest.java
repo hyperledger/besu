@@ -438,7 +438,7 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
           privacyNode
               .getBesu()
               .useAuthenticationTokenInHeaderForJsonRpc(mtpn.getTokenForTenant(tenant));
-          privacyNode.verify(onChainPrivacyGroupExists(privacyGroupId, base64StringList));
+          privacyNode.verify(onchainPrivacyGroupExists(privacyGroupId, base64StringList));
         }
       }
     }

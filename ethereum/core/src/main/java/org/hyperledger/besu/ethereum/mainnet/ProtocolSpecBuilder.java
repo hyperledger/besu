@@ -318,9 +318,9 @@ public class ProtocolSpecBuilder {
         privacyPluginPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
-        final OnChainPrivacyPrecompiledContract onChainPrivacyPrecompiledContract =
+        final OnChainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
             (OnChainPrivacyPrecompiledContract) precompileContractRegistry.get(ONCHAIN_PRIVACY);
-        onChainPrivacyPrecompiledContract.setPrivateTransactionProcessor(
+        onchainPrivacyPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else {
         final PrivacyPrecompiledContract privacyPrecompiledContract =

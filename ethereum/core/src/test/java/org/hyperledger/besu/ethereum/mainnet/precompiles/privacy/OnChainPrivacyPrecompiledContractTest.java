@@ -269,7 +269,7 @@ public class OnChainPrivacyPrecompiledContractTest {
 
     final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
     Mockito.doReturn(false).when(contractSpy).isContractLocked(any(), any());
-    Mockito.doReturn(true).when(contractSpy).onChainPrivacyGroupVersionMatches(any(), any(), any());
+    Mockito.doReturn(true).when(contractSpy).onchainPrivacyGroupVersionMatches(any(), any(), any());
 
     final VersionedPrivateTransaction privateTransaction = versionedPrivateTransactionBesu();
     final byte[] payload = convertVersionedPrivateTransactionToBytes(privateTransaction);

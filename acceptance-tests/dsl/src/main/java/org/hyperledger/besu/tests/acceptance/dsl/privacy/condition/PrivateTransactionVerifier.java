@@ -53,7 +53,7 @@ public class PrivateTransactionVerifier {
     return new ExpectValidPrivacyGroupCreated(transactions, expected);
   }
 
-  public ExpectValidOnChainPrivacyGroupCreated onChainPrivacyGroupExists(
+  public ExpectValidOnChainPrivacyGroupCreated onchainPrivacyGroupExists(
       final String privacyGroupId, final PrivacyNode... members) {
 
     final List<Base64String> membersEnclaveKeys =
@@ -61,10 +61,10 @@ public class PrivateTransactionVerifier {
             .map(PrivacyNode::getEnclaveKey)
             .map(Base64String::wrap)
             .collect(Collectors.toList());
-    return onChainPrivacyGroupExists(privacyGroupId, membersEnclaveKeys);
+    return onchainPrivacyGroupExists(privacyGroupId, membersEnclaveKeys);
   }
 
-  public ExpectValidOnChainPrivacyGroupCreated onChainPrivacyGroupExists(
+  public ExpectValidOnChainPrivacyGroupCreated onchainPrivacyGroupExists(
       final String privacyGroupId, final List<Base64String> membersEnclaveKeys) {
 
     final OnChainPrivacyGroup expectedGroup =
