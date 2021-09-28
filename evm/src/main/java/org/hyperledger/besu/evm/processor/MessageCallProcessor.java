@@ -20,12 +20,14 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.logging.log4j.LogManager;
@@ -64,7 +66,8 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
         frame.setState(MessageFrame.State.CODE_EXECUTING);
       }
     } catch (ModificationNotAllowedException ex) {
-      LOG.trace("Message call error: illegal modification not allowed from private state");
+      LOG.trace("Message call error: atttempt to mutate an immutable account");
+      frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     }
   }
@@ -128,6 +131,7 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
           contract,
           gasRequirement,
           frame.getRemainingGas());
+      frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     } else {
       frame.decrementRemainingGas(gasRequirement);
