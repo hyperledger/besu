@@ -57,7 +57,7 @@ import org.web3j.tx.gas.ContractGasProvider;
  * <p>Generated with web3j version 4.5.16.
  */
 @SuppressWarnings("rawtypes")
-public class OnChainPrivacyGroupManagementProxy extends Contract {
+public class OnchainPrivacyGroupManagementProxy extends Contract {
   public static final String BINARY =
       "608060405234801561001057600080fd5b50604051610fa6380380610fa68339818101604052602081101561003357600080fd5b8101908080519060200190929190505050806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555050610f12806100946000396000f3fe608060405234801561001057600080fd5b506004361061009e5760003560e01c80639738968c116100665780639738968c146101b8578063a69df4b5146101d8578063b4926e25146101e2578063f83d08ba146102b0578063fd017797146102ba5761009e565b80630d8e6e2c146100a35780633659cfe6146100c15780635aa68ac0146101055780635c60da1b1461016457806378b9033714610198575b600080fd5b6100ab6102fe565b6040518082815260200191505060405180910390f35b610103600480360360208110156100d757600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506103ab565b005b61010d61083e565b6040518080602001828103825283818151815260200191508051906020019060200280838360005b83811015610150578082015181840152602081019050610135565b505050509050019250505060405180910390f35b61016c610987565b604051808273ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6101a06109ab565b60405180821515815260200191505060405180910390f35b6101c0610a58565b60405180821515815260200191505060405180910390f35b6101e0610b07565b005b610298600480360360208110156101f857600080fd5b810190808035906020019064010000000081111561021557600080fd5b82018360208201111561022757600080fd5b8035906020019184602083028401116401000000008311171561024957600080fd5b919080806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f820116905080830192505050505050509192919290505050610b90565b60405180821515815260200191505060405180910390f35b6102b8610c8d565b005b6102e6600480360360208110156102d057600080fd5b8101908080359060200190929190505050610d16565b60405180821515815260200191505060405180910390f35b60008060008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff16630d8e6e2c6040518163ffffffff1660e01b815260040160206040518083038186803b15801561036a57600080fd5b505afa15801561037e573d6000803e3d6000fd5b505050506040513d602081101561039457600080fd5b810190808051906020019092919050505091505090565b3073ffffffffffffffffffffffffffffffffffffffff166378b903376040518163ffffffff1660e01b815260040160206040518083038186803b1580156103f157600080fd5b505afa158015610405573d6000803e3d6000fd5b505050506040513d602081101561041b57600080fd5b810190808051906020019092919050505061049e576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260178152602001807f54686520636f6e7472616374206973206c6f636b65642e00000000000000000081525060200191505060405180910390fd5b8073ffffffffffffffffffffffffffffffffffffffff1660008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff161415610543576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401808060200182810382526054815260200180610e5a6054913960600191505060405180910390fd5b3073ffffffffffffffffffffffffffffffffffffffff16639738968c6040518163ffffffff1660e01b8152600401602060405180830381600087803b15801561058b57600080fd5b505af115801561059f573d6000803e3d6000fd5b505050506040513d60208110156105b557600080fd5b810190808051906020019092919050505061061b576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602f815260200180610eae602f913960400191505060405180910390fd5b60603073ffffffffffffffffffffffffffffffffffffffff16635aa68ac06040518163ffffffff1660e01b815260040160006040518083038186803b15801561066357600080fd5b505afa158015610677573d6000803e3d6000fd5b505050506040513d6000823e3d601f19601f8201168201806040525060208110156106a157600080fd5b81019080805160405193929190846401000000008211156106c157600080fd5b838201915060208201858111156106d757600080fd5b82518660208202830111640100000000821117156106f457600080fd5b8083526020830192505050908051906020019060200280838360005b8381101561072b578082015181840152602081019050610710565b50505050905001604052505050905061074382610e16565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff1663b4926e25836040518263ffffffff1660e01b81526004018080602001828103825283818151815260200191508051906020019060200280838360005b838110156107d85780820151818401526020810190506107bd565b5050505090500192505050602060405180830381600087803b1580156107fd57600080fd5b505af1158015610811573d6000803e3d6000fd5b505050506040513d602081101561082757600080fd5b810190808051906020019092919050505050505050565b606060008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff16635aa68ac06040518163ffffffff1660e01b815260040160006040518083038186803b1580156108ac57600080fd5b505afa1580156108c0573d6000803e3d6000fd5b505050506040513d6000823e3d601f19601f8201168201806040525060208110156108ea57600080fd5b810190808051604051939291908464010000000082111561090a57600080fd5b8382019150602082018581111561092057600080fd5b825186602082028301116401000000008211171561093d57600080fd5b8083526020830192505050908051906020019060200280838360005b83811015610974578082015181840152602081019050610959565b5050505090500160405250505091505090565b60008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b60008060008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff166378b903376040518163ffffffff1660e01b815260040160206040518083038186803b158015610a1757600080fd5b505afa158015610a2b573d6000803e3d6000fd5b505050506040513d6020811015610a4157600080fd5b810190808051906020019092919050505091505090565b60008060008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff16639738968c6040518163ffffffff1660e01b8152600401602060405180830381600087803b158015610ac657600080fd5b505af1158015610ada573d6000803e3d6000fd5b505050506040513d6020811015610af057600080fd5b810190808051906020019092919050505091505090565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff1663a69df4b56040518163ffffffff1660e01b8152600401600060405180830381600087803b158015610b7557600080fd5b505af1158015610b89573d6000803e3d6000fd5b5050505050565b60008060008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff1663b4926e25846040518263ffffffff1660e01b81526004018080602001828103825283818151815260200191508051906020019060200280838360005b83811015610c25578082015181840152602081019050610c0a565b5050505090500192505050602060405180830381600087803b158015610c4a57600080fd5b505af1158015610c5e573d6000803e3d6000fd5b505050506040513d6020811015610c7457600080fd5b8101908080519060200190929190505050915050919050565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690508073ffffffffffffffffffffffffffffffffffffffff1663f83d08ba6040518163ffffffff1660e01b8152600401600060405180830381600087803b158015610cfb57600080fd5b505af1158015610d0f573d6000803e3d6000fd5b5050505050565b60008060008054906101000a900473ffffffffffffffffffffffffffffffffffffffff16905060008173ffffffffffffffffffffffffffffffffffffffff1663fd017797856040518263ffffffff1660e01b815260040180828152602001915050602060405180830381600087803b158015610d9157600080fd5b505af1158015610da5573d6000803e3d6000fd5b505050506040513d6020811015610dbb57600080fd5b810190808051906020019092919050505090508015610e0c577fef2df0cc0f44b5a36a7de9951ef49ba4d861649244ff89bcf7ffaa1ac7291e89846040518082815260200191505060405180910390a15b8092505050919050565b806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055505056fe54686520636f6e747261637420746f207570677261646520746f2068617320746f20626520646966666572656e742066726f6d207468652063757272656e74206d616e6167656d656e7420636f6e74726163742e4e6f7420616c6c6f77656420746f207570677261646520746865206d616e6167656d656e7420636f6e74726163742ea26469706673582212207d77b2288fb78b354ca3a252d7513de3d808fcaa42e73f475b95f412c24a314f64736f6c634300060c0033";
 
@@ -86,7 +86,7 @@ public class OnChainPrivacyGroupManagementProxy extends Contract {
           "ParticipantRemoved", Arrays.<TypeReference<?>>asList(new TypeReference<Bytes32>() {}));
 
   @Deprecated
-  protected OnChainPrivacyGroupManagementProxy(
+  protected OnchainPrivacyGroupManagementProxy(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
@@ -95,7 +95,7 @@ public class OnChainPrivacyGroupManagementProxy extends Contract {
     super(BINARY, contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
-  protected OnChainPrivacyGroupManagementProxy(
+  protected OnchainPrivacyGroupManagementProxy(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
@@ -104,7 +104,7 @@ public class OnChainPrivacyGroupManagementProxy extends Contract {
   }
 
   @Deprecated
-  protected OnChainPrivacyGroupManagementProxy(
+  protected OnchainPrivacyGroupManagementProxy(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
@@ -113,7 +113,7 @@ public class OnChainPrivacyGroupManagementProxy extends Contract {
     super(BINARY, contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
-  protected OnChainPrivacyGroupManagementProxy(
+  protected OnchainPrivacyGroupManagementProxy(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
@@ -261,46 +261,46 @@ public class OnChainPrivacyGroupManagementProxy extends Contract {
   }
 
   @Deprecated
-  public static OnChainPrivacyGroupManagementProxy load(
+  public static OnchainPrivacyGroupManagementProxy load(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
       BigInteger gasPrice,
       BigInteger gasLimit) {
-    return new OnChainPrivacyGroupManagementProxy(
+    return new OnchainPrivacyGroupManagementProxy(
         contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
   @Deprecated
-  public static OnChainPrivacyGroupManagementProxy load(
+  public static OnchainPrivacyGroupManagementProxy load(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
       BigInteger gasPrice,
       BigInteger gasLimit) {
-    return new OnChainPrivacyGroupManagementProxy(
+    return new OnchainPrivacyGroupManagementProxy(
         contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
-  public static OnChainPrivacyGroupManagementProxy load(
+  public static OnchainPrivacyGroupManagementProxy load(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
       ContractGasProvider contractGasProvider) {
-    return new OnChainPrivacyGroupManagementProxy(
+    return new OnchainPrivacyGroupManagementProxy(
         contractAddress, web3j, credentials, contractGasProvider);
   }
 
-  public static OnChainPrivacyGroupManagementProxy load(
+  public static OnchainPrivacyGroupManagementProxy load(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
       ContractGasProvider contractGasProvider) {
-    return new OnChainPrivacyGroupManagementProxy(
+    return new OnchainPrivacyGroupManagementProxy(
         contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
-  public static RemoteCall<OnChainPrivacyGroupManagementProxy> deploy(
+  public static RemoteCall<OnchainPrivacyGroupManagementProxy> deploy(
       Web3j web3j,
       Credentials credentials,
       ContractGasProvider contractGasProvider,
@@ -309,7 +309,7 @@ public class OnChainPrivacyGroupManagementProxy extends Contract {
         FunctionEncoder.encodeConstructor(
             Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _implementation)));
     return deployRemoteCall(
-        OnChainPrivacyGroupManagementProxy.class,
+        OnchainPrivacyGroupManagementProxy.class,
         web3j,
         credentials,
         contractGasProvider,
@@ -317,7 +317,7 @@ public class OnChainPrivacyGroupManagementProxy extends Contract {
         encodedConstructor);
   }
 
-  public static RemoteCall<OnChainPrivacyGroupManagementProxy> deploy(
+  public static RemoteCall<OnchainPrivacyGroupManagementProxy> deploy(
       Web3j web3j,
       TransactionManager transactionManager,
       ContractGasProvider contractGasProvider,
@@ -326,7 +326,7 @@ public class OnChainPrivacyGroupManagementProxy extends Contract {
         FunctionEncoder.encodeConstructor(
             Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _implementation)));
     return deployRemoteCall(
-        OnChainPrivacyGroupManagementProxy.class,
+        OnchainPrivacyGroupManagementProxy.class,
         web3j,
         transactionManager,
         contractGasProvider,
@@ -335,7 +335,7 @@ public class OnChainPrivacyGroupManagementProxy extends Contract {
   }
 
   @Deprecated
-  public static RemoteCall<OnChainPrivacyGroupManagementProxy> deploy(
+  public static RemoteCall<OnchainPrivacyGroupManagementProxy> deploy(
       Web3j web3j,
       Credentials credentials,
       BigInteger gasPrice,
@@ -345,7 +345,7 @@ public class OnChainPrivacyGroupManagementProxy extends Contract {
         FunctionEncoder.encodeConstructor(
             Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _implementation)));
     return deployRemoteCall(
-        OnChainPrivacyGroupManagementProxy.class,
+        OnchainPrivacyGroupManagementProxy.class,
         web3j,
         credentials,
         gasPrice,
@@ -355,7 +355,7 @@ public class OnChainPrivacyGroupManagementProxy extends Contract {
   }
 
   @Deprecated
-  public static RemoteCall<OnChainPrivacyGroupManagementProxy> deploy(
+  public static RemoteCall<OnchainPrivacyGroupManagementProxy> deploy(
       Web3j web3j,
       TransactionManager transactionManager,
       BigInteger gasPrice,
@@ -365,7 +365,7 @@ public class OnChainPrivacyGroupManagementProxy extends Contract {
         FunctionEncoder.encodeConstructor(
             Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _implementation)));
     return deployRemoteCall(
-        OnChainPrivacyGroupManagementProxy.class,
+        OnchainPrivacyGroupManagementProxy.class,
         web3j,
         transactionManager,
         gasPrice,

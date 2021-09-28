@@ -73,7 +73,7 @@ public class IbftBlockHashing {
    * @param header The header for which a block hash is to be calculated
    * @return the hash of the header including the validator and proposer seal in the extra data
    */
-  public static Hash calculateHashOfIbftBlockOnChain(final BlockHeader header) {
+  public static Hash calculateHashOfIbftBlockOnchain(final BlockHeader header) {
     final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
     return Hash.hash(serializeHeaderWithoutCommittedSeals(header, ibftExtraData));
   }

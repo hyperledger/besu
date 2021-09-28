@@ -89,11 +89,11 @@ public class PrivateTransactionDataFixture {
     return privateMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, DEFAULT_PRIVACY);
   }
 
-  public static Transaction privateMarkerTransactionOnChain() {
+  public static Transaction privateMarkerTransactionOnchain() {
     return privateMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, ONCHAIN_PRIVACY);
   }
 
-  public static Transaction privateMarkerTransactionOnChainAdd() {
+  public static Transaction privateMarkerTransactionOnchainAdd() {
     return privateMarkerTransaction(
         Bytes.concatenate(VALID_BASE64_ENCLAVE_KEY, VALID_BASE64_ENCLAVE_KEY), ONCHAIN_PRIVACY);
   }

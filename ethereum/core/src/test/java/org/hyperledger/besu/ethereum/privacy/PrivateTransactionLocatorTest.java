@@ -126,7 +126,7 @@ public class PrivateTransactionLocatorTest {
 
   @Test
   public void locateBesuPrivateTransactionSentToOnchainPrivacyGroup() {
-    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnChain();
+    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnchain();
     final PrivateTransaction privateTransaction = privateTransactionBesu();
 
     final ExecutedPrivateTransaction expectedPrivateTx =
@@ -160,7 +160,7 @@ public class PrivateTransactionLocatorTest {
 
   @Test
   public void locateBesuPrivateTransactionFromAddBlobSentToOnchainPrivacyGroup() {
-    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnChain();
+    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnchain();
     final PrivateTransaction privateTransaction = privateTransactionBesu();
 
     final ExecutedPrivateTransaction expectedPrivateTx =
@@ -174,7 +174,7 @@ public class PrivateTransactionLocatorTest {
 
   @Test
   public void locatePrivateTransactionWithNoEntryOnPGHeadBlockMap() {
-    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnChain();
+    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnchain();
     final PrivateTransaction privateTransaction = privateTransactionBesu();
 
     createExecutedPrivateTransactionFromAddBlob(pmt, privateTransaction);
@@ -190,7 +190,7 @@ public class PrivateTransactionLocatorTest {
 
   @Test
   public void locateBesuPrivateTransactionNotFoundInAddBlob() {
-    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnChain();
+    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnchain();
     final PrivateTransaction privateTransaction = privateTransactionBesu();
 
     createExecutedPrivateTransactionFromAddBlob(pmt, privateTransaction);
