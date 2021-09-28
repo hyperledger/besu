@@ -10,7 +10,7 @@
 - Allow BESU_CONFIG_FILE environment to specify TOML file [#2455](https://github.com/hyperledger/besu/issues/2455)
 
 ### Early Access Features
-
+- Enable plugins to expose custom JSON RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
 
 ## 21.7.4
 ### Additions and Improvements
