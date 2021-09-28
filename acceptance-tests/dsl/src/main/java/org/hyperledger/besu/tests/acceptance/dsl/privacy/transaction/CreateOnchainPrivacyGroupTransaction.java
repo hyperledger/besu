@@ -14,35 +14,31 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
 
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory.PrivxCreatePrivacyGroupResponse;
 
 import java.io.IOException;
+import java.util.List;
 
-import org.web3j.crypto.Credentials;
-import org.web3j.utils.Base64String;
+public class CreateOnchainPrivacyGroupTransaction
+    implements Transaction<PrivxCreatePrivacyGroupResponse> {
+  private final PrivacyNode creator;
+  private final List<String> addresses;
+  private final String privateFrom;
 
-public class RemoveFromOnChainPrivacyGroupTransaction implements Transaction<String> {
-  private final Base64String privacyGroupId;
-  private final String remover;
-  private final String toRemove;
-  private final Credentials signer;
-
-  public RemoveFromOnChainPrivacyGroupTransaction(
-      final String privacyGroupId,
-      final String remover,
-      final Credentials signer,
-      final String toRemove) {
-    this.privacyGroupId = Base64String.wrap(privacyGroupId);
-    this.remover = remover;
-    this.signer = signer;
-    this.toRemove = toRemove;
+  CreateOnchainPrivacyGroupTransaction(
+      final PrivacyNode creator, final String privateFrom, final List<String> addresses) {
+    this.creator = creator;
+    this.addresses = addresses;
+    this.privateFrom = privateFrom;
   }
 
   @Override
-  public String execute(final NodeRequests node) {
+  public PrivxCreatePrivacyGroupResponse execute(final NodeRequests node) {
     try {
-      return node.privacy().privxRemoveFromPrivacyGroup(privacyGroupId, remover, signer, toRemove);
+      return node.privacy().privxCreatePrivacyGroup(creator, privateFrom, addresses);
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }

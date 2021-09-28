@@ -25,7 +25,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnchainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -62,7 +62,7 @@ public class MainnetPrecompiledContractRegistriesTest {
     verify(privacyParameters).isEnabled();
     verify(privacyParameters).isOnchainPrivacyGroupsEnabled();
 
-    assertThat(reg.get(ONCHAIN_PRIVACY)).isInstanceOf(OnChainPrivacyPrecompiledContract.class);
+    assertThat(reg.get(ONCHAIN_PRIVACY)).isInstanceOf(OnchainPrivacyPrecompiledContract.class);
     assertThat(reg.get(DEFAULT_PRIVACY)).isNull();
   }
 

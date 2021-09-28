@@ -79,12 +79,12 @@ public class BlockHashLookupTest {
   }
 
   @Test
-  public void shouldReturnEmptyHashWhenRequestedBlockNotOnChain() {
+  public void shouldReturnEmptyHashWhenRequestedBlockNotOnchain() {
     Assertions.assertThat(lookup.apply(CURRENT_BLOCK_NUMBER + 20L)).isEqualTo(Hash.ZERO);
   }
 
   @Test
-  public void shouldReturnEmptyHashWhenParentBlockNotOnChain() {
+  public void shouldReturnEmptyHashWhenParentBlockNotOnchain() {
     final BlockHashLookup lookupWithUnavailableParent =
         new BlockHashLookup(
             new BlockHeaderTestFixture().number(CURRENT_BLOCK_NUMBER + 20).buildHeader(),

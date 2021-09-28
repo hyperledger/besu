@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE;
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -247,7 +247,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
       // An exception is thrown if the offchain group cannot be found
       LOG.debug("Offchain privacy group not found: {}", privacyGroupId);
     }
-    return findOnChainPrivacyGroupByGroupId(Bytes.fromBase64String(privacyGroupId), privacyUserId);
+    return findOnchainPrivacyGroupByGroupId(Bytes.fromBase64String(privacyGroupId), privacyUserId);
   }
 
   @Override
@@ -257,7 +257,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public List<PrivacyGroup> findOnChainPrivacyGroupByMembers(
+  public List<PrivacyGroup> findOnchainPrivacyGroupByMembers(
       final List<String> addresses, final String privacyUserId) {
     final ArrayList<PrivacyGroup> privacyGroups = new ArrayList<>();
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
@@ -269,7 +269,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
         .forEach(
             c -> {
               final Optional<PrivacyGroup> maybePrivacyGroup =
-                  findOnChainPrivacyGroupByGroupId(c, privacyUserId);
+                  findOnchainPrivacyGroupByGroupId(c, privacyUserId);
               if (maybePrivacyGroup.isPresent()
                   && maybePrivacyGroup.get().getMembers().containsAll(addresses)) {
                 privacyGroups.add(maybePrivacyGroup.get());
@@ -278,7 +278,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
     return privacyGroups;
   }
 
-  public Optional<PrivacyGroup> findOnChainPrivacyGroupByGroupId(
+  public Optional<PrivacyGroup> findOnchainPrivacyGroupByGroupId(
       final Bytes privacyGroupId, final String enclaveKey) {
     // get the privateFor list from the management contract
     final Optional<TransactionProcessingResult> privateTransactionSimulatorResultOptional =
@@ -306,7 +306,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> findOnChainPrivacyGroupAndAddNewMembers(
+  public Optional<PrivacyGroup> findOnchainPrivacyGroupAndAddNewMembers(
       final Bytes privacyGroupId,
       final String privacyUserId,
       final PrivateTransaction privateTransaction) {
@@ -481,11 +481,11 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
                 privateTransaction.getPrivacyGroupId().get().toBase64String(),
                 buildCallParams(GET_VERSION_METHOD_SIGNATURE));
         new VersionedPrivateTransaction(privateTransaction, result).writeTo(rlpOutput);
-        final List<String> onChainPrivateFor = privacyGroup.getMembers();
+        final List<String> onchainPrivateFor = privacyGroup.getMembers();
         return enclave.send(
             rlpOutput.encoded().toBase64String(),
             privateTransaction.getPrivateFrom().toBase64String(),
-            onChainPrivateFor);
+            onchainPrivateFor);
       } else if (privacyGroup.getType() == PrivacyGroup.Type.PANTHEON) {
         // offchain privacy group
         privateTransaction.writeTo(rlpOutput);

@@ -262,14 +262,14 @@ public class PluginPrivacyController implements PrivacyController {
   }
 
   @Override
-  public List<PrivacyGroup> findOnChainPrivacyGroupByMembers(
+  public List<PrivacyGroup> findOnchainPrivacyGroupByMembers(
       final List<String> asList, final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
         "Method not supported when using PrivacyPlugin");
   }
 
   @Override
-  public Optional<PrivacyGroup> findOnChainPrivacyGroupAndAddNewMembers(
+  public Optional<PrivacyGroup> findOnchainPrivacyGroupAndAddNewMembers(
       final Bytes privacyGroupId,
       final String privacyUserId,
       final PrivateTransaction privateTransaction) {

@@ -71,7 +71,7 @@ public class BftQueryServiceImplTest {
     final BlockHeaderTestFixture blockHeaderTestFixture = new BlockHeaderTestFixture();
     blockHeaderTestFixture.number(1); // can't be genesis block (due to extradata serialisation)
     blockHeaderTestFixture.blockHeaderFunctions(
-        BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec));
+        BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec));
 
     blockHeader = blockHeaderTestFixture.buildHeader();
   }
