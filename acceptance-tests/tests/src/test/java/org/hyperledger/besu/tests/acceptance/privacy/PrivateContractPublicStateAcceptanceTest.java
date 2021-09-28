@@ -22,6 +22,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTes
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.CrossContractReader;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.besu.tests.web3j.generated.RemoteSimpleStorage;
+import org.hyperledger.besu.tests.web3j.generated.SimpleStorage;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
@@ -168,5 +170,44 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             "Transaction null has failed with status: 0x0. Gas used: unknown. Revert reason: '0x'.")
         .returns(
             "0x", e -> ((PrivateTransactionReceipt) e.getTransactionReceipt().get()).getOutput());
+  }
+
+  @Test
+  public void canCallPublicContractThatCallsPublicContractFromPrivateContract() throws Exception {
+    final SimpleStorage simpleStorage =
+        transactionNode
+            .getBesu()
+            .execute(contractTransactions.createSmartContract(SimpleStorage.class));
+
+    final RemoteSimpleStorage remoteSimpleStorage =
+        transactionNode
+            .getBesu()
+            .execute(contractTransactions.createSmartContract(RemoteSimpleStorage.class));
+
+    remoteSimpleStorage.setRemote(simpleStorage.getContractAddress()).send();
+
+    final RemoteSimpleStorage reallyRemoteSimpleStorage =
+        transactionNode
+            .getBesu()
+            .execute(contractTransactions.createSmartContract(RemoteSimpleStorage.class));
+
+    reallyRemoteSimpleStorage.setRemote(remoteSimpleStorage.getContractAddress()).send();
+
+    simpleStorage.set(BigInteger.valueOf(42)).send();
+
+    assertThat(simpleStorage.get().send()).isEqualTo(BigInteger.valueOf(42));
+    assertThat(remoteSimpleStorage.get().send()).isEqualTo(BigInteger.valueOf(42));
+    assertThat(reallyRemoteSimpleStorage.get().send()).isEqualTo(BigInteger.valueOf(42));
+
+    final RemoteSimpleStorage privateRemoteSimpleStorage =
+        transactionNode.execute(
+            privateContractTransactions.createSmartContract(
+                RemoteSimpleStorage.class,
+                transactionNode.getTransactionSigningKey(),
+                transactionNode.getEnclaveKey()));
+
+    privateRemoteSimpleStorage.setRemote(reallyRemoteSimpleStorage.getContractAddress()).send();
+
+    assertThat(privateRemoteSimpleStorage.get().send()).isEqualTo(BigInteger.valueOf(42));
   }
 }

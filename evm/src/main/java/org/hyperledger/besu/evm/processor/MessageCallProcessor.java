@@ -27,6 +27,7 @@ import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableSet;
@@ -66,7 +67,7 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
         frame.setState(MessageFrame.State.CODE_EXECUTING);
       }
     } catch (ModificationNotAllowedException ex) {
-      LOG.trace("Message call error: atttempt to mutate an immutable account");
+      LOG.trace("Message call error: attempt to mutate an immutable account");
       frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     }
@@ -89,6 +90,12 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
    * of the world state of this executor.
    */
   private void transferValue(final MessageFrame frame) {
+    if (Objects.equals(frame.getValue(), Wei.ZERO)) {
+      LOG.trace(
+          "Message call of {} to has zero value: no fund transferred", frame.getSenderAddress());
+      return;
+    }
+
     final MutableAccount senderAccount =
         frame.getWorldUpdater().getSenderAccount(frame).getMutable();
     // The yellow paper explicitly states that if the recipient account doesn't exist at this
