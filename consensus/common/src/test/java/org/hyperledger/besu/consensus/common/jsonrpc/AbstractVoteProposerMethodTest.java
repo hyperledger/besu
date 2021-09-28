@@ -18,7 +18,6 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.assertj.core.api.Assertions;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteType;
@@ -33,6 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public abstract class AbstractVoteProposerMethodTest {
@@ -81,10 +81,10 @@ public abstract class AbstractVoteProposerMethodTest {
   @Test
   public void methodNotEnabledWhenNoVoteProvider() {
     final JsonRpcRequestContext request =
-            new JsonRpcRequestContext(
-                    new JsonRpcRequest(JSON_RPC_VERSION, getMethodName(), new Object[] {}));
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(JSON_RPC_VERSION, getMethodName(), new Object[] {}));
     final JsonRpcResponse expectedResponse =
-            new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.METHOD_NOT_ENABLED);
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.METHOD_NOT_ENABLED);
     when(validatorProvider.getVoteProvider()).thenReturn(Optional.empty());
 
     final JsonRpcResponse response = getMethod().response(request);
