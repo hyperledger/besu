@@ -145,20 +145,24 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
       final PrivateMetadataUpdater privateMetadataUpdater) {
-    return processBlock(
+
+    Result res = executeBlock(
         blockchain,
         worldState,
-        worldState.updater(),
         blockHeader,
         transactions,
         ommers,
         privateMetadataUpdater);
+
+    // persist accumulated changes from executeBlock
+    worldState.persist(blockHeader);
+
+    return res;
   }
 
-  protected AbstractBlockProcessor.Result processBlock(
+  protected AbstractBlockProcessor.Result executeBlock(
       final Blockchain blockchain,
       final MutableWorldState worldState,
-      final WorldUpdater worldStateUpdater,
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
@@ -170,10 +174,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return AbstractBlockProcessor.Result.failed();
       }
 
+      final WorldUpdater worldStateUpdater = worldState.updater();
       final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
-
+System.out.println("\n\n transaction trace:\n\n");
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
               blockchain,
@@ -216,7 +221,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return AbstractBlockProcessor.Result.failed();
     }
 
-    worldState.persist(blockHeader);
     return AbstractBlockProcessor.Result.successful(receipts);
   }
 

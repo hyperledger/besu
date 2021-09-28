@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -31,16 +30,17 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class MergeBlockProcessor extends MainnetBlockProcessor {
   private static final Logger LOG = LogManager.getLogger();
@@ -93,40 +93,42 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions) {
 
-    CandidateUpdateWrapper candidateUpdater =
-        new CandidateUpdateWrapper(worldState.updater(), blockHeader.getHash());
+    CandidateWorldState candidateWorldState =
+        new CandidateWorldState(worldState, blockHeader);
 
     CompletableFuture<Result> result =
         CompletableFuture.supplyAsync(
-                () ->
-                    super.processBlock(
+                () -> {
+                    Result res = super.executeBlock(
                         blockchain,
-                        worldState,
-                        candidateUpdater,
+                        candidateWorldState,
                         blockHeader,
                         transactions,
                         Collections.emptyList(), // no ommers for merge blocks
-                        null))
+                        null);
+                    candidateWorldState.setBlockExecuted();
+                    return res;
+                })
             // fail any block that takes longer than a slot to execute:
             .orTimeout(12000, TimeUnit.MILLISECONDS);
 
-    return new CandidateBlock(blockHeader, result, candidateUpdater, blockchain);
+    return new CandidateBlock(blockHeader, result, candidateWorldState, blockchain);
   }
 
   public static class CandidateBlock {
     final BlockHeader blockHeader;
     final CompletableFuture<? extends BlockProcessor.Result> result;
-    final CandidateUpdateWrapper candidateUpdateWrapper;
+    final CandidateWorldState candidateWorldState;
     final MutableBlockchain blockchain;
 
     CandidateBlock(
         final BlockHeader blockHeader,
         final CompletableFuture<? extends BlockProcessor.Result> result,
-        final CandidateUpdateWrapper candidateUpdater,
+        final CandidateWorldState candidateWorldState,
         final MutableBlockchain blockchain) {
       this.blockHeader = blockHeader;
       this.result = result;
-      this.candidateUpdateWrapper = candidateUpdater;
+      this.candidateWorldState = candidateWorldState;
       this.blockchain = blockchain;
     }
 
@@ -139,7 +141,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
     }
 
     public void setConsensusValidated() {
-      candidateUpdateWrapper.setConsensusValidated();
+      candidateWorldState.setConsensusValidated();
     }
 
     /**
@@ -164,7 +166,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
                     Optional<Block> flushedBlock = Optional.empty();
                     // if new head is candidateBlock, flush and do not wait on consensusValidated:
                     if (getBlockhash().equals(headBlockhash)) {
-                      candidateUpdateWrapper.flush();
+                      candidateWorldState.flush();
                       flushedBlock = blockchain.getBlockByHash(headBlockhash);
                     }
                     // if we still can't find it, throw.
@@ -181,17 +183,17 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
     }
   }
 
-  static class CandidateUpdateWrapper implements WorldUpdater {
-    final WorldUpdater wrappedUpdater;
-    final Hash blockhash;
+  static class CandidateWorldState implements MutableWorldState {
+    final MutableWorldState worldState;
+    final BlockHeader blockHeader;
 
     final Object commitLock = new Object();
     final AtomicBoolean consensusValidated = new AtomicBoolean(false);
     final AtomicBoolean blockExecuted = new AtomicBoolean(false);
 
-    CandidateUpdateWrapper(final WorldUpdater updater, final Hash blockhash) {
-      this.wrappedUpdater = updater;
-      this.blockhash = blockhash;
+    CandidateWorldState(final MutableWorldState worldState, final BlockHeader blockHeader) {
+      this.worldState = worldState;
+      this.blockHeader = blockHeader;
     }
 
     /**
@@ -218,45 +220,9 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
       commit();
     }
 
-    @Override
-    public WorldUpdater updater() {
-      return wrappedUpdater.updater();
-    }
-
-    @Override
-    public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
-      return wrappedUpdater.createAccount(address, nonce, balance);
-    }
-
-    @Override
-    public EvmAccount getAccount(final Address address) {
-      return wrappedUpdater.getAccount(address);
-    }
-
-    @Override
-    public void deleteAccount(final Address address) {
-      wrappedUpdater.deleteAccount(address);
-    }
-
-    @Override
-    public Collection<? extends Account> getTouchedAccounts() {
-      return wrappedUpdater.getTouchedAccounts();
-    }
-
-    @Override
-    public Collection<Address> getDeletedAccountAddresses() {
-      return wrappedUpdater.getDeletedAccountAddresses();
-    }
-
-    @Override
-    public void revert() {
-      wrappedUpdater.revert();
-    }
-
     /**
      * Commit the underlying wrapped WorldState IF consensus has been validated for it. Thread safe
      */
-    @Override
     public void commit() {
 
       boolean shouldCommit = false;
@@ -267,28 +233,53 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
 
       if (shouldCommit) {
         flush();
-        LOG.trace("Committed blockhash {}: consensus validated}", blockhash.toShortHexString());
+        LOG.trace("Committed blockhash {}: consensus validated}", blockHeader.getBlockHash().toShortHexString());
       } else {
         LOG.trace(
             "Uncommitted blockhash {}: blockExecuted: {}; consensusValidated {}",
-            blockhash.toShortHexString(),
+            blockHeader.getBlockHash().toShortHexString(),
             blockExecuted.get(),
             consensusValidated.get());
       }
     }
 
-    void flush() {
-      wrappedUpdater.commit();
+    public void flush() {
+      worldState.persist(blockHeader);
     }
 
     @Override
-    public Optional<WorldUpdater> parentUpdater() {
-      return Optional.empty();
+    public MutableWorldState copy() {
+      return worldState.copy();
+    }
+
+    @Override
+    public void persist(final BlockHeader blockHeader) {
+      worldState.persist(blockHeader);
+    }
+
+    @Override
+    public Hash rootHash() {
+      return worldState.rootHash();
+    }
+
+    @Override
+    public Hash frontierRootHash() {
+      return worldState.frontierRootHash();
+    }
+
+    @Override
+    public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
+      return worldState.streamAccounts(startKeyHash, limit);
+    }
+
+    @Override
+    public WorldUpdater updater() {
+      return worldState.updater();
     }
 
     @Override
     public Account get(final Address address) {
-      return wrappedUpdater.get(address);
+      return worldState.get(address);
     }
   }
 }
