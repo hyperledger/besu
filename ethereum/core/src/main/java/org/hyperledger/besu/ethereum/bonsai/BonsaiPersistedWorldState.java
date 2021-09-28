@@ -241,8 +241,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   public void persist(final BlockHeader blockHeader) {
     boolean success = false;
 
-    worldStateStorage.cleanBucket(blockHeader.getNumber());
-
     final BonsaiWorldStateUpdater localUpdater = updater.copy();
 
     final Hash originalBlockHash = worldStateBlockHash;
@@ -260,6 +258,9 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       // then persist the TrieLog for that transition.  If specified but not a direct
       // descendant simply store the new block hash.
       if (blockHeader != null) {
+
+        worldStateStorage.cleanBucket(blockHeader.getNumber());
+
         if (!worldStateRootHash.equals(blockHeader.getStateRoot())) {
           throw new RuntimeException(
               "World State Root does not match expected value, header "
