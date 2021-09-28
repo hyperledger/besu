@@ -124,7 +124,7 @@ public abstract class BaseBftProtocolSchedule {
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
         .skipZeroBlockRewards(true)
-        .blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec));
+        .blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec));
 
     blockReward.ifPresent(bigInteger -> builder.blockReward(Wei.of(bigInteger)));
 

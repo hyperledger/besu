@@ -60,7 +60,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnchainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -919,8 +919,8 @@ public class RunnerBuilder {
     // register privateTransactionObserver as observer of events fired by the onchain precompile.
     if (privacyParameters.isOnchainPrivacyGroupsEnabled()
         && privacyParameters.isMultiTenancyEnabled()) {
-      final OnChainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
-          (OnChainPrivacyPrecompiledContract)
+      final OnchainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
+          (OnchainPrivacyPrecompiledContract)
               besuController
                   .getProtocolSchedule()
                   .getByBlockNumber(1)

@@ -190,7 +190,7 @@ public class TestContextBuilder {
 
     final MutableBlockchain blockChain =
         createInMemoryBlockchain(
-            genesisBlock, BftBlockHeaderFunctions.forOnChainBlock(IBFT_EXTRA_DATA_ENCODER));
+            genesisBlock, BftBlockHeaderFunctions.forOnchainBlock(IBFT_EXTRA_DATA_ENCODER));
 
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.
     final StubValidatorMulticaster multicaster = new StubValidatorMulticaster();
