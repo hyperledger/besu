@@ -33,8 +33,8 @@ plugins {
 
 sonarqube {
   properties {
-    property "sonar.projectKey", "hyperledger_besu"
-    property "sonar.organization", "hyperledger"
+    property "sonar.projectKey", "hyperledger-cicd_besu"
+    property "sonar.organization", "hyperledger-cicd"
     property "sonar.host.url", "https://sonarcloud.io"
   }
 }
@@ -776,6 +776,7 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
   reports {
     xml.required = true
+    xml.enabled = true
     csv.required = true
     html.destination file("build/reports/jacocoHtml")
   }
