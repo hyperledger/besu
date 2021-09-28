@@ -14,16 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.INVALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.KNOWN;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.VALID;
+import static org.hyperledger.besu.consensus.merge.MergeContext.ExecutionStatus.INVALID;
+import static org.hyperledger.besu.consensus.merge.MergeContext.ExecutionStatus.KNOWN;
+import static org.hyperledger.besu.consensus.merge.MergeContext.ExecutionStatus.VALID;
 
+import org.hyperledger.besu.consensus.merge.MergeContext.ExecutionStatus;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionEngineNewBlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionPayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -36,8 +38,6 @@ import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.Collections;
@@ -58,16 +58,16 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
   private static final Hash OMMERS_HASH_CONSTANT = BodyValidation.ommersHash(OMMERS_CONSTANT);
   private static final Logger LOG = LogManager.getLogger();
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
-  private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
+  private final BlockValidator blockValidator;
 
   public EngineExecutePayload(
       final Vertx vertx,
-      final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext) {
-    super(vertx);
-    this.protocolSchedule = protocolSchedule;
+      final ProtocolContext protocolContext,
+      final BlockValidator blockValidator) {
+    super(vertx, protocolContext);
     this.protocolContext = protocolContext;
+    this.blockValidator = blockValidator;
   }
 
   @Override
@@ -77,16 +77,14 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    final ExecutionEngineNewBlockParameter blockParam =
-        requestContext.getRequiredParameter(0, ExecutionEngineNewBlockParameter.class);
+    final ExecutionPayloadParameter blockParam =
+        requestContext.getRequiredParameter(0, ExecutionPayloadParameter.class);
 
     Object reqId = requestContext.getRequest().getId();
     // respond with known if block is already imported
     if (protocolContext.getBlockchain().getBlockByHash(blockParam.getBlockHash()).isPresent()) {
       return respondWith(reqId, blockParam.getBlockHash(), KNOWN);
     }
-
-    ProtocolSpec spec = protocolSchedule.getByBlockNumber(blockParam.getNumber());
 
     try {
       LOG.trace("blockparam: " + Json.encodePrettily(blockParam));
@@ -120,31 +118,30 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
             blockParam.getGasLimit(),
             blockParam.getGasUsed(),
             blockParam.getTimestamp(),
-            Bytes.EMPTY,
+            Bytes.fromHexString(blockParam.getExtraData()),
             blockParam.getBaseFeePerGas(),
             Hash.ZERO,
             0,
             headerFunctions);
 
-    LOG.trace("newBlockHeader " + newBlockHeader);
-    boolean blkHashEq = newBlockHeader.getHash().equals(blockParam.getBlockHash());
-    LOG.trace("blkHashEq " + blkHashEq);
+    boolean execSuccess = false;
+    // ensure the block hash matches the blockParam hash
+    if (newBlockHeader.getHash().equals(blockParam.getBlockHash())) {
 
-    // import block
-    boolean importSuccess =
-        spec.getBlockImporter()
-            .importBlock(
-                protocolContext,
-                new Block(newBlockHeader, new BlockBody(transactions, OMMERS_CONSTANT)),
-                HeaderValidationMode.FULL);
-
-    if (!importSuccess) {
-      LOG.warn("{} invalid payload, failed block processing", this.getName());
+      // execute block
+      execSuccess =
+          blockValidator
+              .validateAndProcessBlock(
+                  protocolContext,
+                  new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList())),
+                  HeaderValidationMode.FULL,
+                  HeaderValidationMode.NONE // no ommers
+                  )
+              .isPresent();
     }
 
     // return result response
-    return respondWith(
-        reqId, blockParam.getBlockHash(), blkHashEq && importSuccess ? VALID : INVALID);
+    return respondWith(reqId, blockParam.getBlockHash(), execSuccess ? VALID : INVALID);
   }
 
   JsonRpcResponse respondWith(

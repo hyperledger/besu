@@ -14,18 +14,27 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import io.vertx.core.Vertx;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class EngineConsensusValidated extends ExecutionEngineJsonRpcMethod {
 
-  public EngineConsensusValidated(final Vertx vertx) {
-    super(vertx);
+  private static final Logger LOG = LogManager.getLogger();
+
+  public EngineConsensusValidated(final Vertx vertx, final ProtocolContext protocolContext) {
+    super(vertx, protocolContext);
   }
 
   @Override
@@ -35,9 +44,18 @@ public class EngineConsensusValidated extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    // final Hash blockHash = requestContext.getRequiredParameter(0, Hash.class);
+    final Hash blockhash = requestContext.getRequiredParameter(0, Hash.class);
+    final String consensuStatus = requestContext.getRequiredParameter(1, String.class);
 
-    // TODO: implement me https://github.com/ConsenSys/protocol-misc/issues/477
+    if (MergeContext.ConsensusStatus.VALID.equalsIgnoreCase(consensuStatus)
+        && !mergeContext.setConsensusValidated(blockhash)) {
+
+      // return an error if unable to set consensus status for the requested blockhash
+      LOG.debug("Failed to set consensus validated for block {}", blockhash);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND);
+    }
+
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
   }
 }

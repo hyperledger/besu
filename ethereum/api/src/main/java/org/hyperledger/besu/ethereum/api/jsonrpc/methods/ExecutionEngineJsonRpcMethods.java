@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineG
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EnginePreparePayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Map;
@@ -37,20 +37,20 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockResultFactory blockResultFactory = new BlockResultFactory();
 
-  private final MutableBlockchain blockchain;
   private final MiningCoordinator miningCoordinator;
-  private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
+  private final BlockValidator blockValidator;
 
   ExecutionEngineJsonRpcMethods(
-      final MutableBlockchain blockchain,
       final MiningCoordinator miningCoordinator,
-      final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext) {
-    this.blockchain = blockchain;
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule) {
     this.miningCoordinator = miningCoordinator;
-    this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
+    // TODO: revisit this when totalDifficulty transition is defined.  Since ProtocolSchedule
+    //  doesn't make sense here:
+    // MergeBlockValidator is required for merge consensus
+    this.blockValidator = protocolSchedule.getByBlockNumber(0).getBlockValidator();
   }
 
   @Override
@@ -62,10 +62,10 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create() {
     Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
     return mapOf(
-        new EnginePreparePayload(syncVertx),
-        new EngineGetPayload(syncVertx, blockResultFactory, blockchain, miningCoordinator),
-        new EngineExecutePayload(syncVertx, protocolSchedule, protocolContext),
-        new EngineConsensusValidated(syncVertx),
-        new EngineForkchoiceUpdated(syncVertx));
+        new EnginePreparePayload(syncVertx, protocolContext),
+        new EngineGetPayload(syncVertx, protocolContext, blockResultFactory, miningCoordinator),
+        new EngineExecutePayload(syncVertx, protocolContext, blockValidator),
+        new EngineConsensusValidated(syncVertx, protocolContext),
+        new EngineForkchoiceUpdated(syncVertx, protocolContext));
   }
 }

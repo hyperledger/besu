@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -30,15 +32,11 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
 
   private final Vertx syncVertx;
   private static final Logger LOG = LogManager.getLogger();
+  protected final MergeContext mergeContext;
 
-  public enum ExecutionStatus {
-    VALID,
-    INVALID,
-    KNOWN;
-  }
-
-  protected ExecutionEngineJsonRpcMethod(final Vertx vertx) {
+  protected ExecutionEngineJsonRpcMethod(final Vertx vertx, final ProtocolContext protocolContext) {
     this.syncVertx = vertx;
+    this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
   }
 
   @Override
