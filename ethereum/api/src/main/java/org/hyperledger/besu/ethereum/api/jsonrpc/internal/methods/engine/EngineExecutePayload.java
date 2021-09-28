@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionEngineNewBlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionPayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -77,8 +77,8 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    final ExecutionEngineNewBlockParameter blockParam =
-        requestContext.getRequiredParameter(0, ExecutionEngineNewBlockParameter.class);
+    final ExecutionPayloadParameter blockParam =
+        requestContext.getRequiredParameter(0, ExecutionPayloadParameter.class);
 
     Object reqId = requestContext.getRequest().getId();
     // respond with known if block is already imported
