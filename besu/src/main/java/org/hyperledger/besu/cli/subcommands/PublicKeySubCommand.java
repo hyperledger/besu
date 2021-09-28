@@ -23,7 +23,6 @@ import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.AddressSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.ExportSubCommand;
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.io.BufferedWriter;
@@ -32,7 +31,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -84,7 +83,7 @@ public class PublicKeySubCommand implements Runnable {
       name = "export",
       description = "This command outputs the node public key. Default output is standard output.",
       mixinStandardHelpOptions = true)
-  static class ExportSubCommand implements Runnable {
+  static class ExportSubCommand extends KeyPairSubcommand implements Runnable {
 
     @Option(
         names = "--to",
@@ -93,34 +92,9 @@ public class PublicKeySubCommand implements Runnable {
         arity = "1..1")
     private final File publicKeyExportFile = null;
 
-    @SuppressWarnings("unused")
-    @ParentCommand
-    private PublicKeySubCommand parentCommand; // Picocli injects reference to parent command
-
     @Override
     public void run() {
-      checkNotNull(parentCommand);
-      BesuCommand besuCommand = this.parentCommand.parentCommand;
-      checkNotNull(besuCommand);
-
-      final KeyPair keyPair = besuCommand.loadKeyPair();
-      Optional.ofNullable(keyPair).ifPresent(this::outputPublicKey);
-    }
-
-    private void outputPublicKey(final KeyPair keyPair) {
-      // if we have an output file defined, print to it
-      // otherwise print to standard output.
-      if (publicKeyExportFile != null) {
-        final Path path = publicKeyExportFile.toPath();
-
-        try (final BufferedWriter fileWriter = Files.newBufferedWriter(path, UTF_8)) {
-          fileWriter.write(keyPair.getPublicKey().toString());
-        } catch (final IOException e) {
-          LOG.error("An error occurred while trying to write the public key", e);
-        }
-      } else {
-        parentCommand.out.println(keyPair.getPublicKey().toString());
-      }
+      run(publicKeyExportFile, keyPair -> keyPair.getPublicKey().toString());
     }
   }
 
@@ -138,7 +112,7 @@ public class PublicKeySubCommand implements Runnable {
           "This command outputs the node's account address. "
               + "Default output is standard output.",
       mixinStandardHelpOptions = true)
-  static class AddressSubCommand implements Runnable {
+  static class AddressSubCommand extends KeyPairSubcommand implements Runnable {
 
     @Option(
         names = "--to",
@@ -147,35 +121,36 @@ public class PublicKeySubCommand implements Runnable {
         arity = "1..1")
     private final File addressExportFile = null;
 
+    @Override
+    public void run() {
+      run(addressExportFile, keyPair -> Util.publicKeyToAddress(keyPair.getPublicKey()).toString());
+    }
+  }
+
+  private static class KeyPairSubcommand {
+
     @SuppressWarnings("unused")
     @ParentCommand
     private PublicKeySubCommand parentCommand; // Picocli injects reference to parent command
 
-    @Override
-    public void run() {
+    protected final void run(
+        final File exportFile, final Function<KeyPair, String> outputFunction) {
       checkNotNull(parentCommand);
       final BesuCommand besuCommand = parentCommand.parentCommand;
       checkNotNull(besuCommand);
 
       final KeyPair keyPair = besuCommand.loadKeyPair();
-      Optional.ofNullable(keyPair).ifPresent(this::outputAddress);
-    }
-
-    private void outputAddress(final KeyPair keyPair) {
-      final Address address = Util.publicKeyToAddress(keyPair.getPublicKey());
-
-      // if we have an output file defined, print to it
-      // otherwise print to standard output.
-      if (addressExportFile != null) {
-        final Path path = addressExportFile.toPath();
+      final String output = outputFunction.apply(keyPair);
+      if (exportFile != null) {
+        final Path path = exportFile.toPath();
 
         try (final BufferedWriter fileWriter = Files.newBufferedWriter(path, UTF_8)) {
-          fileWriter.write(address.toString());
+          fileWriter.write(output);
         } catch (final IOException e) {
-          LOG.error("An error occurred while trying to write the account address", e);
+          LOG.error("An error occurred while trying to write to output file", e);
         }
       } else {
-        parentCommand.out.println(address.toString());
+        parentCommand.out.println(output);
       }
     }
   }
