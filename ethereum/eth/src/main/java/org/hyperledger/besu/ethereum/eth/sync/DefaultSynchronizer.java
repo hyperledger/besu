@@ -125,11 +125,6 @@ public class DefaultSynchronizer implements Synchronizer {
 
   @Override
   public void start() {
-    if (MergeOptions.isMergeEnabled()) {
-      // no chain sync for initial rayonism test nets
-      return;
-    }
-
     if (running.compareAndSet(false, true)) {
       LOG.info("Starting synchronizer.");
       blockPropagationManager.start();

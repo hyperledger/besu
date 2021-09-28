@@ -109,6 +109,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
                     candidateWorldState.setBlockExecuted();
                     return res;
                 })
+            // TODO: does having a block processing timeout make sense, what is the correct failure mode here
             // fail any block that takes longer than a slot to execute:
             .orTimeout(12000, TimeUnit.MILLISECONDS);
 

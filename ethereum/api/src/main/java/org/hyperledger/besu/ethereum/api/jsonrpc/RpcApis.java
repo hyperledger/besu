@@ -33,7 +33,7 @@ public class RpcApis {
   public static final RpcApi TRACE = new RpcApi("TRACE");
   public static final RpcApi PLUGINS = new RpcApi("PLUGINS");
   public static final RpcApi GOQUORUM = new RpcApi("GOQUORUM");
-  public static final RpcApi ENGINE = new RpcApi("CONSENSUS");
+  public static final RpcApi ENGINE = new RpcApi("EXECUTION");
 
   public static final List<RpcApi> DEFAULT_JSON_RPC_APIS = Arrays.asList(ETH, NET, WEB3);
 
