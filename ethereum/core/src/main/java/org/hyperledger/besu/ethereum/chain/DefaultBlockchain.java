@@ -134,7 +134,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         () -> chainHeadOmmerCount);
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
-    //TODO: FROMRAYONISM
+    // TODO: FROMRAYONISM
     this.blockChoiceRule =
         MergeOptions.isMergeEnabled()
             ? // always regard the new block as "worse" because we don't reorg anymore; the

@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 
 import java.util.List;
 
@@ -26,20 +25,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
- * parentHash: DATA, 32 Bytes
- * coinbase: DATA, 20 Bytes
- * stateRoot: DATA, 32 Bytes
- * receiptRoot: DATA, 32 Bytes
- * logsBloom: DATA, 256 Bytes
- * random: DATA, 32 Bytes
- * blockNumber: QUANTITY
- * gasLimit: QUANTITY
- * gasUsed: QUANTITY
- * timestamp: QUANTITY
- * baseFeePerGas: QUANTITY
- * blockHash: DATA, 32 Bytes
+ * parentHash: DATA, 32 Bytes coinbase: DATA, 20 Bytes stateRoot: DATA, 32 Bytes receiptRoot: DATA,
+ * 32 Bytes logsBloom: DATA, 256 Bytes random: DATA, 32 Bytes blockNumber: QUANTITY gasLimit:
+ * QUANTITY gasUsed: QUANTITY timestamp: QUANTITY baseFeePerGas: QUANTITY blockHash: DATA, 32 Bytes
  * transactions: Array of TypedTransaction
- * */
+ */
 public class ExecutionPayloadParameter {
   private final Hash blockHash;
   private final Hash parentHash;

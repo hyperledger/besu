@@ -23,20 +23,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
- * parentHash: DATA, 32 Bytes
- * coinbase: DATA, 20 Bytes
- * stateRoot: DATA, 32 Bytes
- * receiptRoot: DATA, 32 Bytes
- * logsBloom: DATA, 256 Bytes
- * random: DATA, 32 Bytes
- * blockNumber: QUANTITY
- * gasLimit: QUANTITY
- * gasUsed: QUANTITY
- * timestamp: QUANTITY
- * baseFeePerGas: QUANTITY
- * blockHash: DATA, 32 Bytes
+ * parentHash: DATA, 32 Bytes coinbase: DATA, 20 Bytes stateRoot: DATA, 32 Bytes receiptRoot: DATA,
+ * 32 Bytes logsBloom: DATA, 256 Bytes random: DATA, 32 Bytes blockNumber: QUANTITY gasLimit:
+ * QUANTITY gasUsed: QUANTITY timestamp: QUANTITY baseFeePerGas: QUANTITY blockHash: DATA, 32 Bytes
  * transactions: Array of TypedTransaction
- * */
+ */
 public class ExecutionPayloadHeaderParameter {
   private final Hash blockHash;
   private final Hash parentHash;
@@ -132,6 +123,7 @@ public class ExecutionPayloadHeaderParameter {
 
   /**
    * get the SSZ hashed transactions root.
+   *
    * @return String
    */
   public String getTransactionsRoot() {

@@ -73,7 +73,7 @@ public class PoWBlockCreator extends AbstractBlockCreator {
     final PoWSolverInputs workDefinition = generateNonceSolverInputs(sealableBlockHeader);
     final PoWSolution solution;
     try {
-      //TODO: FROMRAYONISM, should be able to remove
+      // TODO: FROMRAYONISM, should be able to remove
       if (MergeOptions.isMergeEnabled()) {
         solution = new PoWSolution(0, Hash.ZERO, Bytes.EMPTY, Bytes.EMPTY);
       } else {

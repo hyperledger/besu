@@ -160,7 +160,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(processableBlockHeader.getNumber());
 
-      //TODO: FROMRAYONISM work this into blockprocessor
+      // TODO: FROMRAYONISM work this into blockprocessor
       if (!MergeOptions.isMergeEnabled()
           && !rewardBeneficiary(
               disposableWorldState,

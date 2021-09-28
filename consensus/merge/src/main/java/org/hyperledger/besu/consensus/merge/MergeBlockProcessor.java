@@ -93,23 +93,24 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions) {
 
-    CandidateWorldState candidateWorldState =
-        new CandidateWorldState(worldState, blockHeader);
+    CandidateWorldState candidateWorldState = new CandidateWorldState(worldState, blockHeader);
 
     CompletableFuture<Result> result =
         CompletableFuture.supplyAsync(
                 () -> {
-                    Result res = super.executeBlock(
-                        blockchain,
-                        candidateWorldState,
-                        blockHeader,
-                        transactions,
-                        Collections.emptyList(), // no ommers for merge blocks
-                        null);
-                    candidateWorldState.setBlockExecuted();
-                    return res;
+                  Result res =
+                      super.executeBlock(
+                          blockchain,
+                          candidateWorldState,
+                          blockHeader,
+                          transactions,
+                          Collections.emptyList(), // no ommers for merge blocks
+                          null);
+                  candidateWorldState.setBlockExecuted();
+                  return res;
                 })
-            // TODO: does having a block processing timeout make sense, what is the correct failure mode here
+            // TODO: does having a block processing timeout make sense, what is the correct failure
+            // mode here
             // fail any block that takes longer than a slot to execute:
             .orTimeout(12000, TimeUnit.MILLISECONDS);
 
@@ -234,7 +235,9 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
 
       if (shouldCommit) {
         flush();
-        LOG.trace("Committed blockhash {}: consensus validated}", blockHeader.getBlockHash().toShortHexString());
+        LOG.trace(
+            "Committed blockhash {}: consensus validated}",
+            blockHeader.getBlockHash().toShortHexString());
       } else {
         LOG.trace(
             "Uncommitted blockhash {}: blockExecuted: {}; consensusValidated {}",
