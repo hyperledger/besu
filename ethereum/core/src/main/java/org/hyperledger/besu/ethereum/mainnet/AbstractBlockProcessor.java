@@ -151,7 +151,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater);
 
     // persist accumulated changes from executeBlock
-    worldState.persist(blockHeader);
+    if (res.successful) {
+      worldState.persist(blockHeader);
+    }
 
     return res;
   }
@@ -174,7 +176,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
-      System.out.println("\n\n transaction trace:\n\n");
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
               blockchain,

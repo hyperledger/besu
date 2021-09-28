@@ -47,6 +47,8 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final ProtocolSchedule protocolSchedule) {
     this.miningCoordinator = miningCoordinator;
     this.protocolContext = protocolContext;
+    // TODO: revisit this when totalDifficulty transition is defined.  Since ProtocolSchedule
+    //  doesn't make sense here:
     // MergeBlockValidator is required for merge consensus
     this.blockValidator = protocolSchedule.getByBlockNumber(0).getBlockValidator();
   }
