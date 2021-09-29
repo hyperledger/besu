@@ -134,7 +134,6 @@ import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.evm.internal.JumpDestCache;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
@@ -267,7 +266,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
   private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
-  private final ContractCacheOptions unstableContractCacheOptions = new ContractCacheOptions();
+  private final ContractCacheOptions unstableContractCacheOptions = ContractCacheOptions.create();
 
   // stable CLI options
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
@@ -293,6 +292,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
   private final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider;
+  private GenesisConfigOptions genesisConfigOptions;
 
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
@@ -406,8 +406,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
   private final Boolean randomPeerPriority = false;
-
-  private GenesisConfigOptions genesisConfigOptions;
 
   @Option(
       names = {"--banned-node-ids", "--banned-node-id"},
@@ -1591,7 +1589,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     : SyncMode.FULL);
 
     ethNetworkConfig = updateNetworkConfig(getNetwork());
-    JumpDestCache.init(unstableContractCacheOptions.toDomainObject());
     checkGoQuorumCompatibilityConfig(ethNetworkConfig);
 
     jsonRpcConfiguration = jsonRpcConfiguration();
@@ -1739,6 +1736,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .orElse(GasLimitCalculator.constant()))
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
+        .jumpDestCacheConfiguration(ContractCacheOptions.create().toDomainObject())
         .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject());
   }
 

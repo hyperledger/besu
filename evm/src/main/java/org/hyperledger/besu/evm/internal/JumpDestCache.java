@@ -24,23 +24,9 @@ public class JumpDestCache {
 
   private final Cache<Hash, long[]> cache;
   private final long weightLimit;
-  private static JumpDestCache INSTANCE = null;
 
-  public static void init(final JumpdestCacheConfiguration config) {
-    if (INSTANCE == null) {
-      INSTANCE = new JumpDestCache(config.getContractCacheWeightBytes());
-    }
-  }
-
-  public static void destroy() {
-    INSTANCE = null;
-  }
-
-  public static JumpDestCache getInstance() {
-    if (INSTANCE == null) {
-      JumpDestCache.init(JumpdestCacheConfiguration.DEFAULT_CONFIG);
-    }
-    return INSTANCE;
+  public JumpDestCache(final JumpDestCacheConfiguration config) {
+    this(config.getContractCacheWeightBytes());
   }
 
   private JumpDestCache(final long maxWeightBytes) {

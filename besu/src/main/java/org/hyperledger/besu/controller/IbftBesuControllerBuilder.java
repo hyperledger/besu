@@ -233,7 +233,8 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled,
-        bftExtraDataCodec().get());
+        bftExtraDataCodec().get(),
+        jumpDestCacheConfiguration);
   }
 
   @Override

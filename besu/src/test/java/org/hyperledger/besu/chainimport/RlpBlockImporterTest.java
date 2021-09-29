@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 import org.hyperledger.besu.testutil.TestClock;
@@ -72,6 +73,7 @@ public final class RlpBlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .jumpDestCacheConfiguration(JumpDestCacheConfiguration.DEFAULT_CONFIG)
             .build();
     final RlpBlockImporter.ImportResult result =
         rlpBlockImporter.importBlockchain(source, targetController, false);
@@ -100,6 +102,7 @@ public final class RlpBlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .jumpDestCacheConfiguration(JumpDestCacheConfiguration.DEFAULT_CONFIG)
             .build();
 
     assertThatThrownBy(
@@ -128,6 +131,7 @@ public final class RlpBlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .jumpDestCacheConfiguration(JumpDestCacheConfiguration.DEFAULT_CONFIG)
             .build();
 
     final RlpBlockImporter.ImportResult result =
@@ -168,6 +172,7 @@ public final class RlpBlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .jumpDestCacheConfiguration(JumpDestCacheConfiguration.DEFAULT_CONFIG)
             .build();
     final RlpBlockImporter.ImportResult result =
         rlpBlockImporter.importBlockchain(source, controller, false);

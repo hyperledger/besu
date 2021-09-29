@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
@@ -142,7 +143,7 @@ public class EvmToyCommand implements Runnable {
     worldUpdater.getOrCreate(receiver).getMutable().setCode(codeBytes);
 
     int repeat = this.repeat;
-    final EVM evm = MainnetEVMs.berlin();
+    final EVM evm = MainnetEVMs.berlin(JumpDestCacheConfiguration.DEFAULT_CONFIG);
     final PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
     MainnetPrecompiledContracts.populateForIstanbul(
         precompileContractRegistry, evm.getGasCalculator());

@@ -22,17 +22,11 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class JumpDestCacheTest {
 
   private final String op = Bytes.of(JumpDestOperation.OPCODE).toUnprefixedHexString();
-
-  @BeforeClass
-  public static void resetConfig() {
-    JumpDestCache.destroy(); // tests run in parallel, often with defaults
-  }
 
   @Test
   public void testScale() {

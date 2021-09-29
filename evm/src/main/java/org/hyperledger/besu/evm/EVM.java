@@ -16,12 +16,15 @@ package org.hyperledger.besu.evm;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
+import org.hyperledger.besu.evm.internal.JumpDestCache;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
@@ -36,6 +39,7 @@ import java.util.function.BiConsumer;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class EVM {
   private static final Logger LOG = getLogger();
@@ -50,11 +54,16 @@ public class EVM {
   private final OperationRegistry operations;
   private final GasCalculator gasCalculator;
   private final Operation endOfScriptStop;
+  private final JumpDestCache jumpDestCache;
 
-  public EVM(final OperationRegistry operations, final GasCalculator gasCalculator) {
+  public EVM(
+      final OperationRegistry operations,
+      final GasCalculator gasCalculator,
+      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
     this.operations = operations;
     this.gasCalculator = gasCalculator;
     this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
+    this.jumpDestCache = new JumpDestCache(jumpdestCacheConfiguration);
   }
 
   public GasCalculator getGasCalculator() {
@@ -149,5 +158,33 @@ public class EVM {
     } else {
       return operation;
     }
+  }
+
+  /**
+   * Determine whether a specified destination is a valid jump target.
+   *
+   * @param destination The destination we're checking for validity.
+   * @return Whether or not this location is a valid jump destination.
+   */
+  public boolean isValidJumpDestination(final UInt256 destination, final Code code) {
+    if (!destination.fitsInt()) return false;
+
+    final int jumpDestination = destination.intValue();
+    if (jumpDestination >= code.getSize()) return false;
+    long[] validJumpDestinations = code.getValidJumpDestinations();
+    if (validJumpDestinations == null || validJumpDestinations.length == 0) {
+      validJumpDestinations = jumpDestCache.getIfPresent(code.getCodeHash());
+      if (validJumpDestinations == null) {
+        validJumpDestinations = code.calculateJumpDests();
+        if (code.getCodeHash() != null && !code.getCodeHash().equals(Hash.EMPTY)) {
+          jumpDestCache.put(code.getCodeHash(), validJumpDestinations);
+        } else {
+          LOG.debug("not caching jumpdest for unhashed contract code");
+        }
+      }
+    }
+    long targetLong = validJumpDestinations[jumpDestination >> 6];
+    long targetBit = 1L << (jumpDestination & 0x3F);
+    return (targetLong & targetBit) != 0L;
   }
 }

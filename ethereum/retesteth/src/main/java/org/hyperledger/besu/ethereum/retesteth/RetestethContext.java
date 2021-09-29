@@ -57,6 +57,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -131,7 +132,9 @@ public class RetestethContext {
     final JsonGenesisConfigOptions jsonGenesisConfigOptions =
         JsonGenesisConfigOptions.fromJsonObject(
             JsonUtil.getObjectNode(genesisConfig, "config").get());
-    protocolSchedule = MainnetProtocolSchedule.fromConfig(jsonGenesisConfigOptions);
+    protocolSchedule =
+        MainnetProtocolSchedule.fromConfig(
+            jsonGenesisConfigOptions, JumpDestCacheConfiguration.DEFAULT_CONFIG);
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
       protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule);
     }

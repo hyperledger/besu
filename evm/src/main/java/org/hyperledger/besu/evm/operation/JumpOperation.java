@@ -40,7 +40,7 @@ public class JumpOperation extends AbstractFixedCostOperation {
       final MessageFrame frame, final EVM evm) {
     final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
     final Code code = frame.getCode();
-    if (!code.isValidJumpDestination(jumpDestination)) {
+    if (!evm.isValidJumpDestination(jumpDestination, code)) {
       return invalidJumpResponse;
     } else {
       frame.setPC(jumpDestination.intValue());

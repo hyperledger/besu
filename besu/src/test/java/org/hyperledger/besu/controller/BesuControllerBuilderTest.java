@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguratio
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -140,6 +141,7 @@ public class BesuControllerBuilderTest {
             .transactionPoolConfiguration(poolConfiguration)
             .nodeKey(nodeKey)
             .storageProvider(storageProvider)
+            .jumpDestCacheConfiguration(JumpDestCacheConfiguration.DEFAULT_CONFIG)
             .networkId(networkId);
   }
 

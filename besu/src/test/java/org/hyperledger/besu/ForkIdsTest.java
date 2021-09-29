@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 
 import java.util.Collection;
 import java.util.List;
@@ -156,7 +157,9 @@ public class ForkIdsTest {
     final GenesisConfigFile genesisConfigFile =
         GenesisConfigFile.fromConfig(EthNetworkConfig.jsonConfig(chainName));
     final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
-    final ProtocolSchedule schedule = MainnetProtocolSchedule.fromConfig(configOptions);
+    final ProtocolSchedule schedule =
+        MainnetProtocolSchedule.fromConfig(
+            configOptions, JumpDestCacheConfiguration.DEFAULT_CONFIG);
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, schedule);
     final Blockchain mockBlockchain = mock(Blockchain.class);
 

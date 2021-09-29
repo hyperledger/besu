@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Arrays;
@@ -51,7 +52,9 @@ public class ChainHeadTrackerTest {
 
   private final ProtocolSchedule protocolSchedule =
       FixedDifficultyProtocolSchedule.create(
-          GenesisConfigFile.development().getConfigOptions(), false);
+          GenesisConfigFile.development().getConfigOptions(),
+          false,
+          JumpDestCacheConfiguration.DEFAULT_CONFIG);
 
   private final TrailingPeerLimiter trailingPeerLimiter = mock(TrailingPeerLimiter.class);
 

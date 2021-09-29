@@ -16,16 +16,20 @@
 package org.hyperledger.besu.cli.options.unstable;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
-import org.hyperledger.besu.evm.internal.JumpdestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 
 import java.util.Arrays;
 import java.util.List;
 
 import picocli.CommandLine;
 
-public class ContractCacheOptions implements CLIOptions<JumpdestCacheConfiguration> {
+public class ContractCacheOptions implements CLIOptions<JumpDestCacheConfiguration> {
 
   public static final String CONTRACT_CACHE_WEIGHT = "--Xcontract-code-cache-weight-kb";
+
+  public static ContractCacheOptions create() {
+    return new ContractCacheOptions();
+  }
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
@@ -41,8 +45,8 @@ public class ContractCacheOptions implements CLIOptions<JumpdestCacheConfigurati
       32_000L; // 10k contracts, (25k max contract size / 8 bit) + 32byte hash
 
   @Override
-  public JumpdestCacheConfiguration toDomainObject() {
-    return new JumpdestCacheConfiguration(contractCacheWeightKilobytes);
+  public JumpDestCacheConfiguration toDomainObject() {
+    return new JumpDestCacheConfiguration(contractCacheWeightKilobytes);
   }
 
   @Override

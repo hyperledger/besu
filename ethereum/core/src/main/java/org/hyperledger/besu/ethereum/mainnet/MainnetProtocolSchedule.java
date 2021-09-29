@@ -18,6 +18,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyCalculators;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 
 import java.math.BigInteger;
 import java.util.function.Function;
@@ -39,10 +40,11 @@ public class MainnetProtocolSchedule {
   public static ProtocolSchedule fromConfig(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
-          config, privacyParameters, isRevertReasonEnabled);
+          config, privacyParameters, isRevertReasonEnabled, jumpdestCacheConfiguration);
     }
     return new ProtocolScheduleBuilder(
             config,
@@ -50,7 +52,8 @@ public class MainnetProtocolSchedule {
             ProtocolSpecAdapters.create(0, Function.identity()),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum())
+            config.isQuorum(),
+            jumpdestCacheConfiguration)
         .createProtocolSchedule();
   }
 
@@ -63,8 +66,25 @@ public class MainnetProtocolSchedule {
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
-      final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
-    return fromConfig(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
+      final GenesisConfigOptions config,
+      final boolean isRevertReasonEnabled,
+      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+    return fromConfig(
+        config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, jumpdestCacheConfiguration);
+  }
+
+  /**
+   * Create a Mainnet protocol schedule from a config object
+   *
+   * @param config {@link GenesisConfigOptions} containing the config options for the milestone
+   *     starting points
+   * @param jumpdestCacheConfiguration size of
+   * @return A configured mainnet protocol schedule
+   */
+  public static ProtocolSchedule fromConfig(
+      final GenesisConfigOptions config,
+      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+    return fromConfig(config, PrivacyParameters.DEFAULT, false, jumpdestCacheConfiguration);
   }
 
   /**
@@ -75,6 +95,7 @@ public class MainnetProtocolSchedule {
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(final GenesisConfigOptions config) {
-    return fromConfig(config, PrivacyParameters.DEFAULT, false);
+    return fromConfig(
+        config, PrivacyParameters.DEFAULT, false, JumpDestCacheConfiguration.DEFAULT_CONFIG);
   }
 }

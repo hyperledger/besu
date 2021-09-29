@@ -23,6 +23,7 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 
 import javax.inject.Named;
 
@@ -41,7 +42,8 @@ class CliqueGenesisFileModule extends GenesisFileModule {
       final GenesisConfigOptions configOptions,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     // dagger can handle this magic one day
-    return CliqueProtocolSchedule.create(configOptions, nodeKey, revertReasonEnabled);
+    return CliqueProtocolSchedule.create(
+        configOptions, nodeKey, revertReasonEnabled, JumpDestCacheConfiguration.DEFAULT_CONFIG);
   }
 
   @Override

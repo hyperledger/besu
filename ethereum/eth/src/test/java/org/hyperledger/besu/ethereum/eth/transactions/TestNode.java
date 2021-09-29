@@ -55,6 +55,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -105,7 +106,9 @@ public class TestNode implements Closeable {
     final GenesisConfigFile genesisConfigFile = GenesisConfigFile.development();
     final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(), false);
+            GenesisConfigFile.development().getConfigOptions(),
+            false,
+            JumpDestCacheConfiguration.DEFAULT_CONFIG);
 
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
     final BlockHeaderFunctions blockHeaderFunctions =

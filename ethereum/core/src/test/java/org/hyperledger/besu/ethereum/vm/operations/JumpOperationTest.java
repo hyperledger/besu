@@ -34,6 +34,7 @@ import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
@@ -82,7 +83,7 @@ public class JumpOperationTest {
     final OperationRegistry registry = new OperationRegistry();
     registry.put(new JumpOperation(gasCalculator));
     registry.put(new JumpDestOperation(gasCalculator));
-    evm = new EVM(registry, gasCalculator);
+    evm = new EVM(registry, gasCalculator, JumpDestCacheConfiguration.DEFAULT_CONFIG);
   }
 
   @Test
@@ -126,7 +127,7 @@ public class JumpOperationTest {
             .build();
     frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
 
-    final OperationResult result = operation.execute(frameDestinationGreaterThanCodeSize, null);
+    final OperationResult result = operation.execute(frameDestinationGreaterThanCodeSize, evm);
     assertThat(result.getHaltReason()).contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
     Bytes badJump = Bytes.fromHexString("0x60045600");
     final MessageFrame frameDestinationEqualsToCodeSize =
@@ -136,7 +137,7 @@ public class JumpOperationTest {
             .build();
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
 
-    final OperationResult result2 = operation.execute(frameDestinationEqualsToCodeSize, null);
+    final OperationResult result2 = operation.execute(frameDestinationEqualsToCodeSize, evm);
     assertThat(result2.getHaltReason()).contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
   }
 
@@ -154,7 +155,7 @@ public class JumpOperationTest {
             .build();
     longContract.setPC(255);
 
-    final OperationResult result = operation.execute(longContract, null);
+    final OperationResult result = operation.execute(longContract, evm);
     assertThat(result.getHaltReason()).isEmpty();
   }
 

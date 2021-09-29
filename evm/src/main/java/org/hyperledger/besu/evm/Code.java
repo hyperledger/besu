@@ -14,17 +14,12 @@
  */
 package org.hyperledger.besu.evm;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.evm.internal.JumpDestCache;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
 
 import com.google.common.base.MoreObjects;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** Represents EVM code associated with an account. */
 public class Code {
@@ -36,13 +31,10 @@ public class Code {
   private final Hash codeHash;
 
   /** Used to cache valid jump destinations. */
-  //  private BitSet validJumpDestinations;
   long[] validJumpDestinations;
 
   /** Syntactic sugar for an empty contract */
   public static Code EMPTY = new Code(Bytes.EMPTY, Hash.EMPTY);
-
-  private static final Logger LOG = getLogger();
 
   /**
    * Public constructor.
@@ -59,7 +51,6 @@ public class Code {
     this.bytes = bytecode;
     this.validJumpDestinations = validJumpDestinations;
     this.codeHash = codeHash;
-    JumpDestCache.getInstance().put(codeHash, validJumpDestinations);
   }
 
   public Code() {
@@ -96,34 +87,6 @@ public class Code {
     return bytes.size();
   }
 
-  /**
-   * Determine whether a specified destination is a valid jump target.
-   *
-   * @param destination The destination we're checking for validity.
-   * @return Whether or not this location is a valid jump destination.
-   */
-  public boolean isValidJumpDestination(final UInt256 destination) {
-    if (!destination.fitsInt()) return false;
-
-    final int jumpDestination = destination.intValue();
-    if (jumpDestination >= getSize()) return false;
-
-    if (validJumpDestinations == null) {
-      validJumpDestinations = JumpDestCache.getInstance().getIfPresent(this.codeHash);
-      if (validJumpDestinations == null) {
-        validJumpDestinations = this.calculateJumpDests();
-        if (this.codeHash != null && !this.codeHash.equals(Hash.EMPTY)) {
-          JumpDestCache.getInstance().put(this.codeHash, validJumpDestinations);
-        } else {
-          LOG.debug("not caching jumpdest for unhashed contract code");
-        }
-      }
-    }
-    long targetLong = validJumpDestinations[jumpDestination >> 6];
-    long targetBit = 1L << (jumpDestination & 0x3F);
-    return (targetLong & targetBit) != 0L;
-  }
-
   public long[] calculateJumpDests() {
     int size = getSize();
     long[] bitmap = new long[(size >> 6) + 1];
@@ -149,6 +112,7 @@ public class Code {
       }
       bitmap[entryPos] = thisEntry;
     }
+    this.validJumpDestinations = bitmap;
     return bitmap;
   }
 

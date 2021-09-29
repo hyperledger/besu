@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTran
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -87,7 +88,8 @@ public class BftBlockCreatorTest {
         IbftProtocolSchedule.create(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
                 .getConfigOptions(),
-            false);
+            false,
+            JumpDestCacheConfiguration.DEFAULT_CONFIG);
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,

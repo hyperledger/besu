@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -45,7 +46,8 @@ public class CliqueProtocolSchedule {
       final GenesisConfigOptions config,
       final NodeKey nodeKey,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
 
@@ -71,15 +73,22 @@ public class CliqueProtocolSchedule {
                         privacyParameters.getGoQuorumPrivacyParameters().isPresent())),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum())
+            config.isQuorum(),
+            jumpdestCacheConfiguration)
         .createProtocolSchedule();
   }
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final NodeKey nodeKey,
-      final boolean isRevertReasonEnabled) {
-    return create(config, nodeKey, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
+      final boolean isRevertReasonEnabled,
+      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+    return create(
+        config,
+        nodeKey,
+        PrivacyParameters.DEFAULT,
+        isRevertReasonEnabled,
+        jumpdestCacheConfiguration);
   }
 
   private static ProtocolSpecBuilder applyCliqueSpecificModifications(

@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.io.IOException;
@@ -58,7 +59,9 @@ public class DifficultyCalculatorTests {
     return List.of(
         new Object[] {
           "/BasicTests/difficultyMainNetwork.json",
-          MainnetProtocolSchedule.fromConfig(GenesisConfigFile.mainnet().getConfigOptions())
+          MainnetProtocolSchedule.fromConfig(
+              GenesisConfigFile.mainnet().getConfigOptions(),
+              JumpDestCacheConfiguration.DEFAULT_CONFIG)
         },
         new Object[] {
           "/BasicTests/difficultyRopsten.json",
@@ -67,49 +70,57 @@ public class DifficultyCalculatorTests {
                       Resources.toString(
                           GenesisConfigFile.class.getResource("/ropsten.json"),
                           StandardCharsets.UTF_8))
-                  .getConfigOptions())
+                  .getConfigOptions(),
+              JumpDestCacheConfiguration.DEFAULT_CONFIG)
         },
         new Object[] {
           "/BasicTests/difficultyFrontier.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\": {\"frontierBlock\":0}}")
-                  .getConfigOptions())
+                  .getConfigOptions(),
+              JumpDestCacheConfiguration.DEFAULT_CONFIG)
         },
         new Object[] {
           "/BasicTests/difficultyHomestead.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\": {\"homesteadBlock\":0}}")
-                  .getConfigOptions())
+                  .getConfigOptions(),
+              JumpDestCacheConfiguration.DEFAULT_CONFIG)
         },
         new Object[] {
           "/BasicTests/difficultyByzantium.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\": {\"byzantiumBlock\":0}}")
-                  .getConfigOptions())
+                  .getConfigOptions(),
+              JumpDestCacheConfiguration.DEFAULT_CONFIG)
         },
         new Object[] {
           "/BasicTests/difficultyConstantinople.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\": {\"constantinopleBlock\":0}}")
-                  .getConfigOptions())
+                  .getConfigOptions(),
+              JumpDestCacheConfiguration.DEFAULT_CONFIG)
         },
         new Object[] {
           "/BasicTests/difficultyEIP2384.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
-                  .getConfigOptions())
+                  .getConfigOptions(),
+              JumpDestCacheConfiguration.DEFAULT_CONFIG)
         },
         new Object[] {
           "/BasicTests/difficultyEIP2384_random.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
-                  .getConfigOptions())
+                  .getConfigOptions(),
+              JumpDestCacheConfiguration.DEFAULT_CONFIG)
         },
         new Object[] {
           "/BasicTests/difficultyEIP2384_random_to20M.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
-                  .getConfigOptions())
+                  .getConfigOptions(),
+              JumpDestCacheConfiguration.DEFAULT_CONFIG)
         });
   }
 

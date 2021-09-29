@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
@@ -77,7 +78,9 @@ public class LondonSStoreOperationGasCostTest {
   @Before
   public void setUp() {
     protocolSchedule =
-        MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().londonBlock(0));
+        MainnetProtocolSchedule.fromConfig(
+            new StubGenesisConfigOptions().londonBlock(0),
+            JumpDestCacheConfiguration.DEFAULT_CONFIG);
     codeExecutor = new TestCodeExecutor(protocolSchedule);
   }
 

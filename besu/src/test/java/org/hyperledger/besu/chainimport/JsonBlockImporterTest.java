@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -426,6 +427,7 @@ public abstract class JsonBlockImporterTest {
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .gasLimitCalculator(GasLimitCalculator.constant())
+        .jumpDestCacheConfiguration(JumpDestCacheConfiguration.DEFAULT_CONFIG)
         .build();
   }
 }
