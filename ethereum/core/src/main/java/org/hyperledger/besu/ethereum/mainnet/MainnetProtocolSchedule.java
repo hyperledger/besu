@@ -35,6 +35,7 @@ public class MainnetProtocolSchedule {
    *     starting points
    * @param privacyParameters the parameters set for private transactions
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
+   * @param jumpdestCacheConfiguration how to configure the EVMs jumpdest cache
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
@@ -63,6 +64,7 @@ public class MainnetProtocolSchedule {
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
    *     starting points
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
+   * @param jumpdestCacheConfiguration how to configure the EVMs jumpdest cache
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(

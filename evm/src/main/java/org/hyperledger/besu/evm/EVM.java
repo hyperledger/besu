@@ -164,6 +164,7 @@ public class EVM {
    * Determine whether a specified destination is a valid jump target.
    *
    * @param destination The destination we're checking for validity.
+   * @param code The code within which we are looking for the destination.
    * @return Whether or not this location is a valid jump destination.
    */
   public boolean isValidJumpDestination(final UInt256 destination, final Code code) {
