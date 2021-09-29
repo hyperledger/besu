@@ -42,6 +42,6 @@ class IBFTGenesisFileModule extends GenesisFileModule {
 
   @Override
   BlockHeaderFunctions blockHashFunction() {
-    return BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataEncoder);
+    return BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataEncoder);
   }
 }

@@ -36,17 +36,17 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
+public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
 
   final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
-  RestrictedOffChainEeaSendRawTransaction method;
+  RestrictedOffchainEeaSendRawTransaction method;
 
   @Before
   public void before() {
     method =
-        new RestrictedOffChainEeaSendRawTransaction(
+        new RestrictedOffchainEeaSendRawTransaction(
             transactionPool,
             privacyIdProvider,
             privateMarkerTransactionFactory,
@@ -85,7 +85,7 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
             new PrivacyGroup(
                 "", PrivacyGroup.Type.PANTHEON, "", "", singletonList(ENCLAVE_PUBLIC_KEY)));
 
-    when(privacyController.findOffChainPrivacyGroupByGroupId(any(), any()))
+    when(privacyController.findOffchainPrivacyGroupByGroupId(any(), any()))
         .thenReturn(pantheonPrivacyGroup);
     when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
 

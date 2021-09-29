@@ -201,7 +201,7 @@ public class TransactionPoolTest {
   }
 
   @Test
-  public void shouldRemoveTransactionsFromPendingListWhenIncludedInBlockOnChain() {
+  public void shouldRemoveTransactionsFromPendingListWhenIncludedInBlockOnchain() {
     transactions.addRemoteTransaction(transaction1);
     assertTransactionPending(transaction1);
     appendBlock(transaction1);

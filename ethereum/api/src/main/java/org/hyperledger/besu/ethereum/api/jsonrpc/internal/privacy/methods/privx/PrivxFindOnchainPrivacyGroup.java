@@ -33,13 +33,13 @@ import java.util.List;
 
 import org.apache.logging.log4j.Logger;
 
-public class PrivxFindOnChainPrivacyGroup implements JsonRpcMethod {
+public class PrivxFindOnchainPrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
-  public PrivxFindOnChainPrivacyGroup(
+  public PrivxFindOnchainPrivacyGroup(
       final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
@@ -61,7 +61,7 @@ public class PrivxFindOnChainPrivacyGroup implements JsonRpcMethod {
     final List<PrivacyGroup> response;
     try {
       response =
-          privacyController.findOnChainPrivacyGroupByMembers(
+          privacyController.findOnchainPrivacyGroupByMembers(
               Arrays.asList(addresses),
               privacyIdProvider.getPrivacyUserId(requestContext.getUser()));
     } catch (final MultiTenancyValidationException e) {

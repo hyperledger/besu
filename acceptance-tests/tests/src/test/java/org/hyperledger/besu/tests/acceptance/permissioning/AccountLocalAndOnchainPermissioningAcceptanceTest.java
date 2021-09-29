@@ -24,7 +24,7 @@ import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
 
-public class AccountLocalAndOnChainPermissioningAcceptanceTest
+public class AccountLocalAndOnchainPermissioningAcceptanceTest
     extends AccountSmartContractPermissioningAcceptanceTestBase {
 
   private Account senderC;
@@ -36,7 +36,7 @@ public class AccountLocalAndOnChainPermissioningAcceptanceTest
 
   @Test
   public void testAccountCannotSendTxWhenNotOnLocalAllowList() {
-    // OnChain allowlist: Primary, Secondary, C
+    // Onchain allowlist: Primary, Secondary, C
     // Local allowlist: Primary, Secondary
 
     final Node node =
@@ -51,7 +51,7 @@ public class AccountLocalAndOnChainPermissioningAcceptanceTest
     node.execute(accountTransactions.createTransfer(senderC, 10));
     node.verify(senderC.balanceEquals(10));
 
-    // add accounts to onChain allowlist
+    // add accounts to onchain allowlist
     node.execute(allowAccount(accounts.getPrimaryBenefactor()));
     node.verify(accountIsAllowed(accounts.getPrimaryBenefactor()));
 
@@ -66,8 +66,8 @@ public class AccountLocalAndOnChainPermissioningAcceptanceTest
   }
 
   @Test
-  public void testAccountCannotSendTxWhenNotOnOnChainAllowList() {
-    // OnChain allowlist: Primary, Secondary, Receiver
+  public void testAccountCannotSendTxWhenNotOnOnchainAllowList() {
+    // Onchain allowlist: Primary, Secondary, Receiver
     // Local allowlist: Primary, Secondary, C, Receiver
 
     final Account receiverAccount = accounts.createAccount("Rec-A");
@@ -86,7 +86,7 @@ public class AccountLocalAndOnChainPermissioningAcceptanceTest
     node.execute(accountTransactions.createTransfer(senderC, 10));
     node.verify(senderC.balanceEquals(10));
 
-    // add accounts to onChain allowlist
+    // add accounts to onchain allowlist
     node.execute(allowAccount(accounts.getPrimaryBenefactor()));
     node.verify(accountIsAllowed(accounts.getPrimaryBenefactor()));
 
@@ -96,7 +96,7 @@ public class AccountLocalAndOnChainPermissioningAcceptanceTest
     node.execute(allowAccount(receiverAccount));
     node.verify(accountIsAllowed(receiverAccount));
 
-    // verify senderC is forbidden because it is not on OnChain allowlist
+    // verify senderC is forbidden because it is not on Onchain allowlist
     node.verify(accountIsForbidden(senderC));
 
     // sender C should not be able to send Tx

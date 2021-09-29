@@ -3416,7 +3416,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void onChainPrivacyGroupEnabledFlagDefaultValueIsFalse() {
+  public void onchainPrivacyGroupEnabledFlagDefaultValueIsFalse() {
     parseCommand(
         "--privacy-enabled",
         "--privacy-public-key-file",
@@ -3438,7 +3438,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void onChainPrivacyGroupEnabledFlagValueIsSet() {
+  public void onchainPrivacyGroupEnabledFlagValueIsSet() {
     parseCommand(
         "--privacy-enabled",
         "--privacy-public-key-file",

@@ -37,17 +37,17 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
+public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
 
   final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
-  RestrictedOnChainEeaSendRawTransaction method;
+  RestrictedOnchainEeaSendRawTransaction method;
 
   @Before
   public void before() {
     method =
-        new RestrictedOnChainEeaSendRawTransaction(
+        new RestrictedOnchainEeaSendRawTransaction(
             transactionPool,
             privacyIdProvider,
             privateMarkerTransactionFactory,
@@ -56,7 +56,7 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
   }
 
   @Test
-  public void validOnChainTransactionPrivacyGroupIsSentToTransactionPool() {
+  public void validOnchainTransactionPrivacyGroupIsSentToTransactionPool() {
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
@@ -65,13 +65,13 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
     when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any()))
         .thenReturn(MOCK_ORION_KEY);
 
-    final Optional<PrivacyGroup> onChainPrivacyGroup =
+    final Optional<PrivacyGroup> onchainPrivacyGroup =
         Optional.of(
             new PrivacyGroup(
                 "", PrivacyGroup.Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY)));
 
-    when(privacyController.findOnChainPrivacyGroupAndAddNewMembers(any(), any(), any()))
-        .thenReturn(onChainPrivacyGroup);
+    when(privacyController.findOnchainPrivacyGroupAndAddNewMembers(any(), any(), any()))
+        .thenReturn(onchainPrivacyGroup);
 
     final JsonRpcSuccessResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -100,11 +100,11 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
   }
 
   @Test
-  public void offChainPrivacyGroupTransactionFailsWhenOnchainPrivacyGroupFeatureIsEnabled() {
+  public void offchainPrivacyGroupTransactionFailsWhenOnchainPrivacyGroupFeatureIsEnabled() {
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
 
-    when(privacyController.findOnChainPrivacyGroupAndAddNewMembers(any(), any(), any()))
+    when(privacyController.findOnchainPrivacyGroupAndAddNewMembers(any(), any(), any()))
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse expectedResponse =
@@ -118,7 +118,7 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
   }
 
   @Test
-  public void onChainPrivacyGroupTransactionFailsWhenGroupDoesNotExist() {
+  public void onchainPrivacyGroupTransactionFailsWhenGroupDoesNotExist() {
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
 

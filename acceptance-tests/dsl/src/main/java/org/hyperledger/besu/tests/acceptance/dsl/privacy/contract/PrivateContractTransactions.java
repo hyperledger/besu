@@ -142,13 +142,13 @@ public class PrivateContractTransactions {
         contractAddress, clazz, transactionSigningKey, privateFrom, privacyGroupId);
   }
 
-  public CallOnChainPermissioningPrivateSmartContractFunction callOnChainPermissioningSmartContract(
+  public CallOnchainPermissioningPrivateSmartContractFunction callOnchainPermissioningSmartContract(
       final String contractAddress,
       final String encodedFunction,
       final String transactionSigningKey,
       final String privateFrom,
       final String privacyGroupId) {
-    return new CallOnChainPermissioningPrivateSmartContractFunction(
+    return new CallOnchainPermissioningPrivateSmartContractFunction(
         contractAddress, encodedFunction, transactionSigningKey, privateFrom, privacyGroupId);
   }
 }

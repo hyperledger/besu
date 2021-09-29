@@ -163,7 +163,7 @@ public class PrivacyReorgTest {
             .build();
     privacyParameters.setPrivacyUserId(ENCLAVE_PUBLIC_KEY.toBase64String());
     privacyController = mock(RestrictedDefaultPrivacyController.class);
-    when(privacyController.findOffChainPrivacyGroupByGroupId(any(), any()))
+    when(privacyController.findOffchainPrivacyGroupByGroupId(any(), any()))
         .thenReturn(Optional.of(new PrivacyGroup()));
 
     privateStateRootResolver =

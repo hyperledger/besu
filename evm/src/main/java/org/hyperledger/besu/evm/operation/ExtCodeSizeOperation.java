@@ -31,14 +31,17 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class ExtCodeSizeOperation extends AbstractOperation {
 
-  private final Optional<Gas> warmCost;
-  private final Optional<Gas> coldCost;
-
   public ExtCodeSizeOperation(final GasCalculator gasCalculator) {
     super(0x3B, "EXTCODESIZE", 1, 1, false, 1, gasCalculator);
-    final Gas baseCost = gasCalculator.getExtCodeSizeOperationGasCost();
-    warmCost = Optional.of(baseCost.plus(gasCalculator.getWarmStorageReadCost()));
-    coldCost = Optional.of(baseCost.plus(gasCalculator.getColdAccountAccessCost()));
+  }
+
+  protected Gas cost(final boolean accountIsWarm) {
+    return gasCalculator()
+        .getExtCodeSizeOperationGasCost()
+        .plus(
+            accountIsWarm
+                ? gasCalculator().getWarmStorageReadCost()
+                : gasCalculator().getColdAccountAccessCost());
   }
 
   @Override
@@ -47,7 +50,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
       final Address address = Words.toAddress(frame.popStackItem());
       final boolean accountIsWarm =
           frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-      final Optional<Gas> optionalCost = accountIsWarm ? warmCost : coldCost;
+      final Optional<Gas> optionalCost = Optional.of(cost(accountIsWarm));
       if (frame.getRemainingGas().compareTo(optionalCost.get()) < 0) {
         return new OperationResult(
             optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
@@ -59,9 +62,10 @@ public class ExtCodeSizeOperation extends AbstractOperation {
       }
     } catch (final UnderflowException ufe) {
       return new OperationResult(
-          warmCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+          Optional.of(cost(true)), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
     } catch (final OverflowException ofe) {
-      return new OperationResult(warmCost, Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+      return new OperationResult(
+          Optional.of(cost(true)), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
     }
   }
 }
