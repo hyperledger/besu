@@ -397,7 +397,10 @@ public class TestContextBuilder {
     genesisConfigOptions.transitions(new TestTransitions(qbftForks));
 
     final ProtocolSchedule protocolSchedule =
-        QbftProtocolSchedule.create(genesisConfigOptions, BFT_EXTRA_DATA_ENCODER, JumpDestCacheConfiguration.DEFAULT_CONFIG);
+        QbftProtocolSchedule.create(
+            genesisConfigOptions,
+            BFT_EXTRA_DATA_ENCODER,
+            JumpDestCacheConfiguration.DEFAULT_CONFIG);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController

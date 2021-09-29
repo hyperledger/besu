@@ -294,7 +294,10 @@ public class TestContextBuilder {
     genesisConfigOptions.byzantiumBlock(0);
 
     final ProtocolSchedule protocolSchedule =
-        IbftProtocolSchedule.create(genesisConfigOptions, IBFT_EXTRA_DATA_ENCODER, JumpDestCacheConfiguration.DEFAULT_CONFIG);
+        IbftProtocolSchedule.create(
+            genesisConfigOptions,
+            IBFT_EXTRA_DATA_ENCODER,
+            JumpDestCacheConfiguration.DEFAULT_CONFIG);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController
