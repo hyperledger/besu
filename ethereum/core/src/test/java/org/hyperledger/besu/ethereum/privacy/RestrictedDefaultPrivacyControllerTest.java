@@ -297,7 +297,7 @@ public class RestrictedDefaultPrivacyControllerTest {
     when(enclave.findPrivacyGroup(any())).thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final PrivacyGroup[] privacyGroups =
-        privacyController.findOffChainPrivacyGroupByMembers(
+        privacyController.findOffchainPrivacyGroupByMembers(
             PRIVACY_GROUP_ADDRESSES, ENCLAVE_PUBLIC_KEY);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);

@@ -100,7 +100,7 @@ public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTr
   }
 
   @Test
-  public void offChainPrivacyGroupTransactionFailsWhenOnchainPrivacyGroupFeatureIsEnabled() {
+  public void offchainPrivacyGroupTransactionFailsWhenOnchainPrivacyGroupFeatureIsEnabled() {
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
 
