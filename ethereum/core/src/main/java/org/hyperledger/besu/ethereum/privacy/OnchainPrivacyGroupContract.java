@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.CAN_EXECUTE_METHOD_SIGNATURE;
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.CAN_EXECUTE_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;

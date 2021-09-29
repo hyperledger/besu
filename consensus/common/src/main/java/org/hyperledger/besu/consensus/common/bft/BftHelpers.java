@@ -55,7 +55,7 @@ public class BftHelpers {
     final BlockHeader sealedHeader =
         BlockHeaderBuilder.fromHeader(initialHeader)
             .extraData(bftExtraDataCodec.encode(sealedExtraData))
-            .blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec))
+            .blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec))
             .buildBlockHeader();
 
     return new Block(sealedHeader, block.getBody());
