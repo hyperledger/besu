@@ -74,6 +74,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -293,7 +294,7 @@ public class TestContextBuilder {
     genesisConfigOptions.byzantiumBlock(0);
 
     final ProtocolSchedule protocolSchedule =
-        IbftProtocolSchedule.create(genesisConfigOptions, IBFT_EXTRA_DATA_ENCODER);
+        IbftProtocolSchedule.create(genesisConfigOptions, IBFT_EXTRA_DATA_ENCODER, JumpDestCacheConfiguration.DEFAULT_CONFIG);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController
