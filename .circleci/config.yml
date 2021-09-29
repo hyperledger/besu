@@ -340,10 +340,5 @@ workflows:
             - besu-dockerhub-rw
             - besu-acr-rw
       - benchmark:
-          filters:
-            branches:
-              only:
-                - main
-                - /^release-.*/
           requires:
-            - publishDocker
+            - buildDocker
