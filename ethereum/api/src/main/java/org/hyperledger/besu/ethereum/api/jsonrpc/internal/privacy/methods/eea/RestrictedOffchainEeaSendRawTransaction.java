@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
-import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOnchainPrivacyGroup;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
+import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOffchainPrivacyGroup;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -35,33 +35,39 @@ import java.util.Optional;
 
 import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
-public class RestrictedOnChainEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
+public class RestrictedOffchainEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
-  private final PrivacyController privacyController;
+  final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
-  public RestrictedOnChainEeaSendRawTransaction(
+  public RestrictedOffchainEeaSendRawTransaction(
       final TransactionPool transactionPool,
       final PrivacyIdProvider privacyIdProvider,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final NonceProvider publicNonceProvider,
       final PrivacyController privacyController) {
     super(transactionPool, privacyIdProvider, privateMarkerTransactionFactory, publicNonceProvider);
-    this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
+    this.privacyController = privacyController;
   }
 
   @Override
   protected ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction, final Optional<User> user) {
+
     if (!privateTransaction.getRestriction().equals(Restriction.RESTRICTED)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE);
     }
-    return privacyController.validatePrivateTransaction(
-        privateTransaction, privacyIdProvider.getPrivacyUserId(user));
+
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(user);
+
+    if (!privateTransaction.getPrivateFrom().equals(Bytes.fromBase64String(privacyUserId))) {
+      throw new JsonRpcErrorResponseException(PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
+    }
+
+    return privacyController.validatePrivateTransaction(privateTransaction, privacyUserId);
   }
 
   @Override
@@ -69,52 +75,23 @@ public class RestrictedOnChainEeaSendRawTransaction extends AbstractEeaSendRawTr
       final Address sender,
       final PrivateTransaction privateTransaction,
       final Optional<User> user) {
-    if (privateTransaction.getPrivacyGroupId().isEmpty()) {
-      throw new JsonRpcErrorResponseException(JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
-    }
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(user);
 
-    final Optional<PrivacyGroup> privacyGroup =
-        findOnchainPrivacyGroup(
-            privacyController,
-            privateTransaction.getPrivacyGroupId(),
-            privacyUserId,
-            privateTransaction);
-
-    if (privacyGroup.isEmpty()) {
-      throw new JsonRpcErrorResponseException(JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
-    }
-
-    final Bytes privacyGroupId = privateTransaction.getPrivacyGroupId().get();
+    final Optional<PrivacyGroup> maybePrivacyGroup =
+        findOffchainPrivacyGroup(
+            privacyController, privateTransaction.getPrivacyGroupId(), privacyUserId);
 
     final String privateTransactionLookupId =
         privacyController.createPrivateMarkerTransactionPayload(
-            privateTransaction, privacyUserId, privacyGroup);
-    final Optional<String> addPayloadPrivateTransactionLookupId =
-        privacyController.buildAndSendAddPayload(
-            privateTransaction, Bytes32.wrap(privacyGroupId), privacyUserId);
-
-    final String pmtPayload =
-        buildCompoundLookupId(privateTransactionLookupId, addPayloadPrivateTransactionLookupId);
+            privateTransaction, privacyUserId, maybePrivacyGroup);
 
     return createPrivateMarkerTransaction(
-        sender, ONCHAIN_PRIVACY, pmtPayload, privateTransaction, privacyUserId);
+        sender, DEFAULT_PRIVACY, privateTransactionLookupId, privateTransaction, privacyUserId);
   }
 
   @Override
   protected long getGasLimit(final PrivateTransaction privateTransaction, final String pmtPayload) {
     return privateTransaction.getGasLimit();
-  }
-
-  private String buildCompoundLookupId(
-      final String privateTransactionLookupId,
-      final Optional<String> maybePrivateTransactionLookupId) {
-    return maybePrivateTransactionLookupId.isPresent()
-        ? Bytes.concatenate(
-                Bytes.fromBase64String(privateTransactionLookupId),
-                Bytes.fromBase64String(maybePrivateTransactionLookupId.get()))
-            .toBase64String()
-        : privateTransactionLookupId;
   }
 }

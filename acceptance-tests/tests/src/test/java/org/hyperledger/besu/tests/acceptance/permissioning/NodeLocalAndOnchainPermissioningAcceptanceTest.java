@@ -19,7 +19,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.junit.Before;
 import org.junit.Test;
 
-public class NodeLocalAndOnChainPermissioningAcceptanceTest
+public class NodeLocalAndOnchainPermissioningAcceptanceTest
     extends NodeSmartContractPermissioningAcceptanceTestBase {
 
   private Node bootnode;
@@ -37,13 +37,13 @@ public class NodeLocalAndOnChainPermissioningAcceptanceTest
   }
 
   @Test
-  public void testNodeCannotConnectWhenAllowedOnChainButNotLocally() {
+  public void testNodeCannotConnectWhenAllowedOnchainButNotLocally() {
 
     // add permissioned node after cluster start because we need enode URI for local config
     permissionedNode = permissionedNode("permissioned-node", bootnode, allowedNode);
     permissionedCluster.addNode(permissionedNode);
 
-    // update OnChain smart contract with allowed nodes
+    // update Onchain smart contract with allowed nodes
     permissionedNode.execute(allowNode(bootnode));
     permissionedNode.verify(nodeIsAllowed(bootnode));
 
@@ -60,7 +60,7 @@ public class NodeLocalAndOnChainPermissioningAcceptanceTest
   }
 
   @Test
-  public void testNodeCannotConnectWhenAllowedLocallyButNotOnChain() {
+  public void testNodeCannotConnectWhenAllowedLocallyButNotOnchain() {
     // onchain allowlist: A, B
     // local allowlist: A, B, C
 
@@ -68,7 +68,7 @@ public class NodeLocalAndOnChainPermissioningAcceptanceTest
     permissionedNode = permissionedNode("permissioned-node", bootnode, allowedNode, forbiddenNode);
     permissionedCluster.addNode(permissionedNode);
 
-    // update OnChain smart contract with allowed nodes
+    // update Onchain smart contract with allowed nodes
     permissionedNode.execute(allowNode(bootnode));
     permissionedNode.verify(nodeIsAllowed(bootnode));
 
@@ -82,12 +82,12 @@ public class NodeLocalAndOnChainPermissioningAcceptanceTest
   }
 
   @Test
-  public void testNodesCanConnectWhenAllowedBothOnChainAndLocally() {
+  public void testNodesCanConnectWhenAllowedBothOnchainAndLocally() {
     // add permissioned node after cluster start because we need enode URI for local config
     permissionedNode = permissionedNode("permissioned-node", bootnode, allowedNode, forbiddenNode);
     permissionedCluster.addNode(permissionedNode);
 
-    // update OnChain smart contract with allowed nodes
+    // update Onchain smart contract with allowed nodes
     permissionedNode.execute(allowNode(bootnode));
     permissionedNode.verify(nodeIsAllowed(bootnode));
 

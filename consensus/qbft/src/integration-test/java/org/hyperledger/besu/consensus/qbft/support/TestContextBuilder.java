@@ -259,7 +259,7 @@ public class TestContextBuilder {
         blockChain =
             createInMemoryBlockchain(
                 genesisState.getBlock(),
-                BftBlockHeaderFunctions.forOnChainBlock(BFT_EXTRA_DATA_ENCODER));
+                BftBlockHeaderFunctions.forOnchainBlock(BFT_EXTRA_DATA_ENCODER));
         genesisState.writeStateTo(worldStateArchive.getMutable());
       } catch (IOException e) {
         throw new IllegalStateException(e);
@@ -268,7 +268,7 @@ public class TestContextBuilder {
       final Block genesisBlock = createGenesisBlock(networkNodes.getValidatorAddresses());
       blockChain =
           createInMemoryBlockchain(
-              genesisBlock, BftBlockHeaderFunctions.forOnChainBlock(BFT_EXTRA_DATA_ENCODER));
+              genesisBlock, BftBlockHeaderFunctions.forOnchainBlock(BFT_EXTRA_DATA_ENCODER));
     }
 
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.

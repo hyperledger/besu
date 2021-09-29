@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -25,10 +26,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
-import java.util.Arrays;
 import java.util.Optional;
 
 import org.junit.Before;
@@ -37,17 +36,17 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
+public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
 
   final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
-  RestrictedOnChainEeaSendRawTransaction method;
+  RestrictedOffchainEeaSendRawTransaction method;
 
   @Before
   public void before() {
     method =
-        new RestrictedOnChainEeaSendRawTransaction(
+        new RestrictedOffchainEeaSendRawTransaction(
             transactionPool,
             privacyIdProvider,
             privateMarkerTransactionFactory,
@@ -56,76 +55,44 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
   }
 
   @Test
-  public void validOnChainTransactionPrivacyGroupIsSentToTransactionPool() {
-    when(privacyController.validatePrivateTransaction(any(), any()))
-        .thenReturn(ValidationResult.valid());
-    when(transactionPool.addLocalTransaction(any(Transaction.class)))
-        .thenReturn(ValidationResult.valid());
-
+  public void validLegacyTransactionIsSentToTransactionPool() {
     when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any()))
         .thenReturn(MOCK_ORION_KEY);
-
-    final Optional<PrivacyGroup> onChainPrivacyGroup =
-        Optional.of(
-            new PrivacyGroup(
-                "", PrivacyGroup.Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY)));
-
-    when(privacyController.findOnChainPrivacyGroupAndAddNewMembers(any(), any(), any()))
-        .thenReturn(onChainPrivacyGroup);
-
-    final JsonRpcSuccessResponse expectedResponse =
-        new JsonRpcSuccessResponse(
-            validPrivacyGroupTransactionRequest.getRequest().getId(),
-            "0x5af919ad2926e1cf98292dc0f3f8f74dbc446dd96debdd97e224e4695e662ff0");
-
-    final JsonRpcResponse actualResponse = method.response(validPrivacyGroupTransactionRequest);
-
-    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(PUBLIC_ONCHAIN_TRANSACTION);
-  }
-
-  @Test
-  public void transactionFailsForLegacyPrivateTransaction() {
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
+    when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(
+        new JsonRpcSuccessResponse(
             validPrivateForTransactionRequest.getRequest().getId(),
-            JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
+            "0x7f14b1aaa2fdddf918350d99801bf00a0eb1a1441b21b8c147f42db5ea675590");
 
     final JsonRpcResponse actualResponse = method.response(validPrivateForTransactionRequest);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+    verify(transactionPool).addLocalTransaction(PUBLIC_OFF_CHAIN_TRANSACTION);
   }
 
   @Test
-  public void offChainPrivacyGroupTransactionFailsWhenOnchainPrivacyGroupFeatureIsEnabled() {
+  public void validPantheonPrivacyGroupTransactionIsSentToTransactionPool() {
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
+    when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any()))
+        .thenReturn(MOCK_ORION_KEY);
 
-    when(privacyController.findOnChainPrivacyGroupAndAddNewMembers(any(), any(), any()))
-        .thenReturn(Optional.empty());
+    Optional<PrivacyGroup> pantheonPrivacyGroup =
+        Optional.of(
+            new PrivacyGroup(
+                "", PrivacyGroup.Type.PANTHEON, "", "", singletonList(ENCLAVE_PUBLIC_KEY)));
 
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(
-            validPrivacyGroupTransactionRequest.getRequest().getId(),
-            JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
-
-    final JsonRpcResponse actualResponse = method.response(validPrivacyGroupTransactionRequest);
-
-    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-  }
-
-  @Test
-  public void onChainPrivacyGroupTransactionFailsWhenGroupDoesNotExist() {
-    when(privacyController.validatePrivateTransaction(any(), any()))
-        .thenReturn(ValidationResult.valid());
+    when(privacyController.findOffChainPrivacyGroupByGroupId(any(), any()))
+        .thenReturn(pantheonPrivacyGroup);
+    when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(
+        new JsonRpcSuccessResponse(
             validPrivacyGroupTransactionRequest.getRequest().getId(),
-            JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
+            "0x7f14b1aaa2fdddf918350d99801bf00a0eb1a1441b21b8c147f42db5ea675590");
 
     final JsonRpcResponse actualResponse = method.response(validPrivacyGroupTransactionRequest);
 

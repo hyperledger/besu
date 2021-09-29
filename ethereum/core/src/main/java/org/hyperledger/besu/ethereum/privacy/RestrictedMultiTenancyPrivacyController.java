@@ -208,14 +208,14 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   }
 
   @Override
-  public List<PrivacyGroup> findOnChainPrivacyGroupByMembers(
+  public List<PrivacyGroup> findOnchainPrivacyGroupByMembers(
       final List<String> addresses, final String privacyUserId) {
     if (!addresses.contains(privacyUserId)) {
       throw new MultiTenancyValidationException(
           "Privacy group addresses must contain the enclave public key");
     }
     final List<PrivacyGroup> resultantGroups =
-        privacyController.findOnChainPrivacyGroupByMembers(addresses, privacyUserId);
+        privacyController.findOnchainPrivacyGroupByMembers(addresses, privacyUserId);
     return resultantGroups.stream()
         .filter(g -> g.getMembers().contains(privacyUserId))
         .collect(Collectors.toList());
@@ -243,12 +243,12 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   }
 
   @Override
-  public Optional<PrivacyGroup> findOnChainPrivacyGroupAndAddNewMembers(
+  public Optional<PrivacyGroup> findOnchainPrivacyGroupAndAddNewMembers(
       final Bytes privacyGroupId,
       final String privacyUserId,
       final PrivateTransaction privateTransaction) {
     final Optional<PrivacyGroup> maybePrivacyGroup =
-        privacyController.findOnChainPrivacyGroupAndAddNewMembers(
+        privacyController.findOnchainPrivacyGroupAndAddNewMembers(
             privacyGroupId, privacyUserId, privateTransaction);
     // The check that the privacyUserId is a member (if the group already exists) is done in the
     // DefaultPrivacyController.
