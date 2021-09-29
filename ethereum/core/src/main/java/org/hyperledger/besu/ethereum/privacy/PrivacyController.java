@@ -46,7 +46,7 @@ public interface PrivacyController {
 
   String deletePrivacyGroup(String privacyGroupId, String privacyUserId);
 
-  PrivacyGroup[] findOffChainPrivacyGroupByMembers(List<String> addresses, String privacyUserId);
+  PrivacyGroup[] findOffchainPrivacyGroupByMembers(List<String> addresses, String privacyUserId);
 
   ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       PrivateTransaction privateTransaction, String privacyUserId);
@@ -65,7 +65,7 @@ public interface PrivacyController {
   Optional<String> buildAndSendAddPayload(
       PrivateTransaction privateTransaction, Bytes32 privacyGroupId, String privacyUserId);
 
-  Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
+  Optional<PrivacyGroup> findOffchainPrivacyGroupByGroupId(
       String privacyGroupId, String privacyUserId);
 
   Optional<PrivacyGroup> findPrivacyGroupByGroupId(

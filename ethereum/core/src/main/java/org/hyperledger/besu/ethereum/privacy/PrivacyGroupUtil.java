@@ -72,7 +72,7 @@ public class PrivacyGroupUtil {
       final String privacyUserId) {
     return maybePrivacyGroupId.flatMap(
         privacyGroupId ->
-            privacyController.findOffChainPrivacyGroupByGroupId(
+            privacyController.findOffchainPrivacyGroupByGroupId(
                 privacyGroupId.toBase64String(), privacyUserId));
   }
 }
