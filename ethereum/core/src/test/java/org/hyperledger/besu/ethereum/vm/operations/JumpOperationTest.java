@@ -163,29 +163,29 @@ public class JumpOperationTest {
   public void shouldReuseJumpDestMap() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
-    Code toRun = spy(new Code(jumpBytes, Hash.hash(jumpBytes)));
+    Code getsCached = spy(new Code(jumpBytes, Hash.hash(jumpBytes)));
     MessageFrame frame =
         createMessageFrameBuilder(Gas.of(10_000))
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(toRun)
+            .code(getsCached)
             .build();
     frame.setPC(CURRENT_PC);
 
     OperationResult result = operation.execute(frame, evm);
     assertThat(result.getHaltReason()).isEmpty();
-    Mockito.verify(toRun, times(1)).calculateJumpDests();
+    Mockito.verify(getsCached, times(1)).calculateJumpDests();
 
-    // do it again to prove we don't recalc
+    // do it again to prove we don't recalc, and we hit the cache
 
     frame =
         createMessageFrameBuilder(Gas.of(10_000))
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(toRun)
+            .code(getsCached)
             .build();
     frame.setPC(CURRENT_PC);
 
     result = operation.execute(frame, evm);
     assertThat(result.getHaltReason()).isEmpty();
-    Mockito.verify(toRun, times(1)).calculateJumpDests();
+    Mockito.verify(getsCached, times(1)).calculateJumpDests();
   }
 }

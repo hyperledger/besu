@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.account.Account;
 /** Generic interface for a view over the accounts of the world state. */
 public interface WorldView {
   WorldView EMPTY = address -> null;
+
   /**
    * Get an account provided its address.
    *
