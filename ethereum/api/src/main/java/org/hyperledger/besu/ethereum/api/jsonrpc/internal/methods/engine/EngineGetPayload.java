@@ -71,6 +71,7 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
     final Optional<BlockHeader> parentBlockHeader =
         blockchain.getBlockHeader(blockParams.getParentHash());
     if (parentBlockHeader.isPresent()) {
+
       final Optional<Block> block =
           miningCoordinator.createBlock(parentBlockHeader.get(), blockParams.getTimestamp());
       if (block.isPresent()) {
