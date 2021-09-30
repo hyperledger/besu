@@ -93,13 +93,20 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
     final EvmAccount senderAccount = frame.getWorldUpdater().getSenderAccount(frame);
 
     // The yellow paper explicitly states that if the recipient account doesn't exist at this
-    // point, it is created. Event if the value is zero!
+    // point, it is created. Even if the value is zero we are still creating an account with 0x!
     final EvmAccount recipientAccount =
         frame.getWorldUpdater().getOrCreate(frame.getRecipientAddress());
 
     if (Objects.equals(frame.getValue(), Wei.ZERO)) {
+      // This is only here for situations where you are calling a public address from a private
+      // address. Without this guard clause we would attempt to get a mutable public address
+      // which isn't possible from a private address and an error would be thrown.
+      // If you are attempting to transfer value from a private address
+      // to public address an error will be thrown.
       LOG.trace(
-          "Message call of {} to has zero value: no fund transferred", frame.getSenderAddress());
+          "Message call from {} to {} has zero value: no fund transferred",
+          frame.getSenderAddress(),
+          frame.getRecipientAddress());
       return;
     }
 

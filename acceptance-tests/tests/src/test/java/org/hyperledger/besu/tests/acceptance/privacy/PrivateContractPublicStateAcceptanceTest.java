@@ -173,7 +173,7 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
   }
 
   @Test
-  public void canCallPublicContractThatCallsPublicContractFromPrivateContract() throws Exception {
+  public void privateContractCanCallPublicContractThatCallsPublicContract() throws Exception {
     final SimpleStorage simpleStorage =
         transactionNode
             .getBesu()
