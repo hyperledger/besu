@@ -110,7 +110,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         frame.setState(MessageFrame.State.CODE_EXECUTING);
       }
     } catch (final ModificationNotAllowedException ex) {
-      LOG.trace("Contract creation error: atttempt to mutate an immutable account");
+      LOG.trace("Contract creation error: attempt to mutate an immutable account");
       frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     }
