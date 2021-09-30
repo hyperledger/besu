@@ -34,7 +34,7 @@ public interface BonsaiWorldView extends WorldView {
 
   Optional<Bytes> getStateTrieNode(Bytes location);
 
-  UInt256 getStorageValue(Address address, UInt256 key);
+  UInt256 getStorageValue(Address adodress, UInt256 key);
 
   Optional<UInt256> getStorageValueBySlotHash(Address address, Hash slotHash);
 

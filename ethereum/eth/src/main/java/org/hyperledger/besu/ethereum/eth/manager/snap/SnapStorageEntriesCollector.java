@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -27,12 +28,12 @@ import org.apache.tuweni.bytes.Bytes32;
 public class SnapStorageEntriesCollector extends StorageEntriesCollector<Bytes> {
 
   private int currentSize = 0;
-  private final Bytes32 endKeyHash;
+  private final Optional<Bytes32> endKeyHash;
   private final Integer maxResponseBytes;
 
   public SnapStorageEntriesCollector(
       final Bytes32 startKeyHash,
-      final Bytes32 endKeyHash,
+      final Optional<Bytes32> endKeyHash,
       final int limit,
       final int maxResponseBytes) {
     super(startKeyHash, limit);
@@ -40,17 +41,31 @@ public class SnapStorageEntriesCollector extends StorageEntriesCollector<Bytes> 
     this.maxResponseBytes = maxResponseBytes;
   }
 
-  public static Map<Bytes32, Bytes> collectEntries(
-      final Node<Bytes> root,
+  public static SnapStorageEntriesCollector createCollector(
       final Bytes32 startKeyHash,
       final Bytes32 endKeyHash,
       final int limit,
       final int maxResponseBytes) {
-    final SnapStorageEntriesCollector entriesCollector =
-        new SnapStorageEntriesCollector(startKeyHash, endKeyHash, limit, maxResponseBytes);
-    final TrieIterator<Bytes> visitor = new TrieIterator<>(entriesCollector, false);
+    return new SnapStorageEntriesCollector(
+        startKeyHash, Optional.ofNullable(endKeyHash), limit, maxResponseBytes);
+  }
+
+  public static SnapStorageEntriesCollector createCollector(
+      final Bytes32 startKeyHash, final int limit, final int maxResponseBytes) {
+    return new SnapStorageEntriesCollector(startKeyHash, Optional.empty(), limit, maxResponseBytes);
+  }
+
+  public static TrieIterator<Bytes> createVisitor(final SnapStorageEntriesCollector collector) {
+    return new TrieIterator<>(collector, false);
+  }
+
+  public static Map<Bytes32, Bytes> collectEntries(
+      final SnapStorageEntriesCollector collector,
+      final TrieIterator<Bytes> visitor,
+      final Node<Bytes> root,
+      final Bytes32 startKeyHash) {
     root.accept(visitor, CompactEncoding.bytesToPath(startKeyHash));
-    return entriesCollector.getValues();
+    return collector.getValues();
   }
 
   @Override
@@ -62,7 +77,9 @@ public class SnapStorageEntriesCollector extends StorageEntriesCollector<Bytes> 
         if (currentSize > maxResponseBytes) {
           return TrieIterator.State.STOP;
         }
-        if (!values.isEmpty() && keyHash.compareTo(endKeyHash) > 0) {
+        if (endKeyHash.isPresent()
+            && !values.isEmpty()
+            && keyHash.compareTo(endKeyHash.get()) > 0) {
           return TrieIterator.State.STOP;
         }
 

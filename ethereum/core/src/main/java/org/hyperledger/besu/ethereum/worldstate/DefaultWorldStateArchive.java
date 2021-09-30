@@ -105,7 +105,13 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
 
   @Override
   public List<Bytes> getAccountProofRelatedNodes(
-      final Hash worldStateRoot, final Hash accountHash) {
-    return worldStateProof.getProofRelatedNodes(worldStateRoot, accountHash);
+      final Hash worldStateRoot, final Bytes accountHash) {
+    return worldStateProof.getAccountProofRelatedNodes(worldStateRoot, accountHash);
+  }
+
+  @Override
+  public List<Bytes> getSlotProofRelatedNodes(
+      final Hash worldStateRoot, final Hash accountHash, final Hash slotHash) {
+    return worldStateProof.getStorageProofRelatedNodes(worldStateRoot, accountHash, slotHash);
   }
 }

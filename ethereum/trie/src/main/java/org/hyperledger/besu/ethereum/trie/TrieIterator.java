@@ -116,4 +116,8 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
       return this != STOP;
     }
   }
+
+  public State getState() {
+    return state;
+  }
 }

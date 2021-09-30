@@ -18,6 +18,12 @@ public final class SnapV1 {
 
   public static final int GET_ACCOUNT_RANGE = 0x00;
   public static final int ACCOUNT_RANGE = 0x01;
+  public static final int GET_STORAGE_RANGE = 0x02;
+  public static final int STORAGE_RANGE = 0x03;
+  public static final int GET_BYTECODES = 0x04;
+  public static final int BYTECODES = 0x05;
+  public static final int GET_TRIE_NODES = 0x06;
+  public static final int TRIE_NODES = 0x07;
 
   private SnapV1() {
     // Holder for constants only

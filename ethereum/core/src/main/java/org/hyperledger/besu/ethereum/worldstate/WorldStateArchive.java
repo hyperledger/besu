@@ -50,5 +50,7 @@ public interface WorldStateArchive {
   Optional<WorldStateProof> getAccountProof(
       Hash worldStateRoot, Address accountAddress, List<UInt256> accountStorageKeys);
 
-  List<Bytes> getAccountProofRelatedNodes(Hash worldStateRoot, Hash accountHash);
+  List<Bytes> getAccountProofRelatedNodes(Hash worldStateRoot, Bytes accountHash);
+
+  List<Bytes> getSlotProofRelatedNodes(Hash worldStateRoot, Hash accountHash, Hash slotHash);
 }

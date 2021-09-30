@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -67,14 +66,18 @@ public class WorldStateProofProvider {
     }
   }
 
-  public List<Bytes> getProofRelatedNodes(final Hash worldStateRoot, final Hash accountHash) {
-    if (!worldStateStorage.isWorldStateAvailable(worldStateRoot, null)) {
-      return new ArrayList<>();
-    } else {
-      final Proof<Bytes> accountProof =
-          newAccountStateTrie(worldStateRoot).getValueWithProof(accountHash);
-      return accountProof.getProofRelatedNodes();
-    }
+  public List<Bytes> getAccountProofRelatedNodes(
+      final Hash worldStateRoot, final Bytes accountHash) {
+    final Proof<Bytes> accountProof =
+        newAccountStateTrie(worldStateRoot).getValueWithProof(accountHash);
+    return accountProof.getProofRelatedNodes();
+  }
+
+  public List<Bytes> getStorageProofRelatedNodes(
+      final Hash worldStateRoot, final Hash accountHash, final Hash slotHash) {
+    final Proof<Bytes> storageProof =
+        newAccountStorageTrie(accountHash, worldStateRoot).getValueWithProof(slotHash);
+    return storageProof.getProofRelatedNodes();
   }
 
   private SortedMap<UInt256, Proof<Bytes>> getStorageProofs(
@@ -89,7 +92,7 @@ public class WorldStateProofProvider {
     return storageProofs;
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
+  private MerklePatriciaTrie<Bytes, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode, rootHash, b -> b, b -> b);
   }

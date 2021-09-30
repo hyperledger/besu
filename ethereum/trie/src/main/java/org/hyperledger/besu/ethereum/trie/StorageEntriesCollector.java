@@ -39,7 +39,7 @@ public class StorageEntriesCollector<V> implements TrieIterator.LeafHandler<V> {
     return entriesCollector.getValues();
   }
 
-  protected boolean limitReached() {
+  public boolean limitReached() {
     return limit <= values.size();
   }
 

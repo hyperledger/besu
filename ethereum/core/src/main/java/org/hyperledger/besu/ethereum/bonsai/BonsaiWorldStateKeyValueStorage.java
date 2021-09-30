@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -35,6 +36,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
+
+  public static final Bytes CODE_COUNTER_PREFIX =
+      Bytes.wrap("codeCounter".getBytes(StandardCharsets.UTF_8));
 
   protected final KeyValueStorage accountStorage;
   protected final KeyValueStorage codeStorage;
@@ -88,7 +92,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
-    return codeStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    if (codeHash != null) {
+      return codeStorage.get(codeHash.toArrayUnsafe()).map(Bytes::wrap);
+    }
+    return codeStorage.get(accountHash.toArrayUnsafe()).flatMap(codeStorage::get).map(Bytes::wrap);
+  }
+
+  public Optional<BigInteger> getCodeCounter(final Bytes32 codeHash) {
+    return codeStorage
+        .get(Bytes.concatenate(CODE_COUNTER_PREFIX, codeHash).toArrayUnsafe())
+        .map(BigInteger::new);
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
@@ -106,14 +119,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-
       return snapTrieBranchBucketStorage
           .get(nodeHash.toArrayUnsafe())
-          .map(Bytes::wrap)
-          .or(
-              () ->
-                  snapTrieBranchSecondBucketStorage.get(nodeHash.toArrayUnsafe()).map(Bytes::wrap))
-          .or(() -> trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap));
+          .or(() -> snapTrieBranchSecondBucketStorage.get(nodeHash.toArrayUnsafe()))
+          .or(() -> trieBranchStorage.get(location.toArrayUnsafe()))
+          .map(Bytes::wrap);
     }
   }
 
@@ -123,9 +133,23 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return trieBranchStorage
-          .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
+      return snapTrieBranchBucketStorage
+          .get(nodeHash.toArrayUnsafe())
+          .or(() -> snapTrieBranchSecondBucketStorage.get(nodeHash.toArrayUnsafe()))
+          .or(() -> trieBranchStorage.get(Bytes.concatenate(accountHash, location).toArrayUnsafe()))
           .map(Bytes::wrap);
+    }
+  }
+
+  public Optional<Bytes> getCodeTrieNode(final Bytes32 codeHash) {
+    if (codeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
+      return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    } else {
+      return snapTrieBranchBucketStorage
+          .get(codeHash.toArrayUnsafe())
+          .or(() -> snapTrieBranchSecondBucketStorage.get(codeHash.toArrayUnsafe()))
+          .map(Bytes::wrap)
+          .or(() -> getCode(codeHash, null));
     }
   }
 
@@ -133,8 +157,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     return trieLogStorage.get(blockHash.toArrayUnsafe());
   }
 
-  public Optional<Bytes> getStateTrieNode(final Bytes location) {
-    return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
+  public Optional<Bytes> getStateTrieNode(final Bytes key) {
+    return trieBranchStorage.get(key.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   public Optional<Bytes> getWorldStateRootHash() {
@@ -253,7 +277,24 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         // Don't save empty values
         return this;
       }
-      codeStorageTransaction.put(accountHash.toArrayUnsafe(), code.toArrayUnsafe());
+      codeStorageTransaction.put(accountHash.toArrayUnsafe(), codeHash.toArrayUnsafe());
+      return this;
+    }
+
+    public Updater updateCodeCounter(
+        final Bytes32 codeHash, final Bytes code, final BigInteger newCodeCounter) {
+      if (newCodeCounter.equals(BigInteger.ZERO)) {
+        codeStorageTransaction.remove(
+            Bytes.concatenate(CODE_COUNTER_PREFIX, codeHash).toArrayUnsafe());
+        codeStorageTransaction.remove(codeHash.toArrayUnsafe());
+      } else {
+        if (newCodeCounter.equals(BigInteger.ONE)) {
+          codeStorageTransaction.put(codeHash.toArrayUnsafe(), code.toArrayUnsafe());
+        }
+        codeStorageTransaction.put(
+            Bytes.concatenate(CODE_COUNTER_PREFIX, codeHash).toArrayUnsafe(),
+            newCodeCounter.toByteArray());
+      }
       return this;
     }
 

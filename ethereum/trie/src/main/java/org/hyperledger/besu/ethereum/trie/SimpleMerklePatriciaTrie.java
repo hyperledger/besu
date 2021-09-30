@@ -60,6 +60,14 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
+  public Optional<Node<V>> getNode(final K path) {
+    checkNotNull(path);
+    final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);
+    root.accept(proofVisitor, path).getValue();
+    return proofVisitor.getProof().stream().reduce((first, second) -> second);
+  }
+
+  @Override
   public Proof<V> getValueWithProof(final K key) {
     checkNotNull(key);
     final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);

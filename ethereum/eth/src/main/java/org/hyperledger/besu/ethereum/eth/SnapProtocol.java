@@ -30,7 +30,15 @@ public class SnapProtocol implements SubProtocol {
   private static final SnapProtocol INSTANCE = new SnapProtocol();
 
   private static final List<Integer> snap1Messages =
-      List.of(SnapV1.GET_ACCOUNT_RANGE, SnapV1.ACCOUNT_RANGE);
+      List.of(
+          SnapV1.GET_ACCOUNT_RANGE,
+          SnapV1.ACCOUNT_RANGE,
+          SnapV1.GET_STORAGE_RANGE,
+          SnapV1.STORAGE_RANGE,
+          SnapV1.GET_BYTECODES,
+          SnapV1.BYTECODES,
+          SnapV1.GET_TRIE_NODES,
+          SnapV1.TRIE_NODES);
 
   @Override
   public String getName() {
