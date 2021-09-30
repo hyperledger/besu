@@ -100,7 +100,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
               .map(TransactionDecoder::decodeOpaqueBytes)
               .collect(Collectors.toList());
     } catch (final RLPException | IllegalArgumentException e) {
-      LOG.warn("failed to decode transactions from newBlock RPC");
+      LOG.warn("failed to decode transactions from newBlock RPC", e);
       return respondWith(reqId, blockParam.getBlockHash(), INVALID);
     }
 
@@ -114,7 +114,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
             blockParam.getReceiptsRoot(),
             blockParam.getLogsBloom(),
             Difficulty.ONE,
-            blockParam.getNumber(),
+            blockParam.getBlockNumber(),
             blockParam.getGasLimit(),
             blockParam.getGasUsed(),
             blockParam.getTimestamp(),
