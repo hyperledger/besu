@@ -49,11 +49,6 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
   }
 
   @Override
-  public EvmAccount getOrCreate(final Address address) {
-    return privateWorldUpdater.getOrCreate(address);
-  }
-
-  @Override
   public EvmAccount getAccount(final Address address) {
     final EvmAccount privateAccount = privateWorldUpdater.getAccount(address);
     if (privateAccount != null && !privateAccount.isEmpty()) {
