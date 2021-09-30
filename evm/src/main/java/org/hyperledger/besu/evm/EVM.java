@@ -59,11 +59,11 @@ public class EVM {
   public EVM(
       final OperationRegistry operations,
       final GasCalculator gasCalculator,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     this.operations = operations;
     this.gasCalculator = gasCalculator;
     this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
-    this.jumpDestCache = new JumpDestCache(jumpdestCacheConfiguration);
+    this.jumpDestCache = new JumpDestCache(evmConfiguration);
   }
 
   public GasCalculator getGasCalculator() {

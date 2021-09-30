@@ -37,22 +37,17 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return new QbftProtocolSchedule()
         .createProtocolSchedule(
-            config,
-            privacyParameters,
-            isRevertReasonEnabled,
-            bftExtraDataCodec,
-            jumpdestCacheConfiguration);
+            config, privacyParameters, isRevertReasonEnabled, bftExtraDataCodec, evmConfiguration);
   }
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final BftExtraDataCodec bftExtraDataCodec,
-      final EvmConfiguration jumpdestCacheConfiguration) {
-    return create(
-        config, PrivacyParameters.DEFAULT, false, bftExtraDataCodec, jumpdestCacheConfiguration);
+      final EvmConfiguration evmConfiguration) {
+    return create(config, PrivacyParameters.DEFAULT, false, bftExtraDataCodec, evmConfiguration);
   }
 
   @Override

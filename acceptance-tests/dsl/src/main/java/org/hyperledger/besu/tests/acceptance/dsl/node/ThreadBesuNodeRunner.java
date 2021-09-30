@@ -169,7 +169,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                 node.getPkiKeyStoreConfiguration()
                     .map(
                         (pkiConfig) -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
-            .jumpDestCacheConfiguration(EvmConfiguration.DEFAULT_CONFIG)
+            .evmConfiguration(EvmConfiguration.DEFAULT_CONFIG)
             .build();
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();

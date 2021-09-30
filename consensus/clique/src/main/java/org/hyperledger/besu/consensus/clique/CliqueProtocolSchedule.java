@@ -47,7 +47,7 @@ public class CliqueProtocolSchedule {
       final NodeKey nodeKey,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
 
@@ -74,7 +74,7 @@ public class CliqueProtocolSchedule {
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
-            jumpdestCacheConfiguration)
+            evmConfiguration)
         .createProtocolSchedule();
   }
 
@@ -82,13 +82,9 @@ public class CliqueProtocolSchedule {
       final GenesisConfigOptions config,
       final NodeKey nodeKey,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return create(
-        config,
-        nodeKey,
-        PrivacyParameters.DEFAULT,
-        isRevertReasonEnabled,
-        jumpdestCacheConfiguration);
+        config, nodeKey, PrivacyParameters.DEFAULT, isRevertReasonEnabled, evmConfiguration);
   }
 
   private static ProtocolSpecBuilder applyCliqueSpecificModifications(

@@ -1589,6 +1589,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     : SyncMode.FULL);
 
     ethNetworkConfig = updateNetworkConfig(getNetwork());
+
     checkGoQuorumCompatibilityConfig(ethNetworkConfig);
 
     jsonRpcConfiguration = jsonRpcConfiguration();
@@ -1736,7 +1737,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .orElse(GasLimitCalculator.constant()))
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
-        .jumpDestCacheConfiguration(EvmOptions.create().toDomainObject())
+        .evmConfiguration(unstableEvmOptions.toDomainObject())
         .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject());
   }
 

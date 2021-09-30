@@ -35,17 +35,17 @@ public class MainnetProtocolSchedule {
    *     starting points
    * @param privacyParameters the parameters set for private transactions
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
-   * @param jumpdestCacheConfiguration how to configure the EVMs jumpdest cache
+   * @param evmConfiguration how to configure the EVMs jumpdest cache
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
-          config, privacyParameters, isRevertReasonEnabled, jumpdestCacheConfiguration);
+          config, privacyParameters, isRevertReasonEnabled, evmConfiguration);
     }
     return new ProtocolScheduleBuilder(
             config,
@@ -54,7 +54,7 @@ public class MainnetProtocolSchedule {
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
-            jumpdestCacheConfiguration)
+            evmConfiguration)
         .createProtocolSchedule();
   }
 
@@ -64,15 +64,14 @@ public class MainnetProtocolSchedule {
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
    *     starting points
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
-   * @param jumpdestCacheConfiguration how to configure the EVMs jumpdest cache
+   * @param evmConfiguration how to configure the EVMs jumpdest cache
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration jumpdestCacheConfiguration) {
-    return fromConfig(
-        config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, jumpdestCacheConfiguration);
+      final EvmConfiguration evmConfiguration) {
+    return fromConfig(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, evmConfiguration);
   }
 
   /**
@@ -80,12 +79,12 @@ public class MainnetProtocolSchedule {
    *
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
    *     starting points
-   * @param jumpdestCacheConfiguration size of
+   * @param evmConfiguration size of
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
-      final GenesisConfigOptions config, final EvmConfiguration jumpdestCacheConfiguration) {
-    return fromConfig(config, PrivacyParameters.DEFAULT, false, jumpdestCacheConfiguration);
+      final GenesisConfigOptions config, final EvmConfiguration evmConfiguration) {
+    return fromConfig(config, PrivacyParameters.DEFAULT, false, evmConfiguration);
   }
 
   /**

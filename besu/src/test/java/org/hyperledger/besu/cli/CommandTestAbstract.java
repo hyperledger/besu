@@ -215,7 +215,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.requiredBlocks(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.reorgLoggingThreshold(anyLong())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.dataStorageConfiguration(any())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.jumpDestCacheConfiguration(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.evmConfiguration(any())).thenReturn(mockControllerBuilder);
 
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();

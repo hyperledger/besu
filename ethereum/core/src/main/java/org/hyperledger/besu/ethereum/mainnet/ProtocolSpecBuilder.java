@@ -238,7 +238,7 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder jumpDestCacheConfig(final EvmConfiguration evmConfiguration) {
+  public ProtocolSpecBuilder evmConfiguration(final EvmConfiguration evmConfiguration) {
     this.evmConfiguration = evmConfiguration;
     return this;
   }
@@ -247,7 +247,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
     checkNotNull(evmBuilder, "Missing operation registry");
-    checkNotNull(evmConfiguration, "Missing jumpdest cache configuration");
+    checkNotNull(evmConfiguration, "Missing evm configuration");
     checkNotNull(transactionValidatorBuilder, "Missing transaction validator");
     checkNotNull(privateTransactionValidatorBuilder, "Missing private transaction validator");
     checkNotNull(contractCreationProcessorBuilder, "Missing contract creation processor");

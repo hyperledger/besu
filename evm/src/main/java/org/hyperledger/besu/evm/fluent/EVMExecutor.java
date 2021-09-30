@@ -77,9 +77,9 @@ public class EVMExecutor {
     return executor;
   }
 
-  public static EVMExecutor frontier(final EvmConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor frontier(final EvmConfiguration evmConfiguration) {
     EVMExecutor executor = new EVMExecutor();
-    executor.evm = MainnetEVMs.frontier(jumpdestCacheConfiguration);
+    executor.evm = MainnetEVMs.frontier(evmConfiguration);
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.frontier(executor.evm.getGasCalculator());
     executor.contractValidationRules = List.of();
@@ -88,9 +88,9 @@ public class EVMExecutor {
     return executor;
   }
 
-  public static EVMExecutor homestead(final EvmConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor homestead(final EvmConfiguration evmConfiguration) {
     EVMExecutor executor = new EVMExecutor();
-    executor.evm = MainnetEVMs.homestead(jumpdestCacheConfiguration);
+    executor.evm = MainnetEVMs.homestead(evmConfiguration);
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.frontier(executor.evm.getGasCalculator());
     executor.contractValidationRules = List.of();
@@ -98,72 +98,72 @@ public class EVMExecutor {
     return executor;
   }
 
-  public static EVMExecutor spuriousDragon(final EvmConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor spuriousDragon(final EvmConfiguration evmConfiguration) {
     EVMExecutor executor = new EVMExecutor();
-    executor.evm = MainnetEVMs.spuriousDragon(jumpdestCacheConfiguration);
+    executor.evm = MainnetEVMs.spuriousDragon(evmConfiguration);
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.frontier(executor.evm.getGasCalculator());
     executor.contractValidationRules = List.of(MaxCodeSizeRule.of(0x6000));
     return executor;
   }
 
-  public static EVMExecutor tangerineWhistle(final EvmConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor tangerineWhistle(final EvmConfiguration evmConfiguration) {
     EVMExecutor executor = new EVMExecutor();
-    executor.evm = MainnetEVMs.tangerineWhistle(jumpdestCacheConfiguration);
+    executor.evm = MainnetEVMs.tangerineWhistle(evmConfiguration);
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.frontier(executor.evm.getGasCalculator());
     executor.contractValidationRules = List.of(MaxCodeSizeRule.of(0x6000));
     return executor;
   }
 
-  public static EVMExecutor byzantium(final EvmConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor byzantium(final EvmConfiguration evmConfiguration) {
     EVMExecutor executor = new EVMExecutor();
-    executor.evm = MainnetEVMs.byzantium(jumpdestCacheConfiguration);
+    executor.evm = MainnetEVMs.byzantium(evmConfiguration);
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.byzantium(executor.evm.getGasCalculator());
     executor.contractValidationRules = List.of(MaxCodeSizeRule.of(0x6000));
     return executor;
   }
 
-  public static EVMExecutor constantinople(final EvmConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor constantinople(final EvmConfiguration evmConfiguration) {
     EVMExecutor executor = new EVMExecutor();
-    executor.evm = MainnetEVMs.constantinople(jumpdestCacheConfiguration);
+    executor.evm = MainnetEVMs.constantinople(evmConfiguration);
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.byzantium(executor.evm.getGasCalculator());
     executor.contractValidationRules = List.of(MaxCodeSizeRule.of(0x6000));
     return executor;
   }
 
-  public static EVMExecutor petersburg(final EvmConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor petersburg(final EvmConfiguration evmConfiguration) {
     EVMExecutor executor = new EVMExecutor();
-    executor.evm = MainnetEVMs.petersburg(jumpdestCacheConfiguration);
+    executor.evm = MainnetEVMs.petersburg(evmConfiguration);
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.byzantium(executor.evm.getGasCalculator());
     executor.contractValidationRules = List.of(MaxCodeSizeRule.of(0x6000));
     return executor;
   }
 
-  public static EVMExecutor istanbul(final EvmConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor istanbul(final EvmConfiguration evmConfiguration) {
     EVMExecutor executor = new EVMExecutor();
-    executor.evm = MainnetEVMs.istanbul(jumpdestCacheConfiguration);
+    executor.evm = MainnetEVMs.istanbul(evmConfiguration);
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.istanbul(executor.evm.getGasCalculator());
     executor.contractValidationRules = List.of(MaxCodeSizeRule.of(0x6000));
     return executor;
   }
 
-  public static EVMExecutor berlin(final EvmConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor berlin(final EvmConfiguration evmConfiguration) {
     EVMExecutor executor = new EVMExecutor();
-    executor.evm = MainnetEVMs.berlin(jumpdestCacheConfiguration);
+    executor.evm = MainnetEVMs.berlin(evmConfiguration);
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.istanbul(executor.evm.getGasCalculator());
     executor.contractValidationRules = List.of(MaxCodeSizeRule.of(0x6000));
     return executor;
   }
 
-  public static EVMExecutor london(final EvmConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor london(final EvmConfiguration evmConfiguration) {
     EVMExecutor executor = new EVMExecutor();
-    executor.evm = MainnetEVMs.istanbul(jumpdestCacheConfiguration);
+    executor.evm = MainnetEVMs.istanbul(evmConfiguration);
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.istanbul(executor.evm.getGasCalculator());
     return executor;

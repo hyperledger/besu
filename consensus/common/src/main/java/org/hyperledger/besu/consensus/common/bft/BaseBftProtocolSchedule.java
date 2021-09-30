@@ -48,7 +48,7 @@ public abstract class BaseBftProtocolSchedule {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
 
     specMap.put(
@@ -93,7 +93,7 @@ public abstract class BaseBftProtocolSchedule {
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
-            jumpdestCacheConfiguration)
+            evmConfiguration)
         .createProtocolSchedule();
   }
 

@@ -116,7 +116,7 @@ public class PrivacyTest {
         .privacyParameters(privacyParameters)
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .gasLimitCalculator(GasLimitCalculator.constant())
-        .jumpDestCacheConfiguration(EvmConfiguration.DEFAULT_CONFIG)
+        .evmConfiguration(EvmConfiguration.DEFAULT_CONFIG)
         .build();
   }
 

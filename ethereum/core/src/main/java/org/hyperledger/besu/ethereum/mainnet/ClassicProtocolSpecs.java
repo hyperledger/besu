@@ -153,7 +153,7 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(MainnetProtocolSpecs.SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
@@ -163,9 +163,9 @@ public class ClassicProtocolSpecs {
             configStackSizeLimit,
             ecip1017EraRounds,
             quorumCompatibilityMode,
-            jumpdestCacheConfiguration)
+            evmConfiguration)
         .evmBuilder(MainnetEVMs::byzantium)
-        .jumpDestCacheConfig(jumpdestCacheConfiguration)
+        .evmConfiguration(evmConfiguration)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
         .messageCallProcessorBuilder(MessageCallProcessor::new)
@@ -207,7 +207,7 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return atlantisDefinition(
             chainId,
             configContractSizeLimit,
@@ -215,7 +215,7 @@ public class ClassicProtocolSpecs {
             enableRevertReason,
             ecip1017EraRounds,
             quorumCompatibilityMode,
-            jumpdestCacheConfiguration)
+            evmConfiguration)
         .evmBuilder(MainnetEVMs::constantinople)
         .gasCalculator(PetersburgGasCalculator::new)
         .evmBuilder(MainnetEVMs::constantinople)
@@ -230,7 +230,7 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return aghartaDefinition(
             chainId,
             configContractSizeLimit,
@@ -238,12 +238,12 @@ public class ClassicProtocolSpecs {
             enableRevertReason,
             ecip1017EraRounds,
             quorumCompatibilityMode,
-            jumpdestCacheConfiguration)
+            evmConfiguration)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
-            (gasCalculator, jdCacheConf) ->
+            (gasCalculator, jumpDestCacheConf) ->
                 MainnetEVMs.istanbul(
-                    gasCalculator, chainId.orElse(BigInteger.ZERO), jumpdestCacheConfiguration))
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .name("Phoenix");
   }
@@ -255,7 +255,7 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return phoenixDefinition(
             chainId,
             configContractSizeLimit,
@@ -263,7 +263,7 @@ public class ClassicProtocolSpecs {
             enableRevertReason,
             ecip1017EraRounds,
             quorumCompatibilityMode,
-            jumpdestCacheConfiguration)
+            evmConfiguration)
         .blockHeaderValidatorBuilder(
             feeMarket ->
                 MainnetBlockHeaderValidator.createLegacyBlockHeaderValidator(
@@ -302,7 +302,7 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return thanosDefinition(
             chainId,
             configContractSizeLimit,
@@ -310,7 +310,7 @@ public class ClassicProtocolSpecs {
             enableRevertReason,
             ecip1017EraRounds,
             quorumCompatibilityMode,
-            jumpdestCacheConfiguration)
+            evmConfiguration)
         .blockHeaderValidatorBuilder(
             feeMarket ->
                 MainnetBlockHeaderValidator.createLegacyBlockHeaderValidator(
@@ -332,7 +332,7 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return thanosDefinition(
             chainId,
             configContractSizeLimit,
@@ -340,7 +340,7 @@ public class ClassicProtocolSpecs {
             enableRevertReason,
             ecip1017EraRounds,
             quorumCompatibilityMode,
-            jumpdestCacheConfiguration)
+            evmConfiguration)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
             gasCalculator ->

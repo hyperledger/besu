@@ -229,7 +229,7 @@ public abstract class BesuControllerBuilder {
     return this;
   }
 
-  public BesuControllerBuilder jumpDestCacheConfiguration(final EvmConfiguration evmConfiguration) {
+  public BesuControllerBuilder evmConfiguration(final EvmConfiguration evmConfiguration) {
     this.evmConfiguration = evmConfiguration;
     return this;
   }

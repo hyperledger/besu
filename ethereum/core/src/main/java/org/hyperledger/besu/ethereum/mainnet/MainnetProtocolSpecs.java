@@ -164,7 +164,7 @@ public abstract class MainnetProtocolSpecs {
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
-        .jumpDestCacheConfig(evmConfiguration)
+        .evmConfiguration(evmConfiguration)
         .name("Frontier");
   }
 
@@ -238,12 +238,9 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return homesteadDefinition(
-            contractSizeLimit,
-            configStackSizeLimit,
-            quorumCompatibilityMode,
-            jumpdestCacheConfiguration)
+            contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode, evmConfiguration)
         .blockHeaderValidatorBuilder(feeMarket -> MainnetBlockHeaderValidator.createDaoValidator())
         .blockProcessorBuilder(
             (transactionProcessor,
@@ -455,14 +452,14 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return istanbulDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode,
-            jumpdestCacheConfiguration)
+            evmConfiguration)
         .difficultyCalculator(MainnetDifficultyCalculators.MUIR_GLACIER)
         .name("MuirGlacier");
   }
@@ -473,14 +470,14 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return muirGlacierDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode,
-            jumpdestCacheConfiguration)
+            evmConfiguration)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
             gasCalculator ->
@@ -504,7 +501,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
@@ -517,7 +514,7 @@ public abstract class MainnetProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode,
-            jumpdestCacheConfiguration)
+            evmConfiguration)
         .gasCalculator(LondonGasCalculator::new)
         .gasLimitCalculator(
             new LondonTargetingGasLimitCalculator(londonForkBlockNumber, londonFeeMarket))
@@ -559,7 +556,7 @@ public abstract class MainnetProtocolSpecs {
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.london(
-                    gasCalculator, chainId.orElse(BigInteger.ZERO), jumpdestCacheConfiguration))
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .feeMarket(londonFeeMarket)
         .difficultyCalculator(MainnetDifficultyCalculators.LONDON)
         .blockHeaderValidatorBuilder(

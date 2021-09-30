@@ -28,7 +28,7 @@ public class FixedDifficultyProtocolSchedule {
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return new ProtocolScheduleBuilder(
             config,
             ProtocolSpecAdapters.create(
@@ -38,20 +38,19 @@ public class FixedDifficultyProtocolSchedule {
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
-            jumpdestCacheConfiguration)
+            evmConfiguration)
         .createProtocolSchedule();
   }
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration jumpdestCacheConfiguration) {
-    return create(
-        config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, jumpdestCacheConfiguration);
+      final EvmConfiguration evmConfiguration) {
+    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, evmConfiguration);
   }
 
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config, final EvmConfiguration jumpdestCacheConfiguration) {
-    return create(config, PrivacyParameters.DEFAULT, false, jumpdestCacheConfiguration);
+      final GenesisConfigOptions config, final EvmConfiguration evmConfiguration) {
+    return create(config, PrivacyParameters.DEFAULT, false, evmConfiguration);
   }
 }

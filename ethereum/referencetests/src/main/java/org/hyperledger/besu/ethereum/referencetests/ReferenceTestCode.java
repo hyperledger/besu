@@ -33,6 +33,6 @@ public class ReferenceTestCode extends Code {
    */
   @JsonCreator
   public ReferenceTestCode(final String bytes) {
-    super(Bytes.fromHexString(bytes), Hash.EMPTY);
+    super(Bytes.fromHexString(bytes), Hash.hash(Bytes.fromHexString(bytes)));
   }
 }

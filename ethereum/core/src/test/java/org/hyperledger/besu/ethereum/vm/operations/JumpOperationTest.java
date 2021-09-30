@@ -89,7 +89,7 @@ public class JumpOperationTest {
   @Test
   public void shouldJumpWhenLocationIsJumpDest() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
-    Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
+    final Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(10_000))
             .pushStackItem(UInt256.fromHexString("0x03"))
@@ -104,7 +104,7 @@ public class JumpOperationTest {
   @Test
   public void shouldJumpWhenLocationIsJumpDestAndAtEndOfCode() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
-    Bytes jumpBytes = Bytes.fromHexString("0x6003565b");
+    final Bytes jumpBytes = Bytes.fromHexString("0x6003565b");
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(10_000))
             .pushStackItem(UInt256.fromHexString("0x03"))
@@ -119,7 +119,7 @@ public class JumpOperationTest {
   @Test
   public void shouldHaltWithInvalidJumDestinationWhenLocationIsOutsideOfCodeRange() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
-    Bytes jumpBytes = Bytes.fromHexString("0x6801000000000000000c565b00");
+    final Bytes jumpBytes = Bytes.fromHexString("0x6801000000000000000c565b00");
     final MessageFrame frameDestinationGreaterThanCodeSize =
         createMessageFrameBuilder(Gas.of(100))
             .pushStackItem(UInt256.fromHexString("0xFFFFFFFF"))
@@ -162,7 +162,7 @@ public class JumpOperationTest {
   @Test
   public void shouldReuseJumpDestMap() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
-    Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
+    final Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
     Code getsCached = spy(new Code(jumpBytes, Hash.hash(jumpBytes)));
     MessageFrame frame =
         createMessageFrameBuilder(Gas.of(10_000))

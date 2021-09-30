@@ -69,7 +69,7 @@ public class ProtocolScheduleBuilder {
   private final boolean isRevertReasonEnabled;
   private final BadBlockManager badBlockManager = new BadBlockManager();
   private final boolean quorumCompatibilityMode;
-  private final EvmConfiguration jumpdestCacheConfiguration;
+  private final EvmConfiguration evmConfiguration;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -78,7 +78,7 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     this(
         config,
         Optional.of(defaultChainId),
@@ -86,7 +86,7 @@ public class ProtocolScheduleBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         quorumCompatibilityMode,
-        jumpdestCacheConfiguration);
+        evmConfiguration);
   }
 
   private Optional<BuilderMapEntry> create(
@@ -105,7 +105,7 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     this(
         config,
         Optional.empty(),
@@ -113,7 +113,7 @@ public class ProtocolScheduleBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         quorumCompatibilityMode,
-        jumpdestCacheConfiguration);
+        evmConfiguration);
   }
 
   private ProtocolScheduleBuilder(
@@ -123,14 +123,14 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
-      final EvmConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     this.config = config;
     this.defaultChainId = defaultChainId;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.quorumCompatibilityMode = quorumCompatibilityMode;
-    this.jumpdestCacheConfiguration = jumpdestCacheConfiguration;
+    this.evmConfiguration = evmConfiguration;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -146,7 +146,7 @@ public class ProtocolScheduleBuilder {
             isRevertReasonEnabled,
             quorumCompatibilityMode,
             config.getEcip1017EraRounds(),
-            jumpdestCacheConfiguration);
+            evmConfiguration);
 
     validateForkOrdering();
 
@@ -205,7 +205,7 @@ public class ProtocolScheduleBuilder {
                       config.getContractSizeLimit(),
                       config.getEvmStackSize(),
                       quorumCompatibilityMode,
-                      jumpdestCacheConfiguration));
+                      evmConfiguration));
               protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpec);
             });
 
