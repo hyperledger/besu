@@ -863,7 +863,16 @@ public class RunnerBuilder {
                 dataDir,
                 besuController.getProtocolManager().ethContext().getEthPeers());
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
-    methods.putAll(rpcEndpointServiceImpl.getPluginMethods(jsonRpcConfiguration.getRpcApis()));
+
+    var pluginMethods = rpcEndpointServiceImpl.getPluginMethods(jsonRpcConfiguration.getRpcApis());
+
+    var overriddenMethods =
+        methods.keySet().stream().filter(pluginMethods::containsKey).collect(Collectors.toList());
+    if (overriddenMethods.size() > 0) {
+      throw new RuntimeException("You can not override built in methods " + overriddenMethods);
+    }
+
+    methods.putAll(pluginMethods);
     return methods;
   }
 
