@@ -21,8 +21,11 @@ dependencies {
   integrationTestImplementation 'org.bouncycastle:bcpkix-jdk15on'
   integrationTestImplementation 'org.awaitility:awaitility'
   integrationTestImplementation 'org.mockito:mockito-core'
+  integrationTestImplementation 'io.vertx:vertx-web'
+  integrationTestImplementation 'org.testcontainers:testcontainers'
+
 
   integrationTestImplementation 'junit:junit'
-  integrationTestImplementation 'net.consensys:orion'
+  integrationTest
   integrationTestImplementation 'org.assertj:assertj-core'
 }

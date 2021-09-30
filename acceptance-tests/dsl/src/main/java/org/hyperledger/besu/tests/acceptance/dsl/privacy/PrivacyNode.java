@@ -44,7 +44,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.enclave.testutil.EnclaveTestHarness;
 import org.hyperledger.enclave.testutil.EnclaveType;
 import org.hyperledger.enclave.testutil.NoopEnclaveTestHarness;
-import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
 import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 
 import java.io.IOException;
@@ -286,9 +285,6 @@ public class PrivacyNode implements AutoCloseable {
       final Optional<Network> containerNetwork) {
 
     switch (enclaveType) {
-      case ORION:
-        return OrionTestHarnessFactory.create(
-            config.getName(), tempDir, privacyConfiguration.getKeyConfig());
       case TESSERA:
         return TesseraTestHarnessFactory.create(
             config.getName(), tempDir, privacyConfiguration.getKeyConfig(), containerNetwork);

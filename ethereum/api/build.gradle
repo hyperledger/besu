@@ -96,6 +96,7 @@ dependencies {
   integrationTestImplementation project(':services:kvstore')
   integrationTestImplementation project(':testutil')
 
+  integrationTestImplementation 'org.testcontainers:testcontainers'
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-core'

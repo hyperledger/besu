@@ -49,7 +49,7 @@ dependencies {
   testImplementation 'io.opentracing:opentracing-util'
   testImplementation 'io.jaegertracing:jaeger-client'
   testImplementation 'junit:junit'
-  testImplementation 'net.consensys:orion'
+  test
   testImplementation 'org.apache.commons:commons-compress'
   testImplementation 'org.apache.tuweni:tuweni-crypto'
   testImplementation 'org.assertj:assertj-core'
@@ -58,6 +58,7 @@ dependencies {
   testImplementation 'org.web3j:besu'
 
   testImplementation 'org.testcontainers:testcontainers'
+  testImplementation 'io.vertx:vertx-core'
 }
 
 test.enabled = false

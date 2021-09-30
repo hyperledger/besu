@@ -15,7 +15,7 @@
 
 jar { enabled = true }
 dependencies {
-  implementation 'net.consensys:orion'
+
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-io'
   implementation 'org.apache.tuweni:tuweni-toml'

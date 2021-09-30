@@ -62,7 +62,7 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 import org.hyperledger.enclave.testutil.EnclaveTestHarness;
-import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
+import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -143,10 +143,11 @@ public class PrivacyReorgTest {
   @Before
   public void setUp() throws IOException {
     enclave =
-        OrionTestHarnessFactory.create(
+        TesseraTestHarnessFactory.create(
             "orion",
             folder.newFolder().toPath(),
-            new EnclaveKeyConfiguration("enclavePublicKey", "enclavePrivateKey"));
+            new EnclaveKeyConfiguration("enclavePublicKey", "enclavePrivateKey"),
+            Optional.empty());
     enclave.start();
 
     // Create Storage

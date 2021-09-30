@@ -15,7 +15,6 @@
 package org.hyperledger.enclave.testutil;
 
 public enum EnclaveType {
-  ORION,
   TESSERA,
   NOOP
 }
