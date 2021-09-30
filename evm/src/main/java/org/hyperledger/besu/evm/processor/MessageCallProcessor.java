@@ -19,7 +19,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
-import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -27,6 +27,7 @@ import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableSet;
@@ -66,7 +67,7 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
         frame.setState(MessageFrame.State.CODE_EXECUTING);
       }
     } catch (ModificationNotAllowedException ex) {
-      LOG.trace("Message call error: atttempt to mutate an immutable account");
+      LOG.trace("Message call error: attempt to mutate an immutable account");
       frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     }
@@ -89,18 +90,32 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
    * of the world state of this executor.
    */
   private void transferValue(final MessageFrame frame) {
-    final MutableAccount senderAccount =
-        frame.getWorldUpdater().getSenderAccount(frame).getMutable();
+    final EvmAccount senderAccount = frame.getWorldUpdater().getSenderAccount(frame);
+
     // The yellow paper explicitly states that if the recipient account doesn't exist at this
-    // point, it is created.
-    final MutableAccount recipientAccount =
-        frame.getWorldUpdater().getOrCreate(frame.getRecipientAddress()).getMutable();
+    // point, it is created. Even if the value is zero we are still creating an account with 0x!
+    final EvmAccount recipientAccount =
+        frame.getWorldUpdater().getOrCreate(frame.getRecipientAddress());
+
+    if (Objects.equals(frame.getValue(), Wei.ZERO)) {
+      // This is only here for situations where you are calling a public address from a private
+      // address. Without this guard clause we would attempt to get a mutable public address
+      // which isn't possible from a private address and an error would be thrown.
+      // If you are attempting to transfer value from a private address
+      // to public address an error will be thrown.
+      LOG.trace(
+          "Message call from {} to {} has zero value: no fund transferred",
+          frame.getSenderAddress(),
+          frame.getRecipientAddress());
+      return;
+    }
 
     if (frame.getRecipientAddress().equals(frame.getSenderAddress())) {
       LOG.trace("Message call of {} to itself: no fund transferred", frame.getSenderAddress());
     } else {
-      final Wei prevSenderBalance = senderAccount.decrementBalance(frame.getValue());
-      final Wei prevRecipientBalance = recipientAccount.incrementBalance(frame.getValue());
+      final Wei prevSenderBalance = senderAccount.getMutable().decrementBalance(frame.getValue());
+      final Wei prevRecipientBalance =
+          recipientAccount.getMutable().incrementBalance(frame.getValue());
 
       LOG.trace(
           "Transferred value {} for message call from {} ({} -> {}) to {} ({} -> {})",
