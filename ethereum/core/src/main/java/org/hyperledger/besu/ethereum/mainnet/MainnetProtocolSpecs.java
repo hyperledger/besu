@@ -50,7 +50,7 @@ import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -102,7 +102,7 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean goQuorumMode,
-      final JumpDestCacheConfiguration jumpDestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return new ProtocolSpecBuilder()
@@ -164,7 +164,7 @@ public abstract class MainnetProtocolSpecs {
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
-        .jumpDestCacheConfig(jumpDestCacheConfiguration)
+        .jumpDestCacheConfig(evmConfiguration)
         .name("Frontier");
   }
 
@@ -209,13 +209,13 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpDestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
     return frontierDefinition(
             configContractSizeLimit,
             configStackSizeLimit,
             quorumCompatibilityMode,
-            jumpDestCacheConfiguration)
+            evmConfiguration)
         .gasCalculator(HomesteadGasCalculator::new)
         .evmBuilder(MainnetEVMs::homestead)
         .contractCreationProcessorBuilder(
@@ -238,7 +238,7 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration jumpdestCacheConfiguration) {
     return homesteadDefinition(
             contractSizeLimit,
             configStackSizeLimit,
@@ -267,12 +267,9 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpDestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return daoRecoveryInitDefinition(
-            contractSizeLimit,
-            configStackSizeLimit,
-            quorumCompatibilityMode,
-            jumpDestCacheConfiguration)
+            contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode, evmConfiguration)
         .blockProcessorBuilder(MainnetBlockProcessor::new)
         .name("DaoRecoveryTransition");
   }
@@ -281,12 +278,9 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpDestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return homesteadDefinition(
-            contractSizeLimit,
-            configStackSizeLimit,
-            quorumCompatibilityMode,
-            jumpDestCacheConfiguration)
+            contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode, evmConfiguration)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .name("TangerineWhistle");
   }
@@ -296,16 +290,13 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpDestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
 
     return tangerineWhistleDefinition(
-            OptionalInt.empty(),
-            configStackSizeLimit,
-            quorumCompatibilityMode,
-            jumpDestCacheConfiguration)
+            OptionalInt.empty(), configStackSizeLimit, quorumCompatibilityMode, evmConfiguration)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
         .messageCallProcessorBuilder(
@@ -350,14 +341,14 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpDestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return spuriousDragonDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             quorumCompatibilityMode,
-            jumpDestCacheConfiguration)
+            evmConfiguration)
         .gasCalculator(ByzantiumGasCalculator::new)
         .evmBuilder(MainnetEVMs::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
@@ -391,14 +382,14 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpDestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return byzantiumDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode,
-            jumpDestCacheConfiguration)
+            evmConfiguration)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
         .evmBuilder(MainnetEVMs::constantinople)
@@ -412,14 +403,14 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpDestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     return constantinopleDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode,
-            jumpDestCacheConfiguration)
+            evmConfiguration)
         .gasCalculator(PetersburgGasCalculator::new)
         .name("Petersburg");
   }
@@ -430,7 +421,7 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpDestCacheConfiguration) {
+      final EvmConfiguration evmConfiguration) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     return petersburgDefinition(
@@ -439,12 +430,12 @@ public abstract class MainnetProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode,
-            jumpDestCacheConfiguration)
+            evmConfiguration)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.istanbul(
-                    gasCalculator, chainId.orElse(BigInteger.ZERO), jumpDestCacheConfiguration))
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
@@ -464,7 +455,7 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration jumpdestCacheConfiguration) {
     return istanbulDefinition(
             chainId,
             contractSizeLimit,
@@ -482,7 +473,7 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration jumpdestCacheConfiguration) {
     return muirGlacierDefinition(
             chainId,
             contractSizeLimit,
@@ -513,7 +504,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration jumpdestCacheConfiguration) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);

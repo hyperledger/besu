@@ -42,6 +42,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   protected final long height;
   protected final TrieLogLayer trieLog;
   private final Hash worldStateRootHash;
+
   private final Blockchain blockchain;
   private final BonsaiWorldStateArchive archive;
 

@@ -50,10 +50,10 @@ import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
-import org.hyperledger.besu.cli.options.unstable.ContractCacheOptions;
 import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
+import org.hyperledger.besu.cli.options.unstable.EvmOptions;
 import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.MiningOptions;
@@ -266,7 +266,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
   private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
-  private final ContractCacheOptions unstableContractCacheOptions = ContractCacheOptions.create();
+  private final EvmOptions unstableEvmOptions = EvmOptions.create();
 
   // stable CLI options
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
@@ -1297,7 +1297,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Native Library", unstableNativeLibraryOptions)
             .put("Data Storage Options", unstableDataStorageOptions)
             .put("Launcher", unstableLauncherOptions)
-            .put("Jump Destination Cache", unstableContractCacheOptions)
+            .put("Jump Destination Cache", unstableEvmOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1736,7 +1736,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .orElse(GasLimitCalculator.constant()))
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
-        .jumpDestCacheConfiguration(ContractCacheOptions.create().toDomainObject())
+        .jumpDestCacheConfiguration(EvmOptions.create().toDomainObject())
         .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject());
   }
 

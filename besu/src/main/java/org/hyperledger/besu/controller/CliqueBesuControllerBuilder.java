@@ -110,7 +110,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         nodeKey,
         privacyParameters,
         isRevertReasonEnabled,
-        jumpDestCacheConfiguration);
+        evmConfiguration);
   }
 
   @Override

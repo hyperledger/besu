@@ -18,7 +18,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -69,7 +69,7 @@ public class ProtocolScheduleBuilder {
   private final boolean isRevertReasonEnabled;
   private final BadBlockManager badBlockManager = new BadBlockManager();
   private final boolean quorumCompatibilityMode;
-  private final JumpDestCacheConfiguration jumpdestCacheConfiguration;
+  private final EvmConfiguration jumpdestCacheConfiguration;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -78,7 +78,7 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration jumpdestCacheConfiguration) {
     this(
         config,
         Optional.of(defaultChainId),
@@ -105,7 +105,7 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration jumpdestCacheConfiguration) {
     this(
         config,
         Optional.empty(),
@@ -123,7 +123,7 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration jumpdestCacheConfiguration) {
     this.config = config;
     this.defaultChainId = defaultChainId;
     this.protocolSpecAdapters = protocolSpecAdapters;

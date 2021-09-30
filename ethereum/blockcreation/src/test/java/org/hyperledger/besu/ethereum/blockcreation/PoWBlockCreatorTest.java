@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ValidationTestUtils;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -78,7 +78,7 @@ public class PoWBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum(),
-                        JumpDestCacheConfiguration.DEFAULT_CONFIG)
+                        EvmConfiguration.DEFAULT_CONFIG)
                     .createProtocolSchedule())
             .build();
 
@@ -140,7 +140,7 @@ public class PoWBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum(),
-                        JumpDestCacheConfiguration.DEFAULT_CONFIG)
+                        EvmConfiguration.DEFAULT_CONFIG)
                     .createProtocolSchedule())
             .build();
 
@@ -197,7 +197,7 @@ public class PoWBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum(),
-                        JumpDestCacheConfiguration.DEFAULT_CONFIG)
+                        EvmConfiguration.DEFAULT_CONFIG)
                     .createProtocolSchedule())
             .build();
 
@@ -270,7 +270,7 @@ public class PoWBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum(),
-                        JumpDestCacheConfiguration.DEFAULT_CONFIG)
+                        EvmConfiguration.DEFAULT_CONFIG)
                     .createProtocolSchedule())
             .build();
 

@@ -93,7 +93,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled,
-        jumpDestCacheConfiguration);
+        evmConfiguration);
   }
 
   @Override

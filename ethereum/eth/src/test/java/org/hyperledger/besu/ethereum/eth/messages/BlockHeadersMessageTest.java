@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -63,7 +63,7 @@ public final class BlockHeadersMessageTest {
             FixedDifficultyProtocolSchedule.create(
                 GenesisConfigFile.development().getConfigOptions(),
                 false,
-                JumpDestCacheConfiguration.DEFAULT_CONFIG));
+                EvmConfiguration.DEFAULT_CONFIG));
 
     for (int i = 0; i < 50; ++i) {
       Assertions.assertThat(readHeaders.get(i)).isEqualTo(headers.get(i));

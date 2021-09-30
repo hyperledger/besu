@@ -16,41 +16,41 @@
 package org.hyperledger.besu.cli.options.unstable;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.Arrays;
 import java.util.List;
 
 import picocli.CommandLine;
 
-public class ContractCacheOptions implements CLIOptions<JumpDestCacheConfiguration> {
+public class EvmOptions implements CLIOptions<EvmConfiguration> {
 
-  public static final String CONTRACT_CACHE_WEIGHT = "--Xcontract-code-cache-weight-kb";
+  public static final String JUMPDEST_CACHE_WEIGHT = "--Xevm-jumpdest-cache-weight-kb";
 
-  public static ContractCacheOptions create() {
-    return new ContractCacheOptions();
+  public static EvmOptions create() {
+    return new EvmOptions();
   }
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
-      names = {CONTRACT_CACHE_WEIGHT},
+      names = {JUMPDEST_CACHE_WEIGHT},
       description =
-          "size in kilobytes to allow the cached "
-              + "contract bytecode to grow to before evicting the least recently used contract",
+          "size in kilobytes to allow the cache "
+              + "of valid jump destinations to grow to before evicting the least recently used entry",
       fallbackValue = "32000",
       defaultValue = "32000",
       hidden = true,
       arity = "1")
-  private Long contractCacheWeightKilobytes =
+  private Long jumpDestCacheWeightKilobytes =
       32_000L; // 10k contracts, (25k max contract size / 8 bit) + 32byte hash
 
   @Override
-  public JumpDestCacheConfiguration toDomainObject() {
-    return new JumpDestCacheConfiguration(contractCacheWeightKilobytes);
+  public EvmConfiguration toDomainObject() {
+    return new EvmConfiguration(jumpDestCacheWeightKilobytes);
   }
 
   @Override
   public List<String> getCLIOptions() {
-    return Arrays.asList(CONTRACT_CACHE_WEIGHT);
+    return Arrays.asList(JUMPDEST_CACHE_WEIGHT);
   }
 }

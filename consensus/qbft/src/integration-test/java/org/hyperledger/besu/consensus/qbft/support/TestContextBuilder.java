@@ -90,7 +90,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -398,9 +398,7 @@ public class TestContextBuilder {
 
     final ProtocolSchedule protocolSchedule =
         QbftProtocolSchedule.create(
-            genesisConfigOptions,
-            BFT_EXTRA_DATA_ENCODER,
-            JumpDestCacheConfiguration.DEFAULT_CONFIG);
+            genesisConfigOptions, BFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT_CONFIG);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController

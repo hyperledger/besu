@@ -25,8 +25,8 @@ public class JumpDestCache {
   private final Cache<Hash, long[]> cache;
   private final long weightLimit;
 
-  public JumpDestCache(final JumpDestCacheConfiguration config) {
-    this(config.getContractCacheWeightBytes());
+  public JumpDestCache(final EvmConfiguration config) {
+    this(config.getJumpDestCacheWeightBytes());
   }
 
   private JumpDestCache(final long maxWeightBytes) {

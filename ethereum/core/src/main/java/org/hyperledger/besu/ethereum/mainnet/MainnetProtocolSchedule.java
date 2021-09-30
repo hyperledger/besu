@@ -18,7 +18,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyCalculators;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.function.Function;
@@ -42,7 +42,7 @@ public class MainnetProtocolSchedule {
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration jumpdestCacheConfiguration) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
           config, privacyParameters, isRevertReasonEnabled, jumpdestCacheConfiguration);
@@ -70,7 +70,7 @@ public class MainnetProtocolSchedule {
   public static ProtocolSchedule fromConfig(
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration jumpdestCacheConfiguration) {
     return fromConfig(
         config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, jumpdestCacheConfiguration);
   }
@@ -84,8 +84,7 @@ public class MainnetProtocolSchedule {
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
-      final GenesisConfigOptions config,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final GenesisConfigOptions config, final EvmConfiguration jumpdestCacheConfiguration) {
     return fromConfig(config, PrivacyParameters.DEFAULT, false, jumpdestCacheConfiguration);
   }
 
@@ -97,7 +96,6 @@ public class MainnetProtocolSchedule {
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(final GenesisConfigOptions config) {
-    return fromConfig(
-        config, PrivacyParameters.DEFAULT, false, JumpDestCacheConfiguration.DEFAULT_CONFIG);
+    return fromConfig(config, PrivacyParameters.DEFAULT, false, EvmConfiguration.DEFAULT_CONFIG);
   }
 }

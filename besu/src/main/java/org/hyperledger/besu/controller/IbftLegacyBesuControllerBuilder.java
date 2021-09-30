@@ -77,7 +77,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled,
-        jumpDestCacheConfiguration);
+        evmConfiguration);
   }
 
   @Override

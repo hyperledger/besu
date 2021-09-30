@@ -34,7 +34,7 @@ import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
@@ -83,7 +83,7 @@ public class JumpOperationTest {
     final OperationRegistry registry = new OperationRegistry();
     registry.put(new JumpOperation(gasCalculator));
     registry.put(new JumpDestOperation(gasCalculator));
-    evm = new EVM(registry, gasCalculator, JumpDestCacheConfiguration.DEFAULT_CONFIG);
+    evm = new EVM(registry, gasCalculator, EvmConfiguration.DEFAULT_CONFIG);
   }
 
   @Test

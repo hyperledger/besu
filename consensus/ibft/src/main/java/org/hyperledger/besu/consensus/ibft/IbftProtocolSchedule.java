@@ -21,7 +21,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.function.Supplier;
 
@@ -33,7 +33,7 @@ public class IbftProtocolSchedule extends BaseBftProtocolSchedule {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration jumpdestCacheConfiguration) {
     return new IbftProtocolSchedule()
         .createProtocolSchedule(
             config,
@@ -46,7 +46,7 @@ public class IbftProtocolSchedule extends BaseBftProtocolSchedule {
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final BftExtraDataCodec bftExtraDataCodec,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration jumpdestCacheConfiguration) {
     return create(
         config, PrivacyParameters.DEFAULT, false, bftExtraDataCodec, jumpdestCacheConfiguration);
   }

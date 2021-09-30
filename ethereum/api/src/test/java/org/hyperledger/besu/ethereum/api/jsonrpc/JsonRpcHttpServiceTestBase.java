@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
@@ -111,7 +111,7 @@ public class JsonRpcHttpServiceTestBase {
                     synchronizer,
                     MainnetProtocolSchedule.fromConfig(
                         new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
-                        JumpDestCacheConfiguration.DEFAULT_CONFIG),
+                        EvmConfiguration.DEFAULT_CONFIG),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(PoWMiningCoordinator.class),

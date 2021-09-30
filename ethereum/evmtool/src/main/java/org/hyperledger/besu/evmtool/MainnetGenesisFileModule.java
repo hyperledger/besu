@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import javax.inject.Named;
 
@@ -34,8 +34,7 @@ class MainnetGenesisFileModule extends GenesisFileModule {
   ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
-    return MainnetProtocolSchedule.fromConfig(
-        configOptions, JumpDestCacheConfiguration.DEFAULT_CONFIG);
+    return MainnetProtocolSchedule.fromConfig(configOptions, EvmConfiguration.DEFAULT_CONFIG);
   }
 
   @Override

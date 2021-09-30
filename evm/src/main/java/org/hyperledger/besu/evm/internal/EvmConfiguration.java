@@ -15,20 +15,19 @@
 
 package org.hyperledger.besu.evm.internal;
 
-public class JumpDestCacheConfiguration {
-  public static final JumpDestCacheConfiguration DEFAULT_CONFIG =
-      new JumpDestCacheConfiguration(32_000L);
-  private final long contractCacheWeightKilobytes;
+public class EvmConfiguration {
+  public static final EvmConfiguration DEFAULT_CONFIG = new EvmConfiguration(32_000L);
+  private final long jumpDestCacheWeightKB;
 
-  public JumpDestCacheConfiguration(final long contractCacheWeightKilobytes) {
-    this.contractCacheWeightKilobytes = contractCacheWeightKilobytes;
+  public EvmConfiguration(final long jumpDestCacheWeightKB) {
+    this.jumpDestCacheWeightKB = jumpDestCacheWeightKB;
   }
 
-  public long getContractCacheWeightBytes() {
-    return contractCacheWeightKilobytes * 1024L;
+  public long getJumpDestCacheWeightBytes() {
+    return jumpDestCacheWeightKB * 1024L;
   }
 
-  public long getContractCacheWeightKilobytes() {
-    return contractCacheWeightKilobytes;
+  public long getJumpDestCacheWeightKB() {
+    return jumpDestCacheWeightKB;
   }
 }

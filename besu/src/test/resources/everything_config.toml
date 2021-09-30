@@ -189,4 +189,4 @@ Xp2p-tls-keystore-password-file="none"
 Xp2p-tls-crl-file="none.file"
 
 #contracts
-Xcontract-code-cache-weight-kb=32000
+Xevm-jumpdest-cache-weight-kb=32000

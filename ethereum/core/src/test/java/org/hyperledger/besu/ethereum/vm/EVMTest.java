@@ -23,7 +23,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.operation.StopOperation;
@@ -44,7 +44,7 @@ public class EVMTest {
 
   @Before
   public void setup() {
-    evm = new EVM(operationRegistry, gasCalculator, JumpDestCacheConfiguration.DEFAULT_CONFIG);
+    evm = new EVM(operationRegistry, gasCalculator, EvmConfiguration.DEFAULT_CONFIG);
   }
 
   @Test

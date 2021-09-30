@@ -24,7 +24,7 @@ import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.AddressOperation;
@@ -115,13 +115,12 @@ public abstract class MainnetEVMs {
 
   public static final BigInteger DEV_NET_CHAIN_ID = BigInteger.valueOf(1337);
 
-  public static EVM frontier(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVM frontier(final EvmConfiguration jumpdestCacheConfiguration) {
     return frontier(new FrontierGasCalculator(), jumpdestCacheConfiguration);
   }
 
   public static EVM frontier(
-      final GasCalculator gasCalculator,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final GasCalculator gasCalculator, final EvmConfiguration jumpdestCacheConfiguration) {
     return new EVM(frontierOperations(gasCalculator), gasCalculator, jumpdestCacheConfiguration);
   }
 
@@ -216,13 +215,12 @@ public abstract class MainnetEVMs {
     }
   }
 
-  public static EVM homestead(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVM homestead(final EvmConfiguration jumpdestCacheConfiguration) {
     return homestead(new FrontierGasCalculator(), jumpdestCacheConfiguration);
   }
 
   public static EVM homestead(
-      final GasCalculator gasCalculator,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final GasCalculator gasCalculator, final EvmConfiguration jumpdestCacheConfiguration) {
     return new EVM(homesteadOperations(gasCalculator), gasCalculator, jumpdestCacheConfiguration);
   }
 
@@ -238,21 +236,20 @@ public abstract class MainnetEVMs {
     registry.put(new DelegateCallOperation(gasCalculator));
   }
 
-  public static EVM spuriousDragon(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVM spuriousDragon(final EvmConfiguration jumpdestCacheConfiguration) {
     return homestead(new SpuriousDragonGasCalculator(), jumpdestCacheConfiguration);
   }
 
-  public static EVM tangerineWhistle(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVM tangerineWhistle(final EvmConfiguration jumpdestCacheConfiguration) {
     return homestead(new TangerineWhistleGasCalculator(), jumpdestCacheConfiguration);
   }
 
-  public static EVM byzantium(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVM byzantium(final EvmConfiguration jumpdestCacheConfiguration) {
     return byzantium(new ByzantiumGasCalculator(), jumpdestCacheConfiguration);
   }
 
   public static EVM byzantium(
-      final GasCalculator gasCalculator,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final GasCalculator gasCalculator, final EvmConfiguration jumpdestCacheConfiguration) {
     return new EVM(byzantiumOperations(gasCalculator), gasCalculator, jumpdestCacheConfiguration);
   }
 
@@ -271,13 +268,12 @@ public abstract class MainnetEVMs {
     registry.put(new StaticCallOperation(gasCalculator));
   }
 
-  public static EVM constantinople(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVM constantinople(final EvmConfiguration jumpdestCacheConfiguration) {
     return constantinople(new ConstantinopleGasCalculator(), jumpdestCacheConfiguration);
   }
 
   public static EVM constantinople(
-      final GasCalculator gasCalculator,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final GasCalculator gasCalculator, final EvmConfiguration jumpdestCacheConfiguration) {
     return new EVM(
         constantinopleOperations(gasCalculator), gasCalculator, jumpdestCacheConfiguration);
   }
@@ -298,23 +294,23 @@ public abstract class MainnetEVMs {
     registry.put(new ExtCodeHashOperation(gasCalculator));
   }
 
-  public static EVM petersburg(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVM petersburg(final EvmConfiguration jumpdestCacheConfiguration) {
     return constantinople(new PetersburgGasCalculator(), jumpdestCacheConfiguration);
   }
 
-  public static EVM istanbul(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVM istanbul(final EvmConfiguration jumpdestCacheConfiguration) {
     return istanbul(DEV_NET_CHAIN_ID, jumpdestCacheConfiguration);
   }
 
   public static EVM istanbul(
-      final BigInteger chainId, final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final BigInteger chainId, final EvmConfiguration jumpdestCacheConfiguration) {
     return istanbul(new IstanbulGasCalculator(), chainId, jumpdestCacheConfiguration);
   }
 
   public static EVM istanbul(
       final GasCalculator gasCalculator,
       final BigInteger chainId,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration jumpdestCacheConfiguration) {
     return new EVM(
         istanbulOperations(gasCalculator, chainId), gasCalculator, jumpdestCacheConfiguration);
   }
@@ -337,28 +333,28 @@ public abstract class MainnetEVMs {
     registry.put(new SStoreOperation(gasCalculator, SStoreOperation.EIP_1706_MINIMUM));
   }
 
-  public static EVM berlin(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVM berlin(final EvmConfiguration jumpdestCacheConfiguration) {
     return berlin(DEV_NET_CHAIN_ID, jumpdestCacheConfiguration);
   }
 
   public static EVM berlin(
-      final BigInteger chainId, final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final BigInteger chainId, final EvmConfiguration jumpdestCacheConfiguration) {
     return istanbul(new BerlinGasCalculator(), chainId, jumpdestCacheConfiguration);
   }
 
-  public static EVM london(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVM london(final EvmConfiguration jumpdestCacheConfiguration) {
     return london(DEV_NET_CHAIN_ID, jumpdestCacheConfiguration);
   }
 
   public static EVM london(
-      final BigInteger chainId, final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final BigInteger chainId, final EvmConfiguration jumpdestCacheConfiguration) {
     return london(new LondonGasCalculator(), chainId, jumpdestCacheConfiguration);
   }
 
   public static EVM london(
       final GasCalculator gasCalculator,
       final BigInteger chainId,
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+      final EvmConfiguration jumpdestCacheConfiguration) {
     return new EVM(
         londonOperations(gasCalculator, chainId), gasCalculator, jumpdestCacheConfiguration);
   }

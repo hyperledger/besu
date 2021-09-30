@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 
@@ -52,8 +52,8 @@ public class ProtocolSpecBuilder {
   private BlockHeaderFunctions blockHeaderFunctions;
   private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private DifficultyCalculator difficultyCalculator;
-  private JumpDestCacheConfiguration jumpDestCacheConfiguration;
-  private BiFunction<GasCalculator, JumpDestCacheConfiguration, EVM> evmBuilder;
+  private EvmConfiguration evmConfiguration;
+  private BiFunction<GasCalculator, EvmConfiguration, EVM> evmBuilder;
   private Function<GasCalculator, MainnetTransactionValidator> transactionValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
@@ -113,7 +113,7 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder evmBuilder(
-      final BiFunction<GasCalculator, JumpDestCacheConfiguration, EVM> evmBuilder) {
+      final BiFunction<GasCalculator, EvmConfiguration, EVM> evmBuilder) {
     this.evmBuilder = evmBuilder;
     return this;
   }
@@ -238,9 +238,8 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder jumpDestCacheConfig(
-      final JumpDestCacheConfiguration jumpDestCacheConfiguration) {
-    this.jumpDestCacheConfiguration = jumpDestCacheConfiguration;
+  public ProtocolSpecBuilder jumpDestCacheConfig(final EvmConfiguration evmConfiguration) {
+    this.evmConfiguration = evmConfiguration;
     return this;
   }
 
@@ -248,7 +247,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
     checkNotNull(evmBuilder, "Missing operation registry");
-    checkNotNull(jumpDestCacheConfiguration, "Missing jumpdest cache configuration");
+    checkNotNull(evmConfiguration, "Missing jumpdest cache configuration");
     checkNotNull(transactionValidatorBuilder, "Missing transaction validator");
     checkNotNull(privateTransactionValidatorBuilder, "Missing private transaction validator");
     checkNotNull(contractCreationProcessorBuilder, "Missing contract creation processor");
@@ -273,7 +272,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(badBlockManager, "Missing bad blocks manager");
 
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
-    final EVM evm = evmBuilder.apply(gasCalculator, jumpDestCacheConfiguration);
+    final EVM evm = evmBuilder.apply(gasCalculator, evmConfiguration);
     final PrecompiledContractConfiguration precompiledContractConfiguration =
         new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
     final MainnetTransactionValidator transactionValidator =

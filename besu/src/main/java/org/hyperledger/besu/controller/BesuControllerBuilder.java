@@ -64,7 +64,7 @@ import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
@@ -110,7 +110,7 @@ public abstract class BesuControllerBuilder {
       DataStorageConfiguration.DEFAULT_CONFIG;
   private List<NodeMessagePermissioningProvider> messagePermissioningProviders =
       Collections.emptyList();
-  protected JumpDestCacheConfiguration jumpDestCacheConfiguration;
+  protected EvmConfiguration evmConfiguration;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -229,9 +229,8 @@ public abstract class BesuControllerBuilder {
     return this;
   }
 
-  public BesuControllerBuilder jumpDestCacheConfiguration(
-      final JumpDestCacheConfiguration jumpDestCacheConfiguration) {
-    this.jumpDestCacheConfiguration = jumpDestCacheConfiguration;
+  public BesuControllerBuilder jumpDestCacheConfiguration(final EvmConfiguration evmConfiguration) {
+    this.evmConfiguration = evmConfiguration;
     return this;
   }
 
@@ -249,7 +248,7 @@ public abstract class BesuControllerBuilder {
     checkNotNull(nodeKey, "Missing node key");
     checkNotNull(storageProvider, "Must supply a storage provider");
     checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
-    checkNotNull(jumpDestCacheConfiguration, "Missing jumpdest cache config");
+    checkNotNull(evmConfiguration, "Missing jumpdest cache config");
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();

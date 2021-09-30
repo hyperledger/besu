@@ -20,7 +20,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import org.junit.Test;
 
@@ -31,8 +31,7 @@ public class FixedProtocolScheduleTest {
 
     final ProtocolSchedule schedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(),
-            JumpDestCacheConfiguration.DEFAULT_CONFIG);
+            GenesisConfigFile.development().getConfigOptions(), EvmConfiguration.DEFAULT_CONFIG);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
@@ -65,8 +64,7 @@ public class FixedProtocolScheduleTest {
 
     final ProtocolSchedule schedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.ecip1049dev().getConfigOptions(),
-            JumpDestCacheConfiguration.DEFAULT_CONFIG);
+            GenesisConfigFile.ecip1049dev().getConfigOptions(), EvmConfiguration.DEFAULT_CONFIG);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 

@@ -22,7 +22,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.io.IOException;
 
@@ -37,7 +37,7 @@ public class ProtocolScheduleFixture {
           getMainnetConfigOptions(),
           PrivacyParameters.DEFAULT,
           false,
-          JumpDestCacheConfiguration.DEFAULT_CONFIG);
+          EvmConfiguration.DEFAULT_CONFIG);
 
   private static GenesisConfigOptions getMainnetConfigOptions() {
     // this method avoids reading all the alloc accounts when all we want is the "config" section

@@ -26,7 +26,7 @@ import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
@@ -77,7 +77,7 @@ public class EVMExecutor {
     return executor;
   }
 
-  public static EVMExecutor frontier(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor frontier(final EvmConfiguration jumpdestCacheConfiguration) {
     EVMExecutor executor = new EVMExecutor();
     executor.evm = MainnetEVMs.frontier(jumpdestCacheConfiguration);
     executor.precompileContractRegistry =
@@ -88,7 +88,7 @@ public class EVMExecutor {
     return executor;
   }
 
-  public static EVMExecutor homestead(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor homestead(final EvmConfiguration jumpdestCacheConfiguration) {
     EVMExecutor executor = new EVMExecutor();
     executor.evm = MainnetEVMs.homestead(jumpdestCacheConfiguration);
     executor.precompileContractRegistry =
@@ -98,8 +98,7 @@ public class EVMExecutor {
     return executor;
   }
 
-  public static EVMExecutor spuriousDragon(
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor spuriousDragon(final EvmConfiguration jumpdestCacheConfiguration) {
     EVMExecutor executor = new EVMExecutor();
     executor.evm = MainnetEVMs.spuriousDragon(jumpdestCacheConfiguration);
     executor.precompileContractRegistry =
@@ -108,8 +107,7 @@ public class EVMExecutor {
     return executor;
   }
 
-  public static EVMExecutor tangerineWhistle(
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor tangerineWhistle(final EvmConfiguration jumpdestCacheConfiguration) {
     EVMExecutor executor = new EVMExecutor();
     executor.evm = MainnetEVMs.tangerineWhistle(jumpdestCacheConfiguration);
     executor.precompileContractRegistry =
@@ -118,7 +116,7 @@ public class EVMExecutor {
     return executor;
   }
 
-  public static EVMExecutor byzantium(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor byzantium(final EvmConfiguration jumpdestCacheConfiguration) {
     EVMExecutor executor = new EVMExecutor();
     executor.evm = MainnetEVMs.byzantium(jumpdestCacheConfiguration);
     executor.precompileContractRegistry =
@@ -127,8 +125,7 @@ public class EVMExecutor {
     return executor;
   }
 
-  public static EVMExecutor constantinople(
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor constantinople(final EvmConfiguration jumpdestCacheConfiguration) {
     EVMExecutor executor = new EVMExecutor();
     executor.evm = MainnetEVMs.constantinople(jumpdestCacheConfiguration);
     executor.precompileContractRegistry =
@@ -137,8 +134,7 @@ public class EVMExecutor {
     return executor;
   }
 
-  public static EVMExecutor petersburg(
-      final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor petersburg(final EvmConfiguration jumpdestCacheConfiguration) {
     EVMExecutor executor = new EVMExecutor();
     executor.evm = MainnetEVMs.petersburg(jumpdestCacheConfiguration);
     executor.precompileContractRegistry =
@@ -147,7 +143,7 @@ public class EVMExecutor {
     return executor;
   }
 
-  public static EVMExecutor istanbul(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor istanbul(final EvmConfiguration jumpdestCacheConfiguration) {
     EVMExecutor executor = new EVMExecutor();
     executor.evm = MainnetEVMs.istanbul(jumpdestCacheConfiguration);
     executor.precompileContractRegistry =
@@ -156,7 +152,7 @@ public class EVMExecutor {
     return executor;
   }
 
-  public static EVMExecutor berlin(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor berlin(final EvmConfiguration jumpdestCacheConfiguration) {
     EVMExecutor executor = new EVMExecutor();
     executor.evm = MainnetEVMs.berlin(jumpdestCacheConfiguration);
     executor.precompileContractRegistry =
@@ -165,7 +161,7 @@ public class EVMExecutor {
     return executor;
   }
 
-  public static EVMExecutor london(final JumpDestCacheConfiguration jumpdestCacheConfiguration) {
+  public static EVMExecutor london(final EvmConfiguration jumpdestCacheConfiguration) {
     EVMExecutor executor = new EVMExecutor();
     executor.evm = MainnetEVMs.istanbul(jumpdestCacheConfiguration);
     executor.precompileContractRegistry =

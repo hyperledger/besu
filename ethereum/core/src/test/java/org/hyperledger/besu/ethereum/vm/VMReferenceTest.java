@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.referencetests.VMReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
@@ -100,10 +100,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
 
     final ProtocolSpec protocolSpec =
         MainnetProtocolSpecs.frontierDefinition(
-                OptionalInt.empty(),
-                OptionalInt.empty(),
-                false,
-                JumpDestCacheConfiguration.DEFAULT_CONFIG)
+                OptionalInt.empty(), OptionalInt.empty(), false, EvmConfiguration.DEFAULT_CONFIG)
             .privacyParameters(PrivacyParameters.DEFAULT)
             .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(CHAIN_ID))
             .badBlocksManager(new BadBlockManager())

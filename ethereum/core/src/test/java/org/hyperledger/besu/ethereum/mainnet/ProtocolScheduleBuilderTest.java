@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.evm.internal.JumpDestCacheConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.OptionalLong;
@@ -57,7 +57,7 @@ public class ProtocolScheduleBuilderTest {
             new PrivacyParameters(),
             false,
             false,
-            JumpDestCacheConfiguration.DEFAULT_CONFIG);
+            EvmConfiguration.DEFAULT_CONFIG);
 
     final MutableProtocolSchedule schedule =
         (MutableProtocolSchedule) builder.createProtocolSchedule();
@@ -86,7 +86,7 @@ public class ProtocolScheduleBuilderTest {
             new PrivacyParameters(),
             false,
             false,
-            JumpDestCacheConfiguration.DEFAULT_CONFIG);
+            EvmConfiguration.DEFAULT_CONFIG);
 
     final MutableProtocolSchedule schedule =
         (MutableProtocolSchedule) builder.createProtocolSchedule();
@@ -115,7 +115,7 @@ public class ProtocolScheduleBuilderTest {
             new PrivacyParameters(),
             false,
             false,
-            JumpDestCacheConfiguration.DEFAULT_CONFIG);
+            EvmConfiguration.DEFAULT_CONFIG);
 
     final MutableProtocolSchedule schedule =
         (MutableProtocolSchedule) builder.createProtocolSchedule();
