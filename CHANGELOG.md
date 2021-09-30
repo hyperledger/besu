@@ -8,6 +8,7 @@
 
 ### Bug Fixes
 - Allow BESU_CONFIG_FILE environment to specify TOML file [#2455](https://github.com/hyperledger/besu/issues/2455)
+- Fix bug with private contracts not able to call public contracts that call public contracts [#2816](https://github.com/hyperledger/besu/pull/2816)
 
 ### Early Access Features
 
