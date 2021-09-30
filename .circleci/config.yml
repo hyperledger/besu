@@ -339,6 +339,10 @@ workflows:
             - besu-dockerhub-ro
             - besu-dockerhub-rw
             - besu-acr-rw
+      - request-benchmark:
+          type: approval
+          requires:
+            - publishDocker
       - benchmark:
           filters:
             branches:
@@ -346,4 +350,5 @@ workflows:
                 - main
                 - /^release-.*/
           requires:
+            - request-benchmark
             - publishDocker
