@@ -23,45 +23,44 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({
-  "blockNumber",
   "blockHash",
   "parentHash",
-  "logsBloom",
-  "transactionsRoot",
+  "coinbase",
   "stateRoot",
-  "receiptsRoot",
-  "extraData",
-  "baseFee",
+  "receiptRoot",
+  "logsBloom",
+  "random",
+  "blockNumber",
   "gasLimit",
   "gasUsed",
   "timestamp",
-  "transactions",
-  "coinbase"
+  "extraData",
+  "baseFee",
+  "transactions"
 })
 public class ExecutionBlockResult {
-  private final String blockNumber;
   protected final String blockHash;
   private final String parentHash;
-  private final String logsBloom;
-  private final String transactionsRoot;
+  private final String coinbase;
   private final String stateRoot;
-  private final String receiptsRoot;
-  private final String extraData;
-  private final String baseFeePerGas;
+  private final String receiptRoot;
+  private final String logsBloom;
+  private final String random;
+  private final String blockNumber;
   private final String gasLimit;
   private final String gasUsed;
   private final String timestamp;
+  private final String extraData;
+  private final String baseFeePerGas;
   protected final List<String> transactions;
-  private final String coinbase;
 
   public ExecutionBlockResult(final BlockHeader header, final List<String> transactions) {
     this.blockNumber = Quantity.create(header.getNumber());
     this.blockHash = header.getHash().toString();
     this.parentHash = header.getParentHash().toString();
     this.logsBloom = header.getLogsBloom().toString();
-    this.transactionsRoot = header.getTransactionsRoot().toString();
     this.stateRoot = header.getStateRoot().toString();
-    this.receiptsRoot = header.getReceiptsRoot().toString();
+    this.receiptRoot = header.getReceiptsRoot().toString();
     this.extraData = header.getExtraData().toString();
     this.baseFeePerGas = header.getBaseFee().map(Quantity::create).orElse(null);
     this.gasLimit = Quantity.create(header.getGasLimit());
@@ -69,9 +68,12 @@ public class ExecutionBlockResult {
     this.timestamp = Quantity.create(header.getTimestamp());
     this.transactions = transactions;
     this.coinbase = header.getCoinbase().toString();
+
+    // TODO: should have an optional field for random rather than repurposing difficulty
+    this.random = header.getDifficulty().toHexString();
   }
 
-  @JsonGetter(value = "number")
+  @JsonGetter(value = "blockNumber")
   public String getNumber() {
     return blockNumber;
   }
@@ -91,9 +93,9 @@ public class ExecutionBlockResult {
     return logsBloom;
   }
 
-  @JsonGetter(value = "transactionsRoot")
-  public String getTransactionsRoot() {
-    return transactionsRoot;
+  @JsonGetter(value = "random")
+  public String getRandom() {
+    return random;
   }
 
   @JsonGetter(value = "stateRoot")
@@ -102,8 +104,8 @@ public class ExecutionBlockResult {
   }
 
   @JsonGetter(value = "receiptsRoot")
-  public String getReceiptsRoot() {
-    return receiptsRoot;
+  public String getReceiptRoot() {
+    return receiptRoot;
   }
 
   @JsonGetter(value = "extraData")
