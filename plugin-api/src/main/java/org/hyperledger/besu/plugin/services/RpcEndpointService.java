@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import java.util.function.Function;
 
 /**
- * This service allows you to add method references and functions exposed via RPC endpoints.
+ * This service allows you to add functions exposed via RPC endpoints.
  *
  * <p>This service will be available during the registration callback and must be used during the
  * registration callback. RPC endpoints are configured prior to the start callback and all endpoints
