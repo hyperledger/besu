@@ -31,13 +31,9 @@ import org.apache.logging.log4j.Logger;
 
 public class MergeContext {
   private static final Logger LOG = LogManager.getLogger();
+  private static MergeContext singleton;
 
-  // TODO: configure static terminal total difficulty,
-  //      a value of 0 means we will be unable to sync PoW blocks
-  public static final Difficulty STATIC_TERMINAL_TOTAL_DIFFICULTY = Difficulty.ZERO;
-
-  private final AtomicReference<Difficulty> terminalTotalDifficulty =
-      new AtomicReference<>(STATIC_TERMINAL_TOTAL_DIFFICULTY);
+  private final AtomicReference<Difficulty> terminalTotalDifficulty;
 
   private final Map<PayloadIdentifier, Block> blocksInProgressById = new ConcurrentHashMap<>();
 
@@ -48,8 +44,21 @@ public class MergeContext {
   // TODO: persist this to storage https://github.com/ConsenSys/protocol-misc/issues/478
   AtomicReference<BlockHeader> lastFinalized = new AtomicReference<>();
 
-  public void setTerminalTotalDifficulty(final Difficulty newTerminalTotalDifficulty) {
+  private MergeContext() {
+    this.terminalTotalDifficulty = new AtomicReference<>(Difficulty.ZERO);
+  }
+
+  public static synchronized MergeContext get() {
+    // TODO: get rid of singleton
+    if (singleton == null) {
+      singleton = new MergeContext();
+    }
+    return singleton;
+  }
+
+  public MergeContext setTerminalTotalDifficulty(final Difficulty newTerminalTotalDifficulty) {
     this.terminalTotalDifficulty.set(newTerminalTotalDifficulty);
+    return this;
   }
 
   public boolean isPostMerge(final BlockHeader blockheader) {

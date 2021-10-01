@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
@@ -277,6 +278,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     } else {
       return getLondonBlockNumber();
     }
+  }
+
+  @Override
+  public Optional<UInt256> getTerminalTotalDifficulty() {
+    return getOptionalBigInteger("terminaltotaldifficulty").map(UInt256::valueOf);
   }
 
   @Override

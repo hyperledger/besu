@@ -62,7 +62,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
         goQuorumPrivacyParameters);
-    this.mergeContext = MergeContextFactory.get();
+    this.mergeContext = MergeContext.get();
   }
 
   @Override

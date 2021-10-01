@@ -15,13 +15,13 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
-import org.hyperledger.besu.consensus.merge.MergeContextFactory;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -65,7 +65,13 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    return MergeContextFactory.get();
+    return MergeContext.get()
+        .setTerminalTotalDifficulty(
+            genesisConfig
+                .getConfigOptions(genesisConfigOverrides)
+                .getTerminalTotalDifficulty()
+                .map(Difficulty::of)
+                .orElse(Difficulty.ZERO));
   }
 
   @Override
