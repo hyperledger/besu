@@ -48,6 +48,7 @@ import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
+import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
 import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
@@ -270,6 +271,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // stable CLI options
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
+  private final NodePrivateKeyFileOption nodePrivateKeyFileOption =
+      NodePrivateKeyFileOption.create();
 
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
@@ -323,13 +326,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Genesis file. Setting this option makes --network option ignored and requires --network-id to be set.")
   private final File genesisFile = null;
-
-  @CommandLine.Option(
-      names = {"--node-private-key-file"},
-      paramLabel = MANDATORY_PATH_FORMAT_HELP,
-      description =
-          "The node's private key file (default: a file named \"key\" in the Besu data folder)")
-  private final File nodePrivateKeyFile = null;
 
   @Option(
       names = "--identity",
@@ -1249,8 +1245,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             rlpBlockExporterFactory,
             resultHandler.out()));
     commandLine.addSubcommand(
-        PublicKeySubCommand.COMMAND_NAME,
-        new PublicKeySubCommand(resultHandler.out(), this::buildNodeKey));
+        PublicKeySubCommand.COMMAND_NAME, new PublicKeySubCommand(resultHandler.out()));
     commandLine.addSubcommand(
         PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(resultHandler.out()));
     commandLine.addSubcommand(RetestethSubCommand.COMMAND_NAME, new RetestethSubCommand());
@@ -1280,6 +1275,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void handleStableOptions() {
     commandLine.addMixin("Ethstats", ethstatsOptions);
+    commandLine.addMixin("Private key file", nodePrivateKeyFileOption);
   }
 
   private void handleUnstableOptions() {
@@ -1330,12 +1326,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private SecurityModule defaultSecurityModule() {
-    return new KeyPairSecurityModule(loadKeyPair());
+    return new KeyPairSecurityModule(loadKeyPair(nodePrivateKeyFileOption.getNodePrivateKeyFile()));
   }
 
-  @VisibleForTesting
-  KeyPair loadKeyPair() {
-    return KeyPairUtil.loadKeyPair(nodePrivateKeyFile());
+  // loadKeyPair() is public because it is accessed by subcommands
+  public KeyPair loadKeyPair(final File nodePrivateKeyFile) {
+    return KeyPairUtil.loadKeyPair(resolveNodePrivateKeyFile(nodePrivateKeyFile));
   }
 
   private void parse(
@@ -1590,7 +1586,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         !SyncMode.FAST.equals(syncMode),
         singletonList("--fast-sync-min-peers"));
 
-    if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE) && nodePrivateKeyFile != null) {
+    if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
+        && nodePrivateKeyFileOption.getNodePrivateKeyFile() != null) {
       logger.warn(
           DEPENDENCY_WARNING_MSG,
           "--node-private-key-file",
@@ -1739,7 +1736,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .maxOmmerDepth(unstableMiningOptions.getMaxOmmersDepth())
                 .build())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
-        .nodeKey(buildNodeKey())
+        .nodeKey(new NodeKey(securityModule()))
         .metricsSystem(metricsSystem.get())
         .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
         .privacyParameters(privacyParameters(storageProvider))
@@ -2563,11 +2560,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  @VisibleForTesting
-  NodeKey buildNodeKey() {
-    return new NodeKey(securityModule());
-  }
-
   private SecurityModule securityModule() {
     return securityModuleService
         .getByName(securityModuleName)
@@ -2575,7 +2567,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .get();
   }
 
-  private File nodePrivateKeyFile() {
+  private File resolveNodePrivateKeyFile(final File nodePrivateKeyFile) {
     return Optional.ofNullable(nodePrivateKeyFile)
         .orElseGet(() -> KeyPairUtil.getDefaultKeyFile(dataDir()));
   }
