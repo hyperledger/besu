@@ -68,7 +68,7 @@ public class RpcEndpointServicePluginTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void canThrowExceptions() throws IOException {
+  public void exceptionsInPluginMethodReturnError() throws IOException {
     ObjectNode resultJson = callTestMethod("tests_throwException", List.of());
     assertThat(resultJson.get("error").get("message").asText()).isEqualTo("Internal error");
   }
