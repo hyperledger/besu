@@ -58,7 +58,7 @@ public class ExecutionPayloadParameter {
       @JsonProperty("gasUsed") final UnsignedLongParameter gasUsed,
       @JsonProperty("timestamp") final UnsignedLongParameter timestamp,
       @JsonProperty("extraData") final String extraData,
-      @JsonProperty("receiptsRoot") final Hash receiptsRoot,
+      @JsonProperty("receiptRoot") final Hash receiptsRoot,
       @JsonProperty("logsBloom") final LogsBloomFilter logsBloom,
       @JsonProperty("random") final String random,
       @JsonProperty("transactions") final List<String> transactions) {

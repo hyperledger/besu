@@ -56,7 +56,7 @@ public class MergeBlockValidator extends MainnetBlockValidator {
   @Override
   protected Result processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
-    if (mergeContext.isPostMerge(block.getHeader())) {
+    if (!mergeContext.isPostMerge(block.getHeader())) {
       return super.processBlock(context, worldState, block);
     }
 

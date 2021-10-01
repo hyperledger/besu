@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
+import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collections;
@@ -50,12 +52,17 @@ public class MergeCoordinator implements MiningCoordinator {
   final BiFunction<BlockHeader, Bytes32, MergeBlockCreator> mergeBlockCreator;
   final AtomicReference<Bytes> extraData = new AtomicReference<>(Bytes.fromHexString("0x"));
   private final MergeContext mergeContext;
+  private final BlockValidator blockValidator;
+  private final ProtocolContext protocolContext;
 
   public MergeCoordinator(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final AbstractPendingTransactionsSorter pendingTransactions,
-      final MiningParameters miningParams) {
+      final MiningParameters miningParams,
+      final BlockValidator blockValidator) {
+    this.protocolContext = protocolContext;
+    this.blockValidator = blockValidator;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.miningParameters = miningParams;
     this.targetGasLimit =
@@ -151,23 +158,32 @@ public class MergeCoordinator implements MiningCoordinator {
     final MergeBlockCreator mergeBlockCreator = this.mergeBlockCreator.apply(parentHeader, random);
 
     // put the empty block in first
-    mergeContext.putPayloadById(
-        payloadIdentifier,
-        mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp));
+    final Block emptyBlock =
+        mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp);
+    executePayload(emptyBlock);
+    mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
 
     // start working on a full block and update the associated value when it's ready
     CompletableFuture.supplyAsync(
             () -> mergeBlockCreator.createBlock(Optional.empty(), random, timestamp))
         .orTimeout(12, TimeUnit.SECONDS)
         .whenComplete(
-            (block, throwable) -> {
+            (bestBlock, throwable) -> {
               if (throwable != null) {
                 LOG.warn("timed out attempting to create block", throwable);
               } else {
-                mergeContext.replacePayloadById(payloadIdentifier, block);
+                executePayload(bestBlock);
+                mergeContext.replacePayloadById(payloadIdentifier, bestBlock);
               }
             });
 
     return payloadIdentifier;
+  }
+
+  public boolean executePayload(final Block block) {
+    return blockValidator
+        .validateAndProcessBlock(
+            protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE)
+        .isPresent();
   }
 }

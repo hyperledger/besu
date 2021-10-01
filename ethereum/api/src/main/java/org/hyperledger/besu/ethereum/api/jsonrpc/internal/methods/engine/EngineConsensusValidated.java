@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ConsensusStatus.VALID;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionConsensusValidatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -45,16 +45,18 @@ public class EngineConsensusValidated extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    final Hash blockhash = requestContext.getRequiredParameter(0, Hash.class);
-    final String consensuStatus = requestContext.getRequiredParameter(1, String.class);
+    final ExecutionConsensusValidatedParameter consensusParam =
+        requestContext.getRequiredParameter(0, ExecutionConsensusValidatedParameter.class);
 
-    if (VALID.equalsIgnoreCase(consensuStatus) && !mergeContext.setConsensusValidated(blockhash)) {
+    if (VALID.equals(consensusParam.getStatus())
+        && !mergeContext.setConsensusValidated(consensusParam.getBlockHash())) {
 
       // return an error if unable to set consensus status for the requested blockhash
-      LOG.debug("Failed to set consensus validated for block {}", blockhash);
+      LOG.debug("Failed to set consensus validated for block {}", consensusParam.getBlockHash());
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND);
     }
+    // TODO: remove block by hash if marked invalid
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
   }

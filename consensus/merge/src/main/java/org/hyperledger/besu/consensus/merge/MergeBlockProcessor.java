@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -34,6 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
@@ -114,21 +116,25 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
             // fail any block that takes longer than a slot to execute:
             .orTimeout(12000, TimeUnit.MILLISECONDS);
 
-    return new CandidateBlock(blockHeader, result, candidateWorldState, blockchain);
+    return new CandidateBlock(
+        new Block(blockHeader, new BlockBody(transactions, Collections.emptyList())),
+        result,
+        candidateWorldState,
+        blockchain);
   }
 
   public static class CandidateBlock {
-    final BlockHeader blockHeader;
+    final Block block;
     final CompletableFuture<? extends BlockProcessor.Result> result;
     final CandidateWorldState candidateWorldState;
     final MutableBlockchain blockchain;
 
     CandidateBlock(
-        final BlockHeader blockHeader,
+        final Block block,
         final CompletableFuture<? extends BlockProcessor.Result> result,
         final CandidateWorldState candidateWorldState,
         final MutableBlockchain blockchain) {
-      this.blockHeader = blockHeader;
+      this.block = block;
       this.result = result;
       this.candidateWorldState = candidateWorldState;
       this.blockchain = blockchain;
@@ -139,7 +145,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
     }
 
     public Hash getBlockhash() {
-      return blockHeader.getHash();
+      return block.getHash();
     }
 
     public void setConsensusValidated() {
@@ -169,6 +175,14 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
                     // if new head is candidateBlock, flush and do not wait on consensusValidated:
                     if (getBlockhash().equals(headBlockhash)) {
                       candidateWorldState.flush();
+
+                      // TODO: better async handling
+                      try {
+                        blockchain.appendBlock(block, getResult().get().getReceipts());
+                      } catch (InterruptedException | ExecutionException e) {
+                        LOG.error("Failed to set new head");
+                      }
+
                       flushedBlock = blockchain.getBlockByHash(headBlockhash);
                     }
                     // if we still can't find it, throw.
