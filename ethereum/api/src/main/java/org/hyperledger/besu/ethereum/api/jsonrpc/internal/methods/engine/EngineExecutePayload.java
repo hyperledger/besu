@@ -18,8 +18,8 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.KNOWN;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.VALID;
 
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
@@ -57,14 +56,14 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
   private static final Hash OMMERS_HASH_CONSTANT = BodyValidation.ommersHash(OMMERS_CONSTANT);
   private static final Logger LOG = LogManager.getLogger();
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
-  private final BlockValidator blockValidator;
+  private final MergeCoordinator mergeCoordinator;
 
   public EngineExecutePayload(
       final Vertx vertx,
       final ProtocolContext protocolContext,
-      final BlockValidator blockValidator) {
+      final MergeCoordinator mergeCoordinator) {
     super(vertx, protocolContext);
-    this.blockValidator = blockValidator;
+    this.mergeCoordinator = mergeCoordinator;
   }
 
   @Override
@@ -127,14 +126,8 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
 
       // execute block
       execSuccess =
-          blockValidator
-              .validateAndProcessBlock(
-                  protocolContext,
-                  new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList())),
-                  HeaderValidationMode.FULL,
-                  HeaderValidationMode.NONE // no ommers
-                  )
-              .isPresent();
+          mergeCoordinator.executePayload(
+              new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList())));
     }
 
     // return result response

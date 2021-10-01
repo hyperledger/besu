@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeContextFactory;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
+import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -38,11 +39,17 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
+
+    // TODO: revisit this when totalDifficulty transition is defined.  Since ProtocolSchedule
+    //  doesn't make sense here:
+    BlockValidator blockValidator = protocolSchedule.getByBlockNumber(0).getBlockValidator();
+
     return new MergeCoordinator(
         protocolContext,
         protocolSchedule,
         transactionPool.getPendingTransactions(),
-        miningParameters);
+        miningParameters,
+        blockValidator);
   }
 
   @Override

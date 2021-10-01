@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
-import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
@@ -40,7 +39,6 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final MergeCoordinator mergeCoordinator;
   private final ProtocolContext protocolContext;
-  private final BlockValidator blockValidator;
 
   ExecutionEngineJsonRpcMethods(
       final MiningCoordinator miningCoordinator,
@@ -48,10 +46,6 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final ProtocolSchedule protocolSchedule) {
     this.mergeCoordinator = (MergeCoordinator) miningCoordinator;
     this.protocolContext = protocolContext;
-    // TODO: revisit this when totalDifficulty transition is defined.  Since ProtocolSchedule
-    //  doesn't make sense here:
-    // MergeBlockValidator is required for merge consensus
-    this.blockValidator = protocolSchedule.getByBlockNumber(0).getBlockValidator();
   }
 
   @Override
@@ -65,7 +59,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
     return mapOf(
         new EnginePreparePayload(syncVertx, protocolContext, mergeCoordinator),
         new EngineGetPayload(syncVertx, protocolContext, blockResultFactory),
-        new EngineExecutePayload(syncVertx, protocolContext, blockValidator),
+        new EngineExecutePayload(syncVertx, protocolContext, mergeCoordinator),
         new EngineConsensusValidated(syncVertx, protocolContext),
         new EngineForkchoiceUpdated(syncVertx, protocolContext));
   }

@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionForkChoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
@@ -37,12 +37,12 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    final Hash headBlockHash = requestContext.getRequiredParameter(0, Hash.class);
-    final Hash finalizedBlockHash = requestContext.getRequiredParameter(0, Hash.class);
+    final ExecutionForkChoiceUpdatedParameter forkChoice =
+        requestContext.getRequiredParameter(0, ExecutionForkChoiceUpdatedParameter.class);
 
-    mergeContext.updateForkChoice(headBlockHash, finalizedBlockHash);
+    mergeContext.updateForkChoice(
+        forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
 
-    // TODO: implement me https://github.com/ConsenSys/protocol-misc/issues/478
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
   }
 }
