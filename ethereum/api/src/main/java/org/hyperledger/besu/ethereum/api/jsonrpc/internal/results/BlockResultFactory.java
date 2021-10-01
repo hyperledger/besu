@@ -107,6 +107,16 @@ public class BlockResultFactory {
         true);
   }
 
+  public ExecutionBlockResult executionTransactionComplete(final Block block) {
+    final List<String> txs =
+        block.getBody().getTransactions().stream()
+            .map(TransactionEncoder::encodeOpaqueBytes)
+            .map(Bytes::toHexString)
+            .collect(Collectors.toList());
+
+    return new ExecutionBlockResult(block.getHeader(), txs);
+  }
+
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
     return transactionHash(blockWithMetadata, false);
   }

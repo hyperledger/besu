@@ -14,20 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ConsensusAssembleBlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
 
@@ -38,19 +35,14 @@ import org.apache.logging.log4j.Logger;
 public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
 
   private final BlockResultFactory blockResultFactory;
-  private final MiningCoordinator miningCoordinator;
-  private final Blockchain blockchain;
   private static final Logger LOG = LogManager.getLogger();
 
   public EngineGetPayload(
       final Vertx vertx,
       final ProtocolContext protocolContext,
-      final BlockResultFactory blockResultFactory,
-      final MiningCoordinator miningCoordinator) {
+      final BlockResultFactory blockResultFactory) {
     super(vertx, protocolContext);
     this.blockResultFactory = blockResultFactory;
-    this.miningCoordinator = miningCoordinator;
-    this.blockchain = protocolContext.getBlockchain();
   }
 
   @Override
@@ -60,26 +52,14 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
+    final PayloadIdentifier payloadId = request.getRequiredParameter(0, PayloadIdentifier.class);
 
-    // TODO: this is a naive repurposing of rayonism's consensus_assembleBlock to engine_getPayload.
-    //      We should build a block on engine_preparePayload rather than here.
-    //      https://github.com/ConsenSys/protocol-misc/issues/480
-
-    final ConsensusAssembleBlockParameter blockParams =
-        request.getRequiredParameter(0, ConsensusAssembleBlockParameter.class);
-
-    final Optional<BlockHeader> parentBlockHeader =
-        blockchain.getBlockHeader(blockParams.getParentHash());
-    if (parentBlockHeader.isPresent()) {
-
-      final Optional<Block> block =
-          miningCoordinator.createBlock(parentBlockHeader.get(), blockParams.getTimestamp());
-      if (block.isPresent()) {
-        LOG.trace("assembledBlock " + block.map(b -> b.toString()).orElse(""));
-        return new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            blockResultFactory.opaqueTransactionComplete(block.get()));
-      }
+    final Optional<Block> block = mergeContext.retrieveBlockById(payloadId);
+    if (block.isPresent()) {
+      LOG.trace("assembledBlock " + block.map(Block::toString).orElse(""));
+      return new JsonRpcSuccessResponse(
+          request.getRequest().getId(),
+          blockResultFactory.executionTransactionComplete(block.get()));
     }
     return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND);
   }

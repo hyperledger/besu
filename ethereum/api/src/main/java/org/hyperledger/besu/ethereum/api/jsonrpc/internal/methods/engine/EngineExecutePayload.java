@@ -14,11 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.consensus.merge.MergeContext.ExecutionStatus.INVALID;
-import static org.hyperledger.besu.consensus.merge.MergeContext.ExecutionStatus.KNOWN;
-import static org.hyperledger.besu.consensus.merge.MergeContext.ExecutionStatus.VALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.INVALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.KNOWN;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.VALID;
 
-import org.hyperledger.besu.consensus.merge.MergeContext.ExecutionStatus;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -58,7 +57,6 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
   private static final Hash OMMERS_HASH_CONSTANT = BodyValidation.ommersHash(OMMERS_CONSTANT);
   private static final Logger LOG = LogManager.getLogger();
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
-  private final ProtocolContext protocolContext;
   private final BlockValidator blockValidator;
 
   public EngineExecutePayload(
@@ -66,7 +64,6 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
       final ProtocolContext protocolContext,
       final BlockValidator blockValidator) {
     super(vertx, protocolContext);
-    this.protocolContext = protocolContext;
     this.blockValidator = blockValidator;
   }
 

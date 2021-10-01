@@ -29,11 +29,13 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTran
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class MergeBlockCreator extends AbstractBlockCreator {
 
@@ -46,6 +48,7 @@ public class MergeBlockCreator extends AbstractBlockCreator {
       final ProtocolSchedule protocolSchedule,
       final Wei minTransactionGasPrice,
       final Address miningBeneficiary,
+      final Bytes32 random,
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     super(
@@ -61,12 +64,19 @@ public class MergeBlockCreator extends AbstractBlockCreator {
         parentHeader);
   }
 
+  public Block createBlock(
+      final Optional<List<Transaction>> maybeTransactions,
+      final Bytes32 random,
+      final long timestamp) {
+    return createBlock(Optional.empty(), Optional.of(Collections.emptyList()), timestamp, false);
+  }
+
   @Override
   public Block createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
-    return createBlock(maybeTransactions, Optional.empty(), timestamp, false);
+    throw new UnsupportedOperationException("random is required");
   }
 
   @Override

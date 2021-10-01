@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -29,24 +31,32 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class MergeCoordinator implements MiningCoordinator {
+  private static final Logger LOG = LogManager.getLogger();
 
   final AtomicLong targetGasLimit;
   final MiningParameters miningParameters;
-  final Function<BlockHeader, MergeBlockCreator> mergeBlockCreator;
+  final BiFunction<BlockHeader, Bytes32, MergeBlockCreator> mergeBlockCreator;
   final AtomicReference<Bytes> extraData = new AtomicReference<>(Bytes.fromHexString("0x"));
+  private final MergeContext mergeContext;
 
   public MergeCoordinator(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final AbstractPendingTransactionsSorter pendingTransactions,
       final MiningParameters miningParams) {
+    this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.miningParameters = miningParams;
     this.targetGasLimit =
         miningParameters
@@ -55,7 +65,7 @@ public class MergeCoordinator implements MiningCoordinator {
             .orElse(new AtomicLong(30000000L));
 
     this.mergeBlockCreator =
-        parentHeader ->
+        (parentHeader, random) ->
             new MergeBlockCreator(
                 this.miningParameters.getCoinbase().orElse(Address.ZERO),
                 () -> Optional.of(targetGasLimit.longValue()),
@@ -65,6 +75,7 @@ public class MergeCoordinator implements MiningCoordinator {
                 protocolSchedule,
                 this.miningParameters.getMinTransactionGasPrice(),
                 this.miningParameters.getCoinbase().orElse(Address.ZERO),
+                random,
                 this.miningParameters.getMinBlockOccupancyRatio(),
                 parentHeader);
   }
@@ -113,15 +124,12 @@ public class MergeCoordinator implements MiningCoordinator {
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
-    return Optional.of(
-        mergeBlockCreator
-            .apply(parentHeader)
-            .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis()));
+    throw new UnsupportedOperationException("random is required");
   }
 
   @Override
   public Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp) {
-    return createBlock(parentHeader, Collections.emptyList(), Collections.emptyList());
+    throw new UnsupportedOperationException("random is required");
   }
 
   @Override
@@ -129,7 +137,37 @@ public class MergeCoordinator implements MiningCoordinator {
     if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
       this.targetGasLimit.set(newTargetGasLimit);
     } else {
-      throw new UnsupportedOperationException("Specified target gas limit is invalid");
+      throw new IllegalArgumentException("Specified target gas limit is invalid");
     }
+  }
+
+  public PayloadIdentifier preparePayload(
+      final BlockHeader parentHeader,
+      final Long timestamp,
+      final Bytes32 random,
+      final Address feeRecipient) {
+    // todo feeRecipient
+    final PayloadIdentifier payloadIdentifier = PayloadIdentifier.random();
+    final MergeBlockCreator mergeBlockCreator = this.mergeBlockCreator.apply(parentHeader, random);
+
+    // put the empty block in first
+    mergeContext.putPayloadById(
+        payloadIdentifier,
+        mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp));
+
+    // start working on a full block and update the associated value when it's ready
+    CompletableFuture.supplyAsync(
+            () -> mergeBlockCreator.createBlock(Optional.empty(), random, timestamp))
+        .orTimeout(12, TimeUnit.SECONDS)
+        .whenComplete(
+            (block, throwable) -> {
+              if (throwable != null) {
+                LOG.warn("timed out attempting to create block", throwable);
+              } else {
+                mergeContext.replacePayloadById(payloadIdentifier, block);
+              }
+            });
+
+    return payloadIdentifier;
   }
 }
