@@ -139,6 +139,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
+    return createBlock(maybeTransactions, maybeOmmers, timestamp, true);
+  }
+
+  protected Block createBlock(
+      final Optional<List<Transaction>> maybeTransactions,
+      final Optional<List<BlockHeader>> maybeOmmers,
+      final long timestamp,
+      boolean rewardCoinbase) {
     try {
       final ProcessableBlockHeader processableBlockHeader = createPendingBlockHeader(timestamp);
 
@@ -160,8 +168,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(processableBlockHeader.getNumber());
 
-      // TODO: FROMRAYONISM work this into blockprocessor
-      if (!MergeOptions.isMergeEnabled()
+      if (rewardCoinbase
           && !rewardBeneficiary(
               disposableWorldState,
               processableBlockHeader,
@@ -186,11 +193,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .receiptsRoot(BodyValidation.receiptsRoot(transactionResults.getReceipts()))
               .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
               .gasUsed(transactionResults.getCumulativeGasUsed())
-              .extraData(
-                  // TODO: FROMRAYONISM is extraData still deprecated for the merge?
-                  MergeOptions.isMergeEnabled()
-                      ? Bytes.EMPTY
-                      : extraDataCalculator.get(parentHeader))
+              .extraData(extraDataCalculator.get(parentHeader))
               .buildSealableBlockHeader();
 
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);

@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 
@@ -211,8 +210,7 @@ public class BlockHeaderBuilder {
     transactionsRoot(sealableBlockHeader.getTransactionsRoot());
     receiptsRoot(sealableBlockHeader.getReceiptsRoot());
     logsBloom(sealableBlockHeader.getLogsBloom());
-    difficulty(
-        MergeOptions.isMergeEnabled() ? Difficulty.ONE : sealableBlockHeader.getDifficulty());
+    difficulty(sealableBlockHeader.getDifficulty());
     number(sealableBlockHeader.getNumber());
     gasLimit(sealableBlockHeader.getGasLimit());
     gasUsed(sealableBlockHeader.getGasUsed());

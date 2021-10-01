@@ -38,7 +38,11 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
-    return new MergeCoordinator(miningParameters);
+    return new MergeCoordinator(
+        protocolContext,
+        protocolSchedule,
+        transactionPool.getPendingTransactions(),
+        miningParameters);
   }
 
   @Override

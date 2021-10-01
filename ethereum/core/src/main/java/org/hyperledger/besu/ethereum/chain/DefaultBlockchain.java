@@ -134,7 +134,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         () -> chainHeadOmmerCount);
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
-    // TODO: FROMRAYONISM
+    // TODO: FROMRAYONISM, need to account for fixed total difficulty
     this.blockChoiceRule =
         MergeOptions.isMergeEnabled()
             ? // always regard the new block as "worse" because we don't reorg anymore; the
@@ -315,6 +315,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     final Hash newBlockHash = newBlock.getHash();
     try {
+      // TODO: FROMRAYONISM, not updating chain head if merge is enabled, revisit.
       if ((chainHead == null || newBlock.getHeader().getParentHash().equals(chainHead))
           && !MergeOptions.isMergeEnabled()) {
         // This block advances the chain, update the chain head

@@ -35,7 +35,7 @@ public class ExecutionPayloadParameter {
   private final Hash parentHash;
   private final Address coinbase;
   private final Hash stateRoot;
-  private final long number;
+  private final long blockNumber;
   private final Bytes32 random;
   private final long baseFeePerGas;
   private final long gasLimit;
@@ -52,8 +52,8 @@ public class ExecutionPayloadParameter {
       @JsonProperty("parentHash") final Hash parentHash,
       @JsonProperty("miner") final Address coinbase,
       @JsonProperty("stateRoot") final Hash stateRoot,
-      @JsonProperty("number") final UnsignedLongParameter number,
-      @JsonProperty("baseFeePerGas") final long baseFeePerGas,
+      @JsonProperty("blockNumber") final UnsignedLongParameter blockNumber,
+      @JsonProperty("baseFeePerGas") final UnsignedLongParameter baseFeePerGas,
       @JsonProperty("gasLimit") final UnsignedLongParameter gasLimit,
       @JsonProperty("gasUsed") final UnsignedLongParameter gasUsed,
       @JsonProperty("timestamp") final UnsignedLongParameter timestamp,
@@ -66,8 +66,8 @@ public class ExecutionPayloadParameter {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.stateRoot = stateRoot;
-    this.number = number.getValue();
-    this.baseFeePerGas = baseFeePerGas;
+    this.blockNumber = blockNumber.getValue();
+    this.baseFeePerGas = baseFeePerGas.getValue();
     this.gasLimit = gasLimit.getValue();
     this.gasUsed = gasUsed.getValue();
     this.timestamp = timestamp.getValue();
@@ -94,8 +94,8 @@ public class ExecutionPayloadParameter {
     return stateRoot;
   }
 
-  public long getNumber() {
-    return number;
+  public long getBlockNumber() {
+    return blockNumber;
   }
 
   public long getBaseFeePerGas() {
