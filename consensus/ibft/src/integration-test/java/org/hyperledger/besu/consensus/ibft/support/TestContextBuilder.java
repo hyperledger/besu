@@ -295,7 +295,7 @@ public class TestContextBuilder {
 
     final ProtocolSchedule protocolSchedule =
         IbftProtocolSchedule.create(
-            genesisConfigOptions, IBFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT_CONFIG);
+            genesisConfigOptions, IBFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController

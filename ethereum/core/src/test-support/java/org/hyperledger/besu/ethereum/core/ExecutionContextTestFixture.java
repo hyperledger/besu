@@ -122,7 +122,7 @@ public class ExecutionContextTestFixture {
                     new PrivacyParameters(),
                     false,
                     genesisConfigFile.getConfigOptions().isQuorum(),
-                    EvmConfiguration.DEFAULT_CONFIG)
+                    EvmConfiguration.DEFAULT)
                 .createProtocolSchedule();
       }
       if (keyValueStorage == null) {

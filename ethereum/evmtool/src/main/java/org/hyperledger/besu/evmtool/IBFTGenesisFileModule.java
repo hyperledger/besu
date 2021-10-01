@@ -37,7 +37,7 @@ class IBFTGenesisFileModule extends GenesisFileModule {
       final GenesisConfigOptions configOptions,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     return IbftProtocolSchedule.create(
-        configOptions, bftExtraDataEncoder, EvmConfiguration.DEFAULT_CONFIG);
+        configOptions, bftExtraDataEncoder, EvmConfiguration.DEFAULT);
   }
 
   @Override

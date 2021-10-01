@@ -248,7 +248,7 @@ public abstract class BesuControllerBuilder {
     checkNotNull(nodeKey, "Missing node key");
     checkNotNull(storageProvider, "Must supply a storage provider");
     checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
-    checkNotNull(evmConfiguration, "Missing jumpdest cache config");
+    checkNotNull(evmConfiguration, "Missing evm config");
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();

@@ -55,7 +55,7 @@ public class CliqueProtocolScheduleTest {
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule protocolSchedule =
-        CliqueProtocolSchedule.create(config, NODE_KEY, false, EvmConfiguration.DEFAULT_CONFIG);
+        CliqueProtocolSchedule.create(config, NODE_KEY, false, EvmConfiguration.DEFAULT);
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockNumber(1);
     final ProtocolSpec tangerineWhistleSpec = protocolSchedule.getByBlockNumber(2);
@@ -74,7 +74,7 @@ public class CliqueProtocolScheduleTest {
                 GenesisConfigFile.DEFAULT.getConfigOptions(),
                 NODE_KEY,
                 false,
-                EvmConfiguration.DEFAULT_CONFIG)
+                EvmConfiguration.DEFAULT)
             .getByBlockNumber(0);
 
     assertThat(homestead.getName()).isEqualTo("Frontier");
@@ -92,7 +92,7 @@ public class CliqueProtocolScheduleTest {
     assertThatThrownBy(
             () ->
                 CliqueProtocolSchedule.create(
-                    genesisConfig, NODE_KEY, false, EvmConfiguration.DEFAULT_CONFIG))
+                    genesisConfig, NODE_KEY, false, EvmConfiguration.DEFAULT))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -106,7 +106,7 @@ public class CliqueProtocolScheduleTest {
     assertThatThrownBy(
             () ->
                 CliqueProtocolSchedule.create(
-                    genesisConfig, NODE_KEY, false, EvmConfiguration.DEFAULT_CONFIG))
+                    genesisConfig, NODE_KEY, false, EvmConfiguration.DEFAULT))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -121,7 +121,7 @@ public class CliqueProtocolScheduleTest {
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule protocolSchedule =
-        CliqueProtocolSchedule.create(config, NODE_KEY, false, EvmConfiguration.DEFAULT_CONFIG);
+        CliqueProtocolSchedule.create(config, NODE_KEY, false, EvmConfiguration.DEFAULT);
 
     BlockHeader emptyFrontierParent =
         headerBuilder

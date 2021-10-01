@@ -111,7 +111,7 @@ public class JsonRpcHttpServiceTestBase {
                     synchronizer,
                     MainnetProtocolSchedule.fromConfig(
                         new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
-                        EvmConfiguration.DEFAULT_CONFIG),
+                        EvmConfiguration.DEFAULT),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(PoWMiningCoordinator.class),

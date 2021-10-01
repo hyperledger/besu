@@ -79,7 +79,7 @@ public class LondonSStoreOperationGasCostTest {
   public void setUp() {
     protocolSchedule =
         MainnetProtocolSchedule.fromConfig(
-            new StubGenesisConfigOptions().londonBlock(0), EvmConfiguration.DEFAULT_CONFIG);
+            new StubGenesisConfigOptions().londonBlock(0), EvmConfiguration.DEFAULT);
     codeExecutor = new TestCodeExecutor(protocolSchedule);
   }
 

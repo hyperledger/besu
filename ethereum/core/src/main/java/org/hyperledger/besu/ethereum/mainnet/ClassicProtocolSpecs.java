@@ -241,7 +241,7 @@ public class ClassicProtocolSpecs {
             evmConfiguration)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
-            (gasCalculator, jumpDestCacheConf) ->
+            (gasCalculator, evmConfig) ->
                 MainnetEVMs.istanbul(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)

@@ -188,7 +188,7 @@ public class PrivacyReorgTest {
             .privacyParameters(privacyParameters)
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
-            .evmConfiguration(EvmConfiguration.DEFAULT_CONFIG)
+            .evmConfiguration(EvmConfiguration.DEFAULT)
             .build();
   }
 

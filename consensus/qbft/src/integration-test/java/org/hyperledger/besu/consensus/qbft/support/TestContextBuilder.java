@@ -398,7 +398,7 @@ public class TestContextBuilder {
 
     final ProtocolSchedule protocolSchedule =
         QbftProtocolSchedule.create(
-            genesisConfigOptions, BFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT_CONFIG);
+            genesisConfigOptions, BFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController

@@ -31,7 +31,7 @@ public class FixedProtocolScheduleTest {
 
     final ProtocolSchedule schedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(), EvmConfiguration.DEFAULT_CONFIG);
+            GenesisConfigFile.development().getConfigOptions(), EvmConfiguration.DEFAULT);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
@@ -64,7 +64,7 @@ public class FixedProtocolScheduleTest {
 
     final ProtocolSchedule schedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.ecip1049dev().getConfigOptions(), EvmConfiguration.DEFAULT_CONFIG);
+            GenesisConfigFile.ecip1049dev().getConfigOptions(), EvmConfiguration.DEFAULT);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 

@@ -90,7 +90,7 @@ public class CliqueBlockCreatorTest {
             GenesisConfigFile.DEFAULT.getConfigOptions(),
             proposerNodeKey,
             false,
-            EvmConfiguration.DEFAULT_CONFIG);
+            EvmConfiguration.DEFAULT);
 
     final Address otherAddress = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     validatorList.add(otherAddress);

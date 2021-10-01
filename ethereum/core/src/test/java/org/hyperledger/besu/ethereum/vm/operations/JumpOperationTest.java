@@ -83,7 +83,7 @@ public class JumpOperationTest {
     final OperationRegistry registry = new OperationRegistry();
     registry.put(new JumpOperation(gasCalculator));
     registry.put(new JumpDestOperation(gasCalculator));
-    evm = new EVM(registry, gasCalculator, EvmConfiguration.DEFAULT_CONFIG);
+    evm = new EVM(registry, gasCalculator, EvmConfiguration.DEFAULT);
   }
 
   @Test

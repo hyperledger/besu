@@ -89,7 +89,7 @@ public class BftBlockCreatorTest {
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
                 .getConfigOptions(),
             false,
-            EvmConfiguration.DEFAULT_CONFIG);
+            EvmConfiguration.DEFAULT);
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,

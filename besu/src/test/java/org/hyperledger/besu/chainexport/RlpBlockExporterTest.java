@@ -93,7 +93,7 @@ public final class RlpBlockExporterTest {
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .gasLimitCalculator(GasLimitCalculator.constant())
-        .evmConfiguration(EvmConfiguration.DEFAULT_CONFIG)
+        .evmConfiguration(EvmConfiguration.DEFAULT)
         .build();
   }
 

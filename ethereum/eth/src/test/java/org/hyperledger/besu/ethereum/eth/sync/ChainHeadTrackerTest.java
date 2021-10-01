@@ -52,9 +52,7 @@ public class ChainHeadTrackerTest {
 
   private final ProtocolSchedule protocolSchedule =
       FixedDifficultyProtocolSchedule.create(
-          GenesisConfigFile.development().getConfigOptions(),
-          false,
-          EvmConfiguration.DEFAULT_CONFIG);
+          GenesisConfigFile.development().getConfigOptions(), false, EvmConfiguration.DEFAULT);
 
   private final TrailingPeerLimiter trailingPeerLimiter = mock(TrailingPeerLimiter.class);
 

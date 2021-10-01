@@ -427,7 +427,7 @@ public abstract class JsonBlockImporterTest {
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .gasLimitCalculator(GasLimitCalculator.constant())
-        .evmConfiguration(EvmConfiguration.DEFAULT_CONFIG)
+        .evmConfiguration(EvmConfiguration.DEFAULT)
         .build();
   }
 }

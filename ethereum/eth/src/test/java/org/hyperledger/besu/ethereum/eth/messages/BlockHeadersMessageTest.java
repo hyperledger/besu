@@ -63,7 +63,7 @@ public final class BlockHeadersMessageTest {
             FixedDifficultyProtocolSchedule.create(
                 GenesisConfigFile.development().getConfigOptions(),
                 false,
-                EvmConfiguration.DEFAULT_CONFIG));
+                EvmConfiguration.DEFAULT));
 
     for (int i = 0; i < 50; ++i) {
       Assertions.assertThat(readHeaders.get(i)).isEqualTo(headers.get(i));

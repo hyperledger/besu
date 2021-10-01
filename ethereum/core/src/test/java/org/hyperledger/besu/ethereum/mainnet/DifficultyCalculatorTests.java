@@ -60,7 +60,7 @@ public class DifficultyCalculatorTests {
         new Object[] {
           "/BasicTests/difficultyMainNetwork.json",
           MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.mainnet().getConfigOptions(), EvmConfiguration.DEFAULT_CONFIG)
+              GenesisConfigFile.mainnet().getConfigOptions(), EvmConfiguration.DEFAULT)
         },
         new Object[] {
           "/BasicTests/difficultyRopsten.json",
@@ -70,56 +70,56 @@ public class DifficultyCalculatorTests {
                           GenesisConfigFile.class.getResource("/ropsten.json"),
                           StandardCharsets.UTF_8))
                   .getConfigOptions(),
-              EvmConfiguration.DEFAULT_CONFIG)
+              EvmConfiguration.DEFAULT)
         },
         new Object[] {
           "/BasicTests/difficultyFrontier.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\": {\"frontierBlock\":0}}")
                   .getConfigOptions(),
-              EvmConfiguration.DEFAULT_CONFIG)
+              EvmConfiguration.DEFAULT)
         },
         new Object[] {
           "/BasicTests/difficultyHomestead.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\": {\"homesteadBlock\":0}}")
                   .getConfigOptions(),
-              EvmConfiguration.DEFAULT_CONFIG)
+              EvmConfiguration.DEFAULT)
         },
         new Object[] {
           "/BasicTests/difficultyByzantium.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\": {\"byzantiumBlock\":0}}")
                   .getConfigOptions(),
-              EvmConfiguration.DEFAULT_CONFIG)
+              EvmConfiguration.DEFAULT)
         },
         new Object[] {
           "/BasicTests/difficultyConstantinople.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\": {\"constantinopleBlock\":0}}")
                   .getConfigOptions(),
-              EvmConfiguration.DEFAULT_CONFIG)
+              EvmConfiguration.DEFAULT)
         },
         new Object[] {
           "/BasicTests/difficultyEIP2384.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
                   .getConfigOptions(),
-              EvmConfiguration.DEFAULT_CONFIG)
+              EvmConfiguration.DEFAULT)
         },
         new Object[] {
           "/BasicTests/difficultyEIP2384_random.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
                   .getConfigOptions(),
-              EvmConfiguration.DEFAULT_CONFIG)
+              EvmConfiguration.DEFAULT)
         },
         new Object[] {
           "/BasicTests/difficultyEIP2384_random_to20M.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
                   .getConfigOptions(),
-              EvmConfiguration.DEFAULT_CONFIG)
+              EvmConfiguration.DEFAULT)
         });
   }
 

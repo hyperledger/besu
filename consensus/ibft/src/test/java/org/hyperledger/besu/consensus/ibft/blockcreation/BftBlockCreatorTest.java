@@ -105,7 +105,7 @@ public class BftBlockCreatorTest {
             PrivacyParameters.DEFAULT,
             false,
             bftExtraDataEncoder,
-            EvmConfiguration.DEFAULT_CONFIG);
+            EvmConfiguration.DEFAULT);
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,

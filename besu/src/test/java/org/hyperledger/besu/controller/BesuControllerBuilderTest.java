@@ -141,7 +141,7 @@ public class BesuControllerBuilderTest {
             .transactionPoolConfiguration(poolConfiguration)
             .nodeKey(nodeKey)
             .storageProvider(storageProvider)
-            .evmConfiguration(EvmConfiguration.DEFAULT_CONFIG)
+            .evmConfiguration(EvmConfiguration.DEFAULT)
             .networkId(networkId);
   }
 

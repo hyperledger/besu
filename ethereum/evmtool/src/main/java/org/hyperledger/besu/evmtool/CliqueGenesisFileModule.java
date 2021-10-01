@@ -43,7 +43,7 @@ class CliqueGenesisFileModule extends GenesisFileModule {
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     // dagger can handle this magic one day
     return CliqueProtocolSchedule.create(
-        configOptions, nodeKey, revertReasonEnabled, EvmConfiguration.DEFAULT_CONFIG);
+        configOptions, nodeKey, revertReasonEnabled, EvmConfiguration.DEFAULT);
   }
 
   @Override

@@ -71,7 +71,7 @@ public final class BlockBodiesMessageTest {
                 FixedDifficultyProtocolSchedule.create(
                     GenesisConfigFile.development().getConfigOptions(),
                     false,
-                    EvmConfiguration.DEFAULT_CONFIG))
+                    EvmConfiguration.DEFAULT))
             .iterator();
     for (int i = 0; i < 50; ++i) {
       Assertions.assertThat(readBodies.next()).isEqualTo(bodies.get(i));

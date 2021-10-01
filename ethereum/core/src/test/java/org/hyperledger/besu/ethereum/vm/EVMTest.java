@@ -44,7 +44,7 @@ public class EVMTest {
 
   @Before
   public void setup() {
-    evm = new EVM(operationRegistry, gasCalculator, EvmConfiguration.DEFAULT_CONFIG);
+    evm = new EVM(operationRegistry, gasCalculator, EvmConfiguration.DEFAULT);
   }
 
   @Test

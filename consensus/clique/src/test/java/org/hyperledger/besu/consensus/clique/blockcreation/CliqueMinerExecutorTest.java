@@ -92,7 +92,7 @@ public class CliqueMinerExecutorTest {
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             CliqueProtocolSchedule.create(
-                GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT_CONFIG),
+                GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT),
             new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
@@ -137,7 +137,7 @@ public class CliqueMinerExecutorTest {
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             CliqueProtocolSchedule.create(
-                GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT_CONFIG),
+                GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT),
             new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
@@ -182,7 +182,7 @@ public class CliqueMinerExecutorTest {
         new CliqueMinerExecutor(
             cliqueProtocolContext,
             CliqueProtocolSchedule.create(
-                GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT_CONFIG),
+                GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT),
             new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,

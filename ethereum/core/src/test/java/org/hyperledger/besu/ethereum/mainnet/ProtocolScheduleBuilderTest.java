@@ -57,7 +57,7 @@ public class ProtocolScheduleBuilderTest {
             new PrivacyParameters(),
             false,
             false,
-            EvmConfiguration.DEFAULT_CONFIG);
+            EvmConfiguration.DEFAULT);
 
     final MutableProtocolSchedule schedule =
         (MutableProtocolSchedule) builder.createProtocolSchedule();
@@ -86,7 +86,7 @@ public class ProtocolScheduleBuilderTest {
             new PrivacyParameters(),
             false,
             false,
-            EvmConfiguration.DEFAULT_CONFIG);
+            EvmConfiguration.DEFAULT);
 
     final MutableProtocolSchedule schedule =
         (MutableProtocolSchedule) builder.createProtocolSchedule();
@@ -115,7 +115,7 @@ public class ProtocolScheduleBuilderTest {
             new PrivacyParameters(),
             false,
             false,
-            EvmConfiguration.DEFAULT_CONFIG);
+            EvmConfiguration.DEFAULT);
 
     final MutableProtocolSchedule schedule =
         (MutableProtocolSchedule) builder.createProtocolSchedule();

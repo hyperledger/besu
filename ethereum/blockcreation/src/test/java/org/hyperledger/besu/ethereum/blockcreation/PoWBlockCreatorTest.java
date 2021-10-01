@@ -78,7 +78,7 @@ public class PoWBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum(),
-                        EvmConfiguration.DEFAULT_CONFIG)
+                        EvmConfiguration.DEFAULT)
                     .createProtocolSchedule())
             .build();
 
@@ -140,7 +140,7 @@ public class PoWBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum(),
-                        EvmConfiguration.DEFAULT_CONFIG)
+                        EvmConfiguration.DEFAULT)
                     .createProtocolSchedule())
             .build();
 
@@ -197,7 +197,7 @@ public class PoWBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum(),
-                        EvmConfiguration.DEFAULT_CONFIG)
+                        EvmConfiguration.DEFAULT)
                     .createProtocolSchedule())
             .build();
 
@@ -270,7 +270,7 @@ public class PoWBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum(),
-                        EvmConfiguration.DEFAULT_CONFIG)
+                        EvmConfiguration.DEFAULT)
                     .createProtocolSchedule())
             .build();
 

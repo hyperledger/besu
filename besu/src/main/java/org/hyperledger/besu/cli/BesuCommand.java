@@ -1293,7 +1293,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Native Library", unstableNativeLibraryOptions)
             .put("Data Storage Options", unstableDataStorageOptions)
             .put("Launcher", unstableLauncherOptions)
-            .put("Jump Destination Cache", unstableEvmOptions)
+            .put("EVM Options", unstableEvmOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);

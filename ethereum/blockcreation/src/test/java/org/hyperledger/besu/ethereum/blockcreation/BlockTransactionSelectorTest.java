@@ -114,7 +114,7 @@ public class BlockTransactionSelectorTest {
   public void emptyPendingTransactionsResultsInEmptyVettingResult() {
     final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(), EvmConfiguration.DEFAULT_CONFIG);
+            GenesisConfigFile.development().getConfigOptions(), EvmConfiguration.DEFAULT);
     final MainnetTransactionProcessor mainnetTransactionProcessor =
         protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
 

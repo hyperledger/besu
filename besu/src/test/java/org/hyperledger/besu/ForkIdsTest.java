@@ -158,7 +158,7 @@ public class ForkIdsTest {
         GenesisConfigFile.fromConfig(EthNetworkConfig.jsonConfig(chainName));
     final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
     final ProtocolSchedule schedule =
-        MainnetProtocolSchedule.fromConfig(configOptions, EvmConfiguration.DEFAULT_CONFIG);
+        MainnetProtocolSchedule.fromConfig(configOptions, EvmConfiguration.DEFAULT);
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, schedule);
     final Blockchain mockBlockchain = mock(Blockchain.class);
 

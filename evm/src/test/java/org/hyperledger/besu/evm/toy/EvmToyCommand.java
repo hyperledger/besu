@@ -143,7 +143,7 @@ public class EvmToyCommand implements Runnable {
     worldUpdater.getOrCreate(receiver).getMutable().setCode(codeBytes);
 
     int repeat = this.repeat;
-    final EVM evm = MainnetEVMs.berlin(EvmConfiguration.DEFAULT_CONFIG);
+    final EVM evm = MainnetEVMs.berlin(EvmConfiguration.DEFAULT);
     final PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
     MainnetPrecompiledContracts.populateForIstanbul(
         precompileContractRegistry, evm.getGasCalculator());

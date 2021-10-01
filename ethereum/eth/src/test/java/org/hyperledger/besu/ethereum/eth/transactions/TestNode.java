@@ -106,9 +106,7 @@ public class TestNode implements Closeable {
     final GenesisConfigFile genesisConfigFile = GenesisConfigFile.development();
     final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(),
-            false,
-            EvmConfiguration.DEFAULT_CONFIG);
+            GenesisConfigFile.development().getConfigOptions(), false, EvmConfiguration.DEFAULT);
 
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
     final BlockHeaderFunctions blockHeaderFunctions =

@@ -95,6 +95,6 @@ public class MainnetProtocolSchedule {
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(final GenesisConfigOptions config) {
-    return fromConfig(config, PrivacyParameters.DEFAULT, false, EvmConfiguration.DEFAULT_CONFIG);
+    return fromConfig(config, PrivacyParameters.DEFAULT, false, EvmConfiguration.DEFAULT);
   }
 }

@@ -197,6 +197,6 @@ public class BaseBftProtocolScheduleTest {
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,
-        EvmConfiguration.DEFAULT_CONFIG);
+        EvmConfiguration.DEFAULT);
   }
 }
