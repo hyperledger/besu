@@ -58,7 +58,8 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
     if (block.isPresent()) {
       LOG.trace("assembledBlock " + block.map(Block::toString).orElse(""));
       return new JsonRpcSuccessResponse(
-          request.getRequest().getId(), blockResultFactory.opaqueTransactionComplete(block.get()));
+          request.getRequest().getId(),
+          blockResultFactory.executionTransactionComplete(block.get()));
     }
     return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND);
   }

@@ -26,6 +26,7 @@ import org.apache.tuweni.units.bigints.UInt64;
 public class PayloadIdentifier implements Quantity {
 
   private final UInt64 val;
+  static final Random rand = new Random();
 
   @JsonCreator
   public PayloadIdentifier(final String payloadId) {
@@ -37,7 +38,10 @@ public class PayloadIdentifier implements Quantity {
   }
 
   public static PayloadIdentifier random() {
-    return new PayloadIdentifier(new Random().nextLong());
+    long lng = rand.nextLong();
+    // address corner case of nextLong returning a negative value
+    lng = (lng == Long.MIN_VALUE) ? 0 : Math.abs(lng);
+    return new PayloadIdentifier(lng);
   }
 
   @Override
@@ -63,5 +67,18 @@ public class PayloadIdentifier implements Quantity {
   @JsonValue
   public String serialize() {
     return val.toShortHexString();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (o instanceof PayloadIdentifier) {
+      return getValue().equals(((PayloadIdentifier) o).getValue());
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return val.hashCode();
   }
 }

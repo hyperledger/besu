@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
@@ -91,8 +92,6 @@ public class JsonRpcMethodsFactory {
                   namedPlugins,
                   natService,
                   ethPeers),
-              new ExecutionEngineJsonRpcMethods(
-                  miningCoordinator, protocolContext, protocolSchedule),
               new DebugJsonRpcMethods(
                   blockchainQueries, protocolSchedule, metricsSystem, transactionPool, dataDir),
               new EeaJsonRpcMethods(
@@ -129,6 +128,12 @@ public class JsonRpcMethodsFactory {
               new TraceJsonRpcMethods(blockchainQueries, protocolSchedule),
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
+
+      MergeOptions.doIfMergeEnabled(
+          () ->
+              availableApiGroups.add(
+                  new ExecutionEngineJsonRpcMethods(
+                      miningCoordinator, protocolContext, protocolSchedule)));
 
       for (final JsonRpcMethods apiGroup : availableApiGroups) {
         enabled.putAll(apiGroup.create(rpcApis));

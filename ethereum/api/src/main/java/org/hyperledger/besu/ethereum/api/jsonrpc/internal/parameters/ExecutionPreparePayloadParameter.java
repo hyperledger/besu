@@ -32,12 +32,12 @@ public class ExecutionPreparePayloadParameter {
   @JsonCreator
   public ExecutionPreparePayloadParameter(
       @JsonProperty("parentHash") final Hash parentHash,
-      @JsonProperty("timestamp") final Long timestamp,
-      @JsonProperty("random") final Bytes32 random,
+      @JsonProperty("timestamp") final UnsignedLongParameter timestamp,
+      @JsonProperty("random") final String random,
       @JsonProperty("feeRecipient") final Address feeRecipient) {
     this.parentHash = parentHash;
-    this.timestamp = timestamp;
-    this.random = random;
+    this.timestamp = timestamp.getValue();
+    this.random = Bytes32.fromHexString(random);
     this.feeRecipient = feeRecipient;
   }
 

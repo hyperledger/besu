@@ -31,4 +31,8 @@ public class MergeOptions {
   public static boolean isMergeEnabled() {
     return mergeEnabled.orElse(false);
   }
+
+  public static void doIfMergeEnabled(final Runnable mergeDo) {
+    mergeDo.run();
+  }
 }

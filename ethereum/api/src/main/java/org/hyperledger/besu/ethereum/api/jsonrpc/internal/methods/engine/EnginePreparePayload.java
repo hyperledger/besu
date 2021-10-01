@@ -48,7 +48,7 @@ public class EnginePreparePayload extends ExecutionEngineJsonRpcMethod {
     final ExecutionPreparePayloadParameter executionPreparePayloadParameter =
         requestContext.getRequiredParameter(0, ExecutionPreparePayloadParameter.class);
 
-    // todo respond with error if we're syncing
+    // TODO: respond with error if we're syncing
 
     return protocolContext
         .getBlockchain()
