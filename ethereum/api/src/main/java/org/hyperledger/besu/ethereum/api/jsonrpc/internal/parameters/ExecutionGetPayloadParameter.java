@@ -14,29 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ConsensusAssembleBlockParameter {
+public class ExecutionGetPayloadParameter {
 
-  final Hash hash;
-  final Long timestamp;
+  final Quantity payloadId;
 
   @JsonCreator
-  public ConsensusAssembleBlockParameter(
-      @JsonProperty("parentHash") final Hash parentHash,
-      @JsonProperty("timestamp") final UnsignedLongParameter timestamp) {
-    this.hash = parentHash;
-    this.timestamp = timestamp.getValue();
+  public ExecutionGetPayloadParameter(
+      @JsonProperty("payloadId") final Quantity payloadId) {
+    this.payloadId = payloadId;
   }
 
-  public Hash getParentHash() {
-    return hash;
-  }
-
-  public Long getTimestamp() {
-    return timestamp;
+  public Quantity getPayloadId() {
+    return payloadId;
   }
 }

@@ -36,6 +36,6 @@ public class EnginePreparePayload extends ExecutionEngineJsonRpcMethod {
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     // TODO: stubbed, implement https://github.com/ConsenSys/protocol-misc/issues/479
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), );
   }
 }

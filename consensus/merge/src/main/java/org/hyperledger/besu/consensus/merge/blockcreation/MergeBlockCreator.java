@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -61,12 +62,17 @@ public class MergeBlockCreator extends AbstractBlockCreator {
         parentHeader);
   }
 
+  public Future<Block> createBlock(final Optional<List<Transaction>> maybeTransactions,
+                                   final Optional<List<BlockHeader>> maybeOmmers,
+                                   final long timestamp) {
+)
+
   @Override
   public Block createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
-    return createBlock(maybeTransactions, Optional.empty(), timestamp, false);
+    return createBlock(Optional.empty(), Optional.empty(), timestamp, false);
   }
 
   @Override

@@ -108,6 +108,13 @@ public class MergeCoordinator implements MiningCoordinator {
     return miningParameters.getCoinbase();
   }
 
+  /**
+   * todo: fill this out.
+   * @param parentHeader The parent block's header
+   * @param transactions this list of transactions is ignored for MergeCoordinator
+   * @param ommers this list of ommers is ignored for MergeCoordinator
+   * @return Optional of Block
+   */
   @Override
   public Optional<Block> createBlock(
       final BlockHeader parentHeader,
@@ -116,9 +123,15 @@ public class MergeCoordinator implements MiningCoordinator {
     return Optional.of(
         mergeBlockCreator
             .apply(parentHeader)
-            .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis()));
+            .createBlock(Optional.empty(), Optional.empty(), System.currentTimeMillis()));
   }
 
+  /**
+   * todo: fill this out.
+   * @param parentHeader The parent block's header
+   * @param timestamp timestamp to use for the block, ignored.
+   * @return Optional of Block
+   */
   @Override
   public Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp) {
     return createBlock(parentHeader, Collections.emptyList(), Collections.emptyList());

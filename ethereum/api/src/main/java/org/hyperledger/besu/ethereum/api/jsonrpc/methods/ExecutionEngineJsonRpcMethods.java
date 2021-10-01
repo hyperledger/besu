@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
@@ -37,7 +38,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockResultFactory blockResultFactory = new BlockResultFactory();
 
-  private final MiningCoordinator miningCoordinator;
+  private final MergeCoordinator miningCoordinator;
   private final ProtocolContext protocolContext;
   private final BlockValidator blockValidator;
 
