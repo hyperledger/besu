@@ -33,6 +33,8 @@ public class MergeOptions {
   }
 
   public static void doIfMergeEnabled(final Runnable mergeDo) {
-    mergeDo.run();
+    if (isMergeEnabled()) {
+      mergeDo.run();
+    }
   }
 }
