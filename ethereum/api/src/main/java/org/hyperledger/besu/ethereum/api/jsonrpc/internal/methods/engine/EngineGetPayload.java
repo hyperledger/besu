@@ -14,20 +14,20 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionGetPayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
 
@@ -60,27 +60,14 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
+    final PayloadIdentifier payloadId = request.getRequiredParameter(0, PayloadIdentifier.class);
 
-    // TODO: this is a naive repurposing of rayonism's consensus_assembleBlock to engine_getPayload.
-    //      We should build a block on engine_preparePayload rather than here.
-    //      https://github.com/ConsenSys/protocol-misc/issues/480
-
-    final ExecutionGetPayloadParameter blockParams =
-        request.getRequiredParameter(0, ExecutionGetPayloadParameter.class);
-
-//    final Optional<BlockHeader> parentBlockHeader =
-//        blockchain.getBlockHeader(blockParams.getParentHash());
-//    if (parentBlockHeader.isPresent()) {
-//
-//      final Optional<Block> block =
-//          miningCoordinator.createBlock(parentBlockHeader.get(), blockParams.getTimestamp());
-//      if (block.isPresent()) {
-//        LOG.trace("assembledBlock " + block.map(b -> b.toString()).orElse(""));
-//        return new JsonRpcSuccessResponse(
-//            request.getRequest().getId(),
-//            blockResultFactory.opaqueTransactionComplete(block.get()));
-//      }
-//    }
+    final Optional<Block> block = mergeContext.retrieveBlockById(payloadId);
+    if (block.isPresent()) {
+      LOG.trace("assembledBlock " + block.map(Block::toString).orElse(""));
+      return new JsonRpcSuccessResponse(
+          request.getRequest().getId(), blockResultFactory.opaqueTransactionComplete(block.get()));
+    }
     return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND);
   }
 }

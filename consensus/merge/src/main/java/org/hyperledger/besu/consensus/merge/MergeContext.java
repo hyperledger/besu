@@ -16,14 +16,21 @@ package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.consensus.merge.MergeBlockProcessor.CandidateBlock;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.PayloadIdentifier;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.plugin.data.Quantity;
 
 public class MergeContext {
   private static final Logger LOG = LogManager.getLogger();
@@ -35,20 +42,7 @@ public class MergeContext {
   private final AtomicReference<Difficulty> terminalTotalDifficulty =
       new AtomicReference<>(STATIC_TERMINAL_TOTAL_DIFFICULTY);
 
-  public enum ExecutionStatus {
-    VALID,
-    INVALID,
-    KNOWN;
-  }
-
-  public enum ConsensusStatus {
-    VALID,
-    INVALID;
-
-    public boolean equalsIgnoreCase(final String status) {
-      return name().equalsIgnoreCase(status);
-    }
-  }
+  private Map<PayloadIdentifier, Block> blocksInProgressById = new ConcurrentHashMap<>();
 
   // current candidate block from consensus engine
   AtomicReference<CandidateBlock> candidateBlock = new AtomicReference<>();
@@ -109,5 +103,19 @@ public class MergeContext {
       return true;
     }
     return false;
+  }
+
+  public void putPayloadById(final PayloadIdentifier payloadId, final Block block) {
+    blocksInProgressById.put(payloadId, block);
+  }
+
+  public void replacePayloadById(final PayloadIdentifier payloadId, final Block block) {
+    if (blocksInProgressById.replace(payloadId, block) == null) {
+      LOG.warn("");
+    }
+  }
+
+  public Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId) {
+    return Optional.ofNullable(blocksInProgressById.remove(payloadId));
   }
 }

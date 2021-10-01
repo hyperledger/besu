@@ -24,8 +24,7 @@ public class ExecutionGetPayloadParameter {
   final Quantity payloadId;
 
   @JsonCreator
-  public ExecutionGetPayloadParameter(
-      @JsonProperty("payloadId") final Quantity payloadId) {
+  public ExecutionGetPayloadParameter(@JsonProperty("payloadId") final Quantity payloadId) {
     this.payloadId = payloadId;
   }
 

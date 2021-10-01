@@ -38,7 +38,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockResultFactory blockResultFactory = new BlockResultFactory();
 
-  private final MergeCoordinator miningCoordinator;
+  private final MergeCoordinator mergeCoordinator;
   private final ProtocolContext protocolContext;
   private final BlockValidator blockValidator;
 
@@ -46,7 +46,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final MiningCoordinator miningCoordinator,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule) {
-    this.miningCoordinator = miningCoordinator;
+    this.mergeCoordinator = (MergeCoordinator) miningCoordinator;
     this.protocolContext = protocolContext;
     // TODO: revisit this when totalDifficulty transition is defined.  Since ProtocolSchedule
     //  doesn't make sense here:
@@ -63,8 +63,8 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create() {
     Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
     return mapOf(
-        new EnginePreparePayload(syncVertx, protocolContext),
-        new EngineGetPayload(syncVertx, protocolContext, blockResultFactory, miningCoordinator),
+        new EnginePreparePayload(syncVertx, protocolContext, mergeCoordinator),
+        new EngineGetPayload(syncVertx, protocolContext, blockResultFactory, mergeCoordinator),
         new EngineExecutePayload(syncVertx, protocolContext, blockValidator),
         new EngineConsensusValidated(syncVertx, protocolContext),
         new EngineForkchoiceUpdated(syncVertx, protocolContext));
