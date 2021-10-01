@@ -131,9 +131,10 @@ public class JsonRpcMethodsFactory {
 
       MergeOptions.doIfMergeEnabled(
           () ->
-              availableApiGroups.add(
+              enabled.putAll(
                   new ExecutionEngineJsonRpcMethods(
-                      miningCoordinator, protocolContext, protocolSchedule)));
+                          miningCoordinator, protocolContext, protocolSchedule)
+                      .create(rpcApis)));
 
       for (final JsonRpcMethods apiGroup : availableApiGroups) {
         enabled.putAll(apiGroup.create(rpcApis));
