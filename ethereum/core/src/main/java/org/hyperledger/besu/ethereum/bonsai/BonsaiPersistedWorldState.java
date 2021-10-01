@@ -31,7 +31,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
-import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -203,15 +202,12 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
       if (prior != null && !prior.isZero()) {
         final Hash priorCodeHash = Hash.hash(prior);
-        stateUpdater.updateCodeCounter(
-            priorCodeHash, prior, getCodeCounter(priorCodeHash).subtract(BigInteger.ONE));
+        stateUpdater.decCodeCounter(priorCodeHash);
       }
       if (updatedCode == null || updatedCode.size() == 0) {
         stateUpdater.removeCode(updatedAddressHash);
       } else {
         stateUpdater.putCode(updatedAddressHash, updatedCodeHash, updatedCode);
-        stateUpdater.updateCodeCounter(
-            updatedCodeHash, updatedCode, getCodeCounter(updatedCodeHash).add(BigInteger.ONE));
         blockHeader.ifPresent(
             header ->
                 stateUpdater
@@ -363,7 +359,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   public Hash frontierRootHash() {
     return calculateRootHash(
         new BonsaiWorldStateKeyValueStorage.Updater(
-            noOpTx, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx));
+            worldStateStorage, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx));
   }
 
   public Hash blockHash() {
@@ -454,13 +450,5 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             Function.identity(),
             Function.identity());
     return storageTrie.entriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
-  }
-
-  private BigInteger getCodeCounter(final Hash codeHash) {
-    final BigInteger bigInteger =
-        worldStateStorage.getCodeCounter(codeHash).orElse(BigInteger.ZERO);
-
-    System.out.println("updatedCodeHash ->" + codeHash + " " + bigInteger);
-    return bigInteger;
   }
 }

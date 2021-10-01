@@ -47,6 +47,7 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
   @Override
   public InMemoryUpdater updater() {
     return new InMemoryUpdater(
+        this,
         accountStorage.startTransaction(),
         codeStorage.startTransaction(),
         storageStorage.startTransaction(),
@@ -60,6 +61,7 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
       implements WorldStateStorage.Updater {
 
     public InMemoryUpdater(
+        final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage,
         final KeyValueStorageTransaction accountStorageTransaction,
         final KeyValueStorageTransaction codeStorageTransaction,
         final KeyValueStorageTransaction storageStorageTransaction,
@@ -68,6 +70,7 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
         final KeyValueStorageTransaction snapTrieBranchBucketStorageTransaction,
         final KeyValueStorageTransaction snapTrieBranchSecondBucketStorageTransaction) {
       super(
+          bonsaiWorldStateKeyValueStorage,
           accountStorageTransaction,
           codeStorageTransaction,
           storageStorageTransaction,

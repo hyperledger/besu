@@ -204,6 +204,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   @Override
   public Updater updater() {
     return new Updater(
+        this,
         accountStorage.startTransaction(),
         codeStorage.startTransaction(),
         storageStorage.startTransaction(),
@@ -239,6 +240,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   public static class Updater implements WorldStateStorage.Updater {
 
+    private static final Object LOCK = new Object();
+
     private final KeyValueStorageTransaction accountStorageTransaction;
     private final KeyValueStorageTransaction codeStorageTransaction;
     private final KeyValueStorageTransaction storageStorageTransaction;
@@ -247,7 +250,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     private final KeyValueStorageTransaction snapTrieBranchBucketStorageTransaction;
     private final KeyValueStorageTransaction snapTrieBranchSecondBucketStorageTransaction;
 
+    final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage;
+
     public Updater(
+        final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
         final KeyValueStorageTransaction accountStorageTransaction,
         final KeyValueStorageTransaction codeStorageTransaction,
         final KeyValueStorageTransaction storageStorageTransaction,
@@ -264,6 +270,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       this.snapTrieBranchBucketStorageTransaction = snapTrieBranchBucketStorageTransaction;
       this.snapTrieBranchSecondBucketStorageTransaction =
           snapTrieBranchSecondBucketStorageTransaction;
+      this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     }
 
     public Updater removeCode(final Hash accountHash) {
@@ -273,24 +280,41 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
     @Override
     public Updater putCode(final Hash accountHash, final Bytes32 codeHash, final Bytes code) {
-      if (code.size() == 0) {
-        // Don't save empty values
+      synchronized (LOCK) {
+        if (code.size() == 0) {
+          // Don't save empty values
+          return this;
+        }
+        codeStorageTransaction.put(accountHash.toArrayUnsafe(), codeHash.toArrayUnsafe());
+        codeStorageTransaction.put(codeHash.toArrayUnsafe(), code.toArrayUnsafe());
+        incCodeCounter(codeHash);
         return this;
       }
-      codeStorageTransaction.put(accountHash.toArrayUnsafe(), codeHash.toArrayUnsafe());
-      return this;
     }
 
-    public Updater updateCodeCounter(
-        final Bytes32 codeHash, final Bytes code, final BigInteger newCodeCounter) {
+    public Updater incCodeCounter(final Bytes32 codeHash) {
+      synchronized (LOCK) {
+        final BigInteger counter =
+            worldStateKeyValueStorage.getCodeCounter(codeHash).orElse(BigInteger.ZERO);
+        return updateCodeCounter(codeHash, counter.add(BigInteger.ONE));
+      }
+    }
+
+    public Updater decCodeCounter(final Bytes32 codeHash) {
+      synchronized (LOCK) {
+        final BigInteger counter =
+            worldStateKeyValueStorage.getCodeCounter(codeHash).orElse(BigInteger.ZERO);
+        return updateCodeCounter(codeHash, counter.subtract(BigInteger.ONE));
+      }
+    }
+
+    private Updater updateCodeCounter(final Bytes32 codeHash, final BigInteger newCodeCounter) {
+      System.out.println("Update code counter " + codeHash + " " + newCodeCounter);
       if (newCodeCounter.equals(BigInteger.ZERO)) {
         codeStorageTransaction.remove(
             Bytes.concatenate(CODE_COUNTER_PREFIX, codeHash).toArrayUnsafe());
         codeStorageTransaction.remove(codeHash.toArrayUnsafe());
       } else {
-        if (newCodeCounter.equals(BigInteger.ONE)) {
-          codeStorageTransaction.put(codeHash.toArrayUnsafe(), code.toArrayUnsafe());
-        }
         codeStorageTransaction.put(
             Bytes.concatenate(CODE_COUNTER_PREFIX, codeHash).toArrayUnsafe(),
             newCodeCounter.toByteArray());
