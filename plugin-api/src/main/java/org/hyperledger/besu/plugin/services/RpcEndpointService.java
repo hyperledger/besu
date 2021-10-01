@@ -37,7 +37,7 @@ public interface RpcEndpointService extends BesuService {
    * <p>The resulting endpoint is the {@code namespace} and the {@code functionName} concatenated
    * with an underscore to create the JSON-RPC method name.
    *
-   * <p>The method takes a {@link PluginRpcRequest} which contains a list of the inputs expressed
+   * <p>The function takes a {@link PluginRpcRequest} which contains a list of the inputs expressed
    * entirely as strings. Javascript numbers are converted to strings via their toString method, and
    * complex input objects are not supported.
    *
