@@ -1530,7 +1530,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-http-apis'");
     }
 
-    if (!rpcWsApis.stream().allMatch(configuredApi)) {
+    if (!rpcWsApis.stream().allMatch(configuredApis)) {
       throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-ws-apis'");
     }
   }

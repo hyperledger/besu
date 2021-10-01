@@ -34,8 +34,8 @@ public interface RpcEndpointService extends BesuService {
    * <p>The mechanism is a Java function that takes a list of Strings and returns any Java object,
    * registered in a specific namespace with a function name.
    *
-   * <p>The resulting endpoint is the namespace and the function name concatenated with an
-   * underscore. In the future we may prohibit registration in certain well-known namespaces.
+   * <p>The resulting endpoint is the {@code namespace} and the {@code functionName} concatenated
+   * with an underscore to create the JSON-RPC method name.
    *
    * <p>The method takes a {@link PluginRpcRequest} which contains a list of the inputs expressed
    * entirely as strings. Javascript numbers are converted to strings via their toString method, and
