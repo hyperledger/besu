@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import org.hyperledger.besu.consensus.merge.MergeContext;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ConsensusStatus.VALID;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -47,8 +48,7 @@ public class EngineConsensusValidated extends ExecutionEngineJsonRpcMethod {
     final Hash blockhash = requestContext.getRequiredParameter(0, Hash.class);
     final String consensuStatus = requestContext.getRequiredParameter(1, String.class);
 
-    if (MergeContext.ConsensusStatus.VALID.equalsIgnoreCase(consensuStatus)
-        && !mergeContext.setConsensusValidated(blockhash)) {
+    if (VALID.equalsIgnoreCase(consensuStatus) && !mergeContext.setConsensusValidated(blockhash)) {
 
       // return an error if unable to set consensus status for the requested blockhash
       LOG.debug("Failed to set consensus validated for block {}", blockhash);

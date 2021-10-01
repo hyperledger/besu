@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -33,10 +32,10 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class MergeBlockCreator extends AbstractBlockCreator {
 
@@ -66,9 +65,9 @@ public class MergeBlockCreator extends AbstractBlockCreator {
   }
 
   public Block createBlock(
-          final Optional<List<Transaction>> maybeTransactions,
-          final Bytes32 random,
-          final long timestamp) {
+      final Optional<List<Transaction>> maybeTransactions,
+      final Bytes32 random,
+      final long timestamp) {
     return createBlock(Optional.empty(), Optional.of(Collections.emptyList()), timestamp, false);
   }
 

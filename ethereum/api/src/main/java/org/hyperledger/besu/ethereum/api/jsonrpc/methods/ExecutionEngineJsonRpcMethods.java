@@ -64,7 +64,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
     Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
     return mapOf(
         new EnginePreparePayload(syncVertx, protocolContext, mergeCoordinator),
-        new EngineGetPayload(syncVertx, protocolContext, blockResultFactory, mergeCoordinator),
+        new EngineGetPayload(syncVertx, protocolContext, blockResultFactory),
         new EngineExecutePayload(syncVertx, protocolContext, blockValidator),
         new EngineConsensusValidated(syncVertx, protocolContext),
         new EngineForkchoiceUpdated(syncVertx, protocolContext));

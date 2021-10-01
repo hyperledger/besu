@@ -29,21 +29,21 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
-    public enum ExecutionStatus {
-        VALID,
-        INVALID,
-        KNOWN;
-    }
+  public enum ExecutionStatus {
+    VALID,
+    INVALID,
+    KNOWN;
+  }
 
-    public enum ConsensusStatus {
-        VALID,
-        INVALID;
+  public enum ConsensusStatus {
+    VALID,
+    INVALID;
 
-        public boolean equalsIgnoreCase(final String status) {
-            return name().equalsIgnoreCase(status);
-        }
+    public boolean equalsIgnoreCase(final String status) {
+      return name().equalsIgnoreCase(status);
     }
-    
+  }
+
   private final Vertx syncVertx;
   private static final Logger LOG = LogManager.getLogger();
   protected final MergeContext mergeContext;

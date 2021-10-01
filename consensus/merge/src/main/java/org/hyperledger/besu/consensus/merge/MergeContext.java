@@ -23,14 +23,11 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hyperledger.besu.plugin.data.Quantity;
 
 public class MergeContext {
   private static final Logger LOG = LogManager.getLogger();
@@ -42,7 +39,7 @@ public class MergeContext {
   private final AtomicReference<Difficulty> terminalTotalDifficulty =
       new AtomicReference<>(STATIC_TERMINAL_TOTAL_DIFFICULTY);
 
-  private Map<PayloadIdentifier, Block> blocksInProgressById = new ConcurrentHashMap<>();
+  private final Map<PayloadIdentifier, Block> blocksInProgressById = new ConcurrentHashMap<>();
 
   // current candidate block from consensus engine
   AtomicReference<CandidateBlock> candidateBlock = new AtomicReference<>();

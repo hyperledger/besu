@@ -1,12 +1,13 @@
 package org.hyperledger.besu.datatypes;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.hyperledger.besu.plugin.data.Quantity;
 
 import java.math.BigInteger;
 import java.util.Random;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public class PayloadIdentifier implements Quantity {
 
@@ -47,7 +48,6 @@ public class PayloadIdentifier implements Quantity {
 
   @JsonValue
   public String serialize() {
-    return val.toShortHexString()
+    return val.toShortHexString();
   }
-
 }

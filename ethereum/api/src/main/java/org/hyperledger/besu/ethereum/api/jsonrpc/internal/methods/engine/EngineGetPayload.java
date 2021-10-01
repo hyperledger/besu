@@ -24,9 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Optional;
@@ -38,19 +35,14 @@ import org.apache.logging.log4j.Logger;
 public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
 
   private final BlockResultFactory blockResultFactory;
-  private final MiningCoordinator miningCoordinator;
-  private final Blockchain blockchain;
   private static final Logger LOG = LogManager.getLogger();
 
   public EngineGetPayload(
       final Vertx vertx,
       final ProtocolContext protocolContext,
-      final BlockResultFactory blockResultFactory,
-      final MiningCoordinator miningCoordinator) {
+      final BlockResultFactory blockResultFactory) {
     super(vertx, protocolContext);
     this.blockResultFactory = blockResultFactory;
-    this.miningCoordinator = miningCoordinator;
-    this.blockchain = protocolContext.getBlockchain();
   }
 
   @Override

@@ -22,24 +22,25 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
- * parentHash: DATA, 32 Bytes - hash of the parent block
- * timestamp: QUANTITY, 64 Bits - value for the timestamp field of the new payload
- * random: DATA, 32 Bytes - value for the random field of the new payload
- * feeRecipient: DATA, 20 Bytes - suggested value for the coinbase field of the new payload
+ * parentHash: DATA, 32 Bytes - hash of the parent block timestamp: QUANTITY, 64 Bits - value for
+ * the timestamp field of the new payload random: DATA, 32 Bytes - value for the random field of the
+ * new payload feeRecipient: DATA, 20 Bytes - suggested value for the coinbase field of the new
+ * payload
  */
 public class ExecutionPreparePayloadParameter {
 
   @JsonCreator
   public ExecutionPreparePayloadParameter(
-      @JsonProperty("parentHash") Hash parentHash,
-      @JsonProperty("timestamp") Long timestamp,
-      @JsonProperty("random") Bytes32 random,
-      @JsonProperty("feeRecipient") Address feeRecipient) {
+      @JsonProperty("parentHash") final Hash parentHash,
+      @JsonProperty("timestamp") final Long timestamp,
+      @JsonProperty("random") final Bytes32 random,
+      @JsonProperty("feeRecipient") final Address feeRecipient) {
     this.parentHash = parentHash;
     this.timestamp = timestamp;
     this.random = random;
     this.feeRecipient = feeRecipient;
   }
+
   private final Hash parentHash;
   private final Long timestamp;
   private final Bytes32 random;
