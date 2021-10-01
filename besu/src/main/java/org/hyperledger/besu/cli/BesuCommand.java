@@ -1520,13 +1520,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   public void validateRpcOptionsParams() {
-    Predicate<String> configuredApi =
+    Predicate<String> configuredApis =
         apiName ->
             Arrays.stream(RpcApis.values())
                     .anyMatch(builtInApi -> apiName.equals(builtInApi.name()))
                 || rpcEndpointServiceImpl.hasNamespace(apiName);
 
-    if (!rpcHttpApis.stream().allMatch(configuredApi)) {
+    if (!rpcHttpApis.stream().allMatch(configuredApis)) {
       throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-http-apis'");
     }
 

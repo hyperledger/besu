@@ -12,7 +12,7 @@
 - Fix bug with private contracts not able to call public contracts that call public contracts [#2816](https://github.com/hyperledger/besu/pull/2816)
 
 ### Early Access Features
-- Enable plugins to expose custom JSON RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
+- Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
 
 ## 21.7.4
 ### Additions and Improvements
