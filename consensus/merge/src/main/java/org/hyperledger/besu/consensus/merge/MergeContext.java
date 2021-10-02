@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.logging.log4j.LogManager;
@@ -34,6 +35,7 @@ public class MergeContext {
   private static MergeContext singleton;
 
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
+  private final AtomicBoolean isPostMerge = new AtomicBoolean();
 
   private final Map<PayloadIdentifier, Block> blocksInProgressById = new ConcurrentHashMap<>();
 
@@ -61,9 +63,17 @@ public class MergeContext {
     return this;
   }
 
-  public boolean isPostMerge(final BlockHeader blockheader) {
-    // TODO: this will probably erroneously return true for the transition block. fix
-    return terminalTotalDifficulty.get().lessOrEqualThan(blockheader.getDifficulty());
+  public void setIsPostMerge(final BlockHeader blockHeader) {
+    if (Optional.ofNullable(lastFinalized.get()).isEmpty()) {
+      // we check this condition because if we've received a finalized block, we never want to
+      // switch back to a pre-merge
+      return;
+    }
+    isPostMerge.set(terminalTotalDifficulty.get().lessOrEqualThan(blockHeader.getDifficulty()));
+  }
+
+  public boolean isPostMerge() {
+    return isPostMerge.get();
   }
 
   public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {

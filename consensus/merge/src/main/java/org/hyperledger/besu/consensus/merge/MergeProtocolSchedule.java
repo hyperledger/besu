@@ -43,7 +43,7 @@ public class MergeProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            ProtocolSpecAdapters.create(0, builder -> applyMergeSpecificModifications(builder)),
+            ProtocolSpecAdapters.create(0, MergeProtocolSchedule::applyMergeSpecificModifications),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())

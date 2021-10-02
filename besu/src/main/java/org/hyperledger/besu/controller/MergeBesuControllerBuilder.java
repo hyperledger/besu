@@ -65,13 +65,18 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    return MergeContext.get()
-        .setTerminalTotalDifficulty(
-            genesisConfig
-                .getConfigOptions(genesisConfigOverrides)
-                .getTerminalTotalDifficulty()
-                .map(Difficulty::of)
-                .orElse(Difficulty.ZERO));
+    final MergeContext mergeContext =
+        MergeContext.get()
+            .setTerminalTotalDifficulty(
+                genesisConfig
+                    .getConfigOptions(genesisConfigOverrides)
+                    .getTerminalTotalDifficulty()
+                    .map(Difficulty::of)
+                    .orElse(Difficulty.ZERO));
+    mergeContext.setIsPostMerge(blockchain.getChainHeadHeader());
+    blockchain.observeBlockAdded(
+        blockAddedEvent -> mergeContext.setIsPostMerge(blockAddedEvent.getBlock().getHeader()));
+    return mergeContext;
   }
 
   @Override
