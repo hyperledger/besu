@@ -103,7 +103,7 @@ public class ExecutionBlockResult {
     return stateRoot;
   }
 
-  @JsonGetter(value = "receiptsRoot")
+  @JsonGetter(value = "receiptRoot")
   public String getReceiptRoot() {
     return receiptRoot;
   }

@@ -88,6 +88,10 @@ public class MergeContext {
     newMergeStateCallbackSubscribers.subscribe(newMergeStateCallback);
   }
 
+  public Difficulty getTerminalTotalDifficulty() {
+    return terminalTotalDifficulty.get();
+  }
+
   public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
     BlockHeader newFinalized =
         candidateBlock.get().updateForkChoice(headBlockHash, finalizedBlockHash);
