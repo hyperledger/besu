@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ExecutionPrepareResult;
 
 import io.vertx.core.Vertx;
 
@@ -57,11 +58,12 @@ public class EnginePreparePayload extends ExecutionEngineJsonRpcMethod {
             parentHeader ->
                 new JsonRpcSuccessResponse(
                     requestContext.getRequest().getId(),
-                    mergeCoordinator.preparePayload(
-                        parentHeader,
-                        executionPreparePayloadParameter.getTimestamp(),
-                        executionPreparePayloadParameter.getRandom(),
-                        executionPreparePayloadParameter.getFeeRecipient())))
+                    new ExecutionPrepareResult(
+                        mergeCoordinator.preparePayload(
+                            parentHeader,
+                            executionPreparePayloadParameter.getTimestamp(),
+                            executionPreparePayloadParameter.getRandom(),
+                            executionPreparePayloadParameter.getFeeRecipient()))))
         .orElse(
             new JsonRpcErrorResponse(
                 requestContext.getRequest().getId(), JsonRpcError.UNKNOWN_HEADER));

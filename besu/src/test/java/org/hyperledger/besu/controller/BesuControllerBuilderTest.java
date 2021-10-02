@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -25,9 +26,11 @@ import org.hyperledger.besu.config.EthashConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.Keccak256ConfigOptions;
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -48,10 +51,12 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
 import java.time.Clock;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 import com.google.common.collect.Range;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -126,21 +131,24 @@ public class BesuControllerBuilderTest {
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
     when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
 
-    besuControllerBuilder =
-        new MainnetBesuControllerBuilder()
-            .gasLimitCalculator(gasLimitCalculator)
-            .genesisConfigFile(genesisConfigFile)
-            .synchronizerConfiguration(synchronizerConfiguration)
-            .ethProtocolConfiguration(ethProtocolConfiguration)
-            .miningParameters(miningParameters)
-            .metricsSystem(observableMetricsSystem)
-            .privacyParameters(privacyParameters)
-            .dataDirectory(tempDirRule.getRoot().toPath())
-            .clock(clock)
-            .transactionPoolConfiguration(poolConfiguration)
-            .nodeKey(nodeKey)
-            .storageProvider(storageProvider)
-            .networkId(networkId);
+    besuControllerBuilder = visitWithMockConfigs(new MainnetBesuControllerBuilder());
+  }
+
+  BesuControllerBuilder visitWithMockConfigs(final BesuControllerBuilder builder) {
+    return builder
+        .gasLimitCalculator(gasLimitCalculator)
+        .genesisConfigFile(genesisConfigFile)
+        .synchronizerConfiguration(synchronizerConfiguration)
+        .ethProtocolConfiguration(ethProtocolConfiguration)
+        .miningParameters(miningParameters)
+        .metricsSystem(observableMetricsSystem)
+        .privacyParameters(privacyParameters)
+        .dataDirectory(tempDirRule.getRoot().toPath())
+        .clock(clock)
+        .transactionPoolConfiguration(poolConfiguration)
+        .nodeKey(nodeKey)
+        .storageProvider(storageProvider)
+        .networkId(networkId);
   }
 
   @Test
@@ -171,5 +179,20 @@ public class BesuControllerBuilderTest {
     besuControllerBuilder.build();
 
     verify(storageProvider).getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.PRUNING_STATE);
+  }
+
+  @Test
+  public void assertTerminalTotalDifficultyInMergeContext() {
+    when(genesisConfigOptions.getTerminalTotalDifficulty())
+        .thenReturn(Optional.of(UInt256.valueOf(1500L)));
+
+    Difficulty terminalTotalDifficulty =
+        visitWithMockConfigs(new MergeBesuControllerBuilder())
+            .build()
+            .getProtocolContext()
+            .getConsensusContext(MergeContext.class)
+            .getTerminalTotalDifficulty();
+
+    assertThat(terminalTotalDifficulty).isEqualTo(Difficulty.of(1500L));
   }
 }
