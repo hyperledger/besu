@@ -61,6 +61,10 @@ public class MergeContext {
     return this;
   }
 
+  public Difficulty getTerminalTotalDifficulty() {
+    return terminalTotalDifficulty.get();
+  }
+
   public boolean isPostMerge(final BlockHeader blockheader) {
     // TODO: this will probably erroneously return true for the transition block. fix
     return terminalTotalDifficulty.get().lessOrEqualThan(blockheader.getDifficulty());

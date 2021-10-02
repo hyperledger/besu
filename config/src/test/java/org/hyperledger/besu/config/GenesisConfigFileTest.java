@@ -32,6 +32,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.Test;
 
@@ -160,6 +161,23 @@ public class GenesisConfigFileTest {
   @Test
   public void shouldNotGetBaseFeeAtGenesis() {
     assertThat(EMPTY_CONFIG.getBaseFeePerGas()).isNotPresent();
+  }
+
+  @Test
+  public void shouldGetTerminalTotalDifficultyAtGenesis() {
+    GenesisConfigFile withTerminalTotalDifficultyAtGenesis =
+        fromConfig("{\"config\":{\"terminalTotalDifficulty\":1000}}");
+    assertThat(
+            withTerminalTotalDifficultyAtGenesis
+                .getConfigOptions()
+                .getTerminalTotalDifficulty()
+                .get())
+        .isEqualTo(UInt256.valueOf(1000L));
+  }
+
+  @Test
+  public void shouldGetEmptyTerminalTotalDifficultyAtGenesis() {
+    assertThat(EMPTY_CONFIG.getConfigOptions().getTerminalTotalDifficulty()).isNotPresent();
   }
 
   @Test
