@@ -58,6 +58,7 @@ public class MergeProtocolSchedule {
         .blockValidatorBuilder(MergeBlockValidator::new)
         .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
         .blockReward(Wei.ZERO)
+        .difficultyCalculator((a, b, c) -> BigInteger.ZERO)
         .skipZeroBlockRewards(true);
   }
 

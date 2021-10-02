@@ -109,7 +109,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
             BodyValidation.transactionsRoot(transactions),
             blockParam.getReceiptsRoot(),
             blockParam.getLogsBloom(),
-            Difficulty.ONE,
+            Difficulty.ZERO,
             blockParam.getBlockNumber(),
             blockParam.getGasLimit(),
             blockParam.getGasUsed(),
