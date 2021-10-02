@@ -36,7 +36,7 @@ public class MergeContext {
   private static MergeContext singleton;
 
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
-  private final AtomicBoolean isPostMerge = new AtomicBoolean();
+  private final AtomicBoolean isPostMerge = new AtomicBoolean(true);
   private final Subscribers<NewMergeStateCallback> newMergeStateCallbackSubscribers =
       Subscribers.create();
 
@@ -62,18 +62,17 @@ public class MergeContext {
   }
 
   public MergeContext setTerminalTotalDifficulty(final Difficulty newTerminalTotalDifficulty) {
-    this.terminalTotalDifficulty.set(newTerminalTotalDifficulty);
+    terminalTotalDifficulty.set(newTerminalTotalDifficulty);
     return this;
   }
 
-  public void setIsPostMerge(final BlockHeader blockHeader) {
-    if (Optional.ofNullable(lastFinalized.get()).isEmpty()) {
+  public void setIsPostMerge(final Difficulty totalDifficulty) {
+    if (Optional.ofNullable(lastFinalized.get()).isPresent()) {
       // we check this condition because if we've received a finalized block, we never want to
       // switch back to a pre-merge
       return;
     }
-    final boolean newState =
-        terminalTotalDifficulty.get().lessOrEqualThan(blockHeader.getDifficulty());
+    final boolean newState = terminalTotalDifficulty.get().lessOrEqualThan(totalDifficulty);
     final boolean oldState = isPostMerge.getAndSet(newState);
     if (oldState != newState) {
       newMergeStateCallbackSubscribers.forEach(

@@ -2,6 +2,7 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import org.hyperledger.besu.consensus.merge.TransitionUtils;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -12,18 +13,19 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
-    implements MiningCoordinator {
+    implements MergeMiningCoordinator {
 
   private final MiningCoordinator miningCoordinator;
-  private final MiningCoordinator mergeCoordinator;
+  private final MergeMiningCoordinator mergeCoordinator;
 
   public TransitionCoordinator(
       final MiningCoordinator miningCoordinator, final MiningCoordinator mergeCoordinator) {
     super(miningCoordinator, mergeCoordinator);
     this.miningCoordinator = miningCoordinator;
-    this.mergeCoordinator = mergeCoordinator;
+    this.mergeCoordinator = (MergeMiningCoordinator) mergeCoordinator;
   }
 
   @Override
@@ -94,5 +96,19 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
     // todo check if this makes sense to do for both
     miningCoordinator.changeTargetGasLimit(targetGasLimit);
     mergeCoordinator.changeTargetGasLimit(targetGasLimit);
+  }
+
+  @Override
+  public PayloadIdentifier preparePayload(
+      final BlockHeader parentHeader,
+      final Long timestamp,
+      final Bytes32 random,
+      final Address feeRecipient) {
+    return mergeCoordinator.preparePayload(parentHeader, timestamp, random, feeRecipient);
+  }
+
+  @Override
+  public boolean executePayload(final Block block) {
+    return mergeCoordinator.executePayload(block);
   }
 }

@@ -18,7 +18,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.KNOWN;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.VALID;
 
-import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -56,12 +56,12 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
   private static final Hash OMMERS_HASH_CONSTANT = BodyValidation.ommersHash(OMMERS_CONSTANT);
   private static final Logger LOG = LogManager.getLogger();
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
-  private final MergeCoordinator mergeCoordinator;
+  private final MergeMiningCoordinator mergeCoordinator;
 
   public EngineExecutePayload(
       final Vertx vertx,
       final ProtocolContext protocolContext,
-      final MergeCoordinator mergeCoordinator) {
+      final MergeMiningCoordinator mergeCoordinator) {
     super(vertx, protocolContext);
     this.mergeCoordinator = mergeCoordinator;
   }

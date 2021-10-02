@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -44,7 +43,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class MergeCoordinator implements MiningCoordinator {
+public class MergeCoordinator implements MergeMiningCoordinator {
   private static final Logger LOG = LogManager.getLogger();
 
   final AtomicLong targetGasLimit;
@@ -148,6 +147,7 @@ public class MergeCoordinator implements MiningCoordinator {
     }
   }
 
+  @Override
   public PayloadIdentifier preparePayload(
       final BlockHeader parentHeader,
       final Long timestamp,
@@ -180,6 +180,7 @@ public class MergeCoordinator implements MiningCoordinator {
     return payloadIdentifier;
   }
 
+  @Override
   public boolean executePayload(final Block block) {
     return blockValidator
         .validateAndProcessBlock(

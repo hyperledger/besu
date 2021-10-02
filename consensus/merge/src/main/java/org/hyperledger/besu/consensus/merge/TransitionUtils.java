@@ -16,11 +16,11 @@ public abstract class TransitionUtils<SwitchingObject> {
   }
 
   protected void dispatchConsumerAccordingToMergeState(final Consumer<SwitchingObject> consumer) {
-    consumer.accept(mergeContext.isPostMerge() ? preMergeObject : postMergeObject);
+    consumer.accept(mergeContext.isPostMerge() ? postMergeObject : preMergeObject);
   }
 
   protected <T> T dispatchFunctionAccordingToMergeState(
       final Function<SwitchingObject, T> function) {
-    return function.apply(mergeContext.isPostMerge() ? preMergeObject : postMergeObject);
+    return function.apply(mergeContext.isPostMerge() ? postMergeObject : preMergeObject);
   }
 }
