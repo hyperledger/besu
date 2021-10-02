@@ -360,6 +360,7 @@ public abstract class BesuControllerBuilder {
           .observeNewIsPostMergeState(
               newIsPostMergeState -> {
                 if (newIsPostMergeState) {
+                  miningCoordinator.disable();
                   miningCoordinator.stop();
                 }
                 // todo: return the mining coordinator back to its previous state if we transition
