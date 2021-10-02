@@ -17,10 +17,8 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
@@ -33,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.logging.log4j.Logger;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 /**
  * Responsible for determining when a block mining operation should be started/stopped, then

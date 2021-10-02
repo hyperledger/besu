@@ -1,7 +1,5 @@
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
-
 import java.util.function.Consumer;
 import java.util.function.Function;
 

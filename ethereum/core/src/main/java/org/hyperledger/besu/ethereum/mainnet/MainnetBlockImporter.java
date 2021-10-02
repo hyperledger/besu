@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public class MainnetBlockImporter implements BlockImporter {
 

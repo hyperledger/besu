@@ -65,6 +65,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
+    // never used for pow so we can just have the merge version here
     final MergeContext mergeContext =
         MergeContext.get()
             .setTerminalTotalDifficulty(

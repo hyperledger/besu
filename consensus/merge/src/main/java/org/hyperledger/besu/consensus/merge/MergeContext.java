@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
 import java.util.Optional;
@@ -36,6 +37,8 @@ public class MergeContext {
 
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
   private final AtomicBoolean isPostMerge = new AtomicBoolean();
+  private final Subscribers<NewMergeStateCallback> newMergeStateCallbackSubscribers =
+      Subscribers.create();
 
   private final Map<PayloadIdentifier, Block> blocksInProgressById = new ConcurrentHashMap<>();
 
@@ -69,11 +72,21 @@ public class MergeContext {
       // switch back to a pre-merge
       return;
     }
-    isPostMerge.set(terminalTotalDifficulty.get().lessOrEqualThan(blockHeader.getDifficulty()));
+    final boolean newState =
+        terminalTotalDifficulty.get().lessOrEqualThan(blockHeader.getDifficulty());
+    final boolean oldState = isPostMerge.getAndSet(newState);
+    if (oldState != newState) {
+      newMergeStateCallbackSubscribers.forEach(
+          newMergeStateCallback -> newMergeStateCallback.onNewIsPostMergeState(newState));
+    }
   }
 
   public boolean isPostMerge() {
     return isPostMerge.get();
+  }
+
+  public void observeNewIsPostMergeState(final NewMergeStateCallback newMergeStateCallback) {
+    newMergeStateCallbackSubscribers.subscribe(newMergeStateCallback);
   }
 
   public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
@@ -133,5 +146,9 @@ public class MergeContext {
 
   public Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId) {
     return Optional.ofNullable(blocksInProgressById.remove(payloadId));
+  }
+
+  public interface NewMergeStateCallback {
+    void onNewIsPostMergeState(final boolean newIsPostMergeState);
   }
 }

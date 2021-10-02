@@ -1,6 +1,5 @@
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.consensus.merge.TransitionUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -11,6 +10,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
     implements MiningCoordinator {
@@ -27,7 +28,6 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
 
   @Override
   public void start() {
-    // todo, how to stop the mining coordinator?
     miningCoordinator.start();
   }
 
