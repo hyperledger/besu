@@ -174,6 +174,7 @@ public abstract class AbstractMiningCoordinator<
       if (event.isNewCanonicalHead()
           && newChainHeadInvalidatesMiningOperation(event.getBlock().getHeader())) {
         haltCurrentMiningOperation();
+        startMiningIfPossible();
       }
     }
   }
