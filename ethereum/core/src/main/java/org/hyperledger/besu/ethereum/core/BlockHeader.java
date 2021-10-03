@@ -249,8 +249,8 @@ public class BlockHeader extends SealableBlockHeader
     final Hash mixHash = Hash.wrap(input.readBytes32());
     final long nonce = input.readLong();
     final Long baseFee = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
-    input.leaveList();
     final Bytes32 random = !input.isEndOfCurrentList() ? input.readBytes32() : null;
+    input.leaveList();
     return new BlockHeader(
         parentHash,
         ommersHash,
