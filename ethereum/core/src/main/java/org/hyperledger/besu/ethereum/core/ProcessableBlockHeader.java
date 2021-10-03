@@ -19,6 +19,8 @@ import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
+
 /** A block header capable of being processed. */
 public class ProcessableBlockHeader {
 
@@ -36,6 +38,8 @@ public class ProcessableBlockHeader {
   protected final long timestamp;
   // base fee is included for post EIP-1559 blocks
   protected final Long baseFee;
+  // random is included for post-merge blocks
+  protected final Bytes32 random;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -44,7 +48,8 @@ public class ProcessableBlockHeader {
       final long number,
       final long gasLimit,
       final long timestamp,
-      final Long baseFee) {
+      final Long baseFee,
+      final Bytes32 random) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
@@ -52,6 +57,7 @@ public class ProcessableBlockHeader {
     this.gasLimit = gasLimit;
     this.timestamp = timestamp;
     this.baseFee = baseFee;
+    this.random = random;
   }
 
   /**
@@ -111,9 +117,18 @@ public class ProcessableBlockHeader {
   /**
    * Returns the basefee of the block.
    *
-   * @return the raw bytes of the extra data field
+   * @return the optional long value for base fee
    */
   public Optional<Long> getBaseFee() {
     return Optional.ofNullable(baseFee);
+  }
+
+  /**
+   * Returns the random of the block.
+   *
+   * @return the raw bytes of the random field
+   */
+  public Optional<Bytes32> getRandom() {
+    return Optional.ofNullable(random);
   }
 }

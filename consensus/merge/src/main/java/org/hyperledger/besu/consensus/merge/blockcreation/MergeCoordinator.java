@@ -81,7 +81,6 @@ public class MergeCoordinator implements MergeMiningCoordinator {
                 protocolSchedule,
                 this.miningParameters.getMinTransactionGasPrice(),
                 this.miningParameters.getCoinbase().orElse(Address.ZERO),
-                random,
                 this.miningParameters.getMinBlockOccupancyRatio(),
                 parentHeader);
   }
