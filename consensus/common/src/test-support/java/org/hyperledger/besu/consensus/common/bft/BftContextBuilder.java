@@ -25,7 +25,6 @@ import org.hyperledger.besu.datatypes.Address;
 import java.util.Collection;
 
 import org.mockito.Mockito;
-import org.mockito.internal.matchers.Any;
 
 public class BftContextBuilder {
 
