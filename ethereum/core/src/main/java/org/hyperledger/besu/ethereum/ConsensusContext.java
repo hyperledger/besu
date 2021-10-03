@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum;
 
+@FunctionalInterface
 public interface ConsensusContext {
   <C extends ConsensusContext> C get(final Class<C> klass);
 }
