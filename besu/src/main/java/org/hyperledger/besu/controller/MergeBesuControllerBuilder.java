@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -67,7 +68,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final ProtocolSchedule protocolSchedule) {
     // never used for pow so we can just have the merge version here
     final MergeContext mergeContext =
-        MergeContext.get()
+        PostMergeContext.get()
             .setTerminalTotalDifficulty(
                 genesisConfig
                     .getConfigOptions(genesisConfigOverrides)

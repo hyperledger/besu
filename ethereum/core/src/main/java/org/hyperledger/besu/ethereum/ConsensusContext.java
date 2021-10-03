@@ -14,15 +14,6 @@
  */
 package org.hyperledger.besu.ethereum;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-
-@FunctionalInterface
-public interface ConsensusContextFactory {
-
-  ConsensusContext create(
-      Blockchain blockchain,
-      WorldStateArchive worldStateArchive,
-      ProtocolSchedule protocolSchedule);
+public interface ConsensusContext {
+  <C extends ConsensusContext> C get(final Class<C> klass);
 }
