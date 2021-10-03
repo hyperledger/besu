@@ -193,14 +193,7 @@ public class BesuController implements java.io.Closeable {
           genesisConfig.getConfigOptions(genesisConfigOverrides);
       final BesuControllerBuilder builder;
 
-      if (MergeOptions.isMergeEnabled()) {
-        // use merge config is experimental merge flag is enabled:
-        builder =
-            // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
-            // series of classes removed after we successfully transition to PoS
-            new TransitionBesuControllerBuilder(
-                new MainnetBesuControllerBuilder(), new MergeBesuControllerBuilder());
-      } else if (configOptions.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
+      if (configOptions.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
         builder = new MainnetBesuControllerBuilder();
       } else if (configOptions.isIbft2()) {
         builder = new IbftBesuControllerBuilder();
@@ -213,7 +206,14 @@ public class BesuController implements java.io.Closeable {
       } else {
         throw new IllegalArgumentException("Unknown consensus mechanism defined");
       }
-      return builder.genesisConfigFile(genesisConfig);
+
+      if (MergeOptions.isMergeEnabled()) {
+        // use merge config is experimental merge flag is enabled:
+        // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
+        // series of classes removed after we successfully transition to PoS
+        return new TransitionBesuControllerBuilder(builder, new MergeBesuControllerBuilder())
+            .genesisConfigFile(genesisConfig);
+      } else return builder.genesisConfigFile(genesisConfig);
     }
   }
 }

@@ -51,6 +51,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -89,9 +90,12 @@ public class MessageValidatorTest {
     when(proposalBlockConsistencyValidator.validateProposalMatchesBlock(any(), any(), any()))
         .thenReturn(true);
 
+    BftContext mockBftCtx = mock(BftContext.class);
+    when(mockBftCtx.get(Mockito.any())).thenReturn(mockBftCtx);
+
     protocolContext =
         new ProtocolContext(
-            mock(MutableBlockchain.class), mock(WorldStateArchive.class), mock(BftContext.class));
+            mock(MutableBlockchain.class), mock(WorldStateArchive.class), mockBftCtx);
 
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));

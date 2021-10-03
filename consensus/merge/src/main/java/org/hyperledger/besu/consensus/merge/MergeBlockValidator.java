@@ -33,7 +33,7 @@ import java.util.concurrent.ExecutionException;
 
 public class MergeBlockValidator extends MainnetBlockValidator {
   private final MergeBlockProcessor mergeBlockProcessor;
-  private final MergeContext mergeContext = MergeContext.get();
+  private final MergeContext mergeContext = PostMergeContext.get();
   /**
    * BlockValidator wrapping MainnetBlockValidator for use with merge.
    *

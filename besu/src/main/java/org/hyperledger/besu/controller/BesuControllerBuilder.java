@@ -18,10 +18,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.experimental.MergeOptions;
-import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -356,7 +357,7 @@ public abstract class BesuControllerBuilder {
 
     // todo: remove post transition
     if (MergeOptions.isMergeEnabled()) {
-      MergeContext.get()
+      PostMergeContext.get()
           .observeNewIsPostMergeState(
               newIsPostMergeState -> {
                 if (newIsPostMergeState) {
@@ -425,7 +426,7 @@ public abstract class BesuControllerBuilder {
 
   protected void validateContext(final ProtocolContext context) {}
 
-  protected abstract Object createConsensusContext(
+  protected abstract ConsensusContext createConsensusContext(
       Blockchain blockchain,
       WorldStateArchive worldStateArchive,
       ProtocolSchedule protocolSchedule);

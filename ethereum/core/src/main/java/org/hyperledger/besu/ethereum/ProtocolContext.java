@@ -27,12 +27,12 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
-  private final Object consensusContext;
+  private final ConsensusContext consensusContext;
 
   public ProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final Object consensusContext) {
+      final ConsensusContext consensusContext) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.consensusContext = consensusContext;
@@ -62,7 +62,7 @@ public class ProtocolContext {
     return worldStateArchive;
   }
 
-  public <C> C getConsensusContext(final Class<C> klass) {
-    return klass.cast(consensusContext);
+  public <C extends ConsensusContext> C getConsensusContext(final Class<C> klass) {
+    return consensusContext.get(klass);
   }
 }

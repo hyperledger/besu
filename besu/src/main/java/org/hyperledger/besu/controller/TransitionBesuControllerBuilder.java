@@ -15,11 +15,13 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.consensus.merge.TransitionContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -49,16 +51,22 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
-  private final MainnetBesuControllerBuilder mainnetBesuControllerBuilder;
+  private final BesuControllerBuilder preMergeBesuControllerBuilder;
   private final MergeBesuControllerBuilder mergeBesuControllerBuilder;
 
   public TransitionBesuControllerBuilder(
-      final MainnetBesuControllerBuilder mainnetBesuControllerBuilder,
+      final BesuControllerBuilder preMergeBesuControllerBuilder,
       final MergeBesuControllerBuilder mergeBesuControllerBuilder) {
-    this.mainnetBesuControllerBuilder = mainnetBesuControllerBuilder;
+    this.preMergeBesuControllerBuilder = preMergeBesuControllerBuilder;
     this.mergeBesuControllerBuilder = mergeBesuControllerBuilder;
-    // propogate configs:
+    // propagate configs:
     propagateAllConfigs();
+  }
+
+  @Override
+  protected void prepForBuild() {
+    preMergeBesuControllerBuilder.prepForBuild();
+    mergeBesuControllerBuilder.prepForBuild();
   }
 
   @Override
@@ -70,7 +78,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
     return new TransitionCoordinator(
-        mainnetBesuControllerBuilder.createMiningCoordinator(
+        preMergeBesuControllerBuilder.createMiningCoordinator(
             protocolSchedule,
             protocolContext,
             transactionPool,
@@ -89,18 +97,20 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return new TransitionProtocolSchedule(
-        mainnetBesuControllerBuilder.createProtocolSchedule(),
+        preMergeBesuControllerBuilder.createProtocolSchedule(),
         mergeBesuControllerBuilder.createProtocolSchedule());
   }
 
   @Override
-  protected Object createConsensusContext(
+  protected ConsensusContext createConsensusContext(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    // never called for pow so always use merge version
-    return mergeBesuControllerBuilder.createConsensusContext(
-        blockchain, worldStateArchive, protocolSchedule);
+    return new TransitionContext(
+        preMergeBesuControllerBuilder.createConsensusContext(
+            blockchain, worldStateArchive, protocolSchedule),
+        mergeBesuControllerBuilder.createConsensusContext(
+            blockchain, worldStateArchive, protocolSchedule));
   }
 
   @Override
@@ -274,7 +284,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   private BesuControllerBuilder propagateConfig(final Consumer<BesuControllerBuilder> toPropogate) {
-    toPropogate.accept(mainnetBesuControllerBuilder);
+    toPropogate.accept(preMergeBesuControllerBuilder);
     toPropogate.accept(mergeBesuControllerBuilder);
     return this;
   }

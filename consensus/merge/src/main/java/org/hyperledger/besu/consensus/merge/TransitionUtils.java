@@ -19,7 +19,7 @@ import java.util.function.Function;
 
 public abstract class TransitionUtils<SwitchingObject> {
 
-  private final MergeContext mergeContext = MergeContext.get();
+  private final MergeContext mergeContext = PostMergeContext.get();
   private final SwitchingObject preMergeObject;
   private final SwitchingObject postMergeObject;
 

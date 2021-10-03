@@ -47,7 +47,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   final AtomicLong targetGasLimit;
   final MiningParameters miningParameters;
-  final MergeBlockCreatorSupplier mergeBlockCreator;
+  final MergeBlockCreatorFactory mergeBlockCreator;
   final AtomicReference<Bytes> extraData = new AtomicReference<>(Bytes.fromHexString("0x"));
   private final MergeContext mergeContext;
   private final BlockValidator blockValidator;
@@ -188,7 +188,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @FunctionalInterface
-  interface MergeBlockCreatorSupplier {
+  interface MergeBlockCreatorFactory {
     MergeBlockCreator forParams(BlockHeader header, Bytes32 random, Optional<Address> feeRecipient);
   }
 }
