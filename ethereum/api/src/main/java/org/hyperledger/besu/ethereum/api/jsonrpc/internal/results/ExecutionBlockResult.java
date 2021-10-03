@@ -21,6 +21,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes32;
 
 @JsonPropertyOrder({
   "blockHash",
@@ -68,9 +69,7 @@ public class ExecutionBlockResult {
     this.timestamp = Quantity.create(header.getTimestamp());
     this.transactions = transactions;
     this.coinbase = header.getCoinbase().toString();
-
-    // TODO: should have an optional field for random rather than repurposing difficulty
-    this.random = header.getDifficulty().toHexString();
+    this.random = header.getRandom().map(Bytes32::toHexString).orElse(null);
   }
 
   @JsonGetter(value = "blockNumber")

@@ -36,7 +36,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiFunction;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,7 +47,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   final AtomicLong targetGasLimit;
   final MiningParameters miningParameters;
-  final BiFunction<BlockHeader, Bytes32, MergeBlockCreator> mergeBlockCreator;
+  final MergeBlockCreatorSupplier mergeBlockCreator;
   final AtomicReference<Bytes> extraData = new AtomicReference<>(Bytes.fromHexString("0x"));
   private final MergeContext mergeContext;
   private final BlockValidator blockValidator;
@@ -68,12 +67,12 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         miningParameters
             .getTargetGasLimit()
             // TODO: revisit default target gas limit
-            .orElse(new AtomicLong(30000000L));
+            .orElse(new AtomicLong(10000000L));
 
     this.mergeBlockCreator =
-        (parentHeader, random) ->
+        (parentHeader, random, address) ->
             new MergeBlockCreator(
-                this.miningParameters.getCoinbase().orElse(Address.ZERO),
+                address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 () -> Optional.of(targetGasLimit.longValue()),
                 parent -> extraData.get(),
                 pendingTransactions,
@@ -81,7 +80,6 @@ public class MergeCoordinator implements MergeMiningCoordinator {
                 protocolSchedule,
                 this.miningParameters.getMinTransactionGasPrice(),
                 this.miningParameters.getCoinbase().orElse(Address.ZERO),
-                random,
                 this.miningParameters.getMinBlockOccupancyRatio(),
                 parentHeader);
   }
@@ -153,9 +151,10 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       final Long timestamp,
       final Bytes32 random,
       final Address feeRecipient) {
-    // todo feeRecipient
+
     final PayloadIdentifier payloadIdentifier = PayloadIdentifier.random();
-    final MergeBlockCreator mergeBlockCreator = this.mergeBlockCreator.apply(parentHeader, random);
+    final MergeBlockCreator mergeBlockCreator =
+        this.mergeBlockCreator.forParams(parentHeader, random, Optional.ofNullable(feeRecipient));
 
     // put the empty block in first
     final Block emptyBlock =
@@ -186,5 +185,10 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         .validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE)
         .isPresent();
+  }
+
+  @FunctionalInterface
+  interface MergeBlockCreatorSupplier {
+    MergeBlockCreator forParams(BlockHeader header, Bytes32 random, Optional<Address> feeRecipient);
   }
 }

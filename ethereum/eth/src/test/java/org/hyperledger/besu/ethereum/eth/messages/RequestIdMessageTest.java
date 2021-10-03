@@ -346,6 +346,7 @@ public class RequestIdMessageTest {
           null,
           Hash.fromHexString(mixHash),
           Bytes.fromHexString(nonce).getLong(0),
+          null,
           new MainnetBlockHeaderFunctions());
     }
   }

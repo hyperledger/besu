@@ -55,6 +55,7 @@ import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
@@ -139,16 +140,18 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
-    return createBlock(maybeTransactions, maybeOmmers, timestamp, true);
+    return createBlock(maybeTransactions, maybeOmmers, Optional.empty(), timestamp, true);
   }
 
   protected Block createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
+      final Optional<Bytes32> maybeRandom,
       final long timestamp,
       boolean rewardCoinbase) {
     try {
-      final ProcessableBlockHeader processableBlockHeader = createPendingBlockHeader(timestamp);
+      final ProcessableBlockHeader processableBlockHeader =
+          createPendingBlockHeader(timestamp, maybeRandom);
 
       throwIfStopped();
 
@@ -266,7 +269,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     return Lists.newArrayList();
   }
 
-  private ProcessableBlockHeader createPendingBlockHeader(final long timestamp) {
+  private ProcessableBlockHeader createPendingBlockHeader(
+      final long timestamp, final Optional<Bytes32> maybeRandom) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
     long gasLimit =
         protocolSpec
@@ -293,6 +297,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                         feeMarket.targetGasUsed(parentHeader)))
             .orElse(null);
 
+    final Bytes32 random = maybeRandom.orElse(null);
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
         .coinbase(
@@ -306,6 +311,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         .gasLimit(gasLimit)
         .timestamp(timestamp)
         .baseFee(baseFee)
+        .random(random)
         .buildProcessableBlockHeader();
   }
 

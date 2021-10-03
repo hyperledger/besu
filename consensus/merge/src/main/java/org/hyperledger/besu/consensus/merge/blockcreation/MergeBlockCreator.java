@@ -48,7 +48,6 @@ public class MergeBlockCreator extends AbstractBlockCreator {
       final ProtocolSchedule protocolSchedule,
       final Wei minTransactionGasPrice,
       final Address miningBeneficiary,
-      final Bytes32 random,
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     super(
@@ -68,7 +67,12 @@ public class MergeBlockCreator extends AbstractBlockCreator {
       final Optional<List<Transaction>> maybeTransactions,
       final Bytes32 random,
       final long timestamp) {
-    return createBlock(Optional.empty(), Optional.of(Collections.emptyList()), timestamp, false);
+    return createBlock(
+        Optional.empty(),
+        Optional.of(Collections.emptyList()),
+        Optional.of(random),
+        timestamp,
+        false);
   }
 
   @Override
