@@ -43,7 +43,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
 
     // TODO: revisit how we fetch this when totalDifficulty transition is defined.
     //  Since ProtocolSchedule doesn't make sense here:
-    BlockValidator blockValidator = protocolSchedule.getByBlockNumber(Long.MAX_VALUE).getBlockValidator();
+    BlockValidator blockValidator =
+        protocolSchedule.getByBlockNumber(Long.MAX_VALUE).getBlockValidator();
 
     return new MergeCoordinator(
         protocolContext,
