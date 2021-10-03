@@ -195,7 +195,11 @@ public class BesuController implements java.io.Closeable {
 
       if (MergeOptions.isMergeEnabled()) {
         // use merge config is experimental merge flag is enabled:
-        builder = new MergeBesuControllerBuilder();
+        builder =
+            // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
+            // series of classes removed after we successfully transition to PoS
+            new TransitionBesuControllerBuilder(
+                new MainnetBesuControllerBuilder(), new MergeBesuControllerBuilder());
       } else if (configOptions.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
         builder = new MainnetBesuControllerBuilder();
       } else if (configOptions.isIbft2()) {

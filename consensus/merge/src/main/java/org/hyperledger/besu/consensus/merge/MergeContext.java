@@ -20,10 +20,12 @@ import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.logging.log4j.LogManager;
@@ -34,6 +36,9 @@ public class MergeContext {
   private static MergeContext singleton;
 
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
+  private final AtomicBoolean isPostMerge = new AtomicBoolean(true);
+  private final Subscribers<NewMergeStateCallback> newMergeStateCallbackSubscribers =
+      Subscribers.create();
 
   private final Map<PayloadIdentifier, Block> blocksInProgressById = new ConcurrentHashMap<>();
 
@@ -57,17 +62,34 @@ public class MergeContext {
   }
 
   public MergeContext setTerminalTotalDifficulty(final Difficulty newTerminalTotalDifficulty) {
-    this.terminalTotalDifficulty.set(newTerminalTotalDifficulty);
+    terminalTotalDifficulty.set(newTerminalTotalDifficulty);
     return this;
+  }
+
+  public void setIsPostMerge(final Difficulty totalDifficulty) {
+    if (Optional.ofNullable(lastFinalized.get()).isPresent()) {
+      // we check this condition because if we've received a finalized block, we never want to
+      // switch back to a pre-merge
+      return;
+    }
+    final boolean newState = terminalTotalDifficulty.get().lessOrEqualThan(totalDifficulty);
+    final boolean oldState = isPostMerge.getAndSet(newState);
+    if (oldState != newState) {
+      newMergeStateCallbackSubscribers.forEach(
+          newMergeStateCallback -> newMergeStateCallback.onNewIsPostMergeState(newState));
+    }
+  }
+
+  public boolean isPostMerge() {
+    return isPostMerge.get();
+  }
+
+  public void observeNewIsPostMergeState(final NewMergeStateCallback newMergeStateCallback) {
+    newMergeStateCallbackSubscribers.subscribe(newMergeStateCallback);
   }
 
   public Difficulty getTerminalTotalDifficulty() {
     return terminalTotalDifficulty.get();
-  }
-
-  public boolean isPostMerge(final BlockHeader blockheader) {
-    // TODO: this will probably erroneously return true for the transition block. fix
-    return terminalTotalDifficulty.get().lessOrEqualThan(blockheader.getDifficulty());
   }
 
   public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
@@ -127,5 +149,9 @@ public class MergeContext {
 
   public Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId) {
     return Optional.ofNullable(blocksInProgressById.remove(payloadId));
+  }
+
+  public interface NewMergeStateCallback {
+    void onNewIsPostMergeState(final boolean newIsPostMergeState);
   }
 }

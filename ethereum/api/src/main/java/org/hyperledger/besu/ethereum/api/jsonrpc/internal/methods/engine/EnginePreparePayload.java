@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -29,12 +29,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ExecutionPrepa
 import io.vertx.core.Vertx;
 
 public class EnginePreparePayload extends ExecutionEngineJsonRpcMethod {
-  private final MergeCoordinator mergeCoordinator;
+  private final MergeMiningCoordinator mergeCoordinator;
 
   public EnginePreparePayload(
       final Vertx vertx,
       final ProtocolContext protocolContext,
-      final MergeCoordinator mergeCoordinator) {
+      final MergeMiningCoordinator mergeCoordinator) {
     super(vertx, protocolContext);
     this.mergeCoordinator = mergeCoordinator;
   }

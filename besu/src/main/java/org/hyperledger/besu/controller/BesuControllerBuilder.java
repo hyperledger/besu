@@ -17,6 +17,8 @@ package org.hyperledger.besu.controller;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.experimental.MergeOptions;
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -85,8 +87,8 @@ public abstract class BesuControllerBuilder {
   private static final Logger LOG = LogManager.getLogger();
 
   protected GenesisConfigFile genesisConfig;
-  private SynchronizerConfiguration syncConfig;
-  private EthProtocolConfiguration ethereumWireProtocolConfiguration;
+  protected SynchronizerConfiguration syncConfig;
+  protected EthProtocolConfiguration ethereumWireProtocolConfiguration;
   protected TransactionPoolConfiguration transactionPoolConfiguration;
   protected BigInteger networkId;
   protected MiningParameters miningParameters;
@@ -99,15 +101,15 @@ public abstract class BesuControllerBuilder {
   protected NodeKey nodeKey;
   protected boolean isRevertReasonEnabled;
   GasLimitCalculator gasLimitCalculator;
-  private StorageProvider storageProvider;
-  private boolean isPruningEnabled;
-  private PrunerConfiguration prunerConfiguration;
-  Map<String, String> genesisConfigOverrides;
-  private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
-  private long reorgLoggingThreshold;
-  private DataStorageConfiguration dataStorageConfiguration =
+  protected StorageProvider storageProvider;
+  protected boolean isPruningEnabled;
+  protected PrunerConfiguration prunerConfiguration;
+  protected Map<String, String> genesisConfigOverrides;
+  protected Map<Long, Hash> requiredBlocks = Collections.emptyMap();
+  protected long reorgLoggingThreshold;
+  protected DataStorageConfiguration dataStorageConfiguration =
       DataStorageConfiguration.DEFAULT_CONFIG;
-  private List<NodeMessagePermissioningProvider> messagePermissioningProviders =
+  protected List<NodeMessagePermissioningProvider> messagePermissioningProviders =
       Collections.emptyList();
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
@@ -351,6 +353,20 @@ public abstract class BesuControllerBuilder {
             miningParameters,
             syncState,
             ethProtocolManager);
+
+    // todo: remove post transition
+    if (MergeOptions.isMergeEnabled()) {
+      MergeContext.get()
+          .observeNewIsPostMergeState(
+              newIsPostMergeState -> {
+                if (newIsPostMergeState) {
+                  miningCoordinator.disable();
+                  miningCoordinator.stop();
+                }
+                // todo: return the mining coordinator back to its previous state if we transition
+                // back
+              });
+    }
 
     final PluginServiceFactory additionalPluginServices =
         createAdditionalPluginServices(blockchain, protocolContext);

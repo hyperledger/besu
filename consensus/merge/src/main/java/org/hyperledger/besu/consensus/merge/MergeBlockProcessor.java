@@ -72,7 +72,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
       final List<BlockHeader> ommers,
       final boolean skipZeroBlockRewards) {
 
-    if (!mergeContext.isPostMerge(header)) {
+    if (!mergeContext.isPostMerge()) {
       return super.rewardCoinbase(worldState, header, ommers, skipZeroBlockRewards);
     }
     // do not issue block rewards post-merge

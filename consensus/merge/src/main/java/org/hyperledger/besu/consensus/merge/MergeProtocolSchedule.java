@@ -43,7 +43,7 @@ public class MergeProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            ProtocolSpecAdapters.create(0, builder -> applyMergeSpecificModifications(builder)),
+            ProtocolSpecAdapters.create(0, MergeProtocolSchedule::applyMergeSpecificModifications),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
@@ -58,6 +58,7 @@ public class MergeProtocolSchedule {
         .blockValidatorBuilder(MergeBlockValidator::new)
         .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
         .blockReward(Wei.ZERO)
+        .difficultyCalculator((a, b, c) -> BigInteger.ZERO)
         .skipZeroBlockRewards(true);
   }
 

@@ -40,8 +40,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
 
-    // TODO: revisit this when totalDifficulty transition is defined.  Since ProtocolSchedule
-    //  doesn't make sense here:
+    // TODO: revisit how we fetch this when totalDifficulty transition is defined.
+    //  Since ProtocolSchedule doesn't make sense here:
     BlockValidator blockValidator = protocolSchedule.getByBlockNumber(0).getBlockValidator();
 
     return new MergeCoordinator(
@@ -65,13 +65,20 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    return MergeContext.get()
-        .setTerminalTotalDifficulty(
-            genesisConfig
-                .getConfigOptions(genesisConfigOverrides)
-                .getTerminalTotalDifficulty()
-                .map(Difficulty::of)
-                .orElse(Difficulty.ZERO));
+    // never used for pow so we can just have the merge version here
+    final MergeContext mergeContext =
+        MergeContext.get()
+            .setTerminalTotalDifficulty(
+                genesisConfig
+                    .getConfigOptions(genesisConfigOverrides)
+                    .getTerminalTotalDifficulty()
+                    .map(Difficulty::of)
+                    .orElse(Difficulty.ZERO));
+    mergeContext.setIsPostMerge(blockchain.getChainHeadHeader().getDifficulty());
+    blockchain.observeBlockAdded(
+        blockAddedEvent ->
+            mergeContext.setIsPostMerge(blockAddedEvent.getBlock().getHeader().getDifficulty()));
+    return mergeContext;
   }
 
   @Override
