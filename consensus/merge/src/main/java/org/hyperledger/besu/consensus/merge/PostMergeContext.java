@@ -133,7 +133,7 @@ public class PostMergeContext implements MergeContext {
   @Override
   public boolean validateCandidateHead(final BlockHeader candidateHeader) {
     return Optional.ofNullable(lastFinalized.get())
-        .map(finalized -> candidateHeader.getNumber() <= finalized.getNumber())
+        .map(finalized -> candidateHeader.getNumber() >= finalized.getNumber())
         .orElse(Boolean.TRUE);
   }
 
