@@ -43,7 +43,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
 
     // TODO: revisit how we fetch this when totalDifficulty transition is defined.
     //  Since ProtocolSchedule doesn't make sense here:
-    BlockValidator blockValidator = protocolSchedule.getByBlockNumber(0).getBlockValidator();
+    BlockValidator blockValidator = protocolSchedule.getByBlockNumber(Long.MAX_VALUE).getBlockValidator();
 
     return new MergeCoordinator(
         protocolContext,
@@ -66,7 +66,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    // never used for pow so we can just have the merge version here
+
     final MergeContext mergeContext =
         PostMergeContext.get()
             .setTerminalTotalDifficulty(
