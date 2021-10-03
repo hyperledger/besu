@@ -67,7 +67,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         miningParameters
             .getTargetGasLimit()
             // TODO: revisit default target gas limit
-            .orElse(new AtomicLong(10000000L));
+            .orElse(new AtomicLong(30000000L));
 
     this.mergeBlockCreator =
         (parentHeader, random, address) ->
