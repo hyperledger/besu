@@ -92,6 +92,12 @@ public class PeerDiscoveryTimestampsTest {
     firstDiscovered.set(fd);
 
     // Send another packet and ensure that timestamps are updated accordingly.
+    // Sleep beforehand to make sure timestamps will be different.
+    try {
+      Thread.sleep(1);
+    } catch (InterruptedException e) {
+      // Swallow exception because we only want to pause the test.
+    }
     helper.sendMessageBetweenAgents(testAgent, agent, ping);
 
     peer = agent.streamDiscoveredPeers().iterator().next();

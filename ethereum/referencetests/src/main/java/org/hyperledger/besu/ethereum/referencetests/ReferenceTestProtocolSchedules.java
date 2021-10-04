@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -85,7 +86,8 @@ public class ReferenceTestProtocolSchedules {
             ProtocolSpecAdapters.create(0, Function.identity()),
             PrivacyParameters.DEFAULT,
             false,
-            options.isQuorum())
+            options.isQuorum(),
+            EvmConfiguration.DEFAULT)
         .createProtocolSchedule();
   }
 
