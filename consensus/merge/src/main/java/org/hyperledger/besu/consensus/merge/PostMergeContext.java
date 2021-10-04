@@ -37,7 +37,7 @@ public class PostMergeContext implements MergeContext {
   private static PostMergeContext singleton;
 
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
-  private final AtomicBoolean isPostMerge = new AtomicBoolean(true);
+  private final AtomicBoolean isPostMerge = new AtomicBoolean(false);
   private final Subscribers<NewMergeStateCallback> newMergeStateCallbackSubscribers =
       Subscribers.create();
 

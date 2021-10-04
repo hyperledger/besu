@@ -315,9 +315,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     final Hash newBlockHash = newBlock.getHash();
     try {
-      // TODO: FROMRAYONISM, not updating chain head if merge is enabled, revisit.
-      if ((chainHead == null || newBlock.getHeader().getParentHash().equals(chainHead))
-          && !MergeOptions.isMergeEnabled()) {
+      if ((chainHead == null || newBlock.getHeader().getParentHash().equals(chainHead))) {
         // This block advances the chain, update the chain head
         updater.putBlockHash(newBlock.getHeader().getNumber(), newBlockHash);
         updater.setChainHead(newBlockHash);
