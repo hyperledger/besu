@@ -105,6 +105,7 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
+    // only empty if we haven't ever finalized yet
     Optional<BlockHeader> maybeNewFinalized =
         candidateBlock.get().updateForkChoice(headBlockHash, finalizedBlockHash);
     Optional.ofNullable(lastFinalized.get())

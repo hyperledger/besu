@@ -200,7 +200,6 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
       // set the new head
       blockchain.rewindToBlock(newHead.getHash());
 
-      // return the finalized block's header
       return newFinalized.map(Block::getHeader);
     }
   }
