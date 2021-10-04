@@ -127,7 +127,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
 
       // execute block
       execSuccess =
-          mergeCoordinator.executePayload(
+          mergeCoordinator.validateProcessAndSetAsCandidate(
               new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList())));
     }
 

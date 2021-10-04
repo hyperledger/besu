@@ -151,13 +151,14 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public boolean setConsensusValidated(final Hash candidateHash) {
-    CandidateBlock candidate = candidateBlock.get();
-
-    if (candidate != null && candidate.getBlockhash().equals(candidateHash)) {
-      candidate.setConsensusValidated();
-      return true;
-    }
-    return false;
+    return Optional.ofNullable(candidateBlock.get())
+        .filter(candidate -> candidate.getBlockHash().equals(candidateHash))
+        .map(
+            candidate -> {
+              candidate.setConsensusValidated();
+              return true;
+            })
+        .orElse(false);
   }
 
   @Override

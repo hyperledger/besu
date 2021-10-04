@@ -34,10 +34,8 @@ import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -97,59 +95,100 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
 
     CandidateWorldState candidateWorldState = new CandidateWorldState(worldState, blockHeader);
 
-    CompletableFuture<Result> result =
-        CompletableFuture.supplyAsync(
-                () -> {
-                  Result res =
-                      super.executeBlock(
-                          blockchain,
-                          candidateWorldState,
-                          blockHeader,
-                          transactions,
-                          Collections.emptyList(), // no ommers for merge blocks
-                          null);
-                  candidateWorldState.setBlockExecuted();
-                  return res;
-                })
-            // TODO: does having a block processing timeout make sense, what is the correct failure
-            // mode here
-            // fail any block that takes longer than a slot to execute:
-            .orTimeout(12000, TimeUnit.MILLISECONDS);
+    final CandidateBlock candidateBlock =
+        new CandidateBlock(
+            new Block(blockHeader, new BlockBody(transactions, Collections.emptyList())),
+            candidateWorldState,
+            blockchain);
 
-    return new CandidateBlock(
-        new Block(blockHeader, new BlockBody(transactions, Collections.emptyList())),
-        result,
-        candidateWorldState,
-        blockchain);
+    // TODO: this setting happening here makes me think we actually might have the invariant in the
+    // code base right now where a block is only a candidate if it's been sucessfully executed. That
+    // means we don't need to do this setting anywhere and can flush a candidate as soon as we get a
+    // consensusValidated. Especially since setConsensusValidated is a noop if there isn't a
+    // candidate block already
+    candidateBlock.setBlockProcessorResult(
+        super.executeBlock(
+            blockchain,
+            candidateWorldState,
+            blockHeader,
+            transactions,
+            Collections.emptyList(), // no ommers for merge blocks
+            null));
+
+    return candidateBlock;
   }
 
   public static class CandidateBlock {
     final Block block;
-    final CompletableFuture<? extends BlockProcessor.Result> result;
     final CandidateWorldState candidateWorldState;
     final MutableBlockchain blockchain;
 
+    final Object commitLock = new Object();
+
+    final AtomicBoolean consensusValidated = new AtomicBoolean(false);
+    final AtomicReference<BlockProcessor.Result> blockProcessorResult = new AtomicReference<>();
+
     CandidateBlock(
         final Block block,
-        final CompletableFuture<? extends BlockProcessor.Result> result,
         final CandidateWorldState candidateWorldState,
         final MutableBlockchain blockchain) {
       this.block = block;
-      this.result = result;
       this.candidateWorldState = candidateWorldState;
       this.blockchain = blockchain;
     }
 
-    public CompletableFuture<? extends BlockProcessor.Result> getResult() {
-      return result;
+    public AtomicReference<BlockProcessor.Result> getBlockProcessorResult() {
+      return blockProcessorResult;
     }
 
-    public Hash getBlockhash() {
+    public Hash getBlockHash() {
       return block.getHash();
     }
 
+    /**
+     * Set the candidate block hash as consensus validated. Attempts to commit if block has
+     * completed executing.
+     */
     public void setConsensusValidated() {
-      candidateWorldState.setConsensusValidated();
+      synchronized (commitLock) {
+        this.consensusValidated.set(true);
+      }
+      maybePersistChainAndStateData();
+    }
+
+    private void setBlockProcessorResult(final BlockProcessor.Result blockProcessorResult) {
+      synchronized (commitLock) {
+        this.blockProcessorResult.set(blockProcessorResult);
+      }
+      maybePersistChainAndStateData();
+    }
+
+    private void maybePersistChainAndStateData() {
+
+      final boolean shouldCommit;
+      synchronized (commitLock) {
+        // synchronize to ensure we do not have a race that prevents committing
+        shouldCommit =
+            consensusValidated.get()
+                && Optional.ofNullable(blockProcessorResult.get())
+                    .map(BlockProcessor.Result::isSuccessful)
+                    .orElse(false);
+      }
+
+      if (shouldCommit) {
+        candidateWorldState.flush();
+        blockchain.appendBlock(block, getBlockProcessorResult().get().getReceipts());
+        LOG.debug(
+            "Committed blockhash {}: consensus validated}", getBlockHash().toShortHexString());
+      } else {
+        LOG.debug(
+            "Uncommitted blockhash {}: blockExecuted: {}; consensusValidated {}",
+            getBlockHash().toShortHexString(),
+            Optional.ofNullable(blockProcessorResult.get())
+                .map(BlockProcessor.Result::isSuccessful)
+                .orElse(false),
+            consensusValidated.get());
+      }
     }
 
     /**
@@ -179,15 +218,10 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
                   () -> {
                     Optional<Block> flushedBlock = Optional.empty();
                     // if new head is candidateBlock, flush and do not wait on consensusValidated:
-                    if (getBlockhash().equals(headBlockHash)) {
+                    if (getBlockHash().equals(headBlockHash)) {
                       candidateWorldState.flush();
 
-                      // TODO: better async handling
-                      try {
-                        blockchain.appendBlock(block, getResult().get().getReceipts());
-                      } catch (InterruptedException | ExecutionException e) {
-                        LOG.error("Failed to set new head");
-                      }
+                      blockchain.appendBlock(block, getBlockProcessorResult().get().getReceipts());
 
                       flushedBlock = blockchain.getBlockByHash(headBlockHash);
                     }
@@ -202,68 +236,22 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
 
       return newFinalized.map(Block::getHeader);
     }
+
+    @Override
+    public String toString() {
+      return String.format(
+          "CandidateBlock{block=%s, candidateWorldState=%s, blockchain=%s}",
+          block, candidateWorldState, blockchain);
+    }
   }
 
   static class CandidateWorldState implements MutableWorldState {
     final MutableWorldState worldState;
     final BlockHeader blockHeader;
 
-    final Object commitLock = new Object();
-    final AtomicBoolean consensusValidated = new AtomicBoolean(false);
-    final AtomicBoolean blockExecuted = new AtomicBoolean(false);
-
     CandidateWorldState(final MutableWorldState worldState, final BlockHeader blockHeader) {
       this.worldState = worldState;
       this.blockHeader = blockHeader;
-    }
-
-    /**
-     * Set the candidate block hash as consensus validated. Attempts to commit if block has
-     * completed executing.
-     */
-    public void setConsensusValidated() {
-      synchronized (commitLock) {
-        this.consensusValidated.set(true);
-      }
-      // attempt to commit
-      commit();
-    }
-
-    /**
-     * Set the candidate block hash as executed. Attempts to commit if block has been marked
-     * consensus validated.
-     */
-    public void setBlockExecuted() {
-      synchronized (commitLock) {
-        this.blockExecuted.set(true);
-      }
-      // attempt to commit
-      commit();
-    }
-
-    /**
-     * Commit the underlying wrapped WorldState IF consensus has been validated for it. Thread safe
-     */
-    public void commit() {
-
-      boolean shouldCommit = false;
-      synchronized (commitLock) {
-        // synchronize to ensure we do not have a race that prevents committing
-        shouldCommit = blockExecuted.get() && consensusValidated.get();
-      }
-
-      if (shouldCommit) {
-        flush();
-        LOG.trace(
-            "Committed blockhash {}: consensus validated}",
-            blockHeader.getBlockHash().toShortHexString());
-      } else {
-        LOG.trace(
-            "Uncommitted blockhash {}: blockExecuted: {}; consensusValidated {}",
-            blockHeader.getBlockHash().toShortHexString(),
-            blockExecuted.get(),
-            consensusValidated.get());
-      }
     }
 
     public void flush() {

@@ -159,19 +159,19 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     // put the empty block in first
     final Block emptyBlock =
         mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp);
-    executePayload(emptyBlock);
+    validateProcessAndSetAsCandidate(emptyBlock);
     mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
 
-    // start working on a full block and update the associated value when it's ready
+    // start working on a full block and update the payload value and candidate when it's ready
     CompletableFuture.supplyAsync(
             () -> mergeBlockCreator.createBlock(Optional.empty(), random, timestamp))
         .orTimeout(12, TimeUnit.SECONDS)
         .whenComplete(
             (bestBlock, throwable) -> {
               if (throwable != null) {
-                LOG.warn("timed out attempting to create block", throwable);
+                LOG.warn("something went wrong creating block", throwable);
               } else {
-                executePayload(bestBlock);
+                validateProcessAndSetAsCandidate(bestBlock);
                 mergeContext.replacePayloadById(payloadIdentifier, bestBlock);
               }
             });
@@ -180,7 +180,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @Override
-  public boolean executePayload(final Block block) {
+  public boolean validateProcessAndSetAsCandidate(final Block block) {
     return blockValidator
         .validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE)

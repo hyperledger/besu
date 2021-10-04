@@ -29,9 +29,9 @@ import org.hyperledger.besu.ethereum.mainnet.BlockProcessor.Result;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 public class MergeBlockValidator extends MainnetBlockValidator {
+
   private final MergeBlockProcessor mergeBlockProcessor;
   private final MergeContext mergeContext = PostMergeContext.get();
   /**
@@ -41,14 +41,14 @@ public class MergeBlockValidator extends MainnetBlockValidator {
    * @param blockBodyValidator configured BlockBodyValidator
    * @param mergeBlockProcessor configured BlockProcessor, should be instance of MergeBlockProcessor
    * @param badBlockManager configured BadBlockManager
-   * @param goQuorumPrivacyParameters unused, here for functional constructor convenience
+   * @param __ unused GoQuorumPrivacyParameters, here for functional constructor convenience
    */
   public MergeBlockValidator(
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
       final BlockProcessor mergeBlockProcessor,
       final BadBlockManager badBlockManager,
-      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
+      final Optional<GoQuorumPrivacyParameters> __) {
     super(blockHeaderValidator, blockBodyValidator, mergeBlockProcessor, badBlockManager);
     this.mergeBlockProcessor = (MergeBlockProcessor) mergeBlockProcessor;
   }
@@ -68,16 +68,9 @@ public class MergeBlockValidator extends MainnetBlockValidator {
               block.getHeader(),
               block.getBody().getTransactions());
 
-      // set our candidate block now so an async consensusValidated request will find it
       mergeContext.setCandidateBlock(newCandidate);
 
-      try {
-        // execute the block
-        return newCandidate.getResult().get();
-      } catch (InterruptedException | ExecutionException ex) {
-        // unset candidate block and fall through to return false
-        mergeContext.setCandidateBlock(null);
-      }
+      return newCandidate.getBlockProcessorResult().get();
     }
     return failedResult;
   }
