@@ -20,7 +20,6 @@ import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -30,8 +29,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-
-import java.util.function.Function;
 
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
 
@@ -79,11 +76,12 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
                     .getTerminalTotalDifficulty()
                     .map(Difficulty::of)
                     .orElse(Difficulty.ZERO));
-    mergeContext.setIsPostMerge(blockchain.getChainHeadHeader().getDifficulty());
     blockchain.observeBlockAdded(
         blockAddedEvent ->
-            blockchain.getTotalDifficultyByHash(blockAddedEvent.getBlock().getHeader().getHash())
+            blockchain
+                .getTotalDifficultyByHash(blockAddedEvent.getBlock().getHeader().getHash())
                 .ifPresent(mergeContext::setIsPostMerge));
+
     return mergeContext;
   }
 

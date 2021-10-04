@@ -17,8 +17,6 @@ package org.hyperledger.besu.controller;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.experimental.MergeOptions;
-import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -354,20 +352,6 @@ public abstract class BesuControllerBuilder {
             miningParameters,
             syncState,
             ethProtocolManager);
-
-    // todo: remove post transition
-    if (MergeOptions.isMergeEnabled()) {
-      PostMergeContext.get()
-          .observeNewIsPostMergeState(
-              newIsPostMergeState -> {
-                if (newIsPostMergeState) {
-                  miningCoordinator.disable();
-                  miningCoordinator.stop();
-                }
-                // todo: return the mining coordinator back to its previous state if we transition
-                // back
-              });
-    }
 
     final PluginServiceFactory additionalPluginServices =
         createAdditionalPluginServices(blockchain, protocolContext);

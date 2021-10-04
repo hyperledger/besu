@@ -37,7 +37,8 @@ public class PostMergeContext implements MergeContext {
   private static PostMergeContext singleton;
 
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
-  private final AtomicBoolean isPostMerge = new AtomicBoolean(false);
+  // transition miners are created disabled by default, so reflect that default:
+  private final AtomicBoolean isPostMerge = new AtomicBoolean(true);
   private final Subscribers<NewMergeStateCallback> newMergeStateCallbackSubscribers =
       Subscribers.create();
 
