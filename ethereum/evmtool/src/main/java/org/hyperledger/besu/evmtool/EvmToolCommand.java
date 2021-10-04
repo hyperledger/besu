@@ -241,7 +241,7 @@ public class EvmToolCommand implements Runnable {
                 .inputData(callData)
                 .value(ethValue)
                 .apparentValue(ethValue)
-                .code(new Code(codeHexString))
+                .code(new Code(codeHexString, Hash.hash(codeHexString)))
                 .blockValues(blockHeader)
                 .depth(0)
                 .completer(c -> {})

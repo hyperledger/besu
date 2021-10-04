@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTran
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -103,7 +104,8 @@ public class BftBlockCreatorTest {
                 .getConfigOptions(),
             PrivacyParameters.DEFAULT,
             false,
-            bftExtraDataEncoder);
+            bftExtraDataEncoder,
+            EvmConfiguration.DEFAULT);
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,
