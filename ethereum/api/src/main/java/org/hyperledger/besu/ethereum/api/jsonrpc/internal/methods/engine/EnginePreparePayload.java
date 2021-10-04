@@ -64,7 +64,7 @@ public class EnginePreparePayload extends ExecutionEngineJsonRpcMethod {
                             executionPreparePayloadParameter.getTimestamp(),
                             executionPreparePayloadParameter.getRandom(),
                             executionPreparePayloadParameter.getFeeRecipient()))))
-        .orElse(
+        .orElseGet(() ->
             new JsonRpcErrorResponse(
                 requestContext.getRequest().getId(), JsonRpcError.UNKNOWN_HEADER));
   }
