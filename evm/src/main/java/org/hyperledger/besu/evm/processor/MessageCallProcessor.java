@@ -130,7 +130,7 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
   }
 
   /**
-   * Executes this message call knowing that it is a call to the provide pre-compiled contract.
+   * Executes this message call knowing that it is a call to the provided pre-compiled contract.
    *
    * @param contract The contract this is a message call to.
    */
