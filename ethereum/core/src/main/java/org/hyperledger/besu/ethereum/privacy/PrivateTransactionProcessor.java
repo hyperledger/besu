@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateU
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -156,7 +157,7 @@ public class PrivateTransactionProcessor {
                 .address(privateContractAddress)
                 .contract(privateContractAddress)
                 .inputData(Bytes.EMPTY)
-                .code(new Code(transaction.getPayload()))
+                .code(new Code(transaction.getPayload(), Hash.EMPTY))
                 .build();
       } else {
         final Address to = transaction.getTo().get();
@@ -167,7 +168,10 @@ public class PrivateTransactionProcessor {
                 .address(to)
                 .contract(to)
                 .inputData(transaction.getPayload())
-                .code(new Code(maybeContract.map(Account::getCode).orElse(Bytes.EMPTY)))
+                .code(
+                    new Code(
+                        maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY),
+                        maybeContract.map(AccountState::getCodeHash).orElse(Hash.EMPTY)))
                 .build();
       }
 

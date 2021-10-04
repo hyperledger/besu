@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.IbftProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import javax.inject.Named;
 
@@ -35,7 +36,8 @@ class IBFTGenesisFileModule extends GenesisFileModule {
   ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
-    return IbftProtocolSchedule.create(configOptions, bftExtraDataEncoder);
+    return IbftProtocolSchedule.create(
+        configOptions, bftExtraDataEncoder, EvmConfiguration.DEFAULT);
   }
 
   @Override

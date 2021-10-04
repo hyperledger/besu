@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
@@ -134,7 +135,8 @@ public class BlockchainSetupUtil {
 
   private static ProtocolSchedule mainnetProtocolScheduleProvider(
       final GenesisConfigFile genesisConfigFile) {
-    return MainnetProtocolSchedule.fromConfig(genesisConfigFile.getConfigOptions());
+    return MainnetProtocolSchedule.fromConfig(
+        genesisConfigFile.getConfigOptions(), EvmConfiguration.DEFAULT);
   }
 
   private static ProtocolContext mainnetProtocolContextProvider(
