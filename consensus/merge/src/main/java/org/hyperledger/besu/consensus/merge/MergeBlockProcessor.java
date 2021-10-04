@@ -156,11 +156,11 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
      * update the blockchain head and fetch the specified new finalized block. We do both atomically
      * to ensure we do not get head and finalized on different forks.
      *
-     * @param headBlockhash hash of new head block.
+     * @param headBlockHash hash of new head block.
      * @param finalizedBlockHash hash of new finalized block.
      * @return BlockHeader of finalized block on success.
      */
-    public BlockHeader updateForkChoice(final Hash headBlockhash, final Hash finalizedBlockHash) {
+    public BlockHeader updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
 
       // first ensure we have the new finalized block:
       Block newFinalized = blockchain.getBlockByHash(finalizedBlockHash).orElseThrow();
@@ -168,12 +168,12 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
       // ensure we have headBlock:
       Block newHead =
           blockchain
-              .getBlockByHash(headBlockhash)
+              .getBlockByHash(headBlockHash)
               .orElseGet(
                   () -> {
                     Optional<Block> flushedBlock = Optional.empty();
                     // if new head is candidateBlock, flush and do not wait on consensusValidated:
-                    if (getBlockhash().equals(headBlockhash)) {
+                    if (getBlockhash().equals(headBlockHash)) {
                       candidateWorldState.flush();
 
                       // TODO: better async handling
@@ -183,7 +183,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
                         LOG.error("Failed to set new head");
                       }
 
-                      flushedBlock = blockchain.getBlockByHash(headBlockhash);
+                      flushedBlock = blockchain.getBlockByHash(headBlockHash);
                     }
                     // if we still can't find it, throw.
                     return flushedBlock.orElseThrow();
