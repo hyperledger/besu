@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -192,6 +193,10 @@ public class BaseBftProtocolScheduleTest {
           }
         };
     return bftProtocolSchedule.createProtocolSchedule(
-        genesisConfig, PrivacyParameters.DEFAULT, false, bftExtraDataCodec);
+        genesisConfig,
+        PrivacyParameters.DEFAULT,
+        false,
+        bftExtraDataCodec,
+        EvmConfiguration.DEFAULT);
   }
 }
