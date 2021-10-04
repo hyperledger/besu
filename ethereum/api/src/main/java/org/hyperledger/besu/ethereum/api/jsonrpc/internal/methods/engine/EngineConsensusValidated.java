@@ -58,6 +58,6 @@ public class EngineConsensusValidated extends ExecutionEngineJsonRpcMethod {
     }
     // TODO: remove block by hash if marked invalid
 
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
   }
 }

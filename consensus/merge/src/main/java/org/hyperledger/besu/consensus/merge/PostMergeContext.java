@@ -105,11 +105,17 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
-    BlockHeader newFinalized =
+    // only empty if we haven't ever finalized yet
+    Optional<BlockHeader> maybeNewFinalized =
         candidateBlock.get().updateForkChoice(headBlockHash, finalizedBlockHash);
     Optional.ofNullable(lastFinalized.get())
         .ifPresentOrElse(
             last -> {
+              final BlockHeader newFinalized =
+                  maybeNewFinalized.orElseThrow(
+                      () ->
+                          new IllegalStateException(
+                              "we have a last finalized so we should always have a valid new finalized"));
               if (last.getNumber() < newFinalized.getNumber()) {
                 lastFinalized.set(newFinalized);
               } else {
@@ -121,8 +127,8 @@ public class PostMergeContext implements MergeContext {
                     last.getNumber());
               }
             },
-            // no existing finalized block, set it:
-            () -> lastFinalized.set(newFinalized));
+            // waiting for first finalized block, set it if we got it:
+            () -> maybeNewFinalized.ifPresent(lastFinalized::set));
   }
 
   @Override
