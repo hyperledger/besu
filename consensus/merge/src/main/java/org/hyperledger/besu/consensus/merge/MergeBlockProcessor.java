@@ -160,10 +160,16 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
      * @param finalizedBlockHash hash of new finalized block.
      * @return BlockHeader of finalized block on success.
      */
-    public BlockHeader updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
+    public Optional<BlockHeader> updateForkChoice(
+        final Hash headBlockHash, final Hash finalizedBlockHash) {
 
-      // first ensure we have the new finalized block:
-      Block newFinalized = blockchain.getBlockByHash(finalizedBlockHash).orElseThrow();
+      final Optional<Block> newFinalized = blockchain.getBlockByHash(finalizedBlockHash);
+      if (newFinalized.isEmpty() && !finalizedBlockHash.equals(Hash.ZERO)) {
+        // we should only fail to find when it's the special value 0x000..000
+        throw new IllegalStateException(
+            String.format(
+                "should've been able to find block hash %s but couldn't", finalizedBlockHash));
+      }
 
       // ensure we have headBlock:
       Block newHead =
@@ -195,7 +201,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
       blockchain.rewindToBlock(newHead.getHash());
 
       // return the finalized block's header
-      return newFinalized.getHeader();
+      return newFinalized.map(Block::getHeader);
     }
   }
 
