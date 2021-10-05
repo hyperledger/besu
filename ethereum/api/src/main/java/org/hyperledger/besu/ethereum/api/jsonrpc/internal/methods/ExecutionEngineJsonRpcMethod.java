@@ -62,7 +62,8 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
 
     syncVertx.<JsonRpcResponse>executeBlocking(
         z -> {
-          LOG.info("consensus JSON-RPC request {}", this.getName());
+          LOG.info(
+              "consensus JSON-RPC request {} {}", this.getName(), request.getRequest().getParams());
           z.tryComplete(syncResponse(request));
         },
         true,
