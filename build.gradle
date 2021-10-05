@@ -524,10 +524,28 @@ task evmToolStartScripts(type: CreateStartScripts) {
   }
 }
 
+task autocomplete(type: JavaExec) {
+  dependsOn compileJava
+  def tempAutocompleteFile = File.createTempFile("besu", ".autocomplete")
+  standardOutput tempAutocompleteFile.newOutputStream()
+  outputs.file "$buildDir/besu.autocomplete.sh"
+
+  mainClass = application.mainClass
+  args "generate-completion"
+  classpath sourceSets.main.runtimeClasspath
+  doLast {
+    copy {
+      from tempAutocompleteFile
+      into "$buildDir"
+      rename tempAutocompleteFile.getName(), 'besu.autocomplete.sh'
+    }
+  }
+}
+
 installDist { dependsOn checkLicenses }
 
 distTar {
-  dependsOn checkLicenses
+  dependsOn checkLicenses, autocomplete
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -536,7 +554,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicenses
+  dependsOn checkLicenses, autocomplete
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
@@ -863,6 +881,7 @@ distributions {
       from("build/reports/license/license-dependency.html") { into "." }
       from("./docs/GettingStartedBinaries.md") { into "." }
       from("./docs/DocsArchive0.8.0.html") { into "." }
+      from("build/besu.autocomplete.sh") { into "." }
     }
   }
 }
