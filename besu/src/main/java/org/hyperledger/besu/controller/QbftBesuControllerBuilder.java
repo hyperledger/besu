@@ -15,6 +15,7 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.BftFork;
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
@@ -278,30 +279,24 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   private boolean usingValidatorContractModeButSignersExistIn(
       final BlockHeader genesisBlockHeader) {
-    return genesisConfig
-            .getConfigOptions()
-            .getQbftConfigOptions()
-            .getValidatorContractAddress()
-            .isPresent()
-        && signersExistIn(genesisBlockHeader);
+    return isValidatorContractMode(genesisConfig) && signersExistIn(genesisBlockHeader);
   }
 
   private boolean usingValidatorBlockHeaderModeButNoSignersIn(
       final BlockHeader genesisBlockHeader) {
+    return !isValidatorContractMode(genesisConfig) && !signersExistIn(genesisBlockHeader);
+  }
+
+  private boolean isValidatorContractMode(final GenesisConfigFile genesisConfig) {
     return genesisConfig
-            .getConfigOptions()
-            .getQbftConfigOptions()
-            .getValidatorContractAddress()
-            .isEmpty()
-        && noSignersExistIn(genesisBlockHeader);
+        .getConfigOptions()
+        .getQbftConfigOptions()
+        .getValidatorContractAddress()
+        .isPresent();
   }
 
   private boolean signersExistIn(final BlockHeader genesisBlockHeader) {
-    return !noSignersExistIn(genesisBlockHeader);
-  }
-
-  private boolean noSignersExistIn(final BlockHeader genesisBlockHeader) {
-    return bftBlockInterface().get().validatorsInBlock(genesisBlockHeader).isEmpty();
+    return bftBlockInterface().get().validatorsInBlock(genesisBlockHeader).size() > 0;
   }
 
   @Override
