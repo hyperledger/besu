@@ -33,8 +33,8 @@ plugins {
 
 sonarqube {
   properties {
-    property "sonar.projectKey", "hyperledger-cicd_besu"
-    property "sonar.organization", "hyperledger-cicd"
+    property "sonar.projectKey", "hyperledger_besu"
+    property "sonar.organization", "hyperledger"
     property "sonar.host.url", "https://sonarcloud.io"
     property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
   }
