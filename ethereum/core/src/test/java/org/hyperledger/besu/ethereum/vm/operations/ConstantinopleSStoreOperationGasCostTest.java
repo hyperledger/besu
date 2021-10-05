@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
@@ -36,7 +37,8 @@ import org.junit.runners.Parameterized.Parameters;
 public class ConstantinopleSStoreOperationGasCostTest {
 
   private static final ProtocolSchedule protocolSchedule =
-      MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().constantinopleBlock(0));
+      MainnetProtocolSchedule.fromConfig(
+          new StubGenesisConfigOptions().constantinopleBlock(0), EvmConfiguration.DEFAULT);
 
   @Parameters(name = "Code: {0}, Original: {1}")
   public static Object[][] scenarios() {

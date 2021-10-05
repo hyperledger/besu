@@ -17,11 +17,22 @@ package org.hyperledger.besu.cli;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.contentOf;
 
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.SECPPrivateKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
+import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.asn1.sec.SECNamedCurves;
+import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -48,11 +59,19 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
           + System.lineSeparator();
 
   private static final String EXPECTED_PUBLIC_KEY_EXPORT_USAGE =
-      "Usage: besu public-key export [-hV] [--to=<FILE>]"
+      "Usage: besu public-key export [-hV] [--node-private-key-file=<PATH>]"
+          + System.lineSeparator()
+          + "                              [--to=<FILE>]"
           + System.lineSeparator()
           + "This command outputs the node public key. Default output is standard output."
           + System.lineSeparator()
           + "  -h, --help        Show this help message and exit."
+          + System.lineSeparator()
+          + "      --node-private-key-file=<PATH>"
+          + System.lineSeparator()
+          + "                    The node's private key file (default: a file named \"key\" in"
+          + System.lineSeparator()
+          + "                      the Besu data directory)"
           + System.lineSeparator()
           + "      --to=<FILE>   File to write public key to instead of standard output"
           + System.lineSeparator()
@@ -60,13 +79,21 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
           + System.lineSeparator();
 
   private static final String EXPECTED_PUBLIC_KEY_EXPORT_ADDRESS_USAGE =
-      "Usage: besu public-key export-address [-hV] [--to=<FILE>]"
+      "Usage: besu public-key export-address [-hV] [--node-private-key-file=<PATH>]"
+          + System.lineSeparator()
+          + "                                      [--to=<FILE>]"
           + System.lineSeparator()
           + "This command outputs the node's account address. Default output is standard"
           + System.lineSeparator()
           + "output."
           + System.lineSeparator()
           + "  -h, --help        Show this help message and exit."
+          + System.lineSeparator()
+          + "      --node-private-key-file=<PATH>"
+          + System.lineSeparator()
+          + "                    The node's private key file (default: a file named \"key\" in"
+          + System.lineSeparator()
+          + "                      the Besu data directory)"
           + System.lineSeparator()
           + "      --to=<FILE>   File to write address to instead of standard output"
           + System.lineSeparator()
@@ -76,6 +103,15 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   private static final String PUBLIC_KEY_SUBCOMMAND_NAME = "public-key";
   private static final String PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME = "export";
   private static final String PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME = "export-address";
+  private static final String CURVE_NAME = "secp256k1";
+  private static final String ALGORITHM = SignatureAlgorithm.ALGORITHM;
+  private static ECDomainParameters curve;
+
+  @BeforeClass
+  public static void setUp() {
+    final X9ECParameters params = SECNamedCurves.getByName(CURVE_NAME);
+    curve = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
+  }
 
   // public-key sub-command
   @Test
@@ -141,6 +177,55 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
+  @Test
+  public void callingPublicKeyExportSubCommandWithPrivateKeyFileMustWriteKeyToStandardOutput()
+      throws IOException {
+    final SECPPrivateKey privateKey =
+        SECPPrivateKey.create(
+            Bytes32.fromHexString(
+                "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"),
+            ALGORITHM);
+    final KeyPair keyPair = KeyPair.create(privateKey, curve, ALGORITHM);
+
+    final Path privateKeyFile = Files.createTempFile("private", "address");
+    Files.writeString(privateKeyFile, privateKey.toString());
+
+    parseCommand(
+        PUBLIC_KEY_SUBCOMMAND_NAME,
+        PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME,
+        "--node-private-key-file",
+        privateKeyFile.toString());
+
+    final String expectedOutputStart = keyPair.getPublicKey().toString();
+    assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void callingPublicKeyExportSubCommandWithNonExistentMustDisplayError() {
+    parseCommand(
+        PUBLIC_KEY_SUBCOMMAND_NAME,
+        PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME,
+        "--node-private-key-file",
+        "/non/existent/file");
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).startsWith("Private key file doesn't exist");
+  }
+
+  @Test
+  public void callingPublicKeyExportSubCommandWithInvalidFileMustDisplayError() throws IOException {
+    final Path privateKeyFile = Files.createTempFile("private", "address");
+    Files.writeString(privateKeyFile, "invalid private key");
+
+    parseCommand(
+        PUBLIC_KEY_SUBCOMMAND_NAME,
+        PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME,
+        "--node-private-key-file",
+        privateKeyFile.toString());
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).startsWith("Private key cannot be loaded from file");
+  }
+
   // Export address sub-sub-command
   @Test
   public void callingPublicKeyExportAddressSubCommandHelpMustDisplayUsage() {
@@ -180,5 +265,56 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void
+      callingPublicKeyExportAddressSubCommandWithPrivateKeyFileMustWriteKeyToStandardOutput()
+          throws IOException {
+    final SECPPrivateKey privateKey =
+        SECPPrivateKey.create(
+            Bytes32.fromHexString(
+                "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"),
+            ALGORITHM);
+    final KeyPair keyPair = KeyPair.create(privateKey, curve, ALGORITHM);
+
+    final Path privateKeyFile = Files.createTempFile("private", "address");
+    Files.writeString(privateKeyFile, privateKey.toString());
+
+    parseCommand(
+        PUBLIC_KEY_SUBCOMMAND_NAME,
+        PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME,
+        "--node-private-key-file",
+        privateKeyFile.toString());
+
+    final String expectedOutputStart = Util.publicKeyToAddress(keyPair.getPublicKey()).toString();
+    assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void callingPublicKeyExportAddressSubCommandWithNonExistentMustDisplayError() {
+    parseCommand(
+        PUBLIC_KEY_SUBCOMMAND_NAME,
+        PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME,
+        "--node-private-key-file",
+        "/non/existent/file");
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).startsWith("Private key file doesn't exist");
+  }
+
+  @Test
+  public void callingPublicKeyExportAddressSubCommandWithInvalidFileMustDisplayError()
+      throws IOException {
+    final Path privateKeyFile = Files.createTempFile("private", "address");
+    Files.writeString(privateKeyFile, "invalid private key");
+
+    parseCommand(
+        PUBLIC_KEY_SUBCOMMAND_NAME,
+        PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME,
+        "--node-private-key-file",
+        privateKeyFile.toString());
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).startsWith("Private key cannot be loaded from file");
   }
 }
