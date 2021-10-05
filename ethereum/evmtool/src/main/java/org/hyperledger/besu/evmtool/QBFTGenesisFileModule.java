@@ -22,6 +22,7 @@ import org.hyperledger.besu.consensus.qbft.QbftProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import javax.inject.Named;
 
@@ -37,11 +38,15 @@ class QBFTGenesisFileModule extends GenesisFileModule {
       final GenesisConfigOptions configOptions,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     return QbftProtocolSchedule.create(
-        configOptions, PrivacyParameters.DEFAULT, revertReasonEnabled, bftExtraDataEncoder);
+        configOptions,
+        PrivacyParameters.DEFAULT,
+        revertReasonEnabled,
+        bftExtraDataEncoder,
+        EvmConfiguration.DEFAULT);
   }
 
   @Override
   BlockHeaderFunctions blockHashFunction() {
-    return BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataEncoder);
+    return BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataEncoder);
   }
 }
