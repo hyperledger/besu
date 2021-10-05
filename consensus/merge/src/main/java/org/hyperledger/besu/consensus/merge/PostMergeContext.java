@@ -117,7 +117,7 @@ public class PostMergeContext implements MergeContext {
                       () ->
                           new IllegalStateException(
                               "we have a last finalized so we should always have a valid new finalized"));
-              if (last.getNumber() < newFinalized.getNumber()) {
+              if (last.getNumber() <= newFinalized.getNumber()) {
                 lastFinalized.set(newFinalized);
               } else {
                 LOG.error(
