@@ -113,14 +113,14 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   }
 
   @Override
-  public PrivacyGroup[] findOffChainPrivacyGroupByMembers(
+  public PrivacyGroup[] findOffchainPrivacyGroupByMembers(
       final List<String> addresses, final String privacyUserId) {
     if (!addresses.contains(privacyUserId)) {
       throw new MultiTenancyValidationException(
           "Privacy group addresses must contain the enclave public key");
     }
     final PrivacyGroup[] resultantGroups =
-        privacyController.findOffChainPrivacyGroupByMembers(addresses, privacyUserId);
+        privacyController.findOffchainPrivacyGroupByMembers(addresses, privacyUserId);
     return Arrays.stream(resultantGroups)
         .filter(g -> g.getMembers().contains(privacyUserId))
         .toArray(PrivacyGroup[]::new);
@@ -181,10 +181,10 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   }
 
   @Override
-  public Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
+  public Optional<PrivacyGroup> findOffchainPrivacyGroupByGroupId(
       final String privacyGroupId, final String privacyUserId) {
     final Optional<PrivacyGroup> maybePrivacyGroup =
-        privacyController.findOffChainPrivacyGroupByGroupId(privacyGroupId, privacyUserId);
+        privacyController.findOffchainPrivacyGroupByGroupId(privacyGroupId, privacyUserId);
     checkGroupParticipation(maybePrivacyGroup, privacyUserId);
     return maybePrivacyGroup;
   }

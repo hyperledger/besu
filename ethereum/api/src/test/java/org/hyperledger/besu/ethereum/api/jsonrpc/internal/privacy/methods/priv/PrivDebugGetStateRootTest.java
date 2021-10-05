@@ -90,7 +90,7 @@ public class PrivDebugGetStateRootTest {
   public void shouldReturnErrorIfInvalidGroupId() {
     when(privacyController.findPrivacyGroupByGroupId(anyString(), anyString()))
         .thenCallRealMethod();
-    when(privacyController.findOffChainPrivacyGroupByGroupId(anyString(), anyString()))
+    when(privacyController.findOffchainPrivacyGroupByGroupId(anyString(), anyString()))
         .thenReturn(Optional.empty());
     final JsonRpcResponse response = method.response(request("not_base64", "latest"));
     assertThat(response.getType()).isEqualByComparingTo(JsonRpcResponseType.ERROR);
@@ -123,7 +123,7 @@ public class PrivDebugGetStateRootTest {
   }
 
   @Test
-  public void shouldReturnSuccessWhenOffChainGroupExists() {
+  public void shouldReturnSuccessWhenOffchainGroupExists() {
     final Hash hash = Hash.EMPTY_LIST_HASH;
     when(privacyController.findPrivacyGroupByGroupId(anyString(), anyString()))
         .thenReturn(Optional.of(PRIVACY_GROUP));
