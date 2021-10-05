@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.data.EnodeURL;
@@ -168,6 +169,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                 node.getPkiKeyStoreConfiguration()
                     .map(
                         (pkiConfig) -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
+            .evmConfiguration(EvmConfiguration.DEFAULT)
             .build();
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();

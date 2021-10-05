@@ -60,7 +60,7 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
   }
 
   @Test
-  public void manipulatedNodesWhitelistWithHostnameShouldWorkWhenDnsEnabled() {
+  public void manipulatedNodesAllowlistWithHostnameShouldWorkWhenDnsEnabled() {
 
     node.verify(perm.addNodesToAllowlist(ENODE_ONE, ENODE_TWO));
     node.verify(

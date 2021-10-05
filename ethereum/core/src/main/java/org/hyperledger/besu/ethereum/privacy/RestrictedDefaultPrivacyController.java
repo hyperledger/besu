@@ -153,7 +153,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public PrivacyGroup[] findOffChainPrivacyGroupByMembers(
+  public PrivacyGroup[] findOffchainPrivacyGroupByMembers(
       final List<String> addresses, final String privacyUserId) {
     return enclave.findPrivacyGroup(addresses);
   }
@@ -242,7 +242,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
   public Optional<PrivacyGroup> findPrivacyGroupByGroupId(
       final String privacyGroupId, final String privacyUserId) {
     try {
-      return findOffChainPrivacyGroupByGroupId(privacyGroupId, privacyUserId);
+      return findOffchainPrivacyGroupByGroupId(privacyGroupId, privacyUserId);
     } catch (final EnclaveClientException ex) {
       // An exception is thrown if the offchain group cannot be found
       LOG.debug("Offchain privacy group not found: {}", privacyGroupId);
@@ -251,7 +251,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
+  public Optional<PrivacyGroup> findOffchainPrivacyGroupByGroupId(
       final String privacyGroupId, final String privacyUserId) {
     return Optional.ofNullable(enclave.retrievePrivacyGroup(privacyGroupId));
   }
