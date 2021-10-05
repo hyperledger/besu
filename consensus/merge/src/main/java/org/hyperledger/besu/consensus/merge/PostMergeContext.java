@@ -37,7 +37,8 @@ public class PostMergeContext implements MergeContext {
   private static PostMergeContext singleton;
 
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
-  private final AtomicBoolean isPostMerge = new AtomicBoolean(false);
+  // transition miners are created disabled by default, so reflect that default:
+  private final AtomicBoolean isPostMerge = new AtomicBoolean(true);
   private final Subscribers<NewMergeStateCallback> newMergeStateCallbackSubscribers =
       Subscribers.create();
 
@@ -150,13 +151,14 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public boolean setConsensusValidated(final Hash candidateHash) {
-    CandidateBlock candidate = candidateBlock.get();
-
-    if (candidate != null && candidate.getBlockhash().equals(candidateHash)) {
-      candidate.setConsensusValidated();
-      return true;
-    }
-    return false;
+    return Optional.ofNullable(candidateBlock.get())
+        .filter(candidate -> candidate.getBlockHash().equals(candidateHash))
+        .map(
+            candidate -> {
+              candidate.setConsensusValidated();
+              return true;
+            })
+        .orElse(false);
   }
 
   @Override

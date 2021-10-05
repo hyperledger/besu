@@ -15,6 +15,7 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
@@ -59,8 +60,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final MergeBesuControllerBuilder mergeBesuControllerBuilder) {
     this.preMergeBesuControllerBuilder = preMergeBesuControllerBuilder;
     this.mergeBesuControllerBuilder = mergeBesuControllerBuilder;
-    // propagate configs:
-    propagateAllConfigs();
   }
 
   @Override
@@ -77,21 +76,28 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
-    return new TransitionCoordinator(
-        preMergeBesuControllerBuilder.createMiningCoordinator(
-            protocolSchedule,
-            protocolContext,
-            transactionPool,
-            miningParameters,
-            syncState,
-            ethProtocolManager),
-        mergeBesuControllerBuilder.createMiningCoordinator(
-            protocolSchedule,
-            protocolContext,
-            transactionPool,
-            miningParameters,
-            syncState,
-            ethProtocolManager));
+
+    // cast to transition schedule for explicit access to pre and post objects:
+    final TransitionProtocolSchedule tps = (TransitionProtocolSchedule) protocolSchedule;
+
+    final TransitionCoordinator composedCoordinator =
+        new TransitionCoordinator(
+            preMergeBesuControllerBuilder.createMiningCoordinator(
+                tps.getPreMergeSchedule(),
+                protocolContext,
+                transactionPool,
+                new MiningParameters.Builder(miningParameters).enabled(false).build(),
+                syncState,
+                ethProtocolManager),
+            mergeBesuControllerBuilder.createMiningCoordinator(
+                tps.getPostMergeSchedule(),
+                protocolContext,
+                transactionPool,
+                miningParameters,
+                syncState,
+                ethProtocolManager));
+    initTransitionWatcher(protocolContext, composedCoordinator);
+    return composedCoordinator;
   }
 
   @Override
@@ -117,6 +123,30 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   protected PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext) {
     return new NoopPluginServiceFactory();
+  }
+
+  private void initTransitionWatcher(
+      final ProtocolContext protocolContext, final TransitionCoordinator composedCoordinator) {
+
+    PostMergeContext postMergeContext = protocolContext.getConsensusContext(PostMergeContext.class);
+    postMergeContext.observeNewIsPostMergeState(
+        newIsPostMergeState -> {
+          if (newIsPostMergeState) {
+            // if we transitioned to post-merge, stop mining
+            composedCoordinator.getPreMergeObject().disable();
+            composedCoordinator.getPreMergeObject().stop();
+          } else {
+            // if we transitioned to pre-merge, start mining
+            composedCoordinator.getPreMergeObject().enable();
+            composedCoordinator.getPreMergeObject().start();
+          }
+        });
+
+    // initialize our merge context merge status before we would start either
+    Blockchain blockchain = protocolContext.getBlockchain();
+    blockchain
+        .getTotalDifficultyByHash(blockchain.getChainHeadHash())
+        .ifPresent(postMergeContext::setIsPostMerge);
   }
 
   @Override
@@ -256,31 +286,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final DataStorageConfiguration dataStorageConfiguration) {
     super.dataStorageConfiguration(dataStorageConfiguration);
     return propagateConfig(z -> z.dataStorageConfiguration(dataStorageConfiguration));
-  }
-
-  private void propagateAllConfigs() {
-    propagateConfig(z -> z.storageProvider(storageProvider));
-    propagateConfig(z -> z.genesisConfigFile(genesisConfig));
-    propagateConfig(z -> z.synchronizerConfiguration(syncConfig));
-    propagateConfig(z -> z.ethProtocolConfiguration(ethereumWireProtocolConfiguration));
-    propagateConfig(z -> z.networkId(networkId));
-    propagateConfig(z -> z.miningParameters(miningParameters));
-    propagateConfig(z -> z.messagePermissioningProviders(messagePermissioningProviders));
-    propagateConfig(z -> z.nodeKey(nodeKey));
-    propagateConfig(z -> z.metricsSystem(metricsSystem));
-    propagateConfig(z -> z.privacyParameters(privacyParameters));
-    propagateConfig(z -> z.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration));
-    propagateConfig(z -> z.dataDirectory(dataDirectory));
-    propagateConfig(z -> z.clock(clock));
-    propagateConfig(z -> z.transactionPoolConfiguration(transactionPoolConfiguration));
-    propagateConfig(z -> z.isRevertReasonEnabled(isRevertReasonEnabled));
-    propagateConfig(z -> z.isPruningEnabled(isPruningEnabled));
-    propagateConfig(z -> z.pruningConfiguration(prunerConfiguration));
-    propagateConfig(z -> z.genesisConfigOverrides(genesisConfigOverrides));
-    propagateConfig(z -> z.gasLimitCalculator(gasLimitCalculator));
-    propagateConfig(z -> z.requiredBlocks(requiredBlocks));
-    propagateConfig(z -> z.reorgLoggingThreshold(reorgLoggingThreshold));
-    propagateConfig(z -> z.dataStorageConfiguration(dataStorageConfiguration));
   }
 
   private BesuControllerBuilder propagateConfig(final Consumer<BesuControllerBuilder> toPropogate) {

@@ -122,7 +122,7 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public boolean executePayload(final Block block) {
-    return mergeCoordinator.executePayload(block);
+  public boolean validateProcessAndSetAsCandidate(final Block block) {
+    return mergeCoordinator.validateProcessAndSetAsCandidate(block);
   }
 }

@@ -29,5 +29,5 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       final Bytes32 random,
       final Address feeRecipient);
 
-  boolean executePayload(final Block block);
+  boolean validateProcessAndSetAsCandidate(final Block block);
 }

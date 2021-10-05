@@ -235,6 +235,31 @@ public class MiningParameters {
     private long powJobTimeToLive = DEFAULT_POW_JOB_TTL;
     private int maxOmmerDepth = DEFAULT_MAX_OMMERS_DEPTH;
 
+    public Builder() {
+      // zero arg
+    }
+
+    public Builder(final MiningParameters existing) {
+      existing.getCoinbase().ifPresent(cb -> this.coinbase = cb);
+      existing
+          .getTargetGasLimit()
+          .map(AtomicLong::longValue)
+          .ifPresent(gasLimit -> this.targetGasLimit = gasLimit);
+      this.minTransactionGasPrice = existing.getMinTransactionGasPrice();
+      this.extraData = existing.getExtraData();
+      this.enabled = existing.isMiningEnabled();
+      this.stratumMiningEnabled = existing.isStratumMiningEnabled();
+      this.stratumNetworkInterface = existing.getStratumNetworkInterface();
+      this.stratumPort = existing.getStratumPort();
+      this.stratumExtranonce = existing.getStratumExtranonce();
+      existing.getNonceGenerator().ifPresent(ng -> this.maybeNonceGenerator = ng);
+      this.minBlockOccupancyRatio = existing.getMinBlockOccupancyRatio();
+      this.remoteSealersLimit = existing.getRemoteSealersLimit();
+      this.remoteSealersTimeToLive = existing.getRemoteSealersTimeToLive();
+      this.powJobTimeToLive = existing.getPowJobTimeToLive();
+      this.maxOmmerDepth = existing.getMaxOmmerDepth();
+    }
+
     public Builder coinbase(final Address address) {
       this.coinbase = address;
       return this;

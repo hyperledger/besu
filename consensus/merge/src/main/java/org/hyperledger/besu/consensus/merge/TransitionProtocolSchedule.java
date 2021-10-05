@@ -32,6 +32,14 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
     super(preMergeProtocolSchedule, postMergeProtocolSchedule);
   }
 
+  public ProtocolSchedule getPreMergeSchedule() {
+    return getPreMergeObject();
+  }
+
+  public ProtocolSchedule getPostMergeSchedule() {
+    return getPostMergeObject();
+  }
+
   @Override
   public ProtocolSpec getByBlockNumber(final long number) {
     return dispatchFunctionAccordingToMergeState(

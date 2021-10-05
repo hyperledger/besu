@@ -76,10 +76,12 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
                     .getTerminalTotalDifficulty()
                     .map(Difficulty::of)
                     .orElse(Difficulty.ZERO));
-    mergeContext.setIsPostMerge(blockchain.getChainHeadHeader().getDifficulty());
     blockchain.observeBlockAdded(
         blockAddedEvent ->
-            mergeContext.setIsPostMerge(blockAddedEvent.getBlock().getHeader().getDifficulty()));
+            blockchain
+                .getTotalDifficultyByHash(blockAddedEvent.getBlock().getHeader().getHash())
+                .ifPresent(mergeContext::setIsPostMerge));
+
     return mergeContext;
   }
 

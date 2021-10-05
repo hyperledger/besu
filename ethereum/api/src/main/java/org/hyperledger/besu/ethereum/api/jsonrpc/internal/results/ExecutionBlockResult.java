@@ -36,7 +36,7 @@ import org.apache.tuweni.bytes.Bytes32;
   "gasUsed",
   "timestamp",
   "extraData",
-  "baseFee",
+  "baseFeePerGas",
   "transactions"
 })
 public class ExecutionBlockResult {

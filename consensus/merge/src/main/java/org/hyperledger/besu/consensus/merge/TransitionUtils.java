@@ -37,4 +37,12 @@ public abstract class TransitionUtils<SwitchingObject> {
       final Function<SwitchingObject, T> function) {
     return function.apply(mergeContext.isPostMerge() ? postMergeObject : preMergeObject);
   }
+
+  public SwitchingObject getPreMergeObject() {
+    return preMergeObject;
+  }
+
+  SwitchingObject getPostMergeObject() {
+    return postMergeObject;
+  }
 }
