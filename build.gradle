@@ -28,6 +28,16 @@ plugins {
   id 'me.champeau.jmh' version '0.6.6' apply false
   id 'net.ltgt.errorprone' version '2.0.2'
   id 'maven-publish'
+  id 'org.sonarqube' version '3.3'
+}
+
+sonarqube {
+  properties {
+    property "sonar.projectKey", "hyperledger-cicd_besu"
+    property "sonar.organization", "hyperledger-cicd"
+    property "sonar.host.url", "https://sonarcloud.io"
+    property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
+  }
 }
 
 if (!JavaVersion.current().java11Compatible) {
@@ -785,6 +795,7 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
   reports {
     xml.required = true
+    xml.enabled = true
     csv.required = true
     html.destination file("build/reports/jacocoHtml")
   }
