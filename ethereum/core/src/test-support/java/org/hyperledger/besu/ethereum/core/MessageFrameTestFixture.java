@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 import static org.hyperledger.besu.evm.frame.MessageFrame.DEFAULT_MAX_STACK_SIZE;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
@@ -51,7 +52,7 @@ public class MessageFrameTestFixture {
   private Wei gasPrice = Wei.ZERO;
   private Wei value = Wei.ZERO;
   private Bytes inputData = Bytes.EMPTY;
-  private Code code = new Code(Bytes.EMPTY);
+  private Code code = new Code(Bytes.EMPTY, Hash.EMPTY);
   private final List<UInt256> stackItems = new ArrayList<>();
   private Optional<BlockHeader> blockHeader = Optional.empty();
   private int depth = 0;
