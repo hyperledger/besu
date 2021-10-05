@@ -30,6 +30,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -47,6 +48,8 @@ public abstract class AbstractMiningCoordinator<
   private final Subscribers<PoWObserver> ethHashObservers = Subscribers.create();
   private final AbstractMinerExecutor<M> executor;
   private final SyncState syncState;
+  private final AtomicReference<Optional<Long>> remineOnNewHeadListenerId =
+      new AtomicReference<>(Optional.empty());
   protected final Blockchain blockchain;
 
   private State state = State.IDLE;
@@ -60,7 +63,6 @@ public abstract class AbstractMiningCoordinator<
     this.executor = executor;
     this.blockchain = blockchain;
     this.syncState = syncState;
-    this.blockchain.observeBlockAdded(this);
     syncState.subscribeInSync(this::inSyncChanged);
   }
 
@@ -114,6 +116,7 @@ public abstract class AbstractMiningCoordinator<
         return true;
       }
       isEnabled = true;
+      remineOnNewHeadListenerId.set(Optional.of(blockchain.observeBlockAdded(this)));
       startMiningIfPossible();
     }
     return true;
@@ -126,6 +129,7 @@ public abstract class AbstractMiningCoordinator<
         return false;
       }
       isEnabled = false;
+      remineOnNewHeadListenerId.get().ifPresent(blockchain::removeObserver);
       haltCurrentMiningOperation();
     }
     return false;
