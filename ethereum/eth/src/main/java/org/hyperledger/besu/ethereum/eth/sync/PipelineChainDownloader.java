@@ -150,7 +150,7 @@ public class PipelineChainDownloader implements ChainDownloader {
   }
 
   private synchronized CompletionStage<Void> startDownloadForSyncTarget(final SyncTarget target) {
-    if (cancelled.get()) {
+    if (cancelled.get() || syncState.isStoppedAtTerminalDifficulty()) {
       return CompletableFuture.failedFuture(
           new CancellationException("Chain download was cancelled"));
     }

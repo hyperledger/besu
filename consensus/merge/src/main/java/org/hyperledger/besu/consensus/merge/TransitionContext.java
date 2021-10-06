@@ -20,15 +20,19 @@ import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 public class TransitionContext implements MergeContext {
   final ConsensusContext preMergeContext;
   final MergeContext postMergeContext;
 
   public TransitionContext(
-      final ConsensusContext preMergeContext, final MergeContext postMergeContext) {
+      final ConsensusContext preMergeContext,
+      final MergeContext postMergeContext) {
     this.preMergeContext = preMergeContext;
     this.postMergeContext = postMergeContext;
   }
@@ -39,6 +43,11 @@ public class TransitionContext implements MergeContext {
       return klass.cast(postMergeContext);
     }
     return klass.cast(preMergeContext);
+  }
+
+  @Override
+  public MergeContext setSyncState(final SyncState syncState) {
+    return postMergeContext.setSyncState(syncState);
   }
 
   @Override

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
@@ -36,6 +37,7 @@ public class PostMergeContext implements MergeContext {
   private static final Logger LOG = LogManager.getLogger();
   private static PostMergeContext singleton;
 
+  private final AtomicReference<SyncState> syncState;
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
   // transition miners are created disabled by default, so reflect that default:
   private final AtomicBoolean isPostMerge = new AtomicBoolean(true);
@@ -53,6 +55,7 @@ public class PostMergeContext implements MergeContext {
 
   private PostMergeContext() {
     this.terminalTotalDifficulty = new AtomicReference<>(Difficulty.ZERO);
+    this.syncState = new AtomicReference<>();
   }
 
   public static synchronized PostMergeContext get() {
@@ -75,6 +78,12 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
+  public PostMergeContext setSyncState(final SyncState syncState) {
+    this.syncState.set(syncState);
+    return this;
+  }
+
+  @Override
   public void setIsPostMerge(final Difficulty totalDifficulty) {
     if (Optional.ofNullable(lastFinalized.get()).isPresent()) {
       // we check this condition because if we've received a finalized block, we never want to
@@ -83,6 +92,11 @@ public class PostMergeContext implements MergeContext {
     }
     final boolean newState = terminalTotalDifficulty.get().lessOrEqualThan(totalDifficulty);
     final boolean oldState = isPostMerge.getAndSet(newState);
+
+    // for now set this every time we call, since we might not have a syncState at genesis
+    Optional.ofNullable(syncState.get())
+        .ifPresent(ss -> ss.setStoppedAtTerminalDifficulty(newState));
+
     if (oldState != newState) {
       newMergeStateCallbackSubscribers.forEach(
           newMergeStateCallback -> newMergeStateCallback.onNewIsPostMergeState(newState));
@@ -91,7 +105,9 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public boolean isPostMerge() {
-    return isPostMerge.get();
+    return isPostMerge.get() &&
+        Optional.ofNullable(syncState.get()).map(SyncState::isStoppedAtTerminalDifficulty)
+            .orElse(Boolean.TRUE);
   }
 
   @Override
@@ -108,7 +124,8 @@ public class PostMergeContext implements MergeContext {
   public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
     // only empty if we haven't ever finalized yet
     Optional<BlockHeader> maybeNewFinalized =
-        candidateBlock.get().updateForkChoice(headBlockHash, finalizedBlockHash);
+        Optional.ofNullable(candidateBlock.get())
+            .flatMap(cb -> cb.updateForkChoice(headBlockHash, finalizedBlockHash));
     Optional.ofNullable(lastFinalized.get())
         .ifPresentOrElse(
             last -> {

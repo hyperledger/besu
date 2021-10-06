@@ -21,10 +21,13 @@ import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.Optional;
 
 public interface MergeContext extends ConsensusContext {
+
+  MergeContext setSyncState(SyncState syncState);
 
   MergeContext setTerminalTotalDifficulty(final Difficulty newTerminalTotalDifficulty);
 

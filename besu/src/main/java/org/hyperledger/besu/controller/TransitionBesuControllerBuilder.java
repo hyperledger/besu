@@ -156,6 +156,13 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
+  public BesuController build() {
+    BesuController controller = super.build();
+    PostMergeContext.get().setSyncState(controller.getSyncState());
+    return controller;
+  }
+
+  @Override
   public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
     super.genesisConfigFile(genesisConfig);
     return propagateConfig(z -> z.genesisConfigFile(genesisConfig));
