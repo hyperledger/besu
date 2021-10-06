@@ -63,6 +63,11 @@ public class TransitionContext implements MergeContext {
   }
 
   @Override
+  public boolean isSyncing() {
+    return postMergeContext.isSyncing();
+  }
+
+  @Override
   public void observeNewIsPostMergeState(final NewMergeStateCallback newMergeStateCallback) {
     postMergeContext.observeNewIsPostMergeState(newMergeStateCallback);
   }

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.consensus.merge.blockcreation.MergeBlockImporter;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -55,7 +54,6 @@ public class MergeProtocolSchedule {
       final ProtocolSpecBuilder specBuilder) {
 
     return specBuilder
-        .blockImporterBuilder(MergeBlockImporter::new)
         .blockProcessorBuilder(MergeBlockProcessor::new)
         .blockValidatorBuilder(MergeBlockValidator::new)
         .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)

@@ -78,12 +78,6 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public PostMergeContext setSyncState(final SyncState syncState) {
-    this.syncState.set(syncState);
-    return this;
-  }
-
-  @Override
   public void setIsPostMerge(final Difficulty totalDifficulty) {
     if (Optional.ofNullable(lastFinalized.get()).isPresent()) {
       // we check this condition because if we've received a finalized block, we never want to
@@ -93,10 +87,6 @@ public class PostMergeContext implements MergeContext {
     final boolean newState = terminalTotalDifficulty.get().lessOrEqualThan(totalDifficulty);
     final boolean oldState = isPostMerge.getAndSet(newState);
 
-    // for now set this every time we call, since we might not have a syncState at genesis
-    Optional.ofNullable(syncState.get())
-        .ifPresent(ss -> ss.setStoppedAtTerminalDifficulty(newState));
-
     if (oldState != newState) {
       newMergeStateCallbackSubscribers.forEach(
           newMergeStateCallback -> newMergeStateCallback.onNewIsPostMergeState(newState));
@@ -105,10 +95,18 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public boolean isPostMerge() {
-    return isPostMerge.get()
-        && Optional.ofNullable(syncState.get())
-            .map(SyncState::isStoppedAtTerminalDifficulty)
-            .orElse(Boolean.TRUE);
+    return isPostMerge.get();
+  }
+
+  @Override
+  public PostMergeContext setSyncState(final SyncState syncState) {
+    this.syncState.set(syncState);
+    return this;
+  }
+
+  @Override
+  public boolean isSyncing() {
+    return Optional.ofNullable(syncState.get()).map(s -> !s.isInSync()).orElse(Boolean.TRUE);
   }
 
   @Override

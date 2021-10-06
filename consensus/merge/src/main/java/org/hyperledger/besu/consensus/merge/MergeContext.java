@@ -35,6 +35,8 @@ public interface MergeContext extends ConsensusContext {
 
   boolean isPostMerge();
 
+  boolean isSyncing();
+
   void observeNewIsPostMergeState(final NewMergeStateCallback newMergeStateCallback);
 
   Difficulty getTerminalTotalDifficulty();
