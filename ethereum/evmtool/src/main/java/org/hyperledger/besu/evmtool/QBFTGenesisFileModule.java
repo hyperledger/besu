@@ -19,29 +19,23 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import javax.inject.Named;
 
 class QBFTGenesisFileModule extends GenesisFileModule {
-  final QbftExtraDataCodec bftExtraDataEncoder = new QbftExtraDataCodec();
+  final QbftExtraDataCodec bftExtraDataEncoder;
 
   QBFTGenesisFileModule(final String genesisConfig) {
     super(genesisConfig);
+    bftExtraDataEncoder = new QbftExtraDataCodec();
   }
 
   @Override
   ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
-    return QbftProtocolSchedule.create(
-        configOptions,
-        PrivacyParameters.DEFAULT,
-        revertReasonEnabled,
-        bftExtraDataEncoder,
-        EvmConfiguration.DEFAULT);
+    return QbftProtocolSchedule.create(configOptions, revertReasonEnabled, bftExtraDataEncoder);
   }
 
   @Override
