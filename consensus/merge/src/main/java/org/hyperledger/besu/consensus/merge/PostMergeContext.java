@@ -105,8 +105,9 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public boolean isPostMerge() {
-    return isPostMerge.get() &&
-        Optional.ofNullable(syncState.get()).map(SyncState::isStoppedAtTerminalDifficulty)
+    return isPostMerge.get()
+        && Optional.ofNullable(syncState.get())
+            .map(SyncState::isStoppedAtTerminalDifficulty)
             .orElse(Boolean.TRUE);
   }
 

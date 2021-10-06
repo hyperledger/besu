@@ -31,11 +31,9 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   private final AtomicReference<SyncState> syncState = new AtomicReference<>();
-
 
   @Override
   protected MiningCoordinator createMiningCoordinator(

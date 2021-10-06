@@ -140,7 +140,7 @@ public class SyncState {
   }
 
   public void setStoppedAtTerminalDifficulty(final boolean stoppedAtTerminalDifficulty) {
-    //TODO: this is an inexpensive way to stop sync when we reach TTD,
+    // TODO: this is an inexpensive way to stop sync when we reach TTD,
     //      we should revisit when merge sync is better defined
     this.stoppedAtTerminalDifficulty = stoppedAtTerminalDifficulty;
   }
@@ -156,7 +156,8 @@ public class SyncState {
       final long syncTolerance) {
     // Sync target may be temporarily empty while we switch sync targets during a sync, so
     // check both the sync target and our best peer to determine if we're in sync or not
-    return stoppedAtTerminalDifficulty && isInSync(localChain, syncTargetChain, syncTolerance)
+    return stoppedAtTerminalDifficulty
+        && isInSync(localChain, syncTargetChain, syncTolerance)
         && isInSync(localChain, bestPeerChain, syncTolerance);
   }
 

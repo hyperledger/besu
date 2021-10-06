@@ -40,6 +40,4 @@ public class MergeBlockImporter extends MainnetBlockImporter {
     }
     return super.importBlock(context, block, headerValidationMode, ommerValidationMode);
   }
-
-
 }
