@@ -106,7 +106,8 @@ public class PipelineChainDownloader implements ChainDownloader {
   private CompletionStage<Void> repeatUnlessDownloadComplete(
       @SuppressWarnings("unused") final Void result) {
     syncState.clearSyncTarget();
-    if (syncTargetManager.shouldContinueDownloading()) {
+    if (syncTargetManager.shouldContinueDownloading()
+        && !syncState.isStoppedAtTerminalDifficulty()) {
       return performDownload();
     } else {
       LOG.info("Chain download complete");
