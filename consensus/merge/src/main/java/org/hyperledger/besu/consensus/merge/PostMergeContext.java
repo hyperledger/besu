@@ -86,7 +86,8 @@ public class PostMergeContext implements MergeContext {
     }
     final boolean newState = terminalTotalDifficulty.get().lessOrEqualThan(totalDifficulty);
     final boolean oldState = isPostMerge.getAndSet(newState);
-    Optional.ofNullable(syncState.get()).ifPresent(ss -> ss.setStoppedAtTerminalDifficulty(newState));
+    Optional.ofNullable(syncState.get())
+        .ifPresent(ss -> ss.setStoppedAtTerminalDifficulty(newState));
 
     if (oldState != newState) {
       newMergeStateCallbackSubscribers.forEach(

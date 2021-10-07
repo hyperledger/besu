@@ -77,9 +77,10 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
 
     Object reqId = requestContext.getRequest().getId();
     // TODO: should create a no-op candidate block here, but just commented for expediency
-//    if (protocolContext.getBlockchain().getBlockByHash(blockParam.getBlockHash()).isPresent()) {
-//      return respondWith(reqId, blockParam.getBlockHash(), VALID);
-//    }
+    //    if (protocolContext.getBlockchain().getBlockByHash(blockParam.getBlockHash()).isPresent())
+    // {
+    //      return respondWith(reqId, blockParam.getBlockHash(), VALID);
+    //    }
 
     try {
       LOG.trace("blockparam: " + Json.encodePrettily(blockParam));
@@ -117,7 +118,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
             blockParam.getBaseFeePerGas(),
             Hash.ZERO,
             0,
-            null, //blockParam.getRandom(),
+            null, // blockParam.getRandom(),
             headerFunctions);
 
     boolean execSuccess = false;
