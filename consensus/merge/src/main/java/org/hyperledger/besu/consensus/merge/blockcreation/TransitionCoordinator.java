@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
+import org.hyperledger.besu.consensus.merge.MergeBlockProcessor.CandidateBlock;
 import org.hyperledger.besu.consensus.merge.TransitionUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.PayloadIdentifier;
@@ -124,5 +125,10 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   @Override
   public boolean validateProcessAndSetAsCandidate(final Block block) {
     return mergeCoordinator.validateProcessAndSetAsCandidate(block);
+  }
+
+  @Override
+  public CandidateBlock setExistingAsCandidate(final Block block) {
+    return mergeCoordinator.setExistingAsCandidate(block);
   }
 }
