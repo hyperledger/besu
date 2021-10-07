@@ -23,7 +23,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
 
-public class BftConfigOptionsTest {
+public class JsonBftConfigOptionsTest {
 
   private static final int EXPECTED_DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int EXPECTED_DEFAULT_BLOCK_PERIOD = 1;
