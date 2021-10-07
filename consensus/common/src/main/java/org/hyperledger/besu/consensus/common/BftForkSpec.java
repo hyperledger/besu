@@ -12,11 +12,26 @@
  *
  *  SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.config;
 
-import java.util.Optional;
+package org.hyperledger.besu.consensus.common;
 
-public interface QbftConfigOptions extends BftConfigOptions {
+import org.hyperledger.besu.config.BftConfigOptions;
 
-  Optional<String> getValidatorContractAddress();
+public class BftForkSpec<C extends BftConfigOptions> {
+
+  private final long block;
+  private final C configOptions;
+
+  public BftForkSpec(final long block, final C configOptions) {
+    this.block = block;
+    this.configOptions = configOptions;
+  }
+
+  public long getBlock() {
+    return block;
+  }
+
+  public C getConfigOptions() {
+    return configOptions;
+  }
 }

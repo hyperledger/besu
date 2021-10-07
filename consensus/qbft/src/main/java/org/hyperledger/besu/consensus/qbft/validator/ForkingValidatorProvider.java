@@ -15,10 +15,9 @@
 
 package org.hyperledger.besu.consensus.qbft.validator;
 
-import static org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE.BLOCKHEADER;
-import static org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE.CONTRACT;
-
-import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
+import org.hyperledger.besu.config.QbftConfigOptions;
+import org.hyperledger.besu.consensus.common.BftForkSpec;
+import org.hyperledger.besu.consensus.common.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
@@ -33,13 +32,13 @@ import java.util.function.Function;
 public class ForkingValidatorProvider implements ValidatorProvider {
 
   private final Blockchain blockchain;
-  private final ValidatorSelectorForksSchedule forksSchedule;
+  private final BftForksSchedule<QbftConfigOptions> forksSchedule;
   private final BlockValidatorProvider blockValidatorProvider;
   private final TransactionValidatorProvider transactionValidatorProvider;
 
   public ForkingValidatorProvider(
       final Blockchain blockchain,
-      final ValidatorSelectorForksSchedule forksSchedule,
+      final BftForksSchedule<QbftConfigOptions> forksSchedule,
       final BlockValidatorProvider blockValidatorProvider,
       final TransactionValidatorProvider transactionValidatorProvider) {
     this.blockchain = blockchain;
@@ -71,46 +70,32 @@ public class ForkingValidatorProvider implements ValidatorProvider {
 
   private Collection<Address> getValidators(
       final long block, final Function<ValidatorProvider, Collection<Address>> getValidators) {
-    final Optional<ValidatorSelectorConfig> fork = forksSchedule.getFork(block);
+    final BftForkSpec<QbftConfigOptions> forkSpec = forksSchedule.getFork(block);
     final ValidatorProvider validatorProvider = resolveValidatorProvider(block);
 
-    if (fork.isPresent()) {
-      final VALIDATOR_SELECTION_MODE validatorSelectionMode =
-          fork.get().getValidatorSelectionMode();
-
-      // when moving to a block validator the first block needs to be initialised or created with
-      // the previous block state otherwise we would have no validators
-      if (validatorSelectionMode.equals(BLOCKHEADER)) {
-        if (block > 0 && block == fork.get().getBlock()) {
-          final long prevBlockNumber = block - 1L;
-          final Optional<BlockHeader> prevBlockHeader = blockchain.getBlockHeader(prevBlockNumber);
-          if (prevBlockHeader.isPresent()) {
-            return resolveValidatorProvider(prevBlockNumber)
-                .getValidatorsForBlock(prevBlockHeader.get());
-          }
+    // when moving to a block validator the first block needs to be initialised or created with
+    // the previous block state otherwise we would have no validators
+    if (forkSpec.getConfigOptions().getValidatorContractAddress().isEmpty()) {
+      if (block > 0 && block == forkSpec.getBlock()) {
+        final long prevBlockNumber = block - 1L;
+        final Optional<BlockHeader> prevBlockHeader = blockchain.getBlockHeader(prevBlockNumber);
+        if (prevBlockHeader.isPresent()) {
+          return resolveValidatorProvider(prevBlockNumber)
+              .getValidatorsForBlock(prevBlockHeader.get());
         }
-        return getValidators.apply(validatorProvider);
       }
+      return getValidators.apply(validatorProvider);
     }
 
     return getValidators.apply(validatorProvider);
   }
 
   private ValidatorProvider resolveValidatorProvider(final long block) {
-    final Optional<ValidatorSelectorConfig> fork = forksSchedule.getFork(block);
-    if (fork.isPresent()) {
-      final VALIDATOR_SELECTION_MODE validatorSelectionMode =
-          fork.get().getValidatorSelectionMode();
-      if (validatorSelectionMode.equals(BLOCKHEADER)) {
-        return blockValidatorProvider;
-      }
-      if (validatorSelectionMode.equals(CONTRACT) && fork.get().getContractAddress().isPresent()) {
-        return transactionValidatorProvider;
-      } else if (block > 0) { // if no contract address then resolve using previous block
-        return resolveValidatorProvider(block - 1L);
-      }
+    final BftForkSpec<QbftConfigOptions> fork = forksSchedule.getFork(block);
+    if (fork.getConfigOptions().getValidatorContractAddress().isEmpty()) {
+      return blockValidatorProvider;
+    } else {
+      return transactionValidatorProvider;
     }
-
-    throw new IllegalStateException("Unknown qbft validator selection mode");
   }
 }

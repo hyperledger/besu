@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.consensus.qbft.blockcreation;
 
-import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
+import org.hyperledger.besu.config.QbftConfigOptions;
+import org.hyperledger.besu.consensus.common.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.QbftContext;
-import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorConfig;
-import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
@@ -37,7 +36,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** Supports contract based voters and validators in extra data */
 public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
-  private final ValidatorSelectorForksSchedule validatorSelectorForksSchedule;
+  private final BftForksSchedule<QbftConfigOptions> forksSchedule;
 
   public QbftBlockCreatorFactory(
       final AbstractPendingTransactionsSorter pendingTransactions,
@@ -47,7 +46,7 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
       final Address localAddress,
       final Address miningBeneficiary,
       final BftExtraDataCodec bftExtraDataCodec,
-      final ValidatorSelectorForksSchedule validatorSelectorForksSchedule) {
+      final BftForksSchedule<QbftConfigOptions> forksSchedule) {
     super(
         pendingTransactions,
         protocolContext,
@@ -56,7 +55,7 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
         localAddress,
         miningBeneficiary,
         bftExtraDataCodec);
-    this.validatorSelectorForksSchedule = validatorSelectorForksSchedule;
+    this.forksSchedule = forksSchedule;
   }
 
   @Override
@@ -73,12 +72,11 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
 
   @Override
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
-    final Optional<VALIDATOR_SELECTION_MODE> validatorSelectionMode =
-        validatorSelectorForksSchedule
-            .getFork(parentHeader.getNumber() + 1L)
-            .map(ValidatorSelectorConfig::getValidatorSelectionMode);
-    if (validatorSelectionMode.isPresent()
-        && validatorSelectionMode.get().equals(VALIDATOR_SELECTION_MODE.CONTRACT)) {
+    if (forksSchedule
+        .getFork(parentHeader.getNumber() + 1L)
+        .getConfigOptions()
+        .getValidatorContractAddress()
+        .isPresent()) {
       // vote and validators will come from contract instead of block
       final BftExtraData extraData =
           new BftExtraData(

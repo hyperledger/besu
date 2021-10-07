@@ -48,7 +48,8 @@ public class BftConfigOptionsTest {
 
   @Test
   public void shouldGetDefaultEpochLengthFromDefaultConfig() {
-    assertThat(BftConfigOptions.DEFAULT.getEpochLength()).isEqualTo(EXPECTED_DEFAULT_EPOCH_LENGTH);
+    assertThat(JsonBftConfigOptions.DEFAULT.getEpochLength())
+        .isEqualTo(EXPECTED_DEFAULT_EPOCH_LENGTH);
   }
 
   @Test
@@ -65,7 +66,7 @@ public class BftConfigOptionsTest {
 
   @Test
   public void shouldGetDefaultBlockPeriodFromDefaultConfig() {
-    assertThat(BftConfigOptions.DEFAULT.getBlockPeriodSeconds())
+    assertThat(JsonBftConfigOptions.DEFAULT.getBlockPeriodSeconds())
         .isEqualTo(EXPECTED_DEFAULT_BLOCK_PERIOD);
   }
 
@@ -83,7 +84,7 @@ public class BftConfigOptionsTest {
 
   @Test
   public void shouldGetDefaultRequestTimeoutFromDefaultConfig() {
-    assertThat(BftConfigOptions.DEFAULT.getRequestTimeoutSeconds())
+    assertThat(JsonBftConfigOptions.DEFAULT.getRequestTimeoutSeconds())
         .isEqualTo(EXPECTED_DEFAULT_REQUEST_TIMEOUT);
   }
 
@@ -101,7 +102,7 @@ public class BftConfigOptionsTest {
 
   @Test
   public void shouldGetDefaultGossipedHistoryLimitFromDefaultConfig() {
-    assertThat(BftConfigOptions.DEFAULT.getGossipedHistoryLimit())
+    assertThat(JsonBftConfigOptions.DEFAULT.getGossipedHistoryLimit())
         .isEqualTo(EXPECTED_DEFAULT_GOSSIPED_HISTORY_LIMIT);
   }
 
@@ -119,7 +120,7 @@ public class BftConfigOptionsTest {
 
   @Test
   public void shouldGetDefaultMessageQueueLimitFromDefaultConfig() {
-    assertThat(BftConfigOptions.DEFAULT.getMessageQueueLimit())
+    assertThat(JsonBftConfigOptions.DEFAULT.getMessageQueueLimit())
         .isEqualTo(EXPECTED_DEFAULT_MESSAGE_QUEUE_LIMIT);
   }
 
@@ -138,7 +139,7 @@ public class BftConfigOptionsTest {
 
   @Test
   public void shouldGetDefaultDuplicateMessageLimitFromDefaultConfig() {
-    assertThat(BftConfigOptions.DEFAULT.getDuplicateMessageLimit())
+    assertThat(JsonBftConfigOptions.DEFAULT.getDuplicateMessageLimit())
         .isEqualTo(EXPECTED_DEFAULT_DUPLICATE_MESSAGE_LIMIT);
   }
 
@@ -156,7 +157,7 @@ public class BftConfigOptionsTest {
 
   @Test
   public void shouldGetDefaultFutureMessagesLimitsFromDefaultConfig() {
-    assertThat(BftConfigOptions.DEFAULT.getFutureMessagesLimit())
+    assertThat(JsonBftConfigOptions.DEFAULT.getFutureMessagesLimit())
         .isEqualTo(EXPECTED_DEFAULT_FUTURE_MESSAGES_LIMIT);
   }
 
@@ -176,7 +177,7 @@ public class BftConfigOptionsTest {
 
   @Test
   public void shouldGetDefaultFutureMessagesMaxDistanceFromDefaultConfig() {
-    assertThat(BftConfigOptions.DEFAULT.getFutureMessagesMaxDistance())
+    assertThat(JsonBftConfigOptions.DEFAULT.getFutureMessagesMaxDistance())
         .isEqualTo(EXPECTED_DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE);
   }
 

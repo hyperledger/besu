@@ -19,18 +19,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
-import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorConfig;
-import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-
-import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -40,16 +37,11 @@ public class QbftBlockCreatorFactoryTest {
   private final QbftExtraDataCodec extraDataCodec = new QbftExtraDataCodec();
   private QbftBlockCreatorFactory qbftBlockCreatorFactory;
 
+  @SuppressWarnings("unchecked")
   @Before
   public void setUp() throws Exception {
     final MiningParameters miningParams = mock(MiningParameters.class);
     when(miningParams.getExtraData()).thenReturn(Bytes.wrap("Qbft tests".getBytes(UTF_8)));
-
-    final ValidatorSelectorConfig genesisFork = ValidatorSelectorConfig.createBlockConfig(0);
-    final ValidatorSelectorConfig contractFork =
-        ValidatorSelectorConfig.createContractConfig(2, "");
-    final ValidatorSelectorForksSchedule qbftForksSchedule =
-        new ValidatorSelectorForksSchedule(genesisFork, List.of(contractFork));
 
     qbftBlockCreatorFactory =
         new QbftBlockCreatorFactory(
@@ -60,7 +52,7 @@ public class QbftBlockCreatorFactoryTest {
             mock(Address.class),
             mock(Address.class),
             extraDataCodec,
-            qbftForksSchedule);
+            mock(BftForksSchedule.class));
   }
 
   @Test
