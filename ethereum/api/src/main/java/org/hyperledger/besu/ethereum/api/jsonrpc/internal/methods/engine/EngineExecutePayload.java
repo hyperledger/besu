@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableMap;
@@ -132,12 +133,17 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
     }
 
     // return result response
-    return respondWith(reqId, blockParam.getBlockHash(), execSuccess ? VALID : INVALID);
+    return respondWith(reqId, newBlockHeader.getHash(), execSuccess ? VALID : INVALID);
   }
 
   JsonRpcResponse respondWith(
       final Object requestId, final Hash blockHash, final ExecutionStatus status) {
     return new JsonRpcSuccessResponse(
-        requestId, ImmutableMap.of("blockHash", blockHash, "status", status.name()));
+        requestId,
+        ImmutableMap.of(
+            "blockHash",
+            Optional.ofNullable(blockHash).map(Hash::toShortHexString).orElse(null),
+            "status",
+            status.name()));
   }
 }
