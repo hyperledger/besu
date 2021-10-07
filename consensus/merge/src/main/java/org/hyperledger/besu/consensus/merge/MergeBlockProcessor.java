@@ -121,7 +121,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
   public static class CandidateBlock {
     final Block block;
     final Optional<CandidateWorldState> candidateWorldState;
-    final Optional<MutableBlockchain> blockchain;
+    final MutableBlockchain blockchain;
 
     final Object commitLock = new Object();
 
@@ -134,7 +134,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
         final MutableBlockchain blockchain) {
       this.block = block;
       this.candidateWorldState = Optional.ofNullable(candidateWorldState);
-      this.blockchain = Optional.ofNullable(blockchain);
+      this.blockchain = blockchain;
     }
 
     public AtomicReference<BlockProcessor.Result> getBlockProcessorResult() {
@@ -177,8 +177,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
 
       if (shouldCommit) {
         candidateWorldState.ifPresent(ws -> ws.flush());
-        blockchain.ifPresent(
-            b -> b.appendBlock(block, getBlockProcessorResult().get().getReceipts()));
+        blockchain.appendBlock(block, getBlockProcessorResult().get().getReceipts());
         LOG.debug(
             "Committed blockhash {}: consensus validated}", getBlockHash().toShortHexString());
       } else {
@@ -203,8 +202,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
     public Optional<BlockHeader> updateForkChoice(
         final Hash headBlockHash, final Hash finalizedBlockHash) {
 
-      final Optional<Block> newFinalized =
-          blockchain.flatMap(b -> b.getBlockByHash(finalizedBlockHash));
+      final Optional<Block> newFinalized = blockchain.getBlockByHash(finalizedBlockHash);
       if (newFinalized.isEmpty() && !finalizedBlockHash.equals(Hash.ZERO)) {
         // we should only fail to find when it's the special value 0x000..000
         throw new IllegalStateException(
@@ -212,29 +210,26 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
                 "should've been able to find block hash %s but couldn't", finalizedBlockHash));
       }
 
-      if (blockchain.isPresent()) {
-        final MutableBlockchain bc = blockchain.get();
-        final CandidateWorldState ws = candidateWorldState.get();
-        // ensure we have headBlock:
-        Block newHead =
-            bc.getBlockByHash(headBlockHash)
-                .orElseGet(
-                    () -> {
-                      Optional<Block> flushedBlock = Optional.empty();
-                      // if new head is candidateBlock, flush and do not wait on consensusValidated:
-                      if (getBlockHash().equals(headBlockHash)) {
-                        ws.flush();
-                        bc.appendBlock(block, getBlockProcessorResult().get().getReceipts());
-                        flushedBlock = bc.getBlockByHash(headBlockHash);
-                      }
-                      // if we still can't find it, throw.
-                      return flushedBlock.orElseThrow();
-                    });
+      // ensure we have headBlock:
+      Block newHead =
+          blockchain
+              .getBlockByHash(headBlockHash)
+              .orElseGet(
+                  () -> {
+                    Optional<Block> flushedBlock = Optional.empty();
+                    // if new head is candidateBlock, flush and do not wait on consensusValidated:
+                    if (getBlockHash().equals(headBlockHash)) {
+                      candidateWorldState.ifPresent(ws -> ws.flush());
+                      blockchain.appendBlock(block, getBlockProcessorResult().get().getReceipts());
+                      flushedBlock = blockchain.getBlockByHash(headBlockHash);
+                    }
+                    // if we still can't find it, throw.
+                    return flushedBlock.orElseThrow();
+                  });
 
-        // TODO: ensure head is a descendant of finalized!
-        // set the new head
-        bc.rewindToBlock(newHead.getHash());
-      }
+      // TODO: ensure head is a descendant of finalized!
+      // set the new head
+      blockchain.rewindToBlock(newHead.getHash());
       return newFinalized.map(Block::getHeader);
     }
 

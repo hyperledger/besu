@@ -190,7 +190,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public CandidateBlock setExistingAsCandidate(final Block block) {
-    CandidateBlock noOpBlock = new CandidateBlock(block, null, null);
+    CandidateBlock noOpBlock = new CandidateBlock(block, null, protocolContext.getBlockchain());
     mergeContext.setCandidateBlock(noOpBlock);
     return noOpBlock;
   }
