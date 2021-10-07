@@ -32,7 +32,7 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   public enum ExecutionStatus {
     VALID,
     INVALID,
-    KNOWN;
+    SYNCING;
   }
 
   public enum ConsensusStatus {
