@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.INVALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.KNOWN;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.VALID;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
@@ -77,10 +76,10 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
         requestContext.getRequiredParameter(0, ExecutionPayloadParameter.class);
 
     Object reqId = requestContext.getRequest().getId();
-    // respond with known if block is already imported
-    if (protocolContext.getBlockchain().getBlockByHash(blockParam.getBlockHash()).isPresent()) {
-      return respondWith(reqId, blockParam.getBlockHash(), KNOWN);
-    }
+    // TODO: should create a no-op candidate block here, but just commented for expediency
+//    if (protocolContext.getBlockchain().getBlockByHash(blockParam.getBlockHash()).isPresent()) {
+//      return respondWith(reqId, blockParam.getBlockHash(), VALID);
+//    }
 
     try {
       LOG.trace("blockparam: " + Json.encodePrettily(blockParam));
@@ -118,7 +117,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
             blockParam.getBaseFeePerGas(),
             Hash.ZERO,
             0,
-            blockParam.getRandom(),
+            null, //blockParam.getRandom(),
             headerFunctions);
 
     boolean execSuccess = false;

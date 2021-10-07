@@ -224,9 +224,10 @@ public class BlockHeader extends SealableBlockHeader
     if (baseFee != null) {
       out.writeLongScalar(baseFee);
     }
-    if (random != null) {
-      out.writeBytes(random);
-    }
+// TODO: merge-interop specifies we ignore random for now
+//    if (random != null) {
+//      out.writeBytes(random);
+//    }
     out.endList();
   }
 
