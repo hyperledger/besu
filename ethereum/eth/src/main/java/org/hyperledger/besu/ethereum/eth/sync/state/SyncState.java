@@ -46,7 +46,7 @@ public class SyncState {
   private volatile Optional<SyncTarget> syncTarget = Optional.empty();
   private Optional<WorldStateDownloadStatus> worldStateDownloadStatus = Optional.empty();
   private Optional<Long> newPeerListenerId;
-  private boolean stoppedAtTerminalDifficulty;
+  private Optional<Boolean> stoppedAtTerminalDifficulty = Optional.empty();
 
   public SyncState(final Blockchain blockchain, final EthPeers ethPeers) {
     this.blockchain = blockchain;
@@ -142,10 +142,10 @@ public class SyncState {
   public void setStoppedAtTerminalDifficulty(final boolean stoppedAtTerminalDifficulty) {
     // TODO: this is an inexpensive way to stop sync when we reach TTD,
     //      we should revisit when merge sync is better defined
-    this.stoppedAtTerminalDifficulty = stoppedAtTerminalDifficulty;
+    this.stoppedAtTerminalDifficulty = Optional.of(stoppedAtTerminalDifficulty);
   }
 
-  public boolean isStoppedAtTerminalDifficulty() {
+  public Optional<Boolean> isStoppedAtTerminalDifficulty() {
     return stoppedAtTerminalDifficulty;
   }
 
@@ -154,9 +154,9 @@ public class SyncState {
       final Optional<ChainHeadEstimate> syncTargetChain,
       final Optional<ChainHeadEstimate> bestPeerChain,
       final long syncTolerance) {
-    // Sync target may be temporarily empty while we switch sync targets during a sync, so
-    // check both the sync target and our best peer to determine if we're in sync or not
-    return stoppedAtTerminalDifficulty
+    return stoppedAtTerminalDifficulty.orElse(true)
+        // Sync target may be temporarily empty while we switch sync targets during a sync, so
+        // check both the sync target and our best peer to determine if we're in sync or not
         && isInSync(localChain, syncTargetChain, syncTolerance)
         && isInSync(localChain, bestPeerChain, syncTolerance);
   }
