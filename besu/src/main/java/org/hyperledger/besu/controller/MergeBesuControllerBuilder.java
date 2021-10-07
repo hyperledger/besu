@@ -30,7 +30,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
+  private final AtomicReference<SyncState> syncState = new AtomicReference<>();
 
   @Override
   protected MiningCoordinator createMiningCoordinator(
@@ -41,10 +44,11 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
 
-    // TODO: revisit how we fetch this when totalDifficulty transition is defined.
-    //  Since ProtocolSchedule doesn't make sense here:
     BlockValidator blockValidator =
         protocolSchedule.getByBlockNumber(Long.MAX_VALUE).getBlockValidator();
+
+    // TODO: revisit how we stop/manage the synchronizer when merge sync process is better defined
+    this.syncState.set(syncState);
 
     return new MergeCoordinator(
         protocolContext,
@@ -70,6 +74,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
 
     final MergeContext mergeContext =
         PostMergeContext.get()
+            .setSyncState(syncState.get())
             .setTerminalTotalDifficulty(
                 genesisConfig
                     .getConfigOptions(genesisConfigOverrides)

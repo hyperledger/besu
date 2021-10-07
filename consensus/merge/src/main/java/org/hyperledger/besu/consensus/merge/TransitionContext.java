@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.Optional;
 
@@ -42,6 +43,11 @@ public class TransitionContext implements MergeContext {
   }
 
   @Override
+  public MergeContext setSyncState(final SyncState syncState) {
+    return postMergeContext.setSyncState(syncState);
+  }
+
+  @Override
   public MergeContext setTerminalTotalDifficulty(final Difficulty newTerminalTotalDifficulty) {
     return postMergeContext.setTerminalTotalDifficulty(newTerminalTotalDifficulty);
   }
@@ -54,6 +60,11 @@ public class TransitionContext implements MergeContext {
   @Override
   public boolean isPostMerge() {
     return postMergeContext.isPostMerge();
+  }
+
+  @Override
+  public boolean isSyncing() {
+    return postMergeContext.isSyncing();
   }
 
   @Override
