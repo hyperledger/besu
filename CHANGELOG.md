@@ -3,6 +3,7 @@
 ## 21.10.0-RC2
 
 ### Additions and Improvements
+- Add CLI autocomplete scripts. [#2854](https://github.com/hyperledger/besu/pull/2854)
 
 ### Bug Fixes
 
