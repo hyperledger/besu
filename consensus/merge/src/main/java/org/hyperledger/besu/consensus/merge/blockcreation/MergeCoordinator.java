@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
+import org.hyperledger.besu.consensus.merge.MergeBlockProcessor.CandidateBlock;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.PayloadIdentifier;
@@ -185,6 +186,13 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         .validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE)
         .isPresent();
+  }
+
+  @Override
+  public CandidateBlock setExistingAsCandidate(final Block block) {
+    CandidateBlock noOpBlock = new CandidateBlock(block, null, protocolContext.getBlockchain());
+    mergeContext.setCandidateBlock(noOpBlock);
+    return noOpBlock;
   }
 
   @FunctionalInterface

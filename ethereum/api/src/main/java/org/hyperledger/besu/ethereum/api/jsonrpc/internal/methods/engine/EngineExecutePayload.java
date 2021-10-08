@@ -77,11 +77,15 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
         requestContext.getRequiredParameter(0, ExecutionPayloadParameter.class);
 
     Object reqId = requestContext.getRequest().getId();
-    // TODO: should create a no-op candidate block here, but just commented for expediency
-    //    if (protocolContext.getBlockchain().getBlockByHash(blockParam.getBlockHash()).isPresent())
-    // {
-    //      return respondWith(reqId, blockParam.getBlockHash(), VALID);
-    //    }
+
+    // create a no-op candidate block here, since we already have this payload
+    if (protocolContext
+        .getBlockchain()
+        .getBlockByHash(blockParam.getBlockHash())
+        .map(mergeCoordinator::setExistingAsCandidate)
+        .isPresent()) {
+      return respondWith(reqId, blockParam.getBlockHash(), VALID);
+    }
 
     try {
       LOG.trace("blockparam: " + Json.encodePrettily(blockParam));

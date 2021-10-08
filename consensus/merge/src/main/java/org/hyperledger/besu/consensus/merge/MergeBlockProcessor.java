@@ -120,7 +120,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
 
   public static class CandidateBlock {
     final Block block;
-    final CandidateWorldState candidateWorldState;
+    final Optional<CandidateWorldState> candidateWorldState;
     final MutableBlockchain blockchain;
 
     final Object commitLock = new Object();
@@ -128,12 +128,12 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
     final AtomicBoolean consensusValidated = new AtomicBoolean(false);
     final AtomicReference<BlockProcessor.Result> blockProcessorResult = new AtomicReference<>();
 
-    CandidateBlock(
+    public CandidateBlock(
         final Block block,
         final CandidateWorldState candidateWorldState,
         final MutableBlockchain blockchain) {
       this.block = block;
-      this.candidateWorldState = candidateWorldState;
+      this.candidateWorldState = Optional.ofNullable(candidateWorldState);
       this.blockchain = blockchain;
     }
 
@@ -176,7 +176,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
       }
 
       if (shouldCommit) {
-        candidateWorldState.flush();
+        candidateWorldState.ifPresent(ws -> ws.flush());
         blockchain.appendBlock(block, getBlockProcessorResult().get().getReceipts());
         LOG.debug(
             "Committed blockhash {}: consensus validated}", getBlockHash().toShortHexString());
@@ -219,21 +219,17 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
                     Optional<Block> flushedBlock = Optional.empty();
                     // if new head is candidateBlock, flush and do not wait on consensusValidated:
                     if (getBlockHash().equals(headBlockHash)) {
-                      candidateWorldState.flush();
-
+                      candidateWorldState.ifPresent(ws -> ws.flush());
                       blockchain.appendBlock(block, getBlockProcessorResult().get().getReceipts());
-
                       flushedBlock = blockchain.getBlockByHash(headBlockHash);
                     }
                     // if we still can't find it, throw.
                     return flushedBlock.orElseThrow();
                   });
 
-      // TODO: ensure head is a descendant of finalized
-
+      // TODO: ensure head is a descendant of finalized!
       // set the new head
       blockchain.rewindToBlock(newHead.getHash());
-
       return newFinalized.map(Block::getHeader);
     }
 
