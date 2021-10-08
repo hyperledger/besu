@@ -12,33 +12,40 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.web3j;
+package org.hyperledger.besu.tests.acceptance.jsonrpc;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
-import org.hyperledger.besu.tests.web3j.generated.SimpleStorage;
 
 import org.junit.Before;
 import org.junit.Test;
 
-public class DeploySmartContractAcceptanceTest extends AcceptanceTestBase {
+public class DeployTransactionAcceptanceTest extends AcceptanceTestBase {
 
   private BesuNode minerNode;
+  private Account recipient;
 
   @Before
   public void setUp() throws Exception {
-    minerNode = besu.createMinerNode("miner-node");
+    recipient = accounts.createAccount("recipient");
+    minerNode = besu.createMinerNode("node");
     cluster.start(minerNode);
   }
 
   @Test
-  public void deployingMustGiveValidReceipt() {
-    // Contract address is generated from sender address and transaction nonce
-    final String contractAddress = "0x42699a7612a82f1d9c36148af9c77354759b210b";
+  public void transactionMustHaveReceipt() {
+    final Hash transactionHash =
+        minerNode.execute(accountTransactions.createTransfer(recipient, 5));
+    cluster.verify(recipient.balanceEquals(5));
+    minerNode.verify(eth.expectSuccessfulTransactionReceipt(transactionHash.toString()));
+  }
 
-    final SimpleStorage simpleStorageContract =
-        minerNode.execute(contractTransactions.createSmartContract(SimpleStorage.class));
-
-    contractVerifier.validTransactionReceipt(contractAddress).verify(simpleStorageContract);
+  @Test
+  public void imaginaryTransactionMustHaveNoReceipt() {
+    minerNode.verify(
+        eth.expectNoTransactionReceipt(
+            "0x0000000000000000000000000000000000000000000000000000000000000000"));
   }
 }
