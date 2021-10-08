@@ -23,8 +23,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.BftForkSpec;
-import org.hyperledger.besu.consensus.common.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;

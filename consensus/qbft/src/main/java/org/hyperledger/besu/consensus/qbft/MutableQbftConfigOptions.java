@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.qbft;
 
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.MutableBftConfigOptions;
+import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
 import java.util.Optional;
 

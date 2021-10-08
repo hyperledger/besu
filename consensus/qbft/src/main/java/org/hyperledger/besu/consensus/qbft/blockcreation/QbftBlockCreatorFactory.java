@@ -15,10 +15,10 @@
 package org.hyperledger.besu.consensus.qbft.blockcreation;
 
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.datatypes.Address;
