@@ -155,7 +155,8 @@ public class GenesisConfigFileTest {
   public void shouldGetDefaultBaseFeeAtGenesis() {
     GenesisConfigFile withBaseFeeAtGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":0}}");
-    assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isNotPresent();
+    assertThat(withBaseFeeAtGenesis.getBaseFeePerGas().get())
+        .isEqualTo(GenesisConfigFile.DEFAULT_BASEFEE_INITIAL_VALUE);
   }
 
   @Test

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.INVALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.VALID;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
@@ -77,6 +78,10 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
         requestContext.getRequiredParameter(0, ExecutionPayloadParameter.class);
 
     Object reqId = requestContext.getRequest().getId();
+
+    if (mergeContext.isSyncing()) {
+      return respondWith(reqId, blockParam.getBlockHash(), SYNCING);
+    }
 
     // create a no-op candidate block here, since we already have this payload
     if (protocolContext

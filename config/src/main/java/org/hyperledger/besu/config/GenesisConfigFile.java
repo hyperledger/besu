@@ -31,6 +31,10 @@ import com.google.common.io.Resources;
 
 public class GenesisConfigFile {
 
+  // TODO: refer to / move LondonBaseFeeMarket.DEFAULT_BASEFEE_INITIAL_VALUE rather than duplicating
+  // here
+  public static final long DEFAULT_BASEFEE_INITIAL_VALUE = 1000000000L;
+
   public static final GenesisConfigFile DEFAULT =
       new GenesisConfigFile(JsonUtil.createEmptyObjectNode());
 
@@ -123,8 +127,14 @@ public class GenesisConfigFile {
   }
 
   public Optional<Long> getBaseFeePerGas() {
+    // get configured baseFeePerGas or
     return JsonUtil.getString(configRoot, "basefeepergas")
-        .map(baseFeeStr -> parseLong("baseFeePerGas", baseFeeStr));
+        .map(baseFeeStr -> parseLong("baseFeePerGas", baseFeeStr))
+        .map(Optional::of)
+        .orElseGet(
+            () ->
+                Optional.of(DEFAULT_BASEFEE_INITIAL_VALUE)
+                    .filter(z -> 0L == getConfigOptions().getEIP1559BlockNumber().orElse(-1L)));
   }
 
   public String getMixHash() {
