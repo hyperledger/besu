@@ -1,10 +1,10 @@
 # Besu Ethereum Client
- [![CircleCI](https://circleci.com/gh/hyperledger/besu/tree/master.svg?style=svg)](https://circleci.com/gh/hyperledger/besu/tree/master)
+ [![CircleCI](https://circleci.com/gh/hyperledger/besu/tree/master.svg?style=svg)](https://circleci.com/gh/hyperledger/besu/tree/main)
  [![Total alerts](https://img.shields.io/lgtm/alerts/g/hyperledger/besu.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hyperledger/besu/alerts/)
  [![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/hyperledger/besu.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hyperledger/besu/context:java)
  [![Documentation Status](https://readthedocs.org/projects/hyperledger-besu/badge/?version=latest)](https://besu.hyperledger.org/en/latest/?badge=latest)
  [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3174/badge)](https://bestpractices.coreinfrastructure.org/projects/3174)
- [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/hyperledger/besu/blob/master/LICENSE)
+ [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/hyperledger/besu/blob/main/LICENSE)
  [![RocketChat chat](https://open.rocket.chat/images/join-chat.svg)](https://chat.hyperledger.org/channel/besu)
 
 [Download](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/)
