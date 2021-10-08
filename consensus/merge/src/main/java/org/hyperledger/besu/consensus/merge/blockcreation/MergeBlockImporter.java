@@ -21,12 +21,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class MergeBlockImporter extends MainnetBlockImporter {
-  private static final Logger LOG = LogManager.getLogger();
-
   public MergeBlockImporter(final BlockValidator blockValidator) {
     super(blockValidator);
   }
@@ -38,11 +33,9 @@ public class MergeBlockImporter extends MainnetBlockImporter {
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
     if (context.getConsensusContext(MergeContext.class).isPostMerge()) {
-      LOG.info("should be a no-op import for block {}", block.getHeader().getNumber());
       // TODO: for now optimistically import, this should only come from initial sync pre-TTD
       // return true;
     }
-    LOG.info("Imported block {}", block.getHeader().getNumber());
     return super.importBlock(context, block, headerValidationMode, ommerValidationMode);
   }
 }

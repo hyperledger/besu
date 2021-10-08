@@ -62,7 +62,7 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
 
     syncVertx.<JsonRpcResponse>executeBlocking(
         z -> {
-          LOG.info(
+          LOG.debug(
               "consensus JSON-RPC request {} {}", this.getName(), request.getRequest().getParams());
           z.tryComplete(syncResponse(request));
         },
@@ -71,7 +71,7 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
             cf.complete(
                 resp.otherwise(
                         t -> {
-                          LOG.error("failed to exec consensus method " + this.getName(), t);
+                          LOG.debug("failed to exec consensus method " + this.getName(), t);
                           return new JsonRpcErrorResponse(
                               request.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
                         })

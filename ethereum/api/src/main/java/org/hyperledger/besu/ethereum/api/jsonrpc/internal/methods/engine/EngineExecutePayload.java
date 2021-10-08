@@ -84,6 +84,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
         .getBlockByHash(blockParam.getBlockHash())
         .map(mergeCoordinator::setExistingAsCandidate)
         .isPresent()) {
+      LOG.debug("creating no-op candidate block since executePayload is present");
       return respondWith(reqId, blockParam.getBlockHash(), VALID);
     }
 
