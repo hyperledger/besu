@@ -16,15 +16,12 @@ package org.hyperledger.besu.ethereum.eth;
 
 import static java.util.stream.Collectors.toUnmodifiableList;
 
-import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -70,9 +67,6 @@ public class EthProtocol implements SubProtocol {
                   EthPV65.POOLED_TRANSACTIONS))
           .collect(toUnmodifiableList());
 
-  private static final List<Integer> mergeSupportExcludedMessages =
-      Arrays.asList(EthPV62.NEW_BLOCK_HASHES, EthPV62.NEW_BLOCK);
-
   public static boolean requestIdCompatible(final int code) {
     return Set.of(
             EthPV62.GET_BLOCK_HEADERS,
@@ -86,12 +80,6 @@ public class EthProtocol implements SubProtocol {
             EthPV63.GET_RECEIPTS,
             EthPV63.RECEIPTS)
         .contains(code);
-  }
-
-  private final List<Integer> disabledProtocolMessages;
-
-  public EthProtocol(final List<Integer> disabledProtocolMessages) {
-    this.disabledProtocolMessages = disabledProtocolMessages;
   }
 
   @Override
@@ -118,9 +106,6 @@ public class EthProtocol implements SubProtocol {
 
   @Override
   public boolean isValidMessageCode(final int protocolVersion, final int code) {
-    if (disabledProtocolMessages.contains(code)) {
-      return false;
-    }
     switch (protocolVersion) {
       case EthVersion.V62:
         return eth62Messages.contains(code);
@@ -175,9 +160,7 @@ public class EthProtocol implements SubProtocol {
 
   public static EthProtocol get() {
     if (INSTANCE == null) {
-      INSTANCE =
-          new EthProtocol(
-              MergeOptions.isMergeEnabled() ? mergeSupportExcludedMessages : new ArrayList<>());
+      INSTANCE = new EthProtocol();
     }
     return INSTANCE;
   }
