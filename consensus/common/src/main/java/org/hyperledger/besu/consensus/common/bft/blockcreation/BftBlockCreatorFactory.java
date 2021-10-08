@@ -105,9 +105,14 @@ public class BftBlockCreatorFactory {
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
     final BftContext bftContext = protocolContext.getConsensusState(BftContext.class);
     final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
-    checkState(validatorProvider.getVoteProvider().isPresent(), "Bft requires a vote provider");
+    checkState(
+        validatorProvider.getVoteProviderAfterBlock(parentHeader).isPresent(),
+        "Bft requires a vote provider");
     final Optional<ValidatorVote> proposal =
-        validatorProvider.getVoteProvider().get().getVoteAfterBlock(parentHeader, localAddress);
+        validatorProvider
+            .getVoteProviderAfterBlock(parentHeader)
+            .get()
+            .getVoteAfterBlock(parentHeader, localAddress);
 
     final List<Address> validators =
         new ArrayList<>(validatorProvider.getValidatorsAfterBlock(parentHeader));

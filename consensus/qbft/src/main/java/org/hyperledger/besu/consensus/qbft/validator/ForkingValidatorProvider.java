@@ -69,6 +69,11 @@ public class ForkingValidatorProvider implements ValidatorProvider {
     return resolveValidatorProvider(blockchain.getChainHeadHeader().getNumber()).getVoteProvider();
   }
 
+  @Override
+  public Optional<VoteProvider> getVoteProviderAfterBlock(final BlockHeader header) {
+    return resolveValidatorProvider(header.getNumber() + 1).getVoteProvider();
+  }
+
   private Collection<Address> getValidators(
       final long block, final Function<ValidatorProvider, Collection<Address>> getValidators) {
     final Optional<ValidatorSelectorConfig> fork = forksSchedule.getFork(block);
