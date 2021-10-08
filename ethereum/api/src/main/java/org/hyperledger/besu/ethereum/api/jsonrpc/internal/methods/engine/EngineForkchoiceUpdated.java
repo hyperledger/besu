@@ -23,8 +23,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import io.vertx.core.Vertx;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
+  private static final Logger LOG = LogManager.getLogger();
 
   public EngineForkchoiceUpdated(final Vertx vertx, final ProtocolContext protocolContext) {
     super(vertx, protocolContext);
@@ -39,6 +42,10 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     final ExecutionForkChoiceUpdatedParameter forkChoice =
         requestContext.getRequiredParameter(0, ExecutionForkChoiceUpdatedParameter.class);
+    LOG.info(
+        "Consensus fork-choice-update: head: {}, finalized: {}",
+        forkChoice.getHeadBlockHash(),
+        forkChoice.getFinalizedBlockHash());
 
     mergeContext.updateForkChoice(
         forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());

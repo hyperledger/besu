@@ -2,13 +2,19 @@
 FROM openjdk:slim-buster
 ARG VERSION="dev"
 
-RUN adduser --disabled-password --gecos "" --home /opt/besu besu && \
-    chown besu:besu /opt/besu
+############### MERGE BETA MODIFICATIONS ##################
 
-USER besu
+## TODO: remove these modifications
+#RUN adduser --disabled-password --gecos "" --home /opt/besu besu && \
+#    chown besu:besu /opt/besu
+
+#USER besu
 WORKDIR /opt/besu
 
-COPY --chown=besu:besu besu /opt/besu/
+COPY besu /opt/besu/
+#COPY --chown=besu:besu besu /opt/besu/
+
+############### END MODIFICATIONS ##################
 
 # Expose services ports
 # 8545 HTTP JSON-RPC
