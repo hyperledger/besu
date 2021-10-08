@@ -28,9 +28,9 @@ public interface ValidatorProvider {
 
   Collection<Address> getValidatorsForBlock(BlockHeader header);
 
-  Optional<VoteProvider> getVoteProvider();
+  Optional<VoteProvider> getVoteProviderAtHead();
 
   default Optional<VoteProvider> getVoteProviderAfterBlock(final BlockHeader header) {
-    return getVoteProvider();
+    return getVoteProviderAtHead();
   }
 }

@@ -165,9 +165,9 @@ public class ForkingValidatorProviderTest {
             blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
 
     final VoteProvider voteProvider = Mockito.mock(VoteProvider.class);
-    when(contractValidatorProvider.getVoteProvider()).thenReturn(Optional.of(voteProvider));
+    when(contractValidatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
 
-    assertThat(validatorProvider.getVoteProvider()).contains(voteProvider);
+    assertThat(validatorProvider.getVoteProviderAtHead()).contains(voteProvider);
   }
 
   private ValidatorSelectorConfig createContractFork(

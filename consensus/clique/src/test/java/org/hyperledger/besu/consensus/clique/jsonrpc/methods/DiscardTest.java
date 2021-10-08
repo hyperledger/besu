@@ -64,7 +64,7 @@ public class DiscardTest {
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
-    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a0)).isNull();
+    assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a0)).isNull();
   }
 
   @Test
@@ -72,11 +72,11 @@ public class DiscardTest {
     final Discard discard = new Discard(validatorProvider);
     final Address a0 = Address.fromHexString("0");
 
-    validatorProvider.getVoteProvider().get().authVote(a0);
+    validatorProvider.getVoteProviderAtHead().get().authVote(a0);
 
     final JsonRpcResponse response = discard.response(requestWithParams(a0));
 
-    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a0)).isNull();
+    assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a0)).isNull();
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
@@ -87,11 +87,11 @@ public class DiscardTest {
     final Discard discard = new Discard(validatorProvider);
     final Address a0 = Address.fromHexString("0");
 
-    validatorProvider.getVoteProvider().get().dropVote(a0);
+    validatorProvider.getVoteProviderAtHead().get().dropVote(a0);
 
     final JsonRpcResponse response = discard.response(requestWithParams(a0));
 
-    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a0)).isNull();
+    assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a0)).isNull();
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
@@ -103,13 +103,13 @@ public class DiscardTest {
     final Address a0 = Address.fromHexString("0");
     final Address a1 = Address.fromHexString("1");
 
-    validatorProvider.getVoteProvider().get().authVote(a0);
-    validatorProvider.getVoteProvider().get().authVote(a1);
+    validatorProvider.getVoteProviderAtHead().get().authVote(a0);
+    validatorProvider.getVoteProviderAtHead().get().authVote(a1);
 
     final JsonRpcResponse response = discard.response(requestWithParams(a0));
 
-    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a0)).isNull();
-    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a1))
+    assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a0)).isNull();
+    assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a1))
         .isEqualTo(VoteType.ADD);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
