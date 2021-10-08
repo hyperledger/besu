@@ -41,6 +41,7 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
   // transition miners are created disabled by default, so reflect that default:
   private final AtomicBoolean isPostMerge = new AtomicBoolean(true);
+  private final AtomicBoolean isAtGenesis = new AtomicBoolean(true);
   private final Subscribers<NewMergeStateCallback> newMergeStateCallbackSubscribers =
       Subscribers.create();
 
@@ -86,10 +87,14 @@ public class PostMergeContext implements MergeContext {
     }
     final boolean newState = terminalTotalDifficulty.get().lessOrEqualThan(totalDifficulty);
     final boolean oldState = isPostMerge.getAndSet(newState);
-    Optional.ofNullable(syncState.get())
-        .ifPresent(ss -> ss.setStoppedAtTerminalDifficulty(newState));
+    final boolean atGenesis = isAtGenesis.getAndSet(Boolean.FALSE);
 
-    if (oldState != newState) {
+    // if we are past TTD, set it:
+    if (newState)
+      Optional.ofNullable(syncState.get())
+          .ifPresent(ss -> ss.setStoppedAtTerminalDifficulty(newState));
+
+    if (oldState != newState || atGenesis) {
       newMergeStateCallbackSubscribers.forEach(
           newMergeStateCallback -> newMergeStateCallback.onNewIsPostMergeState(newState));
     }
