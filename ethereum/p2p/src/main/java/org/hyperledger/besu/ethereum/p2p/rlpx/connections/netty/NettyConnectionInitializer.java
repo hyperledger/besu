@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
@@ -25,10 +24,13 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.ConnectionInitializer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.security.GeneralSecurityException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -37,6 +39,7 @@ import java.util.stream.StreamSupport;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -46,6 +49,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
+import org.jetbrains.annotations.NotNull;
 
 public class NettyConnectionInitializer implements ConnectionInitializer {
 
@@ -170,30 +174,7 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
         .remoteAddress(new InetSocketAddress(enode.getIp(), enode.getListeningPort().get()))
         .option(ChannelOption.TCP_NODELAY, true)
         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT_SECONDS * 1000)
-        .handler(
-            new ChannelInitializer<SocketChannel>() {
-              @Override
-              protected void initChannel(final SocketChannel ch) {
-                ch.pipeline()
-                    .addLast(
-                        new TimeoutHandler<>(
-                            connectionFuture::isDone,
-                            TIMEOUT_SECONDS,
-                            () ->
-                                connectionFuture.completeExceptionally(
-                                    new TimeoutException(
-                                        "Timed out waiting to establish connection with peer: "
-                                            + peer.getId()))),
-                        new HandshakeHandlerOutbound(
-                            nodeKey,
-                            peer,
-                            config.getSupportedProtocols(),
-                            localNode,
-                            connectionFuture,
-                            eventDispatcher,
-                            metricsSystem));
-              }
-            })
+        .handler(outboundChannelInitializer(peer, connectionFuture))
         .connect()
         .addListener(
             (f) -> {
@@ -205,34 +186,81 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
     return connectionFuture;
   }
 
+  /** @return a channel initializer for outbound connections */
+  @NotNull
+  private ChannelInitializer<SocketChannel> outboundChannelInitializer(
+      final Peer peer, final CompletableFuture<PeerConnection> connectionFuture) {
+    return new ChannelInitializer<SocketChannel>() {
+      @Override
+      protected void initChannel(final SocketChannel ch) throws Exception {
+        ch.pipeline()
+            .addLast(
+                timeoutHandler(
+                    connectionFuture,
+                    "Timed out waiting to establish connection with peer: " + peer.getId()));
+        addAdditionalOutboundHandlers(ch);
+        ch.pipeline().addLast(outboundHandler(peer, connectionFuture));
+      }
+    };
+  }
+
   /** @return a channel initializer for inbound connections */
   private ChannelInitializer<SocketChannel> inboundChannelInitializer() {
     return new ChannelInitializer<SocketChannel>() {
       @Override
-      protected void initChannel(final SocketChannel ch) {
+      protected void initChannel(final SocketChannel ch) throws Exception {
         final CompletableFuture<PeerConnection> connectionFuture = new CompletableFuture<>();
         connectionFuture.thenAccept(
             connection -> connectSubscribers.forEach(c -> c.onConnect(connection)));
-
         ch.pipeline()
             .addLast(
-                new TimeoutHandler<>(
-                    connectionFuture::isDone,
-                    TIMEOUT_SECONDS,
-                    () ->
-                        connectionFuture.completeExceptionally(
-                            new TimeoutException(
-                                "Timed out waiting to fully establish incoming connection"))),
-                new HandshakeHandlerInbound(
-                    nodeKey,
-                    config.getSupportedProtocols(),
-                    localNode,
-                    connectionFuture,
-                    eventDispatcher,
-                    metricsSystem));
+                timeoutHandler(
+                    connectionFuture, "Timed out waiting to fully establish incoming connection"));
+        addAdditionalInboundHandlers(ch);
+        ch.pipeline().addLast(inboundHandler(connectionFuture));
       }
     };
   }
+
+  @NotNull
+  private HandshakeHandlerInbound inboundHandler(
+      final CompletableFuture<PeerConnection> connectionFuture) {
+    return new HandshakeHandlerInbound(
+        nodeKey,
+        config.getSupportedProtocols(),
+        localNode,
+        connectionFuture,
+        eventDispatcher,
+        metricsSystem);
+  }
+
+  @NotNull
+  private HandshakeHandlerOutbound outboundHandler(
+      final Peer peer, final CompletableFuture<PeerConnection> connectionFuture) {
+    return new HandshakeHandlerOutbound(
+        nodeKey,
+        peer,
+        config.getSupportedProtocols(),
+        localNode,
+        connectionFuture,
+        eventDispatcher,
+        metricsSystem);
+  }
+
+  @NotNull
+  private TimeoutHandler<Channel> timeoutHandler(
+      final CompletableFuture<PeerConnection> connectionFuture, final String s) {
+    return new TimeoutHandler<>(
+        connectionFuture::isDone,
+        TIMEOUT_SECONDS,
+        () -> connectionFuture.completeExceptionally(new TimeoutException(s)));
+  }
+
+  protected void addAdditionalOutboundHandlers(final SocketChannel ch)
+      throws GeneralSecurityException, IOException {}
+
+  protected void addAdditionalInboundHandlers(final SocketChannel ch)
+      throws GeneralSecurityException, IOException {}
 
   private IntSupplier pendingTaskCounter(final EventLoopGroup eventLoopGroup) {
     return () ->

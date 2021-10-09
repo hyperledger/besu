@@ -22,6 +22,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -30,11 +32,8 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
@@ -68,7 +67,6 @@ public class GoQuorumBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
-            TransactionGasBudgetCalculator.frontier(),
             Optional.of(goQuorumPrivacyParameters));
 
     final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
@@ -95,7 +93,6 @@ public class GoQuorumBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             false,
-            TransactionGasBudgetCalculator.frontier(),
             Optional.of(goQuorumPrivacyParameters));
 
     final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
@@ -122,7 +119,6 @@ public class GoQuorumBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             false,
-            TransactionGasBudgetCalculator.frontier(),
             Optional.of(goQuorumPrivacyParameters));
 
     final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());

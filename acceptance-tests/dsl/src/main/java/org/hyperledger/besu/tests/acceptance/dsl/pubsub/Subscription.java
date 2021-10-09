@@ -16,7 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.pubsub;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 
 import java.util.List;

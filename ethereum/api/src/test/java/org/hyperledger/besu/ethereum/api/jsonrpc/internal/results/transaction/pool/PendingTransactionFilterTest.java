@@ -25,12 +25,12 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transac
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transaction.pool.PendingTransactionFilter.Filter;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -123,12 +123,13 @@ public class PendingTransactionFilterTest {
     }
   }
 
-  private Set<PendingTransactions.TransactionInfo> getPendingTransactions() {
-    final List<PendingTransactions.TransactionInfo> transactionInfoList = new ArrayList<>();
+  private Set<AbstractPendingTransactionsSorter.TransactionInfo> getPendingTransactions() {
+    final List<AbstractPendingTransactionsSorter.TransactionInfo> transactionInfoList =
+        new ArrayList<>();
     final int numberTrx = 5;
     for (int i = 1; i < numberTrx; i++) {
       Transaction transaction = mock(Transaction.class);
-      when(transaction.getGasPrice()).thenReturn(Wei.of(i));
+      when(transaction.getGasPrice()).thenReturn(Optional.of(Wei.of(i)));
       when(transaction.getValue()).thenReturn(Wei.of(i));
       when(transaction.getGasLimit()).thenReturn((long) i);
       when(transaction.getNonce()).thenReturn((long) i);
@@ -140,7 +141,7 @@ public class PendingTransactionFilterTest {
         when(transaction.isContractCreation()).thenReturn(true);
       }
       transactionInfoList.add(
-          new PendingTransactions.TransactionInfo(
+          new AbstractPendingTransactionsSorter.TransactionInfo(
               transaction, true, Instant.ofEpochSecond(Integer.MAX_VALUE)));
     }
     return new LinkedHashSet<>(transactionInfoList);

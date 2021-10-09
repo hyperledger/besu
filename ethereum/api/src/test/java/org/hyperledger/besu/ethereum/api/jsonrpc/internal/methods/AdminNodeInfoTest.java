@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -31,14 +32,14 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -72,7 +73,7 @@ public class AdminNodeInfoTest {
       new StubGenesisConfigOptions().chainId(BigInteger.valueOf(2019));
   private final DefaultPeer defaultPeer =
       DefaultPeer.fromEnodeURL(
-          EnodeURL.builder()
+          EnodeURLImpl.builder()
               .nodeId(nodeId)
               .ipAddress("1.2.3.4")
               .discoveryPort(7890)
@@ -188,7 +189,7 @@ public class AdminNodeInfoTest {
   @Test
   public void handlesLocalEnodeWithListeningAndDiscoveryDisabled() {
     final EnodeURL localEnode =
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress("1.2.3.4")
             .discoveryAndListeningPorts(0)
@@ -233,7 +234,7 @@ public class AdminNodeInfoTest {
   @Test
   public void handlesLocalEnodeWithListeningDisabled() {
     final EnodeURL localEnode =
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress("1.2.3.4")
             .discoveryAndListeningPorts(0)
@@ -279,7 +280,7 @@ public class AdminNodeInfoTest {
   @Test
   public void handlesLocalEnodeWithDiscoveryDisabled() {
     final EnodeURL localEnode =
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress("1.2.3.4")
             .discoveryAndListeningPorts(0)
@@ -368,7 +369,8 @@ public class AdminNodeInfoTest {
             .agharta(7)
             .phoenix(8)
             .thanos(9)
-            .ecip1049(10);
+            .magneto(10)
+            .ecip1049(11);
 
     final AdminNodeInfo methodClassic =
         new AdminNodeInfo(
@@ -382,17 +384,19 @@ public class AdminNodeInfoTest {
     final JsonRpcRequestContext request = adminNodeInfo();
 
     final Map<String, Long> expectedConfig =
-        Map.of(
-            "classicForkBlock", 1L,
-            "ecip1015Block", 2L,
-            "dieHardBlock", 3L,
-            "gothamBlock", 4L,
-            "ecip1041Block", 5L,
-            "atlantisBlock", 6L,
-            "aghartaBlock", 7L,
-            "phoenixBlock", 8L,
-            "thanosBlock", 9L,
-            "ecip1049Block", 10L);
+        new HashMap<>(
+            Map.of(
+                "classicForkBlock", 1L,
+                "ecip1015Block", 2L,
+                "dieHardBlock", 3L,
+                "gothamBlock", 4L,
+                "ecip1041Block", 5L,
+                "atlantisBlock", 6L,
+                "aghartaBlock", 7L,
+                "phoenixBlock", 8L,
+                "thanosBlock", 9L,
+                "magnetoBlock", 10L));
+    expectedConfig.put("ecip1049Block", 11L);
 
     final JsonRpcResponse response = methodClassic.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);

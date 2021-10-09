@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -23,15 +24,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionRec
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptStatusResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptType;
 
 public class EthGetTransactionReceipt implements JsonRpcMethod {
 
-  private final BlockchainQueries blockchain;
+  private final BlockchainQueries blockchainQueries;
 
-  public EthGetTransactionReceipt(final BlockchainQueries blockchain) {
-    this.blockchain = blockchain;
+  public EthGetTransactionReceipt(final BlockchainQueries blockchainQueries) {
+    this.blockchainQueries = blockchainQueries;
   }
 
   @Override
@@ -43,9 +43,9 @@ public class EthGetTransactionReceipt implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Hash hash = requestContext.getRequiredParameter(0, Hash.class);
     final TransactionReceiptResult result =
-        blockchain
+        blockchainQueries
             .transactionReceiptByTransactionHash(hash)
-            .map(receipt -> getResult(receipt))
+            .map(this::getResult)
             .orElse(null);
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.permissioning.node;
 
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Collections;
 import java.util.List;

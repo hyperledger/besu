@@ -24,13 +24,11 @@ import static org.hyperledger.besu.ethereum.core.Util.publicKeyToAddress;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
+import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -78,12 +76,8 @@ public class CliqueBlockChoiceTests {
 
     cliqueContext =
         new CliqueContext(
-            new VoteTallyCache(
-                blockchain,
-                new VoteTallyUpdater(epochManager, blockInterface),
-                epochManager,
-                blockInterface),
-            new VoteProposer(),
+            BlockValidatorProvider.nonForkingValidatorProvider(
+                blockchain, epochManager, blockInterface),
             epochManager,
             blockInterface);
 

@@ -16,16 +16,16 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
+import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
+import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -37,6 +37,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -46,17 +47,28 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
     implements BonsaiWorldView {
 
-  private final Map<Address, BonsaiValue<BonsaiAccount>> accountsToUpdate = new HashMap<>();
-  private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new HashMap<>();
-  private final Set<Address> storageToClear = new HashSet<>();
+  private Map<Address, BonsaiValue<BonsaiAccount>> accountsToUpdate = new HashMap<>();
+  private Map<Address, BonsaiValue<Bytes>> codeToUpdate = new HashMap<>();
+  private Set<Address> storageToClear = new HashSet<>();
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
   // alternative was to keep a giant pre-image cache of the entire trie.
-  private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storageToUpdate = new HashMap<>();
+  private Map<Address, Map<Hash, BonsaiValue<UInt256>>> storageToUpdate = new ConcurrentHashMap<>();
 
   BonsaiWorldStateUpdater(final BonsaiWorldView world) {
     super(world);
+  }
+
+  public BonsaiWorldStateUpdater copy() {
+    final BonsaiWorldStateUpdater copy = new BonsaiWorldStateUpdater(wrappedWorldView());
+    copy.accountsToUpdate = new HashMap<>(accountsToUpdate);
+    copy.codeToUpdate = new HashMap<>(codeToUpdate);
+    copy.storageToClear = new HashSet<>(storageToClear);
+    copy.storageToUpdate = new ConcurrentHashMap<>(storageToUpdate);
+    copy.updatedAccounts = new HashMap<>(updatedAccounts);
+    copy.deletedAccounts = new HashSet<>(deletedAccounts);
+    return copy;
   }
 
   @Override
@@ -93,7 +105,6 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
             balance,
             Hash.EMPTY_TRIE_HASH,
             Hash.EMPTY,
-            Account.DEFAULT_VERSION,
             true);
     bonsaiValue.setUpdated(newAccount);
     return new WrappedEvmAccount(track(new UpdateTrackingAccount<>(newAccount)));
@@ -191,7 +202,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                   final Hash slotHash = Hash.wrap(keyHash);
                   if (!deletedStorageUpdates.containsKey(slotHash)) {
                     final UInt256 value = UInt256.fromBytes(RLP.decodeOne(entryValue));
-                    deletedStorageUpdates.put(slotHash, new BonsaiValue<>(value, null));
+                    deletedStorageUpdates.put(slotHash, new BonsaiValue<>(value, null, true));
                   }
                 });
       }
@@ -249,7 +260,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
       for (final Map.Entry<UInt256, UInt256> storageUpdate : entries) {
         final UInt256 keyUInt = storageUpdate.getKey();
-        final Hash slotHash = Hash.hash(keyUInt.toBytes());
+        final Hash slotHash = Hash.hash(keyUInt);
         final UInt256 value = storageUpdate.getValue();
         final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotHash);
         if (pendingValue == null) {
@@ -263,6 +274,10 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
       if (pendingStorageUpdates.isEmpty()) {
         storageToUpdate.remove(updatedAddress);
+      }
+
+      if (tracked.getStorageWasCleared()) {
+        tracked.setStorageWasCleared(false); // storage already cleared for this transaction
       }
 
       // TODO maybe add address preimage?
@@ -288,7 +303,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   @Override
   public UInt256 getStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
-    final Hash slotHashBytes = Hash.hash(storageKey.toBytes());
+    final Hash slotHashBytes = Hash.hash(storageKey);
     return getStorageValueBySlotHash(address, slotHashBytes).orElse(UInt256.ZERO);
   }
 
@@ -311,13 +326,13 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   @Override
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
-    if (storageToClear.contains(address)) {
-      return UInt256.ZERO;
-    }
     final Map<Hash, BonsaiValue<UInt256>> localAccountStorage = storageToUpdate.get(address);
-    final Hash slotHash = Hash.hash(storageKey.toBytes());
+    final Hash slotHash = Hash.hash(storageKey);
     if (localAccountStorage != null && localAccountStorage.containsKey(slotHash)) {
       final BonsaiValue<UInt256> value = localAccountStorage.get(slotHash);
+      if (value.isCleared()) {
+        return UInt256.ZERO;
+      }
       final UInt256 updated = value.getUpdated();
       if (updated != null) {
         return updated;
@@ -327,15 +342,16 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         return original;
       }
     }
+    if (storageToClear.contains(address)) {
+      return UInt256.ZERO;
+    }
     return getStorageValue(address, storageKey);
   }
 
   @Override
   public Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash) {
     final Map<Bytes32, Bytes> results = wrappedWorldView().getAllAccountStorage(address, rootHash);
-    storageToUpdate
-        .get(address)
-        .forEach((key, value) -> results.put(key, value.getUpdated().toBytes()));
+    storageToUpdate.get(address).forEach((key, value) -> results.put(key, value.getUpdated()));
     return results;
   }
 
@@ -358,8 +374,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                   oldValue.getNonce(),
                   oldValue.getBalance(),
                   oldValue.getStorageRoot(),
-                  oldValue.getCodeHash(),
-                  oldValue.getVersion());
+                  oldValue.getCodeHash());
       final BonsaiAccount newValue = bonsaiValue.getUpdated();
       final StateTrieAccountValue newAccount =
           newValue == null
@@ -368,8 +383,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                   newValue.getNonce(),
                   newValue.getBalance(),
                   newValue.getStorageRoot(),
-                  newValue.getCodeHash(),
-                  newValue.getVersion());
+                  newValue.getCodeHash());
       layer.addAccountChange(updatedAccount.getKey(), oldAccount, newAccount);
     }
 
@@ -608,7 +622,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                 "Expected to create slot, but the slot exists. Account=%s SlotHash=%s expectedValue=%s existingValue=%s",
                 address, slotHash, expectedValue, existingSlotValue));
       }
-      if (!Objects.equals(expectedValue, existingSlotValue)) {
+      if (!isSlotEquals(expectedValue, existingSlotValue)) {
         throw new IllegalStateException(
             String.format(
                 "Old value of slot does not match expected value. Account=%s SlotHash=%s Expected=%s Actual=%s",
@@ -628,6 +642,13 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         slotValue.setUpdated(replacementValue);
       }
     }
+  }
+
+  private boolean isSlotEquals(final UInt256 expectedValue, final UInt256 existingSlotValue) {
+    final UInt256 sanitizedExpectedValue = (expectedValue == null) ? UInt256.ZERO : expectedValue;
+    final UInt256 sanitizedExistingSlotValue =
+        (existingSlotValue == null) ? UInt256.ZERO : existingSlotValue;
+    return Objects.equals(sanitizedExpectedValue, sanitizedExistingSlotValue);
   }
 
   @Override

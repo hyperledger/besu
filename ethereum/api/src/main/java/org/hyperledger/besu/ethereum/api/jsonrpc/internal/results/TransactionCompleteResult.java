@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;
@@ -35,6 +36,8 @@ import org.apache.tuweni.bytes.Bytes;
   "from",
   "gas",
   "gasPrice",
+  "maxPriorityFeePerGas",
+  "maxFeePerGas",
   "hash",
   "input",
   "nonce",
@@ -55,10 +58,20 @@ public class TransactionCompleteResult implements TransactionResult {
 
   private final String blockHash;
   private final String blockNumber;
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String chainId;
+
   private final String from;
   private final String gas;
   private final String gasPrice;
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String maxPriorityFeePerGas;
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String maxFeePerGas;
+
   private final String hash;
   private final String input;
   private final String nonce;
@@ -84,7 +97,13 @@ public class TransactionCompleteResult implements TransactionResult {
     this.chainId = transaction.getChainId().map(Quantity::create).orElse(null);
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());
-    this.gasPrice = Quantity.create(transaction.getGasPrice());
+    this.maxPriorityFeePerGas =
+        tx.getTransaction().getMaxPriorityFeePerGas().map(Wei::toShortHexString).orElse(null);
+    this.maxFeePerGas =
+        tx.getTransaction().getMaxFeePerGas().map(Wei::toShortHexString).orElse(null);
+    this.gasPrice =
+        Quantity.create(
+            transaction.getGasPrice().orElse(transaction.getEffectiveGasPrice(tx.getBaseFee())));
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
@@ -130,6 +149,16 @@ public class TransactionCompleteResult implements TransactionResult {
   @JsonGetter(value = "gas")
   public String getGas() {
     return gas;
+  }
+
+  @JsonGetter(value = "maxPriorityFeePerGas")
+  public String getMaxPriorityFeePerGas() {
+    return maxPriorityFeePerGas;
+  }
+
+  @JsonGetter(value = "maxFeePerGas")
+  public String getMaxFeePerGas() {
+    return maxFeePerGas;
   }
 
   @JsonGetter(value = "gasPrice")

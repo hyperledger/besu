@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 import org.hyperledger.besu.ethereum.permissioning.node.NodeAllowlistUpdatedEvent;
-import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningProvider;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.IOException;
@@ -39,7 +40,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class NodeLocalConfigPermissioningController implements NodePermissioningProvider {
+public class NodeLocalConfigPermissioningController implements NodeConnectionPermissioningProvider {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -112,7 +113,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
     }
     final List<EnodeURL> peers =
         enodeURLs.stream()
-            .map(url -> EnodeURL.fromString(url, configuration.getEnodeDnsConfiguration()))
+            .map(url -> EnodeURLImpl.fromString(url, configuration.getEnodeDnsConfiguration()))
             .collect(Collectors.toList());
 
     for (EnodeURL peer : peers) {
@@ -146,7 +147,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
     }
     final List<EnodeURL> peers =
         enodeURLs.stream()
-            .map(url -> EnodeURL.fromString(url, configuration.getEnodeDnsConfiguration()))
+            .map(url -> EnodeURLImpl.fromString(url, configuration.getEnodeDnsConfiguration()))
             .collect(Collectors.toList());
 
     boolean anyBootnode = peers.stream().anyMatch(fixedNodes::contains);
@@ -231,14 +232,14 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   }
 
   public boolean isPermitted(final String enodeURL) {
-    return isPermitted(EnodeURL.fromString(enodeURL, configuration.getEnodeDnsConfiguration()));
+    return isPermitted(EnodeURLImpl.fromString(enodeURL, configuration.getEnodeDnsConfiguration()));
   }
 
   public boolean isPermitted(final EnodeURL node) {
     if (Objects.equals(localNodeId, node.getNodeId())) {
       return true;
     }
-    return nodesAllowlist.stream().anyMatch(p -> EnodeURL.sameListeningEndpoint(p, node));
+    return nodesAllowlist.stream().anyMatch(p -> EnodeURLImpl.sameListeningEndpoint(p, node));
   }
 
   public List<String> getNodesAllowlist() {
@@ -328,7 +329,8 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   }
 
   @Override
-  public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+  public boolean isConnectionPermitted(
+      final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     this.checkCounter.inc();
     if (isPermitted(sourceEnode) && isPermitted(destinationEnode)) {
       this.checkCounterPermitted.inc();

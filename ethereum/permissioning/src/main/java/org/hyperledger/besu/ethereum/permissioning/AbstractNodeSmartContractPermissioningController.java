@@ -14,21 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
-import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractNodeSmartContractPermissioningController
-    implements NodePermissioningProvider {
+    implements NodeConnectionPermissioningProvider {
 
   protected final Address contractAddress;
   protected final TransactionSimulator transactionSimulator;
@@ -73,10 +73,11 @@ public abstract class AbstractNodeSmartContractPermissioningController
    *
    * @param sourceEnode The enode url of the node initiating the connection
    * @param destinationEnode The enode url of the node receiving the connection
-   * @return boolean of whether or not to permit the connection to occur
+   * @return boolean of whether to permit the connection
    */
   @Override
-  public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+  public boolean isConnectionPermitted(
+      final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     this.checkCounter.inc();
 
     if (!isContractDeployed()) {

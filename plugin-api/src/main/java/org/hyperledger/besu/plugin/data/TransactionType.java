@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.data;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Set;
 
 public enum TransactionType {
@@ -24,6 +25,9 @@ public enum TransactionType {
 
   private static final Set<TransactionType> ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES =
       Set.of(ACCESS_LIST, EIP1559);
+
+  private static final EnumSet<TransactionType> LEGACY_FEE_MARKET_TRANSACTION_TYPES =
+      EnumSet.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST);
 
   private final int typeValue;
 
@@ -49,7 +53,15 @@ public enum TransactionType {
                     String.format("Unsupported transaction type %x", serializedTypeValue)));
   }
 
-  public boolean supportAccessList() {
+  public boolean supportsAccessList() {
     return ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES.contains(this);
+  }
+
+  public boolean supports1559FeeMarket() {
+    return !LEGACY_FEE_MARKET_TRANSACTION_TYPES.contains(this);
+  }
+
+  public boolean requiresChainId() {
+    return !this.equals(FRONTIER);
   }
 }

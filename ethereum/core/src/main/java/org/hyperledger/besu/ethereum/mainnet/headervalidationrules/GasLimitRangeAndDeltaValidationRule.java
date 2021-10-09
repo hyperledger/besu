@@ -17,6 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,8 +34,16 @@ public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecifi
 
   private static final Logger LOG = LogManager.getLogger(GasLimitRangeAndDeltaValidationRule.class);
 
-  public GasLimitRangeAndDeltaValidationRule(final long minGasLimit, final long maxGasLimit) {
+  private final Optional<BaseFeeMarket> baseFeeMarket;
+
+  public GasLimitRangeAndDeltaValidationRule(
+      final long minGasLimit, final long maxGasLimit, final Optional<BaseFeeMarket> baseFeeMarket) {
     super(minGasLimit, maxGasLimit);
+    this.baseFeeMarket = baseFeeMarket;
+  }
+
+  public GasLimitRangeAndDeltaValidationRule(final long minGasLimit, final long maxGasLimit) {
+    this(minGasLimit, maxGasLimit, Optional.empty());
   }
 
   @Override
@@ -48,9 +59,21 @@ public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecifi
       return false;
     }
 
-    final long parentGasLimit = parent.getGasLimit();
+    if (baseFeeMarket.isEmpty() && header.getBaseFee().isPresent()) {
+      LOG.info(
+          "Invalid block header: basefee should not be present in a block without a base fee market");
+      return false;
+    }
+
+    long parentGasLimit =
+        baseFeeMarket
+            .filter(baseFeeMarket -> baseFeeMarket.isForkBlock(header.getNumber()))
+            .map(baseFeeMarket -> parent.getGasLimit() * baseFeeMarket.getSlackCoefficient())
+            .orElse(parent.getGasLimit());
+
     final long difference = Math.abs(parentGasLimit - gasLimit);
     final long bounds = deltaBound(parentGasLimit);
+    // this is an exclusive bound, so the difference should be strictly less:
     if (Long.compareUnsigned(difference, bounds) >= 0) {
       LOG.info(
           "Invalid block header: gas limit delta {} is out of bounds of {}", difference, bounds);

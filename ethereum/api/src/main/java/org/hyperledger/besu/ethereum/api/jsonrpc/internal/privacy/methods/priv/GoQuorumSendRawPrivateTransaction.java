@@ -23,7 +23,7 @@ import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.JsonRpcErrorResponseException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -45,16 +45,16 @@ public class GoQuorumSendRawPrivateTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
   final TransactionPool transactionPool;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyIdProvider privacyIdProvider;
   private final GoQuorumEnclave enclave;
 
   public GoQuorumSendRawPrivateTransaction(
       final GoQuorumEnclave enclave,
       final TransactionPool transactionPool,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyIdProvider privacyIdProvider) {
     this.enclave = enclave;
     this.transactionPool = transactionPool;
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyIdProvider = privacyIdProvider;
   }
 
   @Override
@@ -112,9 +112,8 @@ public class GoQuorumSendRawPrivateTransaction implements JsonRpcMethod {
 
     if (rawTxArgs.getPrivateFrom() != null) {
       final String privateFrom = rawTxArgs.getPrivateFrom();
-      final String enclavePublicKey =
-          enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser());
-      if (!privateFrom.equals(enclavePublicKey)) {
+      final String privacyUserId = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
+      if (!privateFrom.equals(privacyUserId)) {
         LOG.error(JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY.getMessage());
         throw new JsonRpcErrorResponseException(
             JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);

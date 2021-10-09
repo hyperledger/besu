@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli.custom;
 
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 
 import java.net.URI;
 import java.util.function.Function;
@@ -27,7 +27,7 @@ public class EnodeToURIPropertyConverter implements ITypeConverter<URI> {
   private final Function<String, URI> converter;
 
   EnodeToURIPropertyConverter() {
-    this.converter = (s) -> EnodeURL.fromString(s).toURI();
+    this.converter = (s) -> EnodeURLImpl.fromString(s).toURI();
   }
 
   @VisibleForTesting

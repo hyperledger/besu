@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.permissions;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions.Action;
 
@@ -223,10 +223,10 @@ public class PeerPermissionsDenylistTest {
 
   private Peer createPeer() {
     return DefaultPeer.fromEnodeURL(
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(Peer.randomId())
             .ipAddress("127.0.0.1")
-            .discoveryAndListeningPorts(EnodeURL.DEFAULT_LISTENING_PORT)
+            .discoveryAndListeningPorts(EnodeURLImpl.DEFAULT_LISTENING_PORT)
             .build());
   }
 }

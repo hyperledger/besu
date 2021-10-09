@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.AbstractMessageTas
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException;
 import org.hyperledger.besu.util.ExceptionUtils;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,7 +48,11 @@ public class GetBlockFromPeerTaskTest
   @Override
   protected EthTask<AbstractPeerTask.PeerTaskResult<Block>> createTask(final Block requestedData) {
     return GetBlockFromPeerTask.create(
-        protocolSchedule, ethContext, requestedData.getHash(), BLOCK_NUMBER, metricsSystem);
+        protocolSchedule,
+        ethContext,
+        Optional.of(requestedData.getHash()),
+        BLOCK_NUMBER,
+        metricsSystem);
   }
 
   @Override

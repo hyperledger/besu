@@ -21,19 +21,18 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.ibft.IbftLegacyContext;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
@@ -53,11 +52,9 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext setupContextWithValidators(final Collection<Address> validators) {
     final IbftLegacyContext bftContext = mock(IbftLegacyContext.class);
-    final VoteTallyCache mockCache = mock(VoteTallyCache.class);
-    final VoteTally mockVoteTally = mock(VoteTally.class);
-    when(bftContext.getVoteTallyCache()).thenReturn(mockCache);
-    when(mockCache.getVoteTallyAfterBlock(any())).thenReturn(mockVoteTally);
-    when(mockVoteTally.getValidators()).thenReturn(validators);
+    final ValidatorProvider mockValidatorProvider = mock(ValidatorProvider.class);
+    when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
+    when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
 
     return new ProtocolContext(null, null, bftContext);
   }

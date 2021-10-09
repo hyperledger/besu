@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.plugin.data.Quantity;
 
 import java.math.BigInteger;
@@ -39,6 +39,7 @@ public abstract class MainnetDifficultyCalculators {
   private static final long BYZANTIUM_FAKE_BLOCK_OFFSET = 2_999_999L;
   private static final long CONSTANTINOPLE_FAKE_BLOCK_OFFSET = 4_999_999L;
   private static final long MUIR_GLACIER_FAKE_BLOCK_OFFSET = 8_999_999L;
+  private static final long LONDON_FAKE_BLOCK_OFFSET = 9_699_999L;
 
   private MainnetDifficultyCalculators() {}
 
@@ -81,6 +82,11 @@ public abstract class MainnetDifficultyCalculators {
   static DifficultyCalculator MUIR_GLACIER =
       (time, parent, protocolContext) ->
           calculateThawedDifficulty(time, parent, MUIR_GLACIER_FAKE_BLOCK_OFFSET);
+
+  // As per https://eips.ethereum.org/EIPS/eip-3554
+  static DifficultyCalculator LONDON =
+      (time, parent, protocolContext) ->
+          calculateThawedDifficulty(time, parent, LONDON_FAKE_BLOCK_OFFSET);
 
   private static BigInteger calculateThawedDifficulty(
       final long time, final BlockHeader parent, final long fakeBlockOffset) {

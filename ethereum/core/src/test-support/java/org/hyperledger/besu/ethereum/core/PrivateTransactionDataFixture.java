@@ -15,10 +15,15 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionWithMetadata;
@@ -48,7 +53,7 @@ public class PrivateTransactionDataFixture {
   public static final Wei DEFAULT_VALUE = Wei.of(0);
   public static final Address DEFAULT_SENDER =
       Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
-  public static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(2018);
+  public static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(1337);
 
   public static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -80,21 +85,20 @@ public class PrivateTransactionDataFixture {
   public static final Address VALID_CONTRACT_DEPLOYMENT_ADDRESS =
       Address.fromHexString("0x0bac79b78b9866ef11c989ad21a7fcf15f7a18d7");
 
-  public static Transaction privacyMarkerTransaction() {
-    return privacyMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, Address.DEFAULT_PRIVACY);
+  public static Transaction privateMarkerTransaction() {
+    return privateMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, DEFAULT_PRIVACY);
   }
 
-  public static Transaction privacyMarkerTransactionOnChain() {
-    return privacyMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, Address.ONCHAIN_PRIVACY);
+  public static Transaction privateMarkerTransactionOnchain() {
+    return privateMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, ONCHAIN_PRIVACY);
   }
 
-  public static Transaction privacyMarkerTransactionOnChainAdd() {
-    return privacyMarkerTransaction(
-        Bytes.concatenate(VALID_BASE64_ENCLAVE_KEY, VALID_BASE64_ENCLAVE_KEY),
-        Address.ONCHAIN_PRIVACY);
+  public static Transaction privateMarkerTransactionOnchainAdd() {
+    return privateMarkerTransaction(
+        Bytes.concatenate(VALID_BASE64_ENCLAVE_KEY, VALID_BASE64_ENCLAVE_KEY), ONCHAIN_PRIVACY);
   }
 
-  private static Transaction privacyMarkerTransaction(
+  private static Transaction privateMarkerTransaction(
       final Bytes transactionKey, final Address precompiledContractAddress) {
     return Transaction.builder()
         .type(TransactionType.FRONTIER)

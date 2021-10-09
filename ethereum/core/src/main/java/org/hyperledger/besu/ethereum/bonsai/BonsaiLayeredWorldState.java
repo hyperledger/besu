@@ -16,15 +16,15 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -127,7 +127,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
 
   @Override
   public UInt256 getStorageValue(final Address address, final UInt256 key) {
-    return getStorageValueBySlotHash(address, Hash.hash(key.toBytes())).orElse(UInt256.ZERO);
+    return getStorageValueBySlotHash(address, Hash.hash(key)).orElse(UInt256.ZERO);
   }
 
   @Override
@@ -180,7 +180,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
                   if (!results.containsKey(entry.getKey())) {
                     final UInt256 value = entry.getValue().getUpdated();
                     // yes, store the nulls.  If it was deleted it should stay deleted
-                    results.put(entry.getKey(), value == null ? null : value.toBytes());
+                    results.put(entry.getKey(), value);
                   }
                 });
       }
@@ -196,7 +196,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
               .forEach(
                   (k, v) -> {
                     if (!results.containsKey(k)) {
-                      results.put(k, v.getValue().toBytes());
+                      results.put(k, v.getValue());
                     }
                   });
         }
@@ -258,8 +258,16 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
 
   @Override
   public MutableWorldState copy() {
-    throw new UnsupportedOperationException(
-        "Bonsai Tries does not support direct duplication of the persisted tries.");
+    final BonsaiPersistedWorldState bonsaiPersistedWorldState =
+        ((BonsaiPersistedWorldState) archive.getMutable());
+    return new BonsaiInMemoryWorldState(
+        archive,
+        new BonsaiInMemoryWorldStateKeyValueStorage(
+            bonsaiPersistedWorldState.getWorldStateStorage().accountStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().codeStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().storageStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().trieBranchStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage));
   }
 
   @Override

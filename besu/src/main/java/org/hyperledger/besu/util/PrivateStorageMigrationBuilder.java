@@ -15,8 +15,8 @@
 package org.hyperledger.besu.util;
 
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
@@ -39,8 +39,7 @@ public class PrivateStorageMigrationBuilder {
 
   public PrivateStorageMigration build() {
     final Blockchain blockchain = besuController.getProtocolContext().getBlockchain();
-    final Address privacyPrecompileAddress =
-        Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
+    final Address privacyPrecompileAddress = privacyParameters.getPrivacyAddress();
     final ProtocolSchedule protocolSchedule = besuController.getProtocolSchedule();
     final WorldStateArchive publicWorldStateArchive =
         besuController.getProtocolContext().getWorldStateArchive();

@@ -21,23 +21,28 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -148,7 +153,7 @@ public class RoundStateTest {
         validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
 
     final Prepare thirdPrepare =
-        validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(0).createPrepare(roundIdentifier, block.getHash());
 
     roundState.addPrepareMessage(firstPrepare);
     assertThat(roundState.isPrepared()).isFalse();
@@ -209,7 +214,7 @@ public class RoundStateTest {
   }
 
   @Test
-  public void prepareMessageIsValidatedAgainstExitingProposal() {
+  public void prepareMessageIsValidatedAgainstExistingProposal() {
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
 
     final Prepare firstPrepare =
@@ -219,7 +224,7 @@ public class RoundStateTest {
         validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
 
     final Prepare thirdPrepare =
-        validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
+        validatorMessageFactories.get(0).createPrepare(roundIdentifier, block.getHash());
 
     final Proposal proposal =
         validatorMessageFactories
@@ -286,5 +291,48 @@ public class RoundStateTest {
 
     assertThat(roundState.getCommitSeals())
         .containsOnly(firstCommit.getCommitSeal(), secondCommit.getCommitSeal());
+  }
+
+  @Test
+  public void duplicatePreparesAreNotIncludedInRoundChangeMessage() {
+    final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
+
+    final Prepare firstPrepare =
+        validatorMessageFactories.get(1).createPrepare(roundIdentifier, block.getHash());
+
+    final Prepare secondPrepare =
+        validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
+
+    final Prepare duplicatePrepare =
+        validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
+
+    final Proposal proposal =
+        validatorMessageFactories
+            .get(0)
+            .createProposal(
+                roundIdentifier, block, Collections.emptyList(), Collections.emptyList());
+
+    when(messageValidator.validateProposal(any())).thenReturn(true);
+    when(messageValidator.validatePrepare(any())).thenReturn(true);
+
+    roundState.setProposedBlock(proposal);
+    roundState.addPrepareMessage(firstPrepare);
+    roundState.addPrepareMessage(secondPrepare);
+    roundState.addPrepareMessage(duplicatePrepare);
+
+    assertThat(roundState.isPrepared()).isTrue();
+    assertThat(roundState.isCommitted()).isFalse();
+
+    final Optional<PreparedCertificate> preparedCertificate =
+        roundState.constructPreparedCertificate();
+    assertThat(preparedCertificate).isNotEmpty();
+    assertThat(preparedCertificate.get().getRound()).isEqualTo(roundIdentifier.getRoundNumber());
+    assertThat(preparedCertificate.get().getBlock()).isEqualTo(block);
+
+    final List<SignedData<PreparePayload>> expectedPrepares =
+        List.of(firstPrepare, secondPrepare).stream()
+            .map(BftMessage::getSignedPayload)
+            .collect(Collectors.toList());
+    assertThat(preparedCertificate.get().getPrepares()).isEqualTo(expectedPrepares);
   }
 }

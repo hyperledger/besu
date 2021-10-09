@@ -92,11 +92,11 @@ public class JWTAuthOptionsFactoryTest {
   @Test
   public void failsToCreateOptionsWhenPublicKeyFileIsInvalid() throws IOException {
     final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
-    final Path enclavePublicKey = Files.createTempFile("enclave", "pub");
-    Files.writeString(enclavePublicKey, "invalidDataNo---HeadersAndNotBase64");
+    final Path enclavePublicKeyFile = Files.createTempFile("enclave", "pub");
+    Files.writeString(enclavePublicKeyFile, "invalidDataNo---HeadersAndNotBase64");
 
     assertThatThrownBy(
-            () -> jwtAuthOptionsFactory.createForExternalPublicKey(enclavePublicKey.toFile()))
+            () -> jwtAuthOptionsFactory.createForExternalPublicKey(enclavePublicKeyFile.toFile()))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Authentication RPC public key file format is invalid");
   }

@@ -14,18 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.goquorum;
 
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Optional;
-
-import org.apache.tuweni.bytes.Bytes32;
 
 public interface GoQuorumPrivateStorage {
 
   Optional<Hash> getPrivateStateRootHash(final Hash publicStateRootHash);
-
-  Optional<TransactionReceipt> getTransactionReceipt(Bytes32 blockHash, Bytes32 txHash);
 
   Updater updater();
 

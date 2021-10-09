@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 
 /**
  * This class represents a private transaction that has been executed. Therefore, it contains the

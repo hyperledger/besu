@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.proof;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.Proof;
@@ -74,7 +74,7 @@ public class WorldStateProofProvider {
         newAccountStorageTrie(accountHash, account.getStorageRoot());
     final NavigableMap<UInt256, Proof<Bytes>> storageProofs = new TreeMap<>();
     accountStorageKeys.forEach(
-        key -> storageProofs.put(key, storageTrie.getValueWithProof(Hash.hash(key.toBytes()))));
+        key -> storageProofs.put(key, storageTrie.getValueWithProof(Hash.hash(key))));
     return storageProofs;
   }
 

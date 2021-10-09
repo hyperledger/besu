@@ -15,25 +15,29 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnchainPrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
-import org.hyperledger.besu.ethereum.vm.EVM;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
+import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -42,15 +46,17 @@ import java.util.function.Supplier;
 
 public class ProtocolSpecBuilder {
   private Supplier<GasCalculator> gasCalculatorBuilder;
+  private GasLimitCalculator gasLimitCalculator;
   private Wei blockReward;
   private boolean skipZeroBlockRewards;
   private BlockHeaderFunctions blockHeaderFunctions;
   private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private DifficultyCalculator difficultyCalculator;
-  private Function<GasCalculator, EVM> evmBuilder;
+  private EvmConfiguration evmConfiguration;
+  private BiFunction<GasCalculator, EvmConfiguration, EVM> evmBuilder;
   private Function<GasCalculator, MainnetTransactionValidator> transactionValidatorBuilder;
-  private BlockHeaderValidator.Builder blockHeaderValidatorBuilder;
-  private BlockHeaderValidator.Builder ommerHeaderValidatorBuilder;
+  private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
+  private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
   private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
   private BiFunction<GasCalculator, EVM, AbstractMessageProcessor> contractCreationProcessorBuilder;
   private Function<PrecompiledContractConfiguration, PrecompileContractRegistry>
@@ -66,16 +72,17 @@ public class ProtocolSpecBuilder {
   private PrivacyParameters privacyParameters;
   private PrivateTransactionProcessorBuilder privateTransactionProcessorBuilder;
   private PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder;
-  private TransactionPriceCalculator transactionPriceCalculator =
-      TransactionPriceCalculator.frontier();
-  private Optional<EIP1559> eip1559 = Optional.empty();
-  private TransactionGasBudgetCalculator gasBudgetCalculator =
-      TransactionGasBudgetCalculator.frontier();
+  private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
+    return this;
+  }
+
+  public ProtocolSpecBuilder gasLimitCalculator(final GasLimitCalculator gasLimitCalculator) {
+    this.gasLimitCalculator = gasLimitCalculator;
     return this;
   }
 
@@ -105,7 +112,8 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder evmBuilder(final Function<GasCalculator, EVM> evmBuilder) {
+  public ProtocolSpecBuilder evmBuilder(
+      final BiFunction<GasCalculator, EvmConfiguration, EVM> evmBuilder) {
     this.evmBuilder = evmBuilder;
     return this;
   }
@@ -117,13 +125,13 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder blockHeaderValidatorBuilder(
-      final BlockHeaderValidator.Builder blockHeaderValidatorBuilder) {
+      final Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder) {
     this.blockHeaderValidatorBuilder = blockHeaderValidatorBuilder;
     return this;
   }
 
   public ProtocolSpecBuilder ommerHeaderValidatorBuilder(
-      final BlockHeaderValidator.Builder ommerHeaderValidatorBuilder) {
+      final Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder) {
     this.ommerHeaderValidatorBuilder = ommerHeaderValidatorBuilder;
     return this;
   }
@@ -150,9 +158,7 @@ public class ProtocolSpecBuilder {
               precompileContractRegistryBuilder.apply(precompiledContractConfiguration);
           if (precompiledContractConfiguration.getPrivacyParameters().isEnabled()) {
             MainnetPrecompiledContractRegistries.appendPrivacy(
-                registry, precompiledContractConfiguration, Account.DEFAULT_VERSION);
-            MainnetPrecompiledContractRegistries.appendPrivacy(
-                registry, precompiledContractConfiguration, 1);
+                registry, precompiledContractConfiguration);
           }
           return registry;
         };
@@ -217,20 +223,8 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder transactionPriceCalculator(
-      final TransactionPriceCalculator transactionPriceCalculator) {
-    this.transactionPriceCalculator = transactionPriceCalculator;
-    return this;
-  }
-
-  public ProtocolSpecBuilder eip1559(final Optional<EIP1559> eip1559) {
-    this.eip1559 = eip1559;
-    return this;
-  }
-
-  public ProtocolSpecBuilder gasBudgetCalculator(
-      final TransactionGasBudgetCalculator gasBudgetCalculator) {
-    this.gasBudgetCalculator = gasBudgetCalculator;
+  public ProtocolSpecBuilder feeMarket(final FeeMarket feeMarket) {
+    this.feeMarket = feeMarket;
     return this;
   }
 
@@ -244,9 +238,16 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder evmConfiguration(final EvmConfiguration evmConfiguration) {
+    this.evmConfiguration = evmConfiguration;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
+    checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
     checkNotNull(evmBuilder, "Missing operation registry");
+    checkNotNull(evmConfiguration, "Missing evm configuration");
     checkNotNull(transactionValidatorBuilder, "Missing transaction validator");
     checkNotNull(privateTransactionValidatorBuilder, "Missing private transaction validator");
     checkNotNull(contractCreationProcessorBuilder, "Missing contract creation processor");
@@ -267,12 +268,11 @@ public class ProtocolSpecBuilder {
     checkNotNull(miningBeneficiaryCalculator, "Missing Mining Beneficiary Calculator");
     checkNotNull(protocolSchedule, "Missing protocol schedule");
     checkNotNull(privacyParameters, "Missing privacy parameters");
-    checkNotNull(transactionPriceCalculator, "Missing transaction price calculator");
-    checkNotNull(eip1559, "Missing eip1559 optional wrapper");
+    checkNotNull(feeMarket, "Missing fee market");
     checkNotNull(badBlockManager, "Missing bad blocks manager");
 
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
-    final EVM evm = evmBuilder.apply(gasCalculator);
+    final EVM evm = evmBuilder.apply(gasCalculator, evmConfiguration);
     final PrecompiledContractConfiguration precompiledContractConfiguration =
         new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
     final MainnetTransactionValidator transactionValidator =
@@ -288,10 +288,16 @@ public class ProtocolSpecBuilder {
             gasCalculator, transactionValidator, contractCreationProcessor, messageCallProcessor);
 
     final BlockHeaderValidator blockHeaderValidator =
-        blockHeaderValidatorBuilder.difficultyCalculator(difficultyCalculator).build();
+        blockHeaderValidatorBuilder
+            .apply(feeMarket)
+            .difficultyCalculator(difficultyCalculator)
+            .build();
 
     final BlockHeaderValidator ommerHeaderValidator =
-        ommerHeaderValidatorBuilder.difficultyCalculator(difficultyCalculator).build();
+        ommerHeaderValidatorBuilder
+            .apply(feeMarket)
+            .difficultyCalculator(difficultyCalculator)
+            .build();
     final BlockBodyValidator blockBodyValidator = blockBodyValidatorBuilder.apply(protocolSchedule);
 
     BlockProcessor blockProcessor =
@@ -301,7 +307,6 @@ public class ProtocolSpecBuilder {
             blockReward,
             miningBeneficiaryCalculator,
             skipZeroBlockRewards,
-            gasBudgetCalculator,
             privacyParameters.getGoQuorumPrivacyParameters());
     // Set private Tx Processor
     PrivateTransactionProcessor privateTransactionProcessor = null;
@@ -316,16 +321,19 @@ public class ProtocolSpecBuilder {
               messageCallProcessor,
               privateTransactionValidator);
 
-      if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
-        final OnChainPrivacyPrecompiledContract onChainPrivacyPrecompiledContract =
-            (OnChainPrivacyPrecompiledContract)
-                precompileContractRegistry.get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION);
-        onChainPrivacyPrecompiledContract.setPrivateTransactionProcessor(
+      if (privacyParameters.isPrivacyPluginEnabled()) {
+        final PrivacyPluginPrecompiledContract privacyPluginPrecompiledContract =
+            (PrivacyPluginPrecompiledContract) precompileContractRegistry.get(PLUGIN_PRIVACY);
+        privacyPluginPrecompiledContract.setPrivateTransactionProcessor(
+            privateTransactionProcessor);
+      } else if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
+        final OnchainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
+            (OnchainPrivacyPrecompiledContract) precompileContractRegistry.get(ONCHAIN_PRIVACY);
+        onchainPrivacyPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else {
         final PrivacyPrecompiledContract privacyPrecompiledContract =
-            (PrivacyPrecompiledContract)
-                precompileContractRegistry.get(Address.DEFAULT_PRIVACY, Account.DEFAULT_VERSION);
+            (PrivacyPrecompiledContract) precompileContractRegistry.get(DEFAULT_PRIVACY);
         privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
       }
 
@@ -336,7 +344,8 @@ public class ProtocolSpecBuilder {
               privacyParameters.getEnclave(),
               privacyParameters.getPrivateStateStorage(),
               privacyParameters.getPrivateWorldStateArchive(),
-              privacyParameters.getPrivateStateRootResolver());
+              privacyParameters.getPrivateStateRootResolver(),
+              privacyParameters.getPrivateStateGenesisAllocator());
     }
 
     final BlockValidator blockValidator =
@@ -367,9 +376,8 @@ public class ProtocolSpecBuilder {
         precompileContractRegistry,
         skipZeroBlockRewards,
         gasCalculator,
-        transactionPriceCalculator,
-        eip1559,
-        gasBudgetCalculator,
+        gasLimitCalculator,
+        feeMarket,
         badBlockManager,
         Optional.ofNullable(powHasher));
   }
@@ -402,7 +410,6 @@ public class ProtocolSpecBuilder {
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
-        TransactionGasBudgetCalculator gasBudgetCalculator,
         Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
   }
 

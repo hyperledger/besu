@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -61,7 +61,7 @@ public class SimpleTestTransactionBuilder {
 
     final Transaction transaction = mock(Transaction.class);
     when(transaction.getHash()).thenReturn(blockHash);
-    when(transaction.getGasPrice()).thenReturn(Wei.fromHexString(gasPrice));
+    when(transaction.getGasPrice()).thenReturn(Optional.of(Wei.fromHexString(gasPrice)));
     when(transaction.getNonce()).thenReturn(unsignedLong(nonce));
     when(transaction.getV()).thenReturn(bigInteger(v));
     when(transaction.getR()).thenReturn(bigInteger(r));

@@ -15,12 +15,11 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.vm.Code;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.Gas;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -48,8 +47,6 @@ public class EnvironmentInformation {
 
   private final Code code;
 
-  private final int version;
-
   private final Bytes data;
 
   private final int depth;
@@ -75,7 +72,6 @@ public class EnvironmentInformation {
    * @param origin The sender address of the original transaction. message call instruction or
    *     transaction.
    * @param value The deposited value by the instruction/transaction responsible for this execution.
-   * @param version the account version of the account
    */
   @SuppressWarnings("unused") // jackson reflected constructor
   @JsonCreator
@@ -88,8 +84,7 @@ public class EnvironmentInformation {
       @JsonProperty("gas") final String gas,
       @JsonProperty("gasPrice") final String gasPrice,
       @JsonProperty("origin") final String origin,
-      @JsonProperty("value") final String value,
-      @JsonProperty("version") final String version) {
+      @JsonProperty("value") final String value) {
     this(
         code,
         0,
@@ -100,8 +95,7 @@ public class EnvironmentInformation {
         data == null ? null : Bytes.fromHexString(data),
         value == null ? null : Wei.fromHexString(value),
         gasPrice == null ? null : Wei.fromHexString(gasPrice),
-        gas == null ? null : Gas.fromHexString(gas),
-        version == null ? Account.DEFAULT_VERSION : Integer.decode(version));
+        gas == null ? null : Gas.fromHexString(gas));
   }
 
   private EnvironmentInformation(
@@ -114,8 +108,7 @@ public class EnvironmentInformation {
       final Bytes data,
       final Wei value,
       final Wei gasPrice,
-      final Gas gas,
-      final int version) {
+      final Gas gas) {
     this.code = code;
     this.depth = depth;
     this.accountAddress = accountAddress;
@@ -126,7 +119,6 @@ public class EnvironmentInformation {
     this.value = value;
     this.gasPrice = gasPrice;
     this.gas = gas;
-    this.version = version;
   }
 
   /**
@@ -237,15 +229,6 @@ public class EnvironmentInformation {
     return originAddress;
   }
 
-  /**
-   * Returns the account version.
-   *
-   * @return the account version.
-   */
-  public int getVersion() {
-    return version;
-  }
-
   @Override
   public String toString() {
     final StringBuilder builder = new StringBuilder();
@@ -261,9 +244,7 @@ public class EnvironmentInformation {
         .append("\nBlock header: \n  ")
         .append(blockHeader.toString().replaceAll("\n", "\n  "))
         .append("\nCaller: ")
-        .append(callerAddress)
-        .append("\nVersion: ")
-        .append(version);
+        .append(callerAddress);
 
     return builder.toString();
   }

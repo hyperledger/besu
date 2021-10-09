@@ -18,12 +18,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -124,7 +124,7 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
    * Installs a new private log filter
    *
    * @param privacyGroupId String privacyGroupId
-   * @param enclavePublicKey String enclavePublicKey of user creating the filter
+   * @param privacyUserId String privacyUserId of user creating the filter
    * @param fromBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
    * @param toBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
    * @param logsQuery {@link LogsQuery} Addresses and/or topics to filter by
@@ -132,14 +132,14 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
    */
   public String installPrivateLogFilter(
       final String privacyGroupId,
-      final String enclavePublicKey,
+      final String privacyUserId,
       final BlockParameter fromBlock,
       final BlockParameter toBlock,
       final LogsQuery logsQuery) {
     final String filterId = filterIdGenerator.nextId();
     filterRepository.save(
         new PrivateLogFilter(
-            filterId, privacyGroupId, enclavePublicKey, fromBlock, toBlock, logsQuery));
+            filterId, privacyGroupId, privacyUserId, fromBlock, toBlock, logsQuery));
     return filterId;
   }
 
@@ -231,7 +231,7 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
         .filter(
             privateLogFilter ->
                 privateLogFilter.getPrivacyGroupId().equals(event.getPrivacyGroupId())
-                    && privateLogFilter.getEnclavePublicKey().equals(event.getEnclavePublicKey()))
+                    && privateLogFilter.getPrivacyUserId().equals(event.getPrivacyUserId()))
         .forEach(
             privateLogFilter -> {
               uninstallFilter(privateLogFilter.getId());

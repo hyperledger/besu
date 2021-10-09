@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.vm.FixedStack.OverflowException;
-import org.hyperledger.besu.ethereum.vm.FixedStack.UnderflowException;
+import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
+import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
+import org.hyperledger.besu.evm.internal.OperandStack;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class OperandStackTest {
@@ -38,8 +40,8 @@ public class OperandStackTest {
   @Test(expected = OverflowException.class)
   public void push_StackOverflow() {
     final OperandStack stack = new OperandStack(1);
-    stack.push(Bytes32.fromHexString("0x01"));
-    stack.push(Bytes32.fromHexString("0x02"));
+    stack.push(UInt256.fromHexString("0x01"));
+    stack.push(UInt256.fromHexString("0x02"));
   }
 
   @Test(expected = UnderflowException.class)
@@ -51,56 +53,56 @@ public class OperandStackTest {
   @Test
   public void pushPop() {
     final OperandStack stack = new OperandStack(1);
-    stack.push(Bytes32.fromHexString("0x01"));
+    stack.push(UInt256.fromHexString("0x01"));
     assertThat(stack.size()).isEqualTo(1);
     assertThat(stack.pop()).isEqualTo(Bytes32.fromHexString("0x01"));
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test(expected = UnderflowException.class)
   public void get_NegativeOffset() {
     final OperandStack stack = new OperandStack(1);
     stack.get(-1);
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test(expected = UnderflowException.class)
   public void get_IndexGreaterThanSize() {
     final OperandStack stack = new OperandStack(1);
-    stack.push(Bytes32.fromHexString("0x01"));
+    stack.push(UInt256.fromHexString("0x01"));
     stack.get(2);
   }
 
   @Test
   public void get() {
     final OperandStack stack = new OperandStack(3);
-    stack.push(Bytes32.fromHexString("0x01"));
-    stack.push(Bytes32.fromHexString("0x02"));
-    stack.push(Bytes32.fromHexString("0x03"));
+    stack.push(UInt256.fromHexString("0x01"));
+    stack.push(UInt256.fromHexString("0x02"));
+    stack.push(UInt256.fromHexString("0x03"));
     assertThat(stack.size()).isEqualTo(3);
     assertThat(stack.get(0)).isEqualTo(Bytes32.fromHexString("0x03"));
     assertThat(stack.get(1)).isEqualTo(Bytes32.fromHexString("0x02"));
     assertThat(stack.get(2)).isEqualTo(Bytes32.fromHexString("0x01"));
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test(expected = UnderflowException.class)
   public void set_NegativeOffset() {
     final OperandStack stack = new OperandStack(1);
     stack.get(-1);
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test(expected = UnderflowException.class)
   public void set_IndexGreaterThanSize() {
     final OperandStack stack = new OperandStack(1);
-    stack.push(Bytes32.fromHexString("0x01"));
+    stack.push(UInt256.fromHexString("0x01"));
     stack.get(2);
   }
 
   @Test
   public void set() {
     final OperandStack stack = new OperandStack(3);
-    stack.push(Bytes32.fromHexString("0x01"));
-    stack.push(Bytes32.fromHexString("0x02"));
-    stack.push(Bytes32.fromHexString("0x03"));
-    stack.set(2, Bytes32.fromHexString("0x04"));
+    stack.push(UInt256.fromHexString("0x01"));
+    stack.push(UInt256.fromHexString("0x02"));
+    stack.push(UInt256.fromHexString("0x03"));
+    stack.set(2, UInt256.fromHexString("0x04"));
     assertThat(stack.size()).isEqualTo(3);
     assertThat(stack.get(0)).isEqualTo(Bytes32.fromHexString("0x03"));
     assertThat(stack.get(1)).isEqualTo(Bytes32.fromHexString("0x02"));

@@ -23,19 +23,20 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
 import java.math.BigInteger;
@@ -1057,6 +1058,12 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
         blockWithMetadata(block);
     when(blockchainQueries.headBlockNumber()).thenReturn(0L);
     when(blockchainQueries.blockByNumber(eq(0L))).thenReturn(Optional.of(blockWithMetadata));
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchain.getBlockHeader(blockchainQueries.headBlockNumber()))
+        .thenReturn(Optional.of(block.getHeader()));
+    WorldStateArchive state = mock(WorldStateArchive.class);
+    when(state.isWorldStateAvailable(any(Hash.class), any(Hash.class))).thenReturn(true);
+    when(blockchainQueries.getWorldStateArchive()).thenReturn(state);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -1079,6 +1086,19 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             "{\"jsonrpc\":\"2.0\",\"id\":"
                 + Json.encode(id)
                 + ",\"method\":\"eth_getBlockByNumber\", \"params\": [\"pending\",true]}");
+    // Setup mocks to return a block
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final Block block = gen.genesisBlock();
+    final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata =
+        blockWithMetadata(block);
+    when(blockchainQueries.headBlockNumber()).thenReturn(0L);
+    when(blockchainQueries.blockByNumber(eq(0L))).thenReturn(Optional.of(blockWithMetadata));
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchain.getBlockHeader(blockchainQueries.headBlockNumber()))
+        .thenReturn(Optional.of(block.getHeader()));
+    WorldStateArchive state = mock(WorldStateArchive.class);
+    when(state.isWorldStateAvailable(any(Hash.class), any(Hash.class))).thenReturn(true);
+    when(blockchainQueries.getWorldStateArchive()).thenReturn(state);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -1088,7 +1108,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final JsonObject result = json.getJsonObject("result");
-      assertThat(result).isNull();
+      verifyBlockResult(block, blockWithMetadata.getTotalDifficulty(), result, false);
     }
   }
 
@@ -1662,7 +1682,12 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
         final Hash expectedBlockHash = block.getHeader().getHash();
         final long expectedBlockNumber = block.getHeader().getNumber();
         assertTransactionResultMatchesTransaction(
-            transactionResult, transaction, expectedIndex, expectedBlockHash, expectedBlockNumber);
+            transactionResult,
+            transaction,
+            expectedIndex,
+            expectedBlockHash,
+            block.getHeader().getBaseFee(),
+            expectedBlockNumber);
       }
     }
   }
@@ -1672,6 +1697,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final Transaction transaction,
       final Integer index,
       final Hash blockHash,
+      final Optional<Long> baseFee,
       final Long blockNumber) {
     assertThat(Hash.fromHexString(result.getString("hash"))).isEqualTo(transaction.getHash());
     assertThat(Long.decode(result.getString("nonce"))).isEqualByComparingTo(transaction.getNonce());
@@ -1699,8 +1725,13 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       assertThat(result.getValue("to")).isNull();
     }
     assertThat(Wei.fromHexString(result.getString("value"))).isEqualTo(transaction.getValue());
-    assertThat(Wei.fromHexString(result.getString("gasPrice")))
-        .isEqualTo(transaction.getGasPrice());
+    assertThat(Optional.ofNullable(result.getString("gasPrice")).map(Wei::fromHexString))
+        .isEqualTo(Optional.of(transaction.getEffectiveGasPrice(baseFee)));
+    assertThat(Optional.ofNullable(result.getString("maxFeePerGas")).map(Wei::fromHexString))
+        .isEqualTo(transaction.getMaxFeePerGas());
+    assertThat(
+            Optional.ofNullable(result.getString("maxPriorityFeePerGas")).map(Wei::fromHexString))
+        .isEqualTo(transaction.getMaxPriorityFeePerGas());
     assertThat(Long.decode(result.getString("gas"))).isEqualTo(transaction.getGasLimit());
     assertThat(Bytes.fromHexString(result.getString("input"))).isEqualTo(transaction.getPayload());
   }
@@ -1818,7 +1849,11 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     for (int i = 0; i < txs.size(); i++) {
       formattedTxs.add(
           new TransactionWithMetadata(
-              txs.get(i), block.getHeader().getNumber(), block.getHash(), i));
+              txs.get(i),
+              block.getHeader().getNumber(),
+              block.getHeader().getBaseFee(),
+              block.getHash(),
+              i));
     }
     final List<Hash> ommers =
         block.getBody().getOmmers().stream().map(BlockHeader::getHash).collect(Collectors.toList());

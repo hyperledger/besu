@@ -36,6 +36,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
@@ -46,6 +47,7 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -54,7 +56,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
@@ -77,8 +78,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class QbftRoundTest {
 
   private final NodeKey nodeKey = NodeKeyUtils.generate();
+  private final NodeKey nodeKey2 = NodeKeyUtils.generate();
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
+  private final MessageFactory messageFactory2 = new MessageFactory(nodeKey2);
   private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();
   private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
   private ProtocolContext protocolContext;
@@ -107,7 +110,8 @@ public class QbftRoundTest {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(emptyList(), new QbftExtraDataCodec()));
+            setupContextWithBftExtraDataEncoder(
+                QbftContext.class, emptyList(), new QbftExtraDataCodec()));
 
     when(messageValidator.validateProposal(any())).thenReturn(true);
     when(messageValidator.validatePrepare(any())).thenReturn(true);
@@ -243,7 +247,7 @@ public class QbftRoundTest {
     verify(blockImporter, never()).importBlock(any(), any(), any());
 
     round.handlePrepareMessage(
-        messageFactory.createPrepare(roundIdentifier, proposedBlock.getHash()));
+        messageFactory2.createPrepare(roundIdentifier, proposedBlock.getHash()));
 
     verify(transmitter, times(1))
         .multicastCommit(roundIdentifier, proposedBlock.getHash(), localCommitSeal);
@@ -321,7 +325,7 @@ public class QbftRoundTest {
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which
     // indicates the block has entered the roundState (note: all msgs are deemed valid due to mocks)
     round.handlePrepareMessage(
-        messageFactory.createPrepare(roundIdentifier, proposedBlock.getHash()));
+        messageFactory2.createPrepare(roundIdentifier, proposedBlock.getHash()));
     assertThat(roundState.isPrepared()).isTrue();
   }
 
@@ -360,7 +364,7 @@ public class QbftRoundTest {
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which
     // indicates the block has entered the roundState (note: all msgs are deemed valid due to mocks)
     round.handlePrepareMessage(
-        messageFactory.createPrepare(roundIdentifier, proposedBlock.getHash()));
+        messageFactory2.createPrepare(roundIdentifier, proposedBlock.getHash()));
     assertThat(roundState.isPrepared()).isTrue();
   }
 

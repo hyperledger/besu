@@ -27,14 +27,12 @@ import org.hyperledger.besu.consensus.clique.blockcreation.CliqueMiningCoordinat
 import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueJsonRpcMethods;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
+import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -90,11 +88,10 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             miningParameters,
             new CliqueBlockScheduler(
                 clock,
-                protocolContext.getConsensusState(CliqueContext.class).getVoteTallyCache(),
+                protocolContext.getConsensusState(CliqueContext.class).getValidatorProvider(),
                 localAddress,
                 secondsBetweenBlocks),
-            epochManager,
-            gasLimitCalculator);
+            epochManager);
     final CliqueMiningCoordinator miningCoordinator =
         new CliqueMiningCoordinator(
             protocolContext.getBlockchain(),
@@ -114,7 +111,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         nodeKey,
         privacyParameters,
-        isRevertReasonEnabled);
+        isRevertReasonEnabled,
+        evmConfiguration);
   }
 
   @Override
@@ -127,25 +125,23 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
+  protected PluginServiceFactory createAdditionalPluginServices(
+      final Blockchain blockchain, final ProtocolContext protocolContext) {
     return new CliqueQueryPluginServiceFactory(blockchain, nodeKey);
   }
 
   @Override
   protected CliqueContext createConsensusContext(
-      final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule) {
     final CliqueContext cliqueContext =
         new CliqueContext(
-            new VoteTallyCache(
-                blockchain,
-                new VoteTallyUpdater(epochManager, blockInterface),
-                epochManager,
-                blockInterface),
-            new VoteProposer(),
+            BlockValidatorProvider.nonForkingValidatorProvider(
+                blockchain, epochManager, blockInterface),
             epochManager,
             blockInterface);
     installCliqueBlockChoiceRule(blockchain, cliqueContext);
-
     return cliqueContext;
   }
 }

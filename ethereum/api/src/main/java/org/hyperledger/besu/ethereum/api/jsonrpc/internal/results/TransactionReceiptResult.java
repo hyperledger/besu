@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Log;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.evm.log.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,7 @@ import org.apache.tuweni.bytes.Bytes;
   "cumulativeGasUsed",
   "from",
   "gasUsed",
+  "effectiveGasPrice",
   "logs",
   "logsBloom",
   "root",
@@ -52,6 +54,7 @@ public abstract class TransactionReceiptResult {
   private final String cumulativeGasUsed;
   private final String from;
   private final String gasUsed;
+  private final String effectiveGasPrice;
   private final List<TransactionReceiptLogResult> logs;
   private final String logsBloom;
   private final String to;
@@ -62,26 +65,27 @@ public abstract class TransactionReceiptResult {
   protected final TransactionReceipt receipt;
 
   protected TransactionReceiptResult(final TransactionReceiptWithMetadata receiptWithMetadata) {
-
-    receipt = receiptWithMetadata.getReceipt();
-
+    final Transaction txn = receiptWithMetadata.getTransaction();
+    this.receipt = receiptWithMetadata.getReceipt();
     this.blockHash = receiptWithMetadata.getBlockHash().toString();
     this.blockNumber = Quantity.create(receiptWithMetadata.getBlockNumber());
-    this.contractAddress =
-        receiptWithMetadata.getTransaction().contractAddress().map(Address::toString).orElse(null);
+    this.contractAddress = txn.contractAddress().map(Address::toString).orElse(null);
     this.cumulativeGasUsed = Quantity.create(receipt.getCumulativeGasUsed());
-    this.from = receiptWithMetadata.getTransaction().getSender().toString();
+    this.from = txn.getSender().toString();
     this.gasUsed = Quantity.create(receiptWithMetadata.getGasUsed());
+    this.effectiveGasPrice =
+        Quantity.create(txn.getEffectiveGasPrice(receiptWithMetadata.getBaseFee()));
+
     this.logs =
         logReceipts(
-            receipt.getLogs(),
+            receipt.getLogsList(),
             receiptWithMetadata.getBlockNumber(),
-            receiptWithMetadata.getTransaction().getHash(),
+            txn.getHash(),
             receiptWithMetadata.getBlockHash(),
             receiptWithMetadata.getTransactionIndex());
     this.logsBloom = receipt.getBloomFilter().toString();
-    this.to = receiptWithMetadata.getTransaction().getTo().map(Bytes::toHexString).orElse(null);
-    this.transactionHash = receiptWithMetadata.getTransaction().getHash().toString();
+    this.to = txn.getTo().map(Bytes::toHexString).orElse(null);
+    this.transactionHash = txn.getHash().toString();
     this.transactionIndex = Quantity.create(receiptWithMetadata.getTransactionIndex());
     this.revertReason = receipt.getRevertReason().map(Bytes::toString).orElse(null);
   }
@@ -114,6 +118,11 @@ public abstract class TransactionReceiptResult {
   @JsonGetter(value = "gasUsed")
   public String getGasUsed() {
     return gasUsed;
+  }
+
+  @JsonGetter(value = "effectiveGasPrice")
+  public String getEffectiveGasPrice() {
+    return effectiveGasPrice;
   }
 
   @JsonGetter(value = "logs")

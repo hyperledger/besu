@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -41,6 +41,8 @@ public interface WorldStateStorage {
     // we don't have location info
     return getNodeData(null, hash).isPresent();
   }
+
+  void clear();
 
   Updater updater();
 

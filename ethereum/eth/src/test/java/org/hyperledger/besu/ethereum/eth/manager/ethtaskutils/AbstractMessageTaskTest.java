@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.eth.manager.ethtaskutils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.spy;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler;
@@ -43,7 +43,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -101,9 +100,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
             metricsSystem,
             syncState,
             Wei.of(1),
-            TransactionPoolConfiguration.DEFAULT,
-            true,
-            Optional.empty());
+            TransactionPoolConfiguration.DEFAULT);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             blockchain,

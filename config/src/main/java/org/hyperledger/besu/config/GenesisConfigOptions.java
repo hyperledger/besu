@@ -43,6 +43,8 @@ public interface GenesisConfigOptions {
 
   BftConfigOptions getBftConfigOptions();
 
+  QbftConfigOptions getQbftConfigOptions();
+
   EthashConfigOptions getEthashConfigOptions();
 
   Keccak256ConfigOptions getKeccak256ConfigOptions();
@@ -67,7 +69,11 @@ public interface GenesisConfigOptions {
 
   OptionalLong getBerlinBlockNumber();
 
+  OptionalLong getLondonBlockNumber();
+
   // TODO EIP-1559 change for the actual fork name when known
+  OptionalLong getAleutBlockNumber();
+
   OptionalLong getEIP1559BlockNumber();
 
   List<Long> getForks();
@@ -178,6 +184,15 @@ public interface GenesisConfigOptions {
   OptionalLong getThanosBlockNumber();
 
   /**
+   * Block number to activate Magneto on Classic networks.
+   *
+   * @return block number of Magneto fork on Classic networks
+   * @see <a
+   *     href="https://github.com/ethereumclassic/ECIPs/issues/424">https://github.com/ethereumclassic/ECIPs/issues/424</a>
+   */
+  OptionalLong getMagnetoBlockNumber();
+
+  /**
    * Block number to activate ECIP-1049 on Classic networks. Changes the hashing algorithm to
    * keccak-256.
    *
@@ -217,7 +232,7 @@ public interface GenesisConfigOptions {
   boolean isQuorum();
 
   /**
-   * Block number to activate Quorum Permissioning. This options is used on Quorum-compatibility
+   * Block number to activate Quorum Permissioning. This option is used on Quorum-compatibility
    * mode.
    *
    * @return block number to activate Quorum Permissioning

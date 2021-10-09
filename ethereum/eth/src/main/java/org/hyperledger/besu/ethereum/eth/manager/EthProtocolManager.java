@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNot
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -42,6 +43,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -98,8 +101,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
 
-    supportedCapabilities =
-        calculateCapabilities(fastSyncEnabled, ethereumWireProtocolConfiguration.isEth65Enabled());
+    supportedCapabilities = calculateCapabilities(fastSyncEnabled);
 
     // Run validators
     for (final PeerValidator peerValidator : this.peerValidators) {
@@ -188,17 +190,15 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     return EthProtocol.NAME;
   }
 
-  private List<Capability> calculateCapabilities(
-      final boolean fastSyncEnabled, final boolean eth65Enabled) {
+  private List<Capability> calculateCapabilities(final boolean fastSyncEnabled) {
     final ImmutableList.Builder<Capability> capabilities = ImmutableList.builder();
     if (!fastSyncEnabled) {
       capabilities.add(EthProtocol.ETH62);
     }
     capabilities.add(EthProtocol.ETH63);
     capabilities.add(EthProtocol.ETH64);
-    if (eth65Enabled) {
-      capabilities.add(EthProtocol.ETH65);
-    }
+    capabilities.add(EthProtocol.ETH65);
+    capabilities.add(EthProtocol.ETH66);
 
     return capabilities.build();
   }
@@ -231,39 +231,78 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     checkArgument(
         getSupportedCapabilities().contains(cap),
         "Unsupported capability passed to processMessage(): " + cap);
-    LOG.trace("Process message {}, {}", cap, message.getData().getCode());
-    final EthPeer peer = ethPeers.peer(message.getConnection());
-    if (peer == null) {
+    final MessageData messageData = message.getData();
+    final int code = messageData.getCode();
+    LOG.trace("Process message {}, {}", cap, code);
+    final EthPeer ethPeer = ethPeers.peer(message.getConnection());
+    if (ethPeer == null) {
       LOG.debug(
           "Ignoring message received from unknown peer connection: " + message.getConnection());
       return;
     }
 
-    // Handle STATUS processing
-    if (message.getData().getCode() == EthPV62.STATUS) {
-      handleStatusMessage(peer, message.getData());
+    if (messageData.getSize() > 10 * 1_000_000 /*10MB*/) {
+      LOG.debug("Received message over 10MB. Disconnecting from {}", ethPeer);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
-    } else if (!peer.statusHasBeenReceived()) {
+    }
+
+    // Handle STATUS processing
+    if (code == EthPV62.STATUS) {
+      handleStatusMessage(ethPeer, messageData);
+      return;
+    } else if (!ethPeer.statusHasBeenReceived()) {
       // Peers are required to send status messages before any other message type
       LOG.debug(
           "{} requires a Status ({}) message to be sent first.  Instead, received message {}.  Disconnecting from {}.",
           this.getClass().getSimpleName(),
           EthPV62.STATUS,
-          message.getData().getCode(),
-          peer);
-      peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+          code,
+          ethPeer);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
 
-    // Dispatch eth message
-    final EthMessage ethMessage = new EthMessage(peer, message.getData());
-    if (!peer.validateReceivedMessage(ethMessage)) {
-      LOG.debug("Unsolicited message received from, disconnecting: {}", peer);
-      peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+    final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
+
+    if (!ethPeer.validateReceivedMessage(ethMessage)) {
+      LOG.debug("Unsolicited message received from, disconnecting: {}", ethPeer);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
-    ethPeers.dispatchMessage(peer, ethMessage);
-    ethMessages.dispatch(ethMessage);
+
+    // This will handle responses
+    ethPeers.dispatchMessage(ethPeer, ethMessage);
+
+    // This will handle requests
+    Optional<MessageData> maybeResponseData = Optional.empty();
+    try {
+      if (EthProtocol.isEth66Compatible(cap) && EthProtocol.requestIdCompatible(code)) {
+        final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
+            RequestId.unwrapMessageData(ethMessage.getData());
+        maybeResponseData =
+            ethMessages
+                .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()))
+                .map(
+                    responseData ->
+                        RequestId.wrapMessageData(requestIdAndEthMessage.getKey(), responseData));
+      } else {
+        maybeResponseData = ethMessages.dispatch(ethMessage);
+      }
+    } catch (final RLPException e) {
+      LOG.debug(
+          "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);
+
+      ethPeer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+    }
+    maybeResponseData.ifPresent(
+        responseData -> {
+          try {
+            ethPeer.send(responseData);
+          } catch (final PeerNotConnected __) {
+            // Peer disconnected before we could respond - nothing to do
+          }
+        });
   }
 
   @Override

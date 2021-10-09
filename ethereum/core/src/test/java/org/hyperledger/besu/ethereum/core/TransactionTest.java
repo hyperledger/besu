@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.testutil.JsonTestParameters;
@@ -109,7 +110,9 @@ public class TransactionTest {
 
       // Test transaction deserialization (will throw an exception if it fails).
       final Transaction transaction = Transaction.readFrom(RLP.input(rlp));
-      if (!transactionValidator(milestone).validate(transaction, Optional.empty()).isValid()) {
+      if (!transactionValidator(milestone)
+          .validate(transaction, Optional.empty(), TransactionValidationParams.processingBlock())
+          .isValid()) {
         throw new RuntimeException(String.format("Transaction is invalid %s", transaction));
       }
 

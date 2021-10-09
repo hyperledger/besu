@@ -27,14 +27,22 @@ jar {
   }
 }
 
+configurations { testArtifacts }
+task testJar(type: Jar) {
+  archiveBaseName = "${project.name}-test"
+  from sourceSets.test.output
+}
+
 dependencies {
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
   implementation project(':config')
+  implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:permissioning')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
+  implementation project(':evm')
   implementation project(':metrics:core')
   implementation project(':services:kvstore')
   implementation project(':services:pipeline')
@@ -42,9 +50,9 @@ dependencies {
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:units'
-  implementation 'org.apache.tuweni:rlp'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'org.apache.tuweni:tuweni-rlp'
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"
@@ -65,9 +73,20 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
 
+  testSupportImplementation 'junit:junit'
+  testSupportImplementation 'org.mockito:mockito-core'
+  testSupportImplementation project(':testutil')
+  testSupportImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
+  testSupportImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+
   jmhImplementation project(':besu')
   jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   jmhImplementation project(':plugins:rocksdb')
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
+}
+
+artifacts {
+  testArtifacts testJar
+  testSupportArtifacts testSupportJar
 }

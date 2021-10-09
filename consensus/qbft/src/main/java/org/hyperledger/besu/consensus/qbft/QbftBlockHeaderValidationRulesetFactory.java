@@ -14,9 +14,13 @@
  */
 package org.hyperledger.besu.consensus.qbft;
 
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_GAS_LIMIT;
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MIN_GAS_LIMIT;
+
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCoinbaseValidationRule;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCommitSealsValidationRule;
-import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftValidatorsValidationRule;
+import org.hyperledger.besu.consensus.qbft.headervalidationrules.QbftValidatorsValidationRule;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
@@ -35,19 +39,25 @@ public class QbftBlockHeaderValidationRulesetFactory {
    * part of the BlockChain (i.e. not proposed blocks, which do not contain commit seals)
    *
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
+   * @param useValidatorContract whether validator selection is using a validator contract
    * @return BlockHeaderValidator configured for assessing bft block headers
    */
-  public static BlockHeaderValidator.Builder blockHeaderValidator(final long secondsBetweenBlocks) {
+  public static BlockHeaderValidator.Builder blockHeaderValidator(
+      final long secondsBetweenBlocks, final boolean useValidatorContract) {
     return new BlockHeaderValidator.Builder()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
-        .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
+        .addRule(
+            new GasLimitRangeAndDeltaValidationRule(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT))
         .addRule(new TimestampBoundedByFutureParameter(1))
         .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
         .addRule(
             new ConstantFieldValidationRule<>(
+                "MixHash", BlockHeader::getMixHash, BftHelpers.EXPECTED_MIX_HASH))
+        .addRule(
+            new ConstantFieldValidationRule<>(
                 "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
-        .addRule(new BftValidatorsValidationRule())
+        .addRule(new QbftValidatorsValidationRule(useValidatorContract))
         .addRule(new BftCoinbaseValidationRule())
         .addRule(new BftCommitSealsValidationRule());
   }

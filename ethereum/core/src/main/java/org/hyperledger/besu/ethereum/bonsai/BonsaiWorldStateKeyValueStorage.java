@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -36,11 +36,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
 
-  private final KeyValueStorage accountStorage;
-  private final KeyValueStorage codeStorage;
-  private final KeyValueStorage storageStorage;
-  private final KeyValueStorage trieBranchStorage;
-  private final KeyValueStorage trieLogStorage;
+  protected final KeyValueStorage accountStorage;
+  protected final KeyValueStorage codeStorage;
+  protected final KeyValueStorage storageStorage;
+  protected final KeyValueStorage trieBranchStorage;
+  protected final KeyValueStorage trieLogStorage;
 
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
     accountStorage =
@@ -138,6 +138,15 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
             .filter(hash -> hash.equals(rootHash))
             .isPresent()
         || trieLogStorage.containsKey(blockHash.toArrayUnsafe());
+  }
+
+  @Override
+  public void clear() {
+    accountStorage.clear();
+    codeStorage.clear();
+    storageStorage.clear();
+    trieBranchStorage.clear();
+    trieLogStorage.clear();
   }
 
   @Override

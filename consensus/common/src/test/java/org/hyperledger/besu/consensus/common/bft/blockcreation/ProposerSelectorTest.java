@@ -21,12 +21,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -41,13 +40,13 @@ import org.junit.Test;
 public class ProposerSelectorTest {
 
   private final BlockInterface blockInterface = mock(BlockInterface.class);
-  private final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
+  private final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
 
   private Blockchain createMockedBlockChainWithHeadOf(
       final long blockNumber, final Address proposer, final Collection<Address> validators) {
 
     when(blockInterface.getProposerOfBlock(any())).thenReturn(proposer);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validators));
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
 
     final BlockHeaderTestFixture headerBuilderFixture = new BlockHeaderTestFixture();
     headerBuilderFixture.number(blockNumber);
@@ -98,7 +97,7 @@ public class ProposerSelectorTest {
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
     final ProposerSelector uut =
-        new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
+        new ProposerSelector(blockchain, blockInterface, true, validatorProvider);
 
     final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 0);
 
@@ -117,7 +116,7 @@ public class ProposerSelectorTest {
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
     final ProposerSelector uut =
-        new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
+        new ProposerSelector(blockchain, blockInterface, true, validatorProvider);
 
     final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 0);
 
@@ -137,7 +136,7 @@ public class ProposerSelectorTest {
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
     final ProposerSelector uut =
-        new ProposerSelector(blockchain, blockInterface, false, voteTallyCache);
+        new ProposerSelector(blockchain, blockInterface, false, validatorProvider);
     final Address nextProposer = uut.selectProposerForRound(roundId);
 
     assertThat(nextProposer).isEqualTo(localAddr);
@@ -155,7 +154,7 @@ public class ProposerSelectorTest {
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
     final ProposerSelector uut =
-        new ProposerSelector(blockchain, blockInterface, false, voteTallyCache);
+        new ProposerSelector(blockchain, blockInterface, false, validatorProvider);
     assertThat(uut.selectProposerForRound(roundId)).isEqualTo(localAddr);
 
     roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 1);
@@ -182,7 +181,7 @@ public class ProposerSelectorTest {
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
     final ProposerSelector uut =
-        new ProposerSelector(blockchain, blockInterface, false, voteTallyCache);
+        new ProposerSelector(blockchain, blockInterface, false, validatorProvider);
 
     assertThat(uut.selectProposerForRound(roundId)).isEqualTo(validatorList.get(2));
   }
@@ -203,7 +202,7 @@ public class ProposerSelectorTest {
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
     final ProposerSelector uut =
-        new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
+        new ProposerSelector(blockchain, blockInterface, true, validatorProvider);
 
     assertThat(uut.selectProposerForRound(roundId)).isEqualTo(validatorList.get(2));
   }
@@ -225,7 +224,7 @@ public class ProposerSelectorTest {
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
     final ProposerSelector uut =
-        new ProposerSelector(blockchain, blockInterface, false, voteTallyCache);
+        new ProposerSelector(blockchain, blockInterface, false, validatorProvider);
 
     assertThat(uut.selectProposerForRound(roundId)).isEqualTo(validatorList.get(0));
   }

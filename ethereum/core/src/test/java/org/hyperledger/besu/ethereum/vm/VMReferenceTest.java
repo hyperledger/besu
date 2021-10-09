@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
@@ -29,6 +28,10 @@ import org.hyperledger.besu.ethereum.referencetests.EnvironmentInformation;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.VMReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.math.BigInteger;
@@ -47,18 +50,17 @@ public class VMReferenceTest extends AbstractRetryingTest {
 
   /** The path where all of the VM test configuration files live. */
   private static final String[] TEST_CONFIG_FILE_DIR_PATHS = {
-    "VMTests/vmArithmeticTest",
-    "VMTests/vmBitwiseLogicOperation",
-    "VMTests/vmBlockInfoTest",
-    "VMTests/vmEnvironmentalInfo",
-    "VMTests/vmIOandFlowOperations",
-    "VMTests/vmLogTest",
-    //    "VMTests/vmPerformance",
-    "VMTests/vmPushDupSwapTest",
-    "VMTests/vmRandomTest",
-    "VMTests/vmSha3Test",
-    "VMTests/vmTests",
-    "VMTests/vmSystemOperations"
+    "LegacyTests/Constantinople/VMTests/vmArithmeticTest",
+    "LegacyTests/Constantinople/VMTests/vmBitwiseLogicOperation",
+    "LegacyTests/Constantinople/VMTests/vmBlockInfoTest",
+    "LegacyTests/Constantinople/VMTests/vmEnvironmentalInfo",
+    "LegacyTests/Constantinople/VMTests/vmIOandFlowOperations",
+    "LegacyTests/Constantinople/VMTests/vmLogTest",
+    "LegacyTests/Constantinople/VMTests/vmPushDupSwapTest",
+    "LegacyTests/Constantinople/VMTests/vmRandomTest",
+    "LegacyTests/Constantinople/VMTests/vmSha3Test",
+    "LegacyTests/Constantinople/VMTests/vmTests",
+    "LegacyTests/Constantinople/VMTests/vmSystemOperations"
   };
 
   // The ignored test cases fall into two categories:
@@ -97,7 +99,8 @@ public class VMReferenceTest extends AbstractRetryingTest {
     final EnvironmentInformation execEnv = spec.getExec();
 
     final ProtocolSpec protocolSpec =
-        MainnetProtocolSpecs.frontierDefinition(OptionalInt.empty(), OptionalInt.empty(), false)
+        MainnetProtocolSpecs.frontierDefinition(
+                OptionalInt.empty(), OptionalInt.empty(), false, EvmConfiguration.DEFAULT)
             .privacyParameters(PrivacyParameters.DEFAULT)
             .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(CHAIN_ID))
             .badBlocksManager(new BadBlockManager())
@@ -109,8 +112,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
         MessageFrame.builder()
             .type(MessageFrame.Type.MESSAGE_CALL)
             .messageFrameStack(new ArrayDeque<>())
-            .blockchain(blockchain)
-            .worldState(worldState.updater())
+            .worldUpdater(worldState.updater())
             .initialGas(spec.getExec().getGas())
             .contract(execEnv.getAccountAddress())
             .address(execEnv.getAccountAddress())
@@ -121,9 +123,8 @@ public class VMReferenceTest extends AbstractRetryingTest {
             .value(execEnv.getValue())
             .apparentValue(execEnv.getValue())
             .code(execEnv.getCode())
-            .blockHeader(execEnv.getBlockHeader())
+            .blockValues(execEnv.getBlockHeader())
             .depth(execEnv.getDepth())
-            .contractAccountVersion(execEnv.getVersion())
             .completer(c -> {})
             .miningBeneficiary(execEnv.getBlockHeader().getCoinbase())
             .blockHashLookup(new BlockHashLookup(execEnv.getBlockHeader(), blockchain))
@@ -142,7 +143,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
     } else {
       // This is normally performed when the message processor executing the VM
       // executes to completion successfully.
-      frame.getWorldState().commit();
+      frame.getWorldUpdater().commit();
 
       assertThat(frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT)
           .withFailMessage(

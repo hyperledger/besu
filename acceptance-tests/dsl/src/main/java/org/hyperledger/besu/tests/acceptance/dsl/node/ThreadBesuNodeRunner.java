@@ -20,22 +20,24 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
-import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
@@ -45,6 +47,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
@@ -131,7 +134,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         MetricsSystemFactory.create(node.getMetricsConfiguration());
     final List<EnodeURL> bootnodes =
         node.getConfiguration().getBootnodes().stream()
-            .map(EnodeURL::fromURI)
+            .map(EnodeURLImpl::fromURI)
             .collect(Collectors.toList());
     final EthNetworkConfig.Builder networkConfigBuilder =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(DEV))
@@ -162,15 +165,15 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .isRevertReasonEnabled(node.isRevertReasonEnabled())
             .storageProvider(storageProvider)
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .pkiBlockCreationConfiguration(
+                node.getPkiKeyStoreConfiguration()
+                    .map(
+                        (pkiConfig) -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
+            .evmConfiguration(EvmConfiguration.DEFAULT)
             .build();
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
-    if (node.getPermissioningConfiguration().isPresent()) {
-      final PermissioningConfiguration permissioningConfiguration =
-          node.getPermissioningConfiguration().get();
-
-      runnerBuilder.permissioningConfiguration(permissioningConfiguration);
-    }
+    runnerBuilder.permissioningConfiguration(node.getPermissioningConfiguration());
 
     besuPluginContext.addService(
         BesuEvents.class,
@@ -195,12 +198,14 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .webSocketConfiguration(node.webSocketConfiguration())
             .dataDir(node.homeDirectory())
             .metricsSystem(metricsSystem)
+            .permissioningService(new PermissioningServiceImpl())
             .metricsConfiguration(node.getMetricsConfiguration())
             .p2pEnabled(node.isP2pEnabled())
+            .p2pTLSConfiguration(node.getTLSConfiguration())
             .graphQLConfiguration(GraphQLConfiguration.createDefault())
             .staticNodes(
                 node.getStaticNodes().stream()
-                    .map(EnodeURL::fromString)
+                    .map(EnodeURLImpl::fromString)
                     .collect(Collectors.toList()))
             .besuPluginContext(new BesuPluginContextImpl())
             .autoLogBloomCaching(false)

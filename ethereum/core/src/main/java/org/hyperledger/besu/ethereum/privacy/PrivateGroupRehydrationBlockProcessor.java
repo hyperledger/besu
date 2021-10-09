@@ -16,31 +16,29 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +47,6 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class PrivateGroupRehydrationBlockProcessor {
 
@@ -62,6 +59,7 @@ public class PrivateGroupRehydrationBlockProcessor {
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   final Wei blockReward;
   private final boolean skipZeroBlockRewards;
+  private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
 
   public PrivateGroupRehydrationBlockProcessor(
@@ -70,13 +68,15 @@ public class PrivateGroupRehydrationBlockProcessor {
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards) {
+      final boolean skipZeroBlockRewards,
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator) {
     this.transactionProcessor = transactionProcessor;
     this.privateTransactionProcessor = privateTransactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
+    this.privateStateGenesisAllocator = privateStateGenesisAllocator;
   }
 
   public AbstractBlockProcessor.Result processBlock(
@@ -122,9 +122,16 @@ public class PrivateGroupRehydrationBlockProcessor {
 
         final MutableWorldState disposablePrivateState =
             privateWorldStateArchive.getMutable(lastRootHash, null).get();
-        final WorldUpdater privateStateUpdater = disposablePrivateState.updater();
-        maybeInjectDefaultManagementAndProxy(
-            lastRootHash, disposablePrivateState, privateStateUpdater);
+        final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
+
+        if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
+          privateStateGenesisAllocator.applyGenesisToPrivateWorldState(
+              disposablePrivateState,
+              privateWorldStateUpdater,
+              privacyGroupId,
+              blockHeader.getNumber());
+        }
+
         LOG.debug(
             "Pre-rehydrate root hash: {} for tx {}",
             disposablePrivateState.rootHash(),
@@ -132,9 +139,8 @@ public class PrivateGroupRehydrationBlockProcessor {
 
         final TransactionProcessingResult privateResult =
             privateTransactionProcessor.processTransaction(
-                blockchain,
                 worldStateUpdater.updater(),
-                privateStateUpdater,
+                privateWorldStateUpdater,
                 blockHeader,
                 transactionHash,
                 privateTransaction,
@@ -143,7 +149,7 @@ public class PrivateGroupRehydrationBlockProcessor {
                 new BlockHashLookup(blockHeader, blockchain),
                 privateTransaction.getPrivacyGroupId().get());
 
-        privateStateUpdater.commit();
+        privateWorldStateUpdater.commit();
         disposablePrivateState.persist(null);
 
         storePrivateMetadata(
@@ -206,35 +212,6 @@ public class PrivateGroupRehydrationBlockProcessor {
     privateMetadataUpdater.addPrivateTransactionMetadata(
         privacyGroupId,
         new PrivateTransactionMetadata(commitmentHash, disposablePrivateState.rootHash()));
-  }
-
-  protected void maybeInjectDefaultManagementAndProxy(
-      final Hash lastRootHash,
-      final MutableWorldState disposablePrivateState,
-      final WorldUpdater privateWorldStateUpdater) {
-    if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
-      // inject management
-      final EvmAccount managementPrecompile =
-          privateWorldStateUpdater.createAccount(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT);
-      final MutableAccount mutableManagementPrecompiled = managementPrecompile.getMutable();
-      // this is the code for the simple management contract
-      mutableManagementPrecompiled.setCode(
-          OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
-
-      // inject proxy
-      final EvmAccount proxyPrecompile =
-          privateWorldStateUpdater.createAccount(Address.ONCHAIN_PRIVACY_PROXY);
-      final MutableAccount mutableProxyPrecompiled = proxyPrecompile.getMutable();
-      // this is the code for the proxy contract
-      mutableProxyPrecompiled.setCode(OnChainGroupManagement.PROXY_RUNTIME_BYTECODE);
-      // manually set the management contract address so the proxy can trust it
-      mutableProxyPrecompiled.setStorageValue(
-          UInt256.ZERO,
-          UInt256.fromBytes(Bytes32.leftPad(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)));
-
-      privateWorldStateUpdater.commit();
-      disposablePrivateState.persist(null);
-    }
   }
 
   private boolean rewardCoinbase(

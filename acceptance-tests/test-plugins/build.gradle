@@ -1,0 +1,36 @@
+
+dependencies {
+  implementation project(':besu')
+  implementation project(':crypto')
+  implementation project(':datatypes')
+  implementation project(':ethereum:core')
+  implementation project(':ethereum:rlp')
+  implementation project(':plugin-api')
+  implementation 'com.google.auto.service:auto-service'
+  implementation 'info.picocli:picocli'
+  implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.apache.logging.log4j:log4j-core'
+
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'junit:junit'
+}
+
+task testPluginsJar(type: Jar) {
+  archiveFileName = 'testPlugins.jar'
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': calculateVersion()
+      )
+  }
+  from sourceSets.main.output
+}
+
+artifacts { testPluginsJar }
+
+
+javadoc {
+  enabled = false
+}

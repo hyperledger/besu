@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class CliqueMiningTracker {
@@ -31,7 +31,7 @@ public class CliqueMiningTracker {
   public boolean isProposerAfter(final BlockHeader header) {
     final Address nextProposer =
         CliqueHelpers.getProposerForBlockAfter(
-            header, protocolContext.getConsensusState(CliqueContext.class).getVoteTallyCache());
+            header, protocolContext.getConsensusState(CliqueContext.class).getValidatorProvider());
     return localAddress.equals(nextProposer);
   }
 

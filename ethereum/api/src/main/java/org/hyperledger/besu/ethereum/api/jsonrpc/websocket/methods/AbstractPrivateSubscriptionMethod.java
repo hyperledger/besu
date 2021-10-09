@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionRequestMapper;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
@@ -23,21 +23,21 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 abstract class AbstractPrivateSubscriptionMethod extends AbstractSubscriptionMethod {
 
   private final PrivacyController privacyController;
-  protected final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  protected final PrivacyIdProvider privacyIdProvider;
 
   AbstractPrivateSubscriptionMethod(
       final SubscriptionManager subscriptionManager,
       final SubscriptionRequestMapper mapper,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyIdProvider privacyIdProvider) {
     super(subscriptionManager, mapper);
     this.privacyController = privacyController;
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyIdProvider = privacyIdProvider;
   }
 
-  void checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
+  void checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(
       final JsonRpcRequestContext request, final String privacyGroupId) {
-    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
-    privacyController.verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
+    privacyController.verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId);
   }
 }

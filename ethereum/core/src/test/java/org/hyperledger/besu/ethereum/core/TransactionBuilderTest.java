@@ -18,6 +18,8 @@ package org.hyperledger.besu.ethereum.core;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;
@@ -32,14 +34,14 @@ public class TransactionBuilderTest {
   public void guessTypeCanGuessAllTypes() {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Transaction.Builder frontierBuilder = Transaction.builder();
-    final Transaction.Builder eip1559Builder = Transaction.builder().feeCap(Wei.of(5));
+    final Transaction.Builder eip1559Builder = Transaction.builder().maxFeePerGas(Wei.of(5));
     final Transaction.Builder accessListBuilder =
         Transaction.builder()
             .accessList(List.of(new AccessListEntry(gen.address(), List.of(gen.bytes32()))));
 
     final Set<TransactionType> guessedTypes =
         Stream.of(frontierBuilder, eip1559Builder, accessListBuilder)
-            .map(transactionBuilder -> transactionBuilder.guessType().build().getType())
+            .map(transactionBuilder -> transactionBuilder.guessType().getTransactionType())
             .collect(toUnmodifiableSet());
 
     assertThat(guessedTypes).containsExactlyInAnyOrder(TransactionType.values());

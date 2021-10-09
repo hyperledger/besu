@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.config;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
@@ -38,8 +36,10 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong istanbulBlockNumber = OptionalLong.empty();
   private OptionalLong muirGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong berlinBlockNumber = OptionalLong.empty();
+  private OptionalLong londonBlockNumber = OptionalLong.empty();
+
   // TODO EIP-1559 change for the actual fork name when known
-  private final OptionalLong eip1559BlockNumber = OptionalLong.empty();
+  private final OptionalLong aleutBlockNumber = OptionalLong.empty();
   private OptionalLong classicForkBlock = OptionalLong.empty();
   private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
   private OptionalLong diehardBlockNumber = OptionalLong.empty();
@@ -49,12 +49,15 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong aghartaBlockNumber = OptionalLong.empty();
   private OptionalLong phoenixBlockNumber = OptionalLong.empty();
   private OptionalLong thanosBlockNumber = OptionalLong.empty();
+  private OptionalLong magnetoBlockNumber = OptionalLong.empty();
   private OptionalLong ecip1049BlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
   private final OptionalLong ecip1017EraRounds = OptionalLong.empty();
   private Optional<String> ecCurve = Optional.empty();
+  private QbftConfigOptions qbftConfigOptions = QbftConfigOptions.DEFAULT;
+  private TransitionsConfigOptions transitions = TransitionsConfigOptions.DEFAULT;
 
   @Override
   public String getConsensusEngine() {
@@ -104,6 +107,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public BftConfigOptions getBftConfigOptions() {
     return BftConfigOptions.DEFAULT;
+  }
+
+  @Override
+  public QbftConfigOptions getQbftConfigOptions() {
+    return qbftConfigOptions;
   }
 
   @Override
@@ -167,9 +175,23 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getLondonBlockNumber() {
+    return londonBlockNumber;
+  }
+
+  @Override
   // TODO EIP-1559 change for the actual fork name when known
+  public OptionalLong getAleutBlockNumber() {
+    return aleutBlockNumber;
+  }
+
+  @Override
   public OptionalLong getEIP1559BlockNumber() {
-    return ExperimentalEIPs.eip1559Enabled ? eip1559BlockNumber : OptionalLong.empty();
+    if (getAleutBlockNumber().isPresent()) {
+      return getAleutBlockNumber();
+    } else {
+      return getLondonBlockNumber();
+    }
   }
 
   @Override
@@ -215,6 +237,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getThanosBlockNumber() {
     return thanosBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getMagnetoBlockNumber() {
+    return magnetoBlockNumber;
   }
 
   @Override
@@ -266,9 +293,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
-    // TODO EIP-1559 change for the actual fork name when known
-    getEIP1559BlockNumber().ifPresent(l -> builder.put("aleutblock", l));
-
+    getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
+    getAleutBlockNumber().ifPresent(l -> builder.put("aleutBlock", l));
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
     getEcip1015BlockNumber().ifPresent(l -> builder.put("ecip1015Block", l));
@@ -279,6 +305,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getAghartaBlockNumber().ifPresent(l -> builder.put("aghartaBlock", l));
     getPhoenixBlockNumber().ifPresent(l -> builder.put("phoenixBlock", l));
     getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
+    getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
     getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
@@ -303,7 +330,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public TransitionsConfigOptions getTransitions() {
-    return TransitionsConfigOptions.DEFAULT;
+    return transitions;
   }
 
   @Override
@@ -383,6 +410,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
+  public StubGenesisConfigOptions londonBlock(final long blockNumber) {
+    londonBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
   public StubGenesisConfigOptions classicForkBlock(final long blockNumber) {
     classicForkBlock = OptionalLong.of(blockNumber);
     return this;
@@ -428,6 +460,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
+  public StubGenesisConfigOptions magneto(final long blockNumber) {
+    magnetoBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
   public StubGenesisConfigOptions ecip1049(final long blockNumber) {
     ecip1049BlockNumber = OptionalLong.of(blockNumber);
     return this;
@@ -450,6 +487,16 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions ecCurve(final Optional<String> ecCurve) {
     this.ecCurve = ecCurve;
+    return this;
+  }
+
+  public StubGenesisConfigOptions qbftConfigOptions(final QbftConfigOptions qbftConfigOptions) {
+    this.qbftConfigOptions = qbftConfigOptions;
+    return this;
+  }
+
+  public StubGenesisConfigOptions transitions(final TransitionsConfigOptions transitions) {
+    this.transitions = transitions;
     return this;
   }
 }

@@ -15,155 +15,164 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
-    dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.12.1'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
+    dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.12.4'
 
-    dependency 'com.github.tomakehurst:wiremock-jre8-standalone:2.27.2'
-    dependency 'com.github.tomakehurst:wiremock-jre8:2.27.2'
+    dependency 'com.github.tomakehurst:wiremock-jre8-standalone:2.29.1'
+    dependency 'com.github.tomakehurst:wiremock-jre8:2.29.1'
 
-    dependency 'com.google.auto.service:auto-service:1.0-rc7'
+    dependency 'com.google.auto.service:auto-service:1.0'
 
     dependency 'com.google.dagger:dagger-compiler:2.30.1'
     dependency 'com.google.dagger:dagger:2.30.1'
 
-    dependency 'com.google.errorprone:error_prone_annotation:2.4.0'
-    dependency 'com.google.errorprone:error_prone_check_api:2.4.0'
-    dependency 'com.google.errorprone:error_prone_core:2.4.0'
-    dependency 'com.google.errorprone:error_prone_test_helpers:2.4.0'
+    dependencySet(group: 'com.google.errorprone', version: '2.8.0') {
+      entry 'error_prone_annotation'
+      entry 'error_prone_check_api'
+      entry 'error_prone_core'
+      entry 'error_prone_test_helpers'
+    }
 
-    dependency 'com.google.guava:guava:30.1-jre'
+    dependency 'com.google.guava:guava:30.1.1-jre'
+    dependency 'com.github.ben-manes.caffeine:caffeine:3.0.4'
+    dependency 'com.graphql-java:graphql-java:16.2'
 
-    dependency 'com.graphql-java:graphql-java:16.1'
+    dependency 'com.splunk.logging:splunk-library-javalogging:1.9.0'
 
-    dependency 'com.splunk.logging:splunk-library-javalogging:1.8.0'
-
-    dependency 'com.squareup.okhttp3:okhttp:4.9.0'
+    dependency 'com.squareup.okhttp3:okhttp:4.9.1'
 
     dependency 'commons-codec:commons-codec:1.13'
 
-    dependency 'commons-io:commons-io:2.8.0'
+    dependency 'commons-io:commons-io:2.11.0'
 
-    dependency 'dnsjava:dnsjava:3.3.1'
+    dependency 'dnsjava:dnsjava:3.4.0'
 
     dependency 'info.picocli:picocli:4.6.1'
 
-    dependency 'io.grpc:grpc-core:1.34.1'
-    dependency 'io.grpc:grpc-netty:1.34.1'
-    dependency 'io.grpc:grpc-stub:1.34.1'
+    dependency 'io.grpc:grpc-core:1.39.0'
+    dependency 'io.grpc:grpc-netty:1.39.0'
+    dependency 'io.grpc:grpc-stub:1.39.0'
+
+    dependency 'io.jaegertracing:jaeger-client:1.6.0'
 
     dependency 'io.kubernetes:client-java:5.0.0'
 
-    dependency 'io.netty:netty-all:4.1.56.Final'
-    dependency 'io.netty:netty-tcnative-boringssl-static:2.0.35.Final'
-    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.56.Final', classifier: 'linux-x86_64'
+    dependency 'io.netty:netty-all:4.1.66.Final'
+    dependency 'io.netty:netty-tcnative-boringssl-static:2.0.40.Final'
+    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.66.Final', classifier: 'linux-x86_64'
 
-    dependency 'io.opentelemetry:opentelemetry-api:0.13.1'
-    dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:0.13.1-alpha'
-    dependency 'io.opentelemetry:opentelemetry-exporter-otlp:0.13.1'
-    dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:0.13.1'
-    dependency 'io.opentelemetry:opentelemetry-proto:0.13.1'
-    dependency 'io.opentelemetry:opentelemetry-sdk-trace:0.13.1'
-    dependency 'io.opentelemetry:opentelemetry-sdk:0.13.1'
+    dependency 'io.opentelemetry:opentelemetry-api:1.5.0'
+    dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.5.0-alpha'
+    dependency 'io.opentelemetry:opentelemetry-exporter-otlp:1.5.0'
+    dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.5.0'
+    dependency 'io.opentelemetry:opentelemetry-proto:1.5.0-alpha'
+    dependency 'io.opentelemetry:opentelemetry-sdk-trace:1.5.0'
+    dependency 'io.opentelemetry:opentelemetry-sdk:1.5.0'
+    dependency 'io.opentelemetry:opentelemetry-semconv:1.5.0-alpha'
 
     dependency 'io.opentracing.contrib:opentracing-okhttp3:3.0.0'
     dependency 'io.opentracing:opentracing-api:0.33.0'
     dependency 'io.opentracing:opentracing-util:0.33.0'
-    dependency 'io.jaegertracing:jaeger-client:1.5.0'
 
-    dependency 'io.pkts:pkts-core:3.0.7'
+    dependency 'io.pkts:pkts-core:3.0.10'
 
     dependency 'io.prometheus:simpleclient:0.9.0'
     dependency 'io.prometheus:simpleclient_common:0.9.0'
     dependency 'io.prometheus:simpleclient_hotspot:0.9.0'
     dependency 'io.prometheus:simpleclient_pushgateway:0.9.0'
 
-    dependency 'io.reactivex.rxjava2:rxjava:2.2.20'
+    dependency 'io.reactivex.rxjava2:rxjava:2.2.21'
 
-    dependency 'io.vertx:vertx-auth-jwt:3.9.1'
-    dependency 'io.vertx:vertx-codegen:3.9.1'
-    dependency 'io.vertx:vertx-core:3.9.1'
-    dependency 'io.vertx:vertx-unit:3.9.1'
-    dependency 'io.vertx:vertx-web:3.9.1'
+    dependency 'io.vertx:vertx-auth-jwt:3.9.8'
+    dependency 'io.vertx:vertx-codegen:3.9.8'
+    dependency 'io.vertx:vertx-core:3.9.8'
+    dependency 'io.vertx:vertx-unit:3.9.8'
+    dependency 'io.vertx:vertx-web:3.9.8'
 
-    dependency 'junit:junit:4.13.1'
+    dependency 'junit:junit:4.13.2'
 
     dependency 'net.consensys:orion:21.1.1'
 
-    dependency 'net.java.dev.jna:jna:5.6.0'
-
-    dependency 'org.apache.commons:commons-compress:1.20'
-    dependency 'org.apache.commons:commons-text:1.9'
-
-    dependency 'org.apache.logging.log4j:log4j-api:2.14.0'
-    dependency 'org.apache.logging.log4j:log4j-core:2.14.0'
-    dependency 'org.apache.logging.log4j:log4j-jul:2.14.0'
-    dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.14.0'
-
-    dependency 'org.apache.tuweni:bytes:1.3.0'
-    dependency 'org.apache.tuweni:config:1.3.0'
-    dependency 'org.apache.tuweni:crypto:1.3.0'
-    dependency 'org.apache.tuweni:devp2p:1.3.0'
-    dependency 'org.apache.tuweni:dns-discovery:1.3.0'
-    dependency 'org.apache.tuweni:io:1.3.0'
-    dependency 'org.apache.tuweni:net:1.3.0'
-    dependency 'org.apache.tuweni:rlp:1.3.0'
-    dependency 'org.apache.tuweni:toml:1.3.0'
-    dependency 'org.apache.tuweni:units:1.3.0'
-
-    dependency 'org.assertj:assertj-core:3.18.1'
-
-    dependency 'org.awaitility:awaitility:4.0.3'
-
-    dependency 'org.bouncycastle:bcpkix-jdk15on:1.68'
-    dependency 'org.bouncycastle:bcprov-jdk15on:1.68'
-
-    dependency 'org.fusesource.jansi:jansi:2.1.1'
     dependency 'net.consensys.services:quorum-mainnet-launcher:1.0.1'
 
+    dependency 'net.java.dev.jna:jna:5.8.0'
+
+    dependency 'org.apache.commons:commons-compress:1.21'
+    dependency 'org.apache.commons:commons-text:1.9'
+
+    dependency 'org.apache.logging.log4j:log4j-api:2.14.1'
+    dependency 'org.apache.logging.log4j:log4j-core:2.14.1'
+    dependency 'org.apache.logging.log4j:log4j-jul:2.14.1'
+    dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.14.1'
+
+    dependency 'org.apache.tuweni:tuweni-bytes:2.0.0'
+    dependency 'org.apache.tuweni:tuweni-config:2.0.0'
+    dependency 'org.apache.tuweni:tuweni-concurrent:2.0.0'
+    dependency 'org.apache.tuweni:tuweni-crypto:2.0.0'
+    dependency 'org.apache.tuweni:tuweni-devp2p:2.0.0'
+    dependency 'org.apache.tuweni:tuweni-dns-discovery:2.0.0'
+    dependency 'org.apache.tuweni:tuweni-io:2.0.0'
+    dependency 'org.apache.tuweni:tuweni-net:2.0.0'
+    dependency 'org.apache.tuweni:tuweni-rlp:2.0.0'
+    dependency 'org.apache.tuweni:tuweni-toml:2.0.0'
+    dependency 'org.apache.tuweni:tuweni-units:2.0.0'
+
+    dependency 'org.assertj:assertj-core:3.20.2'
+
+    dependency 'org.awaitility:awaitility:4.1.0'
+
+    dependency 'org.bouncycastle:bcpkix-jdk15on:1.69'
+    dependency 'org.bouncycastle:bcprov-jdk15on:1.69'
+
+    dependency 'org.fusesource.jansi:jansi:2.3.4'
+
+    // Not updating bls12-381 because of https://github.com/hyperledger/besu/issues/2668
     dependency 'org.hyperledger.besu:bls12-381:0.3.0'
-    dependency 'org.hyperledger.besu:secp256k1:0.3.0'
+    dependency 'org.hyperledger.besu:secp256k1:0.4.2'
+    dependency 'org.hyperledger.besu:secp256r1:0.4.2'
 
     dependency 'org.immutables:value-annotations:2.8.8'
     dependency 'org.immutables:value:2.8.8'
 
-    dependency 'org.java-websocket:Java-WebSocket:1.5.1'
+    dependency 'org.java-websocket:Java-WebSocket:1.5.2'
 
     dependency 'org.jetbrains.kotlin:kotlin-stdlib:1.4.21-2'
 
-    dependency 'org.jupnp:org.jupnp.support:2.5.2'
-    dependency 'org.jupnp:org.jupnp:2.5.2'
+    dependency 'org.jupnp:org.jupnp.support:2.6.0'
+    dependency 'org.jupnp:org.jupnp:2.6.0'
 
-    dependency 'org.mockito:mockito-core:3.7.0'
+    dependency 'org.mockito:mockito-core:3.11.2'
 
-    dependency 'org.openjdk.jmh:jmh-core:1.23'
-    dependency 'org.openjdk.jmh:jmh-generator-annprocess:1.23'
+    dependency 'org.openjdk.jmh:jmh-core:1.29'
+    dependency 'org.openjdk.jmh:jmh-generator-annprocess:1.29'
 
     dependency 'org.rocksdb:rocksdbjni:6.15.2'
 
     dependency 'org.slf4j:slf4j-log4j12:1.7.26'
 
-    dependency 'org.springframework.security:spring-security-crypto:5.4.2'
+    dependency 'org.springframework.security:spring-security-crypto:5.5.1'
 
-    dependency 'org.web3j:abi:4.5.15'
-    dependency 'org.web3j:besu:4.5.15'
-    dependency('org.web3j:core:4.5.15') {
+    dependency 'org.testcontainers:testcontainers:1.16.0'
+
+    dependency 'org.web3j:abi:4.8.6'
+    dependency 'org.web3j:besu:4.8.6'
+    dependency('org.web3j:core:4.8.6') {
       exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
     }
-    dependency 'org.web3j:crypto:4.5.15'
-    dependency 'org.web3j:quorum:4.5.15'
+    dependency 'org.web3j:crypto:4.8.6'
+    dependency 'org.web3j:quorum:4.8.4'
 
-    dependency 'org.xerial.snappy:snappy-java:1.1.8.2'
+    dependency 'org.xerial.snappy:snappy-java:1.1.8.4'
 
     dependency 'org.yaml:snakeyaml:1.26'
 
-    dependency 'tech.pegasys.discovery:discovery:0.4.5'
+    dependency 'tech.pegasys.discovery:discovery:0.4.8'
 
-    dependency 'tech.pegasys.ethsigner.internal:ethsigner-core:21.3.0'
-    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.16') {
+    dependency 'tech.pegasys.ethsigner.internal:ethsigner-core:21.3.2'
+    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.17') {
       entry 'signing-secp256k1-api'
       entry 'signing-secp256k1-impl'
     }
 
-    dependency 'org.testcontainers:testcontainers:1.15.2'
   }
 }

@@ -24,19 +24,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
@@ -45,6 +43,9 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.Collections;
@@ -79,7 +80,9 @@ public class PrivacyBlockProcessorTest {
             enclave,
             privateStateStorage,
             privateWorldStateArchive,
-            new PrivateStateRootResolver(privateStateStorage));
+            new PrivateStateRootResolver(privateStateStorage),
+            new PrivateStateGenesisAllocator(
+                true, (privacyGroupId, blockNumber) -> Collections::emptyList));
     publicWorldStateArchive = mock(WorldStateArchive.class);
     privacyBlockProcessor.setPublicWorldStateArchive(publicWorldStateArchive);
   }
@@ -131,18 +134,18 @@ public class PrivacyBlockProcessorTest {
     final Block firstBlock =
         blockDataGenerator.block(
             BlockDataGenerator.BlockOptions.create()
-                .addTransaction(PrivateTransactionDataFixture.privacyMarkerTransactionOnChain()));
+                .addTransaction(PrivateTransactionDataFixture.privateMarkerTransactionOnchain()));
     final Block secondBlock =
         blockDataGenerator.block(
             BlockDataGenerator.BlockOptions.create()
                 .addTransaction(
-                    PrivateTransactionDataFixture.privacyMarkerTransactionOnChainAdd()));
+                    PrivateTransactionDataFixture.privateMarkerTransactionOnchainAdd()));
 
     when(enclave.receive(any()))
         .thenReturn(
             PrivateTransactionDataFixture.generateAddToGroupReceiveResponse(
                 PrivateTransactionDataFixture.privateTransactionBesu(),
-                PrivateTransactionDataFixture.privacyMarkerTransactionOnChain()));
+                PrivateTransactionDataFixture.privateMarkerTransactionOnchain()));
     when(blockchain.getTransactionLocation(any()))
         .thenReturn(Optional.of(new TransactionLocation(firstBlock.getHash(), 0)));
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.of(firstBlock));
@@ -201,7 +204,7 @@ public class PrivacyBlockProcessorTest {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
                 Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));

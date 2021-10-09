@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli.util;
 
-import org.hyperledger.besu.services.PluginVersionsProvider;
+import org.hyperledger.besu.plugin.services.PluginVersionsProvider;
 
 import picocli.CommandLine;
 

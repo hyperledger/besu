@@ -23,19 +23,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivGetFilterChanges;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
@@ -61,13 +61,13 @@ public class PrivGetFilterChangesTest {
 
   @Mock private FilterManager filterManager;
   @Mock private PrivacyController privacyController;
-  @Mock private EnclavePublicKeyProvider enclavePublicKeyProvider;
+  @Mock private PrivacyIdProvider privacyIdProvider;
 
   private PrivGetFilterChanges method;
 
   @Before
   public void before() {
-    method = new PrivGetFilterChanges(filterManager, privacyController, enclavePublicKeyProvider);
+    method = new PrivGetFilterChanges(filterManager, privacyController, privacyIdProvider);
   }
 
   @Test
@@ -145,10 +145,10 @@ public class PrivGetFilterChangesTest {
   public void multiTenancyCheckFailure() {
     final User user = mock(User.class);
 
-    when(enclavePublicKeyProvider.getEnclaveKey(any())).thenReturn(ENCLAVE_KEY);
+    when(privacyIdProvider.getPrivacyUserId(any())).thenReturn(ENCLAVE_KEY);
     doThrow(new MultiTenancyValidationException("msg"))
         .when(privacyController)
-        .verifyPrivacyGroupContainsEnclavePublicKey(eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY));
+        .verifyPrivacyGroupContainsPrivacyUserId(eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY));
 
     final JsonRpcRequestContext request =
         privGetFilterChangesRequestWithUser(PRIVACY_GROUP_ID, FILTER_ID, user);

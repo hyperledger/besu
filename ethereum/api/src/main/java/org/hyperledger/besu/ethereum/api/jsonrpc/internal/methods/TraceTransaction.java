@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.F
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -78,9 +78,12 @@ public class TraceTransaction implements JsonRpcMethod {
       return emptyResult();
     }
     final TransactionTrace transactionTrace =
-        blockTracerSupplier.get()
+        blockTracerSupplier
+            .get()
             .trace(block, new DebugOperationTracer(new TraceOptions(false, false, true)))
-            .map(BlockTrace::getTransactionTraces).orElse(Collections.emptyList()).stream()
+            .map(BlockTrace::getTransactionTraces)
+            .orElse(Collections.emptyList())
+            .stream()
             .filter(trxTrace -> trxTrace.getTransaction().getHash().equals(transactionHash))
             .findFirst()
             .orElseThrow();

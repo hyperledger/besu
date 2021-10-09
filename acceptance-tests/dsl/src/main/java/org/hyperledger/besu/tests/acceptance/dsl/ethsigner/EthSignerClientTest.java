@@ -66,7 +66,7 @@ public class EthSignerClientTest {
             folder.newFolder().toPath(),
             "ethSignerKey--fe3b557e8fb62b89f4916b721be55ceb828dbd73.json",
             wireMockRule.port(),
-            2018);
+            1337);
 
     ethSignerClient = new EthSignerClient(testHarness.getHttpListeningUrl());
   }

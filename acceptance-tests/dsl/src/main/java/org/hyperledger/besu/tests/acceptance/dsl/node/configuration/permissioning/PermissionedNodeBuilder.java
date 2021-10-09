@@ -17,16 +17,17 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration.permissioni
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
@@ -227,7 +228,9 @@ public class PermissionedNodeBuilder {
       }
 
       final List<EnodeURL> nodeAllowList =
-          localConfigPermittedNodes.stream().map(EnodeURL::fromURI).collect(Collectors.toList());
+          localConfigPermittedNodes.stream()
+              .map(EnodeURLImpl::fromURI)
+              .collect(Collectors.toList());
 
       initPermissioningConfigurationFile(
           ALLOWLIST_TYPE.NODES,

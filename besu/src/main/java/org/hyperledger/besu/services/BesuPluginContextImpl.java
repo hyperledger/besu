@@ -19,6 +19,8 @@ import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.services.BesuService;
+import org.hyperledger.besu.plugin.services.PluginVersionsProvider;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -58,11 +60,11 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
   }
 
   private Lifecycle state = Lifecycle.UNINITIALIZED;
-  private final Map<Class<?>, ? super Object> serviceRegistry = new HashMap<>();
+  private final Map<Class<?>, ? super BesuService> serviceRegistry = new HashMap<>();
   private final List<BesuPlugin> plugins = new ArrayList<>();
   private final List<String> pluginVersions = new ArrayList<>();
 
-  public <T> void addService(final Class<T> serviceType, final T service) {
+  public <T extends BesuService> void addService(final Class<T> serviceType, final T service) {
     checkArgument(serviceType.isInterface(), "Services must be Java interfaces.");
     checkArgument(
         serviceType.isInstance(service),
@@ -72,7 +74,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
   @SuppressWarnings("unchecked")
   @Override
-  public <T> Optional<T> getService(final Class<T> serviceType) {
+  public <T extends BesuService> Optional<T> getService(final Class<T> serviceType) {
     return Optional.ofNullable((T) serviceRegistry.get(serviceType));
   }
 

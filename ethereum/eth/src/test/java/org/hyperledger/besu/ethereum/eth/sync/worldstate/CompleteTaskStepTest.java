@@ -19,9 +19,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -76,13 +76,6 @@ public class CompleteTaskStepTest {
             () -> task.getData().getChildRequests(worldStateStorage).iterator());
 
     verify(downloadState).checkCompletion(worldStateStorage, blockHeader);
-  }
-
-  @Test
-  public void shouldComputeWorldStateProgress() {
-    completeTaskStep.markAsCompleteOrFailed(blockHeader, downloadState, validTask());
-    // One task has been completed and there are 2 pending requests, progress should be 1/4 (25%)
-    assertThat(completeTaskStep.computeWorldStateSyncProgress()).isEqualTo(1.0 / 4.0);
   }
 
   private StubTask validTask() {

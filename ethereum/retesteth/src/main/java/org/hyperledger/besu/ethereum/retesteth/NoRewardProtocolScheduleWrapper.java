@@ -14,12 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.retesteth;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
@@ -49,7 +48,6 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
             Wei.ZERO,
             original.getMiningBeneficiaryCalculator(),
             original.isSkipZeroBlockRewards(),
-            TransactionGasBudgetCalculator.frontier(),
             Optional.empty());
     final BlockValidator noRewardBlockValidator =
         new MainnetBlockValidator(
@@ -78,9 +76,8 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getPrecompileContractRegistry(),
         original.isSkipZeroBlockRewards(),
         original.getGasCalculator(),
-        original.getTransactionPriceCalculator(),
-        original.getEip1559(),
-        original.getGasBudgetCalculator(),
+        original.getGasLimitCalculator(),
+        original.getFeeMarket(),
         original.getBadBlocksManager(),
         Optional.empty());
   }

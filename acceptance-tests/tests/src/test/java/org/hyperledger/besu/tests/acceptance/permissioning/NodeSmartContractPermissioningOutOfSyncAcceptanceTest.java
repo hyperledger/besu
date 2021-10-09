@@ -33,7 +33,7 @@ public class NodeSmartContractPermissioningOutOfSyncAcceptanceTest
 
     permissionedCluster.start(bootnode, permissionedNodeA);
 
-    // update onchain smart contract to whitelist nodes
+    // update onchain smart contract to allowlist nodes
     permissionedNodeA.execute(allowNode(bootnode));
     permissionedNodeA.verify(nodeIsAllowed(bootnode));
     permissionedNodeA.execute(allowNode(permissionedNodeA));
@@ -43,7 +43,7 @@ public class NodeSmartContractPermissioningOutOfSyncAcceptanceTest
 
   @Test
   public void addNodeToClusterAndVerifyNonBootNodePeerConnectionWorksAfterSync() {
-    final long blockchainHeight = 50L;
+    final long blockchainHeight = 25L;
     waitForBlockHeight(permissionedNodeA, blockchainHeight);
 
     // Add Node B

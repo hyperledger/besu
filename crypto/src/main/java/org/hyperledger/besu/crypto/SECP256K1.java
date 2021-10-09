@@ -21,6 +21,7 @@ import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1.secp256k1_ecdsa_rec
 import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1.secp256k1_ecdsa_signature;
 import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1.secp256k1_pubkey;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
@@ -30,6 +31,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.signers.DSAKCalculator;
+import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
 
 /*
@@ -44,18 +48,41 @@ public class SECP256K1 extends AbstractSECP256 {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private boolean useNative = true;
+  private boolean useNative;
 
   public static final String CURVE_NAME = "secp256k1";
 
   public SECP256K1() {
     super(CURVE_NAME, SecP256K1Curve.q);
+
+    // use the native library implementation, if it is available
+    useNative = LibSecp256k1.CONTEXT != null;
+    if (!useNative) {
+      LOG.info("Native secp256k1 not available");
+    }
   }
 
   @Override
-  public void enableNative() {
-    useNative = LibSecp256k1.CONTEXT != null;
-    LOG.info(useNative ? "Using native secp256k1" : "Native secp256k1 requested but not available");
+  public void disableNative() {
+    useNative = false;
+  }
+
+  @Override
+  public boolean isNative() {
+    return useNative;
+  }
+
+  /**
+   * SECP256K1 is using the deterministic implementation of K calculation (defined on RFC 6979
+   * section 3.2)
+   *
+   * @return an instance of HMacDSAKCalculator
+   * @see <a href="https://datatracker.ietf.org/doc/html/rfc6979#section-3.2">RFC 6979 Section
+   *     3.2</a>
+   */
+  @Override
+  public DSAKCalculator getKCalculator() {
+    return new HMacDSAKCalculator(new SHA256Digest());
   }
 
   @Override
@@ -91,7 +118,12 @@ public class SECP256K1 extends AbstractSECP256 {
   public Optional<SECPPublicKey> recoverPublicKeyFromSignature(
       final Bytes32 dataHash, final SECPSignature signature) {
     if (useNative) {
-      return recoverFromSignatureNative(dataHash, signature);
+      Optional<SECPPublicKey> result = recoverFromSignatureNative(dataHash, signature);
+      if (result.isEmpty()) {
+        throw new IllegalArgumentException("Could not recover public key");
+      } else {
+        return result;
+      }
     } else {
       return super.recoverPublicKeyFromSignature(dataHash, signature);
     }
@@ -158,6 +190,18 @@ public class SECP256K1 extends AbstractSECP256 {
         != 0;
   }
 
+  @Override
+  protected BigInteger recoverFromSignature(
+      final int recId, final BigInteger r, final BigInteger s, final Bytes32 dataHash) {
+    if (useNative) {
+      return recoverFromSignatureNative(dataHash, new SECPSignature(r, s, (byte) recId))
+          .map(key -> new BigInteger(1, key.getEncoded()))
+          .orElse(null);
+    } else {
+      return super.recoverFromSignature(recId, r, s, dataHash);
+    }
+  }
+
   private Optional<SECPPublicKey> recoverFromSignatureNative(
       final Bytes32 dataHash, final SECPSignature signature) {
 
@@ -179,7 +223,7 @@ public class SECP256K1 extends AbstractSECP256 {
     if (LibSecp256k1.secp256k1_ecdsa_recover(
             LibSecp256k1.CONTEXT, newPubKey, parsedSignature, dataHash.toArrayUnsafe())
         == 0) {
-      throw new IllegalArgumentException("Could not recover public key");
+      return Optional.empty();
     }
 
     // parse the key

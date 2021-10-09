@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.qbt.support;
 
 import static org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions.forCommittedSeal;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -25,8 +26,8 @@ import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
@@ -40,6 +41,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.apache.tuweni.bytes.Bytes;
 
 public class RoundChangeMessage implements RlpTestCaseMessage {
+  private static final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
+
   private final SignedRoundChange signedRoundChange;
   private final Optional<String> block;
 
@@ -57,7 +60,7 @@ public class RoundChangeMessage implements RlpTestCaseMessage {
 
   @Override
   public BftMessage<RoundChangePayload> fromRlp(final Bytes rlp) {
-    return RoundChange.decode(rlp);
+    return RoundChange.decode(rlp, bftExtraDataCodec);
   }
 
   @Override

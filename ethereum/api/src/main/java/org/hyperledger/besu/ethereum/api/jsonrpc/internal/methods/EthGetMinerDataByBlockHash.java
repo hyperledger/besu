@@ -15,6 +15,8 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -25,17 +27,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.MinerDataResul
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.MinerDataResult.UncleRewardResult;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -86,17 +84,16 @@ public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
     final Wei transactionFee =
         block.getTransactions().stream()
             .map(
-                t -> {
-                  Optional<TransactionReceiptWithMetadata> transactionReceiptWithMetadata =
-                      blockchainQueries.transactionReceiptByTransactionHash(
-                          t.getTransaction().getHash());
-                  return t.getTransaction()
-                      .getGasPrice()
-                      .multiply(
-                          transactionReceiptWithMetadata
-                              .map(TransactionReceiptWithMetadata::getGasUsed)
-                              .orElse(0L));
-                })
+                t ->
+                    blockchainQueries
+                        .transactionReceiptByTransactionHash(t.getTransaction().getHash())
+                        .map(
+                            receipt ->
+                                receipt
+                                    .getTransaction()
+                                    .getEffectiveGasPrice(receipt.getBaseFee())
+                                    .multiply(receipt.getGasUsed()))
+                        .orElse(Wei.ZERO))
             .reduce(Wei.ZERO, BaseUInt256Value::add);
     final Wei uncleInclusionReward =
         staticBlockReward.multiply(block.getOmmers().size()).divide(32);

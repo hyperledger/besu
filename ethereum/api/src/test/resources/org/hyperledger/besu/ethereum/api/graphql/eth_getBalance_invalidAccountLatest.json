@@ -3,7 +3,7 @@
   "response": {
     "data" : {
       "account" : {
-        "balance" : "0x"
+        "balance" : "0x0"
       }
     }
   },

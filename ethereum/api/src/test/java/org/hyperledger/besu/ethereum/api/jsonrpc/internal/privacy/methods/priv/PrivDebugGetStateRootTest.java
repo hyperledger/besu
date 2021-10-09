@@ -24,20 +24,20 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -58,15 +58,15 @@ public class PrivDebugGetStateRootTest {
           Collections.singletonList(ENCLAVE_PUBLIC_KEY));
 
   private PrivDebugGetStateRoot method;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
-  private final PrivacyController privacyController = mock(DefaultPrivacyController.class);
+  private final PrivacyController privacyController =
+      mock(RestrictedDefaultPrivacyController.class);
 
   @Before
   public void setUp() {
-    method =
-        new PrivDebugGetStateRoot(blockchainQueries, enclavePublicKeyProvider, privacyController);
+    method = new PrivDebugGetStateRoot(blockchainQueries, privacyIdProvider, privacyController);
   }
 
   @Test
@@ -90,7 +90,7 @@ public class PrivDebugGetStateRootTest {
   public void shouldReturnErrorIfInvalidGroupId() {
     when(privacyController.findPrivacyGroupByGroupId(anyString(), anyString()))
         .thenCallRealMethod();
-    when(privacyController.findOffChainPrivacyGroupByGroupId(anyString(), anyString()))
+    when(privacyController.findOffchainPrivacyGroupByGroupId(anyString(), anyString()))
         .thenReturn(Optional.empty());
     final JsonRpcResponse response = method.response(request("not_base64", "latest"));
     assertThat(response.getType()).isEqualByComparingTo(JsonRpcResponseType.ERROR);
@@ -123,7 +123,7 @@ public class PrivDebugGetStateRootTest {
   }
 
   @Test
-  public void shouldReturnSuccessWhenOffChainGroupExists() {
+  public void shouldReturnSuccessWhenOffchainGroupExists() {
     final Hash hash = Hash.EMPTY_LIST_HASH;
     when(privacyController.findPrivacyGroupByGroupId(anyString(), anyString()))
         .thenReturn(Optional.of(PRIVACY_GROUP));

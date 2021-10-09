@@ -18,18 +18,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
-import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.operation.AbstractOperation;
+import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.Map;
 import java.util.Optional;
@@ -95,9 +100,9 @@ public class DebugOperationTracerTest {
   @Test
   public void shouldRecordStackWhenEnabled() {
     final MessageFrame frame = validMessageFrame();
-    final Bytes32 stackItem1 = Bytes32.fromHexString("0x01");
-    final Bytes32 stackItem2 = Bytes32.fromHexString("0x02");
-    final Bytes32 stackItem3 = Bytes32.fromHexString("0x03");
+    final UInt256 stackItem1 = UInt256.fromHexString("0x01");
+    final UInt256 stackItem2 = UInt256.fromHexString("0x02");
+    final UInt256 stackItem3 = UInt256.fromHexString("0x03");
     frame.pushStackItem(stackItem1);
     frame.pushStackItem(stackItem2);
     frame.pushStackItem(stackItem3);
@@ -119,9 +124,9 @@ public class DebugOperationTracerTest {
     final Bytes32 word1 = Bytes32.fromHexString("0x01");
     final Bytes32 word2 = Bytes32.fromHexString("0x02");
     final Bytes32 word3 = Bytes32.fromHexString("0x03");
-    frame.writeMemory(UInt256.ZERO, UInt256.valueOf(32), word1);
-    frame.writeMemory(UInt256.valueOf(32), UInt256.valueOf(32), word2);
-    frame.writeMemory(UInt256.valueOf(64), UInt256.valueOf(32), word3);
+    frame.writeMemory(0, 32, word1);
+    frame.writeMemory(32, 32, word2);
+    frame.writeMemory(64, 32, word3);
     final TraceFrame traceFrame = traceFrame(frame, new TraceOptions(false, true, false));
     assertThat(traceFrame.getMemory()).isPresent();
     assertThat(traceFrame.getMemory().get()).containsExactly(word1, word2, word3);
@@ -196,7 +201,7 @@ public class DebugOperationTracerTest {
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
     return new MessageFrameTestFixture()
         .initialGas(INITIAL_GAS)
-        .worldState(worldUpdater)
+        .worldUpdater(worldUpdater)
         .gasPrice(Wei.of(25))
         .blockHeader(blockHeader)
         .blockchain(blockchain)
@@ -216,9 +221,9 @@ public class DebugOperationTracerTest {
     final Bytes32 word1 = Bytes32.fromHexString("0x01");
     final Bytes32 word2 = Bytes32.fromHexString("0x02");
     final Bytes32 word3 = Bytes32.fromHexString("0x03");
-    frame.writeMemory(UInt256.ZERO, UInt256.valueOf(32), word1);
-    frame.writeMemory(UInt256.valueOf(32), UInt256.valueOf(32), word2);
-    frame.writeMemory(UInt256.valueOf(64), UInt256.valueOf(32), word3);
+    frame.writeMemory(0, 32, word1);
+    frame.writeMemory(32, 32, word2);
+    frame.writeMemory(64, 32, word3);
     return updatedStorage;
   }
 }

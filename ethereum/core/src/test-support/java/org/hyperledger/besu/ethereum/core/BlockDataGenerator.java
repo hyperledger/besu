@@ -23,9 +23,19 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SecureRandomProvider;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.AccessListEntry;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.log.LogTopic;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -174,7 +184,6 @@ public class BlockDataGenerator {
       if (random.nextFloat() < percentContractAccounts) {
         // Some percentage of accounts are contract accounts
         account.setCode(bytesValue(5, 50));
-        account.setVersion(Account.DEFAULT_VERSION);
         if (random.nextFloat() < percentContractAccountsWithNonEmptyStorage) {
           // Add some storage for contract accounts
           final int storageValues = random.nextInt(20) + 10;
@@ -274,28 +283,30 @@ public class BlockDataGenerator {
     final int gasLimit = random.nextInt() & Integer.MAX_VALUE;
     final int gasUsed = Math.max(0, gasLimit - 1);
     final long blockNonce = random.nextLong();
-
-    return BlockHeaderBuilder.create()
-        .parentHash(options.getParentHash(hash()))
-        .ommersHash(BodyValidation.ommersHash(body.getOmmers()))
-        .coinbase(options.getCoinbase(address()))
-        .stateRoot(options.getStateRoot(hash()))
-        .transactionsRoot(BodyValidation.transactionsRoot(body.getTransactions()))
-        .receiptsRoot(options.getReceiptsRoot(hash()))
-        .logsBloom(options.getLogsBloom(logsBloom()))
-        .difficulty(options.getDifficulty(Difficulty.of(uint256(4))))
-        .number(number)
-        .gasLimit(gasLimit)
-        .gasUsed(options.getGasUsed(gasUsed))
-        .timestamp(
-            options
-                .getTimestamp()
-                .orElse(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond()))
-        .extraData(options.getExtraData(bytes32()))
-        .mixHash(hash())
-        .nonce(blockNonce)
-        .blockHeaderFunctions(options.getBlockHeaderFunctions(new MainnetBlockHeaderFunctions()))
-        .buildBlockHeader();
+    final BlockHeaderBuilder blockHeaderBuilder =
+        BlockHeaderBuilder.create()
+            .parentHash(options.getParentHash(hash()))
+            .ommersHash(BodyValidation.ommersHash(body.getOmmers()))
+            .coinbase(options.getCoinbase(address()))
+            .stateRoot(options.getStateRoot(hash()))
+            .transactionsRoot(BodyValidation.transactionsRoot(body.getTransactions()))
+            .receiptsRoot(options.getReceiptsRoot(hash()))
+            .logsBloom(options.getLogsBloom(logsBloom()))
+            .difficulty(options.getDifficulty(Difficulty.of(uint256(4))))
+            .number(number)
+            .gasLimit(gasLimit)
+            .gasUsed(options.getGasUsed(gasUsed))
+            .timestamp(
+                options
+                    .getTimestamp()
+                    .orElse(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond()))
+            .extraData(options.getExtraData(bytes32()))
+            .mixHash(hash())
+            .nonce(blockNonce)
+            .blockHeaderFunctions(
+                options.getBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+    options.getBaseFee(Optional.of(uint256(2).toLong())).ifPresent(blockHeaderBuilder::baseFee);
+    return blockHeaderBuilder.buildBlockHeader();
   }
 
   public BlockBody body() {
@@ -372,7 +383,7 @@ public class BlockDataGenerator {
     return Transaction.builder()
         .type(TransactionType.ACCESS_LIST)
         .nonce(positiveLong())
-        .gasPrice(Wei.wrap(bytes32()))
+        .gasPrice(Wei.wrap(bytesValue(4)))
         .gasLimit(positiveLong())
         .to(to)
         .value(Wei.wrap(bytes32()))
@@ -399,8 +410,8 @@ public class BlockDataGenerator {
     return Transaction.builder()
         .type(TransactionType.EIP1559)
         .nonce(positiveLong())
-        .gasPremium(Wei.wrap(bytes32()))
-        .feeCap(Wei.wrap(bytes32()))
+        .maxPriorityFeePerGas(Wei.wrap(bytesValue(4)))
+        .maxFeePerGas(Wei.wrap(bytesValue(4)))
         .gasLimit(positiveLong())
         .to(to)
         .value(Wei.of(positiveLong()))
@@ -413,7 +424,7 @@ public class BlockDataGenerator {
     return Transaction.builder()
         .type(TransactionType.FRONTIER)
         .nonce(positiveLong())
-        .gasPrice(Wei.wrap(bytes32()))
+        .gasPrice(Wei.wrap(bytesValue(4)))
         .gasLimit(positiveLong())
         .to(to)
         .value(Wei.wrap(bytes32()))
@@ -582,7 +593,7 @@ public class BlockDataGenerator {
     return bytes;
   }
 
-  private KeyPair generateKeyPair() {
+  public KeyPair generateKeyPair() {
     final java.security.KeyPair rawKeyPair = keyPairGenerator.generateKeyPair();
     final BCECPrivateKey privateKey = (BCECPrivateKey) rawKeyPair.getPrivate();
     final BCECPublicKey publicKey = (BCECPublicKey) rawKeyPair.getPublic();
@@ -618,6 +629,7 @@ public class BlockDataGenerator {
     private boolean hasTransactions = true;
     private TransactionType[] transactionTypes = TransactionType.values();
     private Optional<Address> coinbase = Optional.empty();
+    private Optional<Optional<Long>> maybeBaseFee = Optional.empty();
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -769,6 +781,15 @@ public class BlockDataGenerator {
 
     public Address getCoinbase(final Address defaultValue) {
       return coinbase.orElse(defaultValue);
+    }
+
+    public Optional<Long> getBaseFee(final Optional<Long> defaultValue) {
+      return maybeBaseFee.orElse(defaultValue);
+    }
+
+    public BlockOptions setBaseFee(final Optional<Long> baseFee) {
+      this.maybeBaseFee = Optional.of(baseFee);
+      return this;
     }
   }
 }

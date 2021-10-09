@@ -25,7 +25,6 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
@@ -36,12 +35,13 @@ import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
@@ -58,18 +58,18 @@ public class QbftRound {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Subscribers<MinedBlockObserver> observers;
-  private final RoundState roundState;
-  private final BftBlockCreator blockCreator;
-  private final ProtocolContext protocolContext;
+  protected final RoundState roundState;
+  protected final BlockCreator blockCreator;
+  protected final ProtocolContext protocolContext;
   private final BlockImporter blockImporter;
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final QbftMessageTransmitter transmitter;
-  private final BftExtraDataCodec bftExtraDataCodec;
+  protected final BftExtraDataCodec bftExtraDataCodec;
 
   public QbftRound(
       final RoundState roundState,
-      final BftBlockCreator blockCreator,
+      final BlockCreator blockCreator,
       final ProtocolContext protocolContext,
       final BlockImporter blockImporter,
       final Subscribers<MinedBlockObserver> observers,
@@ -96,8 +96,9 @@ public class QbftRound {
   }
 
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
-    final Block block = blockCreator.createBlock(headerTimeStampSeconds);
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
+    final Block block = blockCreator.createBlock(headerTimeStampSeconds);
+
     LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
     updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
   }
@@ -123,7 +124,7 @@ public class QbftRound {
         bestPreparedCertificate.map(PreparedCertificate::getPrepares).orElse(emptyList()));
   }
 
-  private void updateStateWithProposalAndTransmit(
+  protected void updateStateWithProposalAndTransmit(
       final Block block,
       final List<SignedData<RoundChangePayload>> roundChanges,
       final List<SignedData<PreparePayload>> prepares) {

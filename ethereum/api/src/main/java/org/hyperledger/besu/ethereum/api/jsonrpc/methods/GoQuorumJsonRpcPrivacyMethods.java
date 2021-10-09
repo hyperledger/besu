@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.GoQuorumEthGetQuorumPayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.GoQuorumSendRawPrivateTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.GoQuorumStoreRawPrivateTransaction;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -26,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Collections;
 import java.util.Map;
@@ -47,12 +50,16 @@ public class GoQuorumJsonRpcPrivacyMethods extends PrivacyApiGroupJsonRpcMethods
   @Override
   protected Map<String, JsonRpcMethod> create(
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyIdProvider enclavePublicKeyProvider,
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
+
     if (goQuorumParameters.isPresent()) {
+      final GoQuorumEnclave enclave = goQuorumParameters.get().enclave();
       return mapOf(
           new GoQuorumSendRawPrivateTransaction(
-              goQuorumParameters.get().enclave(), getTransactionPool(), enclavePublicKeyProvider),
-          new GoQuorumStoreRawPrivateTransaction(goQuorumParameters.get().enclave()));
+              enclave, getTransactionPool(), enclavePublicKeyProvider),
+          new GoQuorumStoreRawPrivateTransaction(enclave),
+          new GoQuorumEthGetQuorumPayload(enclave));
     } else {
       return Collections.emptyMap();
     }

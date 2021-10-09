@@ -34,16 +34,18 @@ dependencies {
   implementation 'com.squareup.okhttp3:okhttp'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.tuweni:bytes'
+  implementation 'org.apache.tuweni:tuweni-bytes'
 
   implementation project(':consensus:clique')
   implementation project(':config')
   implementation project(':util')
+  implementation project(':datatypes')
   implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
   implementation project(':ethereum:p2p')
+  implementation project(':evm')
   implementation project(':plugin-api')
 
   annotationProcessor "org.immutables:value"

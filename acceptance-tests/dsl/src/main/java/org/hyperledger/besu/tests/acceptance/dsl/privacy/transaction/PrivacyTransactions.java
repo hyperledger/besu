@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivGetTransactionReceiptTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
@@ -29,8 +30,12 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.Priv
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.PrivNewFilterTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.PrivUninstallFilterTransaction;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.web3j.crypto.Credentials;
 import org.web3j.tx.Contract;
 
@@ -41,44 +46,49 @@ public class PrivacyTransactions {
     return new PrivGetTransactionReceiptTransaction(transactionHash);
   }
 
-  public CreatePrivacyGroupTransaction createPrivacyGroup(
+  public RestrictedCreatePrivacyGroupTransaction createPrivacyGroup(
       final String name, final String description, final PrivacyNode... nodes) {
-    return new CreatePrivacyGroupTransaction(name, description, nodes);
+    return new RestrictedCreatePrivacyGroupTransaction(name, description, nodes);
   }
 
-  public CreateOnChainPrivacyGroupTransaction createOnChainPrivacyGroup(
+  public CreateOnchainPrivacyGroupTransaction createOnchainPrivacyGroup(
       final PrivacyNode creator,
       final String privateFrom,
       final List<String> addresses,
       final String token) {
     creator.getBesu().useAuthenticationTokenInHeaderForJsonRpc(token);
-    return new CreateOnChainPrivacyGroupTransaction(creator, privateFrom, addresses);
+    return new CreateOnchainPrivacyGroupTransaction(creator, privateFrom, addresses);
   }
 
-  public CreateOnChainPrivacyGroupTransaction createOnChainPrivacyGroup(
+  public CreateOnchainPrivacyGroupTransaction createOnchainPrivacyGroup(
       final PrivacyNode creator, final String privateFrom, final List<String> addresses) {
-    return new CreateOnChainPrivacyGroupTransaction(creator, privateFrom, addresses);
+    return new CreateOnchainPrivacyGroupTransaction(creator, privateFrom, addresses);
   }
 
-  public AddToOnChainPrivacyGroupTransaction addToPrivacyGroup(
+  public AddToOnchainPrivacyGroupTransaction addToPrivacyGroup(
       final String privacyGroupId,
       final PrivacyNode adder,
       final Credentials signer,
       final PrivacyNode... nodes) {
-    return new AddToOnChainPrivacyGroupTransaction(privacyGroupId, adder, signer, nodes);
+    return new AddToOnchainPrivacyGroupTransaction(privacyGroupId, adder, signer, nodes);
   }
 
-  public LockOnChainPrivacyGroupTransaction privxLockPrivacyGroupAndCheck(
+  public LockOnchainPrivacyGroupTransaction privxLockPrivacyGroupAndCheck(
       final String privacyGroupId, final PrivacyNode locker, final Credentials signer) {
-    return new LockOnChainPrivacyGroupTransaction(privacyGroupId, locker, signer);
+    return new LockOnchainPrivacyGroupTransaction(privacyGroupId, locker, signer);
+  }
+
+  public UnlockOnchainPrivacyGroupTransaction privxUnlockPrivacyGroupAndCheck(
+      final String privacyGroupId, final PrivacyNode locker, final Credentials signer) {
+    return new UnlockOnchainPrivacyGroupTransaction(privacyGroupId, locker, signer);
   }
 
   public FindPrivacyGroupTransaction findPrivacyGroup(final List<String> nodes) {
     return new FindPrivacyGroupTransaction(nodes);
   }
 
-  public FindOnChainPrivacyGroupTransaction findOnChainPrivacyGroup(final List<String> nodes) {
-    return new FindOnChainPrivacyGroupTransaction(nodes);
+  public FindOnchainPrivacyGroupTransaction findOnchainPrivacyGroup(final List<String> nodes) {
+    return new FindOnchainPrivacyGroupTransaction(nodes);
   }
 
   public PrivDistributeTransactionTransaction privDistributeTransaction(
@@ -105,12 +115,12 @@ public class PrivacyTransactions {
     return new PrivGetLogsTransaction(privacyGroupId, filterParameter);
   }
 
-  public RemoveFromOnChainPrivacyGroupTransaction removeFromPrivacyGroup(
+  public RemoveFromOnchainPrivacyGroupTransaction removeFromPrivacyGroup(
       final String privacyGroupId,
       final String remover,
       final Credentials signer,
       final String memberToRemove) {
-    return new RemoveFromOnChainPrivacyGroupTransaction(
+    return new RemoveFromOnchainPrivacyGroupTransaction(
         privacyGroupId, remover, signer, memberToRemove);
   }
 
@@ -141,5 +151,15 @@ public class PrivacyTransactions {
   public PrivDebugGetStateRoot debugGetStateRoot(
       final String privacyGroupId, final String blockParam) {
     return new PrivDebugGetStateRoot(privacyGroupId, blockParam);
+  }
+
+  public String getLegacyPrivacyGroupId(final String privateFrom, final String... privateFor) {
+
+    final Bytes32 privacyGroupId =
+        PrivacyGroupUtil.calculateEeaPrivacyGroupId(
+            Bytes.fromBase64String(privateFrom),
+            Arrays.stream(privateFor).map(Bytes::fromBase64String).collect(Collectors.toList()));
+
+    return privacyGroupId.toBase64String();
   }
 }

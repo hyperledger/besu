@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.p2p.network.exceptions.IncompatiblePeerExce
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.PeerDisconnectedException;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.UnexpectedPeerConnectionException;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -49,6 +49,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.PingMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.WireMessageCodes;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -93,7 +94,7 @@ public class DeFramerTest {
   private final int port = 30303;
   private final List<Capability> capabilities = Arrays.asList(Capability.create("eth", 63));
   private final EnodeURL localEnode =
-      EnodeURL.builder()
+      EnodeURLImpl.builder()
           .ipAddress("127.0.0.1")
           .discoveryAndListeningPorts(port)
           .nodeId(Peer.randomId())
@@ -185,7 +186,7 @@ public class DeFramerTest {
     assertThat(peerConnection.getPeerInfo()).isEqualTo(remotePeerInfo);
 
     EnodeURL expectedEnode =
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .configureFromEnode(peer.getEnodeURL())
             // Discovery information is not available from peer info
             .disableDiscovery()
@@ -233,7 +234,7 @@ public class DeFramerTest {
     assertThat(out).isEmpty();
 
     final EnodeURL expectedEnode =
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .ipAddress(remoteAddress.getAddress())
             .nodeId(peer.getId())
             // Listening port should be disabled
@@ -370,7 +371,7 @@ public class DeFramerTest {
 
   private Peer createRemotePeer() {
     return DefaultPeer.fromEnodeURL(
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .ipAddress(remoteAddress.getAddress())
             .discoveryAndListeningPorts(remotePort)
             .nodeId(Peer.randomId())

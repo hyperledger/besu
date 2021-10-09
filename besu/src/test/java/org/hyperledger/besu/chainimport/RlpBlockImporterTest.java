@@ -21,13 +21,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 import org.hyperledger.besu.testutil.TestClock;
@@ -64,7 +65,7 @@ public final class RlpBlockImporterTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
-            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+            .miningParameters(new MiningParameters.Builder().enabled(false).build())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .privacyParameters(PrivacyParameters.DEFAULT)
@@ -72,6 +73,7 @@ public final class RlpBlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .evmConfiguration(EvmConfiguration.DEFAULT)
             .build();
     final RlpBlockImporter.ImportResult result =
         rlpBlockImporter.importBlockchain(source, targetController, false);
@@ -92,7 +94,7 @@ public final class RlpBlockImporterTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
-            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+            .miningParameters(new MiningParameters.Builder().enabled(false).build())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .privacyParameters(PrivacyParameters.DEFAULT)
@@ -100,6 +102,7 @@ public final class RlpBlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .evmConfiguration(EvmConfiguration.DEFAULT)
             .build();
 
     assertThatThrownBy(
@@ -120,7 +123,7 @@ public final class RlpBlockImporterTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
-            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+            .miningParameters(new MiningParameters.Builder().enabled(false).build())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .privacyParameters(PrivacyParameters.DEFAULT)
@@ -128,6 +131,7 @@ public final class RlpBlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .evmConfiguration(EvmConfiguration.DEFAULT)
             .build();
 
     final RlpBlockImporter.ImportResult result =
@@ -160,7 +164,7 @@ public final class RlpBlockImporterTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.valueOf(10))
-            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+            .miningParameters(new MiningParameters.Builder().enabled(false).build())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .privacyParameters(PrivacyParameters.DEFAULT)
@@ -168,6 +172,7 @@ public final class RlpBlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .evmConfiguration(EvmConfiguration.DEFAULT)
             .build();
     final RlpBlockImporter.ImportResult result =
         rlpBlockImporter.importBlockchain(source, controller, false);

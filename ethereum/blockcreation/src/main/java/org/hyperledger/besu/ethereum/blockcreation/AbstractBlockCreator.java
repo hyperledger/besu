@@ -14,25 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
@@ -40,6 +36,10 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.math.BigInteger;
@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
@@ -63,11 +64,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   private static final Logger LOG = LogManager.getLogger();
 
   protected final Address coinbase;
-
-  private final GasLimitCalculator gasLimitCalculator;
+  protected final Supplier<Optional<Long>> targetGasLimitSupplier;
 
   private final ExtraDataCalculator extraDataCalculator;
-  private final PendingTransactions pendingTransactions;
+  private final AbstractPendingTransactionsSorter pendingTransactions;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
   protected final BlockHeaderFunctions blockHeaderFunctions;
@@ -81,21 +81,21 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   protected AbstractBlockCreator(
       final Address coinbase,
+      final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
-      final PendingTransactions pendingTransactions,
+      final AbstractPendingTransactionsSorter pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final GasLimitCalculator gasLimitCalculator,
       final Wei minTransactionGasPrice,
       final Address miningBeneficiary,
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     this.coinbase = coinbase;
+    this.targetGasLimitSupplier = targetGasLimitSupplier;
     this.extraDataCalculator = extraDataCalculator;
     this.pendingTransactions = pendingTransactions;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
-    this.gasLimitCalculator = gasLimitCalculator;
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.miningBeneficiary = miningBeneficiary;
@@ -178,7 +178,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   BodyValidation.transactionsRoot(transactionResults.getTransactions()))
               .receiptsRoot(BodyValidation.receiptsRoot(transactionResults.getReceipts()))
               .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
-              .gasUsed(transactionResults.getTotalCumulativeGasUsed())
+              .gasUsed(transactionResults.getCumulativeGasUsed())
               .extraData(extraDataCalculator.get(parentHeader))
               .buildSealableBlockHeader();
 
@@ -220,18 +220,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             minBlockOccupancyRatio,
             isCancelled::get,
             miningBeneficiary,
-            protocolSpec.getTransactionPriceCalculator(),
-            protocolSpec.getGasBudgetCalculator(),
-            protocolSpec.getEip1559());
+            protocolSpec.getFeeMarket());
 
     if (transactions.isPresent()) {
-      return selector.evaluateTransactions(
-          processableBlockHeader.getNumber(),
-          processableBlockHeader.getGasLimit(),
-          transactions.get());
+      return selector.evaluateTransactions(transactions.get());
     } else {
-      return selector.buildTransactionListForBlock(
-          processableBlockHeader.getNumber(), processableBlockHeader.getGasLimit());
+      return selector.buildTransactionListForBlock();
     }
   }
 
@@ -240,11 +234,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     final MutableWorldState worldState =
         protocolContext
             .getWorldStateArchive()
-            .getMutable(parentStateRoot, parentHeader.getHash())
+            .getMutable(parentStateRoot, parentHeader.getHash(), false)
             .orElseThrow(
                 () -> {
                   LOG.info("Unable to create block because world state is not available");
-                  return new IllegalStateException(
+                  return new CancellationException(
                       "World state not available for block "
                           + parentHeader.getNumber()
                           + " with state root "
@@ -260,25 +254,31 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private ProcessableBlockHeader createPendingBlockHeader(final long timestamp) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
-    final long gasLimit = gasLimitCalculator.nextGasLimit(parentHeader.getGasLimit());
+    long gasLimit =
+        protocolSpec
+            .getGasLimitCalculator()
+            .nextGasLimit(
+                parentHeader.getGasLimit(),
+                targetGasLimitSupplier.get().orElse(parentHeader.getGasLimit()),
+                newBlockNumber);
+
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
     final BigInteger difficulty =
         difficultyCalculator.nextDifficulty(timestamp, parentHeader, protocolContext);
 
-    Long baseFee = null;
-    if (ExperimentalEIPs.eip1559Enabled && protocolSpec.isEip1559()) {
-      final EIP1559 eip1559 = protocolSpec.getEip1559().orElseThrow();
-      if (eip1559.isForkBlock(newBlockNumber)) {
-        baseFee = eip1559.getFeeMarket().getInitialBasefee();
-      } else {
-        baseFee =
-            eip1559.computeBaseFee(
-                newBlockNumber,
-                parentHeader.getBaseFee().orElseThrow(),
-                parentHeader.getGasUsed(),
-                eip1559.targetGasUsed(parentHeader));
-      }
-    }
+    final Long baseFee =
+        Optional.of(protocolSpec.getFeeMarket())
+            .filter(FeeMarket::implementsBaseFee)
+            .map(BaseFeeMarket.class::cast)
+            .map(
+                feeMarket ->
+                    feeMarket.computeBaseFee(
+                        newBlockNumber,
+                        parentHeader.getBaseFee().orElse(0L),
+                        parentHeader.getGasUsed(),
+                        feeMarket.targetGasUsed(parentHeader)))
+            .orElse(null);
+
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
         .coinbase(coinbase)

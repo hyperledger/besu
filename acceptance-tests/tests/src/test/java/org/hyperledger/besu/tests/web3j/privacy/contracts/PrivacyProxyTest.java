@@ -17,8 +17,8 @@ package org.hyperledger.besu.tests.web3j.privacy.contracts;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.hyperledger.besu.privacy.contracts.generated.DefaultOnChainPrivacyGroupManagementContract;
-import org.hyperledger.besu.privacy.contracts.generated.OnChainPrivacyGroupManagementProxy;
+import org.hyperledger.besu.privacy.contracts.generated.DefaultOnchainPrivacyGroupManagementContract;
+import org.hyperledger.besu.privacy.contracts.generated.OnchainPrivacyGroupManagementProxy;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
@@ -46,58 +45,58 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
       Base64String.wrap("9iaJ6OObl6TUWYjXAOyZsL0VaDPwF+tRFkMwwYSeqqw=");
   private final Base64String thirdParticipant =
       Base64String.wrap("Jo2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=");
-  private OnChainPrivacyGroupManagementProxy onChainPrivacyGroupManagementProxy;
+  private OnchainPrivacyGroupManagementProxy onchainPrivacyGroupManagementProxy;
 
   private static final String RAW_GET_PARTICIPANTS = "0x5aa68ac0";
   private static final String RAW_ADD_PARTICIPANT =
-      "0xb4926e2500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000";
+      "0xb4926e2500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001f772b2ee55f016431cefe724a05814324bb96e9afdb73e338665a693d4653678";
 
   private BesuNode minerNode;
-  private DefaultOnChainPrivacyGroupManagementContract defaultOnChainPrivacyGroupManagementContract;
+  private DefaultOnchainPrivacyGroupManagementContract defaultOnchainPrivacyGroupManagementContract;
 
   @Before
   public void setUp() throws Exception {
     minerNode = besu.createMinerNode("node");
     cluster.start(minerNode);
-    defaultOnChainPrivacyGroupManagementContract =
+    defaultOnchainPrivacyGroupManagementContract =
         minerNode.execute(
             contractTransactions.createSmartContract(
-                DefaultOnChainPrivacyGroupManagementContract.class));
-    onChainPrivacyGroupManagementProxy =
+                DefaultOnchainPrivacyGroupManagementContract.class));
+    onchainPrivacyGroupManagementProxy =
         minerNode.execute(
             contractTransactions.createSmartContract(
-                OnChainPrivacyGroupManagementProxy.class,
-                defaultOnChainPrivacyGroupManagementContract.getContractAddress()));
+                OnchainPrivacyGroupManagementProxy.class,
+                defaultOnchainPrivacyGroupManagementContract.getContractAddress()));
   }
 
   @Test
   public void rlp() throws Exception {
-    assertThat(onChainPrivacyGroupManagementProxy.isValid()).isEqualTo(true);
+    assertThat(onchainPrivacyGroupManagementProxy.isValid()).isEqualTo(true);
     contractVerifier
-        .validTransactionReceipt(onChainPrivacyGroupManagementProxy.getContractAddress())
-        .verify(onChainPrivacyGroupManagementProxy);
+        .validTransactionReceipt(onchainPrivacyGroupManagementProxy.getContractAddress())
+        .verify(onchainPrivacyGroupManagementProxy);
     assertThat(RAW_GET_PARTICIPANTS)
-        .isEqualTo(onChainPrivacyGroupManagementProxy.getParticipants().encodeFunctionCall());
+        .isEqualTo(onchainPrivacyGroupManagementProxy.getParticipants().encodeFunctionCall());
+
     assertThat(RAW_ADD_PARTICIPANT)
         .isEqualTo(
-            onChainPrivacyGroupManagementProxy
-                .addParticipants(Collections.emptyList())
+            onchainPrivacyGroupManagementProxy
+                .addParticipants(List.of(firstParticipant.raw()))
                 .encodeFunctionCall());
   }
 
-  @Ignore("return 0x which causes web3j to throw exception instead of return empty list")
   @Test
   public void deploysWithNoParticipant() throws Exception {
-    final List<byte[]> participants = onChainPrivacyGroupManagementProxy.getParticipants().send();
+    final List<byte[]> participants = onchainPrivacyGroupManagementProxy.getParticipants().send();
     assertThat(participants.size()).isEqualTo(0);
   }
 
   @Test
   public void canAddParticipants() throws Exception {
-    onChainPrivacyGroupManagementProxy
+    onchainPrivacyGroupManagementProxy
         .addParticipants(Arrays.asList(firstParticipant.raw(), secondParticipant.raw()))
         .send();
-    final List<byte[]> participants = onChainPrivacyGroupManagementProxy.getParticipants().send();
+    final List<byte[]> participants = onchainPrivacyGroupManagementProxy.getParticipants().send();
     assertThat(participants.size()).isEqualTo(2);
     assertThat(firstParticipant.raw()).isEqualTo(participants.get(0));
     assertThat(secondParticipant.raw()).isEqualTo(participants.get(1));
@@ -105,18 +104,18 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
 
   @Test
   public void nonOwnerCannotUpgrade() throws Exception {
-    onChainPrivacyGroupManagementProxy
+    onchainPrivacyGroupManagementProxy
         .addParticipants(Arrays.asList(firstParticipant.raw(), secondParticipant.raw()))
         .send();
-    final List<byte[]> participants = onChainPrivacyGroupManagementProxy.getParticipants().send();
+    final List<byte[]> participants = onchainPrivacyGroupManagementProxy.getParticipants().send();
     assertThat(participants.size()).isEqualTo(2);
     assertThat(firstParticipant.raw()).isEqualTo(participants.get(0));
     assertThat(secondParticipant.raw()).isEqualTo(participants.get(1));
 
-    final DefaultOnChainPrivacyGroupManagementContract upgradedContract =
+    final DefaultOnchainPrivacyGroupManagementContract upgradedContract =
         minerNode.execute(
             contractTransactions.createSmartContract(
-                DefaultOnChainPrivacyGroupManagementContract.class));
+                DefaultOnchainPrivacyGroupManagementContract.class));
 
     final HttpService httpService =
         new HttpService(
@@ -124,9 +123,9 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
     final Web3j web3j = Web3j.build(httpService);
 
     // load the proxy contract, use it with another signer
-    final OnChainPrivacyGroupManagementProxy proxyContractAccount2 =
-        OnChainPrivacyGroupManagementProxy.load(
-            onChainPrivacyGroupManagementProxy.getContractAddress(),
+    final OnchainPrivacyGroupManagementProxy proxyContractAccount2 =
+        OnchainPrivacyGroupManagementProxy.load(
+            onchainPrivacyGroupManagementProxy.getContractAddress(),
             web3j,
             Credentials.create(Accounts.GENESIS_ACCOUNT_TWO_PRIVATE_KEY),
             new DefaultGasProvider());
@@ -139,22 +138,22 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
 
   @Test
   public void ownerCanUpgrade() throws Exception {
-    onChainPrivacyGroupManagementProxy
+    onchainPrivacyGroupManagementProxy
         .addParticipants(Arrays.asList(firstParticipant.raw(), secondParticipant.raw()))
         .send();
-    final List<byte[]> participants = onChainPrivacyGroupManagementProxy.getParticipants().send();
+    final List<byte[]> participants = onchainPrivacyGroupManagementProxy.getParticipants().send();
     assertThat(participants.size()).isEqualTo(2);
     assertThat(firstParticipant.raw()).isEqualTo(participants.get(0));
     assertThat(secondParticipant.raw()).isEqualTo(participants.get(1));
 
-    final DefaultOnChainPrivacyGroupManagementContract upgradedContract =
+    final DefaultOnchainPrivacyGroupManagementContract upgradedContract =
         minerNode.execute(
             contractTransactions.createSmartContract(
-                DefaultOnChainPrivacyGroupManagementContract.class));
+                DefaultOnchainPrivacyGroupManagementContract.class));
 
-    onChainPrivacyGroupManagementProxy.upgradeTo(upgradedContract.getContractAddress()).send();
+    onchainPrivacyGroupManagementProxy.upgradeTo(upgradedContract.getContractAddress()).send();
     final List<byte[]> participantsAfterUpgrade =
-        onChainPrivacyGroupManagementProxy.getParticipants().send();
+        onchainPrivacyGroupManagementProxy.getParticipants().send();
     assertThat(participantsAfterUpgrade.size()).isEqualTo(2);
     assertThat(firstParticipant.raw()).isEqualTo(participantsAfterUpgrade.get(0));
     assertThat(secondParticipant.raw()).isEqualTo(participantsAfterUpgrade.get(1));
@@ -162,14 +161,14 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
 
   @Test
   public void canAddTwiceToContractWhenCallLock() throws Exception {
-    onChainPrivacyGroupManagementProxy
+    onchainPrivacyGroupManagementProxy
         .addParticipants(Arrays.asList(firstParticipant.raw(), thirdParticipant.raw()))
         .send();
-    onChainPrivacyGroupManagementProxy.lock().send();
-    onChainPrivacyGroupManagementProxy
+    onchainPrivacyGroupManagementProxy.lock().send();
+    onchainPrivacyGroupManagementProxy
         .addParticipants(Collections.singletonList(secondParticipant.raw()))
         .send();
-    final List<byte[]> participants = onChainPrivacyGroupManagementProxy.getParticipants().send();
+    final List<byte[]> participants = onchainPrivacyGroupManagementProxy.getParticipants().send();
     assertThat(participants.size()).isEqualTo(3);
     assertThat(firstParticipant.raw()).isEqualTo(participants.get(0));
     assertThat(thirdParticipant.raw()).isEqualTo(participants.get(1));

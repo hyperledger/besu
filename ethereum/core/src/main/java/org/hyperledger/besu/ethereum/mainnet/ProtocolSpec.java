@@ -14,18 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
-import org.hyperledger.besu.ethereum.vm.EVM;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 import java.util.Optional;
 
@@ -36,6 +35,8 @@ public class ProtocolSpec {
   private final EVM evm;
 
   private final GasCalculator gasCalculator;
+
+  private final GasLimitCalculator gasLimitCalculator;
 
   private final MainnetTransactionValidator transactionValidator;
 
@@ -69,11 +70,7 @@ public class ProtocolSpec {
 
   private final PrivateTransactionProcessor privateTransactionProcessor;
 
-  private final TransactionPriceCalculator transactionPriceCalculator;
-
-  private final Optional<EIP1559> eip1559;
-
-  private final TransactionGasBudgetCalculator gasBudgetCalculator;
+  private final FeeMarket feeMarket;
 
   private final BadBlockManager badBlockManager;
 
@@ -101,9 +98,8 @@ public class ProtocolSpec {
    * @param precompileContractRegistry all the pre-compiled contracts added
    * @param skipZeroBlockRewards should rewards be skipped if it is zero
    * @param gasCalculator the gas calculator to use.
-   * @param transactionPriceCalculator the transaction price calculator to use.
-   * @param eip1559 an {@link Optional} wrapping {@link EIP1559} manager class if appropriate.
-   * @param gasBudgetCalculator the gas budget calculator to use.
+   * @param gasLimitCalculator the gas limit calculator to use.
+   * @param feeMarket an {@link Optional} wrapping {@link FeeMarket} class if appropriate.
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param powHasher the proof-of-work hasher
    */
@@ -127,9 +123,8 @@ public class ProtocolSpec {
       final PrecompileContractRegistry precompileContractRegistry,
       final boolean skipZeroBlockRewards,
       final GasCalculator gasCalculator,
-      final TransactionPriceCalculator transactionPriceCalculator,
-      final Optional<EIP1559> eip1559,
-      final TransactionGasBudgetCalculator gasBudgetCalculator,
+      final GasLimitCalculator gasLimitCalculator,
+      final FeeMarket feeMarket,
       final BadBlockManager badBlockManager,
       final Optional<PoWHasher> powHasher) {
     this.name = name;
@@ -151,9 +146,8 @@ public class ProtocolSpec {
     this.precompileContractRegistry = precompileContractRegistry;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.gasCalculator = gasCalculator;
-    this.transactionPriceCalculator = transactionPriceCalculator;
-    this.eip1559 = eip1559;
-    this.gasBudgetCalculator = gasBudgetCalculator;
+    this.gasLimitCalculator = gasLimitCalculator;
+    this.feeMarket = feeMarket;
     this.badBlockManager = badBlockManager;
     this.powHasher = powHasher;
   }
@@ -317,34 +311,21 @@ public class ProtocolSpec {
   }
 
   /**
-   * Returns the transaction price calculator used in this specification.
+   * Returns the gasLimitCalculator used in this specification.
    *
-   * @return the transaction price calculator
+   * @return the gas limit calculator
    */
-  public TransactionPriceCalculator getTransactionPriceCalculator() {
-    return transactionPriceCalculator;
+  public GasLimitCalculator getGasLimitCalculator() {
+    return gasLimitCalculator;
   }
 
   /**
-   * Returns the EIP1559 manager used in this specification.
+   * Returns the Fee Market used in this specification.
    *
-   * @return the {@link Optional} wrapping EIP-1559 manager
+   * @return the {@link FeeMarket} implementation.
    */
-  public Optional<EIP1559> getEip1559() {
-    return eip1559;
-  }
-
-  public boolean isEip1559() {
-    return ExperimentalEIPs.eip1559Enabled && eip1559.isPresent();
-  }
-
-  /**
-   * Returns the gas budget calculator in this specification.
-   *
-   * @return the gas budget calculator
-   */
-  public TransactionGasBudgetCalculator getGasBudgetCalculator() {
-    return gasBudgetCalculator;
+  public FeeMarket getFeeMarket() {
+    return feeMarket;
   }
 
   /**

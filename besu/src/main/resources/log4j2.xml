@@ -3,7 +3,7 @@
     <Properties>
         <Property name="root.log.level">${env:LOG_LEVEL:-INFO}</Property>
         <Property name="root.log.logger">${env:LOGGER:-Console}</Property>
-        <Property name="host">${env:HOST:-${docker:containerId:-localhost}}</Property>
+        <Property name="host">${env:HOST:-${docker:containerId:-${hostName:-locahost}}}</Property>
         <Property name="splunk.url">${env:SPLUNK_URL}</Property>
         <Property name="splunk.token">${env:SPLUNK_TOKEN}</Property>
         <Property name="splunk.index">${env:SPLUNK_INDEX}</Property>

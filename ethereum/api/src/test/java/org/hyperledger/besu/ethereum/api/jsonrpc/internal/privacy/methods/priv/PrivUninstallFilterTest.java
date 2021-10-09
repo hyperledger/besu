@@ -27,8 +27,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivUninstallFilter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
@@ -48,13 +48,13 @@ public class PrivUninstallFilterTest {
 
   @Mock private FilterManager filterManager;
   @Mock private PrivacyController privacyController;
-  @Mock private EnclavePublicKeyProvider enclavePublicKeyProvider;
+  @Mock private PrivacyIdProvider privacyIdProvider;
 
   private PrivUninstallFilter method;
 
   @Before
   public void before() {
-    method = new PrivUninstallFilter(filterManager, privacyController, enclavePublicKeyProvider);
+    method = new PrivUninstallFilter(filterManager, privacyController, privacyIdProvider);
   }
 
   @Test
@@ -92,10 +92,10 @@ public class PrivUninstallFilterTest {
   public void multiTenancyCheckFailure() {
     final User user = mock(User.class);
 
-    when(enclavePublicKeyProvider.getEnclaveKey(any())).thenReturn(ENCLAVE_KEY);
+    when(privacyIdProvider.getPrivacyUserId(any())).thenReturn(ENCLAVE_KEY);
     doThrow(new MultiTenancyValidationException("msg"))
         .when(privacyController)
-        .verifyPrivacyGroupContainsEnclavePublicKey(eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY));
+        .verifyPrivacyGroupContainsPrivacyUserId(eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY));
 
     final JsonRpcRequestContext request =
         privUninstallFilterRequestWithUser(PRIVACY_GROUP_ID, FILTER_ID, user);

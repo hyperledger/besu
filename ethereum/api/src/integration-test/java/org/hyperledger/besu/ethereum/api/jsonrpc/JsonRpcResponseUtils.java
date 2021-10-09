@@ -36,6 +36,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
@@ -43,15 +46,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionCom
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionHashResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionResult;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -145,9 +145,10 @@ public class JsonRpcResponseUtils {
   }
 
   public TransactionResult transaction(
+      final TransactionType transactionType,
       final String blockHash,
       final String blockNumber,
-      final String chainId,
+      final Long baseFee,
       final String fromAddress,
       final String gas,
       final String gasPrice,
@@ -164,8 +165,8 @@ public class JsonRpcResponseUtils {
       final String s) {
 
     final Transaction transaction = mock(Transaction.class);
-    when(transaction.getType()).thenReturn(TransactionType.FRONTIER);
-    when(transaction.getGasPrice()).thenReturn(Wei.fromHexString(gasPrice));
+    when(transaction.getType()).thenReturn(transactionType);
+    when(transaction.getGasPrice()).thenReturn(Optional.of(Wei.fromHexString(gasPrice)));
     when(transaction.getNonce()).thenReturn(unsignedLong(nonce));
     when(transaction.getV()).thenReturn(bigInteger(v));
     when(transaction.getR()).thenReturn(bigInteger(r));
@@ -176,7 +177,6 @@ public class JsonRpcResponseUtils {
     when(transaction.getPayload()).thenReturn(bytes(input));
     when(transaction.getValue()).thenReturn(wei(value));
     when(transaction.getGasLimit()).thenReturn(unsignedLong(gas));
-    when(transaction.getChainId()).thenReturn(Optional.ofNullable(bigInteger(chainId)));
     when(transaction.getPublicKey()).thenReturn(Optional.ofNullable(publicKey));
     when(transaction.getSignature())
         .thenReturn(
@@ -193,6 +193,7 @@ public class JsonRpcResponseUtils {
         new TransactionWithMetadata(
             transaction,
             unsignedLong(blockNumber),
+            Optional.ofNullable(baseFee),
             Hash.fromHexString(blockHash),
             unsignedInt(transactionIndex)));
   }

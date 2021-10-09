@@ -1,0 +1,21 @@
+{
+  "genesis" : {
+    "author" : "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+    "difficulty" : "0x020000",
+    "gasLimit" : "0x04d2",
+    "baseFeePerGas" : "0x3039",
+    "extraData" : "0x00",
+    "timestamp" : "0x00",
+    "nonce" : "0x0000000000000000",
+    "mixHash" : "0x0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "params": {
+    "EIP150ForkBlock": "0x00",
+    "EIP158ForkBlock": "0x00",
+    "byzantiumForkBlock": "0x00",
+    "homesteadForkBlock": "0x00",
+    "londonForkBlock": "0x00"
+  },
+  "sealEngine": "NoProof",
+  "accounts": {}
+}

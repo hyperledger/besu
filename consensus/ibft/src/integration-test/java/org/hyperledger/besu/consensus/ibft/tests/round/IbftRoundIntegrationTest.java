@@ -38,6 +38,7 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -46,7 +47,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
@@ -65,6 +65,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class IbftRoundIntegrationTest {
 
   private final MessageFactory peerMessageFactory = new MessageFactory(NodeKeyUtils.generate());
+  private final MessageFactory peerMessageFactory2 = new MessageFactory(NodeKeyUtils.generate());
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();
   private ProtocolContext protocolContext;
@@ -181,7 +182,7 @@ public class IbftRoundIntegrationTest {
     verifyNoInteractions(multicaster);
 
     round.handleCommitMessage(
-        peerMessageFactory.createCommit(roundIdentifier, Hash.EMPTY, remoteCommitSeal));
+        peerMessageFactory2.createCommit(roundIdentifier, Hash.EMPTY, remoteCommitSeal));
     assertThat(roundState.isCommitted()).isTrue();
     verifyNoInteractions(multicaster);
 

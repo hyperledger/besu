@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -21,7 +22,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -72,12 +72,13 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
     } else if (blockParameterOrBlockHash.isPending()) {
       result = pendingResult(requestContext);
     } else if (blockParameterOrBlockHash.isNumeric() || blockParameterOrBlockHash.isEarliest()) {
-      OptionalLong blockNumber = blockParameterOrBlockHash.getNumber();
-      if (blockNumber.isEmpty()
-          || blockNumber.getAsLong() < 0
-          || blockNumber.getAsLong() > getBlockchainQueries().headBlockNumber()) {
+      final OptionalLong blockNumber = blockParameterOrBlockHash.getNumber();
+      if (blockNumber.isEmpty() || blockNumber.getAsLong() < 0) {
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+      } else if (blockNumber.getAsLong() > getBlockchainQueries().headBlockNumber()) {
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND);
       }
 
       result =

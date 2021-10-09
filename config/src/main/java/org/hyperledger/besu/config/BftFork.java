@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.config;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -22,14 +23,16 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 
 public class BftFork {
 
-  private static final String FORK_BLOCK_KEY = "block";
-  private static final String VALIDATORS_KEY = "validators";
-  private static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
+  public static final String FORK_BLOCK_KEY = "block";
+  public static final String VALIDATORS_KEY = "validators";
+  public static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
+  public static final String BLOCK_REWARD_KEY = "blockreward";
 
-  private final ObjectNode forkConfigRoot;
+  protected final ObjectNode forkConfigRoot;
 
   @JsonCreator
   public BftFork(final ObjectNode forkConfigRoot) {
@@ -48,6 +51,19 @@ public class BftFork {
     return JsonUtil.getInt(forkConfigRoot, BLOCK_PERIOD_SECONDS_KEY);
   }
 
+  public Optional<BigInteger> getBlockRewardWei() {
+    final Optional<String> configFileContent = JsonUtil.getString(forkConfigRoot, BLOCK_REWARD_KEY);
+
+    if (configFileContent.isEmpty()) {
+      return Optional.empty();
+    }
+    final String weiStr = configFileContent.get();
+    if (weiStr.startsWith("0x")) {
+      return Optional.of(new BigInteger(1, Bytes.fromHexStringLenient(weiStr).toArrayUnsafe()));
+    }
+    return Optional.of(new BigInteger(weiStr));
+  }
+
   public Optional<List<String>> getValidators() throws IllegalArgumentException {
     final Optional<ArrayNode> validatorNode = JsonUtil.getArrayNode(forkConfigRoot, VALIDATORS_KEY);
 
@@ -63,7 +79,7 @@ public class BftFork {
             value -> {
               if (!value.isTextual()) {
                 throw new IllegalArgumentException(
-                    "Bft Validator fork does not contain a string " + value.toString());
+                    "Bft Validator fork does not contain a string " + value);
               }
 
               validators.add(value.asText());

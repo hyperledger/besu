@@ -19,10 +19,11 @@ import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.V
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -30,7 +31,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionResult;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.ExecutedPrivateTransaction;
@@ -56,7 +56,7 @@ public class PrivGetPrivateTransactionTest {
   private final User user =
       new JWTUser(
           new JsonObject().put("privacyPublicKey", VALID_BASE64_ENCLAVE_KEY.toBase64String()), "");
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider =
+  private final PrivacyIdProvider privacyIdProvider =
       (user) -> VALID_BASE64_ENCLAVE_KEY.toBase64String();
 
   private PrivGetPrivateTransaction privGetPrivateTransaction;
@@ -64,10 +64,9 @@ public class PrivGetPrivateTransactionTest {
 
   @Before
   public void before() {
-    privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider);
+    privGetPrivateTransaction = new PrivGetPrivateTransaction(privacyController, privacyIdProvider);
 
-    markerTransaction = PrivateTransactionDataFixture.privacyMarkerTransaction();
+    markerTransaction = PrivateTransactionDataFixture.privateMarkerTransaction();
   }
 
   @Test
@@ -143,7 +142,7 @@ public class PrivGetPrivateTransactionTest {
 
   private PrivateTransactionResult makeRequest(final JsonRpcRequestContext request) {
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider);
+        new PrivGetPrivateTransaction(privacyController, privacyIdProvider);
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetPrivateTransaction.response(request);
     return (PrivateTransactionResult) response.getResult();

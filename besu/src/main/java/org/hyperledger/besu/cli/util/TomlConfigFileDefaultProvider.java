@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli.util;
 
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Wei;
 
 import java.io.File;
 import java.io.IOException;

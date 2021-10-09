@@ -112,7 +112,8 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
   @Override
   public void handleBlockTimerExpiry(final ConsensusRoundIdentifier roundIdentifier) {
     if (roundIdentifier.equals(currentRound.getRoundIdentifier())) {
-      currentRound.createAndSendProposalMessage(clock.millis() / 1000);
+      final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
+      currentRound.createAndSendProposalMessage(headerTimeStampSeconds);
     } else {
       LOG.trace(
           "Block timer expired for a round ({}) other than current ({})",

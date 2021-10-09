@@ -16,24 +16,23 @@ package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
@@ -116,7 +115,6 @@ public final class GenesisState {
           account.setNonce(genesisAccount.nonce);
           account.setBalance(genesisAccount.balance);
           account.setCode(genesisAccount.code);
-          account.setVersion(genesisAccount.version);
           genesisAccount.storage.forEach(account::setStorageValue);
         });
     updater.commit();
@@ -156,6 +154,7 @@ public final class GenesisState {
         .mixHash(parseMixHash(genesis))
         .nonce(parseNonce(genesis))
         .blockHeaderFunctions(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))
+        .baseFee(genesis.getBaseFeePerGas().orElse(null))
         .buildBlockHeader();
   }
 
@@ -228,7 +227,6 @@ public final class GenesisState {
     final Wei balance;
     final Map<UInt256, UInt256> storage;
     final Bytes code;
-    final int version;
 
     static GenesisAccount fromAllocation(final GenesisAllocation allocation) {
       return new GenesisAccount(
@@ -236,8 +234,7 @@ public final class GenesisState {
           allocation.getAddress(),
           allocation.getBalance(),
           allocation.getStorage(),
-          allocation.getCode(),
-          allocation.getVersion());
+          allocation.getCode());
     }
 
     private GenesisAccount(
@@ -245,13 +242,11 @@ public final class GenesisState {
         final String hexAddress,
         final String balance,
         final Map<String, String> storage,
-        final String hexCode,
-        final String version) {
+        final String hexCode) {
       this.nonce = withNiceErrorMessage("nonce", hexNonce, GenesisState::parseUnsignedLong);
       this.address = withNiceErrorMessage("address", hexAddress, Address::fromHexString);
       this.balance = withNiceErrorMessage("balance", balance, this::parseBalance);
       this.code = hexCode != null ? Bytes.fromHexString(hexCode) : null;
-      this.version = version != null ? Integer.decode(version) : Account.DEFAULT_VERSION;
       this.storage = parseStorage(storage);
     }
 
@@ -290,7 +285,6 @@ public final class GenesisState {
           .add("balance", balance)
           .add("storage", storage)
           .add("code", code)
-          .add("version", version)
           .toString();
     }
   }

@@ -21,6 +21,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogResult;
@@ -28,19 +30,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -91,7 +91,7 @@ public class LogsSubscriptionServiceTest {
 
     final int txIndex = 1;
     final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logIndex);
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
@@ -116,7 +116,7 @@ public class LogsSubscriptionServiceTest {
 
     final int txIndex = 1;
     final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logIndex);
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
@@ -152,7 +152,7 @@ public class LogsSubscriptionServiceTest {
 
     final int txIndex = 1;
     final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logIndex);
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
@@ -241,7 +241,7 @@ public class LogsSubscriptionServiceTest {
 
     final int txIndex = 1;
     final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logIndex);
 
     final List<LogsSubscription> subscriptions =
         Stream.generate(() -> createSubscription(targetLog.getLogger()))
@@ -335,7 +335,7 @@ public class LogsSubscriptionServiceTest {
       final int logIndex,
       final boolean isRemoved) {
     final Transaction expectedTransaction = block.getBody().getTransactions().get(txIndex);
-    final Log expectedLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final Log expectedLog = receipts.get(txIndex).getLogsList().get(logIndex);
 
     assertThat(result.getLogIndex()).isEqualTo(Quantity.create(logIndex));
     assertThat(result.getTransactionIndex()).isEqualTo(Quantity.create(txIndex));
@@ -380,7 +380,7 @@ public class LogsSubscriptionServiceTest {
       final TransactionReceipt receipt = gen.receipt(logsSupplier.get());
 
       receipts.add(receipt);
-      receipt.getLogs().forEach(logs::add);
+      receipt.getLogsList().forEach(logs::add);
       blockOptions.addTransaction(tx);
     }
 

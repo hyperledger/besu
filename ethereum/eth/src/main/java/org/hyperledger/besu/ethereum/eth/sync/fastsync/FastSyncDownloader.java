@@ -88,12 +88,14 @@ public class FastSyncDownloader {
 
   private CompletableFuture<FastSyncState> handleFailure(final Throwable error) {
     trailingPeerRequirements = Optional.empty();
-    if (ExceptionUtils.rootCause(error) instanceof FastSyncException) {
+    Throwable rootCause = ExceptionUtils.rootCause(error);
+    if (rootCause instanceof FastSyncException) {
       return CompletableFuture.failedFuture(error);
-    } else if (ExceptionUtils.rootCause(error) instanceof StalledDownloadException) {
-      LOG.warn(
-          "Fast sync was unable to download the world state. Retrying with a new pivot block.");
+    } else if (rootCause instanceof StalledDownloadException) {
+      LOG.info("Re-pivoting to newer block.");
       return start(FastSyncState.EMPTY_SYNC_STATE);
+    } else if (rootCause instanceof CancellationException) {
+      return CompletableFuture.failedFuture(error);
     } else {
       LOG.error(
           "Encountered an unexpected error during fast sync. Restarting fast sync in "
@@ -108,6 +110,7 @@ public class FastSyncDownloader {
   public void stop() {
     synchronized (this) {
       if (running.compareAndSet(true, false)) {
+        LOG.info("Stopping fast sync");
         // Cancelling the world state download will also cause the chain download to be cancelled.
         worldStateDownloader.cancel();
       }

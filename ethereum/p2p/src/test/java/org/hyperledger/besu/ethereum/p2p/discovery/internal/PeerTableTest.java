@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.AddResult.AddOutcome;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.EvictResult;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.EvictResult.EvictOutcome;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 
 import java.util.List;
@@ -58,7 +58,7 @@ public class PeerTableTest {
   public void addSelf() {
     final DiscoveryPeer localPeer =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .nodeId(Peer.randomId())
                 .ipAddress("127.0.0.1")
                 .discoveryAndListeningPorts(12345)

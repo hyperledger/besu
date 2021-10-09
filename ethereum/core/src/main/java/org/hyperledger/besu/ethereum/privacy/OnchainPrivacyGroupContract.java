@@ -14,37 +14,119 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
+import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.CAN_EXECUTE_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
 
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.data.Restriction;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /*
- This contract is an abstraction on top of the privacy group management smart contract.
- TODO: there are a few places on OnChainPrivacyPrecompiledContract that we could use this class instead of a transaction simulator there.
+ This class is an abstraction on top of the privacy group management smart contract.
+
+ It is possible to use it in two different ways that carry different
+ lifetime expectations and call semantics:
+
+ 1. When constructed using `OnchainPrivacyGroupContract(PrivateTransactionSimulator)`
+    the object is expected to be long-lived. Methods can be supplied
+    with block height or block hash parameters to select which block's
+    state is queried.
+
+ 2. When using the alternative constructor, no height or hash
+    parameter must be supplied to subsequent method calls. All methods
+    operate on the state specified by the given MessageFrame. Only
+    when constructed this way, the class can be used to query state
+    that is not on a block boundary. Used this way, the object's life
+    time is intended to be short.
 */
 public class OnchainPrivacyGroupContract {
+  @FunctionalInterface
+  public interface TransactionSimulator {
+    Optional<TransactionProcessingResult> simulate(
+        final String privacyGroupId,
+        final Bytes callData,
+        final Optional<Hash> blockHash,
+        final Optional<Long> blockNumber);
+  }
 
-  private final PrivateTransactionSimulator privateTransactionSimulator;
+  final TransactionSimulator transactionSimulator;
 
   public OnchainPrivacyGroupContract(
       final PrivateTransactionSimulator privateTransactionSimulator) {
-    this.privateTransactionSimulator = privateTransactionSimulator;
+    transactionSimulator =
+        (privacyGroupId, callData, blockHash, blockNumber) -> {
+          final CallParameter callParameter = buildCallParams(callData);
+          if (blockHash.isPresent()) {
+            return privateTransactionSimulator.process(
+                privacyGroupId, callParameter, blockHash.get());
+          } else if (blockNumber.isPresent()) {
+            return privateTransactionSimulator.process(
+                privacyGroupId, callParameter, blockNumber.get());
+          } else {
+            return privateTransactionSimulator.process(privacyGroupId, callParameter);
+          }
+        };
+  }
+
+  public OnchainPrivacyGroupContract(
+      final MessageFrame messageFrame,
+      final ProcessableBlockHeader currentBlockHeader,
+      final MutableWorldState disposablePrivateState,
+      final WorldUpdater privateWorldStateUpdater,
+      final WorldStateArchive privateWorldStateArchive,
+      final PrivateTransactionProcessor privateTransactionProcessor) {
+    transactionSimulator =
+        (base64privacyGroupId, callData, blockHash, blockNumber) -> {
+          assert !blockHash.isPresent();
+          assert !blockNumber.isPresent();
+
+          final Bytes privacyGroupId = Bytes.fromBase64String(base64privacyGroupId);
+          final MutableWorldState localMutableState =
+              privateWorldStateArchive.getMutable(disposablePrivateState.rootHash(), null).get();
+          final WorldUpdater updater = localMutableState.updater();
+          final PrivateTransaction privateTransaction =
+              buildTransaction(privacyGroupId, privateWorldStateUpdater, callData);
+
+          return Optional.of(
+              privateTransactionProcessor.processTransaction(
+                  messageFrame.getWorldUpdater(),
+                  updater,
+                  currentBlockHeader,
+                  messageFrame.getContextVariable(PrivateStateUtils.KEY_TRANSACTION_HASH),
+                  privateTransaction,
+                  messageFrame.getMiningBeneficiary(),
+                  OperationTracer.NO_TRACING,
+                  messageFrame.getBlockHashLookup(),
+                  privacyGroupId));
+        };
   }
 
   public Optional<PrivacyGroup> getPrivacyGroupById(final String privacyGroupId) {
@@ -66,16 +148,9 @@ public class OnchainPrivacyGroupContract {
       final Optional<Hash> blockHash,
       final Optional<Long> blockNumber) {
 
-    final CallParameter callParams = buildCallParams(GET_PARTICIPANTS_METHOD_SIGNATURE);
-    final Optional<TransactionProcessingResult> result;
-
-    if (blockHash.isPresent()) {
-      result = privateTransactionSimulator.process(privacyGroupId, callParams, blockHash.get());
-    } else if (blockNumber.isPresent()) {
-      result = privateTransactionSimulator.process(privacyGroupId, callParams, blockNumber.get());
-    } else {
-      result = privateTransactionSimulator.process(privacyGroupId, callParams);
-    }
+    final Optional<TransactionProcessingResult> result =
+        transactionSimulator.simulate(
+            privacyGroupId, GET_PARTICIPANTS_METHOD_SIGNATURE, blockHash, blockNumber);
     return readPrivacyGroupFromResult(privacyGroupId, result);
   }
 
@@ -101,28 +176,68 @@ public class OnchainPrivacyGroupContract {
   }
 
   public Optional<Bytes32> getVersion(final String privacyGroupId, final Optional<Hash> blockHash) {
-    final CallParameter callParams = buildCallParams(GET_VERSION_METHOD_SIGNATURE);
-    final Optional<TransactionProcessingResult> result;
-
-    if (blockHash.isPresent()) {
-      result = privateTransactionSimulator.process(privacyGroupId, callParams, blockHash.get());
-    } else {
-      result = privateTransactionSimulator.process(privacyGroupId, callParams);
-    }
-
+    final Optional<TransactionProcessingResult> result =
+        transactionSimulator.simulate(
+            privacyGroupId, GET_VERSION_METHOD_SIGNATURE, blockHash, Optional.empty());
     return result.map(TransactionProcessingResult::getOutput).map(Bytes32::wrap);
+  }
+
+  public Optional<Bytes32> getCanExecute(
+      final String privacyGroupId, final Optional<Hash> blockHash) {
+    final Optional<TransactionProcessingResult> result =
+        transactionSimulator.simulate(
+            privacyGroupId, CAN_EXECUTE_METHOD_SIGNATURE, blockHash, Optional.empty());
+    return result.map(TransactionProcessingResult::getOutput).map(Bytes32::wrap);
+  }
+
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+
+  // Dummy signature for transactions to not fail being processed.
+  private static final SECPSignature FAKE_SIGNATURE =
+      SIGNATURE_ALGORITHM
+          .get()
+          .createSignature(
+              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+              (byte) 0);
+
+  private PrivateTransaction buildTransaction(
+      final Bytes privacyGroupId,
+      final WorldUpdater privateWorldStateUpdater,
+      final Bytes payload) {
+    return PrivateTransaction.builder()
+        .privateFrom(Bytes.EMPTY)
+        .privacyGroupId(privacyGroupId)
+        .restriction(Restriction.RESTRICTED)
+        .nonce(
+            privateWorldStateUpdater.getAccount(Address.ZERO) != null
+                ? privateWorldStateUpdater.getAccount(Address.ZERO).getNonce()
+                : 0)
+        .gasPrice(Wei.of(1000))
+        .gasLimit(3000000)
+        .to(ONCHAIN_PRIVACY_PROXY)
+        .sender(Address.ZERO)
+        .value(Wei.ZERO)
+        .payload(payload)
+        .signature(FAKE_SIGNATURE)
+        .build();
   }
 
   private CallParameter buildCallParams(final Bytes methodCall) {
     return new CallParameter(
-        Address.ZERO, Address.ONCHAIN_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
+        Address.ZERO, ONCHAIN_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
   }
 
   private List<String> decodeList(final Bytes rlpEncodedList) {
     final ArrayList<String> decodedElements = new ArrayList<>();
     // first 32 bytes is dynamic list offset
-    final UInt256 lengthOfList = UInt256.fromBytes(rlpEncodedList.slice(32, 32)); // length of list
-    for (int i = 0; i < lengthOfList.toLong(); ++i) {
+    if (rlpEncodedList.size() < 64) return decodedElements;
+    final long lengthOfList =
+        UInt256.fromBytes(rlpEncodedList.slice(32, 32)).toLong(); // length of list
+    if (rlpEncodedList.size() < 64 + lengthOfList * 32) return decodedElements;
+
+    for (int i = 0; i < lengthOfList; ++i) {
       decodedElements.add(
           Bytes.wrap(rlpEncodedList.slice(64 + (32 * i), 32)).toBase64String()); // participant
     }

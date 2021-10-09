@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.query;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.PrivateWorldStateReader;
@@ -70,7 +70,7 @@ public class PrivacyQueries {
 
     final List<Hash> pmtHashList =
         privateTransactionMetadataList.stream()
-            .map(PrivateTransactionMetadata::getPrivacyMarkerTransactionHash)
+            .map(PrivateTransactionMetadata::getPrivateMarkerTransactionHash)
             .collect(Collectors.toList());
 
     final List<PrivateTransactionReceipt> privateTransactionReceiptList =
@@ -90,7 +90,7 @@ public class PrivacyQueries {
                     privateTransactionReceiptList.get(i),
                     blockNumber,
                     blockHash,
-                    privateTransactionMetadataList.get(i).getPrivacyMarkerTransactionHash(),
+                    privateTransactionMetadataList.get(i).getPrivateMarkerTransactionHash(),
                     findPMTIndex(pmtHashList.get(i)),
                     removed))
         .flatMap(Collection::stream)

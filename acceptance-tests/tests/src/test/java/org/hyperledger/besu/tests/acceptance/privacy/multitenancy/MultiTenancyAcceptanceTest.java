@@ -21,20 +21,20 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.hyperledger.besu.ethereum.core.Address.DEFAULT_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
@@ -326,7 +326,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
         .value(Wei.ZERO)
         .payload(Bytes.wrap(new byte[] {}))
         .sender(senderAddress)
-        .chainId(BigInteger.valueOf(2018))
+        .chainId(BigInteger.valueOf(1337))
         .privateFrom(Bytes.fromBase64String(PARTICIPANT_ENCLAVE_KEY0))
         .restriction(Restriction.RESTRICTED)
         .privacyGroupId(Bytes.fromBase64String(PRIVACY_GROUP_ID))

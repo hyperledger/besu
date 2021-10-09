@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -24,7 +25,7 @@ import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
 
 /** An interface for creating various Metrics components. */
-public interface MetricsSystem {
+public interface MetricsSystem extends BesuService {
 
   /**
    * Creates a Counter.
@@ -49,6 +50,18 @@ public interface MetricsSystem {
    * @return The created LabelledMetric instance.
    */
   LabelledMetric<Counter> createLabelledCounter(
+      MetricCategory category, String name, String help, String... labelNames);
+
+  /**
+   * Creates a Gauge with assigned labels.
+   *
+   * @param category The {@link MetricCategory} this gauge is assigned to.
+   * @param name A name for this metric.
+   * @param help A human readable description of the metric.
+   * @param labelNames An array of labels to assign to the Gauge.
+   * @return The created LabelledGauge instance.
+   */
+  LabelledGauge createLabelledGauge(
       MetricCategory category, String name, String help, String... labelNames);
 
   /**

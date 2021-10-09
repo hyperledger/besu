@@ -29,20 +29,24 @@ jar {
 
 dependencies {
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(':ethereum:p2p')
+  implementation project(':evm')
   implementation project(':metrics:core')
   implementation project(':util')
 
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:toml'
-  implementation 'org.apache.tuweni:units'
-  implementation 'org.web3j:abi:5.0.0'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-toml'
+  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'org.web3j:abi'
 
   testImplementation project(':config')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':evm')
   testImplementation project(':testutil')
   testImplementation 'io.vertx:vertx-core'
   testImplementation 'junit:junit'

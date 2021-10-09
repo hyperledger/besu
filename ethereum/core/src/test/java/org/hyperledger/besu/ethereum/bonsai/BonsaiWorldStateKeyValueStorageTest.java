@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.bonsai;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 
@@ -177,8 +177,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   @Test
   public void isWorldStateAvailable_defaultIsFalse() {
-    assertThat(emptyStorage().isWorldStateAvailable(UInt256.valueOf(1).toBytes(), Hash.EMPTY))
-        .isFalse();
+    assertThat(emptyStorage().isWorldStateAvailable(UInt256.valueOf(1), Hash.EMPTY)).isFalse();
   }
 
   @Test

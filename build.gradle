@@ -20,13 +20,13 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 import java.text.SimpleDateFormat
 
 plugins {
-  id 'com.diffplug.spotless' version '5.9.0'
-  id 'com.github.ben-manes.versions' version '0.36.0'
-  id 'com.github.hierynomus.license' version '0.15.0'
-  id 'com.jfrog.artifactory' version '4.20.0'
+  id 'com.diffplug.spotless' version '5.14.2'
+  id 'com.github.ben-manes.versions' version '0.39.0'
+  id 'com.github.hierynomus.license' version '0.16.1'
+  id 'com.jfrog.artifactory' version '4.24.14'
   id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-  id 'me.champeau.gradle.jmh' version '0.5.0' apply false
-  id 'net.ltgt.errorprone' version '1.3.0'
+  id 'me.champeau.jmh' version '0.6.6' apply false
+  id 'net.ltgt.errorprone' version '2.0.2'
   id 'maven-publish'
 }
 
@@ -96,14 +96,13 @@ allprojects {
 
   task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
-    from javadoc.destinationDir
+    from javadoc.outputDirectory
   }
 
   sourceCompatibility = 11
   targetCompatibility = 11
 
   repositories {
-    jcenter()
     mavenCentral()
     maven { url "https://hyperledger.jfrog.io/hyperledger/besu-maven" }
     maven { url "https://artifacts.consensys.net/public/maven/maven/" }
@@ -117,18 +116,10 @@ allprojects {
   spotless {
     java {
       // This path needs to be relative to each project
-      target fileTree('.') {
-        include '**/src/*/java/**/*.java'
-        exclude '**/generalstate/GeneralStateReferenceTest*.java'
-        exclude '**/generalstate/GeneralStateRegressionReferenceTest*.java'
-        exclude '**/generalstate/LegacyGeneralStateReferenceTest*.java'
-        exclude '**/blockchain/BlockchainReferenceTest*.java'
-        exclude '**/blockchain/LegacyBlockchainReferenceTest*.java'
-        exclude '**/reference-test/resources/docker_interop/**'
-        exclude '**/.gradle/**'
-      }
+      target '**/*.java'
+      targetExclude '**/reference-test/resources/**/*.java'
       removeUnusedImports()
-      googleJavaFormat('1.7')
+      googleJavaFormat('1.10.0')
       importOrder 'org.hyperledger', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
@@ -138,20 +129,10 @@ allprojects {
       greclipse().configFile(rootProject.file('gradle/formatter.properties'))
       endWithNewline()
     }
-
     // Below this line are currently only license header tasks
     format 'groovy', { target '**/src/*/grovy/**/*.groovy' }
-
-    // Currently disabled due to referencetest issues
-    //  format 'bash', {
-    //    target fileTree('.') {
-    //      include '**/*.sh'
-    //     exclude '**/ansible/**'
-    //    }
-    //  }
-    //  format 'sol', {
-    //    target fileTree('.') { include '**/*.sol' }
-    //  }
+    format 'bash', { target '**/*.sh' }
+    format 'sol', { target '**/*.sol' }
   }
 
   tasks.withType(JavaCompile) {
@@ -233,7 +214,24 @@ allprojects {
       '--add-opens',
       'java.base/java.util.concurrent=ALL-UNNAMED',
       '--add-opens',
-      'java.base/java.util.concurrent.atomic=ALL-UNNAMED'
+      'java.base/java.util.concurrent.atomic=ALL-UNNAMED',
+      // errorprone tests need access to the javac compiler
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED',
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED',
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED',
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED',
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED',
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED',
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED'
     ]
     Set toImport = [
       'test.ethereum.include',
@@ -427,7 +425,7 @@ subprojects {
   }
 
   if (file('src/jmh').directory) {
-    apply plugin: 'me.champeau.gradle.jmh'
+    apply plugin: 'me.champeau.jmh'
 
     jmh {
       // Allows to control JMH execution directly from the command line. I typical execution may look
@@ -440,10 +438,10 @@ subprojects {
       fork = _intCmdArg('f')
       iterations = _intCmdArg('i')
       benchmarkMode = _strListCmdArg('bm')
-      include = _strListCmdArg('include', [''])
+      includes = _strListCmdArg('include', [''])
       humanOutputFile = project.file("${project.buildDir}/reports/jmh/results.txt")
       resultFormat = 'JSON'
-      duplicateClassesStrategy = 'warn'
+      duplicateClassesStrategy = DuplicatesStrategy.WARN
     }
 
     dependencies { jmh 'org.apache.logging.log4j:log4j-api' }
@@ -504,28 +502,50 @@ def tweakStartScript(createScriptTask) {
 }
 
 startScripts {
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
   doLast {
     tweakStartScript(startScripts)
   }
 }
 
 task evmToolStartScripts(type: CreateStartScripts) {
-  mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
+  mainClass = 'org.hyperledger.besu.evmtool.EvmTool'
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'evm'
   defaultJvmOpts = [
     "-Dsecp256k1.randomize=false"
   ]
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
   doLast {
     tweakStartScript(evmToolStartScripts)
+  }
+}
+
+task autocomplete(type: JavaExec) {
+  dependsOn compileJava
+  def tempAutocompleteFile = File.createTempFile("besu", ".autocomplete")
+  standardOutput tempAutocompleteFile.newOutputStream()
+  outputs.file "$buildDir/besu.autocomplete.sh"
+
+  mainClass = application.mainClass
+  args "generate-completion"
+  classpath sourceSets.main.runtimeClasspath
+  doLast {
+    copy {
+      from tempAutocompleteFile
+      into "$buildDir"
+      rename tempAutocompleteFile.getName(), 'besu.autocomplete.sh'
+    }
   }
 }
 
 installDist { dependsOn checkLicenses }
 
 distTar {
-  dependsOn checkLicenses
+  dependsOn checkLicenses, autocomplete
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -534,7 +554,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicenses
+  dependsOn checkLicenses, autocomplete
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
@@ -600,6 +620,7 @@ tasks.register("dockerDistUntar") {
       from tarTree(distTarFile)
       into(dockerBuildDir)
     }
+    project.delete(files("${dockerBuildDir}/besu"))
     file("${dockerBuildDir}/${distTarFileName}").renameTo("${dockerBuildDir}/besu")
   }
 }
@@ -629,6 +650,11 @@ task distDocker {
       executable "sh"
       args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:${dockerBuildVersion}'"
     }
+    // create a static tag for the benchmark target
+    exec {
+      executable "sh"
+      args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:benchmark'"
+    }
   }
 }
 
@@ -644,7 +670,7 @@ task testDocker {
     for (def variant in dockerVariants) {
       exec {
         def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
-        workingDir "docker/${variant}"
+        workingDir "${projectDir}/docker/${variant}"
         executable "sh"
         args "-c", "bash ../test.sh ${image}-${variant}"
       }
@@ -660,14 +686,15 @@ task acceptanceTestsQuorum {
    * Basic tests for private and public tx: basic
    * Start a Besu/EthSigner/Tessera network with IBFT2: networks/typical-besu::ibft2
    *
-   * Not available features in Besu: privacy-enhancements-disabled, extension
-   * Not available RPC methods in Besu: async, storage-root, get-quorum-payload, personal-api-signed
+   * Filter only for spam tests supported by Besu: (spam && raw)
+   * Not available features in Besu: privacy-enhancements-disabled, extension, mps
+   * Not available RPC methods in Besu: async, storage-root, personal-api-signed
    *
-   * Ignored for now (privacy-polishing): graphql, eth-api-signed, (estimategas && public)
+   * Ignored for now (privacy-polishing): eth-api-signed, nosupport
    *
    * LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG -- enables HTTP JSON-RPC logging
    */
-  def tags = "(basic && !(estimategas && public) && !eth-api-signed && !privacy-enhancements-disabled && !graphql && !async && !extension && !storage-root && !get-quorum-payload && !personal-api-signed) || networks/typical-besu::ibft2"
+  def tags = "(basic && !nosupport && !mps && !(spam && !raw) && !eth-api-signed && !privacy-enhancements-disabled && !async && !extension && !storage-root && !personal-api-signed) || networks/typical-besu::ibft2"
 
   doLast {
     exec {
@@ -695,7 +722,7 @@ task dockerUpload {
   def image = "${imageName}:${dockerBuildVersion}"
   def additionalTags = []
 
-  if (project.hasProperty('branch') && project.property('branch') == 'master') {
+  if (project.hasProperty('branch') && project.property('branch') == 'main') {
     additionalTags.add('develop')
   }
 
@@ -757,8 +784,8 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   classDirectories.from files(subprojects.sourceSets.main.output)
   executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
   reports {
-    xml.enabled true
-    csv.enabled true
+    xml.required = true
+    csv.required = true
     html.destination file("build/reports/jacocoHtml")
   }
   onlyIf = { true }
@@ -854,6 +881,7 @@ distributions {
       from("build/reports/license/license-dependency.html") { into "." }
       from("./docs/GettingStartedBinaries.md") { into "." }
       from("./docs/DocsArchive0.8.0.html") { into "." }
+      from("build/besu.autocomplete.sh") { into "." }
     }
   }
 }

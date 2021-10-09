@@ -20,8 +20,12 @@ import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStora
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -29,7 +33,10 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.Before;
@@ -102,5 +109,55 @@ public class BonsaiWorldStateArchiveTest {
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
     assertThat(bonsaiWorldStateArchive.getMutable(null, blockHeader.getHash(), false))
         .containsInstanceOf(BonsaiLayeredWorldState.class);
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  @Test
+  public void testGetMutableWithStorageInconsistencyRollbackTheState() {
+
+    when(keyValueStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
+    final Map layeredWorldStatesByHash = mock(HashMap.class);
+
+    bonsaiWorldStateArchive =
+        new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash);
+    final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
+    final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
+    final TrieLogLayer trieLogLayer = new TrieLogLayer();
+    trieLogLayer.setBlockHash(blockHeader.getHash());
+    trieLogLayer.writeTo(rlpLog);
+
+    when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
+
+    assertThat(bonsaiWorldStateArchive.getMutable(null, blockHeader.getHash()))
+        .containsInstanceOf(BonsaiPersistedWorldState.class);
+
+    // verify is trying to get the trie log layer to rollback
+    verify(layeredWorldStatesByHash).containsKey(Hash.ZERO);
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  @Test
+  public void testGetMutableWithStorageConsistencyNotRollbackTheState() {
+
+    when(keyValueStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
+    final Map layeredWorldStatesByHash = mock(HashMap.class);
+
+    bonsaiWorldStateArchive =
+        new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash);
+    final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
+    final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
+    final TrieLogLayer trieLogLayer = new TrieLogLayer();
+    trieLogLayer.setBlockHash(blockHeader.getHash());
+    trieLogLayer.writeTo(rlpLog);
+
+    when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeader));
+
+    assertThat(bonsaiWorldStateArchive.getMutable(null, blockHeader.getHash()))
+        .containsInstanceOf(BonsaiPersistedWorldState.class);
+
+    // verify is not trying to get the trie log layer to rollback when block is present
+    verify(layeredWorldStatesByHash).entrySet();
+    verifyNoMoreInteractions(layeredWorldStatesByHash);
   }
 }

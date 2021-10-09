@@ -31,5 +31,6 @@ public interface RequestTransmitter {
       String mediaType,
       String content,
       String endpoint,
-      ResponseBodyHandler<T> responseBodyHandler);
+      ResponseBodyHandler<T> responseBodyHandler,
+      final boolean withAcceptJsonHeader);
 }

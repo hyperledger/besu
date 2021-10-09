@@ -52,10 +52,9 @@ public class AdminLogsRemoveCache implements JsonRpcMethod {
       startBlock = BlockHeader.GENESIS_BLOCK_NUMBER;
     } else if (startBlockParameter.get().getNumber().isPresent()) {
       startBlock = startBlockParameter.get().getNumber().get();
-      blockchainQueries
-          .getBlockchain()
-          .getBlockByNumber(startBlock)
-          .orElseThrow(() -> new IllegalStateException("Block not found, " + startBlock));
+      if (blockchainQueries.getBlockchain().getBlockByNumber(startBlock).isEmpty()) {
+        throw new IllegalStateException("Block not found, " + startBlock);
+      }
     } else {
       // latest, pending
       startBlock = blockchainQueries.headBlockNumber();
@@ -72,10 +71,9 @@ public class AdminLogsRemoveCache implements JsonRpcMethod {
       stopBlock = BlockHeader.GENESIS_BLOCK_NUMBER;
     } else if (stopBlockParameter.get().getNumber().isPresent()) {
       stopBlock = stopBlockParameter.get().getNumber().get();
-      blockchainQueries
-          .getBlockchain()
-          .getBlockByNumber(stopBlock)
-          .orElseThrow(() -> new IllegalStateException("Block not found, " + stopBlock));
+      if (blockchainQueries.getBlockchain().getBlockByNumber(stopBlock).isEmpty()) {
+        throw new IllegalStateException("Block not found, " + stopBlock);
+      }
     } else {
       // latest, pending
       stopBlock = blockchainQueries.headBlockNumber();

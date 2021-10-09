@@ -26,7 +26,9 @@ public interface SignatureAlgorithm {
   // needs to be known at compile time otherwise triggers InsecureCryptoUsage error
   String ALGORITHM = "ECDSA";
 
-  void enableNative();
+  void disableNative();
+
+  boolean isNative();
 
   SECPSignature sign(final Bytes32 dataHash, final KeyPair keyPair);
 
@@ -66,6 +68,8 @@ public interface SignatureAlgorithm {
       final Bytes32 dataHash, final SECPSignature signature);
 
   ECPoint publicKeyAsEcPoint(final SECPPublicKey publicKey);
+
+  boolean isValidPublicKey(SECPPublicKey publicKey);
 
   KeyPair createKeyPair(final SECPPrivateKey privateKey);
 

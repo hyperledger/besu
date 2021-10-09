@@ -34,6 +34,7 @@ configurations {
 dependencies {
   implementation project(':config')
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':enclave')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
@@ -42,6 +43,7 @@ dependencies {
   implementation project(':ethereum:permissioning')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
+  implementation project(':evm')
   implementation project(':metrics:core')
   implementation project(':nat')
   implementation project(':plugin-api')
@@ -56,10 +58,10 @@ dependencies {
   implementation 'io.vertx:vertx-unit'
   implementation 'io.vertx:vertx-web'
   implementation 'org.apache.logging.log4j:log4j-core'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:net'
-  implementation 'org.apache.tuweni:toml'
-  implementation 'org.apache.tuweni:units'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-net'
+  implementation 'org.apache.tuweni:tuweni-toml'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.bouncycastle:bcprov-jdk15on'
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'

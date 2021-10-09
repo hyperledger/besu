@@ -16,40 +16,75 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
-import org.hyperledger.besu.tests.web3j.privacy.OnChainPrivacyAcceptanceTestBase;
+import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.besu.tests.web3j.privacy.OnchainPrivacyAcceptanceTestBase;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+import org.testcontainers.containers.Network;
 
+@RunWith(Parameterized.class)
 public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
-    extends OnChainPrivacyAcceptanceTestBase {
+    extends OnchainPrivacyAcceptanceTestBase {
+
+  private final EnclaveType enclaveType;
+
+  public PrivDebugGetStateRootOnchainGroupAcceptanceTest(final EnclaveType enclaveType) {
+    this.enclaveType = enclaveType;
+  }
+
+  @Parameters(name = "{0}")
+  public static Collection<EnclaveType> enclaveTypes() {
+    return Arrays.stream(EnclaveType.values())
+        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
+        .collect(Collectors.toList());
+  }
 
   private PrivacyNode aliceNode;
   private PrivacyNode bobNode;
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
+    final Network containerNetwork = Network.newNetwork();
+
     aliceNode =
-        privacyBesu.createOnChainPrivacyGroupEnabledMinerNode(
-            "alice-node", PrivacyAccountResolver.ALICE, Address.PRIVACY, false);
+        privacyBesu.createOnchainPrivacyGroupEnabledMinerNode(
+            "alice-node",
+            PrivacyAccountResolver.ALICE,
+            false,
+            enclaveType,
+            Optional.of(containerNetwork));
     bobNode =
-        privacyBesu.createOnChainPrivacyGroupEnabledNode(
-            "bob-node", PrivacyAccountResolver.BOB, Address.PRIVACY, false);
+        privacyBesu.createOnchainPrivacyGroupEnabledNode(
+            "bob-node",
+            PrivacyAccountResolver.BOB,
+            false,
+            enclaveType,
+            Optional.of(containerNetwork));
+
     privacyCluster.start(aliceNode, bobNode);
   }
 
   @Test
   public void nodesInGroupShouldHaveSameStateRoot() {
-    final String privacyGroupId = createOnChainPrivacyGroup(aliceNode, bobNode);
+    final String privacyGroupId = createOnchainPrivacyGroup(aliceNode, bobNode);
 
     final Hash aliceStateRootId =
         aliceNode
@@ -82,7 +117,7 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
     waitForBlockHeight(aliceNode, 2);
     waitForBlockHeight(bobNode, 2);
 
-    final String privacyGroupId = createOnChainPrivacyGroup(aliceNode, bobNode);
+    final String privacyGroupId = createOnchainPrivacyGroup(aliceNode, bobNode);
 
     waitForBlockHeight(aliceNode, 10);
     waitForBlockHeight(bobNode, 10);
@@ -106,5 +141,42 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
 
     assertThat(aliceResultLatest).isEqualTo(bobResultLatest);
     assertThat(aliceResult1).isNotEqualTo(aliceResultLatest);
+  }
+
+  @Test
+  public void canInteractWithPrivateGenesisPreCompile() throws Exception {
+    final String privacyGroupId = createOnchainPrivacyGroup(aliceNode, bobNode);
+
+    final EventEmitter eventEmitter =
+        aliceNode.execute(
+            privateContractTransactions.loadSmartContractWithPrivacyGroupId(
+                "0x1000000000000000000000000000000000000001",
+                EventEmitter.class,
+                aliceNode.getTransactionSigningKey(),
+                aliceNode.getEnclaveKey(),
+                privacyGroupId));
+
+    privateTransactionVerifier.existingPrivateTransactionReceipt(
+        eventEmitter.store(BigInteger.valueOf(42)).send().getTransactionHash());
+
+    final String aliceResponse =
+        aliceNode
+            .execute(
+                privacyTransactions.privCall(
+                    privacyGroupId, eventEmitter, eventEmitter.value().encodeFunctionCall()))
+            .getValue();
+
+    assertThat(new BigInteger(aliceResponse.substring(2), 16))
+        .isEqualByComparingTo(BigInteger.valueOf(42));
+
+    final String bobResponse =
+        bobNode
+            .execute(
+                privacyTransactions.privCall(
+                    privacyGroupId, eventEmitter, eventEmitter.value().encodeFunctionCall()))
+            .getValue();
+
+    assertThat(new BigInteger(bobResponse.substring(2), 16))
+        .isEqualByComparingTo(BigInteger.valueOf(42));
   }
 }

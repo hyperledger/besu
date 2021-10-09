@@ -14,14 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import static java.lang.Boolean.FALSE;
-
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.json.GasDeserializer;
 import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.evm.Gas;
 
 import java.util.Optional;
 
@@ -31,10 +29,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 
-@JsonIgnoreProperties({"nonce", "privateFor"})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonCallParameter extends CallParameter {
 
-  private final boolean strict;
+  private final Optional<Boolean> strict;
 
   @JsonCreator
   public JsonCallParameter(
@@ -42,8 +40,8 @@ public class JsonCallParameter extends CallParameter {
       @JsonProperty("to") final Address to,
       @JsonDeserialize(using = GasDeserializer.class) @JsonProperty("gas") final Gas gasLimit,
       @JsonProperty("gasPrice") final Wei gasPrice,
-      @JsonProperty("gasPremium") final Wei gasPremium,
-      @JsonProperty("feeCap") final Wei feeCap,
+      @JsonProperty("maxPriorityFeePerGas") final Wei maxPriorityFeePerGas,
+      @JsonProperty("maxFeePerGas") final Wei maxFeePerGas,
       @JsonProperty("value") final Wei value,
       @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("data")
           final Bytes payload,
@@ -53,14 +51,14 @@ public class JsonCallParameter extends CallParameter {
         to,
         gasLimit != null ? gasLimit.toLong() : -1,
         gasPrice,
-        Optional.ofNullable(gasPremium),
-        Optional.ofNullable(feeCap),
+        Optional.ofNullable(maxPriorityFeePerGas),
+        Optional.ofNullable(maxFeePerGas),
         value,
         payload);
-    this.strict = Optional.ofNullable(strict).orElse(FALSE);
+    this.strict = Optional.ofNullable(strict);
   }
 
-  public boolean isStrict() {
+  public Optional<Boolean> isMaybeStrict() {
     return strict;
   }
 }

@@ -18,6 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -118,7 +119,12 @@ public class GenesisConfigFile {
   }
 
   public long getGasLimit() {
-    return parseLong("gasLimit", getRequiredString("gaslimit"));
+    return parseLong("gasLimit", getFirstRequiredString("gaslimit", "gastarget"));
+  }
+
+  public Optional<Long> getBaseFeePerGas() {
+    return JsonUtil.getString(configRoot, "basefeepergas")
+        .map(baseFeeStr -> parseLong("baseFeePerGas", baseFeeStr));
   }
 
   public String getMixHash() {
@@ -138,11 +144,21 @@ public class GenesisConfigFile {
   }
 
   private String getRequiredString(final String key) {
-    if (!configRoot.has(key)) {
-      throw new IllegalArgumentException(
-          String.format("Invalid genesis block configuration, missing value for '%s'", key));
-    }
-    return configRoot.get(key).asText();
+    return getFirstRequiredString(key);
+  }
+
+  private String getFirstRequiredString(final String... keys) {
+    List<String> keysList = Arrays.asList(keys);
+    return keysList.stream()
+        .filter(key -> configRoot.has(key))
+        .findFirst()
+        .map(key -> configRoot.get(key).asText())
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Invalid genesis block configuration, missing value for one of '%s'",
+                        keysList)));
   }
 
   private long parseLong(final String name, final String value) {

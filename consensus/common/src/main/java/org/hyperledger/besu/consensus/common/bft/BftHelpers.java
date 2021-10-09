@@ -15,10 +15,10 @@
 package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Collection;
@@ -55,7 +55,7 @@ public class BftHelpers {
     final BlockHeader sealedHeader =
         BlockHeaderBuilder.fromHeader(initialHeader)
             .extraData(bftExtraDataCodec.encode(sealedExtraData))
-            .blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec))
+            .blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec))
             .buildBlockHeader();
 
     return new Block(sealedHeader, block.getBody());

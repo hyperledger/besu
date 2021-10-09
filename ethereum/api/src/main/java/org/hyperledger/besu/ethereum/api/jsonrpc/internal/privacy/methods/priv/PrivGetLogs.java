@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -27,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
@@ -40,17 +40,17 @@ public class PrivGetLogs implements JsonRpcMethod {
   private final BlockchainQueries blockchainQueries;
   private final PrivacyQueries privacyQueries;
   private final PrivacyController privacyController;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyIdProvider privacyIdProvider;
 
   public PrivGetLogs(
       final BlockchainQueries blockchainQueries,
       final PrivacyQueries privacyQueries,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyIdProvider privacyIdProvider) {
     this.blockchainQueries = blockchainQueries;
     this.privacyQueries = privacyQueries;
     this.privacyController = privacyController;
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyIdProvider = privacyIdProvider;
   }
 
   @Override
@@ -92,7 +92,7 @@ public class PrivGetLogs implements JsonRpcMethod {
     final long toBlockNumber =
         filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
     PrivUtil.checkMembershipForAuthenticatedUser(
-        privacyController, enclavePublicKeyProvider, requestContext, privacyGroupId, toBlockNumber);
+        privacyController, privacyIdProvider, requestContext, privacyGroupId, toBlockNumber);
     return privacyQueries.matchingLogs(
         privacyGroupId, fromBlockNumber, toBlockNumber, filter.getLogsQuery());
   }
@@ -108,7 +108,7 @@ public class PrivGetLogs implements JsonRpcMethod {
     }
     final long blockNumber = blockHeader.get().getNumber();
     PrivUtil.checkMembershipForAuthenticatedUser(
-        privacyController, enclavePublicKeyProvider, requestContext, privacyGroupId, blockNumber);
+        privacyController, privacyIdProvider, requestContext, privacyGroupId, blockNumber);
     return privacyQueries.matchingLogs(privacyGroupId, blockHash, filter.getLogsQuery());
   }
 }

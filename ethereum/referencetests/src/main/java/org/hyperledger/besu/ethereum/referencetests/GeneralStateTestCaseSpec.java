@@ -15,20 +15,24 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** A Transaction test case specification. */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -52,11 +56,25 @@ public class GeneralStateTestCaseSpec {
       final Map<String, List<PostSection>> postSections,
       final StateTestVersionedTransaction versionedTransaction) {
 
+    BlockHeader safeHeader = blockHeader;
     initialWorldState.persist(null);
     final Map<String, List<GeneralStateTestCaseEipSpec>> res =
         new LinkedHashMap<>(postSections.size());
     for (final Map.Entry<String, List<PostSection>> entry : postSections.entrySet()) {
       final String eip = entry.getKey();
+      if (eip.equalsIgnoreCase(MainnetProtocolSpecs.LONDON_FORK_NAME)
+          && !blockHeader.getBaseFee().isPresent()) {
+        // for legacy state tests running in London, this value depends on
+        // the test filler's (retesteth's) default baseFee, currently 0x0a (10)
+        safeHeader =
+            new ReferenceTestEnv(
+                blockHeader.getCoinbase().toShortHexString(),
+                blockHeader.getDifficulty().toShortHexString(),
+                UInt256.valueOf(blockHeader.getGasLimit()).toShortHexString(),
+                UInt256.valueOf(blockHeader.getNumber()).toShortHexString(),
+                "0x0a",
+                UInt256.valueOf(blockHeader.getTimestamp()).toShortHexString());
+      }
       final List<PostSection> post = entry.getValue();
       final List<GeneralStateTestCaseEipSpec> specs = new ArrayList<>(post.size());
       for (final PostSection p : post) {
@@ -68,7 +86,7 @@ public class GeneralStateTestCaseSpec {
                 initialWorldState,
                 p.rootHash,
                 p.logsHash,
-                blockHeader,
+                safeHeader,
                 p.indexes.data,
                 p.indexes.gas,
                 p.indexes.value));
@@ -118,10 +136,11 @@ public class GeneralStateTestCaseSpec {
   }
 
   /** Represents the "post" part of a general state test json _for a specific hard-fork_. */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class PostSection {
 
     private final Hash rootHash;
-    private final Hash logsHash;
+    @Nullable private final Hash logsHash;
     private final Indexes indexes;
 
     @JsonCreator
@@ -131,7 +150,7 @@ public class GeneralStateTestCaseSpec {
         @JsonProperty("indexes") final Indexes indexes,
         @JsonProperty("txbytes") final String txbytes) {
       this.rootHash = Hash.fromHexString(hash);
-      this.logsHash = Hash.fromHexString(logs);
+      this.logsHash = Optional.ofNullable(logs).map(Hash::fromHexString).orElse(null);
       this.indexes = indexes;
     }
   }

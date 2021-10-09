@@ -22,7 +22,6 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerPrivileges;
@@ -33,9 +32,12 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEvents;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerRlpxPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.RlpxConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.NettyConnectionInitializer;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.NettyTLSConnectionInitializer;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.util.Subscribers;
@@ -557,6 +559,7 @@ public class RlpxAgent {
     private PeerConnectionEvents connectionEvents;
     private boolean randomPeerPriority;
     private MetricsSystem metricsSystem;
+    private Optional<TLSConfiguration> p2pTLSConfiguration;
 
     private Builder() {}
 
@@ -567,9 +570,17 @@ public class RlpxAgent {
         connectionEvents = new PeerConnectionEvents(metricsSystem);
       }
       if (connectionInitializer == null) {
-        connectionInitializer =
-            new NettyConnectionInitializer(
-                nodeKey, config, localNode, connectionEvents, metricsSystem);
+        if (p2pTLSConfiguration.isPresent()) {
+          LOG.debug("TLS Configuration found using NettyTLSConnectionInitializer");
+          connectionInitializer =
+              new NettyTLSConnectionInitializer(
+                  nodeKey, config, localNode, connectionEvents, metricsSystem, p2pTLSConfiguration);
+        } else {
+          LOG.debug("Using default NettyConnectionInitializer");
+          connectionInitializer =
+              new NettyConnectionInitializer(
+                  nodeKey, config, localNode, connectionEvents, metricsSystem);
+        }
       }
 
       final PeerRlpxPermissions rlpxPermissions =
@@ -645,6 +656,11 @@ public class RlpxAgent {
 
     public Builder randomPeerPriority(final boolean randomPeerPriority) {
       this.randomPeerPriority = randomPeerPriority;
+      return this;
+    }
+
+    public Builder p2pTLSConfiguration(final Optional<TLSConfiguration> p2pTLSConfiguration) {
+      this.p2pTLSConfiguration = p2pTLSConfiguration;
       return this;
     }
   }

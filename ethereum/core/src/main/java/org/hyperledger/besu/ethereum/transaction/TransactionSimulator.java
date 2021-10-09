@@ -16,30 +16,33 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldStateAtBlock;
 
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateAndPublicWorldStateUpdater;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 import com.google.common.base.Supplier;
@@ -149,51 +152,101 @@ public class TransactionSimulator {
     }
     final WorldUpdater updater = getEffectiveWorldStateUpdater(header, publicWorldState);
 
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+
     final Address senderAddress =
         callParams.getFrom() != null ? callParams.getFrom() : DEFAULT_FROM;
-    final Account sender = publicWorldState.get(senderAddress);
-    final long nonce = sender != null ? sender.getNonce() : 0L;
-    final long gasLimit =
-        callParams.getGasLimit() >= 0 ? callParams.getGasLimit() : header.getGasLimit();
-    final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
-    final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
-    final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
+
+    BlockHeader blockHeaderToProcess = header;
 
     if (transactionValidationParams.isAllowExceedingBalance()) {
       updater.getOrCreate(senderAddress).getMutable().setBalance(Wei.of(UInt256.MAX_VALUE));
+      if (header.getBaseFee().isPresent()) {
+        blockHeaderToProcess =
+            BlockHeaderBuilder.fromHeader(header)
+                .baseFee(0L)
+                .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions())
+                .buildBlockHeader();
+      }
     }
+
+    final Account sender = publicWorldState.get(senderAddress);
+    final long nonce = sender != null ? sender.getNonce() : 0L;
+    final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
+    final long gasLimit =
+        callParams.getGasLimit() >= 0
+            ? callParams.getGasLimit()
+            : blockHeaderToProcess.getGasLimit();
+    final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
+    final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
+
+    final MainnetTransactionProcessor transactionProcessor =
+        protocolSchedule
+            .getByBlockNumber(blockHeaderToProcess.getNumber())
+            .getTransactionProcessor();
 
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
-            .type(TransactionType.FRONTIER)
             .nonce(nonce)
-            .gasPrice(gasPrice)
             .gasLimit(gasLimit)
             .to(callParams.getTo())
             .sender(senderAddress)
             .value(value)
             .payload(payload)
             .signature(FAKE_SIGNATURE);
-    callParams.getGasPremium().ifPresent(transactionBuilder::gasPremium);
-    callParams.getFeeCap().ifPresent(transactionBuilder::feeCap);
 
+    if (header.getBaseFee().isEmpty()) {
+      transactionBuilder.gasPrice(gasPrice);
+    } else if (protocolSchedule.getChainId().isPresent()) {
+      transactionBuilder
+          .maxFeePerGas(callParams.getMaxFeePerGas().orElse(gasPrice))
+          .maxPriorityFeePerGas(callParams.getMaxPriorityFeePerGas().orElse(gasPrice));
+    } else {
+      return Optional.empty();
+    }
+
+    transactionBuilder.guessType();
+    if (transactionBuilder.getTransactionType().requiresChainId()) {
+      transactionBuilder.chainId(
+          protocolSchedule
+              .getChainId()
+              .orElse(BigInteger.ONE)); // needed to make some transactions valid
+    }
     final Transaction transaction = transactionBuilder.build();
 
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
-
-    final MainnetTransactionProcessor transactionProcessor =
-        protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
     final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             blockchain,
             updater,
-            header,
+            blockHeaderToProcess,
             transaction,
-            protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
-            new BlockHashLookup(header, blockchain),
+            protocolSpec
+                .getMiningBeneficiaryCalculator()
+                .calculateBeneficiary(blockHeaderToProcess),
+            new BlockHashLookup(blockHeaderToProcess, blockchain),
             false,
             transactionValidationParams,
             operationTracer);
+
+    // If GoQuorum privacy enabled, and value = zero, get max gas possible for a PMT hash.
+    // It is possible to have a data field that has a lower intrinsic value than the PMT hash.
+    // This means a potential over-estimate of gas, but the tx, if sent with this gas, will not
+    // fail.
+    if (GoQuorumOptions.goQuorumCompatibilityMode && value.isZero()) {
+      Gas privateGasEstimateAndState =
+          protocolSpec.getGasCalculator().getMaximumTransactionCost(64);
+      if (privateGasEstimateAndState.toLong() > result.getEstimateGasUsedByTransaction()) {
+        // modify the result to have the larger estimate
+        TransactionProcessingResult resultPmt =
+            TransactionProcessingResult.successful(
+                result.getLogs(),
+                privateGasEstimateAndState.toLong(),
+                result.getGasRemaining(),
+                result.getOutput(),
+                result.getValidationResult());
+        return Optional.of(new TransactionSimulatorResult(transaction, resultPmt));
+      }
+    }
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }

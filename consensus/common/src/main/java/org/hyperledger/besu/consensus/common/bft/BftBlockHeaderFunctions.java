@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.function.Function;
 
@@ -31,9 +31,9 @@ public class BftBlockHeaderFunctions implements BlockHeaderFunctions {
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
-  public static BlockHeaderFunctions forOnChainBlock(final BftExtraDataCodec bftExtraDataCodec) {
+  public static BlockHeaderFunctions forOnchainBlock(final BftExtraDataCodec bftExtraDataCodec) {
     return new BftBlockHeaderFunctions(
-        h -> new BftBlockHashing(bftExtraDataCodec).calculateHashOfBftBlockOnChain(h),
+        h -> new BftBlockHashing(bftExtraDataCodec).calculateHashOfBftBlockOnchain(h),
         bftExtraDataCodec);
   }
 

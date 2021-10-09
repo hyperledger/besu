@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -160,9 +160,7 @@ public class VmTraceGenerator {
                   if (!currentOperation.startsWith("CREATE")) {
                     lastFrameInCall
                         .getMaybeUpdatedMemory()
-                        .map(
-                            mem ->
-                                new Mem(mem.getValue().toHexString(), mem.getOffset().intValue()))
+                        .map(mem -> new Mem(mem.getValue().toHexString(), mem.getOffset()))
                         .ifPresent(report::setMem);
                   }
                 });
@@ -231,9 +229,7 @@ public class VmTraceGenerator {
             .getMaybeUpdatedMemory()
             .map(
                 updatedMemory ->
-                    new Mem(
-                        updatedMemory.getValue().toHexString(),
-                        updatedMemory.getOffset().intValue()))
+                    new Mem(updatedMemory.getValue().toHexString(), updatedMemory.getOffset()))
             .ifPresent(report::setMem);
         break;
       default:
@@ -264,7 +260,7 @@ public class VmTraceGenerator {
             entry ->
                 report.setStore(
                     new Store(
-                        entry.getOffset().toBytes().toQuantityHexString(),
+                        entry.getOffset().toQuantityHexString(),
                         entry.getValue().toQuantityHexString())));
   }
 

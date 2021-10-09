@@ -104,8 +104,8 @@ public class SECPSignature {
 
   private Bytes _encodedBytes() {
     final MutableBytes bytes = MutableBytes.create(BYTES_REQUIRED);
-    UInt256.valueOf(r).toBytes().copyTo(bytes, 0);
-    UInt256.valueOf(s).toBytes().copyTo(bytes, 32);
+    UInt256.valueOf(r).copyTo(bytes, 0);
+    UInt256.valueOf(s).copyTo(bytes, 32);
     bytes.set(64, recId);
     return bytes;
   }

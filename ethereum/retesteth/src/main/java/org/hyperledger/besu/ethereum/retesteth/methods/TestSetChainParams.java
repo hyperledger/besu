@@ -123,6 +123,7 @@ public class TestSetChainParams implements JsonRpcMethod {
     maybeMoveToNumber(params, "muirGlacierForkBlock", config, "muirGlacierBlock");
     maybeMoveToNumber(params, "berlinForkBlock", config, "berlinBlock");
     maybeMoveToNumber(params, "chainID", config, "chainId", 1);
+
     maybeMove(genesis, "author", chainParamsJson, "coinbase");
     maybeMove(genesis, "difficulty", chainParamsJson, "difficulty");
     maybeMove(genesis, "extraData", chainParamsJson, "extraData");
@@ -131,6 +132,8 @@ public class TestSetChainParams implements JsonRpcMethod {
     maybeMove(genesis, "nonce", chainParamsJson, "nonce");
     maybeMove(genesis, "timestamp", chainParamsJson, "timestamp");
     maybeMove(chainParamsJson, "accounts", chainParamsJson, "alloc");
+    maybeMove(genesis, "baseFeePerGas", chainParamsJson, "baseFeePerGas");
+    maybeMoveToNumber(params, "londonForkBlock", config, "londonBlock");
 
     // strip out precompiles with zero balance
     final JsonObject alloc = chainParamsJson.getJsonObject("alloc");

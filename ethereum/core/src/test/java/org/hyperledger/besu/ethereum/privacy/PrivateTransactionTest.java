@@ -15,11 +15,13 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.plugin.data.Restriction.RESTRICTED;
+import static org.hyperledger.besu.plugin.data.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -121,7 +123,7 @@ public class PrivateTransactionTest {
                   Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
                   Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs="))),
           Optional.empty(),
-          Restriction.RESTRICTED);
+          RESTRICTED);
 
   private static final PrivateTransaction VALID_PRIVATE_TRANSACTION_PRIVACY_GROUP =
       new PrivateTransaction(
@@ -147,7 +149,33 @@ public class PrivateTransactionTest {
           Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
           Optional.empty(),
           Optional.of(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=")),
-          Restriction.RESTRICTED);
+          RESTRICTED);
+
+  private static final PrivateTransaction VALID_UNRESTRICTED_PRIVATE_TRANSACTION_PRIVACY_GROUP =
+      new PrivateTransaction(
+          0L,
+          Wei.of(1),
+          21000L,
+          Optional.of(
+              Address.wrap(Bytes.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))),
+          Wei.of(
+              new BigInteger(
+                  "115792089237316195423570985008687907853269984665640564039457584007913129639935")),
+          SIGNATURE_ALGORITHM
+              .get()
+              .createSignature(
+                  new BigInteger(
+                      "32886959230931919120748662916110619501838190146643992583529828535682419954515"),
+                  new BigInteger(
+                      "14473701025599600909210599917245952381483216609124029382871721729679842002948"),
+                  Byte.valueOf("0")),
+          Bytes.fromHexString("0x"),
+          Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
+          Optional.empty(),
+          Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
+          Optional.empty(),
+          Optional.of(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=")),
+          UNRESTRICTED);
 
   private static final PrivateTransaction VALID_SIGNED_PRIVATE_TRANSACTION =
       PrivateTransaction.builder()
@@ -174,7 +202,7 @@ public class PrivateTransactionTest {
           .privateFor(
               Lists.newArrayList(
                   Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
-          .restriction(Restriction.RESTRICTED)
+          .restriction(RESTRICTED)
           .signAndBuild(
               SIGNATURE_ALGORITHM
                   .get()
@@ -211,7 +239,7 @@ public class PrivateTransactionTest {
           .privateFor(
               Lists.newArrayList(
                   Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
-          .restriction(Restriction.RESTRICTED)
+          .restriction(RESTRICTED)
           .signAndBuild(
               SIGNATURE_ALGORITHM
                   .get()
@@ -225,21 +253,21 @@ public class PrivateTransactionTest {
 
   @Test
   public void testWriteTo() {
-    BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
+    final BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
     VALID_PRIVATE_TRANSACTION.writeTo(bvrlpo);
     assertThat(bvrlpo.encoded().toString()).isEqualTo(VALID_PRIVATE_TRANSACTION_RLP);
   }
 
   @Test
   public void testWriteTo_privacyGroup() {
-    BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
+    final BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
     VALID_PRIVATE_TRANSACTION_PRIVACY_GROUP.writeTo(bvrlpo);
     assertThat(bvrlpo.encoded().toString()).isEqualTo(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP);
   }
 
   @Test
   public void testWriteToWithLargeChainId() {
-    BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
+    final BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
     VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID.writeTo(bvrlpo);
     assertThat(bvrlpo.encoded().toString())
         .isEqualTo(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID_RLP);
@@ -247,14 +275,14 @@ public class PrivateTransactionTest {
 
   @Test
   public void testSignedWriteTo() {
-    BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
+    final BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
     VALID_SIGNED_PRIVATE_TRANSACTION.writeTo(bvrlpo);
     assertThat(bvrlpo.encoded().toString()).isEqualTo(VALID_SIGNED_PRIVATE_TRANSACTION_RLP);
   }
 
   @Test
   public void testReadFrom() {
-    PrivateTransaction p =
+    final PrivateTransaction p =
         PrivateTransaction.readFrom(
             new BytesValueRLPInput(Bytes.fromHexString(VALID_PRIVATE_TRANSACTION_RLP), false));
 
@@ -263,7 +291,7 @@ public class PrivateTransactionTest {
 
   @Test
   public void testReadFrom_privacyGroup() {
-    PrivateTransaction p =
+    final PrivateTransaction p =
         PrivateTransaction.readFrom(
             new BytesValueRLPInput(
                 Bytes.fromHexString(VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP), false));
@@ -273,7 +301,7 @@ public class PrivateTransactionTest {
 
   @Test
   public void testSignedReadFrom() {
-    PrivateTransaction p =
+    final PrivateTransaction p =
         PrivateTransaction.readFrom(
             new BytesValueRLPInput(
                 Bytes.fromHexString(VALID_SIGNED_PRIVATE_TRANSACTION_RLP), false));
@@ -288,7 +316,7 @@ public class PrivateTransactionTest {
 
   @Test
   public void testReadFromWithLargeChainId() {
-    PrivateTransaction p =
+    final PrivateTransaction p =
         PrivateTransaction.readFrom(
             new BytesValueRLPInput(
                 Bytes.fromHexString(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID_RLP), false));
@@ -306,14 +334,23 @@ public class PrivateTransactionTest {
         .value(Wei.ZERO)
         .payload(Bytes.fromHexString("0x"))
         .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
-        .chainId(BigInteger.valueOf(2018))
+        .chainId(BigInteger.valueOf(1337))
         .privacyGroupId(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="))
         .privateFrom(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
         .privateFor(
             Lists.newArrayList(
                 Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
                 Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
-        .restriction(Restriction.RESTRICTED)
+        .restriction(RESTRICTED)
         .build();
+  }
+
+  @Test
+  public void testRestrictionSerialization() {
+    final BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
+    VALID_UNRESTRICTED_PRIVATE_TRANSACTION_PRIVACY_GROUP.writeTo(bvrlpo);
+
+    final BytesValueRLPInput rlp = new BytesValueRLPInput(bvrlpo.encoded(), false);
+    assertThat(PrivateTransaction.readFrom(rlp).getRestriction()).isEqualTo(UNRESTRICTED);
   }
 }

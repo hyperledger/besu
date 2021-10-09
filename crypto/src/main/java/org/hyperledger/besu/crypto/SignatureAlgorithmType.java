@@ -38,13 +38,7 @@ public class SignatureAlgorithmType {
   public static SignatureAlgorithmType create(final String ecCurve)
       throws IllegalArgumentException {
     if (!isValidType(ecCurve)) {
-      throw new IllegalArgumentException(
-          new StringBuilder()
-              .append("Invalid genesis file configuration. Elliptic curve (ecCurve) ")
-              .append(ecCurve)
-              .append(" is not in the list of valid elliptic curves ")
-              .append(getEcCurvesListAsString())
-              .toString());
+      throw new IllegalArgumentException(invalidTypeErrorMessage(ecCurve));
     }
 
     return new SignatureAlgorithmType(SUPPORTED_ALGORITHMS.get(ecCurve));
@@ -64,6 +58,14 @@ public class SignatureAlgorithmType {
 
   public static boolean isDefault(final SignatureAlgorithm signatureAlgorithm) {
     return signatureAlgorithm.getCurveName().equals(DEFAULT_EC_CURVE_NAME);
+  }
+
+  private static String invalidTypeErrorMessage(final String invalidEcCurve) {
+    return new StringBuilder()
+        .append(invalidEcCurve)
+        .append(" is not in the list of valid elliptic curves ")
+        .append(getEcCurvesListAsString())
+        .toString();
   }
 
   private static String getEcCurvesListAsString() {

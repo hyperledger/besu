@@ -14,23 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
-import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.AccountState;
-import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
+import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
+import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -134,13 +133,9 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   private static Bytes serializeAccount(
-      final long nonce,
-      final Wei balance,
-      final Hash storageRoot,
-      final Hash codeHash,
-      final int version) {
+      final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
     final StateTrieAccountValue accountValue =
-        new StateTrieAccountValue(nonce, balance, storageRoot, codeHash, version);
+        new StateTrieAccountValue(nonce, balance, storageRoot, codeHash);
     return RLP.encode(accountValue::writeTo);
   }
 
@@ -155,7 +150,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         .map(
             entry -> {
               final Optional<Address> address = getAccountTrieKeyPreimage(entry.getKey());
-              final AccountState account =
+              final WorldStateAccount account =
                   deserializeAccount(
                       address.orElse(Address.ZERO), Hash.wrap(entry.getKey()), entry.getValue());
               return new StreamableAccount(address, account);
@@ -304,14 +299,9 @@ public class DefaultMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    public int getVersion() {
-      return accountValue.getVersion();
-    }
-
-    @Override
     public UInt256 getStorageValue(final UInt256 key) {
       return storageTrie()
-          .get(Hash.hash(key.toBytes()))
+          .get(Hash.hash(key))
           .map(DefaultMutableWorldState::convertToUInt256)
           .orElse(UInt256.ZERO);
     }
@@ -346,7 +336,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
       builder.append("balance=").append(getBalance()).append(", ");
       builder.append("storageRoot=").append(getStorageRoot()).append(", ");
       builder.append("codeHash=").append(getCodeHash()).append(", ");
-      builder.append("version=").append(getVersion());
       return builder.append("}").toString();
     }
   }
@@ -427,7 +416,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
           for (final Map.Entry<UInt256, UInt256> entry : entries) {
             final UInt256 value = entry.getValue();
-            final Hash keyHash = Hash.hash(entry.getKey().toBytes());
+            final Hash keyHash = Hash.hash(entry.getKey());
             if (value.isZero()) {
               storageTrie.remove(keyHash);
             } else {
@@ -443,12 +432,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         wrapped.newAccountKeyPreimages.put(updated.getAddressHash(), updated.getAddress());
         // Lastly, save the new account.
         final Bytes account =
-            serializeAccount(
-                updated.getNonce(),
-                updated.getBalance(),
-                storageRoot,
-                codeHash,
-                updated.getVersion());
+            serializeAccount(updated.getNonce(), updated.getBalance(), storageRoot, codeHash);
 
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
       }

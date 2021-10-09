@@ -19,6 +19,7 @@ import static java.util.Collections.emptyList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -38,21 +39,22 @@ public class TransitionsConfigOptions {
   }
 
   public List<BftFork> getIbftForks() {
-    return getBftForks("ibft2");
+    return getBftForks("ibft2", BftFork::new);
   }
 
-  public List<BftFork> getQbftForks() {
-    return getBftForks("qbft");
+  public List<QbftFork> getQbftForks() {
+    return getBftForks("qbft", QbftFork::new);
   }
 
-  private List<BftFork> getBftForks(final String fieldKey) {
+  private <T> List<T> getBftForks(
+      final String fieldKey, final Function<ObjectNode, T> forkConstructor) {
     final Optional<ArrayNode> bftForksNode = JsonUtil.getArrayNode(customForkConfigRoot, fieldKey);
 
     if (bftForksNode.isEmpty()) {
       return emptyList();
     }
 
-    final List<BftFork> bftForks = Lists.newArrayList();
+    final List<T> bftForks = Lists.newArrayList();
 
     bftForksNode
         .get()
@@ -62,7 +64,7 @@ public class TransitionsConfigOptions {
               if (!node.isObject()) {
                 throw new IllegalArgumentException("Bft fork is illegally formatted.");
               }
-              bftForks.add(new BftFork((ObjectNode) node));
+              bftForks.add(forkConstructor.apply((ObjectNode) node));
             });
 
     return Collections.unmodifiableList(bftForks);

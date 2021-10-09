@@ -34,14 +34,14 @@ public class PeerTest {
             "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b");
     final Peer peer =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .nodeId(id)
                 .ipAddress("127.0.0.1")
                 .discoveryAndListeningPorts(5000)
                 .build());
     final Peer peer2 =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .nodeId(id)
                 .ipAddress("127.0.0.1")
                 .discoveryAndListeningPorts(5001)
@@ -56,14 +56,14 @@ public class PeerTest {
             "c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b");
     final Peer peer =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .nodeId(id)
                 .ipAddress("127.0.0.1")
                 .discoveryAndListeningPorts(5000)
                 .build());
     final Peer peer2 =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .nodeId(id)
                 .ipAddress("127.0.0.1")
                 .discoveryAndListeningPorts(5001)
@@ -75,7 +75,7 @@ public class PeerTest {
   public void getStatus() {
     final DiscoveryPeer peer =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .nodeId(Peer.randomId())
                 .ipAddress("127.0.0.1")
                 .discoveryAndListeningPorts(5000)

@@ -23,15 +23,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.io.File;
 import java.io.IOException;
@@ -231,7 +231,7 @@ public class TransactionLogBloomCacherTest {
   private byte[] readLogBloomCache(final File logBloom, final long number) throws IOException {
     try (final RandomAccessFile randomAccessFile = new RandomAccessFile(logBloom, "r")) {
       randomAccessFile.seek(BLOOM_BITS_LENGTH * number);
-      byte[] retrievedLog = new byte[BLOOM_BITS_LENGTH];
+      final byte[] retrievedLog = new byte[BLOOM_BITS_LENGTH];
       randomAccessFile.read(retrievedLog);
       return retrievedLog;
     }

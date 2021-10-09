@@ -15,8 +15,8 @@
 package org.hyperledger.besu.consensus.qbft.payload;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -38,12 +38,12 @@ public class ProposalPayload extends QbftPayload {
     this.proposedBlock = proposedBlock;
   }
 
-  public static ProposalPayload readFrom(final RLPInput rlpInput) {
+  public static ProposalPayload readFrom(
+      final RLPInput rlpInput, final BftExtraDataCodec bftExtraDataCodec) {
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = readConsensusRound(rlpInput);
     final Block proposedBlock =
-        Block.readFrom(
-            rlpInput, BftBlockHeaderFunctions.forCommittedSeal(new QbftExtraDataCodec()));
+        Block.readFrom(rlpInput, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     rlpInput.leaveList();
 
     return new ProposalPayload(roundIdentifier, proposedBlock);

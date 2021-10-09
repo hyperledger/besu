@@ -60,7 +60,8 @@ public class LogsSubscriptionService implements Consumer<LogWithMetadata> {
   public void checkPrivateLogs(final BlockAddedEvent event) {
     privacyQueries.ifPresent(
         pq ->
-            subscriptionManager.subscriptionsOfType(SubscriptionType.LOGS, LogsSubscription.class)
+            subscriptionManager
+                .subscriptionsOfType(SubscriptionType.LOGS, LogsSubscription.class)
                 .stream()
                 .filter(PrivateLogsSubscription.class::isInstance)
                 .map(PrivateLogsSubscription.class::cast)

@@ -15,15 +15,17 @@ jar {
 dependencies {
   implementation project(':config')
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
+  implementation project(':evm')
   implementation project(':services:kvstore')
   implementation project(':util')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:units'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
 
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')

@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.p2p.peers;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.hyperledger.besu.plugin.data.EnodeURL;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -42,25 +44,25 @@ public class StaticNodesParserTest {
   // First peer ion the valid_static_nodes file.
   private final List<EnodeURL> validFileItems =
       Lists.newArrayList(
-          EnodeURL.builder()
+          EnodeURLImpl.builder()
               .nodeId(
                   "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa")
               .ipAddress("127.0.0.1")
               .useDefaultPorts()
               .build(),
-          EnodeURL.builder()
+          EnodeURLImpl.builder()
               .nodeId(
                   "02beb46bc17227616be44234071dfa18516684e45eed88049190b6cb56b0bae218f045fd0450f123b8f55c60b96b78c45e8e478004293a8de6818aa4e02eff97")
               .ipAddress("127.0.0.1")
               .discoveryAndListeningPorts(30304)
               .build(),
-          EnodeURL.builder()
+          EnodeURLImpl.builder()
               .nodeId(
                   "819e5cbd81f123516b10f04bf620daa2b385efef06d77253148b814bf1bb6197ff58ebd1fd7bf5dc765b49a4440c733bf941e479c800173f2bfeb887e4fbcbc2")
               .ipAddress("127.0.0.1")
               .discoveryAndListeningPorts(30305)
               .build(),
-          EnodeURL.builder()
+          EnodeURLImpl.builder()
               .nodeId(
                   "6cf53e25d2a98a22e7e205a86bda7077e3c8a7bc99e5ff88ddfd2037a550969ab566f069ffa455df0cfae0c21f7aec3447e414eccc473a3e8b20984b90f164ac")
               .ipAddress("127.0.0.1")
@@ -77,7 +79,7 @@ public class StaticNodesParserTest {
         StaticNodesParser.fromPath(validFile.toPath(), EnodeDnsConfiguration.DEFAULT_CONFIG);
 
     assertThat(enodes)
-        .containsExactlyInAnyOrder(validFileItems.toArray(new EnodeURL[validFileItems.size()]));
+        .containsExactlyInAnyOrder(validFileItems.toArray(new EnodeURLImpl[validFileItems.size()]));
   }
 
   @Test
@@ -92,7 +94,7 @@ public class StaticNodesParserTest {
         StaticNodesParser.fromPath(validFile.toPath(), enodeDnsConfiguration);
 
     assertThat(enodes)
-        .containsExactlyInAnyOrder(validFileItems.toArray(new EnodeURL[validFileItems.size()]));
+        .containsExactlyInAnyOrder(validFileItems.toArray(new EnodeURLImpl[validFileItems.size()]));
   }
 
   @Test
@@ -122,6 +124,12 @@ public class StaticNodesParserTest {
 
     assertThat(enodes)
         .containsExactlyInAnyOrder(validFileItems.toArray(new EnodeURL[validFileItems.size()]));
+    final Set<EnodeURL> actual =
+        StaticNodesParser.fromPath(validFile.toPath(), enodeDnsConfiguration);
+
+    final EnodeURL[] expected = validFileItems.toArray(new EnodeURLImpl[validFileItems.size()]);
+
+    assertThat(actual).containsExactlyInAnyOrder(expected);
   }
 
   @Test

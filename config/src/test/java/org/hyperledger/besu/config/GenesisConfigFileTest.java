@@ -38,7 +38,7 @@ import org.junit.Test;
 public class GenesisConfigFileTest {
 
   private static final BigInteger MAINNET_CHAIN_ID = BigInteger.ONE;
-  private static final BigInteger DEVELOPMENT_CHAIN_ID = BigInteger.valueOf(2018);
+  private static final BigInteger DEVELOPMENT_CHAIN_ID = BigInteger.valueOf(1337);
   private static final GenesisConfigFile EMPTY_CONFIG = fromConfig("{}");
 
   @Test
@@ -140,6 +140,26 @@ public class GenesisConfigFileTest {
   @Test
   public void shouldGetTimestamp() {
     assertThat(configWithProperty("timestamp", "0x10").getTimestamp()).isEqualTo(16L);
+  }
+
+  @Test
+  public void shouldGetBaseFeeAtGenesis() {
+    GenesisConfigFile withBaseFeeAtGenesis =
+        GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":0},\"baseFeePerGas\":\"0xa\"}");
+    assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isPresent();
+    assertThat(withBaseFeeAtGenesis.getBaseFeePerGas().get()).isEqualTo(10L);
+  }
+
+  @Test
+  public void shouldGetDefaultBaseFeeAtGenesis() {
+    GenesisConfigFile withBaseFeeAtGenesis =
+        GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":0}}");
+    assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isNotPresent();
+  }
+
+  @Test
+  public void shouldNotGetBaseFeeAtGenesis() {
+    assertThat(EMPTY_CONFIG.getBaseFeePerGas()).isNotPresent();
   }
 
   @Test
@@ -294,7 +314,7 @@ public class GenesisConfigFileTest {
 
     assertThat(config.getConfigOptions().getPetersburgBlockNumber()).hasValue(0);
     assertThat(config.getConfigOptions().getIstanbulBlockNumber()).isNotPresent();
-    assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(2018));
+    assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(1337));
     assertThat(config.getConfigOptions().getContractSizeLimit()).hasValue(2147483647);
     assertThat(config.getConfigOptions().getEvmStackSize()).isNotPresent();
     assertThat(config.getConfigOptions().getEcip1017EraRounds()).isNotPresent();
@@ -315,7 +335,6 @@ public class GenesisConfigFileTest {
         .isThrownBy(() -> config.getConfigOptions(override).getPetersburgBlockNumber())
         .withMessage(
             "Genesis files cannot specify both petersburgBlock and constantinopleFixBlock.");
-    ;
   }
 
   @Test
@@ -409,6 +428,30 @@ public class GenesisConfigFileTest {
         .isEqualTo(configFileMultipleUnexpectedForks.getForks());
     assertThat(configFileNoUnexpectedForks.getConfigOptions().getChainId())
         .hasValue(BigInteger.valueOf(61));
+  }
+
+  /**
+   * The intent of this test is to catch encoding errors when a new hard fork is being added and the
+   * config is being inserted in all the places the prior fork was. The intent is that
+   * all_forks.json will also be updated.
+   *
+   * <p>This catches a common error in JsonGenesisConfigOptions where internally the names are all
+   * lower ase but 'canonicaly' they are mixed case, as well as being mixed case almost everywhere
+   * else in the code. Case differences are common in custom genesis files so historically we have
+   * been case agnostic.
+   */
+  @Test
+  public void roundTripForkIdBlocks() throws IOException {
+    final String configText =
+        Resources.toString(Resources.getResource("all_forks.json"), StandardCharsets.UTF_8);
+    final ObjectNode genesisNode = JsonUtil.objectNodeFromString(configText);
+
+    final GenesisConfigFile genesisConfig = fromConfig(genesisNode);
+
+    final ObjectNode output = JsonUtil.objectNodeFromMap(genesisConfig.getConfigOptions().asMap());
+
+    assertThat(JsonUtil.getJson(output, true))
+        .isEqualTo(JsonUtil.getJson(genesisNode.get("config"), true));
   }
 
   private GenesisConfigFile configWithProperty(final String key, final String value) {

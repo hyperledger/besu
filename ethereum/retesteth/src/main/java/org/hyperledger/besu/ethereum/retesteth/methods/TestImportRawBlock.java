@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
+import java.util.Collections;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -62,19 +64,33 @@ public class TestImportRawBlock implements JsonRpcMethod {
           requestContext.getRequest().getId(), JsonRpcError.BLOCK_RLP_IMPORT_ERROR);
     }
 
-    final BlockImporter blockImporter =
-        context.getProtocolSpec(block.getHeader().getNumber()).getBlockImporter();
-    if (blockImporter.importBlock(
-        protocolContext,
-        block,
-        context.getHeaderValidationMode(),
-        context.getHeaderValidationMode())) {
-      return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(), block.getHash().toString());
+    // retesteth expects test_rawImportBlock to not only import the block, but append it to head
+    if (context.getBlockchain().contains(block.getHash())) {
+      // if we already have the block but it is not head, append it:
+      context
+          .getBlockchain()
+          .appendBlock(
+              block,
+              context
+                  .getBlockchain()
+                  .getTxReceipts(block.getHash())
+                  .orElse(Collections.emptyList()));
     } else {
-      LOG.debug("Failed to import block.");
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.BLOCK_IMPORT_ERROR);
+      // otherwise attempt to import the block
+      final BlockImporter blockImporter =
+          context.getProtocolSpec(block.getHeader().getNumber()).getBlockImporter();
+      if (!blockImporter.importBlock(
+          protocolContext,
+          block,
+          context.getHeaderValidationMode(),
+          context.getHeaderValidationMode())) {
+        LOG.debug("Failed to import block.");
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.BLOCK_IMPORT_ERROR);
+      }
     }
+    // return success on append or import
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), block.getHash().toString());
   }
 }

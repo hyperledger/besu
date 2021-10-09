@@ -18,15 +18,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.cli.DefaultCommandValues;
+import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.crypto.SignatureAlgorithmType;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.io.File;
@@ -37,6 +41,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -55,12 +60,12 @@ import picocli.CommandLine.ParentCommand;
 
 @Command(
     name = "generate-blockchain-config",
-    description = "Generates node keypairs and genesis file with RLP encoded IBFT 2.0 extra data.",
+    description = "Generates node keypairs and genesis file with RLP encoded extra data.",
     mixinStandardHelpOptions = true)
 class GenerateBlockchainConfig implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+  private final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   @Option(
@@ -133,6 +138,7 @@ class GenerateBlockchainConfig implements Runnable {
     try {
       handleOutputDirectory();
       parseConfig();
+      processEcCurve();
       if (generateNodesKeys) {
         generateNodesKeys();
       } else {
@@ -167,6 +173,16 @@ class GenerateBlockchainConfig implements Runnable {
     try {
       final SECPPublicKey publicKey =
           SIGNATURE_ALGORITHM.get().createPublicKey(Bytes.fromHexString(publicKeyText));
+
+      if (!SIGNATURE_ALGORITHM.get().isValidPublicKey(publicKey)) {
+        throw new IllegalArgumentException(
+            new StringBuilder()
+                .append(publicKeyText)
+                .append(" is not a valid public key for elliptic curve ")
+                .append(SIGNATURE_ALGORITHM.get().getCurveName())
+                .toString());
+      }
+
       writeKeypair(publicKey, null);
       LOG.info("Public key imported from configuration.({})", publicKey.toString());
     } catch (final IOException e) {
@@ -219,13 +235,22 @@ class GenerateBlockchainConfig implements Runnable {
 
   /** Computes RLP encoded exta data from pre filled list of addresses. */
   private void processExtraData() {
-    final ObjectNode configNode = JsonUtil.getObjectNode(genesisConfig, "config").orElse(null);
+    final ObjectNode configNode =
+        JsonUtil.getObjectNode(genesisConfig, "config")
+            .orElseThrow(
+                () -> new IllegalArgumentException("Missing config section in config file"));
+
     final JsonGenesisConfigOptions genesisConfigOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
     if (genesisConfigOptions.isIbft2()) {
       LOG.info("Generating IBFT extra data.");
       final String extraData =
           IbftExtraDataCodec.encodeFromAddresses(addressesForGenesisExtraData).toString();
+      genesisConfig.put("extraData", extraData);
+    } else if (genesisConfigOptions.isQbft()) {
+      LOG.info("Generating QBFT extra data.");
+      final String extraData =
+          QbftExtraDataCodec.encodeFromAddresses(addressesForGenesisExtraData).toString();
       genesisConfig.put("extraData", extraData);
     }
   }
@@ -254,6 +279,27 @@ class GenerateBlockchainConfig implements Runnable {
     nodesConfig =
         JsonUtil.getObjectNode(blockchainConfig, "nodes").orElse(JsonUtil.createEmptyObjectNode());
     generateNodesKeys = JsonUtil.getBoolean(nodesConfig, "generate", false);
+  }
+
+  /** Sets the selected signature algorithm instance in SignatureAlgorithmFactory. */
+  private void processEcCurve() {
+    GenesisConfigOptions options = GenesisConfigFile.fromConfig(genesisConfig).getConfigOptions();
+    Optional<String> ecCurve = options.getEcCurve();
+
+    if (ecCurve.isEmpty()) {
+      SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.createDefault());
+      return;
+    }
+
+    try {
+      SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(ecCurve.get()));
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+          new StringBuilder()
+              .append("Invalid parameter for ecCurve in genesis config: ")
+              .append(e.getMessage())
+              .toString());
+    }
   }
 
   /**

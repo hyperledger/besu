@@ -17,13 +17,13 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.TestCodeExecutor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.MessageFrame.State;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.MessageFrame.State;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
@@ -37,7 +37,8 @@ import org.junit.runners.Parameterized.Parameters;
 public class ConstantinopleSStoreOperationGasCostTest {
 
   private static final ProtocolSchedule protocolSchedule =
-      MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().constantinopleBlock(0));
+      MainnetProtocolSchedule.fromConfig(
+          new StubGenesisConfigOptions().constantinopleBlock(0), EvmConfiguration.DEFAULT);
 
   @Parameters(name = "Code: {0}, Original: {1}")
   public static Object[][] scenarios() {
@@ -87,7 +88,6 @@ public class ConstantinopleSStoreOperationGasCostTest {
     final MessageFrame frame =
         codeExecutor.executeCode(
             code,
-            Account.DEFAULT_VERSION,
             gasLimit,
             account -> account.setStorageValue(UInt256.ZERO, UInt256.valueOf(originalValue)));
     assertThat(frame.getState()).isEqualTo(State.COMPLETED_SUCCESS);

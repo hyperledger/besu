@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -40,17 +40,12 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
 
   @Override
   public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
-    return privateWorldUpdater.createAccount(address);
+    return privateWorldUpdater.createAccount(address, nonce, balance);
   }
 
   @Override
   public EvmAccount createAccount(final Address address) {
     return privateWorldUpdater.createAccount(address);
-  }
-
-  @Override
-  public EvmAccount getOrCreate(final Address address) {
-    return privateWorldUpdater.getOrCreate(address);
   }
 
   @Override

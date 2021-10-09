@@ -14,7 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -33,6 +38,7 @@ public class BlockHeaderTestFixture {
   private long number = 0;
 
   private long gasLimit = 0;
+  private Optional<Long> baseFee = Optional.empty();
   private long gasUsed = 0;
   private long timestamp = 0;
   private Bytes extraData = Bytes.EMPTY;
@@ -54,6 +60,7 @@ public class BlockHeaderTestFixture {
     builder.number(number);
     builder.gasLimit(gasLimit);
     builder.gasUsed(gasUsed);
+    baseFee.ifPresent(builder::baseFee);
     builder.timestamp(timestamp);
     builder.extraData(extraData);
     builder.mixHash(mixHash);
@@ -115,6 +122,11 @@ public class BlockHeaderTestFixture {
 
   public BlockHeaderTestFixture gasUsed(final long gasUsed) {
     this.gasUsed = gasUsed;
+    return this;
+  }
+
+  public BlockHeaderTestFixture baseFeePerGas(final long baseFee) {
+    this.baseFee = Optional.of(baseFee);
     return this;
   }
 

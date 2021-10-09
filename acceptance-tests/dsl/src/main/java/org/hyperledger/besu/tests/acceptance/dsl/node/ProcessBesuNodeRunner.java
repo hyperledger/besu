@@ -20,6 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -120,19 +121,26 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     if (node.getPrivacyParameters().isEnabled()) {
       params.add("--privacy-enabled");
+
       params.add("--privacy-url");
       params.add(node.getPrivacyParameters().getEnclaveUri().toString());
+
       if (node.getPrivacyParameters().isMultiTenancyEnabled()) {
         params.add("--privacy-multi-tenancy-enabled");
       } else {
         params.add("--privacy-public-key-file");
         params.add(node.getPrivacyParameters().getEnclavePublicKeyFile().getAbsolutePath());
       }
+
       params.add("--privacy-marker-transaction-signing-key-file");
       params.add(node.homeDirectory().resolve("key").toString());
 
       if (node.getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
         params.add("--privacy-onchain-groups-enabled");
+      }
+
+      if (node.getPrivacyParameters().isPrivacyPluginEnabled()) {
+        params.add("--Xprivacy-plugin-enabled");
       }
     }
 
@@ -239,6 +247,26 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       final List<String> networkConfigParams =
           NetworkingOptions.fromConfig(node.getNetworkingConfiguration()).getCLIOptions();
       params.addAll(networkConfigParams);
+      if (node.getTLSConfiguration().isPresent()) {
+        final TLSConfiguration config = node.getTLSConfiguration().get();
+        params.add("--Xp2p-tls-enabled");
+        params.add("--Xp2p-tls-keystore-type");
+        params.add(config.getKeyStoreType());
+        params.add("--Xp2p-tls-keystore-file");
+        params.add(config.getKeyStorePath().toAbsolutePath().toString());
+        params.add("--Xp2p-tls-keystore-password-file");
+        params.add(config.getKeyStorePasswordPath().toAbsolutePath().toString());
+        params.add("--Xp2p-tls-crl-file");
+        params.add(config.getCrlPath().toAbsolutePath().toString());
+        if (null != config.getTrustStoreType()) {
+          params.add("--Xp2p-tls-truststore-type");
+          params.add(config.getTrustStoreType());
+          params.add("--Xp2p-tls-truststore-file");
+          params.add(config.getTrustStorePath().toAbsolutePath().toString());
+          params.add("--Xp2p-tls-truststore-password-file");
+          params.add(config.getTrustStorePasswordPath().toAbsolutePath().toString());
+        }
+      }
     }
 
     if (node.isRevertReasonEnabled()) {
@@ -291,6 +319,34 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
                   String.valueOf(
                       permissioningConfiguration.getNodeSmartContractInterfaceVersion()));
             });
+
+    node.getPkiKeyStoreConfiguration()
+        .ifPresent(
+            pkiConfig -> {
+              params.add("--Xpki-block-creation-enabled");
+
+              params.add("--Xpki-block-creation-keystore-certificate-alias");
+              params.add(pkiConfig.getCertificateAlias());
+
+              params.add("--Xpki-block-creation-keystore-type");
+              params.add(pkiConfig.getKeyStoreType());
+
+              params.add("--Xpki-block-creation-keystore-file");
+              params.add(pkiConfig.getKeyStorePath().toAbsolutePath().toString());
+
+              params.add("--Xpki-block-creation-keystore-password-file");
+              params.add(pkiConfig.getKeyStorePasswordPath().toAbsolutePath().toString());
+
+              params.add("--Xpki-block-creation-truststore-type");
+              params.add(pkiConfig.getTrustStoreType());
+
+              params.add("--Xpki-block-creation-truststore-file");
+              params.add(pkiConfig.getTrustStorePath().toAbsolutePath().toString());
+
+              params.add("--Xpki-block-creation-truststore-password-file");
+              params.add(pkiConfig.getTrustStorePasswordPath().toAbsolutePath().toString());
+            });
+
     params.addAll(node.getExtraCLIOptions());
 
     params.add("--key-value-storage");

@@ -53,9 +53,9 @@ public class AutoTransactionLogBloomCachingService {
       final LogBloomCacheMetadata logBloomCacheMetadata =
           LogBloomCacheMetadata.lookUpFrom(cacheDir);
       if (logBloomCacheMetadata.getVersion() < DEFAULT_VERSION) {
-        try (Stream<Path> walk = Files.walk(cacheDir)) {
+        try (final Stream<Path> walk = Files.walk(cacheDir)) {
           walk.filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
-        } catch (Exception e) {
+        } catch (final Exception e) {
           LOG.error("Failed to update cache {}", e.getMessage());
         }
         new LogBloomCacheMetadata(DEFAULT_VERSION).writeToDirectory(cacheDir);
@@ -77,7 +77,7 @@ public class AutoTransactionLogBloomCachingService {
       transactionLogBloomCacher
           .getScheduler()
           .scheduleFutureTask(transactionLogBloomCacher::cacheAll, Duration.ofMinutes(1));
-    } catch (IOException e) {
+    } catch (final IOException e) {
       LOG.error("Unhandled caching exception.", e);
     }
   }

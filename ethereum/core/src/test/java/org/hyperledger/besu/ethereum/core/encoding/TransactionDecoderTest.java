@@ -15,13 +15,14 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.config.GoQuorumOptions;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
@@ -57,9 +58,9 @@ public class TransactionDecoderTest {
     final Transaction transaction =
         TransactionDecoder.decodeForWire(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     assertThat(transaction).isNotNull();
-    assertThat(transaction.getGasPrice()).isEqualByComparingTo(Wei.of(50L));
-    assertThat(transaction.getGasPremium()).isEmpty();
-    assertThat(transaction.getFeeCap()).isEmpty();
+    assertThat(transaction.getGasPrice().get()).isEqualByComparingTo(Wei.of(50L));
+    assertThat(transaction.getMaxPriorityFeePerGas()).isEmpty();
+    assertThat(transaction.getMaxFeePerGas()).isEmpty();
   }
 
   @Test
@@ -67,8 +68,16 @@ public class TransactionDecoderTest {
     final Transaction transaction =
         TransactionDecoder.decodeForWire(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
     assertThat(transaction).isNotNull();
-    assertThat(transaction.getGasPremium()).hasValue(Wei.of(2L));
-    assertThat(transaction.getFeeCap()).hasValue(Wei.of(new BigInteger("5000000000", 10)));
-    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
+    assertThat(transaction.getMaxPriorityFeePerGas()).hasValue(Wei.of(2L));
+    assertThat(transaction.getMaxFeePerGas()).hasValue(Wei.of(new BigInteger("5000000000", 10)));
+  }
+
+  @Test
+  public void doesNotDecodeEIP1559WithLargeMaxFeePerGasOrLargeMaxPriorityFeePerGas() {
+    final String txWithBigFees =
+        "0x02f84e0101a1648a5f8b2dcad5ea5ba6b720ff069c1d87c21a4a6a5b3766b39e2c2792367bb066a1ffa5ffaf5b0560d3a9fb186c2ede2ae6751bc0b4fef9107cf36389630b6196a38805800180c0010203";
+    assertThatThrownBy(
+            () -> TransactionDecoder.decodeOpaqueBytes(Bytes.fromHexString(txWithBigFees)))
+        .isInstanceOf(RLPException.class);
   }
 }

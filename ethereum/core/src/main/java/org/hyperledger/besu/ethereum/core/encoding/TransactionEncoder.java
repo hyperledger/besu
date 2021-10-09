@@ -16,13 +16,12 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.ethereum.core.AccessListEntry;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.plugin.data.Quantity;
+import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -78,7 +77,7 @@ public class TransactionEncoder {
   static void encodeFrontier(final Transaction transaction, final RLPOutput out) {
     out.startList();
     out.writeLongScalar(transaction.getNonce());
-    out.writeUInt256Scalar(transaction.getGasPrice());
+    out.writeUInt256Scalar(transaction.getGasPrice().orElseThrow());
     out.writeLongScalar(transaction.getGasLimit());
     out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
     out.writeUInt256Scalar(transaction.getValue());
@@ -92,7 +91,7 @@ public class TransactionEncoder {
     encodeAccessListInner(
         transaction.getChainId(),
         transaction.getNonce(),
-        transaction.getGasPrice(),
+        transaction.getGasPrice().orElseThrow(),
         transaction.getGasLimit(),
         transaction.getTo(),
         transaction.getValue(),
@@ -119,13 +118,7 @@ public class TransactionEncoder {
       final Bytes payload,
       final List<AccessListEntry> accessList,
       final RLPOutput rlpOutput) {
-    rlpOutput.writeLongScalar(
-        chainId
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "chainId is required for access list transactions"))
-            .longValue());
+    rlpOutput.writeLongScalar(chainId.orElseThrow().longValue());
     rlpOutput.writeLongScalar(nonce);
     rlpOutput.writeUInt256Scalar(gasPrice);
     rlpOutput.writeLongScalar(gasLimit);
@@ -153,17 +146,10 @@ public class TransactionEncoder {
 
   static void encodeEIP1559(final Transaction transaction, final RLPOutput out) {
     out.startList();
-    out.writeLongScalar(
-        transaction
-            .getChainId()
-            .orElseThrow(
-                () -> new IllegalArgumentException("chainId is required for EIP-1559 transactions"))
-            .longValue());
+    out.writeLongScalar(transaction.getChainId().orElseThrow().longValue());
     out.writeLongScalar(transaction.getNonce());
-    out.writeUInt256Scalar(
-        transaction.getGasPremium().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
-    out.writeUInt256Scalar(
-        transaction.getFeeCap().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
+    out.writeUInt256Scalar(transaction.getMaxPriorityFeePerGas().orElseThrow());
+    out.writeUInt256Scalar(transaction.getMaxFeePerGas().orElseThrow());
     out.writeLongScalar(transaction.getGasLimit());
     out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
     out.writeUInt256Scalar(transaction.getValue());

@@ -16,16 +16,19 @@ package org.hyperledger.besu.ethereum.eth.sync.state;
 
 import static java.util.Collections.newSetFromMap;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.cache.ImmutablePendingBlock;
 import org.hyperledger.besu.ethereum.eth.sync.state.cache.PendingBlockCache;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -115,5 +118,12 @@ public class PendingBlocksManager {
         .filter(Objects::nonNull)
         .map(ImmutablePendingBlock::block)
         .collect(Collectors.toList());
+  }
+
+  public Optional<BlockHeader> lowestAnnouncedBlock() {
+    return pendingBlocks.values().stream()
+        .map(ImmutablePendingBlock::block)
+        .map(Block::getHeader)
+        .min(Comparator.comparing(BlockHeader::getNumber));
   }
 }

@@ -28,11 +28,11 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -77,7 +77,7 @@ public class ProposalValidator {
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
-            expectedProposer, roundIdentifier, blockValidator, protocolContext);
+            expectedProposer, roundIdentifier, blockValidator, protocolContext, bftExtraDataCodec);
 
     if (!payloadValidator.validate(msg.getSignedPayload())) {
       LOG.info("{}: invalid proposal payload in proposal message", ERROR_PREFIX);
