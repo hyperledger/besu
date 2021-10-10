@@ -418,9 +418,7 @@ public class BesuNodeFactory {
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
             .genesisConfigProvider(genesis::createQbftGenesisConfig)
-            .pkiBlockCreationEnabled(
-                pkiKeystoreConfigurationFactory.createPkiConfig(
-                    KeyStoreWrapper.KEYSTORE_TYPE_PKCS12, name))
+            .pkiBlockCreationEnabled(pkiKeystoreConfigurationFactory.createPkiConfig(type, name))
             .build());
   }
 

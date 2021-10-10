@@ -306,7 +306,8 @@ public class BesuNodeConfigurationBuilder {
           builder
               .withKeyStoreType(type)
               .withKeyStorePath(
-                  PKCS11Utils.initNSSConfigFile(toPath(String.format("/pki-certs/%s/nss.cfg", name))))
+                  PKCS11Utils.initNSSConfigFile(
+                      toPath(String.format("/pki-certs/%s/nss.cfg", name))))
               .withKeyStorePasswordSupplier(
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
               .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
