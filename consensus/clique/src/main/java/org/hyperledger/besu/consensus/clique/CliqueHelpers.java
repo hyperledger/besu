@@ -32,13 +32,13 @@ public class CliqueHelpers {
     return extraData.getProposerAddress();
   }
 
-  public static Address getProposerForBlockAfter(
+  static Address getProposerForBlockAfter(
       final BlockHeader parent, final ValidatorProvider validatorProvider) {
     final CliqueProposerSelector proposerSelector = new CliqueProposerSelector(validatorProvider);
     return proposerSelector.selectProposerForNextBlock(parent);
   }
 
-  public static boolean isSigner(
+  static boolean isSigner(
       final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
     final Collection<Address> validators =
         protocolContext
@@ -102,9 +102,7 @@ public class CliqueHelpers {
             // shortest chain
             .thenComparing(Comparator.comparing(ProcessableBlockHeader::getNumber).reversed())
             // proposer with least recent in-turn block
-            .thenComparing(
-                Comparator.comparing(
-                    (BlockHeader header) -> distanceFromInTurn(header, cliqueContext)))
+            .thenComparing((BlockHeader header) -> distanceFromInTurn(header, cliqueContext))
             // last resort: blockhash as uint256.
             .thenComparing(Comparator.comparing(BlockHeader::getHash).reversed()));
   }
