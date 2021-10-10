@@ -44,10 +44,10 @@ public class PkiKeystoreConfigurationFactory {
   /*
    PKCS11 config files
   */
-  final String NSSCONFIG_PATH_STRING = "/p2p-tls/%s/nss.cfg";
-  final String NSSPIN_PATH_STRING = "/p2p-tls/%s/nsspin.txt";
-  final String TRUSTSTORE_PATH_STRING = "/p2p-tls/%s/truststore.jks";
-  final String CRL_PATH_STRING = "/p2p-tls/%s/crl.pem";
+  final String NSSCONFIG_PATH_STRING = "/pki-certs/%s/nss.cfg";
+  final String NSSPIN_PATH_STRING = "/pki-certs/%s/nsspin.txt";
+  final String TRUSTSTORE_PATH_STRING = "/pki-certs/%s/truststore.jks";
+  final String CRL_PATH_STRING = "/pki-certs/%s/crl.pem";
 
   /*
    Software keystore config
