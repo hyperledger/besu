@@ -16,6 +16,8 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 
+import java.util.Objects;
+
 public class BftForkSpec<C extends BftConfigOptions> {
 
   private final long block;
@@ -32,5 +34,22 @@ public class BftForkSpec<C extends BftConfigOptions> {
 
   public C getConfigOptions() {
     return configOptions;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final BftForkSpec<?> that = (BftForkSpec<?>) o;
+    return block == that.block && Objects.equals(configOptions, that.configOptions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(block, configOptions);
   }
 }

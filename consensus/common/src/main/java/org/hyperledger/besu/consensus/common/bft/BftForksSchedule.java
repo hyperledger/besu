@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 
@@ -31,30 +33,34 @@ public class BftForksSchedule<C extends BftConfigOptions> {
       new TreeSet<>(
           Comparator.comparing((Function<BftForkSpec<C>, Long>) BftForkSpec::getBlock).reversed());
 
-  public BftForksSchedule(final Collection<BftForkSpec<C>> forks) {
+  public BftForksSchedule(
+      final BftForkSpec<C> genesisFork, final Collection<BftForkSpec<C>> forks) {
+    checkArgument(
+        forks.stream().allMatch(f -> f.getBlock() > 0),
+        "Transition cannot be created for genesis block");
+    checkArgument(
+        forks.stream().map(BftForkSpec::getBlock).distinct().count() == forks.size(),
+        "Duplicate transitions cannot be created for the same block");
+    this.forks.add(genesisFork);
     this.forks.addAll(forks);
   }
 
   public static <T extends BftConfigOptions, U extends BftFork> BftForksSchedule<T> create(
       final T initial, final List<U> forks, final BiFunction<BftForkSpec<T>, U, T> specCreator) {
-    final BftForkSpec<T> initialSpec = new BftForkSpec<T>(0, initial);
-
     final NavigableSet<BftForkSpec<T>> specs =
-        new TreeSet<>(
-            Comparator.comparing((Function<BftForkSpec<T>, Long>) BftForkSpec::getBlock)
-                .reversed());
-    specs.add(initialSpec);
+        new TreeSet<>(Comparator.comparing(BftForkSpec::getBlock));
+    final BftForkSpec<T> initialForkSpec = new BftForkSpec<>(0, initial);
+    specs.add(initialForkSpec);
 
     forks.stream()
         .sorted(Comparator.comparing(BftFork::getForkBlock))
         .forEachOrdered(
             f -> {
-              final BftForkSpec<T> lastSpec = specs.last();
-              final T apply = specCreator.apply(lastSpec, f);
-              specs.add(new BftForkSpec<T>(f.getForkBlock(), apply));
+              final T spec = specCreator.apply(specs.last(), f);
+              specs.add(new BftForkSpec<>(f.getForkBlock(), spec));
             });
 
-    return new BftForksSchedule<T>(specs);
+    return new BftForksSchedule<>(initialForkSpec, specs.tailSet(initialForkSpec, false));
   }
 
   public BftForkSpec<C> getFork(final long blockNumber) {

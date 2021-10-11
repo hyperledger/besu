@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.qbft.validator;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
+import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 
@@ -28,30 +29,30 @@ public class QbftForksSchedulesFactory {
   public static BftForksSchedule<QbftConfigOptions> create(
       final QbftConfigOptions genesisConfig, final List<QbftFork> qbftForks) {
     return BftForksSchedule.create(
-        genesisConfig,
-        qbftForks,
-        (lastSpec, fork) -> {
-          final MutableQbftConfigOptions bftConfigOptions =
-              new MutableQbftConfigOptions(lastSpec.getConfigOptions());
+        genesisConfig, qbftForks, QbftForksSchedulesFactory::createQbftConfigOptions);
+  }
 
-          if (fork.getBlockPeriodSeconds().isPresent()) {
-            bftConfigOptions.setBlockPeriodSeconds(fork.getBlockPeriodSeconds().getAsInt());
-          }
-          if (fork.getBlockRewardWei().isPresent()) {
-            bftConfigOptions.setBlockRewardWei(fork.getBlockRewardWei().get());
-          }
-          if (fork.getValidatorSelectionMode().isPresent()) {
-            final VALIDATOR_SELECTION_MODE validatorSelectionMode =
-                fork.getValidatorSelectionMode().get();
-            if (validatorSelectionMode == VALIDATOR_SELECTION_MODE.BLOCKHEADER) {
-              bftConfigOptions.setValidatorContractAddress(Optional.empty());
-            }
-          }
-          if (fork.getValidatorContractAddress().isPresent()) {
-            bftConfigOptions.setValidatorContractAddress(fork.getValidatorContractAddress());
-          }
+  private static QbftConfigOptions createQbftConfigOptions(
+      final BftForkSpec<QbftConfigOptions> lastSpec, final QbftFork fork) {
+    final MutableQbftConfigOptions bftConfigOptions =
+        new MutableQbftConfigOptions(lastSpec.getConfigOptions());
 
-          return bftConfigOptions;
-        });
+    fork.getBlockPeriodSeconds().ifPresent(bftConfigOptions::setBlockPeriodSeconds);
+    fork.getBlockRewardWei().ifPresent(bftConfigOptions::setBlockRewardWei);
+
+    if (fork.getValidatorSelectionMode().isPresent()) {
+      final VALIDATOR_SELECTION_MODE mode = fork.getValidatorSelectionMode().get();
+      if (mode == VALIDATOR_SELECTION_MODE.BLOCKHEADER) {
+        bftConfigOptions.setValidatorContractAddress(Optional.empty());
+      } else if (mode == VALIDATOR_SELECTION_MODE.CONTRACT
+          && fork.getValidatorContractAddress().isPresent()) {
+        bftConfigOptions.setValidatorContractAddress(fork.getValidatorContractAddress());
+      } else if (fork.getValidatorContractAddress().isEmpty()) {
+        throw new IllegalStateException(
+            "QBFT transition has config with contract mode but no contract address");
+      }
+    }
+
+    return bftConfigOptions;
   }
 }

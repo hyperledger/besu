@@ -96,7 +96,7 @@ public class ForkingValidatorProviderTest {
   @Test
   public void usesInitialValidatorProviderWhenNoForks() {
     final BftForksSchedule<QbftConfigOptions> forksSchedule =
-        new BftForksSchedule<>(List.of(createBlockFork(0)));
+        new BftForksSchedule<>(createBlockFork(0), List.of());
 
     final ForkingValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
@@ -114,7 +114,7 @@ public class ForkingValidatorProviderTest {
   public void migratesFromBlockToContractValidatorProvider() {
     final BftForksSchedule<QbftConfigOptions> forksSchedule =
         new BftForksSchedule<>(
-            List.of(createBlockFork(0), createContractFork(1L, CONTRACT_ADDRESS_1)));
+            createBlockFork(0), List.of(createContractFork(1L, CONTRACT_ADDRESS_1)));
     final ForkingValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
@@ -127,7 +127,7 @@ public class ForkingValidatorProviderTest {
   public void migratesFromContractToBlockValidatorProvider() {
     final BftForksSchedule<QbftConfigOptions> forksSchedule =
         new BftForksSchedule<>(
-            List.of(createContractFork(0, CONTRACT_ADDRESS_1), createBlockFork(1)));
+            createContractFork(0, CONTRACT_ADDRESS_1), List.of(createBlockFork(1)));
     final ForkingValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
@@ -145,8 +145,8 @@ public class ForkingValidatorProviderTest {
   public void migratesFromContractToContractValidatorProvider() {
     final BftForksSchedule<QbftConfigOptions> forksSchedule =
         new BftForksSchedule<>(
+            createBlockFork(0),
             List.of(
-                createBlockFork(0),
                 createContractFork(1L, CONTRACT_ADDRESS_1),
                 createContractFork(2L, CONTRACT_ADDRESS_2)));
 
@@ -163,8 +163,8 @@ public class ForkingValidatorProviderTest {
   public void voteProviderIsDelegatesToHeadFork() {
     final BftForksSchedule<QbftConfigOptions> forksSchedule =
         new BftForksSchedule<>(
-            List.of(
-                createBlockFork(0), createBlockFork(1), createContractFork(2, CONTRACT_ADDRESS_1)));
+            createBlockFork(0),
+            List.of(createBlockFork(1), createContractFork(2, CONTRACT_ADDRESS_1)));
 
     final ForkingValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
