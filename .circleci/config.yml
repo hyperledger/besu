@@ -51,6 +51,10 @@ commands:
     description: "Capture test results"
     steps:
       - run:
+          name: Jacoco
+          command: |
+            ./gradlew --no-daemon jacocoTestReport
+      - run:
           name: Gather test results
           when: always
           command: |
@@ -64,6 +68,8 @@ commands:
             done
       - store_test_results:
           path: build/test-results
+      - store_artifacts:
+          path: build/reports/jacoco
 
   capture_test_logs:
     description: "Capture test logs"
