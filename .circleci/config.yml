@@ -69,7 +69,7 @@ commands:
       - store_test_results:
           path: build/test-results
       - store_artifacts:
-          path: build/reports/jacoco
+          path: besu/build/reports/jacoco
 
   capture_test_logs:
     description: "Capture test logs"
