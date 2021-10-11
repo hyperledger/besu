@@ -24,8 +24,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.TreeSet;
-import java.util.function.BiFunction;
 import java.util.function.Function;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class BftForksSchedule<C extends BftConfigOptions> {
 
@@ -33,20 +34,26 @@ public class BftForksSchedule<C extends BftConfigOptions> {
       new TreeSet<>(
           Comparator.comparing((Function<BftForkSpec<C>, Long>) BftForkSpec::getBlock).reversed());
 
+  public interface BftSpecCreator<T extends BftConfigOptions, U extends BftFork> {
+    T create(BftForkSpec<T> lastSpec, U fork);
+  }
+
+  @VisibleForTesting
   public BftForksSchedule(
       final BftForkSpec<C> genesisFork, final Collection<BftForkSpec<C>> forks) {
-    checkArgument(
-        forks.stream().allMatch(f -> f.getBlock() > 0),
-        "Transition cannot be created for genesis block");
-    checkArgument(
-        forks.stream().map(BftForkSpec::getBlock).distinct().count() == forks.size(),
-        "Duplicate transitions cannot be created for the same block");
     this.forks.add(genesisFork);
     this.forks.addAll(forks);
   }
 
   public static <T extends BftConfigOptions, U extends BftFork> BftForksSchedule<T> create(
-      final T initial, final List<U> forks, final BiFunction<BftForkSpec<T>, U, T> specCreator) {
+      final T initial, final List<U> forks, final BftSpecCreator<T, U> specCreator) {
+    checkArgument(
+        forks.stream().allMatch(f -> f.getForkBlock() > 0),
+        "Transition cannot be created for genesis block");
+    checkArgument(
+        forks.stream().map(BftFork::getForkBlock).distinct().count() == forks.size(),
+        "Duplicate transitions cannot be created for the same block");
+
     final NavigableSet<BftForkSpec<T>> specs =
         new TreeSet<>(Comparator.comparing(BftForkSpec::getBlock));
     final BftForkSpec<T> initialForkSpec = new BftForkSpec<>(0, initial);
@@ -56,7 +63,7 @@ public class BftForksSchedule<C extends BftConfigOptions> {
         .sorted(Comparator.comparing(BftFork::getForkBlock))
         .forEachOrdered(
             f -> {
-              final T spec = specCreator.apply(specs.last(), f);
+              final T spec = specCreator.create(specs.last(), f);
               specs.add(new BftForkSpec<>(f.getForkBlock(), spec));
             });
 
