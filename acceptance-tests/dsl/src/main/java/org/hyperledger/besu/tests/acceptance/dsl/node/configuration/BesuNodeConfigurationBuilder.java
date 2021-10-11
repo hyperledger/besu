@@ -107,13 +107,13 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder miningEnabled(final boolean enabled) {
     this.miningParameters =
         new MiningParameters.Builder().enabled(enabled).coinbase(AddressHelpers.ofValue(1)).build();
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER.name());
     return this;
   }
 
   public BesuNodeConfigurationBuilder miningConfiguration(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER.name());
     return this;
   }
 
@@ -143,18 +143,18 @@ public class BesuNodeConfigurationBuilder {
   }
 
   public BesuNodeConfigurationBuilder enablePrivateTransactions() {
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.EEA);
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.PRIV);
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.EEA.name());
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.PRIV.name());
     return this;
   }
 
   public BesuNodeConfigurationBuilder jsonRpcTxPool() {
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.TX_POOL);
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.TXPOOL.name());
     return this;
   }
 
   public BesuNodeConfigurationBuilder jsonRpcAdmin() {
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.ADMIN);
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.ADMIN.name());
     return this;
   }
 

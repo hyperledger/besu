@@ -12,20 +12,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.jsonrpc;
+package org.hyperledger.besu.plugin.services.rpc;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
-
-import java.util.Optional;
-
-public class QbftRpcApis {
-  public static final RpcApi QBFT = new RpcApi("QBFT");
-
-  public static final Optional<RpcApi> valueOf(final String name) {
-    if (name.equals(QBFT.getCliValue())) {
-      return Optional.of(QBFT);
-    } else {
-      return Optional.empty();
-    }
-  }
+public interface PluginRpcRequest {
+  Object[] getParams();
 }
