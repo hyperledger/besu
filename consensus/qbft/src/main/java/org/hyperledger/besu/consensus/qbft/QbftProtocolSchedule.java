@@ -50,6 +50,18 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
     return create(config, PrivacyParameters.DEFAULT, false, bftExtraDataCodec, evmConfiguration);
   }
 
+  public static ProtocolSchedule create(
+      final GenesisConfigOptions config,
+      final boolean isRevertReasonEnabled,
+      final BftExtraDataCodec bftExtraDataCodec) {
+    return create(
+        config,
+        PrivacyParameters.DEFAULT,
+        isRevertReasonEnabled,
+        bftExtraDataCodec,
+        EvmConfiguration.DEFAULT);
+  }
+
   @Override
   protected Supplier<BlockHeaderValidator.Builder> createForkBlockHeaderRuleset(
       final GenesisConfigOptions config, final BftFork fork) {
