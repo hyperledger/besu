@@ -220,6 +220,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import picocli.AutoComplete;
 import picocli.CommandLine;
 import picocli.CommandLine.AbstractParseResultHandler;
 import picocli.CommandLine.Command;
@@ -1250,6 +1251,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         RLPSubCommand.COMMAND_NAME, new RLPSubCommand(resultHandler.out(), in));
     commandLine.addSubcommand(
         OperatorSubCommand.COMMAND_NAME, new OperatorSubCommand(resultHandler.out()));
+    final String generateCompletionSubcommandName = "generate-completion";
+    commandLine.addSubcommand(
+        generateCompletionSubcommandName, AutoComplete.GenerateCompletion.class);
+    CommandLine generateCompletionSubcommand =
+        commandLine.getSubcommands().get(generateCompletionSubcommandName);
+    generateCompletionSubcommand.getCommandSpec().usageMessage().hidden(true);
   }
 
   private void registerConverters() {

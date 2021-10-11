@@ -38,6 +38,7 @@ dependencies {
   implementation project(':consensus:clique')
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
+  implementation project(':consensus:qbft')
   implementation project(':ethereum:api')
   implementation project(':ethereum:core')
   implementation project(':ethereum:referencetests')
