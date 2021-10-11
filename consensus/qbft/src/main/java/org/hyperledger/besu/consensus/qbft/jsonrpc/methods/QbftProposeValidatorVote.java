@@ -60,7 +60,7 @@ public class QbftProposeValidatorVote implements JsonRpcMethod {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
     } else {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.METHOD_UNIMPLEMENTED);
+          requestContext.getRequest().getId(), JsonRpcError.METHOD_NOT_ENABLED);
     }
   }
 }

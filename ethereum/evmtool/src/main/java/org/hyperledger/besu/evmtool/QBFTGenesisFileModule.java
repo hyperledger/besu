@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,33 +11,31 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
-import org.hyperledger.besu.consensus.ibft.IbftProtocolSchedule;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.QbftProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import javax.inject.Named;
 
-class IBFTGenesisFileModule extends GenesisFileModule {
-  final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
+class QBFTGenesisFileModule extends GenesisFileModule {
+  final QbftExtraDataCodec bftExtraDataEncoder;
 
-  IBFTGenesisFileModule(final String genesisConfig) {
+  QBFTGenesisFileModule(final String genesisConfig) {
     super(genesisConfig);
+    bftExtraDataEncoder = new QbftExtraDataCodec();
   }
 
   @Override
   ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
-    return IbftProtocolSchedule.create(
-        configOptions, bftExtraDataEncoder, EvmConfiguration.DEFAULT);
+    return QbftProtocolSchedule.create(configOptions, revertReasonEnabled, bftExtraDataEncoder);
   }
 
   @Override

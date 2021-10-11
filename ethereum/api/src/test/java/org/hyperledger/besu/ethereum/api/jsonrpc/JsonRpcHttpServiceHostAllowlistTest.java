@@ -64,7 +64,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class JsonRpcHttpServiceHostWhitelistTest {
+public class JsonRpcHttpServiceHostAllowlistTest {
 
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
@@ -81,7 +81,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
   private final JsonRpcConfiguration jsonRpcConfig = createJsonRpcConfig();
   private final NatService natService = new NatService(Optional.empty());
 
-  private final List<String> hostsWhitelist = Arrays.asList("ally", "friend");
+  private final List<String> hostsAllowlist = Arrays.asList("ally", "friend");
 
   @Before
   public void initServerAndClient() throws Exception {
@@ -169,8 +169,8 @@ public class JsonRpcHttpServiceHostWhitelistTest {
   }
 
   @Test
-  public void requestWithWhitelistedHostIsAccepted() throws IOException {
-    jsonRpcConfig.setHostsAllowlist(hostsWhitelist);
+  public void requestWithAllowlistedHostIsAccepted() throws IOException {
+    jsonRpcConfig.setHostsAllowlist(hostsAllowlist);
     assertThat(doRequest("ally")).isEqualTo(200);
     assertThat(doRequest("ally:12345")).isEqualTo(200);
     assertThat(doRequest("friend")).isEqualTo(200);
@@ -178,7 +178,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
 
   @Test
   public void requestWithUnknownHostIsRejected() throws IOException {
-    jsonRpcConfig.setHostsAllowlist(hostsWhitelist);
+    jsonRpcConfig.setHostsAllowlist(hostsAllowlist);
     assertThat(doRequest("foe")).isEqualTo(403);
   }
 
@@ -195,7 +195,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
 
   @Test
   public void requestWithMalformedHostIsRejected() throws IOException {
-    jsonRpcConfig.setHostsAllowlist(hostsWhitelist);
+    jsonRpcConfig.setHostsAllowlist(hostsAllowlist);
     assertThat(doRequest("ally:friend")).isEqualTo(403);
     assertThat(doRequest("ally:123456")).isEqualTo(403);
     assertThat(doRequest("ally:friend:1234")).isEqualTo(403);

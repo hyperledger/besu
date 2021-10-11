@@ -25,6 +25,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.function.Supplier;
 
@@ -35,15 +36,30 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final EvmConfiguration evmConfiguration) {
     return new QbftProtocolSchedule()
         .createProtocolSchedule(
-            config, privacyParameters, isRevertReasonEnabled, bftExtraDataCodec);
+            config, privacyParameters, isRevertReasonEnabled, bftExtraDataCodec, evmConfiguration);
   }
 
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config, final BftExtraDataCodec bftExtraDataCodec) {
-    return create(config, PrivacyParameters.DEFAULT, false, bftExtraDataCodec);
+      final GenesisConfigOptions config,
+      final BftExtraDataCodec bftExtraDataCodec,
+      final EvmConfiguration evmConfiguration) {
+    return create(config, PrivacyParameters.DEFAULT, false, bftExtraDataCodec, evmConfiguration);
+  }
+
+  public static ProtocolSchedule create(
+      final GenesisConfigOptions config,
+      final boolean isRevertReasonEnabled,
+      final BftExtraDataCodec bftExtraDataCodec) {
+    return create(
+        config,
+        PrivacyParameters.DEFAULT,
+        isRevertReasonEnabled,
+        bftExtraDataCodec,
+        EvmConfiguration.DEFAULT);
   }
 
   @Override

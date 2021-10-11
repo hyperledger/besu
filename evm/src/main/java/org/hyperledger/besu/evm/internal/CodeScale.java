@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ *  Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,15 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm.worldstate;
 
-public interface MutableWorldView extends WorldView {
+package org.hyperledger.besu.evm.internal;
 
-  /**
-   * Creates an updater for this mutable world view.
-   *
-   * @return a new updater for this mutable world view. On commit, change made to this updater will
-   *     become visible on this view.
-   */
-  WorldUpdater updater();
+import org.hyperledger.besu.datatypes.Hash;
+
+import com.github.benmanes.caffeine.cache.Weigher;
+
+class CodeScale implements Weigher<Hash, long[]> {
+  @Override
+  public int weigh(final Hash key, final long[] value) {
+    return (value.length * 8) + key.size();
+  }
 }

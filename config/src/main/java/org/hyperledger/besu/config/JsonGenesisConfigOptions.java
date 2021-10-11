@@ -439,6 +439,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     if (isIbft2()) {
       builder.put("ibft2", getBftConfigOptions().asMap());
     }
+    if (isQbft()) {
+      builder.put("qbft", getQbftConfigOptions().asMap());
+    }
 
     if (isQuorum()) {
       builder.put("isQuorum", true);

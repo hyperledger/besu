@@ -53,6 +53,7 @@ import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
 import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
+import org.hyperledger.besu.cli.options.unstable.EvmOptions;
 import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.MiningOptions;
@@ -221,6 +222,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import picocli.AutoComplete;
 import picocli.CommandLine;
 import picocli.CommandLine.AbstractParseResultHandler;
 import picocli.CommandLine.Command;
@@ -268,6 +270,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
   private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
+  private final EvmOptions unstableEvmOptions = EvmOptions.create();
 
   // stable CLI options
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
@@ -296,6 +299,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
   private final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider;
+  private GenesisConfigOptions genesisConfigOptions;
 
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
@@ -402,8 +406,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
   private final Boolean randomPeerPriority = false;
-
-  private GenesisConfigOptions genesisConfigOptions;
 
   @Option(
       names = {"--banned-node-ids", "--banned-node-id"},
@@ -1253,6 +1255,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         RLPSubCommand.COMMAND_NAME, new RLPSubCommand(resultHandler.out(), in));
     commandLine.addSubcommand(
         OperatorSubCommand.COMMAND_NAME, new OperatorSubCommand(resultHandler.out()));
+    final String generateCompletionSubcommandName = "generate-completion";
+    commandLine.addSubcommand(
+        generateCompletionSubcommandName, AutoComplete.GenerateCompletion.class);
+    CommandLine generateCompletionSubcommand =
+        commandLine.getSubcommands().get(generateCompletionSubcommandName);
+    generateCompletionSubcommand.getCommandSpec().usageMessage().hidden(true);
   }
 
   private void registerConverters() {
@@ -1296,6 +1304,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Native Library", unstableNativeLibraryOptions)
             .put("Data Storage Options", unstableDataStorageOptions)
             .put("Launcher", unstableLauncherOptions)
+            .put("EVM Options", unstableEvmOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1754,6 +1763,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .orElse(GasLimitCalculator.constant()))
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
+        .evmConfiguration(unstableEvmOptions.toDomainObject())
         .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject());
   }
 

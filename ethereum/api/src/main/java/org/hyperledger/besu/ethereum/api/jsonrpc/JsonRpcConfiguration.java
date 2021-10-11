@@ -112,8 +112,8 @@ public class JsonRpcConfiguration {
     return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
 
-  public void setHostsAllowlist(final List<String> hostsWhitelist) {
-    this.hostsAllowlist = hostsWhitelist;
+  public void setHostsAllowlist(final List<String> hostsAllowlist) {
+    this.hostsAllowlist = hostsAllowlist;
   }
 
   public boolean isAuthenticationEnabled() {

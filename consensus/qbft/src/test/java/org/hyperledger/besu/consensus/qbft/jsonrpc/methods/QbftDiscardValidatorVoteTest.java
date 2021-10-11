@@ -25,6 +25,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
@@ -76,6 +78,18 @@ public class QbftDiscardValidatorVoteTest {
   }
 
   @Test
+  public void methodNotEnabledWhenNoVoteProvider() {
+    final JsonRpcRequestContext request = requestWithParams(Address.fromHexString("1"));
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.METHOD_NOT_ENABLED);
+    when(validatorProvider.getVoteProvider()).thenReturn(Optional.empty());
+
+    final JsonRpcResponse response = method.response(request);
+
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
   public void discardValidator() {
     final Address parameterAddress = Address.fromHexString("1");
     final JsonRpcRequestContext request = requestWithParams(parameterAddress);
@@ -85,7 +99,7 @@ public class QbftDiscardValidatorVoteTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
 
     verify(voteProvider).discardVote(parameterAddress);
   }
