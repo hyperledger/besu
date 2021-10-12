@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.RpcModules;
@@ -63,7 +62,7 @@ public class JsonRpcMethodsFactory {
       final Set<Capability> supportedCapabilities,
       final Optional<AccountLocalConfigPermissioningController> accountsAllowlistController,
       final Optional<NodeLocalConfigPermissioningController> nodeAllowlistController,
-      final Collection<RpcApi> rpcApis,
+      final Collection<String> rpcApis,
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,

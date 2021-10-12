@@ -4,11 +4,12 @@
 
 ### Additions and Improvements
 - Add CLI autocomplete scripts. [#2854](https://github.com/hyperledger/besu/pull/2854)
+- Added support for PKCS11 keystore on PKI Block Creation. [#2865](https://github.com/hyperledger/besu/pull/2865)
 
 ### Bug Fixes
 
 ### Early Access Features
-
+- Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
 
 ## 21.10.0-RC1
 ### Additions and Improvements
