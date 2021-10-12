@@ -20,6 +20,10 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * A mutable {@link BftConfigOptions} that is used for building config for transitions in the {@link
+ * BftForksSchedule}.
+ */
 public class MutableBftConfigOptions implements BftConfigOptions {
   private long epochLength;
   private int blockPeriodSeconds;
