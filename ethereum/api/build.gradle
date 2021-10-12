@@ -44,6 +44,7 @@ dependencies {
   implementation project(':ethereum:permissioning')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
+  implementation project(':evm')
   implementation project(':metrics:core')
   implementation project(':nat')
   implementation project(':plugin-api')

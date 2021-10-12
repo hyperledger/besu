@@ -111,7 +111,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         nodeKey,
         privacyParameters,
-        isRevertReasonEnabled);
+        isRevertReasonEnabled,
+        evmConfiguration);
   }
 
   @Override

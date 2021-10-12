@@ -21,10 +21,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
@@ -36,11 +38,13 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -48,6 +52,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -78,12 +83,29 @@ public class BftBlockCreatorTest {
     }
 
     final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
+
+    final BaseBftProtocolSchedule bftProtocolSchedule =
+        new BaseBftProtocolSchedule() {
+          @Override
+          protected Supplier<BlockHeaderValidator.Builder> createForkBlockHeaderRuleset(
+              final GenesisConfigOptions config, final BftFork fork) {
+            return () -> IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5);
+          }
+
+          @Override
+          protected Supplier<BlockHeaderValidator.Builder> createGenesisBlockHeaderRuleset(
+              final GenesisConfigOptions config) {
+            return () -> IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5);
+          }
+        };
     final ProtocolSchedule protocolSchedule =
-        BftProtocolSchedule.create(
+        bftProtocolSchedule.createProtocolSchedule(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
                 .getConfigOptions(),
-            IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
-            bftExtraDataEncoder);
+            PrivacyParameters.DEFAULT,
+            false,
+            bftExtraDataEncoder,
+            EvmConfiguration.DEFAULT);
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,

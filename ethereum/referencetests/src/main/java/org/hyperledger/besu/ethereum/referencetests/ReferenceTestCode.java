@@ -15,7 +15,8 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.ethereum.vm.Code;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.Code;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -32,6 +33,6 @@ public class ReferenceTestCode extends Code {
    */
   @JsonCreator
   public ReferenceTestCode(final String bytes) {
-    super(Bytes.fromHexString(bytes));
+    super(Bytes.fromHexString(bytes), Hash.hash(Bytes.fromHexString(bytes)));
   }
 }

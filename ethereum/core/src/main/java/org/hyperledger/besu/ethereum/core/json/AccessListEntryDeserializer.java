@@ -18,7 +18,7 @@ package org.hyperledger.besu.ethereum.core.json;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.AccessListEntry;
+import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.io.IOException;
 import java.util.ArrayList;

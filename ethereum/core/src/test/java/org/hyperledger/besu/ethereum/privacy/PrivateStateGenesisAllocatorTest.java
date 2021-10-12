@@ -16,19 +16,19 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.datatypes.Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT;
-import static org.hyperledger.besu.datatypes.Address.ONCHAIN_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE;
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.PROXY_RUNTIME_BYTECODE;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
+import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE;
+import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.PROXY_RUNTIME_BYTECODE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 import org.hyperledger.besu.plugin.data.PrivacyGenesisAccount;
 import org.hyperledger.besu.plugin.data.Quantity;
@@ -82,7 +82,7 @@ public class PrivateStateGenesisAllocatorTest {
               });
 
   @Test
-  public void whenOnChainDisabledAndNoAccountsProvidedNoGenesisIsApplied() {
+  public void whenOnchainDisabledAndNoAccountsProvidedNoGenesisIsApplied() {
     PrivateStateGenesisAllocator privateStateGenesisAllocator =
         new PrivateStateGenesisAllocator(
             false, (privacyGroupId, blockNumber) -> Collections::emptyList);
@@ -94,7 +94,7 @@ public class PrivateStateGenesisAllocatorTest {
   }
 
   @Test
-  public void whenOnChainEnabledAndNoAccountsProvidedPrivacyManagementContractIsApplied() {
+  public void whenOnchainEnabledAndNoAccountsProvidedPrivacyManagementContractIsApplied() {
     PrivateStateGenesisAllocator privateStateGenesisAllocator =
         new PrivateStateGenesisAllocator(
             true, (privacyGroupId, blockNumber) -> Collections::emptyList);
@@ -108,7 +108,7 @@ public class PrivateStateGenesisAllocatorTest {
   }
 
   @Test
-  public void whenOnChainEnabledAndAccountsProvidedPrivacyManagementContractAndGenesisIsApplied() {
+  public void whenOnchainEnabledAndAccountsProvidedPrivacyManagementContractAndGenesisIsApplied() {
     PrivateStateGenesisAllocator privateStateGenesisAllocator =
         new PrivateStateGenesisAllocator(true, (privacyGroupId, blockNumber) -> privacyGenesis);
 
@@ -122,7 +122,7 @@ public class PrivateStateGenesisAllocatorTest {
   }
 
   @Test
-  public void whenOnChainDisabledAndAccountsProvidedPrivacyManagementContractAndGenesisIsApplied() {
+  public void whenOnchainDisabledAndAccountsProvidedPrivacyManagementContractAndGenesisIsApplied() {
     PrivateStateGenesisAllocator privateStateGenesisAllocator =
         new PrivateStateGenesisAllocator(false, (privacyGroupId, blockNumber) -> privacyGenesis);
 

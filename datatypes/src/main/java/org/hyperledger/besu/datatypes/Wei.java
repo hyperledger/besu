@@ -94,6 +94,6 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
   }
 
   public static Wei fromQuantity(final Quantity quantity) {
-    return Wei.of(quantity.getAsBigInteger());
+    return Wei.wrap((Bytes) quantity);
   }
 }

@@ -28,10 +28,10 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
-import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.evm.log.Log;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -269,15 +269,15 @@ public class RestrictedMultiTenancyPrivacyControllerTest {
             "",
             "",
             List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
-    when(privacyController.findOffChainPrivacyGroupByMembers(addresses, ENCLAVE_PUBLIC_KEY1))
+    when(privacyController.findOffchainPrivacyGroupByMembers(addresses, ENCLAVE_PUBLIC_KEY1))
         .thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final PrivacyGroup[] privacyGroups =
-        multiTenancyPrivacyController.findOffChainPrivacyGroupByMembers(
+        multiTenancyPrivacyController.findOffchainPrivacyGroupByMembers(
             addresses, ENCLAVE_PUBLIC_KEY1);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);
-    verify(privacyController).findOffChainPrivacyGroupByMembers(addresses, ENCLAVE_PUBLIC_KEY1);
+    verify(privacyController).findOffchainPrivacyGroupByMembers(addresses, ENCLAVE_PUBLIC_KEY1);
   }
 
   @Test
@@ -286,7 +286,7 @@ public class RestrictedMultiTenancyPrivacyControllerTest {
 
     assertThatThrownBy(
             () ->
-                multiTenancyPrivacyController.findOffChainPrivacyGroupByMembers(
+                multiTenancyPrivacyController.findOffchainPrivacyGroupByMembers(
                     addresses, ENCLAVE_PUBLIC_KEY1))
         .isInstanceOf(MultiTenancyValidationException.class)
         .hasMessage("Privacy group addresses must contain the enclave public key");

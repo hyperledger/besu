@@ -118,7 +118,11 @@ public class Packet {
     final PacketType.Deserializer<?> deserializer = packetType.getDeserializer();
     final PacketData packetData;
     try {
-      packetData = deserializer.deserialize(RLP.input(message, PACKET_DATA_INDEX));
+      packetData =
+          deserializer.deserialize(
+              RLP.input(
+                  Bytes.wrapBuffer(
+                      message, PACKET_DATA_INDEX, message.length() - PACKET_DATA_INDEX)));
       return new Packet(packetType, packetData, Bytes.wrapBuffer(message));
     } catch (final RLPException e) {
       throw new PeerDiscoveryPacketDecodingException("Malformed packet of type: " + packetType, e);

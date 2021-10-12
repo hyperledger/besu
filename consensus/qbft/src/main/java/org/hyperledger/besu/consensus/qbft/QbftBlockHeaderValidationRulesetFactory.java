@@ -42,7 +42,7 @@ public class QbftBlockHeaderValidationRulesetFactory {
    * @param useValidatorContract whether validator selection is using a validator contract
    * @return BlockHeaderValidator configured for assessing bft block headers
    */
-  public BlockHeaderValidator.Builder blockHeaderValidator(
+  public static BlockHeaderValidator.Builder blockHeaderValidator(
       final long secondsBetweenBlocks, final boolean useValidatorContract) {
     return new BlockHeaderValidator.Builder()
         .addRule(new AncestryValidationRule())

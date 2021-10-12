@@ -18,6 +18,7 @@ dependencies {
   implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
+  implementation project(':evm')
   implementation project(':services:kvstore')
   implementation project(':util')
 

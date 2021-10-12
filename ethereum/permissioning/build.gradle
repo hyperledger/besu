@@ -32,6 +32,7 @@ dependencies {
   implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(':ethereum:p2p')
+  implementation project(':evm')
   implementation project(':metrics:core')
   implementation project(':util')
 
@@ -45,6 +46,7 @@ dependencies {
 
   testImplementation project(':config')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':evm')
   testImplementation project(':testutil')
   testImplementation 'io.vertx:vertx-core'
   testImplementation 'junit:junit'

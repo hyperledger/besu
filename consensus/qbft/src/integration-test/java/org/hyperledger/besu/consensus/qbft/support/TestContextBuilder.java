@@ -52,7 +52,6 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.QbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
@@ -91,6 +90,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -260,7 +260,7 @@ public class TestContextBuilder {
         blockChain =
             createInMemoryBlockchain(
                 genesisState.getBlock(),
-                BftBlockHeaderFunctions.forOnChainBlock(BFT_EXTRA_DATA_ENCODER));
+                BftBlockHeaderFunctions.forOnchainBlock(BFT_EXTRA_DATA_ENCODER));
         genesisState.writeStateTo(worldStateArchive.getMutable());
       } catch (IOException e) {
         throw new IllegalStateException(e);
@@ -269,7 +269,7 @@ public class TestContextBuilder {
       final Block genesisBlock = createGenesisBlock(networkNodes.getValidatorAddresses());
       blockChain =
           createInMemoryBlockchain(
-              genesisBlock, BftBlockHeaderFunctions.forOnChainBlock(BFT_EXTRA_DATA_ENCODER));
+              genesisBlock, BftBlockHeaderFunctions.forOnchainBlock(BFT_EXTRA_DATA_ENCODER));
     }
 
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.
@@ -396,13 +396,9 @@ public class TestContextBuilder {
         new QbftConfigOptions(JsonUtil.objectNodeFromMap(qbftConfigValues)));
     genesisConfigOptions.transitions(new TestTransitions(qbftForks));
 
-    final QbftBlockHeaderValidationRulesetFactory qbftBlockHeaderValidationRulesetFactory =
-        new QbftBlockHeaderValidationRulesetFactory();
     final ProtocolSchedule protocolSchedule =
         QbftProtocolSchedule.create(
-            genesisConfigOptions,
-            qbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
-            BFT_EXTRA_DATA_ENCODER);
+            genesisConfigOptions, BFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController

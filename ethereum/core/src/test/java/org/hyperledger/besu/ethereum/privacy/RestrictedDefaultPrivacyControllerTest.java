@@ -41,13 +41,13 @@ import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.enclave.testutil.EnclaveKeyUtils;
 
@@ -164,7 +164,7 @@ public class RestrictedDefaultPrivacyControllerTest {
   }
 
   @Test
-  public void findOnChainPrivacyGroups() {
+  public void findOnchainPrivacyGroups() {
     final List<String> privacyGroupAddresses = newArrayList(ENCLAVE_PUBLIC_KEY, ENCLAVE_KEY2);
 
     final PrivacyGroup privacyGroup =
@@ -193,7 +193,7 @@ public class RestrictedDefaultPrivacyControllerTest {
                     Optional.empty())));
 
     final List<PrivacyGroup> privacyGroups =
-        privacyController.findOnChainPrivacyGroupByMembers(
+        privacyController.findOnchainPrivacyGroupByMembers(
             privacyGroupAddresses, ENCLAVE_PUBLIC_KEY);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups.get(0)).isEqualToComparingFieldByField(privacyGroup);
@@ -297,7 +297,7 @@ public class RestrictedDefaultPrivacyControllerTest {
     when(enclave.findPrivacyGroup(any())).thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final PrivacyGroup[] privacyGroups =
-        privacyController.findOffChainPrivacyGroupByMembers(
+        privacyController.findOffchainPrivacyGroupByMembers(
             PRIVACY_GROUP_ADDRESSES, ENCLAVE_PUBLIC_KEY);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);

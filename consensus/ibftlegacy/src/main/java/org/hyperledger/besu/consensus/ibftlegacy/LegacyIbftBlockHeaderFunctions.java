@@ -22,7 +22,7 @@ public class LegacyIbftBlockHeaderFunctions implements BlockHeaderFunctions {
 
   @Override
   public Hash hash(final BlockHeader header) {
-    return IbftBlockHashing.calculateHashOfIbftBlockOnChain(header);
+    return IbftBlockHashing.calculateHashOfIbftBlockOnchain(header);
   }
 
   @Override

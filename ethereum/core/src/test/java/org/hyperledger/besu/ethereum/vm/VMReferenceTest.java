@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
@@ -29,6 +28,10 @@ import org.hyperledger.besu.ethereum.referencetests.EnvironmentInformation;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.VMReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.math.BigInteger;
@@ -96,7 +99,8 @@ public class VMReferenceTest extends AbstractRetryingTest {
     final EnvironmentInformation execEnv = spec.getExec();
 
     final ProtocolSpec protocolSpec =
-        MainnetProtocolSpecs.frontierDefinition(OptionalInt.empty(), OptionalInt.empty(), false)
+        MainnetProtocolSpecs.frontierDefinition(
+                OptionalInt.empty(), OptionalInt.empty(), false, EvmConfiguration.DEFAULT)
             .privacyParameters(PrivacyParameters.DEFAULT)
             .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(CHAIN_ID))
             .badBlocksManager(new BadBlockManager())
@@ -108,8 +112,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
         MessageFrame.builder()
             .type(MessageFrame.Type.MESSAGE_CALL)
             .messageFrameStack(new ArrayDeque<>())
-            .blockchain(blockchain)
-            .worldState(worldState.updater())
+            .worldUpdater(worldState.updater())
             .initialGas(spec.getExec().getGas())
             .contract(execEnv.getAccountAddress())
             .address(execEnv.getAccountAddress())
@@ -120,7 +123,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
             .value(execEnv.getValue())
             .apparentValue(execEnv.getValue())
             .code(execEnv.getCode())
-            .blockHeader(execEnv.getBlockHeader())
+            .blockValues(execEnv.getBlockHeader())
             .depth(execEnv.getDepth())
             .completer(c -> {})
             .miningBeneficiary(execEnv.getBlockHeader().getCoinbase())
@@ -140,7 +143,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
     } else {
       // This is normally performed when the message processor executing the VM
       // executes to completion successfully.
-      frame.getWorldState().commit();
+      frame.getWorldUpdater().commit();
 
       assertThat(frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT)
           .withFailMessage(

@@ -15,6 +15,7 @@
 package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -26,7 +27,6 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
@@ -41,7 +41,6 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -56,6 +55,8 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -162,7 +163,7 @@ public class PrivacyReorgTest {
             .build();
     privacyParameters.setPrivacyUserId(ENCLAVE_PUBLIC_KEY.toBase64String());
     privacyController = mock(RestrictedDefaultPrivacyController.class);
-    when(privacyController.findOffChainPrivacyGroupByGroupId(any(), any()))
+    when(privacyController.findOffchainPrivacyGroupByGroupId(any(), any()))
         .thenReturn(Optional.of(new PrivacyGroup()));
 
     privateStateRootResolver =
@@ -187,6 +188,7 @@ public class PrivacyReorgTest {
             .privacyParameters(privacyParameters)
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .evmConfiguration(EvmConfiguration.DEFAULT)
             .build();
   }
 
@@ -461,7 +463,7 @@ public class PrivacyReorgTest {
         .gasPrice(Wei.of(1000))
         .nonce(0)
         .payload(payload)
-        .to(Address.DEFAULT_PRIVACY)
+        .to(DEFAULT_PRIVACY)
         .value(Wei.ZERO)
         .signAndBuild(KEY_PAIR);
   }

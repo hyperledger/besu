@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 
@@ -47,7 +48,8 @@ public class MergeProtocolSchedule {
             ProtocolSpecAdapters.create(0, MergeProtocolSchedule::applyMergeSpecificModifications),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum())
+            config.isQuorum(),
+            EvmConfiguration.DEFAULT)
         .createProtocolSchedule();
   }
 

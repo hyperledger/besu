@@ -19,6 +19,8 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +66,7 @@ public class LogWithMetadata extends Log
       final int transactionIndex,
       final boolean removed) {
     return generate(
-        receipt.getLogs(), number, blockHash, transactionHash, transactionIndex, removed);
+        receipt.getLogsList(), number, blockHash, transactionHash, transactionIndex, removed);
   }
 
   public static List<LogWithMetadata> generate(
