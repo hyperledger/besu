@@ -62,7 +62,7 @@ public class QbftProtocolScheduleTest {
 
     final QbftConfigOptions qbftConfigOptions =
         new QbftConfigOptions(
-            JsonUtil.objectNodeFromMap(Map.of(QbftFork.VALIDATOR_SELECTION_MODE_KEY, "0x1")));
+            JsonUtil.objectNodeFromMap(Map.of(QbftFork.VALIDATOR_CONTRACT_ADDRESS_KEY, "0x1")));
 
     final List<QbftFork> forks = List.of(arbitraryFork, contractModeFork);
     final StubGenesisConfigOptions genesisConfig = new StubGenesisConfigOptions();
