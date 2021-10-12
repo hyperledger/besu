@@ -60,8 +60,6 @@ public class BaseBftProtocolScheduleTest {
     final ProtocolSchedule schedule = createProtocolSchedule();
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
-    spec.getBlockReward();
-
     assertThat(spec.getBlockReward()).isEqualTo(Wei.of(arbitraryBlockReward));
     assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(null))
         .isEqualTo(Address.fromHexString(miningBeneficiary));
