@@ -98,7 +98,7 @@ public class JsonBftConfigOptions implements BftConfigOptions {
       return BigInteger.ZERO;
     }
     final String weiStr = configFileContent.get();
-    if (weiStr.startsWith("0x")) {
+    if (weiStr.toLowerCase().startsWith("0x")) {
       return new BigInteger(1, Bytes.fromHexStringLenient(weiStr).toArrayUnsafe());
     }
     return new BigInteger(weiStr);
