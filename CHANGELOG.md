@@ -8,6 +8,7 @@
 
 ### Bug Fixes
 
+
 ### Early Access Features
 - Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
 
