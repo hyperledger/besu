@@ -35,7 +35,7 @@ public class RpcApisTogglesAcceptanceTest extends AcceptanceTestBase {
   public void before() throws Exception {
     rpcEnabledNode = besu.createArchiveNode("rpc-enabled");
     rpcDisabledNode = besu.createArchiveNodeWithRpcDisabled("rpc-disabled");
-    ethApiDisabledNode = besu.createArchiveNodeWithRpcApis("eth-api-disabled", RpcApis.NET);
+    ethApiDisabledNode = besu.createArchiveNodeWithRpcApis("eth-api-disabled", RpcApis.NET.name());
     cluster.start(rpcEnabledNode, rpcDisabledNode, ethApiDisabledNode);
   }
 

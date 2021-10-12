@@ -18,8 +18,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -447,8 +445,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     StaticNodesUtils.createStaticNodesFile(node.homeDirectory(), node.getStaticNodes());
   }
 
-  private String apiList(final Collection<RpcApi> rpcApis) {
-    return rpcApis.stream().map(RpcApis::getValue).collect(Collectors.joining(","));
+  private String apiList(final Collection<String> rpcApis) {
+    return String.join(",", rpcApis);
   }
 
   @Override
