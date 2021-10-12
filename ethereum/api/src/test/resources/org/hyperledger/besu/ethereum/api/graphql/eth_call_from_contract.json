@@ -1,0 +1,16 @@
+{
+  "request": "{block {number call (data : {from : \"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\", to: \"0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b\", data :\"0x123456\"}){data status}}}"
+  ,
+  "response":{
+    "data" : {
+      "block" : {
+        "number" : 32,
+        "call" : {
+          "data" : "0x",
+          "status" : 1
+        }
+      }
+    }
+  },
+  "statusCode": 200
+}
