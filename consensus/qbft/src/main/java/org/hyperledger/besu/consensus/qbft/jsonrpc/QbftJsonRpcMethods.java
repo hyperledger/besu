@@ -26,6 +26,7 @@ import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetSignerMetrics;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetValidatorsByBlockHash;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetValidatorsByBlockNumber;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftProposeValidatorVote;
+import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -57,9 +58,17 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final BlockInterface blockInterface = bftContext.getBlockInterface();
     final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
 
+    if (!(validatorProvider instanceof ForkingValidatorProvider)) {
+      throw new IllegalStateException("qbft bftContext should use a ForkingValidatorProvider");
+    }
+    ForkingValidatorProvider forkingValidatorProvider =
+        (ForkingValidatorProvider) validatorProvider;
+
     // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
-    final ValidatorProvider readOnlyValidatorProvider =
+    final BlockValidatorProvider readOnlyBlockValidatorProvider =
         createValidatorProvider(context, mutableBlockchain);
+    final ValidatorProvider readOnlyValidatorProvider =
+        forkingValidatorProvider.copy(readOnlyBlockValidatorProvider);
 
     return mapOf(
         new QbftProposeValidatorVote(validatorProvider),
@@ -70,7 +79,7 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new QbftGetPendingVotes(validatorProvider));
   }
 
-  private ValidatorProvider createValidatorProvider(
+  private BlockValidatorProvider createValidatorProvider(
       final ProtocolContext context, final MutableBlockchain blockchain) {
     final BftContext bftContext = context.getConsensusState(BftContext.class);
     final EpochManager epochManager = bftContext.getEpochManager();
