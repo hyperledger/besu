@@ -34,19 +34,16 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.pki.PKCS11Utils;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
-import com.google.common.base.Charsets;
 
 public class BesuNodeConfigurationBuilder {
 
@@ -273,14 +270,14 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder p2pTLSEnabled(final String name, final String type) {
     final TLSConfiguration.Builder builder = TLSConfiguration.Builder.tlsConfiguration();
     try {
-      final String nsspin = "/p2p-tls/%s/nsspin.txt";
-      final String truststore = "/p2p-tls/%s/truststore.jks";
-      final String crl = "/p2p-tls/%s/crl.pem";
+      final String nsspin = "/pki-certs/%s/nsspin.txt";
+      final String truststore = "/pki-certs/%s/truststore.jks";
+      final String crl = "/pki-certs/%s/crl.pem";
       switch (type) {
         case KeyStoreWrapper.KEYSTORE_TYPE_JKS:
           builder
               .withKeyStoreType(type)
-              .withKeyStorePath(toPath(String.format("/p2p-tls/%s/keystore.jks", name)))
+              .withKeyStorePath(toPath(String.format("/pki-certs/%s/keystore.jks", name)))
               .withKeyStorePasswordSupplier(
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
               .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
@@ -294,7 +291,7 @@ public class BesuNodeConfigurationBuilder {
         case KeyStoreWrapper.KEYSTORE_TYPE_PKCS12:
           builder
               .withKeyStoreType(type)
-              .withKeyStorePath(toPath(String.format("/p2p-tls/%s/keys.p12", name)))
+              .withKeyStorePath(toPath(String.format("/pki-certs/%s/keys.p12", name)))
               .withKeyStorePasswordSupplier(
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
               .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
@@ -309,7 +306,8 @@ public class BesuNodeConfigurationBuilder {
           builder
               .withKeyStoreType(type)
               .withKeyStorePath(
-                  initNSSConfigFile(toPath(String.format("/p2p-tls/%s/nss.cfg", name))))
+                  PKCS11Utils.initNSSConfigFile(
+                      toPath(String.format("/pki-certs/%s/nss.cfg", name))))
               .withKeyStorePasswordSupplier(
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
               .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
@@ -321,34 +319,6 @@ public class BesuNodeConfigurationBuilder {
     }
     this.tlsConfiguration = Optional.of(builder.build());
     return this;
-  }
-
-  private Path initNSSConfigFile(final Path srcFilePath) {
-    Path ret = null;
-    try {
-      final String content = Files.readString(srcFilePath);
-      final String updated =
-          content.replaceAll(
-              "(nssSecmodDirectory\\W*)(\\.\\/.*)",
-              "$1".concat(srcFilePath.toAbsolutePath().toString().replace("nss.cfg", "nssdb")));
-      final Path targetFilePath = createTemporaryFile("nsscfg");
-      Files.write(targetFilePath, updated.getBytes(Charsets.UTF_8));
-      ret = targetFilePath;
-    } catch (IOException e) {
-      throw new RuntimeException("Error populating nss config file", e);
-    }
-    return ret;
-  }
-
-  private Path createTemporaryFile(final String suffix) {
-    final File tempFile;
-    try {
-      tempFile = File.createTempFile("temp", suffix);
-      tempFile.deleteOnExit();
-    } catch (IOException e) {
-      throw new RuntimeException("Error creating temporary file", e);
-    }
-    return tempFile.toPath();
   }
 
   public BesuNodeConfigurationBuilder pkiBlockCreationEnabled(
