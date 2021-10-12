@@ -23,7 +23,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider.KeyStoreWrapperProvider;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 
