@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.JsonBftConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -49,7 +50,7 @@ public class BaseBftProtocolScheduleTest {
   public void ensureBlockRewardAndMiningBeneficiaryInProtocolSpecMatchConfig() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(5);
     final String miningBeneficiary = Address.fromHexString("0x1").toString();
-    final BftConfigOptions configOptions = mock(BftConfigOptions.class);
+    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(3000L);
@@ -68,7 +69,7 @@ public class BaseBftProtocolScheduleTest {
   @Test
   public void illegalMiningBeneficiaryStringThrowsException() {
     final String miningBeneficiary = "notHexStringOfTwentyBytes";
-    final BftConfigOptions configOptions = mock(BftConfigOptions.class);
+    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
     when(configOptions.getEpochLength()).thenReturn(3000L);
@@ -82,7 +83,7 @@ public class BaseBftProtocolScheduleTest {
   @Test
   public void missingMiningBeneficiaryInConfigWillPayCoinbaseInHeader() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
-    final BftConfigOptions configOptions = mock(BftConfigOptions.class);
+    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(3000L);
@@ -104,7 +105,7 @@ public class BaseBftProtocolScheduleTest {
   @Test
   public void negativeBlockRewardThrowsException() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(-3);
-    final BftConfigOptions configOptions = mock(BftConfigOptions.class);
+    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(3000L);
@@ -119,7 +120,7 @@ public class BaseBftProtocolScheduleTest {
   @Test
   public void zeroEpochLengthThrowsException() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
-    final BftConfigOptions configOptions = mock(BftConfigOptions.class);
+    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
     when(configOptions.getEpochLength()).thenReturn(0L);
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
@@ -134,7 +135,7 @@ public class BaseBftProtocolScheduleTest {
   @Test
   public void negativeEpochLengthThrowsException() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
-    final BftConfigOptions configOptions = mock(BftConfigOptions.class);
+    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
     when(configOptions.getEpochLength()).thenReturn(-3000L);
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
@@ -150,7 +151,7 @@ public class BaseBftProtocolScheduleTest {
   public void blockRewardSpecifiedInTransitionCreatesNewMilestone() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(5);
     final String miningBeneficiary = Address.fromHexString("0x1").toString();
-    final BftConfigOptions configOptions = mock(BftConfigOptions.class);
+    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(3000L);

@@ -80,6 +80,6 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
     return () ->
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
             config.getBftConfigOptions().getBlockPeriodSeconds(),
-            config.getQbftConfigOptions().getValidatorContractAddress().isPresent());
+            config.getQbftConfigOptions().isValidatorContractMode());
   }
 }
