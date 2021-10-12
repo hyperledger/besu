@@ -34,6 +34,9 @@ public class QbftProtocolScheduleTest {
   private final BftExtraDataCodec bftExtraDataCodec = mock(BftExtraDataCodec.class);
   private final TransitionsConfigOptions transitionsConfigOptions =
       mock(TransitionsConfigOptions.class);
+  private final NodeKey proposerNodeKey = NodeKeyUtils.generate();
+  private final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
+  private final List<Address> validators = singletonList(proposerAddress);
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
     return new ProtocolContext(
@@ -59,28 +62,9 @@ public class QbftProtocolScheduleTest {
                     VALIDATOR_SELECTION_MODE.CONTRACT,
                     QbftFork.VALIDATOR_CONTRACT_ADDRESS_KEY,
                     "0x1")));
-
     final QbftConfigOptions qbftConfigOptions =
         new QbftConfigOptions(
             JsonUtil.objectNodeFromMap(Map.of(QbftFork.VALIDATOR_CONTRACT_ADDRESS_KEY, "0x1")));
-
-    final List<QbftFork> forks = List.of(arbitraryFork, contractModeFork);
-    final StubGenesisConfigOptions genesisConfig = new StubGenesisConfigOptions();
-    genesisConfig.transitions(transitionsConfigOptions);
-    genesisConfig.qbftConfigOptions(qbftConfigOptions);
-    when(transitionsConfigOptions.getQbftForks()).thenReturn(forks);
-
-    ProtocolSchedule schedule =
-        QbftProtocolSchedule.create(
-            genesisConfig,
-            PrivacyParameters.DEFAULT,
-            false,
-            bftExtraDataCodec,
-            EvmConfiguration.DEFAULT);
-
-    final NodeKey proposerNodeKey = NodeKeyUtils.generate();
-    final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
-    final List<Address> validators = singletonList(proposerAddress);
     final BlockHeader parentHeader =
         QbftBlockHeaderUtils.createPresetHeaderBuilderForContractMode(
                 1, proposerNodeKey, null, null)
@@ -90,10 +74,56 @@ public class QbftProtocolScheduleTest {
                 2, proposerNodeKey, parentHeader, null)
             .buildHeader();
 
+    final ProtocolSchedule schedule =
+        createProtocolSchedule(List.of(arbitraryFork, contractModeFork), qbftConfigOptions);
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(3);
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 0)).isTrue();
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 1)).isTrue();
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 2)).isTrue();
+  }
+
+  @Test
+  public void blockModeTransitionsCreatesBlockModeHeaderValidators() {
+    final QbftFork arbitraryFork =
+        new QbftFork(
+            JsonUtil.objectNodeFromMap(
+                Map.of(QbftFork.FORK_BLOCK_KEY, 1, QbftFork.BLOCK_REWARD_KEY, "1")));
+    final QbftFork blockModeFork =
+        new QbftFork(
+            JsonUtil.objectNodeFromMap(
+                Map.of(
+                    QbftFork.FORK_BLOCK_KEY,
+                    2,
+                    QbftFork.VALIDATOR_SELECTION_MODE_KEY,
+                    VALIDATOR_SELECTION_MODE.BLOCKHEADER)));
+    final BlockHeader parentHeader =
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
+            .buildHeader();
+    final BlockHeader blockHeader =
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader)
+            .buildHeader();
+
+    final ProtocolSchedule schedule =
+        createProtocolSchedule(List.of(arbitraryFork, blockModeFork), QbftConfigOptions.DEFAULT);
+    assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(3);
+    assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 0)).isTrue();
+    assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 1)).isTrue();
+    assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 2)).isTrue();
+  }
+
+  private ProtocolSchedule createProtocolSchedule(
+      final List<QbftFork> forks, final QbftConfigOptions qbftConfigOptions) {
+    final StubGenesisConfigOptions genesisConfig = new StubGenesisConfigOptions();
+    genesisConfig.transitions(transitionsConfigOptions);
+    genesisConfig.qbftConfigOptions(qbftConfigOptions);
+    when(transitionsConfigOptions.getQbftForks()).thenReturn(forks);
+
+    return QbftProtocolSchedule.create(
+        genesisConfig,
+        PrivacyParameters.DEFAULT,
+        false,
+        bftExtraDataCodec,
+        EvmConfiguration.DEFAULT);
   }
 
   private boolean validateHeader(
