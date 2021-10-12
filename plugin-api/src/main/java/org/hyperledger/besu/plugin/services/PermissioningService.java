@@ -20,7 +20,7 @@ import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioni
 /**
  * This service allows plugins to decide who you should connect to and what you should send them.
  *
- * <p>Currently, there are two hooks available; connection permissioning and message permissioning.
+ * <p>Currently, there are two hooks available: connection permissioning and message permissioning.
  *
  * <ul>
  *   <li><b>Connection permissioning</b> - checks if inbound and outbound connections to peers are
