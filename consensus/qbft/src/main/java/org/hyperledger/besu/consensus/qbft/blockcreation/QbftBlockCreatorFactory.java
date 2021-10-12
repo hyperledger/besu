@@ -75,8 +75,7 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
     if (forksSchedule
         .getFork(parentHeader.getNumber() + 1L)
         .getConfigOptions()
-        .getValidatorContractAddress()
-        .isPresent()) {
+        .isValidatorContractMode()) {
       // vote and validators will come from contract instead of block
       final BftExtraData extraData =
           new BftExtraData(

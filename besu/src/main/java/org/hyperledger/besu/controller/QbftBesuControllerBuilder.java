@@ -287,11 +287,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   }
 
   private boolean isValidatorContractMode(final GenesisConfigFile genesisConfig) {
-    return genesisConfig
-        .getConfigOptions()
-        .getQbftConfigOptions()
-        .getValidatorContractAddress()
-        .isPresent();
+    return genesisConfig.getConfigOptions().getQbftConfigOptions().isValidatorContractMode();
   }
 
   private boolean signersExistIn(final BlockHeader genesisBlockHeader) {

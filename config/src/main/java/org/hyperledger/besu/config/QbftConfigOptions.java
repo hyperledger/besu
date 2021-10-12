@@ -19,4 +19,8 @@ import java.util.Optional;
 public interface QbftConfigOptions extends BftConfigOptions {
 
   Optional<String> getValidatorContractAddress();
+
+  default boolean isValidatorContractMode() {
+    return getValidatorContractAddress().isPresent();
+  }
 }

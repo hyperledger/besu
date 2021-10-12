@@ -75,7 +75,7 @@ public class ForkingValidatorProvider implements ValidatorProvider {
 
     // when moving to a block validator the first block needs to be initialised or created with
     // the previous block state otherwise we would have no validators
-    if (forkSpec.getConfigOptions().getValidatorContractAddress().isEmpty()) {
+    if (!forkSpec.getConfigOptions().isValidatorContractMode()) {
       if (block > 0 && block == forkSpec.getBlock()) {
         final long prevBlockNumber = block - 1L;
         final Optional<BlockHeader> prevBlockHeader = blockchain.getBlockHeader(prevBlockNumber);
@@ -92,10 +92,8 @@ public class ForkingValidatorProvider implements ValidatorProvider {
 
   private ValidatorProvider resolveValidatorProvider(final long block) {
     final BftForkSpec<QbftConfigOptions> fork = forksSchedule.getFork(block);
-    if (fork.getConfigOptions().getValidatorContractAddress().isEmpty()) {
-      return blockValidatorProvider;
-    } else {
-      return transactionValidatorProvider;
-    }
+    return fork.getConfigOptions().isValidatorContractMode()
+        ? transactionValidatorProvider
+        : blockValidatorProvider;
   }
 }
