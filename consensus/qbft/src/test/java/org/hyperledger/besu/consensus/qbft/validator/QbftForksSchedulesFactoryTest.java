@@ -26,6 +26,7 @@ import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
+import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 
 import java.util.HashMap;
 import java.util.List;

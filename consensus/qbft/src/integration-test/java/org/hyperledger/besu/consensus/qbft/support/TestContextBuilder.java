@@ -57,6 +57,7 @@ import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidator
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
@@ -66,7 +67,6 @@ import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.validator.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -398,24 +398,23 @@ public class TestContextBuilder {
         new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(qbftConfigValues)));
     genesisConfigOptions.transitions(new TestTransitions(qbftForks));
 
-    final ProtocolSchedule protocolSchedule =
-        QbftProtocolSchedule.create(
-            genesisConfigOptions, BFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
-
-    /////////////////////////////////////////////////////////////////////////////////////
-    // From here down is BASICALLY taken from IbftBesuController
     final EpochManager epochManager = new EpochManager(EPOCH_LENGTH);
 
     final BftBlockInterface blockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
+
+    final QbftConfigOptions genesisConfig = createGenesisConfig(useValidatorContract);
+    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+        QbftForksSchedulesFactory.create(genesisConfig, qbftForks);
+
+    final ProtocolSchedule protocolSchedule =
+        QbftProtocolSchedule.create(
+            genesisConfigOptions, forksSchedule, BFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
 
     final BftValidatorOverrides validatorOverrides =
         new BftValidatorOverrides(Collections.emptyMap());
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule);
 
-    final QbftConfigOptions genesisConfig = createGenesisConfig(useValidatorContract);
-    final BftForksSchedule<QbftConfigOptions> forksSchedule =
-        QbftForksSchedulesFactory.create(genesisConfig, qbftForks);
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
             blockChain, epochManager, blockInterface, validatorOverrides);

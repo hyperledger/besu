@@ -1,18 +1,32 @@
+/*
+ * Copyright Hyperledger Besu Contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.consensus.qbft;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.JsonGenesisConfigOptions;
+import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.config.QbftFork;
-import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -24,16 +38,15 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 import org.junit.Test;
 
 public class QbftProtocolScheduleTest {
   private final BftExtraDataCodec bftExtraDataCodec = mock(BftExtraDataCodec.class);
-  private final TransitionsConfigOptions transitionsConfigOptions =
-      mock(TransitionsConfigOptions.class);
   private final NodeKey proposerNodeKey = NodeKeyUtils.generate();
   private final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
   private final List<Address> validators = singletonList(proposerAddress);
@@ -48,23 +61,17 @@ public class QbftProtocolScheduleTest {
 
   @Test
   public void contractModeTransitionsCreatesContractModeHeaderValidators() {
-    final QbftFork arbitraryFork =
-        new QbftFork(
-            JsonUtil.objectNodeFromMap(
-                Map.of(QbftFork.FORK_BLOCK_KEY, 1, QbftFork.BLOCK_REWARD_KEY, "1")));
-    final QbftFork contractModeFork =
-        new QbftFork(
-            JsonUtil.objectNodeFromMap(
-                Map.of(
-                    QbftFork.FORK_BLOCK_KEY,
-                    2,
-                    QbftFork.VALIDATOR_SELECTION_MODE_KEY,
-                    VALIDATOR_SELECTION_MODE.CONTRACT,
-                    QbftFork.VALIDATOR_CONTRACT_ADDRESS_KEY,
-                    "0x1")));
-    final QbftConfigOptions qbftConfigOptions =
-        new QbftConfigOptions(
-            JsonUtil.objectNodeFromMap(Map.of(QbftFork.VALIDATOR_CONTRACT_ADDRESS_KEY, "0x1")));
+    final MutableQbftConfigOptions arbitraryTransition =
+        new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+    arbitraryTransition.setBlockRewardWei(BigInteger.ONE);
+    arbitraryTransition.setValidatorContractAddress(Optional.of("0x2"));
+    final MutableQbftConfigOptions contractTransition =
+        new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+    contractTransition.setValidatorContractAddress(Optional.of("0x2"));
+    final MutableQbftConfigOptions qbftConfigOptions =
+        new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+    qbftConfigOptions.setValidatorContractAddress(Optional.of("0x1"));
+
     final BlockHeader parentHeader =
         QbftBlockHeaderUtils.createPresetHeaderBuilderForContractMode(
                 1, proposerNodeKey, null, null)
@@ -75,7 +82,12 @@ public class QbftProtocolScheduleTest {
             .buildHeader();
 
     final ProtocolSchedule schedule =
-        createProtocolSchedule(List.of(arbitraryFork, contractModeFork), qbftConfigOptions);
+        createProtocolSchedule(
+            JsonGenesisConfigOptions.fromJsonObject(JsonUtil.createEmptyObjectNode()),
+            new BftForkSpec<>(0, qbftConfigOptions),
+            List.of(
+                new BftForkSpec<>(1, arbitraryTransition),
+                new BftForkSpec<>(2, contractTransition)));
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(3);
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 0)).isTrue();
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 1)).isTrue();
@@ -84,18 +96,10 @@ public class QbftProtocolScheduleTest {
 
   @Test
   public void blockModeTransitionsCreatesBlockModeHeaderValidators() {
-    final QbftFork arbitraryFork =
-        new QbftFork(
-            JsonUtil.objectNodeFromMap(
-                Map.of(QbftFork.FORK_BLOCK_KEY, 1, QbftFork.BLOCK_REWARD_KEY, "1")));
-    final QbftFork blockModeFork =
-        new QbftFork(
-            JsonUtil.objectNodeFromMap(
-                Map.of(
-                    QbftFork.FORK_BLOCK_KEY,
-                    2,
-                    QbftFork.VALIDATOR_SELECTION_MODE_KEY,
-                    VALIDATOR_SELECTION_MODE.BLOCKHEADER)));
+    final MutableQbftConfigOptions arbitraryTransition =
+        new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+    arbitraryTransition.setBlockRewardWei(BigInteger.ONE);
+
     final BlockHeader parentHeader =
         QbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
             .buildHeader();
@@ -104,7 +108,12 @@ public class QbftProtocolScheduleTest {
             .buildHeader();
 
     final ProtocolSchedule schedule =
-        createProtocolSchedule(List.of(arbitraryFork, blockModeFork), QbftConfigOptions.DEFAULT);
+        createProtocolSchedule(
+            JsonGenesisConfigOptions.fromJsonObject(JsonUtil.createEmptyObjectNode()),
+            new BftForkSpec<>(0, JsonQbftConfigOptions.DEFAULT),
+            List.of(
+                new BftForkSpec<>(1, arbitraryTransition),
+                new BftForkSpec<>(2, JsonQbftConfigOptions.DEFAULT)));
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(3);
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 0)).isTrue();
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 1)).isTrue();
@@ -112,14 +121,12 @@ public class QbftProtocolScheduleTest {
   }
 
   private ProtocolSchedule createProtocolSchedule(
-      final List<QbftFork> forks, final QbftConfigOptions qbftConfigOptions) {
-    final StubGenesisConfigOptions genesisConfig = new StubGenesisConfigOptions();
-    genesisConfig.transitions(transitionsConfigOptions);
-    genesisConfig.qbftConfigOptions(qbftConfigOptions);
-    when(transitionsConfigOptions.getQbftForks()).thenReturn(forks);
-
+      final GenesisConfigOptions genesisConfig,
+      final BftForkSpec<QbftConfigOptions> genesisFork,
+      final List<BftForkSpec<QbftConfigOptions>> forks) {
     return QbftProtocolSchedule.create(
         genesisConfig,
+        new BftForksSchedule<>(genesisFork, forks),
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,

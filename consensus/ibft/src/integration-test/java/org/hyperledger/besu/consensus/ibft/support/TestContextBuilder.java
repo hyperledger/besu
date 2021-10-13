@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
@@ -27,6 +28,7 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
@@ -48,6 +50,7 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffe
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
+import org.hyperledger.besu.consensus.ibft.IbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
 import org.hyperledger.besu.consensus.ibft.IbftProtocolSchedule;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
@@ -293,9 +296,14 @@ public class TestContextBuilder {
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.byzantiumBlock(0);
 
+    final BftForksSchedule<BftConfigOptions> forksSchedule =
+        IbftForksSchedulesFactory.create(
+            genesisConfigOptions.getBftConfigOptions(),
+            genesisConfigOptions.getTransitions().getIbftForks());
+
     final ProtocolSchedule protocolSchedule =
         IbftProtocolSchedule.create(
-            genesisConfigOptions, IBFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
+            genesisConfigOptions, forksSchedule, IBFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController
