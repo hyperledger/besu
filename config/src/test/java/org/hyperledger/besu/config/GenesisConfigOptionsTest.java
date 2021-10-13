@@ -58,7 +58,7 @@ public class GenesisConfigOptionsTest {
   public void shouldUseIbftLegacyWhenIbftInConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ibft", emptyMap()));
     assertThat(config.isIbftLegacy()).isTrue();
-    assertThat(config.getIbftLegacyConfigOptions()).isNotSameAs(BftConfigOptions.DEFAULT);
+    assertThat(config.getIbftLegacyConfigOptions()).isNotSameAs(JsonBftConfigOptions.DEFAULT);
     assertThat(config.getConsensusEngine()).isEqualTo("ibft");
   }
 
