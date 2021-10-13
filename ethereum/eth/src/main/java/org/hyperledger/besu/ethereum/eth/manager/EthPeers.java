@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -100,11 +101,13 @@ public class EthPeers {
 
   private void abortPendingRequestsAssignedToDisconnectedPeers() {
     synchronized (this) {
-      pendingRequests.stream()
-          .filter(
-              pendingPeerRequest ->
-                  pendingPeerRequest.getAssignedPeer().map(EthPeer::isDisconnected).orElse(false))
-          .forEach(PendingPeerRequest::abort);
+      final Iterator<PendingPeerRequest> iterator = pendingRequests.iterator();
+      while (iterator.hasNext()) {
+        final PendingPeerRequest request = iterator.next();
+        if (request.getAssignedPeer().map(EthPeer::isDisconnected).orElse(false)) {
+          request.abort();
+        }
+      }
     }
   }
 
