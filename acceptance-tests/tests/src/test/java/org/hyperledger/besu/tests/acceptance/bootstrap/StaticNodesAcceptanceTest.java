@@ -12,39 +12,35 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance;
+package org.hyperledger.besu.tests.acceptance.bootstrap;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+
+import java.util.Arrays;
 
 import org.junit.Before;
 import org.junit.Test;
 
-public class ClusterAcceptanceTest extends AcceptanceTestBase {
+public class StaticNodesAcceptanceTest extends AcceptanceTestBase {
 
-  private Node minerNode;
-  private Node fullNode;
+  private Node otherNode;
+  private Node node;
 
   @Before
   public void setUp() throws Exception {
-    minerNode = besu.createMinerNode("node1");
-    fullNode = besu.createArchiveNode("node2");
-    cluster.start(minerNode, fullNode);
+    otherNode = besu.createNodeWithNoDiscovery("other-node");
+    cluster.start(otherNode);
   }
 
   @Test
-  public void shouldConnectToOtherPeer() {
-    minerNode.verify(net.awaitPeerCount(1));
-    fullNode.verify(net.awaitPeerCount(1));
-  }
+  public void shouldConnectToNodeAddedAsStaticNode() throws Exception {
+    node = besu.createNodeWithStaticNodes("node", Arrays.asList(otherNode));
+    cluster.addNode(node);
 
-  @Test
-  public void shouldRestartAfterStop() {
-    minerNode.verify(net.awaitPeerCount(1));
-    fullNode.verify(net.awaitPeerCount(1));
-    cluster.stop();
-    cluster.start(minerNode, fullNode);
-    minerNode.verify(net.awaitPeerCount(1));
-    fullNode.verify(net.awaitPeerCount(1));
+    node.verify(net.awaitPeerCount(1));
+
+    WaitUtils.waitFor(1000000, () -> {});
   }
 }

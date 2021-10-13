@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.web3j.privacy.contracts;
+package org.hyperledger.besu.tests.acceptance.privacy.contracts;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

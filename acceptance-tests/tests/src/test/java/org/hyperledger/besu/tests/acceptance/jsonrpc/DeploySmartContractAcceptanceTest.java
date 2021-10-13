@@ -12,35 +12,33 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance;
+package org.hyperledger.besu.tests.acceptance.jsonrpc;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
-import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
-import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-
-import java.util.Arrays;
+import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.tests.web3j.generated.SimpleStorage;
 
 import org.junit.Before;
 import org.junit.Test;
 
-public class StaticNodesAcceptanceTest extends AcceptanceTestBase {
+public class DeploySmartContractAcceptanceTest extends AcceptanceTestBase {
 
-  private Node otherNode;
-  private Node node;
+  private BesuNode minerNode;
 
   @Before
   public void setUp() throws Exception {
-    otherNode = besu.createNodeWithNoDiscovery("other-node");
-    cluster.start(otherNode);
+    minerNode = besu.createMinerNode("miner-node");
+    cluster.start(minerNode);
   }
 
   @Test
-  public void shouldConnectToNodeAddedAsStaticNode() throws Exception {
-    node = besu.createNodeWithStaticNodes("node", Arrays.asList(otherNode));
-    cluster.addNode(node);
+  public void deployingMustGiveValidReceipt() {
+    // Contract address is generated from sender address and transaction nonce
+    final String contractAddress = "0x42699a7612a82f1d9c36148af9c77354759b210b";
 
-    node.verify(net.awaitPeerCount(1));
+    final SimpleStorage simpleStorageContract =
+        minerNode.execute(contractTransactions.createSmartContract(SimpleStorage.class));
 
-    WaitUtils.waitFor(1000000, () -> {});
+    contractVerifier.validTransactionReceipt(contractAddress).verify(simpleStorageContract);
   }
 }
