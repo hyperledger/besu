@@ -34,9 +34,9 @@ public class AbstractVoteProposerMethod {
   }
 
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    if (validatorProvider.getVoteProvider().isPresent()) {
+    if (validatorProvider.getVoteProviderAtHead().isPresent()) {
       final Map<String, Boolean> proposals =
-          validatorProvider.getVoteProvider().get().getProposals().entrySet().stream()
+          validatorProvider.getVoteProviderAtHead().get().getProposals().entrySet().stream()
               .collect(
                   Collectors.toMap(
                       proposal -> proposal.getKey().toString(),
