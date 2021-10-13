@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -168,6 +169,31 @@ public class ForkingValidatorProviderTest {
     when(contractValidatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
 
     assertThat(validatorProvider.getVoteProviderAtHead()).contains(voteProvider);
+  }
+
+  @Test
+  public void getVoteProviderAfterBlock_correctVoteProviderIsResolved() {
+    final ValidatorSelectorForksSchedule forksSchedule =
+        new ValidatorSelectorForksSchedule(
+            createBlockFork(0),
+            List.of(createBlockFork(1), createContractFork(2, CONTRACT_ADDRESS_1)));
+    final ForkingValidatorProvider validatorProvider =
+        new ForkingValidatorProvider(
+            blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
+
+    final VoteProvider voteProviderForBlockValidator = Mockito.mock(VoteProvider.class);
+    when(blockValidatorProvider.getVoteProviderAtHead())
+        .thenReturn(Optional.of(voteProviderForBlockValidator));
+    when(contractValidatorProvider.getVoteProviderAtHead()).thenReturn(Optional.empty());
+
+    SoftAssertions.assertSoftly(
+        (softly) -> {
+          softly
+              .assertThat(validatorProvider.getVoteProviderAfterBlock(genesisHeader))
+              .contains(voteProviderForBlockValidator);
+          softly.assertThat(validatorProvider.getVoteProviderAfterBlock(header1)).isEmpty();
+          softly.assertThat(validatorProvider.getVoteProviderAfterBlock(header2)).isEmpty();
+        });
   }
 
   private ValidatorSelectorConfig createContractFork(
