@@ -97,7 +97,7 @@ public class CliqueBlockCreatorTest {
 
     validatorProvider = mock(ValidatorProvider.class);
     voteProvider = mock(VoteProvider.class);
-    when(validatorProvider.getVoteProvider()).thenReturn(Optional.of(voteProvider));
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
 
@@ -196,7 +196,7 @@ public class CliqueBlockCreatorTest {
         CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), validatorList);
     final Address a1 = Address.fromHexString("5");
     final Address coinbase = AddressHelpers.ofValue(1);
-    when(validatorProvider.getVoteProvider().get().getVoteAfterBlock(any(), any()))
+    when(validatorProvider.getVoteProviderAtHead().get().getVoteAfterBlock(any(), any()))
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
     final CliqueBlockCreator blockCreator =
