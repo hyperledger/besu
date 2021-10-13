@@ -30,12 +30,10 @@ public interface ValidatorProvider {
 
   Optional<VoteProvider> getVoteProviderAtHead();
 
-  /**
-   * {@link org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider} has a specific
-   * implementation but don't want the client code to know it's using a ForkingValidatorProvider.
-   * ForkingValidatorProvider's voteProvider can be different per block (specified by the {@link
-   * org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorForksSchedule}). Other
-   * ValidatorProviders yield the same voteProvider at every block.
+  /*
+   * ForkingValidatorProvider has a specific implementation but we don't want the client code to
+   * know it's using a ForkingValidatorProvider. ForkingValidatorProvider's voteProvider can be
+   * different per block. Other ValidatorProviders yield the same voteProvider at every block.
    */
   default Optional<VoteProvider> getVoteProviderAfterBlock(final BlockHeader header) {
     return getVoteProviderAtHead();
