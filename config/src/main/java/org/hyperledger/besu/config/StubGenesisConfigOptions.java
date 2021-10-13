@@ -58,7 +58,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalInt stackSizeLimit = OptionalInt.empty();
   private final OptionalLong ecip1017EraRounds = OptionalLong.empty();
   private Optional<String> ecCurve = Optional.empty();
-  private QbftConfigOptions qbftConfigOptions = QbftConfigOptions.DEFAULT;
+  private QbftConfigOptions qbftConfigOptions = JsonQbftConfigOptions.DEFAULT;
   private TransitionsConfigOptions transitions = TransitionsConfigOptions.DEFAULT;
 
   @Override
@@ -108,7 +108,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public BftConfigOptions getBftConfigOptions() {
-    return BftConfigOptions.DEFAULT;
+    return JsonBftConfigOptions.DEFAULT;
   }
 
   @Override

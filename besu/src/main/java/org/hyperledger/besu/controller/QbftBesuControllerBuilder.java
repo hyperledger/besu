@@ -25,6 +25,7 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
@@ -56,10 +57,9 @@ import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.validator.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
-import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorConfig;
-import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -83,7 +83,6 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -96,7 +95,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
   private QbftConfigOptions qbftConfig;
-  private ValidatorSelectorForksSchedule qbftForksSchedule;
+  private BftForksSchedule<QbftConfigOptions> qbftForksSchedule;
   private ValidatorPeers peers;
 
   @Override
@@ -288,11 +287,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   }
 
   private boolean isValidatorContractMode(final GenesisConfigFile genesisConfig) {
-    return genesisConfig
-        .getConfigOptions()
-        .getQbftConfigOptions()
-        .getValidatorContractAddress()
-        .isPresent();
+    return genesisConfig.getConfigOptions().getQbftConfigOptions().isValidatorContractMode();
   }
 
   private boolean signersExistIn(final BlockHeader genesisBlockHeader) {
@@ -325,14 +320,10 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         validatorProvider, epochManager, bftBlockInterface().get(), pkiBlockCreationConfiguration);
   }
 
-  private ValidatorSelectorForksSchedule createQbftForksSchedule(
+  private BftForksSchedule<QbftConfigOptions> createQbftForksSchedule(
       final GenesisConfigOptions configOptions) {
-    final ValidatorSelectorConfig initialFork =
-        ValidatorSelectorConfig.fromQbftConfig(configOptions.getQbftConfigOptions());
-    final List<ValidatorSelectorConfig> validatorSelectionForks =
-        convertToValidatorSelectionConfig(
-            genesisConfig.getConfigOptions().getTransitions().getQbftForks());
-    return new ValidatorSelectorForksSchedule(initialFork, validatorSelectionForks);
+    return QbftForksSchedulesFactory.create(
+        configOptions.getQbftConfigOptions(), configOptions.getTransitions().getQbftForks());
   }
 
   private BftValidatorOverrides convertBftForks(final List<QbftFork> bftForks) {
@@ -350,14 +341,6 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     }
 
     return new BftValidatorOverrides(result);
-  }
-
-  private List<ValidatorSelectorConfig> convertToValidatorSelectionConfig(
-      final List<QbftFork> qbftForks) {
-    return qbftForks.stream()
-        .map(ValidatorSelectorConfig::fromQbftFork)
-        .flatMap(Optional::stream)
-        .collect(Collectors.toList());
   }
 
   private static MinedBlockObserver blockLogger(
