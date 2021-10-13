@@ -97,7 +97,6 @@ public abstract class BaseBftProtocolSchedule {
       throw new IllegalArgumentException("Bft Block reward in config cannot be negative");
     }
 
-    // TODO-jf use Suppliers.memoize to avoid header validation rules being built twice
     builder
         .blockHeaderValidatorBuilder(feeMarket -> blockHeaderRuleset.get())
         .ommerHeaderValidatorBuilder(feeMarket -> blockHeaderRuleset.get())
