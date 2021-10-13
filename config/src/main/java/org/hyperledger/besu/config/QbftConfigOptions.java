@@ -14,31 +14,13 @@
  */
 package org.hyperledger.besu.config;
 
-import java.util.Map;
 import java.util.Optional;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.ImmutableMap;
+public interface QbftConfigOptions extends BftConfigOptions {
 
-public class QbftConfigOptions extends BftConfigOptions {
-  public static final QbftConfigOptions DEFAULT =
-      new QbftConfigOptions(JsonUtil.createEmptyObjectNode());
-  public static final String VALIDATOR_CONTRACT_ADDRESS = "validatorcontractaddress";
+  Optional<String> getValidatorContractAddress();
 
-  public QbftConfigOptions(final ObjectNode bftConfigRoot) {
-    super(bftConfigRoot);
-  }
-
-  public Optional<String> getValidatorContractAddress() {
-    return JsonUtil.getString(bftConfigRoot, VALIDATOR_CONTRACT_ADDRESS);
-  }
-
-  @Override
-  public Map<String, Object> asMap() {
-    final Map<String, Object> map = super.asMap();
-    final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-    builder.putAll(map);
-    builder.put(VALIDATOR_CONTRACT_ADDRESS, getValidatorContractAddress());
-    return builder.build();
+  default boolean isValidatorContractMode() {
+    return getValidatorContractAddress().isPresent();
   }
 }
