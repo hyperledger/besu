@@ -179,8 +179,8 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void getVoteProviderAfterBlock_correctVoteProviderIsResolved() {
-    final ValidatorSelectorForksSchedule forksSchedule =
-        new ValidatorSelectorForksSchedule(
+    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+        new BftForksSchedule<>(
             createBlockFork(0),
             List.of(createBlockFork(1), createContractFork(2, CONTRACT_ADDRESS_1)));
     final ForkingValidatorProvider validatorProvider =
