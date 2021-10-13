@@ -64,7 +64,7 @@ public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void manipulatedAccountsWhitelistIsPersisted() {
+  public void manipulatedAccountsAllowlistIsPersisted() {
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
             ALLOWLIST_TYPE.ACCOUNTS, tempFile, senderA.getAddress()));
@@ -87,7 +87,7 @@ public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void manipulatedNodesWhitelistIsPersisted() {
+  public void manipulatedNodesAllowlistIsPersisted() {
     node.verify(perm.addNodesToAllowlist(ENODE_ONE, ENODE_TWO));
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
@@ -104,7 +104,7 @@ public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void manipulatedNodesWhitelistWithHostnameShouldNotWorkWhenDnsDisabled() {
+  public void manipulatedNodesAllowlistWithHostnameShouldNotWorkWhenDnsDisabled() {
     Assertions.assertThatThrownBy(() -> node.verify(perm.addNodesToAllowlist(ENODE_FOURTH)))
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("Request contains an invalid node");

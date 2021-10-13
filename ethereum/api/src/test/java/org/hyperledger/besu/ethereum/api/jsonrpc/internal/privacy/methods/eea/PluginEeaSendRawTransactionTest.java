@@ -42,7 +42,7 @@ public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
             privateMarkerTransactionFactory,
             address -> 0,
             privacyController,
-            transactionGasCalculator);
+            gasCalculator);
   }
 
   @Test

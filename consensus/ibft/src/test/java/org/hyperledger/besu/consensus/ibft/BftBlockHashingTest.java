@@ -31,9 +31,9 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -60,8 +60,8 @@ public class BftBlockHashingTest {
   private final Hash EXPECTED_HEADER_HASH = expectedHeaderHash();
 
   @Test
-  public void testCalculateHashOfIbft2BlockOnChain() {
-    Hash actualHeaderHash = bftBlockHashing.calculateHashOfBftBlockOnChain(headerToBeHashed);
+  public void testCalculateHashOfIbft2BlockOnchain() {
+    Hash actualHeaderHash = bftBlockHashing.calculateHashOfBftBlockOnchain(headerToBeHashed);
     assertThat(actualHeaderHash).isEqualTo(EXPECTED_HEADER_HASH);
   }
 
@@ -142,7 +142,7 @@ public class BftBlockHashingTest {
     builder.mixHash(
         Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
     builder.nonce(0);
-    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(new IbftExtraDataCodec()));
+    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(new IbftExtraDataCodec()));
     return builder;
   }
 

@@ -62,7 +62,7 @@ public class PrivacyGroupUtil {
       final PrivateTransaction privateTransaction) {
     return maybePrivacyGroupId.flatMap(
         privacyGroupId ->
-            privacyController.findOnChainPrivacyGroupAndAddNewMembers(
+            privacyController.findOnchainPrivacyGroupAndAddNewMembers(
                 privacyGroupId, privacyUserId, privateTransaction));
   }
 
@@ -72,7 +72,7 @@ public class PrivacyGroupUtil {
       final String privacyUserId) {
     return maybePrivacyGroupId.flatMap(
         privacyGroupId ->
-            privacyController.findOffChainPrivacyGroupByGroupId(
+            privacyController.findOffchainPrivacyGroupByGroupId(
                 privacyGroupId.toBase64String(), privacyUserId));
   }
 }

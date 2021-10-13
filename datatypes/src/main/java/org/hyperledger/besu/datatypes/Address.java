@@ -15,6 +15,7 @@
 package org.hyperledger.besu.datatypes;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -23,6 +24,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.DelegatingBytes;
 
 /** A 160-bits account address. */
@@ -50,17 +52,6 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   public static final Address BLS12_PAIRING = Address.precompiled(0x10);
   public static final Address BLS12_MAP_FP_TO_G1 = Address.precompiled(0x11);
   public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x12);
-
-  // Last address that can be generated for a pre-compiled contract
-  public static final Integer PRIVACY = Byte.MAX_VALUE - 1;
-  public static final Address DEFAULT_PRIVACY = Address.precompiled(PRIVACY);
-  public static final Address ONCHAIN_PRIVACY = Address.precompiled(PRIVACY - 1);
-
-  // Onchain privacy management contracts (injected in private state)
-  public static final Address ONCHAIN_PRIVACY_PROXY = Address.precompiled(PRIVACY - 2);
-  public static final Address DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT = Address.precompiled(PRIVACY - 3);
-
-  public static final Address PLUGIN_PRIVACY = Address.precompiled(PRIVACY - 4);
 
   public static final Address ZERO = Address.fromHexString("0x0");
 
@@ -99,12 +90,12 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
    *     </code> function from Appendix F (Signing Transactions) of the Ethereum Yellow Paper.
    * @return The ethereum address from the provided hash.
    */
-  public static Address extract(final Hash hash) {
+  public static Address extract(final Bytes32 hash) {
     return wrap(hash.slice(12, 20));
   }
 
   public static Address extract(final SECPPublicKey publicKey) {
-    return extract(Hash.hash(publicKey.getEncodedBytes()));
+    return Address.extract(keccak256(publicKey.getEncodedBytes()));
   }
 
   /**
@@ -164,8 +155,8 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
    * @return The generated address of the created contract.
    */
   public static Address contractAddress(final Address senderAddress, final long nonce) {
-    return extract(
-        Hash.hash(
+    return Address.extract(
+        keccak256(
             RLP.encode(
                 out -> {
                   out.startList();
@@ -185,8 +176,8 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
    */
   public static Address privateContractAddress(
       final Address senderAddress, final long nonce, final Bytes privacyGroupId) {
-    return extract(
-        Hash.hash(
+    return Address.extract(
+        keccak256(
             RLP.encode(
                 out -> {
                   out.startList();

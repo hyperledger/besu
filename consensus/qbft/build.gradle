@@ -66,6 +66,7 @@ dependencies {
   implementation project(':ethereum:eth')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')
+  implementation project(':evm')
   implementation project(':pki')
   implementation project(':services:kvstore')
 
@@ -82,19 +83,23 @@ dependencies {
   testImplementation project(':crypto')
   testImplementation project(':ethereum:core')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':crypto')
+  testImplementation project(':evm')
   testImplementation project(':metrics:core')
   testImplementation project(':testutil')
 
+  //  TODO: sort out minimum
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
-  integrationTestImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
+  integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  //=======
   integrationTestImplementation project(':crypto')
   integrationTestImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
-  integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  integrationTestImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
+  integrationTestImplementation project(':evm')
   integrationTestImplementation project(':metrics:core')
   integrationTestImplementation project(':testutil')
 

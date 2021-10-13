@@ -59,9 +59,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
-    if (MergeOptions.isMergeEnabled()) {
-      return true;
-    }
+
     if (imlementsBaseFeeMarket()) {
       if (header.getBaseFee().isEmpty()) {
         LOG.info("Invalid block header: missing mandatory base fee.");
@@ -70,6 +68,10 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
     } else if (header.getBaseFee().isPresent()) {
       LOG.info("Invalid block header: presence of basefee in a non-eip1559 block");
       return false;
+    }
+
+    if (MergeOptions.isMergeEnabled()) {
+      return true;
     }
 
     final Hash headerHash = hashHeader(header);

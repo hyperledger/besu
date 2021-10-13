@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat;
 
+import static org.hyperledger.besu.evm.internal.Words.toAddress;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
@@ -21,16 +23,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
@@ -45,7 +46,6 @@ import java.util.stream.Stream;
 import com.google.common.collect.Streams;
 import com.google.common.util.concurrent.Atomics;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class FlatTraceGenerator {
 
@@ -259,7 +259,7 @@ public class FlatTraceGenerator {
       final long cumulativeGasCost,
       final Deque<FlatTrace.Context> tracesContexts,
       final String opcodeString) {
-    final Bytes32[] stack = traceFrame.getStack().orElseThrow();
+    final Bytes[] stack = traceFrame.getStack().orElseThrow();
     final FlatTrace.Context lastContext = tracesContexts.peekLast();
 
     final String callingAddress = calculateCallingAddress(lastContext);
@@ -370,7 +370,7 @@ public class FlatTraceGenerator {
 
     currentContext.setGasUsed(gasUsed.toLong());
 
-    final Bytes32[] stack = traceFrame.getStack().orElseThrow();
+    final Bytes[] stack = traceFrame.getStack().orElseThrow();
     final Address refundAddress = toAddress(stack[stack.length - 1]);
     final FlatTrace.Builder subTraceBuilder =
         FlatTrace.builder()
@@ -593,11 +593,6 @@ public class FlatTraceGenerator {
       }
     }
     return nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(Gas.ZERO);
-  }
-
-  private static Address toAddress(final Bytes32 value) {
-    return Address.wrap(
-        Bytes.of(Arrays.copyOfRange(value.toArray(), Bytes32.SIZE - Address.SIZE, Bytes32.SIZE)));
   }
 
   private static List<Integer> calculateTraceAddress(final Deque<FlatTrace.Context> contexts) {

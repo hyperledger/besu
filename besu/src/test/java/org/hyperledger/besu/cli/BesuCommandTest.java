@@ -64,13 +64,13 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
+import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
@@ -3416,7 +3416,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void onChainPrivacyGroupEnabledFlagDefaultValueIsFalse() {
+  public void onchainPrivacyGroupEnabledFlagDefaultValueIsFalse() {
     parseCommand(
         "--privacy-enabled",
         "--privacy-public-key-file",
@@ -3438,7 +3438,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void onChainPrivacyGroupEnabledFlagValueIsSet() {
+  public void onchainPrivacyGroupEnabledFlagValueIsSet() {
     parseCommand(
         "--privacy-enabled",
         "--privacy-public-key-file",

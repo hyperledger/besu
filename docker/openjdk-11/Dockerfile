@@ -3,19 +3,13 @@ FROM adoptopenjdk/openjdk11:jre-11.0.11_9
 
 ARG VERSION="dev"
 
-############### MERGE BETA MODIFICATIONS ##################
+RUN adduser --disabled-password --gecos "" --home /opt/besu besu && \
+    chown besu:besu /opt/besu
 
-## TODO: remove these modifications
-#RUN adduser --disabled-password --gecos "" --home /opt/besu besu && \
-#    chown besu:besu /opt/besu
-
-#USER besu
+USER besu
 WORKDIR /opt/besu
 
-COPY besu /opt/besu/
-#COPY --chown=besu:besu besu /opt/besu/
-
-############### END MODIFICATIONS ##################
+COPY --chown=besu:besu besu /opt/besu/
 
 # Expose services ports
 # 8545 HTTP JSON-RPC
