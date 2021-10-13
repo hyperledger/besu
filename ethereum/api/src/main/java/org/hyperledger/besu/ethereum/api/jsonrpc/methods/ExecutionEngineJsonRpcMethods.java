@@ -49,7 +49,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   @Override
   protected String getApiGroup() {
-    return RpcApis.ENGINE.name();
+    return RpcApis.EXECUTION.name();
   }
 
   @Override

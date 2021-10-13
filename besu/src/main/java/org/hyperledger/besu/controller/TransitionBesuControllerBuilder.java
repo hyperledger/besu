@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
@@ -160,6 +161,12 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     BesuController controller = super.build();
     PostMergeContext.get().setSyncState(controller.getSyncState());
     return controller;
+  }
+
+  @Override
+  public BesuControllerBuilder evmConfiguration(final EvmConfiguration evmConfiguration) {
+    super.evmConfiguration(evmConfiguration);
+    return propagateConfig(z -> z.evmConfiguration(evmConfiguration));
   }
 
   @Override
