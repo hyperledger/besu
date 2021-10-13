@@ -19,6 +19,8 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
@@ -161,7 +163,7 @@ public class ForkingValidatorProviderTest {
   }
 
   @Test
-  public void voteProviderIsDelegatesToHeadFork() {
+  public void voteProviderIsDelegatesToHeadFork_whenHeadIsContractFork() {
     final BftForksSchedule<QbftConfigOptions> forksSchedule =
         new BftForksSchedule<>(
             createBlockFork(0),
@@ -171,10 +173,25 @@ public class ForkingValidatorProviderTest {
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
 
-    final VoteProvider voteProvider = Mockito.mock(VoteProvider.class);
-    when(contractValidatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
+    validatorProvider.getVoteProviderAtHead();
 
-    assertThat(validatorProvider.getVoteProviderAtHead()).contains(voteProvider);
+    verify(contractValidatorProvider).getVoteProviderAtHead();
+    verifyNoInteractions(blockValidatorProvider);
+  }
+
+  @Test
+  public void voteProviderIsDelegatesToHeadFork_whenHeadIsBlockFork() {
+    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+        new BftForksSchedule<>(createBlockFork(0), emptyList());
+
+    final ForkingValidatorProvider validatorProvider =
+        new ForkingValidatorProvider(
+            blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
+
+    validatorProvider.getVoteProviderAtHead();
+
+    verify(blockValidatorProvider).getVoteProviderAtHead();
+    verifyNoInteractions(contractValidatorProvider);
   }
 
   @Test
