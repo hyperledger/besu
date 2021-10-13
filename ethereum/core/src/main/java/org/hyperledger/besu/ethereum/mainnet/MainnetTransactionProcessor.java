@@ -42,6 +42,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
+import org.hyperledger.besu.evm.tracing.OpenTelemetryTracing;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -111,7 +112,7 @@ public class MainnetTransactionProcessor {
         blockHeader,
         transaction,
         miningBeneficiary,
-        OperationTracer.NO_TRACING,
+        OpenTelemetryTracing.INSTANCE,
         blockHashLookup,
         isPersistingPrivateState,
         transactionValidationParams,

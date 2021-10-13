@@ -35,6 +35,8 @@ dependencies {
   implementation project(':ethereum:rlp')
 
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
+  compileOnly 'io.opentelemetry:opentelemetry-api'
+  compileOnly 'io.opentelemetry:opentelemetry-sdk'
 
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.logging.log4j:log4j-api'

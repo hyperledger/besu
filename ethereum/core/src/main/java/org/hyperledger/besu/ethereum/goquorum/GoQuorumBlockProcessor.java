@@ -39,7 +39,7 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.OpenTelemetryTracing;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -139,7 +139,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
                 blockHeader,
                 effectiveTransaction,
                 miningBeneficiary,
-                OperationTracer.NO_TRACING,
+                OpenTelemetryTracing.INSTANCE,
                 blockHashLookup,
                 true,
                 TransactionValidationParams.processingBlock(),

@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.OpenTelemetryTracing;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.Restriction;
 
@@ -123,7 +123,7 @@ public class OnchainPrivacyGroupContract {
                   messageFrame.getContextVariable(PrivateStateUtils.KEY_TRANSACTION_HASH),
                   privateTransaction,
                   messageFrame.getMiningBeneficiary(),
-                  OperationTracer.NO_TRACING,
+                  OpenTelemetryTracing.INSTANCE,
                   messageFrame.getBlockHashLookup(),
                   privacyGroupId));
         };

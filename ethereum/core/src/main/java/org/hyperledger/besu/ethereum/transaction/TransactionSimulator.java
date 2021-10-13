@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateAndPublicW
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.tracing.OpenTelemetryTracing;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -115,7 +116,7 @@ public class TransactionSimulator {
     return process(
         callParams,
         TransactionValidationParams.transactionSimulator(),
-        OperationTracer.NO_TRACING,
+        OpenTelemetryTracing.INSTANCE,
         header);
   }
 
@@ -124,7 +125,7 @@ public class TransactionSimulator {
     return process(
         callParams,
         TransactionValidationParams.transactionSimulator(),
-        OperationTracer.NO_TRACING,
+        OpenTelemetryTracing.INSTANCE,
         blockNumber);
   }
 
@@ -132,7 +133,7 @@ public class TransactionSimulator {
     return process(
         callParams,
         TransactionValidationParams.transactionSimulator(),
-        OperationTracer.NO_TRACING,
+        OpenTelemetryTracing.INSTANCE,
         blockchain.getChainHeadHeader());
   }
 

@@ -45,7 +45,7 @@ import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.OpenTelemetryTracing;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.Hash;
 
@@ -246,7 +246,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         messageFrame.getContextVariable(KEY_TRANSACTION_HASH),
         privateTransaction,
         messageFrame.getMiningBeneficiary(),
-        OperationTracer.NO_TRACING,
+        OpenTelemetryTracing.INSTANCE,
         messageFrame.getBlockHashLookup(),
         privacyGroupId);
   }

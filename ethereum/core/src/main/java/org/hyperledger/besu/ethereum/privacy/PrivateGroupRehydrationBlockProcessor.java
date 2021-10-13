@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.OpenTelemetryTracing;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -145,7 +145,7 @@ public class PrivateGroupRehydrationBlockProcessor {
                 transactionHash,
                 privateTransaction,
                 miningBeneficiary,
-                OperationTracer.NO_TRACING,
+                OpenTelemetryTracing.INSTANCE,
                 new BlockHashLookup(blockHeader, blockchain),
                 privateTransaction.getPrivacyGroupId().get());
 
