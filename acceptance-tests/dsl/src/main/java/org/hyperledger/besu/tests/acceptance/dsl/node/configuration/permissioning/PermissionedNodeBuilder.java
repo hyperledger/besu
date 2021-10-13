@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor;
@@ -297,9 +296,9 @@ public class PermissionedNodeBuilder {
     jsonRpcConfig.setPort(0);
     jsonRpcConfig.setHostsAllowlist(singletonList("*"));
     jsonRpcConfig.setCorsAllowedDomains(singletonList("*"));
-    final List<RpcApi> rpcApis = new ArrayList<>(jsonRpcConfig.getRpcApis());
-    rpcApis.add(RpcApis.PERM);
-    rpcApis.add(RpcApis.ADMIN);
+    final List<String> rpcApis = new ArrayList<>(jsonRpcConfig.getRpcApis());
+    rpcApis.add(RpcApis.PERM.name());
+    rpcApis.add(RpcApis.ADMIN.name());
     jsonRpcConfig.setRpcApis(rpcApis);
     return jsonRpcConfig;
   }

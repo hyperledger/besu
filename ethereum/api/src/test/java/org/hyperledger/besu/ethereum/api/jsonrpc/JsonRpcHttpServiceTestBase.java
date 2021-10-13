@@ -83,8 +83,9 @@ public class JsonRpcHttpServiceTestBase {
   protected static BlockchainQueries blockchainQueries;
   protected static ChainHead chainHead;
   protected static Synchronizer synchronizer;
-  protected static final Collection<RpcApi> JSON_RPC_APIS =
-      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.ADMIN);
+  protected static final Collection<String> JSON_RPC_APIS =
+      Arrays.asList(
+          RpcApis.ETH.name(), RpcApis.NET.name(), RpcApis.WEB3.name(), RpcApis.ADMIN.name());
   protected static final NatService natService = new NatService(Optional.empty());
   protected static int maxConnections = 80;
 

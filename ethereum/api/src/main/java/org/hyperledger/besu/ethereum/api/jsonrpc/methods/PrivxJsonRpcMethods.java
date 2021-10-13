@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
@@ -39,8 +38,8 @@ public class PrivxJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return RpcApis.PRIV;
+  protected String getApiGroup() {
+    return RpcApis.PRIV.name();
   }
 
   @Override

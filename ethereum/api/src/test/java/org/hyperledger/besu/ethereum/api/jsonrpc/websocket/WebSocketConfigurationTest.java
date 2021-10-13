@@ -15,8 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 
 import org.junit.Test;
 
@@ -29,8 +28,7 @@ public class WebSocketConfigurationTest {
     assertThat(configuration.isEnabled()).isFalse();
     assertThat(configuration.getHost()).isEqualTo("127.0.0.1");
     assertThat(configuration.getPort()).isEqualTo(8546);
-    assertThat(configuration.getRpcApis())
-        .containsExactlyInAnyOrder(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
+    assertThat(configuration.getRpcApis()).containsExactlyInAnyOrderElementsOf(DEFAULT_RPC_APIS);
     assertThat(configuration.getMaxActiveConnections())
         .isEqualTo(WebSocketConfiguration.DEFAULT_MAX_ACTIVE_CONNECTIONS);
   }

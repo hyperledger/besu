@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminAddPeer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminChangeLogLevel;
@@ -67,8 +66,8 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return RpcApis.ADMIN;
+  protected String getApiGroup() {
+    return RpcApis.ADMIN.name();
   }
 
   @Override

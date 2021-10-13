@@ -75,8 +75,13 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
   protected static String CLIENT_VERSION = "TestClientVersion/0.1.0";
   protected static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
-  protected static final Collection<RpcApi> JSON_RPC_APIS =
-      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.DEBUG, RpcApis.TRACE);
+  protected static final Collection<String> JSON_RPC_APIS =
+      Arrays.asList(
+          RpcApis.ETH.name(),
+          RpcApis.NET.name(),
+          RpcApis.WEB3.name(),
+          RpcApis.DEBUG.name(),
+          RpcApis.TRACE.name());
 
   protected final Vertx vertx = Vertx.vertx();
   protected JsonRpcHttpService service;

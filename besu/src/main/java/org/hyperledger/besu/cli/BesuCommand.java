@@ -24,7 +24,7 @@ import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_JSON_RPC_APIS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
 import static org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration.QIP714_DEFAULT_BLOCK;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
@@ -43,7 +43,6 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
-import org.hyperledger.besu.cli.converter.RpcApisConverter;
 import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
@@ -102,7 +101,6 @@ import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
@@ -153,6 +151,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
+import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -166,6 +165,7 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
+import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
@@ -186,6 +186,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
@@ -198,6 +199,7 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -221,6 +223,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import picocli.AutoComplete;
 import picocli.CommandLine;
 import picocli.CommandLine.AbstractParseResultHandler;
 import picocli.CommandLine.Command;
@@ -283,6 +286,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final SecurityModuleServiceImpl securityModuleService;
   private final PermissioningServiceImpl permissioningService;
   private final PrivacyPluginServiceImpl privacyPluginPluginService;
+  private final RpcEndpointServiceImpl rpcEndpointServiceImpl;
 
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
@@ -550,12 +554,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--rpc-http-api", "--rpc-http-apis"},
       paramLabel = "<api name>",
-      split = ",",
+      split = " {0,1}, {0,1}",
       arity = "1..*",
-      converter = RpcApisConverter.class,
       description =
           "Comma separated list of APIs to enable on JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
-  private final Collection<RpcApi> rpcHttpApis = DEFAULT_JSON_RPC_APIS;
+  private final List<String> rpcHttpApis = DEFAULT_RPC_APIS;
 
   @Option(
       names = {"--rpc-http-authentication-enabled"},
@@ -647,12 +650,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--rpc-ws-api", "--rpc-ws-apis"},
       paramLabel = "<api name>",
-      split = ",",
+      split = " {0,1}, {0,1}",
       arity = "1..*",
-      converter = RpcApisConverter.class,
       description =
           "Comma separated list of APIs to enable on JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
-  private final List<RpcApi> rpcWsApis = DEFAULT_JSON_RPC_APIS;
+  private final List<String> rpcWsApis = DEFAULT_RPC_APIS;
 
   @Option(
       names = {"--rpc-ws-authentication-enabled"},
@@ -1142,7 +1144,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new SecurityModuleServiceImpl(),
         new PermissioningServiceImpl(),
         new PrivacyPluginServiceImpl(),
-        new PkiBlockCreationConfigurationProvider());
+        new PkiBlockCreationConfigurationProvider(),
+        new RpcEndpointServiceImpl());
   }
 
   @VisibleForTesting
@@ -1159,7 +1162,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final SecurityModuleServiceImpl securityModuleService,
       final PermissioningServiceImpl permissioningService,
       final PrivacyPluginServiceImpl privacyPluginPluginService,
-      final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider) {
+      final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
+      final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -1175,6 +1179,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     pluginCommonConfiguration = new BesuCommandConfigurationService();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
     this.pkiBlockCreationConfigProvider = pkiBlockCreationConfigProvider;
+    this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
   }
 
   public void parse(
@@ -1252,6 +1257,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         RLPSubCommand.COMMAND_NAME, new RLPSubCommand(resultHandler.out(), in));
     commandLine.addSubcommand(
         OperatorSubCommand.COMMAND_NAME, new OperatorSubCommand(resultHandler.out()));
+    final String generateCompletionSubcommandName = "generate-completion";
+    commandLine.addSubcommand(
+        generateCompletionSubcommandName, AutoComplete.GenerateCompletion.class);
+    CommandLine generateCompletionSubcommand =
+        commandLine.getSubcommands().get(generateCompletionSubcommandName);
+    generateCompletionSubcommand.getCommandSpec().usageMessage().hidden(true);
   }
 
   private void registerConverters() {
@@ -1309,6 +1320,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
     besuPluginContext.addService(PermissioningService.class, permissioningService);
     besuPluginContext.addService(PrivacyPluginService.class, privacyPluginPluginService);
+    besuPluginContext.addService(RpcEndpointService.class, rpcEndpointServiceImpl);
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
@@ -1449,6 +1461,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateNatParams();
     validateNetStatsParams();
     validateDnsOptionsParams();
+    validateRpcOptionsParams();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
   }
@@ -1515,6 +1528,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           this.commandLine,
           "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled"
               + " or specify dns is enabled (--Xdns-enabled)");
+    }
+  }
+
+  public void validateRpcOptionsParams() {
+    Predicate<String> configuredApis =
+        apiName ->
+            Arrays.stream(RpcApis.values())
+                    .anyMatch(builtInApi -> apiName.equals(builtInApi.name()))
+                || rpcEndpointServiceImpl.hasNamespace(apiName);
+
+    if (!rpcHttpApis.stream().allMatch(configuredApis)) {
+      throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-http-apis'");
+    }
+
+    if (!rpcWsApis.stream().allMatch(configuredApis)) {
+      throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-ws-apis'");
     }
   }
 
@@ -1989,7 +2018,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
     if (!(localPermissionsEnabled() || contractPermissionsEnabled())) {
-      if (rpcHttpApis.contains(RpcApis.PERM) || rpcWsApis.contains(RpcApis.PERM)) {
+      if (rpcHttpApis.contains(RpcApis.PERM.name()) || rpcWsApis.contains(RpcApis.PERM.name())) {
         logger.warn(
             "Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
       }
@@ -2221,7 +2250,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (!isGoQuorumCompatibilityMode
-        && (rpcHttpApis.contains(RpcApis.GOQUORUM) || rpcWsApis.contains(RpcApis.GOQUORUM))) {
+        && (rpcHttpApis.contains(RpcApis.GOQUORUM.name())
+            || rpcWsApis.contains(RpcApis.GOQUORUM.name()))) {
       logger.warn("Cannot use GOQUORUM API methods when not in GoQuorum mode.");
     }
     privacyParametersBuilder.setPrivacyService(privacyPluginPluginService);
@@ -2244,10 +2274,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private boolean anyPrivacyApiEnabled() {
-    return rpcHttpApis.contains(RpcApis.EEA)
-        || rpcWsApis.contains(RpcApis.EEA)
-        || rpcHttpApis.contains(RpcApis.PRIV)
-        || rpcWsApis.contains(RpcApis.PRIV);
+    return rpcHttpApis.contains(RpcApis.EEA.name())
+        || rpcWsApis.contains(RpcApis.EEA.name())
+        || rpcHttpApis.contains(RpcApis.PRIV.name())
+        || rpcWsApis.contains(RpcApis.PRIV.name());
   }
 
   private PrivacyKeyValueStorageProvider privacyKeyStorageProvider(final String name) {
@@ -2377,6 +2407,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .ethstatsContact(ethstatsOptions.getEthstatsContact())
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdAsBytesList())
+            .rpcEndpointService(rpcEndpointServiceImpl)
             .build();
 
     addShutdownHook(runner);

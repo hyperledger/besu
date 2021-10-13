@@ -49,6 +49,7 @@ import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
+import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 
@@ -211,6 +212,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .autoLogBloomCaching(false)
             .storageProvider(storageProvider)
             .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdAsBytesList())
+            .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
 
     runner.start();
