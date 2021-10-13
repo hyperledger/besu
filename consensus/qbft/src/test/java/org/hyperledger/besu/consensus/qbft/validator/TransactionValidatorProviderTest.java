@@ -178,6 +178,6 @@ public class TransactionValidatorProviderTest {
     TransactionValidatorProvider transactionValidatorProvider =
         new TransactionValidatorProvider(blockChain, validatorContractController);
 
-    assertThat(transactionValidatorProvider.getVoteProvider()).isEmpty();
+    assertThat(transactionValidatorProvider.getVoteProviderAtHead()).isEmpty();
   }
 }
