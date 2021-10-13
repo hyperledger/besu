@@ -102,8 +102,9 @@ public class JsonRpcHttpServiceLoginTest {
   protected static P2PNetwork peerDiscoveryMock;
   protected static BlockchainQueries blockchainQueries;
   protected static Synchronizer synchronizer;
-  protected static final Collection<RpcApi> JSON_RPC_APIS =
-      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.ADMIN);
+  protected static final Collection<String> JSON_RPC_APIS =
+      Arrays.asList(
+          RpcApis.ETH.name(), RpcApis.NET.name(), RpcApis.WEB3.name(), RpcApis.ADMIN.name());
   protected static JWTAuth jwtAuth;
   protected static String authPermissionsConfigFilePath = "JsonRpcHttpService/auth.toml";
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();

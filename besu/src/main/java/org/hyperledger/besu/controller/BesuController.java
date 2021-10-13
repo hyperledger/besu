@@ -21,7 +21,6 @@ import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -157,7 +156,7 @@ public class BesuController implements java.io.Closeable {
   }
 
   public Map<String, JsonRpcMethod> getAdditionalJsonRpcMethods(
-      final Collection<RpcApi> enabledRpcApis) {
+      final Collection<String> enabledRpcApis) {
     return additionalJsonRpcMethodsFactory.create(enabledRpcApis);
   }
 

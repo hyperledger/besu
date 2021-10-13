@@ -1,15 +1,19 @@
+
 # Changelog
 
-## 21.10.0-RC2
+## 21.10.0-RC3
 
 ### Additions and Improvements
+- Add CLI autocomplete scripts. [#2854](https://github.com/hyperledger/besu/pull/2854)
+- Added support for PKCS11 keystore on PKI Block Creation. [#2865](https://github.com/hyperledger/besu/pull/2865)
 
 ### Bug Fixes
 
+
 ### Early Access Features
+- Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
 
-
-## 21.10.0-RC1
+## 21.10.0-RC1/RC2
 ### Additions and Improvements
 - The EVM has been factored out into a standalone module, suitable for inclusion as a library. [#2790](https://github.com/hyperledger/besu/pull/2790)
 - Low level performance improvements changes to cut worst-case EVM performance in half. [#2796](https://github.com/hyperledger/besu/pull/2796)

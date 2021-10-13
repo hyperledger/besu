@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -47,10 +46,18 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
- * Provides various gas cost lookups and calculations used during block processing.
+ * Provides various gas cost lookups and calculations used during block processing. <<<<<<<
+ * HEAD:evm/src/main/java/org/hyperledger/besu/evm/gascalculator/GasCalculator.java
  *
  * <p>The {@code GasCalculator} is meant to encapsulate all {@link Gas}-related calculations except
  * for the following "safe" operations:
+ *
+ * <p>=======
+ *
+ * <p>The {@code GasCalculator} is meant to encapsulate all {@link Gas}-related calculations except
+ * for the following "safe" operations:
+ *
+ * <p>>>>>>>> main:ethereum/core/src/main/java/org/hyperledger/besu/ethereum/vm/GasCalculator.java
  *
  * <ul>
  *   <li><b>Operation Gas Deductions:</b> Deducting the operation's gas cost from the VM's current

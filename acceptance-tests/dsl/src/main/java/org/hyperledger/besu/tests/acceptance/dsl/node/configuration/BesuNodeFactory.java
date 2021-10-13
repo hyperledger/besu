@@ -24,7 +24,6 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
@@ -255,12 +254,14 @@ public class BesuNodeFactory {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
+            .jsonRpcConfiguration(node.createJsonRpcWithIbft2AdminEnabledConfig())
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .plugins(plugins)
             .extraCLIOptions(extraCLIOptions)
             .build());
   }
 
-  public BesuNode createArchiveNodeWithRpcApis(final String name, final RpcApi... enabledRpcApis)
+  public BesuNode createArchiveNodeWithRpcApis(final String name, final String... enabledRpcApis)
       throws IOException {
     final JsonRpcConfiguration jsonRpcConfig = node.createJsonRpcEnabledConfig();
     jsonRpcConfig.setRpcApis(asList(enabledRpcApis));
@@ -396,7 +397,19 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createPkiQbftNode(final String name) throws IOException {
+  public BesuNode createPkiQbftJKSNode(final String name) throws IOException {
+    return createPkiQbftNode(KeyStoreWrapper.KEYSTORE_TYPE_JKS, name);
+  }
+
+  public BesuNode createPkiQbftPKCS11Node(final String name) throws IOException {
+    return createPkiQbftNode(KeyStoreWrapper.KEYSTORE_TYPE_PKCS11, name);
+  }
+
+  public BesuNode createPkiQbftPKCS12Node(final String name) throws IOException {
+    return createPkiQbftNode(KeyStoreWrapper.KEYSTORE_TYPE_PKCS12, name);
+  }
+
+  public BesuNode createPkiQbftNode(final String type, final String name) throws IOException {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
@@ -405,7 +418,7 @@ public class BesuNodeFactory {
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
             .genesisConfigProvider(genesis::createQbftGenesisConfig)
-            .pkiBlockCreationEnabled(pkiKeystoreConfigurationFactory.createPkiConfig())
+            .pkiBlockCreationEnabled(pkiKeystoreConfigurationFactory.createPkiConfig(type, name))
             .build());
   }
 
@@ -521,8 +534,23 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createPkiQbftNodeWithValidators(final String name, final String... validators)
+  public BesuNode createPkiQbftJKSNodeWithValidators(final String name, final String... validators)
       throws IOException {
+    return createPkiQbftNodeWithValidators(KeyStoreWrapper.KEYSTORE_TYPE_JKS, name, validators);
+  }
+
+  public BesuNode createPkiQbftPKCS11NodeWithValidators(
+      final String name, final String... validators) throws IOException {
+    return createPkiQbftNodeWithValidators(KeyStoreWrapper.KEYSTORE_TYPE_PKCS11, name, validators);
+  }
+
+  public BesuNode createPkiQbftPKCS12NodeWithValidators(
+      final String name, final String... validators) throws IOException {
+    return createPkiQbftNodeWithValidators(KeyStoreWrapper.KEYSTORE_TYPE_PKCS12, name, validators);
+  }
+
+  public BesuNode createPkiQbftNodeWithValidators(
+      final String type, final String name, final String... validators) throws IOException {
 
     return create(
         new BesuNodeConfigurationBuilder()
@@ -531,7 +559,7 @@ public class BesuNodeFactory {
             .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
-            .pkiBlockCreationEnabled(pkiKeystoreConfigurationFactory.createPkiConfig())
+            .pkiBlockCreationEnabled(pkiKeystoreConfigurationFactory.createPkiConfig(type, name))
             .genesisConfigProvider(
                 nodes ->
                     node.createGenesisConfigForValidators(

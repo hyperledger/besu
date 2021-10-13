@@ -81,6 +81,7 @@ dependencies {
   testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
   testImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
   testImplementation project(':crypto')
+
   testImplementation project(':ethereum:core')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':crypto')
@@ -88,14 +89,13 @@ dependencies {
   testImplementation project(':metrics:core')
   testImplementation project(':testutil')
 
-  //  TODO: sort out minimum
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  //=======
+
   integrationTestImplementation project(':crypto')
   integrationTestImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')

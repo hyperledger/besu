@@ -19,9 +19,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
-import org.hyperledger.besu.pki.keystore.SoftwareKeyStoreWrapper;
-
-import java.nio.file.Path;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
@@ -34,7 +31,7 @@ public class PkiBlockCreationConfigurationProvider {
   private final KeyStoreWrapperProvider keyStoreWrapperProvider;
 
   public PkiBlockCreationConfigurationProvider() {
-    this(SoftwareKeyStoreWrapper::new);
+    this(new DefaultKeyStoreWrapperProvider());
   }
 
   @VisibleForTesting
@@ -77,15 +74,5 @@ public class PkiBlockCreationConfigurationProvider {
 
     return new PkiBlockCreationConfiguration(
         keyStore, trustStore, pkiKeyStoreConfiguration.getCertificateAlias());
-  }
-
-  @FunctionalInterface
-  interface KeyStoreWrapperProvider {
-
-    KeyStoreWrapper apply(
-        final String keyStoreType,
-        final Path keyStorePath,
-        final String keyStorePassword,
-        final Path crl);
   }
 }

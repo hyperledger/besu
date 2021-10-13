@@ -146,12 +146,12 @@ public class JsonRpcTestMethodsFactory {
     final MetricsConfiguration metricsConfiguration = mock(MetricsConfiguration.class);
     final NatService natService = new NatService(Optional.empty());
 
-    final List<RpcApi> apis = new ArrayList<>();
-    apis.add(RpcApis.ETH);
-    apis.add(RpcApis.NET);
-    apis.add(RpcApis.WEB3);
-    apis.add(RpcApis.PRIV);
-    apis.add(RpcApis.DEBUG);
+    final List<String> apis = new ArrayList<>();
+    apis.add(RpcApis.ETH.name());
+    apis.add(RpcApis.NET.name());
+    apis.add(RpcApis.WEB3.name());
+    apis.add(RpcApis.PRIV.name());
+    apis.add(RpcApis.DEBUG.name());
 
     final Path dataDir = mock(Path.class);
 
