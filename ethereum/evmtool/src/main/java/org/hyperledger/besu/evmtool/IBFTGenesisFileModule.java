@@ -40,8 +40,7 @@ class IBFTGenesisFileModule extends GenesisFileModule {
       final GenesisConfigOptions configOptions,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     final BftForksSchedule<BftConfigOptions> forksSchedule =
-        IbftForksSchedulesFactory.create(
-            configOptions.getBftConfigOptions(), configOptions.getTransitions().getIbftForks());
+        IbftForksSchedulesFactory.create(configOptions);
     return IbftProtocolSchedule.create(
         configOptions, forksSchedule, bftExtraDataEncoder, EvmConfiguration.DEFAULT);
   }

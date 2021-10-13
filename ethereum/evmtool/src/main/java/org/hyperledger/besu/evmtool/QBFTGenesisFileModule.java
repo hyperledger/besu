@@ -39,8 +39,7 @@ class QBFTGenesisFileModule extends GenesisFileModule {
       final GenesisConfigOptions configOptions,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     final BftForksSchedule<QbftConfigOptions> forksSchedule =
-        QbftForksSchedulesFactory.create(
-            configOptions.getQbftConfigOptions(), configOptions.getTransitions().getQbftForks());
+        QbftForksSchedulesFactory.create(configOptions);
     return QbftProtocolSchedule.create(
         configOptions, forksSchedule, revertReasonEnabled, bftExtraDataEncoder);
   }

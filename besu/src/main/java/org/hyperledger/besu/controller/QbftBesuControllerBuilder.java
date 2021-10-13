@@ -16,7 +16,6 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
@@ -114,7 +113,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected void prepForBuild() {
     qbftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getQbftConfigOptions();
     bftEventQueue = new BftEventQueue(qbftConfig.getMessageQueueLimit());
-    qbftForksSchedule = createQbftForksSchedule(genesisConfig.getConfigOptions());
+    qbftForksSchedule = QbftForksSchedulesFactory.create(genesisConfig.getConfigOptions());
   }
 
   @Override
@@ -319,12 +318,6 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
     return new QbftContext(
         validatorProvider, epochManager, bftBlockInterface().get(), pkiBlockCreationConfiguration);
-  }
-
-  private BftForksSchedule<QbftConfigOptions> createQbftForksSchedule(
-      final GenesisConfigOptions configOptions) {
-    return QbftForksSchedulesFactory.create(
-        configOptions.getQbftConfigOptions(), configOptions.getTransitions().getQbftForks());
   }
 
   private BftValidatorOverrides convertBftForks(final List<QbftFork> bftForks) {

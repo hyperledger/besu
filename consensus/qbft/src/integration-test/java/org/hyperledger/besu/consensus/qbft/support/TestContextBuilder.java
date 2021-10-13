@@ -392,19 +392,20 @@ public class TestContextBuilder {
                 JsonQbftConfigOptions.VALIDATOR_CONTRACT_ADDRESS,
                 VALIDATOR_CONTRACT_ADDRESS.toHexString())
             : Collections.emptyMap();
+    final QbftConfigOptions qbftConfigOptions = createGenesisConfig(useValidatorContract);
 
     genesisConfigOptions.byzantiumBlock(0);
     genesisConfigOptions.qbftConfigOptions(
         new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(qbftConfigValues)));
     genesisConfigOptions.transitions(new TestTransitions(qbftForks));
+    genesisConfigOptions.qbftConfigOptions(qbftConfigOptions);
 
     final EpochManager epochManager = new EpochManager(EPOCH_LENGTH);
 
     final BftBlockInterface blockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
 
-    final QbftConfigOptions genesisConfig = createGenesisConfig(useValidatorContract);
     final BftForksSchedule<QbftConfigOptions> forksSchedule =
-        QbftForksSchedulesFactory.create(genesisConfig, qbftForks);
+        QbftForksSchedulesFactory.create(genesisConfigOptions);
 
     final ProtocolSchedule protocolSchedule =
         QbftProtocolSchedule.create(

@@ -16,18 +16,19 @@ package org.hyperledger.besu.consensus.ibft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
-import java.util.List;
-
 public class IbftForksSchedulesFactory {
 
   public static BftForksSchedule<BftConfigOptions> create(
-      final BftConfigOptions genesisConfig, final List<BftFork> bftForks) {
+      final GenesisConfigOptions genesisConfig) {
     return BftForksSchedule.create(
-        genesisConfig, bftForks, IbftForksSchedulesFactory::createBftConfigOptions);
+        genesisConfig.getBftConfigOptions(),
+        genesisConfig.getTransitions().getIbftForks(),
+        IbftForksSchedulesFactory::createBftConfigOptions);
   }
 
   private static BftConfigOptions createBftConfigOptions(

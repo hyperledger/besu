@@ -297,9 +297,7 @@ public class TestContextBuilder {
     genesisConfigOptions.byzantiumBlock(0);
 
     final BftForksSchedule<BftConfigOptions> forksSchedule =
-        IbftForksSchedulesFactory.create(
-            genesisConfigOptions.getBftConfigOptions(),
-            genesisConfigOptions.getTransitions().getIbftForks());
+        IbftForksSchedulesFactory.create(genesisConfigOptions);
 
     final ProtocolSchedule protocolSchedule =
         IbftProtocolSchedule.create(

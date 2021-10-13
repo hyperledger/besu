@@ -98,7 +98,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected void prepForBuild() {
     bftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getBftConfigOptions();
     bftEventQueue = new BftEventQueue(bftConfig.getMessageQueueLimit());
-    bftForksSchedule = createBftForksSchedule(genesisConfig.getConfigOptions());
+    bftForksSchedule = IbftForksSchedulesFactory.create(genesisConfig.getConfigOptions());
   }
 
   @Override
@@ -269,12 +269,6 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             blockchain, epochManager, bftBlockInterface().get(), validatorOverrides),
         epochManager,
         bftBlockInterface().get());
-  }
-
-  private BftForksSchedule<BftConfigOptions> createBftForksSchedule(
-      final GenesisConfigOptions configOptions) {
-    return IbftForksSchedulesFactory.create(
-        configOptions.getBftConfigOptions(), configOptions.getTransitions().getIbftForks());
   }
 
   private BftValidatorOverrides convertIbftForks(final List<BftFork> bftForks) {
