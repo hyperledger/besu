@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Util;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,30 +52,6 @@ public class IbftBlockHeaderUtils {
     return createPresetHeaderBuilder(number, proposerNodeKey, validators, parent, null);
   }
 
-  public static BlockHeaderTestFixture createPresetHeaderBuilderForContractMode(
-      final long number,
-      final NodeKey proposerNodeKey,
-      final BlockHeader parent,
-      final HeaderModifier modifier) {
-    final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
-    final IbftExtraDataCodec ibftExtraDataEncoder = new IbftExtraDataCodec();
-    populateDefaultBlockHeader(
-        number, proposerNodeKey, parent, modifier, builder, ibftExtraDataEncoder);
-
-    final BftExtraData bftExtraData =
-        BftExtraDataFixture.createExtraData(
-            builder.buildHeader(),
-            Bytes.wrap(new byte[BftExtraDataCodec.EXTRA_VANITY_LENGTH]),
-            Optional.empty(),
-            Collections.emptyList(),
-            singletonList(proposerNodeKey),
-            ROUND_NUMBER,
-            ibftExtraDataEncoder);
-
-    builder.extraData(ibftExtraDataEncoder.encode(bftExtraData));
-    return builder;
-  }
-
   public static BlockHeaderTestFixture createPresetHeaderBuilder(
       final long number,
       final NodeKey proposerNodeKey,
@@ -95,7 +70,7 @@ public class IbftBlockHeaderUtils {
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             singletonList(proposerNodeKey),
-            0x2A,
+            ROUND_NUMBER,
             ibftExtraDataEncoder);
 
     builder.extraData(ibftExtraDataEncoder.encode(bftExtraData));
@@ -114,7 +89,7 @@ public class IbftBlockHeaderUtils {
     }
     builder.number(number);
     builder.gasLimit(5000);
-    builder.timestamp(6000 * number);
+    builder.timestamp(6 * number);
     builder.mixHash(
         Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
     builder.difficulty(Difficulty.ONE);
