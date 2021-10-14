@@ -2,14 +2,12 @@
 
 ## 21.10.0-RC3
 
-### Bug Fixes
-- Regression in RC1 involving LogOperation and frame memory overwrites [#2907](https://github.com/hyperledger/besu/pull/2907)
-
 ### Additions and Improvements
 - Add CLI autocomplete scripts. [#2854](https://github.com/hyperledger/besu/pull/2854)
 - Added support for PKCS11 keystore on PKI Block Creation. [#2865](https://github.com/hyperledger/besu/pull/2865)
 
 ### Bug Fixes
+- Regression in RC1 involving LogOperation and frame memory overwrites [#2907](https://github.com/hyperledger/besu/pull/2907)
 
 ### Early Access Features
 - Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
