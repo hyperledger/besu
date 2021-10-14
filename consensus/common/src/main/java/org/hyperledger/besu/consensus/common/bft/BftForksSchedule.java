@@ -20,9 +20,11 @@ import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NavigableSet;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 
@@ -78,5 +80,9 @@ public class BftForksSchedule<C extends BftConfigOptions> {
     }
 
     return forks.first();
+  }
+
+  public Set<BftForkSpec<C>> getForks() {
+    return Collections.unmodifiableSet(forks);
   }
 }

@@ -18,20 +18,25 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import org.hyperledger.besu.config.BftFork;
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
+import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
+import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
 
 public class QbftForksSchedulesFactoryTest {
@@ -41,9 +46,11 @@ public class QbftForksSchedulesFactoryTest {
     final MutableQbftConfigOptions qbftConfigOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
     final BftForkSpec<QbftConfigOptions> expectedForkSpec = new BftForkSpec<>(0, qbftConfigOptions);
+    final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
+    genesisConfigOptions.qbftConfigOptions(qbftConfigOptions);
 
     final BftForksSchedule<QbftConfigOptions> forksSchedule =
-        QbftForksSchedulesFactory.create(qbftConfigOptions, List.of());
+        QbftForksSchedulesFactory.create(genesisConfigOptions);
     assertThat(forksSchedule.getFork(0)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
     assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
     assertThat(forksSchedule.getFork(2)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
@@ -54,25 +61,24 @@ public class QbftForksSchedulesFactoryTest {
     final MutableQbftConfigOptions configOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
 
-    final QbftFork fork =
-        new QbftFork(
-            JsonUtil.objectNodeFromMap(
-                Map.of(
-                    BftFork.FORK_BLOCK_KEY,
-                    1,
-                    BftFork.VALIDATORS_KEY,
-                    List.of("1", "2", "3"),
-                    BftFork.BLOCK_PERIOD_SECONDS_KEY,
-                    10,
-                    BftFork.BLOCK_REWARD_KEY,
-                    "5",
-                    QbftFork.VALIDATOR_SELECTION_MODE_KEY,
-                    VALIDATOR_SELECTION_MODE.CONTRACT,
-                    QbftFork.VALIDATOR_CONTRACT_ADDRESS_KEY,
-                    "10")));
+    final ObjectNode fork =
+        JsonUtil.objectNodeFromMap(
+            Map.of(
+                BftFork.FORK_BLOCK_KEY,
+                1,
+                BftFork.VALIDATORS_KEY,
+                List.of("1", "2", "3"),
+                BftFork.BLOCK_PERIOD_SECONDS_KEY,
+                10,
+                BftFork.BLOCK_REWARD_KEY,
+                "5",
+                QbftFork.VALIDATOR_SELECTION_MODE_KEY,
+                VALIDATOR_SELECTION_MODE.CONTRACT,
+                QbftFork.VALIDATOR_CONTRACT_ADDRESS_KEY,
+                "10"));
 
     final BftForksSchedule<QbftConfigOptions> forksSchedule =
-        QbftForksSchedulesFactory.create(configOptions, List.of(fork));
+        QbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
     assertThat(forksSchedule.getFork(0))
         .usingRecursiveComparison()
         .isEqualTo(new BftForkSpec<>(0, configOptions));
@@ -96,16 +102,17 @@ public class QbftForksSchedulesFactoryTest {
     final MutableQbftConfigOptions configOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
 
-    final QbftFork fork =
-        new QbftFork(
-            JsonUtil.objectNodeFromMap(
-                Map.of(
-                    BftFork.FORK_BLOCK_KEY,
-                    1,
-                    QbftFork.VALIDATOR_SELECTION_MODE_KEY,
-                    VALIDATOR_SELECTION_MODE.CONTRACT)));
+    final ObjectNode fork =
+        JsonUtil.objectNodeFromMap(
+            Map.of(
+                BftFork.FORK_BLOCK_KEY,
+                1,
+                QbftFork.VALIDATOR_SELECTION_MODE_KEY,
+                VALIDATOR_SELECTION_MODE.CONTRACT));
+    createGenesisConfig(configOptions, fork);
 
-    assertThatThrownBy(() -> QbftForksSchedulesFactory.create(configOptions, List.of(fork)))
+    assertThatThrownBy(
+            () -> QbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork)))
         .hasMessage("QBFT transition has config with contract mode but no contract address");
   }
 
@@ -115,18 +122,26 @@ public class QbftForksSchedulesFactoryTest {
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
     configOptions.setValidatorContractAddress(Optional.of("10"));
 
-    final QbftFork fork =
-        new QbftFork(
-            JsonUtil.objectNodeFromMap(
-                Map.of(
-                    BftFork.FORK_BLOCK_KEY,
-                    1,
-                    QbftFork.VALIDATOR_SELECTION_MODE_KEY,
-                    VALIDATOR_SELECTION_MODE.BLOCKHEADER)));
+    final ObjectNode fork =
+        JsonUtil.objectNodeFromMap(
+            Map.of(
+                BftFork.FORK_BLOCK_KEY,
+                1,
+                QbftFork.VALIDATOR_SELECTION_MODE_KEY,
+                VALIDATOR_SELECTION_MODE.BLOCKHEADER));
 
     final BftForksSchedule<QbftConfigOptions> forksSchedule =
-        QbftForksSchedulesFactory.create(configOptions, List.of(fork));
+        QbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
 
     assertThat(forksSchedule.getFork(1).getConfigOptions().getValidatorContractAddress()).isEmpty();
+  }
+
+  private GenesisConfigOptions createGenesisConfig(
+      final QbftConfigOptions configOptions, final ObjectNode fork) {
+    final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
+    genesisConfigOptions.qbftConfigOptions(configOptions);
+    genesisConfigOptions.transitions(
+        new TransitionsConfigOptions(JsonUtil.objectNodeFromMap(Map.of("qbft", List.of(fork)))));
+    return genesisConfigOptions;
   }
 }
