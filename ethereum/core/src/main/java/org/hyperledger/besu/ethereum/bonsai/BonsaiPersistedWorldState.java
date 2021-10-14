@@ -197,7 +197,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final Address updatedAddress = codeUpdate.getKey();
       final Hash updatedAddressHash = Hash.hash(updatedAddress);
       final Bytes updatedCode = codeUpdate.getValue().getUpdated();
-      final Hash updatedCodeHash = Hash.hash(updatedCode);
       final Bytes prior = codeUpdate.getValue().getPrior();
 
       if (prior != null && !prior.isZero()) {
@@ -207,6 +206,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       if (updatedCode == null || updatedCode.size() == 0) {
         stateUpdater.removeCode(updatedAddressHash);
       } else {
+        final Hash updatedCodeHash = Hash.hash(updatedCode);
         stateUpdater.putCode(updatedAddressHash, updatedCodeHash, updatedCode);
         blockHeader.ifPresent(
             header ->
