@@ -12,24 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.validator;
+package org.hyperledger.besu.consensus.qbft;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
-import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 
-import java.util.List;
 import java.util.Optional;
 
 public class QbftForksSchedulesFactory {
 
   public static BftForksSchedule<QbftConfigOptions> create(
-      final QbftConfigOptions genesisConfig, final List<QbftFork> qbftForks) {
+      final GenesisConfigOptions genesisConfig) {
     return BftForksSchedule.create(
-        genesisConfig, qbftForks, QbftForksSchedulesFactory::createQbftConfigOptions);
+        genesisConfig.getQbftConfigOptions(),
+        genesisConfig.getTransitions().getQbftForks(),
+        QbftForksSchedulesFactory::createQbftConfigOptions);
   }
 
   private static QbftConfigOptions createQbftConfigOptions(

@@ -20,7 +20,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BftConfigOptions;
-import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonBftConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
@@ -29,12 +28,12 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
-import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -58,10 +57,9 @@ public class BaseBftProtocolScheduleTest {
 
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
-    final ProtocolSchedule schedule = createProtocolSchedule();
+    final ProtocolSchedule schedule =
+        createProtocolSchedule(new BftForkSpec<>(0, configOptions), Collections.emptyList());
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
-
-    spec.getBlockReward();
 
     assertThat(spec.getBlockReward()).isEqualTo(Wei.of(arbitraryBlockReward));
     assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(null))
@@ -77,7 +75,10 @@ public class BaseBftProtocolScheduleTest {
     when(configOptions.getEpochLength()).thenReturn(3000L);
     when(configOptions.getBlockRewardWei()).thenReturn(BigInteger.ZERO);
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
-    assertThatThrownBy(this::createProtocolSchedule)
+    assertThatThrownBy(
+            () ->
+                createProtocolSchedule(
+                    new BftForkSpec<>(0, configOptions), Collections.emptyList()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Mining beneficiary in config is not a valid ethereum address");
   }
@@ -92,7 +93,8 @@ public class BaseBftProtocolScheduleTest {
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
-    final ProtocolSchedule schedule = createProtocolSchedule();
+    final ProtocolSchedule schedule =
+        createProtocolSchedule(new BftForkSpec<>(0, configOptions), Collections.emptyList());
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
     final Address headerCoinbase = Address.fromHexString("0x123");
@@ -114,7 +116,10 @@ public class BaseBftProtocolScheduleTest {
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
-    assertThatThrownBy(this::createProtocolSchedule)
+    assertThatThrownBy(
+            () ->
+                createProtocolSchedule(
+                    new BftForkSpec<>(0, configOptions), Collections.emptyList()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Bft Block reward in config cannot be negative");
   }
@@ -129,7 +134,10 @@ public class BaseBftProtocolScheduleTest {
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
-    assertThatThrownBy(this::createProtocolSchedule)
+    assertThatThrownBy(
+            () ->
+                createProtocolSchedule(
+                    new BftForkSpec<>(0, configOptions), Collections.emptyList()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -144,7 +152,10 @@ public class BaseBftProtocolScheduleTest {
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
-    assertThatThrownBy(this::createProtocolSchedule)
+    assertThatThrownBy(
+            () ->
+                createProtocolSchedule(
+                    new BftForkSpec<>(0, configOptions), Collections.emptyList()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -161,15 +172,15 @@ public class BaseBftProtocolScheduleTest {
     when(genesisConfig.isIbft2()).thenReturn(true);
 
     final long transitionBlock = 5L;
-    final BftFork fork = mock(BftFork.class);
-    when(fork.getForkBlock()).thenReturn(transitionBlock);
     final BigInteger forkBlockReward = arbitraryBlockReward.multiply(BigInteger.valueOf(2));
-    when(fork.getBlockRewardWei()).thenReturn(Optional.of(forkBlockReward));
-    final TransitionsConfigOptions transitions = mock(TransitionsConfigOptions.class);
-    when(transitions.getIbftForks()).thenReturn(List.of(fork));
-    when(genesisConfig.getTransitions()).thenReturn(transitions);
+    final MutableBftConfigOptions blockRewardTransition =
+        new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
+    blockRewardTransition.setBlockRewardWei(forkBlockReward);
 
-    final MutableProtocolSchedule schedule = (MutableProtocolSchedule) createProtocolSchedule();
+    final ProtocolSchedule schedule =
+        createProtocolSchedule(
+            new BftForkSpec<>(0, configOptions),
+            List.of(new BftForkSpec<>(transitionBlock, blockRewardTransition)));
 
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(2);
     assertThat(schedule.getByBlockNumber(0).getBlockReward())
@@ -178,23 +189,20 @@ public class BaseBftProtocolScheduleTest {
         .isEqualTo(Wei.of(forkBlockReward));
   }
 
-  private ProtocolSchedule createProtocolSchedule() {
+  private ProtocolSchedule createProtocolSchedule(
+      final BftForkSpec<BftConfigOptions> genesisFork,
+      final List<BftForkSpec<BftConfigOptions>> forks) {
     final BaseBftProtocolSchedule bftProtocolSchedule =
         new BaseBftProtocolSchedule() {
           @Override
-          protected Supplier<BlockHeaderValidator.Builder> createForkBlockHeaderRuleset(
-              final GenesisConfigOptions config, final BftFork fork) {
-            return BlockHeaderValidator.Builder::new;
-          }
-
-          @Override
-          protected Supplier<BlockHeaderValidator.Builder> createGenesisBlockHeaderRuleset(
-              final GenesisConfigOptions config) {
+          protected Supplier<BlockHeaderValidator.Builder> createBlockHeaderRuleset(
+              final BftConfigOptions config) {
             return BlockHeaderValidator.Builder::new;
           }
         };
     return bftProtocolSchedule.createProtocolSchedule(
         genesisConfig,
+        new BftForksSchedule<>(genesisFork, forks),
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,
