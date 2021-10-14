@@ -207,7 +207,17 @@ jobs:
           destination: quorum-at-artifacts
       - store_test_results:
           path: build/quorum-at/openjdk-latest/reports/xml-report
-
+  staticCodeAnalysis:
+    parallelism: 1
+    executor: xl_machine_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: SonarQube
+          no_output_timeout: 30m
+          command: ./gradlew jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
   buildDocker:
     executor: besu_executor_med
     steps:
@@ -290,6 +300,13 @@ workflows:
       - buildDocker:
           requires:
             - assemble
+      - staticCodeAnalysis:
+          - context: SonarCloud
+          - requires:
+              - unitTests
+              - referenceTests
+              - integrationTests
+              - acceptanceTests
       - publish:
           filters:
             branches:
