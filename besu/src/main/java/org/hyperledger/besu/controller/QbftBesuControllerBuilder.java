@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.controller;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.QbftConfigOptions;
@@ -96,6 +98,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private QbftConfigOptions qbftConfig;
   private BftForksSchedule<QbftConfigOptions> qbftForksSchedule;
   private ValidatorPeers peers;
+  private TransactionValidatorProvider transactionValidatorProvider;
 
   @Override
   protected Supplier<BftExtraDataCodec> bftExtraDataCodec() {
@@ -119,7 +122,23 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
       final ProtocolContext protocolContext) {
-    return new QbftJsonRpcMethods(protocolContext);
+
+    return new QbftJsonRpcMethods(
+        protocolContext, createReadOnlyValidatorProvider(protocolContext.getBlockchain()));
+  }
+
+  private ValidatorProvider createReadOnlyValidatorProvider(final Blockchain blockchain) {
+    checkNotNull(
+        transactionValidatorProvider, "transactionValidatorProvider should have been initialised");
+    final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength());
+    final BlockValidatorProvider readOnlyBlockValidatorProvider =
+        BlockValidatorProvider.nonForkingValidatorProvider(
+            blockchain, epochManager, bftBlockInterface().get());
+    return new ForkingValidatorProvider(
+        blockchain,
+        qbftForksSchedule,
+        readOnlyBlockValidatorProvider,
+        transactionValidatorProvider);
   }
 
   @Override
@@ -303,34 +322,22 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
     final BftValidatorOverrides validatorOverrides =
         convertBftForks(genesisConfig.getConfigOptions().getTransitions().getQbftForks());
-    final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
-
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
             blockchain, epochManager, bftBlockInterface().get(), validatorOverrides);
-    final TransactionValidatorProvider transactionValidatorProvider =
+
+    final TransactionSimulator transactionSimulator =
+        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
+    transactionValidatorProvider =
         new TransactionValidatorProvider(
             blockchain, new ValidatorContractController(transactionSimulator, qbftForksSchedule));
+
     final ValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
             blockchain, qbftForksSchedule, blockValidatorProvider, transactionValidatorProvider);
-    final BlockValidatorProvider readOnlyBlockValidatorProvider =
-        BlockValidatorProvider.nonForkingValidatorProvider(
-            blockchain, epochManager, bftBlockInterface().get());
-    final ValidatorProvider readOnlyValidatorProvider =
-        new ForkingValidatorProvider(
-            blockchain,
-            qbftForksSchedule,
-            readOnlyBlockValidatorProvider,
-            transactionValidatorProvider);
 
     return new QbftContext(
-        validatorProvider,
-        readOnlyValidatorProvider,
-        epochManager,
-        bftBlockInterface().get(),
-        pkiBlockCreationConfiguration);
+        validatorProvider, epochManager, bftBlockInterface().get(), pkiBlockCreationConfiguration);
   }
 
   private BftValidatorOverrides convertBftForks(final List<QbftFork> bftForks) {

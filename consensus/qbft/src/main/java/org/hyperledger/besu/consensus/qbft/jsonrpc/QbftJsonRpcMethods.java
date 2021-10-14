@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.qbft.jsonrpc;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftDiscardValidatorVote;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetPendingVotes;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetSignerMetrics;
@@ -35,9 +34,12 @@ import java.util.Map;
 public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final ProtocolContext context;
+  private final ValidatorProvider readOnlyValidatorProvider;
 
-  public QbftJsonRpcMethods(final ProtocolContext context) {
+  public QbftJsonRpcMethods(
+      final ProtocolContext context, final ValidatorProvider readOnlyValidatorProvider) {
     this.context = context;
+    this.readOnlyValidatorProvider = readOnlyValidatorProvider;
   }
 
   @Override
@@ -52,9 +54,6 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final BftContext bftContext = context.getConsensusState(BftContext.class);
     final BlockInterface blockInterface = bftContext.getBlockInterface();
     final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
-
-    final ValidatorProvider readOnlyValidatorProvider =
-        context.getConsensusState(QbftContext.class).getReadOnlyValidatorProvider();
 
     return mapOf(
         new QbftProposeValidatorVote(validatorProvider),

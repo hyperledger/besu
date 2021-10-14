@@ -25,24 +25,17 @@ import java.util.Optional;
 public class QbftContext extends BftContext {
 
   private final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration;
-  private final ValidatorProvider readOnlyValidatorProvider;
 
   public QbftContext(
       final ValidatorProvider validatorProvider,
-      final ValidatorProvider readOnlyValidatorProvider,
       final EpochManager epochManager,
       final BftBlockInterface blockInterface,
       final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration) {
     super(validatorProvider, epochManager, blockInterface);
     this.pkiBlockCreationConfiguration = pkiBlockCreationConfiguration;
-    this.readOnlyValidatorProvider = readOnlyValidatorProvider;
   }
 
   public Optional<PkiBlockCreationConfiguration> getPkiBlockCreationConfiguration() {
     return pkiBlockCreationConfiguration;
-  }
-
-  public ValidatorProvider getReadOnlyValidatorProvider() {
-    return readOnlyValidatorProvider;
   }
 }
