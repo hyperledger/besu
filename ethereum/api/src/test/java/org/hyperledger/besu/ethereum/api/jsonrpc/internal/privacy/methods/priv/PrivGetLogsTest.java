@@ -137,7 +137,7 @@ public class PrivGetLogsTest {
     when(blockHeader.getNumber()).thenReturn(100L);
 
     final FilterParameter blockHashFilter =
-        new FilterParameter(null, null, addresses, null, null, logTopics, blockHash, null, null);
+        new FilterParameter(null, null, null, null, addresses, logTopics, blockHash, null, null);
 
     final LogsQuery expectedQuery =
         new LogsQuery.Builder().addresses(addresses).topics(logTopics).build();
