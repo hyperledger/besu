@@ -68,7 +68,7 @@ public class TransactionValidatorProvider implements ValidatorProvider {
   }
 
   @Override
-  public Optional<VoteProvider> getVoteProvider() {
+  public Optional<VoteProvider> getVoteProviderAtHead() {
     return Optional.empty();
   }
 }

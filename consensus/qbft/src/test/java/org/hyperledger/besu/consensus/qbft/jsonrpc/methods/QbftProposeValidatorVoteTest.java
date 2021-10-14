@@ -49,7 +49,7 @@ public class QbftProposeValidatorVoteTest {
   @Before
   public void setup() {
     method = new QbftProposeValidatorVote(validatorProvider);
-    when(validatorProvider.getVoteProvider()).thenReturn(Optional.of(voteProvider));
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
   }
 
   @Test
@@ -102,7 +102,7 @@ public class QbftProposeValidatorVoteTest {
     final JsonRpcRequestContext request = requestWithParams(Address.fromHexString("1"));
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.METHOD_NOT_ENABLED);
-    when(validatorProvider.getVoteProvider()).thenReturn(Optional.empty());
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.empty());
 
     final JsonRpcResponse response = method.response(request);
 
