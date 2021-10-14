@@ -207,6 +207,7 @@ jobs:
           destination: quorum-at-artifacts
       - store_test_results:
           path: build/quorum-at/openjdk-latest/reports/xml-report
+
   staticCodeAnalysis:
     parallelism: 1
     executor: xl_machine_executor
@@ -218,6 +219,7 @@ jobs:
           name: SonarQube
           no_output_timeout: 30m
           command: ./gradlew jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
+          
   buildDocker:
     executor: besu_executor_med
     steps:
