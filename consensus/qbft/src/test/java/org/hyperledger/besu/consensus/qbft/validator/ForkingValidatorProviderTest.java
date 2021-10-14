@@ -19,10 +19,17 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.JsonQbftConfigOptions;
+import org.hyperledger.besu.config.QbftConfigOptions;
+import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -32,11 +39,11 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -91,8 +98,9 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void usesInitialValidatorProviderWhenNoForks() {
-    final ValidatorSelectorForksSchedule forksSchedule =
-        new ValidatorSelectorForksSchedule(createBlockFork(0), Collections.emptyList());
+    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+        new BftForksSchedule<>(createBlockFork(0), List.of());
+
     final ForkingValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
@@ -107,8 +115,8 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void migratesFromBlockToContractValidatorProvider() {
-    final ValidatorSelectorForksSchedule forksSchedule =
-        new ValidatorSelectorForksSchedule(
+    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+        new BftForksSchedule<>(
             createBlockFork(0), List.of(createContractFork(1L, CONTRACT_ADDRESS_1)));
     final ForkingValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
@@ -120,9 +128,9 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void migratesFromContractToBlockValidatorProvider() {
-    final ValidatorSelectorForksSchedule forksSchedule =
-        new ValidatorSelectorForksSchedule(
-            createContractFork(0, CONTRACT_ADDRESS_1), List.of(createBlockFork(1L)));
+    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+        new BftForksSchedule<>(
+            createContractFork(0, CONTRACT_ADDRESS_1), List.of(createBlockFork(1)));
     final ForkingValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
@@ -138,8 +146,8 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void migratesFromContractToContractValidatorProvider() {
-    final ValidatorSelectorForksSchedule forksSchedule =
-        new ValidatorSelectorForksSchedule(
+    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+        new BftForksSchedule<>(
             createBlockFork(0),
             List.of(
                 createContractFork(1L, CONTRACT_ADDRESS_1),
@@ -155,27 +163,72 @@ public class ForkingValidatorProviderTest {
   }
 
   @Test
-  public void voteProviderIsDelegatesToHeadFork() {
-    final ValidatorSelectorForksSchedule forksSchedule =
-        new ValidatorSelectorForksSchedule(
+  public void voteProviderIsDelegatesToHeadFork_whenHeadIsContractFork() {
+    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+        new BftForksSchedule<>(
+            createBlockFork(0),
+            List.of(createBlockFork(1), createContractFork(2, CONTRACT_ADDRESS_1)));
+
+    final ForkingValidatorProvider validatorProvider =
+        new ForkingValidatorProvider(
+            blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
+
+    validatorProvider.getVoteProviderAtHead();
+
+    verify(contractValidatorProvider).getVoteProviderAtHead();
+    verifyNoInteractions(blockValidatorProvider);
+  }
+
+  @Test
+  public void voteProviderIsDelegatesToHeadFork_whenHeadIsBlockFork() {
+    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+        new BftForksSchedule<>(createBlockFork(0), emptyList());
+
+    final ForkingValidatorProvider validatorProvider =
+        new ForkingValidatorProvider(
+            blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
+
+    validatorProvider.getVoteProviderAtHead();
+
+    verify(blockValidatorProvider).getVoteProviderAtHead();
+    verifyNoInteractions(contractValidatorProvider);
+  }
+
+  @Test
+  public void getVoteProviderAfterBlock_correctVoteProviderIsResolved() {
+    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+        new BftForksSchedule<>(
             createBlockFork(0),
             List.of(createBlockFork(1), createContractFork(2, CONTRACT_ADDRESS_1)));
     final ForkingValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
 
-    final VoteProvider voteProvider = Mockito.mock(VoteProvider.class);
-    when(contractValidatorProvider.getVoteProvider()).thenReturn(Optional.of(voteProvider));
+    final VoteProvider voteProviderForBlockValidator = Mockito.mock(VoteProvider.class);
+    when(blockValidatorProvider.getVoteProviderAtHead())
+        .thenReturn(Optional.of(voteProviderForBlockValidator));
+    when(contractValidatorProvider.getVoteProviderAtHead()).thenReturn(Optional.empty());
 
-    assertThat(validatorProvider.getVoteProvider()).contains(voteProvider);
+    SoftAssertions.assertSoftly(
+        (softly) -> {
+          softly
+              .assertThat(validatorProvider.getVoteProviderAfterBlock(genesisHeader))
+              .contains(voteProviderForBlockValidator);
+          softly.assertThat(validatorProvider.getVoteProviderAfterBlock(header1)).isEmpty();
+          softly.assertThat(validatorProvider.getVoteProviderAfterBlock(header2)).isEmpty();
+        });
   }
 
-  private ValidatorSelectorConfig createContractFork(
+  private BftForkSpec<QbftConfigOptions> createContractFork(
       final long block, final Address contractAddress) {
-    return ValidatorSelectorConfig.createContractConfig(block, contractAddress.toHexString());
+    final MutableQbftConfigOptions qbftConfigOptions =
+        new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+    qbftConfigOptions.setValidatorContractAddress(Optional.of(contractAddress.toHexString()));
+    return new BftForkSpec<>(block, qbftConfigOptions);
   }
 
-  private ValidatorSelectorConfig createBlockFork(final long block) {
-    return ValidatorSelectorConfig.createBlockConfig(block);
+  private BftForkSpec<QbftConfigOptions> createBlockFork(final long block) {
+    final QbftConfigOptions qbftConfigOptions = JsonQbftConfigOptions.DEFAULT;
+    return new BftForkSpec<>(block, qbftConfigOptions);
   }
 }
