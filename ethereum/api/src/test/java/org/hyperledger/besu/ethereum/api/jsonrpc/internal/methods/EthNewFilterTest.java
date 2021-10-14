@@ -66,7 +66,8 @@ public class EthNewFilterTest {
 
   @Test
   public void newFilterWithoutFromBlockParamUsesLatestAsDefault() {
-    final FilterParameter filterParameter = new FilterParameter(null, null, null, null, null);
+    final FilterParameter filterParameter =
+        new FilterParameter(null, null, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = ethNewFilter(filterParameter);
 
     method.response(request);
@@ -76,7 +77,8 @@ public class EthNewFilterTest {
 
   @Test
   public void newFilterWithoutToBlockParamUsesLatestAsDefault() {
-    final FilterParameter filterParameter = new FilterParameter(null, null, null, null, null);
+    final FilterParameter filterParameter =
+        new FilterParameter(null, null, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = ethNewFilter(filterParameter);
 
     method.response(request);
@@ -87,7 +89,8 @@ public class EthNewFilterTest {
   @Test
   public void newFilterWithoutAddressAndTopicsParamsInstallsEmptyLogFilter() {
     final FilterParameter filterParameter =
-        new FilterParameter(BlockParameter.LATEST, BlockParameter.LATEST, null, null, null);
+        new FilterParameter(
+            BlockParameter.LATEST, BlockParameter.LATEST, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = ethNewFilter(filterParameter);
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), "0x1");
@@ -169,8 +172,12 @@ public class EthNewFilterTest {
             BlockParameter.EARLIEST,
             BlockParameter.LATEST,
             Collections.emptyList(),
+            null,
+            null,
             Collections.emptyList(),
-            Hash.ZERO);
+            Hash.ZERO,
+            null,
+            null);
 
     final JsonRpcRequestContext request = ethNewFilter(invalidFilter);
 
@@ -195,7 +202,11 @@ public class EthNewFilterTest {
         BlockParameter.LATEST,
         BlockParameter.LATEST,
         Optional.ofNullable(address).map(Collections::singletonList).orElse(emptyList()),
+        null,
+        null,
         topics,
+        null,
+        null,
         null);
   }
 

@@ -100,8 +100,12 @@ public class PrivNewFilterTest {
             BlockParameter.EARLIEST,
             BlockParameter.LATEST,
             Collections.emptyList(),
+            null,
+            null,
             Collections.emptyList(),
-            Hash.ZERO);
+            Hash.ZERO,
+            null,
+            null);
 
     final JsonRpcRequestContext request = privNewFilterRequest(PRIVACY_GROUP_ID, invalidFilter);
 
@@ -122,7 +126,15 @@ public class PrivNewFilterTest {
 
     final FilterParameter filter =
         new FilterParameter(
-            BlockParameter.EARLIEST, BlockParameter.LATEST, addresses, logTopics, null);
+            BlockParameter.EARLIEST,
+            BlockParameter.LATEST,
+            addresses,
+            null,
+            null,
+            logTopics,
+            null,
+            null,
+            null);
 
     final LogsQuery expectedQuery =
         new LogsQuery.Builder().addresses(addresses).topics(logTopics).build();

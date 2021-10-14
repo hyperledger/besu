@@ -400,7 +400,11 @@ public class LogsSubscriptionServiceTest {
             BlockParameter.LATEST,
             BlockParameter.LATEST,
             Arrays.asList(address),
+            null,
+            null,
             Collections.emptyList(),
+            null,
+            null,
             null),
         privacyGroupId,
         enclavePublicKey);
@@ -417,7 +421,15 @@ public class LogsSubscriptionServiceTest {
         nextSubscriptionId.incrementAndGet(),
         "conn",
         new FilterParameter(
-            BlockParameter.LATEST, BlockParameter.LATEST, addresses, logTopics, null));
+            BlockParameter.LATEST,
+            BlockParameter.LATEST,
+            addresses,
+            null,
+            null,
+            logTopics,
+            null,
+            null,
+            null));
   }
 
   private void registerSubscriptions(final LogsSubscription... subscriptions) {

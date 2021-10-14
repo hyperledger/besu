@@ -110,8 +110,12 @@ public class PrivGetLogsTest {
             BlockParameter.EARLIEST,
             BlockParameter.EARLIEST,
             Collections.emptyList(),
+            null,
+            null,
             Collections.emptyList(),
-            Hash.ZERO);
+            Hash.ZERO,
+            null,
+            null);
 
     final JsonRpcRequestContext request = privGetLogRequest(PRIVACY_GROUP_ID, invalidFilter);
 
@@ -133,7 +137,7 @@ public class PrivGetLogsTest {
     when(blockHeader.getNumber()).thenReturn(100L);
 
     final FilterParameter blockHashFilter =
-        new FilterParameter(null, null, addresses, logTopics, blockHash);
+        new FilterParameter(null, null, addresses, null, null, logTopics, blockHash, null, null);
 
     final LogsQuery expectedQuery =
         new LogsQuery.Builder().addresses(addresses).topics(logTopics).build();
@@ -149,7 +153,15 @@ public class PrivGetLogsTest {
     final Hash blockHash = Hash.hash(Bytes32.random());
     final FilterParameter blockHashFilter =
         new FilterParameter(
-            null, null, Collections.emptyList(), Collections.emptyList(), blockHash);
+            null,
+            null,
+            Collections.emptyList(),
+            null,
+            null,
+            Collections.emptyList(),
+            blockHash,
+            null,
+            null);
 
     final List<LogWithMetadata> logWithMetadataList = logWithMetadataList(3);
     final LogsResult expectedLogsResult = new LogsResult(logWithMetadataList);
@@ -175,7 +187,11 @@ public class PrivGetLogsTest {
             BlockParameter.EARLIEST,
             BlockParameter.LATEST,
             Collections.emptyList(),
+            null,
+            null,
             Collections.emptyList(),
+            null,
+            null,
             null);
     final List<LogWithMetadata> logWithMetadataList = logWithMetadataList(3);
     final LogsResult expectedLogsResult = new LogsResult(logWithMetadataList);
