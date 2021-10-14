@@ -30,6 +30,7 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes32;
 
 public class LogOperation extends AbstractOperation {
 
@@ -61,7 +62,11 @@ public class LogOperation extends AbstractOperation {
     final ImmutableList.Builder<LogTopic> builder =
         ImmutableList.builderWithExpectedSize(numTopics);
     for (int i = 0; i < numTopics; i++) {
-      builder.add(LogTopic.create(leftPad(frame.popStackItem())));
+      // always copy, so the standard leftpad is insufficient
+      final MutableBytes32 result = MutableBytes32.create();
+      final Bytes topic = frame.popStackItem();
+      topic.copyTo(result, 32 - topic.size());
+      builder.add(LogTopic.create(result));
     }
 
     frame.addLog(new Log(address, data, builder.build()));
