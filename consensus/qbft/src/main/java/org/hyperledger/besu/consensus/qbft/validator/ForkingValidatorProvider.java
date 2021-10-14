@@ -47,14 +47,6 @@ public class ForkingValidatorProvider implements ValidatorProvider {
     this.transactionValidatorProvider = transactionValidatorProvider;
   }
 
-  public ForkingValidatorProvider copy(final BlockValidatorProvider blockValidatorProvider) {
-    return new ForkingValidatorProvider(
-        this.blockchain,
-        this.forksSchedule,
-        blockValidatorProvider,
-        this.transactionValidatorProvider);
-  }
-
   @Override
   public Collection<Address> getValidatorsAtHead() {
     final BlockHeader header = blockchain.getChainHeadHeader();

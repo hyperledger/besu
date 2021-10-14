@@ -315,9 +315,22 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final ValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
             blockchain, qbftForksSchedule, blockValidatorProvider, transactionValidatorProvider);
+    final BlockValidatorProvider readOnlyBlockValidatorProvider =
+        BlockValidatorProvider.nonForkingValidatorProvider(
+            blockchain, epochManager, bftBlockInterface().get());
+    final ValidatorProvider readOnlyValidatorProvider =
+        new ForkingValidatorProvider(
+            blockchain,
+            qbftForksSchedule,
+            readOnlyBlockValidatorProvider,
+            transactionValidatorProvider);
 
     return new QbftContext(
-        validatorProvider, epochManager, bftBlockInterface().get(), pkiBlockCreationConfiguration);
+        validatorProvider,
+        readOnlyValidatorProvider,
+        epochManager,
+        bftBlockInterface().get(),
+        pkiBlockCreationConfiguration);
   }
 
   private BftValidatorOverrides convertBftForks(final List<QbftFork> bftForks) {
