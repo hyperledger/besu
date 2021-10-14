@@ -37,6 +37,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class QbftBlockHeaderUtils {
 
+  private static final int ROUND_NUMBER = 0x2A;
+
   @FunctionalInterface
   public interface HeaderModifier {
 
@@ -68,7 +70,7 @@ public class QbftBlockHeaderUtils {
             Optional.empty(),
             Collections.emptyList(),
             singletonList(proposerNodeKey),
-            0x2A,
+            ROUND_NUMBER,
             qbftExtraDataEncoder);
 
     builder.extraData(qbftExtraDataEncoder.encode(bftExtraData));
