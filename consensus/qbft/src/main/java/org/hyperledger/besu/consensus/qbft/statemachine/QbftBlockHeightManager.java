@@ -108,7 +108,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       LOG.warn(
           "Block timer expired for round ({}) after round has already started on round ({})",
           roundIdentifier,
-          currentRound.get());
+          currentRound.get().getRoundIdentifier());
       return;
     }
 
