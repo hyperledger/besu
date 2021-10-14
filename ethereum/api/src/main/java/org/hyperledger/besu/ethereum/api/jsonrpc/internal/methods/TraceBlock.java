@@ -66,7 +66,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
       final JsonRpcRequestContext request, final long blockNumber) {
     if (blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER) {
       // Nothing to trace for the genesis block
-      return emptyResult();
+      return emptyResult().getArrayNode();
     }
 
     return getBlockchainQueries()
