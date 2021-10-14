@@ -442,9 +442,9 @@ public class FilterParameterTest {
     return new FilterParameter(
         BlockParameter.LATEST,
         BlockParameter.LATEST,
+        null,
+        null,
         Arrays.stream(addresses).map(Address::fromHexString).collect(toUnmodifiableList()),
-        null,
-        null,
         null,
         null,
         null,
@@ -455,9 +455,9 @@ public class FilterParameterTest {
     return new FilterParameter(
         BlockParameter.LATEST,
         BlockParameter.LATEST,
+        null,
+        null,
         singletonList(Address.fromHexString("0x0")),
-        null,
-        null,
         singletonList(
             Arrays.stream(topics).map(LogTopic::fromHexString).collect(toUnmodifiableList())),
         null,
@@ -472,9 +472,9 @@ public class FilterParameterTest {
     return new FilterParameter(
         BlockParameter.LATEST,
         BlockParameter.LATEST,
+        null,
+        null,
         singletonList(Address.fromHexString("0x0")),
-        null,
-        null,
         topicsListList,
         null,
         null,

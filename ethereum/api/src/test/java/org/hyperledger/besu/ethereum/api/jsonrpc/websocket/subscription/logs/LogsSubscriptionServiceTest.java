@@ -399,9 +399,9 @@ public class LogsSubscriptionServiceTest {
         new FilterParameter(
             BlockParameter.LATEST,
             BlockParameter.LATEST,
+            null,
+            null,
             Arrays.asList(address),
-            null,
-            null,
             Collections.emptyList(),
             null,
             null,
@@ -423,9 +423,9 @@ public class LogsSubscriptionServiceTest {
         new FilterParameter(
             BlockParameter.LATEST,
             BlockParameter.LATEST,
+            null,
+            null,
             addresses,
-            null,
-            null,
             logTopics,
             null,
             null,

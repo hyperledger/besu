@@ -171,9 +171,9 @@ public class EthNewFilterTest {
         new FilterParameter(
             BlockParameter.EARLIEST,
             BlockParameter.LATEST,
+            null,
+            null,
             Collections.emptyList(),
-            null,
-            null,
             Collections.emptyList(),
             Hash.ZERO,
             null,
@@ -201,9 +201,9 @@ public class EthNewFilterTest {
     return new FilterParameter(
         BlockParameter.LATEST,
         BlockParameter.LATEST,
+        null,
+        null,
         Optional.ofNullable(address).map(Collections::singletonList).orElse(emptyList()),
-        null,
-        null,
         topics,
         null,
         null,

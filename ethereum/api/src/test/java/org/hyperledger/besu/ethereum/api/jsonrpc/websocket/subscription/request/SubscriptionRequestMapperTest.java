@@ -176,9 +176,9 @@ public class SubscriptionRequestMapperTest {
             new FilterParameter(
                 BlockParameter.LATEST,
                 BlockParameter.LATEST,
+                null,
+                null,
                 singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
-                null,
-                null,
                 emptyList(),
                 null,
                 null,
@@ -205,13 +205,13 @@ public class SubscriptionRequestMapperTest {
             new FilterParameter(
                 BlockParameter.LATEST,
                 BlockParameter.LATEST,
+                null,
+                null,
                 Stream.of(
                         "0x8320fe7702b96808f7bbc0d4a888ed1468216cfd",
                         "0xf17f52151EbEF6C7334FAD080c5704D77216b732")
                     .map(Address::fromHexString)
                     .collect(toUnmodifiableList()),
-                null,
-                null,
                 singletonList(
                     singletonList(
                         LogTopic.fromHexString(
@@ -241,9 +241,9 @@ public class SubscriptionRequestMapperTest {
             new FilterParameter(
                 BlockParameter.LATEST,
                 BlockParameter.LATEST,
+                null,
+                null,
                 singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
-                null,
-                null,
                 List.of(
                     singletonList(
                         LogTopic.fromHexString(
@@ -276,9 +276,9 @@ public class SubscriptionRequestMapperTest {
             new FilterParameter(
                 BlockParameter.LATEST,
                 BlockParameter.LATEST,
+                null,
+                null,
                 singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
-                null,
-                null,
                 emptyList(),
                 null,
                 null,
@@ -403,9 +403,9 @@ public class SubscriptionRequestMapperTest {
             new FilterParameter(
                 BlockParameter.LATEST,
                 BlockParameter.LATEST,
+                null,
+                null,
                 singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
-                null,
-                null,
                 emptyList(),
                 null,
                 null,

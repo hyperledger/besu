@@ -99,9 +99,9 @@ public class PrivNewFilterTest {
         new FilterParameter(
             BlockParameter.EARLIEST,
             BlockParameter.LATEST,
+            null,
+            null,
             Collections.emptyList(),
-            null,
-            null,
             Collections.emptyList(),
             Hash.ZERO,
             null,
@@ -128,9 +128,9 @@ public class PrivNewFilterTest {
         new FilterParameter(
             BlockParameter.EARLIEST,
             BlockParameter.LATEST,
+            null,
+            null,
             addresses,
-            null,
-            null,
             logTopics,
             null,
             null,
