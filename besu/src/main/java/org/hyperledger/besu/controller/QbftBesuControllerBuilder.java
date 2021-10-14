@@ -16,7 +16,6 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
@@ -45,6 +44,7 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
@@ -57,7 +57,6 @@ import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.validator.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
 import org.hyperledger.besu.datatypes.Address;
@@ -114,7 +113,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected void prepForBuild() {
     qbftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getQbftConfigOptions();
     bftEventQueue = new BftEventQueue(qbftConfig.getMessageQueueLimit());
-    qbftForksSchedule = createQbftForksSchedule(genesisConfig.getConfigOptions());
+    qbftForksSchedule = QbftForksSchedulesFactory.create(genesisConfig.getConfigOptions());
   }
 
   @Override
@@ -256,6 +255,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected ProtocolSchedule createProtocolSchedule() {
     return QbftProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
+        qbftForksSchedule,
         privacyParameters,
         isRevertReasonEnabled,
         bftExtraDataCodec().get(),
@@ -318,12 +318,6 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
     return new QbftContext(
         validatorProvider, epochManager, bftBlockInterface().get(), pkiBlockCreationConfiguration);
-  }
-
-  private BftForksSchedule<QbftConfigOptions> createQbftForksSchedule(
-      final GenesisConfigOptions configOptions) {
-    return QbftForksSchedulesFactory.create(
-        configOptions.getQbftConfigOptions(), configOptions.getTransitions().getQbftForks());
   }
 
   private BftValidatorOverrides convertBftForks(final List<QbftFork> bftForks) {

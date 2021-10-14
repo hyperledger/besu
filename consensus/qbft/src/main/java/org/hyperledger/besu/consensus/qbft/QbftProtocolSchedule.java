@@ -16,12 +16,12 @@ package org.hyperledger.besu.consensus.qbft;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.config.BftFork;
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.QbftFork;
-import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
+import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -34,28 +34,43 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
+      final BftForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration) {
     return new QbftProtocolSchedule()
         .createProtocolSchedule(
-            config, privacyParameters, isRevertReasonEnabled, bftExtraDataCodec, evmConfiguration);
+            config,
+            qbftForksSchedule,
+            privacyParameters,
+            isRevertReasonEnabled,
+            bftExtraDataCodec,
+            evmConfiguration);
   }
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
+      final BftForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration) {
-    return create(config, PrivacyParameters.DEFAULT, false, bftExtraDataCodec, evmConfiguration);
+    return create(
+        config,
+        qbftForksSchedule,
+        PrivacyParameters.DEFAULT,
+        false,
+        bftExtraDataCodec,
+        evmConfiguration);
   }
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
+      final BftForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec) {
     return create(
         config,
+        qbftForksSchedule,
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
         bftExtraDataCodec,
@@ -63,25 +78,13 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
   }
 
   @Override
-  protected Supplier<BlockHeaderValidator.Builder> createForkBlockHeaderRuleset(
-      final GenesisConfigOptions config, final BftFork fork) {
-    checkArgument(fork instanceof QbftFork, "QbftProtocolSchedule must use QbftForks");
-    final QbftFork qbftFork = (QbftFork) fork;
+  protected Supplier<BlockHeaderValidator.Builder> createBlockHeaderRuleset(
+      final BftConfigOptions config) {
+    checkArgument(
+        config instanceof QbftConfigOptions, "QbftProtocolSchedule must use QbftConfigOptions");
+    final QbftConfigOptions qbftConfigOptions = (QbftConfigOptions) config;
     return () ->
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-            config.getBftConfigOptions().getBlockPeriodSeconds(),
-            qbftFork
-                .getValidatorSelectionMode()
-                .filter(m -> m == VALIDATOR_SELECTION_MODE.CONTRACT)
-                .isPresent());
-  }
-
-  @Override
-  protected Supplier<BlockHeaderValidator.Builder> createGenesisBlockHeaderRuleset(
-      final GenesisConfigOptions config) {
-    return () ->
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-            config.getBftConfigOptions().getBlockPeriodSeconds(),
-            config.getQbftConfigOptions().isValidatorContractMode());
+            qbftConfigOptions.getBlockPeriodSeconds(), qbftConfigOptions.isValidatorContractMode());
   }
 }
