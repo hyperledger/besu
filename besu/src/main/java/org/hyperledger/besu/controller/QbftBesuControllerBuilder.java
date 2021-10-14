@@ -131,6 +131,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     checkNotNull(
         transactionValidatorProvider, "transactionValidatorProvider should have been initialised");
     final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength());
+    // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
     final BlockValidatorProvider readOnlyBlockValidatorProvider =
         BlockValidatorProvider.nonForkingValidatorProvider(
             blockchain, epochManager, bftBlockInterface().get());
