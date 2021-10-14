@@ -210,7 +210,7 @@ jobs:
 
   staticCodeAnalysis:
     parallelism: 1
-    executor: xl_machine_executor
+    executor: besu_executor_xl
     steps:
       - prepare
       - attach_workspace:
@@ -303,12 +303,12 @@ workflows:
           requires:
             - assemble
       - staticCodeAnalysis:
-          - context: SonarCloud
-          - requires:
-              - unitTests
-              - referenceTests
-              - integrationTests
-              - acceptanceTests
+          context: SonarCloud
+          requires:
+            - unitTests
+            - referenceTests
+            - integrationTests
+            - acceptanceTests
       - publish:
           filters:
             branches:
