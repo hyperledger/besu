@@ -466,7 +466,7 @@ public class TestContextBuilder {
             proposerSelector,
             multicaster,
             new RoundTimer(bftEventQueue, ROUND_TIMER_SEC, bftExecutors),
-            new BlockTimer(bftEventQueue, BLOCK_TIMER_SEC, bftExecutors, TestClock.fixed()),
+            new BlockTimer(bftEventQueue, forksSchedule, bftExecutors, TestClock.fixed()),
             blockCreatorFactory,
             clock);
 
@@ -522,6 +522,7 @@ public class TestContextBuilder {
   private static QbftConfigOptions createGenesisConfig(final boolean useValidatorContract) {
     final MutableQbftConfigOptions qbftConfigOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+    qbftConfigOptions.setBlockPeriodSeconds(BLOCK_TIMER_SEC);
     if (useValidatorContract) {
       qbftConfigOptions.setValidatorContractAddress(
           Optional.of(VALIDATOR_CONTRACT_ADDRESS.toHexString()));

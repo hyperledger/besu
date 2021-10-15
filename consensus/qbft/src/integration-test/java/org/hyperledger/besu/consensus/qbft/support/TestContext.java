@@ -141,4 +141,8 @@ public class TestContext {
   public ValidatorProvider getValidatorProvider() {
     return validatorProvider;
   }
+
+  public BftExecutors getBftExecutors() {
+    return bftExecutors;
+  }
 }
