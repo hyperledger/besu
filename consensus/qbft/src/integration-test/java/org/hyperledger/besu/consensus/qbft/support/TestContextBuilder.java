@@ -67,6 +67,7 @@ import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.validator.QbftTransitionNotifier;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -500,7 +501,8 @@ public class TestContextBuilder {
                     messageFactory,
                     BFT_EXTRA_DATA_ENCODER),
                 messageValidatorFactory,
-                messageFactory),
+                messageFactory,
+                new QbftTransitionNotifier(forksSchedule)),
             gossiper,
             duplicateMessageTracker,
             futureMessageBuffer,
