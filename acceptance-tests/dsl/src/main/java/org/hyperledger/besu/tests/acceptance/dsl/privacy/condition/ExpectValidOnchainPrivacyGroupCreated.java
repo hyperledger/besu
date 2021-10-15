@@ -21,6 +21,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PrivacyTran
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.awaitility.Awaitility;
 import org.web3j.utils.Base64String;
@@ -39,7 +40,7 @@ public class ExpectValidOnchainPrivacyGroupCreated implements PrivateCondition {
 
   @Override
   public void verify(final PrivacyNode node) {
-    Awaitility.await()
+    Awaitility.waitAtMost(20, TimeUnit.SECONDS)
         .untilAsserted(
             () -> {
               final List<PrivacyRequestFactory.OnchainPrivacyGroup> groups =
