@@ -49,6 +49,7 @@ import org.hyperledger.besu.consensus.common.bft.inttest.NetworkLayout;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubbedSynchronizerUpdater;
+import org.hyperledger.besu.consensus.common.bft.inttest.TestTransitions;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
@@ -397,7 +398,7 @@ public class TestContextBuilder {
     genesisConfigOptions.byzantiumBlock(0);
     genesisConfigOptions.qbftConfigOptions(
         new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(qbftConfigValues)));
-    genesisConfigOptions.transitions(new TestTransitions(qbftForks));
+    genesisConfigOptions.transitions(TestTransitions.createQbftTestTransitions(qbftForks));
     genesisConfigOptions.qbftConfigOptions(qbftConfigOptions);
 
     final EpochManager epochManager = new EpochManager(EPOCH_LENGTH);

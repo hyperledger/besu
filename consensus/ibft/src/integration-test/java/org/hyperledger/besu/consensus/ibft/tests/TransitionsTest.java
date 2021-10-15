@@ -12,17 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.test;
+package org.hyperledger.besu.consensus.ibft.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.JsonUtil;
-import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
-import org.hyperledger.besu.consensus.qbft.support.TestContext;
-import org.hyperledger.besu.consensus.qbft.support.TestContextBuilder;
+import org.hyperledger.besu.consensus.ibft.support.TestContext;
+import org.hyperledger.besu.consensus.ibft.support.TestContextBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -39,13 +38,13 @@ public class TransitionsTest {
   public void transitionsBlockPeriod() throws InterruptedException {
     final TestClock clock = new TestClock(Instant.EPOCH);
 
-    final List<QbftFork> qbftForks =
+    final List<BftFork> bbftForks =
         List.of(
-            new QbftFork(
+            new BftFork(
                 JsonUtil.objectNodeFromMap(
                     Map.of(
                         BftFork.FORK_BLOCK_KEY, (long) 1, BftFork.BLOCK_PERIOD_SECONDS_KEY, 10))),
-            new QbftFork(
+            new BftFork(
                 JsonUtil.objectNodeFromMap(
                     Map.of(
                         BftFork.FORK_BLOCK_KEY, (long) 2, BftFork.BLOCK_PERIOD_SECONDS_KEY, 20))));
@@ -56,7 +55,7 @@ public class TransitionsTest {
             .indexOfFirstLocallyProposedBlock(0)
             .validatorCount(1)
             .clock(clock)
-            .qbftForks(qbftForks)
+            .bftForks(bbftForks)
             .eventQueue(bftEventQueue)
             .buildAndStart();
 
