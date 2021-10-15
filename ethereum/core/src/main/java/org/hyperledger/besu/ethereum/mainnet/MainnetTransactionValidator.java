@@ -205,7 +205,7 @@ public class MainnetTransactionValidator {
               transaction.getNonce(), senderNonce));
     }
 
-    if (!codeHash.equals(Hash.EMPTY)) {
+    if (!validationParams.isAllowContractAddressAsSender() && !codeHash.equals(Hash.EMPTY)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
           String.format(
