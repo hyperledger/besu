@@ -42,12 +42,10 @@ public class TransitionsTest {
         List.of(
             new BftFork(
                 JsonUtil.objectNodeFromMap(
-                    Map.of(
-                        BftFork.FORK_BLOCK_KEY, (long) 1, BftFork.BLOCK_PERIOD_SECONDS_KEY, 10))),
+                    Map.of(BftFork.FORK_BLOCK_KEY, 1, BftFork.BLOCK_PERIOD_SECONDS_KEY, 10))),
             new BftFork(
                 JsonUtil.objectNodeFromMap(
-                    Map.of(
-                        BftFork.FORK_BLOCK_KEY, (long) 2, BftFork.BLOCK_PERIOD_SECONDS_KEY, 20))));
+                    Map.of(BftFork.FORK_BLOCK_KEY, 2, BftFork.BLOCK_PERIOD_SECONDS_KEY, 20))));
 
     final BftEventQueue bftEventQueue = new BftEventQueue(TestContextBuilder.MESSAGE_QUEUE_LIMIT);
     final TestContext context =
