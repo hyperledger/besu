@@ -26,27 +26,27 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class QbftTransitionNotifier {
+public class ValidatorModeTransitionLogger {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final BftForksSchedule<QbftConfigOptions> bftForksSchedule;
   private final Consumer<String> msgConsumer;
 
-  public QbftTransitionNotifier(final BftForksSchedule<QbftConfigOptions> bftForksSchedule) {
+  public ValidatorModeTransitionLogger(final BftForksSchedule<QbftConfigOptions> bftForksSchedule) {
     this.bftForksSchedule = bftForksSchedule;
     this.msgConsumer = LOG::info;
   }
 
   @VisibleForTesting
-  public QbftTransitionNotifier(
+  ValidatorModeTransitionLogger(
       final BftForksSchedule<QbftConfigOptions> bftForksSchedule,
       final Consumer<String> msgConsumer) {
     this.bftForksSchedule = bftForksSchedule;
     this.msgConsumer = msgConsumer;
   }
 
-  public void checkTransitionChange(final BlockHeader parentHeader) {
+  public void logTransitionChange(final BlockHeader parentHeader) {
     final BftForkSpec<QbftConfigOptions> currentForkSpec =
         bftForksSchedule.getFork(parentHeader.getNumber());
     final BftForkSpec<QbftConfigOptions> nextForkSpec =
@@ -65,10 +65,6 @@ public class QbftTransitionNotifier {
 
   private boolean hasChangedConfig(
       final QbftConfigOptions currentConfig, final QbftConfigOptions nextConfig) {
-    if (currentConfig.isValidatorBlockHeaderMode() && nextConfig.isValidatorBlockHeaderMode()) {
-      return false;
-    }
-
     return !currentConfig
         .getValidatorContractAddress()
         .equals(nextConfig.getValidatorContractAddress());
@@ -76,9 +72,10 @@ public class QbftTransitionNotifier {
 
   private String parseConfigToLog(final QbftConfigOptions configOptions) {
     if (configOptions.getValidatorContractAddress().isPresent()) {
-      return String.format("ADDRESS(%s)", configOptions.getValidatorContractAddress().get());
+      return String.format(
+          "contract (address: %s)", configOptions.getValidatorContractAddress().get());
     } else {
-      return "BLOCKHEADER";
+      return "blockheader";
     }
   }
 }

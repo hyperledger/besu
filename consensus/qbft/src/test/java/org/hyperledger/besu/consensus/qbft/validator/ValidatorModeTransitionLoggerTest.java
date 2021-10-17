@@ -39,13 +39,13 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class QbftTransitionNotifierTest {
+public class ValidatorModeTransitionLoggerTest {
 
   @Mock private BftForksSchedule<BftConfigOptions> bftForksSchedule;
 
   @Mock private Consumer<String> msgConsumer;
 
-  @InjectMocks private QbftTransitionNotifier qbftTransitionNotifier;
+  @InjectMocks private ValidatorModeTransitionLogger qbftTransitionNotifier;
 
   @Test
   public void doNotLogMessageWhenTransitioningFromBlockHeaderToBlockHeader() {
@@ -57,7 +57,7 @@ public class QbftTransitionNotifierTest {
     when(bftForksSchedule.getFork(0)).thenReturn(forkSpecA);
     when(bftForksSchedule.getFork(1)).thenReturn(forkSpecB);
 
-    qbftTransitionNotifier.checkTransitionChange(blockHeader(0));
+    qbftTransitionNotifier.logTransitionChange(blockHeader(0));
 
     verifyNoInteractions(msgConsumer);
   }
@@ -72,7 +72,7 @@ public class QbftTransitionNotifierTest {
     when(bftForksSchedule.getFork(0)).thenReturn(contractForkSpecA);
     when(bftForksSchedule.getFork(1)).thenReturn(contractForkSpecB);
 
-    qbftTransitionNotifier.checkTransitionChange(blockHeader(0));
+    qbftTransitionNotifier.logTransitionChange(blockHeader(0));
 
     verifyNoInteractions(msgConsumer);
   }
@@ -87,9 +87,10 @@ public class QbftTransitionNotifierTest {
     when(bftForksSchedule.getFork(0)).thenReturn(contractForkSpecA);
     when(bftForksSchedule.getFork(1)).thenReturn(contractForkSpecB);
 
-    qbftTransitionNotifier.checkTransitionChange(blockHeader(0));
+    qbftTransitionNotifier.logTransitionChange(blockHeader(0));
 
-    String expectedLog = "Transitioning validator selection mode from ADDRESS(0x0) to ADDRESS(0x1)";
+    String expectedLog =
+        "Transitioning validator selection mode from contract (address: 0x0) to contract (address: 0x1)";
     verify(msgConsumer).accept(eq(expectedLog));
   }
 
@@ -103,9 +104,10 @@ public class QbftTransitionNotifierTest {
     when(bftForksSchedule.getFork(0)).thenReturn(contractForkSpec);
     when(bftForksSchedule.getFork(1)).thenReturn(blockForkSpec);
 
-    qbftTransitionNotifier.checkTransitionChange(blockHeader(0));
+    qbftTransitionNotifier.logTransitionChange(blockHeader(0));
 
-    String expectedLog = "Transitioning validator selection mode from ADDRESS(0x0) to BLOCKHEADER";
+    String expectedLog =
+        "Transitioning validator selection mode from contract (address: 0x0) to blockheader";
     verify(msgConsumer).accept(eq(expectedLog));
   }
 
@@ -119,9 +121,10 @@ public class QbftTransitionNotifierTest {
     when(bftForksSchedule.getFork(0)).thenReturn(blockForkSpec);
     when(bftForksSchedule.getFork(1)).thenReturn(contractForkSpec);
 
-    qbftTransitionNotifier.checkTransitionChange(blockHeader(0));
+    qbftTransitionNotifier.logTransitionChange(blockHeader(0));
 
-    String expectedLog = "Transitioning validator selection mode from BLOCKHEADER to ADDRESS(0x0)";
+    String expectedLog =
+        "Transitioning validator selection mode from blockheader to contract (address: 0x0)";
     verify(msgConsumer).accept(eq(expectedLog));
   }
 

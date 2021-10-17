@@ -18,7 +18,7 @@ import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
-import org.hyperledger.besu.consensus.qbft.validator.QbftTransitionNotifier;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorModeTransitionLogger;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class QbftBlockHeightManagerFactory {
@@ -27,23 +27,23 @@ public class QbftBlockHeightManagerFactory {
   private final BftFinalState finalState;
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
-  private final QbftTransitionNotifier qbftTransitionNotifier;
+  private final ValidatorModeTransitionLogger qbftTransitionNotifier;
 
   public QbftBlockHeightManagerFactory(
       final BftFinalState finalState,
       final QbftRoundFactory roundFactory,
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory,
-      final QbftTransitionNotifier qbftTransitionNotifier) {
+      final ValidatorModeTransitionLogger validatorModeTransitionLogger) {
     this.roundFactory = roundFactory;
     this.finalState = finalState;
     this.messageValidatorFactory = messageValidatorFactory;
     this.messageFactory = messageFactory;
-    this.qbftTransitionNotifier = qbftTransitionNotifier;
+    this.qbftTransitionNotifier = validatorModeTransitionLogger;
   }
 
   public BaseQbftBlockHeightManager create(final BlockHeader parentHeader) {
-    qbftTransitionNotifier.checkTransitionChange(parentHeader);
+    qbftTransitionNotifier.logTransitionChange(parentHeader);
 
     if (finalState.isLocalNodeValidator()) {
       return createFullBlockHeightManager(parentHeader);
