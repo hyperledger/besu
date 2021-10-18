@@ -52,7 +52,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         name,
         stackItemsConsumed,
         stackItemsProduced,
-        updatesProgramCounter,
         opSize,
         gasCalculator);
   }

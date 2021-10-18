@@ -73,8 +73,6 @@ public interface Operation {
 
   int getStackItemsProduced();
 
-  boolean getUpdatesProgramCounter();
-
   int getOpSize();
 
   /**

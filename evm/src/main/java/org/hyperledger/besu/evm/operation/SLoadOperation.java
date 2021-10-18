@@ -38,7 +38,7 @@ public class SLoadOperation extends AbstractOperation {
   private final OperationResult coldSuccess;
 
   public SLoadOperation(final GasCalculator gasCalculator) {
-    super(0x54, "SLOAD", 1, 1, false, 1, gasCalculator);
+    super(0x54, "SLOAD", 1, 1, 1, gasCalculator);
     final Gas baseCost = gasCalculator.getSloadOperationGasCost();
     warmCost = Optional.of(baseCost.plus(gasCalculator.getWarmStorageReadCost()));
     coldCost = Optional.of(baseCost.plus(gasCalculator.getColdSloadCost()));

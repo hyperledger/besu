@@ -32,7 +32,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class ExtCodeSizeOperation extends AbstractOperation {
 
   public ExtCodeSizeOperation(final GasCalculator gasCalculator) {
-    super(0x3B, "EXTCODESIZE", 1, 1, false, 1, gasCalculator);
+    super(0x3B, "EXTCODESIZE", 1, 1, 1, gasCalculator);
   }
 
   protected Gas cost(final boolean accountIsWarm) {

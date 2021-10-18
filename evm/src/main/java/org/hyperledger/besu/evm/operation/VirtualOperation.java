@@ -53,11 +53,6 @@ public class VirtualOperation implements Operation {
   }
 
   @Override
-  public boolean getUpdatesProgramCounter() {
-    return delegate.getUpdatesProgramCounter();
-  }
-
-  @Override
   public int getOpSize() {
     return delegate.getOpSize();
   }

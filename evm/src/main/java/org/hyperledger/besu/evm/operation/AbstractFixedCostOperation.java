@@ -48,7 +48,6 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
         name,
         stackItemsConsumed,
         stackItemsProduced,
-        updatesProgramCounter,
         opSize,
         gasCalculator);
     gasCost = fixedCost;

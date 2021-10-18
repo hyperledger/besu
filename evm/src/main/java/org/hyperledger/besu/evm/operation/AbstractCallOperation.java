@@ -54,7 +54,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
         name,
         stackItemsConsumed,
         stackItemsProduced,
-        false,
         opSize,
         gasCalculator);
   }
