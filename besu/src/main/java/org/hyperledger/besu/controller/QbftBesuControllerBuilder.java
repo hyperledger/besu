@@ -61,6 +61,7 @@ import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorModeTransitionLogger;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -239,7 +240,8 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
                     messageFactory,
                     bftExtraDataCodec().get()),
                 messageValidatorFactory,
-                messageFactory),
+                messageFactory,
+                new ValidatorModeTransitionLogger(qbftForksSchedule)),
             gossiper,
             duplicateMessageTracker,
             futureMessageBuffer,
