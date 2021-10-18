@@ -22,6 +22,8 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class JumpOperation extends AbstractFixedCostOperation {
 
   private final Operation.OperationResult invalidJumpResponse;
@@ -39,8 +41,9 @@ public class JumpOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final int jumpDestination;
+    Bytes bytes = frame.popStackItem().trimLeadingZeros();
     try {
-      jumpDestination = frame.popStackItem().toInt();
+      jumpDestination = bytes.toInt();
     } catch (RuntimeException iae) {
       return invalidJumpResponse;
     }
