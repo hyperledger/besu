@@ -22,8 +22,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
 
-import org.apache.tuweni.units.bigints.UInt256;
-
 public class JumpOperation extends AbstractFixedCostOperation {
 
   private final Operation.OperationResult invalidJumpResponse;
@@ -40,12 +38,17 @@ public class JumpOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
+    final int jumpDestination;
+    try {
+      jumpDestination = frame.popStackItem().toInt();
+    } catch (IllegalArgumentException iae) {
+      return invalidJumpResponse;
+    }
     final Code code = frame.getCode();
     if (!evm.isValidJumpDestination(jumpDestination, code)) {
       return invalidJumpResponse;
     } else {
-      frame.setPC(jumpDestination.intValue());
+      frame.setPC(jumpDestination);
       return jumpResponse;
     }
   }

@@ -23,7 +23,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class JumpiOperation extends AbstractFixedCostOperation {
 
@@ -40,18 +39,24 @@ public class JumpiOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
+    final Bytes dest = frame.popStackItem();
     final Bytes condition = frame.popStackItem();
 
     // If condition is zero (false), no jump is will be performed. Therefore skip the test.
     if (condition.isZero()) {
       return successResponse;
     } else {
+      final int jumpDestination;
+      try {
+        jumpDestination = dest.toInt();
+      } catch (IllegalArgumentException iae) {
+        return invalidJumpResponse;
+      }
       final Code code = frame.getCode();
       if (!evm.isValidJumpDestination(jumpDestination, code)) {
         return invalidJumpResponse;
       }
-      frame.setPC(jumpDestination.intValue());
+      frame.setPC(jumpDestination);
       return jumpResponse;
     }
   }

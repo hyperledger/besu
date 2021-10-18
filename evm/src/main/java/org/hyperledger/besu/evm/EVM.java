@@ -34,12 +34,10 @@ import org.hyperledger.besu.evm.operation.VirtualOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Optional;
-import java.util.function.BiConsumer;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class EVM {
   private static final Logger LOG = getLogger();
@@ -73,17 +71,6 @@ public class EVM {
   public void runToHalt(final MessageFrame frame, final OperationTracer operationTracer) {
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       executeNextOperation(frame, operationTracer);
-    }
-  }
-
-  void forEachOperation(final Code code, final BiConsumer<Operation, Integer> operationDelegate) {
-    int pc = 0;
-    final int length = code.getSize();
-
-    while (pc < length) {
-      final Operation curOp = operationAtOffset(code, pc);
-      operationDelegate.accept(curOp, pc);
-      pc += curOp.getOpSize();
     }
   }
 
@@ -159,14 +146,11 @@ public class EVM {
   /**
    * Determine whether a specified destination is a valid jump target.
    *
-   * @param destination The destination we're checking for validity.
+   * @param jumpDestination The destination we're checking for validity.
    * @param code The code within which we are looking for the destination.
    * @return Whether or not this location is a valid jump destination.
    */
-  public boolean isValidJumpDestination(final UInt256 destination, final Code code) {
-    if (!destination.fitsInt()) return false;
-
-    final int jumpDestination = destination.intValue();
+  public boolean isValidJumpDestination(final int jumpDestination, final Code code) {
     if (jumpDestination >= code.getSize()) return false;
     long[] validJumpDestinations = code.getValidJumpDestinations();
     if (validJumpDestinations == null || validJumpDestinations.length == 0) {
