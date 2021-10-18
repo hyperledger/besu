@@ -38,7 +38,10 @@ sonarqube {
     property "sonar.host.url", "https://sonarcloud.io"
     property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
   }
+
 }
+
+project.tasks["sonarqube"].dependsOn "jacocoRootReport"
 
 if (!JavaVersion.current().java11Compatible) {
   throw new GradleException("Java 11 or later is required to build Besu.\n" +
