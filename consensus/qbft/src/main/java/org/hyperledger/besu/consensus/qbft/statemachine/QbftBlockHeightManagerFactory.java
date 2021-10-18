@@ -27,7 +27,7 @@ public class QbftBlockHeightManagerFactory {
   private final BftFinalState finalState;
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
-  private final ValidatorModeTransitionLogger qbftTransitionNotifier;
+  private final ValidatorModeTransitionLogger validatorModeTransitionLogger;
 
   public QbftBlockHeightManagerFactory(
       final BftFinalState finalState,
@@ -39,11 +39,11 @@ public class QbftBlockHeightManagerFactory {
     this.finalState = finalState;
     this.messageValidatorFactory = messageValidatorFactory;
     this.messageFactory = messageFactory;
-    this.qbftTransitionNotifier = validatorModeTransitionLogger;
+    this.validatorModeTransitionLogger = validatorModeTransitionLogger;
   }
 
   public BaseQbftBlockHeightManager create(final BlockHeader parentHeader) {
-    qbftTransitionNotifier.logTransitionChange(parentHeader);
+    validatorModeTransitionLogger.logTransitionChange(parentHeader);
 
     if (finalState.isLocalNodeValidator()) {
       return createFullBlockHeightManager(parentHeader);

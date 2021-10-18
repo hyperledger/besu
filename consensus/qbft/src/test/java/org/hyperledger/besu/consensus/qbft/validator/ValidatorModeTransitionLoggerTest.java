@@ -49,9 +49,9 @@ public class ValidatorModeTransitionLoggerTest {
 
   @Test
   public void doNotLogMessageWhenTransitioningFromBlockHeaderToBlockHeader() {
-    BftForkSpec<BftConfigOptions> forkSpecA =
+    final BftForkSpec<BftConfigOptions> forkSpecA =
         new BftForkSpec<>(0, createQbftConfigOptionsForBlockHeader());
-    BftForkSpec<BftConfigOptions> forkSpecB =
+    final BftForkSpec<BftConfigOptions> forkSpecB =
         new BftForkSpec<>(1, createQbftConfigOptionsForBlockHeader());
 
     when(bftForksSchedule.getFork(0)).thenReturn(forkSpecA);
@@ -64,9 +64,9 @@ public class ValidatorModeTransitionLoggerTest {
 
   @Test
   public void doNotLogMessageWhenTransitioningFromContractToContractWithSameAddress() {
-    BftForkSpec<BftConfigOptions> contractForkSpecA =
+    final BftForkSpec<BftConfigOptions> contractForkSpecA =
         new BftForkSpec<>(0, createQbftConfigOptionsForContract("0x0"));
-    BftForkSpec<BftConfigOptions> contractForkSpecB =
+    final BftForkSpec<BftConfigOptions> contractForkSpecB =
         new BftForkSpec<>(1, createQbftConfigOptionsForContract("0x0"));
 
     when(bftForksSchedule.getFork(0)).thenReturn(contractForkSpecA);
@@ -79,9 +79,9 @@ public class ValidatorModeTransitionLoggerTest {
 
   @Test
   public void logMessageWhenTransitioningFromContractToContractWithDifferentAddress() {
-    BftForkSpec<BftConfigOptions> contractForkSpecA =
+    final BftForkSpec<BftConfigOptions> contractForkSpecA =
         new BftForkSpec<>(0, createQbftConfigOptionsForContract("0x0"));
-    BftForkSpec<BftConfigOptions> contractForkSpecB =
+    final BftForkSpec<BftConfigOptions> contractForkSpecB =
         new BftForkSpec<>(1, createQbftConfigOptionsForContract("0x1"));
 
     when(bftForksSchedule.getFork(0)).thenReturn(contractForkSpecA);
@@ -96,9 +96,9 @@ public class ValidatorModeTransitionLoggerTest {
 
   @Test
   public void logMessageWhenTransitioningFromContractToBlockHeader() {
-    BftForkSpec<BftConfigOptions> contractForkSpec =
+    final BftForkSpec<BftConfigOptions> contractForkSpec =
         new BftForkSpec<>(0, createQbftConfigOptionsForContract("0x0"));
-    BftForkSpec<BftConfigOptions> blockForkSpec =
+    final BftForkSpec<BftConfigOptions> blockForkSpec =
         new BftForkSpec<>(1, createQbftConfigOptionsForBlockHeader());
 
     when(bftForksSchedule.getFork(0)).thenReturn(contractForkSpec);
@@ -113,9 +113,9 @@ public class ValidatorModeTransitionLoggerTest {
 
   @Test
   public void logMessageWhenTransitioningFromBlockHeaderToContract() {
-    BftForkSpec<BftConfigOptions> blockForkSpec =
+    final BftForkSpec<BftConfigOptions> blockForkSpec =
         new BftForkSpec<>(0, createQbftConfigOptionsForBlockHeader());
-    BftForkSpec<BftConfigOptions> contractForkSpec =
+    final BftForkSpec<BftConfigOptions> contractForkSpec =
         new BftForkSpec<>(1, createQbftConfigOptionsForContract("0x0"));
 
     when(bftForksSchedule.getFork(0)).thenReturn(blockForkSpec);

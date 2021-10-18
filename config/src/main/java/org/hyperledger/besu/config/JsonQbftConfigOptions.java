@@ -31,7 +31,7 @@ public class JsonQbftConfigOptions extends JsonBftConfigOptions implements QbftC
 
   @Override
   public Optional<String> getValidatorContractAddress() {
-    return JsonUtil.getString(bftConfigRoot, VALIDATOR_CONTRACT_ADDRESS);
+    return JsonUtil.getString(bftConfigRoot, VALIDATOR_CONTRACT_ADDRESS).map(String::toLowerCase);
   }
 
   @Override
