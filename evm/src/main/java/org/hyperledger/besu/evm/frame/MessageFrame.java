@@ -645,7 +645,7 @@ public class MessageFrame {
       final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
     memory.setBytes32Aligned(offset, length, value);
     if (explicitMemoryUpdate) {
-      setUpdatedMemory(offset, 0, length, value);
+      setUpdatedMemory32ByteAligned(offset, length, value);
     }
   }
 
@@ -696,6 +696,22 @@ public class MessageFrame {
         setUpdatedMemory(offset, paddedAnswer.copy());
       } else {
         setUpdatedMemory(offset, value.slice((int) sourceOffset, (int) length).copy());
+      }
+    }
+  }
+
+  private void setUpdatedMemory32ByteAligned(
+      final long offset, final long length, final Bytes value) {
+    if (length > 0) {
+      final int srcSize = value.size();
+      if (length > srcSize) {
+        final MutableBytes paddedAnswer = MutableBytes.create((int) length);
+        if ((long) 0 < srcSize) {
+          value.slice(0, (int) ((long) srcSize)).copyTo(paddedAnswer, (int) (length - srcSize));
+        }
+        setUpdatedMemory(offset, paddedAnswer.copy());
+      } else {
+        setUpdatedMemory(offset, value.slice(0, (int) length).copy());
       }
     }
   }
