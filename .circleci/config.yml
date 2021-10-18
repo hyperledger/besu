@@ -218,9 +218,9 @@ jobs:
     parallelism: 1
     executor: besu_executor_xl
     steps:
-      - prepare
       - attach_workspace:
           at: ~/project
+      - capture_test_results
       - run:
           name: SonarQube
           no_output_timeout: 30m
@@ -312,9 +312,6 @@ workflows:
           context: SonarCloud
           requires:
             - unitTests
-            - referenceTests
-            - integrationTests
-            - acceptanceTests
       - publish:
           filters:
             branches:
