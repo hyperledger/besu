@@ -41,7 +41,7 @@ public class JumpOperation extends AbstractFixedCostOperation {
     final int jumpDestination;
     try {
       jumpDestination = frame.popStackItem().toInt();
-    } catch (IllegalArgumentException iae) {
+    } catch (RuntimeException iae) {
       return invalidJumpResponse;
     }
     final Code code = frame.getCode();

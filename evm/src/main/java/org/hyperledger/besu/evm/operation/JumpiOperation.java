@@ -49,7 +49,7 @@ public class JumpiOperation extends AbstractFixedCostOperation {
       final int jumpDestination;
       try {
         jumpDestination = dest.toInt();
-      } catch (IllegalArgumentException iae) {
+      } catch (RuntimeException re) {
         return invalidJumpResponse;
       }
       final Code code = frame.getCode();
