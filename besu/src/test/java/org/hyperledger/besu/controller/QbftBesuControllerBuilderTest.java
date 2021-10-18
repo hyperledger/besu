@@ -146,9 +146,9 @@ public class QbftBesuControllerBuilderTest {
 
   @Test
   public void forkingValidatorProviderIsAvailableOnBftContext() {
-    BesuController besuController = qbftBesuControllerBuilder.build();
+    final BesuController besuController = qbftBesuControllerBuilder.build();
 
-    ValidatorProvider validatorProvider =
+    final ValidatorProvider validatorProvider =
         besuController
             .getProtocolContext()
             .getConsensusState(BftContext.class)
@@ -158,7 +158,7 @@ public class QbftBesuControllerBuilderTest {
 
   @Test
   public void missingTransactionValidatorProviderThrowsError() {
-    ProtocolContext protocolContext = mock(ProtocolContext.class);
+    final ProtocolContext protocolContext = mock(ProtocolContext.class);
     when(protocolContext.getBlockchain()).thenReturn(mock(MutableBlockchain.class));
 
     assertThatThrownBy(
