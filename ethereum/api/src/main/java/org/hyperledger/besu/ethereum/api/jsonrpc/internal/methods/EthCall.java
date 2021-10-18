@@ -46,7 +46,6 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   private final TransactionSimulator transactionSimulator;
-  private static final Logger LOG = LogManager.getLogger();
 
   public EthCall(
       final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
@@ -69,7 +68,6 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   protected Object resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
     JsonCallParameter callParams = validateAndGetCallParams(request);
     final BlockHeader header = blockchainQueries.get().getBlockHeaderByHash(blockHash).orElse(null);
-    LOG.info(header.toString());
     if (header == null) {
       return errorResponse(request, BLOCK_NOT_FOUND);
     }
@@ -149,15 +147,12 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
     ImmutableTransactionValidationParams.Builder transactionValidationParams =
         ImmutableTransactionValidationParams.builder()
             .from(TransactionValidationParams.transactionSimulator());
-    LOG.info(transactionValidationParams.build().toString());
     // if it is not set explicitly whether we want a strict check of the balance or not. this will
     // be decided according to the provided parameters
-    LOG.info("called with: "+callParams.toString());
     if (callParams.isMaybeStrict().isEmpty()) {
 
       boolean isZeroGasPrice =
           callParams.getGasPrice() == null || Wei.ZERO.equals(callParams.getGasPrice());
-      LOG.info("building validation params based on header: "+header.toString());
       header
           .getBaseFee()
           .ifPresentOrElse(
@@ -169,7 +164,6 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
                 if (isZeroGasPrice && isZeroMaxFeePerGas && isZeroMaxPriorityFeePerGas) {
                   // After 1559, when gas pricing is not provided, 0 is used and the balance is not
                   // checked
-                  LOG.info("London, no gas pricing provided, allow to exceed balance");
                   transactionValidationParams.isAllowExceedingBalance(true);
                 } else {
                   // After 1559, when gas price is provided, it is interpreted as both the max and
@@ -179,7 +173,6 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
               },
               () -> {
                 // Prior 1559, when gas price == 0 or is not provided the balance is not checked
-                LOG.info("exceeding based on gas price being zero: "+isZeroGasPrice);
                 transactionValidationParams.isAllowExceedingBalance(isZeroGasPrice);
               });
     } else {
@@ -187,7 +180,6 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
           !callParams.isMaybeStrict().orElse(Boolean.FALSE));
     }
     var tvp = transactionValidationParams.build();
-    LOG.info("ignoring balance "+tvp.toString());
     return transactionValidationParams.build();
   }
 }
