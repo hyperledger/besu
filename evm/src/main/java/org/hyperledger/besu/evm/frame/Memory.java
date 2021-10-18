@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.evm.frame;
 
+import java.util.Arrays;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.MutableBytes;
 
 /**
  * An EVM memory implementation.
@@ -36,17 +37,17 @@ public class Memory {
    * overflow this. A byte array implementation limits us to 2 GiB. But that would cost over 51
    * trillion gas. So this is likely a reasonable limitation, at least at first.
    */
-  private MutableBytes data;
+  private byte[] memBytes;
 
   private int activeWords;
 
   public Memory() {
-    data = MutableBytes.EMPTY;
+    memBytes = new byte[0];
     updateSize();
   }
 
   private void updateSize() {
-    activeWords = data.size() / Bytes32.SIZE;
+    activeWords = memBytes.length / Bytes32.SIZE;
   }
 
   private static RuntimeException overflow(final long v) {
@@ -136,9 +137,9 @@ public class Memory {
     if (activeWords >= newActiveWords) return;
 
     // Require full capacity to guarantee we don't resize more than once.
-    final MutableBytes newData = MutableBytes.create(newActiveWords * Bytes32.SIZE);
-    data.copyTo(newData, 0);
-    data = newData;
+    byte[] newMem = new byte[newActiveWords * Bytes32.SIZE];
+    System.arraycopy(memBytes, 0, newMem, 0, memBytes.length);
+    memBytes = newMem;
     updateSize();
   }
 
@@ -154,13 +155,12 @@ public class Memory {
     if (other == this) return true;
     if (!(other instanceof Memory)) return false;
 
-    final Memory that = (Memory) other;
-    return this.data.equals(that.data);
+    return Arrays.equals(memBytes, ((Memory) other).memBytes);
   }
 
   @Override
   public int hashCode() {
-    return data.hashCode();
+    return Arrays.hashCode(memBytes);
   }
 
   /**
@@ -169,7 +169,7 @@ public class Memory {
    * @return The current number of active bytes stored in memory.
    */
   int getActiveBytes() {
-    return data.size();
+    return memBytes.length;
   }
 
   /**
@@ -202,7 +202,7 @@ public class Memory {
     final int start = asByteIndex(location);
 
     ensureCapacityForBytes(start, length);
-    return data.slice(start, length);
+    return Bytes.wrap(Arrays.copyOfRange(memBytes, start, start + length));
   }
 
   /**
@@ -265,10 +265,51 @@ public class Memory {
 
     ensureCapacityForBytes(start, length);
     if (srcLength >= length) {
-      data.set(start, taintedValue.slice(0, length));
+      System.arraycopy(taintedValue.toArrayUnsafe(), 0, memBytes, start, length);
     } else {
-      data.set(start, Bytes.of(new byte[end - start]));
-      data.set(start, taintedValue.slice(0, srcLength));
+      Arrays.fill(memBytes, start + srcLength, end, (byte) 0);
+      if (srcLength > 0) {
+        System.arraycopy(taintedValue.toArrayUnsafe(), 0, memBytes, start, srcLength);
+  }
+    }
+  }
+
+  /**
+   * Copy the bytes from the provided number of bytes from the provided value to memory from the
+   * provided offset.
+   *
+   * <p>Note that this method will extend memory to accommodate the location assigned and bytes
+   * copied and so never fails.
+   *
+   * @param location the location in memory at which to start copying the bytes of {@code value}.
+   * @param numBytes the number of bytes to set in memory. Note that this value may differ from
+   *     {@code value.size()}: if {@code numBytes < value.size()} bytes, only {@code numBytes} will
+   *     be copied from {@code value}; if {@code numBytes > value.size()}, then only the bytes in
+   *     {@code value} will be copied, but the memory will be expanded if necessary to cover {@code
+   *     numBytes} (in other words, {@link #getActiveWords()} will return a value consistent with
+   *     having set {@code numBytes} bytes, even if less than that have been concretely set due to
+   *     {@code value} being smaller).
+   * @param taintedValue the bytes to copy to memory from {@code location}.
+   */
+  public void setBytes32Aligned(final long location, final long numBytes, final Bytes taintedValue) {
+    if (numBytes == 0) {
+      return;
+    }
+
+    final int start = asByteIndex(location);
+    final int length = asByteLength(numBytes);
+    final int srcLength = taintedValue.size();
+    final int end = Math.addExact(start, length);
+
+    ensureCapacityForBytes(start, length);
+    if (srcLength >= length) {
+      System.arraycopy(taintedValue.toArrayUnsafe(), 0, memBytes, start, length);
+    } else {
+      int divider = end - srcLength;
+      Arrays.fill(memBytes, start,  divider, (byte) 0);
+      if (srcLength > 0) {
+        System.arraycopy(taintedValue.toArrayUnsafe(), 0, memBytes, divider, srcLength);
+      }
     }
   }
 
@@ -299,7 +340,7 @@ public class Memory {
     }
 
     ensureCapacityForBytes(location, numBytes);
-    data.set(location, Bytes.of(new byte[numBytes]));
+    Arrays.fill(memBytes, location, location + numBytes, (byte) 0);
   }
 
   /**
@@ -311,7 +352,7 @@ public class Memory {
   void setByte(final long location, final byte value) {
     final int start = asByteIndex(location);
     ensureCapacityForBytes(start, 1);
-    data.set(start, value);
+    memBytes[start] = value;
   }
 
   /**
@@ -323,7 +364,7 @@ public class Memory {
   public Bytes32 getWord(final long location) {
     final int start = asByteIndex(location);
     ensureCapacityForBytes(start, Bytes32.SIZE);
-    return Bytes32.wrap(data.slice(start, Bytes32.SIZE));
+    return Bytes32.wrap(Arrays.copyOfRange(memBytes, start, start + Bytes32.SIZE));
   }
 
   /**
@@ -338,11 +379,11 @@ public class Memory {
   public void setWord(final long location, final Bytes32 bytes) {
     final int start = asByteIndex(location);
     ensureCapacityForBytes(start, Bytes32.SIZE);
-    data.set(start, bytes);
+    System.arraycopy(bytes.toArrayUnsafe(), 0, memBytes, start, Bytes32.SIZE);
   }
 
   @Override
   public String toString() {
-    return data.toHexString();
+    return Bytes.wrap(memBytes).toHexString();
   }
 }

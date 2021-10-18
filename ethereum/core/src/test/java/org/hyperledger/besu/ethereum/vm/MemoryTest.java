@@ -151,4 +151,77 @@ public class MemoryTest {
   private static Bytes32 fillBytes32(final long value) {
     return Bytes32.fromHexString(Strings.repeat(Long.toString(value), 64));
   }
+
+  @Test
+  public void shouldSetMemory32ByteAlignedWhenLengthEqualToSourceLength() {
+    final Bytes value = Bytes.concatenate(WORD1, WORD2, WORD3);
+    memory.setBytes32Aligned(0, value.size(), value);
+    assertThat(memory.getWord(0)).isEqualTo(WORD1);
+    assertThat(memory.getWord(32)).isEqualTo(WORD2);
+    assertThat(memory.getWord(64)).isEqualTo(WORD3);
+  }
+
+  @Test
+  public void shouldSetMemory32ByteAlignedWhenLengthLessThanSourceLength() {
+    final Bytes value = Bytes.concatenate(WORD1, WORD2, WORD3);
+    memory.setBytes32Aligned(0, 64, value);
+    assertThat(memory.getWord(0)).isEqualTo(WORD1);
+    assertThat(memory.getWord(32)).isEqualTo(WORD2);
+    assertThat(memory.getWord(64)).isEqualTo(Bytes32.ZERO);
+  }
+
+  @Test
+  public void shouldSetMemory32ByteAlignedWhenLengthGreaterThanSourceLength() {
+    final Bytes value = Bytes.concatenate(WORD1, WORD2);
+    memory.setBytes32Aligned(0, 96, value);
+    assertThat(memory.getWord(0)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(32)).isEqualTo(WORD1);
+    assertThat(memory.getWord(64)).isEqualTo(WORD2);
+  }
+
+  @Test
+  public void shouldClearMemory32ByteAlignedAfterSourceDataWhenLengthGreaterThanSourceLength() {
+    memory.setWord(64, WORD3);
+    memory.setWord(96, WORD4);
+    assertThat(memory.getWord(64)).isEqualTo(WORD3);
+    assertThat(memory.getWord(96)).isEqualTo(WORD4);
+
+    final Bytes value = Bytes.concatenate(WORD1, WORD2);
+    memory.setBytes32Aligned(0, 96, value);
+    assertThat(memory.getWord(0)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(32)).isEqualTo(WORD1);
+    assertThat(memory.getWord(64)).isEqualTo(WORD2);
+    assertThat(memory.getWord(96)).isEqualTo(WORD4);
+  }
+
+  @Test
+  public void shouldClearMemory32ByteAlignedAfterSourceDataWhenLengthGreaterThanSourceLengthWithMemoryOffset() {
+    memory.setWord(64, WORD3);
+    memory.setWord(96, WORD4);
+    assertThat(memory.getWord(64)).isEqualTo(WORD3);
+    assertThat(memory.getWord(96)).isEqualTo(WORD4);
+
+    final Bytes value = Bytes.concatenate(WORD1, WORD2);
+    memory.setBytes32Aligned(10, 96, value);
+    assertThat(memory.getWord(10)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(42)).isEqualTo(WORD1);
+    assertThat(memory.getWord(74)).isEqualTo(WORD2);
+    // Word 4 got partially set because of the starting offset.
+    assertThat(memory.getWord(96))
+        .isEqualTo(
+            Bytes32.fromHexString(
+                "0x2222222222222222222244444444444444444444444444444444444444444444"));
+  }
+
+  @Test
+  public void shouldClearMemory32ByteAlignedWhenSourceDataIsEmpty() {
+    memory.setWord(64, WORD3);
+    assertThat(memory.getWord(64)).isEqualTo(WORD3);
+
+    memory.setBytes32Aligned(0, 96, Bytes.EMPTY);
+
+    assertThat(memory.getWord(0)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(32)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(64)).isEqualTo(Bytes32.ZERO);
+  }
 }

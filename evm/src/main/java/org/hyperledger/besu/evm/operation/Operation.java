@@ -26,11 +26,18 @@ public interface Operation {
   class OperationResult {
     final Optional<Gas> gasCost;
     final Optional<ExceptionalHaltReason> haltReason;
+    final int pcIncrement;
 
     public OperationResult(
         final Optional<Gas> gasCost, final Optional<ExceptionalHaltReason> haltReason) {
+      this(gasCost, haltReason, 1);
+    }
+
+    public OperationResult(
+        final Optional<Gas> gasCost, final Optional<ExceptionalHaltReason> haltReason, final int pcIncrement) {
       this.gasCost = gasCost;
       this.haltReason = haltReason;
+      this.pcIncrement = pcIncrement;
     }
 
     public Optional<Gas> getGasCost() {
@@ -40,6 +47,8 @@ public interface Operation {
     public Optional<ExceptionalHaltReason> getHaltReason() {
       return haltReason;
     }
+
+    public int getPcIncrement() { return pcIncrement;}
   }
 
   /**

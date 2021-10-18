@@ -27,12 +27,17 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class JumpOperation extends AbstractFixedCostOperation {
 
   private final Operation.OperationResult invalidJumpResponse;
+  private final OperationResult jumpResponse;
 
   public JumpOperation(final GasCalculator gasCalculator) {
     super(0x56, "JUMP", 2, 0, true, 1, gasCalculator, gasCalculator.getMidTierGasCost());
     invalidJumpResponse =
         new Operation.OperationResult(
             Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
+    jumpResponse =
+        new OperationResult(
+            Optional.of(gasCost), Optional.empty(), 0);
+
   }
 
   @Override
@@ -44,7 +49,7 @@ public class JumpOperation extends AbstractFixedCostOperation {
       return invalidJumpResponse;
     } else {
       frame.setPC(jumpDestination.intValue());
-      return successResponse;
+      return jumpResponse;
     }
   }
 }

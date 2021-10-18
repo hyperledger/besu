@@ -636,6 +636,22 @@ public class MessageFrame {
   /**
    * Write bytes to memory
    *
+   * @param offset The offset in memory
+   * @param length The length of the bytes to write
+   * @param value The value to write
+   * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
+   */
+  public void writeMemory32ByteAligned(
+      final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
+    memory.setBytes32Aligned(offset, length, value);
+    if (explicitMemoryUpdate) {
+      setUpdatedMemory(offset, 0, length, value);
+    }
+  }
+
+  /**
+   * Write bytes to memory
+   *
    * @param offset The offset in memory to start the write
    * @param sourceOffset The offset in the source value to start the write
    * @param length The length of the bytes to write

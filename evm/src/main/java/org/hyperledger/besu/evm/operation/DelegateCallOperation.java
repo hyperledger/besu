@@ -27,7 +27,7 @@ import org.hyperledger.besu.evm.internal.Words;
 public class DelegateCallOperation extends AbstractCallOperation {
 
   public DelegateCallOperation(final GasCalculator gasCalculator) {
-    super(0xF4, "DELEGATECALL", 6, 1, false, 1, gasCalculator);
+    super(0xF4, "DELEGATECALL", 6, 1, 1, gasCalculator);
   }
 
   @Override

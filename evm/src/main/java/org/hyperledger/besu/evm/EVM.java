@@ -94,8 +94,9 @@ public class EVM {
         frame,
         () -> {
           OperationResult result;
+          Operation operation = frame.getCurrentOperation();
           try {
-            result = frame.getCurrentOperation().execute(frame, this);
+            result = operation.execute(frame, this);
           } catch (final OverflowException oe) {
             result = OVERFLOW_RESPONSE;
           } catch (final UnderflowException ue) {
@@ -111,19 +112,14 @@ public class EVM {
           } else if (result.getGasCost().isPresent()) {
             frame.decrementRemainingGas(result.getGasCost().get());
           }
-          incrementProgramCounter(frame);
+          if (frame.getState() == State.CODE_EXECUTING) {
+            final int currentPC = frame.getPC();
+            final int opSize = result.getPcIncrement();
+            frame.setPC(currentPC + opSize);
+          }
 
           return result;
         });
-  }
-
-  private void incrementProgramCounter(final MessageFrame frame) {
-    final Operation operation = frame.getCurrentOperation();
-    if (frame.getState() == State.CODE_EXECUTING && !operation.getUpdatesProgramCounter()) {
-      final int currentPC = frame.getPC();
-      final int opSize = operation.getOpSize();
-      frame.setPC(currentPC + opSize);
-    }
   }
 
   private static void logState(final MessageFrame frame, final Gas currentGasCost) {
