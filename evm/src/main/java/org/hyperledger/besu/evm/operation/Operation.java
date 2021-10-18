@@ -34,7 +34,9 @@ public interface Operation {
     }
 
     public OperationResult(
-        final Optional<Gas> gasCost, final Optional<ExceptionalHaltReason> haltReason, final int pcIncrement) {
+        final Optional<Gas> gasCost,
+        final Optional<ExceptionalHaltReason> haltReason,
+        final int pcIncrement) {
       this.gasCost = gasCost;
       this.haltReason = haltReason;
       this.pcIncrement = pcIncrement;
@@ -48,7 +50,9 @@ public interface Operation {
       return haltReason;
     }
 
-    public int getPcIncrement() { return pcIncrement;}
+    public int getPcIncrement() {
+      return pcIncrement;
+    }
   }
 
   /**

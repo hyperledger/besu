@@ -34,10 +34,7 @@ public class JumpOperation extends AbstractFixedCostOperation {
     invalidJumpResponse =
         new Operation.OperationResult(
             Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
-    jumpResponse =
-        new OperationResult(
-            Optional.of(gasCost), Optional.empty(), 0);
-
+    jumpResponse = new OperationResult(Optional.of(gasCost), Optional.empty(), 0);
   }
 
   @Override

@@ -43,13 +43,7 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
       final int opSize,
       final GasCalculator gasCalculator,
       final Gas fixedCost) {
-    super(
-        opcode,
-        name,
-        stackItemsConsumed,
-        stackItemsProduced,
-        opSize,
-        gasCalculator);
+    super(opcode, name, stackItemsConsumed, stackItemsProduced, opSize, gasCalculator);
     gasCost = fixedCost;
     successResponse = new OperationResult(Optional.of(gasCost), Optional.empty());
     outOfGasResponse =

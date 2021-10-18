@@ -43,9 +43,7 @@ public class PushOperation extends AbstractFixedCostOperation {
         gasCalculator,
         gasCalculator.getVeryLowTierGasCost());
     this.length = length;
-    pushResponse =
-        new OperationResult(
-            Optional.of(gasCost), Optional.empty(), length + 1);
+    pushResponse = new OperationResult(Optional.of(gasCost), Optional.empty(), length + 1);
   }
 
   @Override

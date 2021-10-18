@@ -270,7 +270,7 @@ public class Memory {
       Arrays.fill(memBytes, start + srcLength, end, (byte) 0);
       if (srcLength > 0) {
         System.arraycopy(taintedValue.toArrayUnsafe(), 0, memBytes, start, srcLength);
-  }
+      }
     }
   }
 
@@ -291,7 +291,8 @@ public class Memory {
    *     {@code value} being smaller).
    * @param taintedValue the bytes to copy to memory from {@code location}.
    */
-  public void setBytes32Aligned(final long location, final long numBytes, final Bytes taintedValue) {
+  public void setBytes32Aligned(
+      final long location, final long numBytes, final Bytes taintedValue) {
     if (numBytes == 0) {
       return;
     }
@@ -306,7 +307,7 @@ public class Memory {
       System.arraycopy(taintedValue.toArrayUnsafe(), 0, memBytes, start, length);
     } else {
       int divider = end - srcLength;
-      Arrays.fill(memBytes, start,  divider, (byte) 0);
+      Arrays.fill(memBytes, start, divider, (byte) 0);
       if (srcLength > 0) {
         System.arraycopy(taintedValue.toArrayUnsafe(), 0, memBytes, divider, srcLength);
       }

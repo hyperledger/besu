@@ -195,7 +195,8 @@ public class MemoryTest {
   }
 
   @Test
-  public void shouldClearMemory32ByteAlignedAfterSourceDataWhenLengthGreaterThanSourceLengthWithMemoryOffset() {
+  public void
+      shouldClearMemory32ByteAlignedAfterSourceDataWhenLengthGreaterThanSourceLengthWithMemoryOffset() {
     memory.setWord(64, WORD3);
     memory.setWord(96, WORD4);
     assertThat(memory.getWord(64)).isEqualTo(WORD3);

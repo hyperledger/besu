@@ -39,8 +39,7 @@ public class JumpiOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
     final Bytes condition = frame.popStackItem();
 
