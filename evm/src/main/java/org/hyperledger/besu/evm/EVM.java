@@ -151,7 +151,7 @@ public class EVM {
    * @return Whether or not this location is a valid jump destination.
    */
   public boolean isValidJumpDestination(final int jumpDestination, final Code code) {
-    if (jumpDestination >= code.getSize()) return false;
+    if (jumpDestination < 0 || jumpDestination >= code.getSize()) return false;
     long[] validJumpDestinations = code.getValidJumpDestinations();
     if (validJumpDestinations == null || validJumpDestinations.length == 0) {
       validJumpDestinations = jumpDestCache.getIfPresent(code.getCodeHash());
@@ -164,7 +164,7 @@ public class EVM {
         }
       }
     }
-    long targetLong = validJumpDestinations[jumpDestination >> 6];
+    long targetLong = validJumpDestinations[jumpDestination >>> 6];
     long targetBit = 1L << (jumpDestination & 0x3F);
     return (targetLong & targetBit) != 0L;
   }
