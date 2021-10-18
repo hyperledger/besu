@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.test;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.JsonUtil;
@@ -36,10 +35,9 @@ import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.testutil.TestClock;
 
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,6 +45,7 @@ import java.util.stream.Stream;
 
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.Before;
 import org.junit.Test;
 
 public class ValidatorContractTest {
@@ -61,12 +60,14 @@ public class ValidatorContractTest {
   private static final Bytes32 NODE_2_PRIVATE_KEY =
       Bytes32.fromHexString("0xa3bdf521b0f286a80918c4b67000dfd2a2bdef97e94d268016ef9ec86648eac4");
 
-  private final long blockTimeStamp = 100;
-  private final Clock fixedClock =
-      Clock.fixed(Instant.ofEpochSecond(blockTimeStamp), ZoneId.systemDefault());
-  private final Clock tickingClock = setupTickingClock();
+  private TestClock clock;
 
   private final QbftExtraDataCodec extraDataCodec = new QbftExtraDataCodec();
+
+  @Before
+  public void setup() {
+    clock = new TestClock(Instant.EPOCH.plus(1, SECONDS));
+  }
 
   @Test
   public void retrievesValidatorsFromValidatorContract() {
@@ -75,7 +76,7 @@ public class ValidatorContractTest {
             .indexOfFirstLocallyProposedBlock(0)
             .nodeParams(
                 List.of(new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY))))
-            .clock(fixedClock)
+            .clock(TestClock.fixed())
             .genesisFile(Resources.getResource("genesis_validator_contract.json").getFile())
             .useValidatorContract(true)
             .buildAndStart();
@@ -98,7 +99,7 @@ public class ValidatorContractTest {
             .indexOfFirstLocallyProposedBlock(0)
             .nodeParams(
                 List.of(new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY))))
-            .clock(fixedClock)
+            .clock(TestClock.fixed())
             .genesisFile(
                 Resources.getResource("genesis_migrating_validator_contract.json").getFile())
             .useValidatorContract(false)
@@ -134,7 +135,7 @@ public class ValidatorContractTest {
             .indexOfFirstLocallyProposedBlock(0)
             .nodeParams(
                 List.of(new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY))))
-            .clock(fixedClock)
+            .clock(clock)
             .genesisFile(
                 Resources.getResource("genesis_migrating_validator_blockheader.json").getFile())
             .useValidatorContract(true)
@@ -176,7 +177,7 @@ public class ValidatorContractTest {
                 List.of(
                     new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY)),
                     new NodeParams(NODE_2_ADDRESS, NodeKeyUtils.createFrom(NODE_2_PRIVATE_KEY))))
-            .clock(tickingClock)
+            .clock(clock)
             .genesisFile(
                 Resources.getResource("genesis_migrating_validator_contract.json").getFile())
             .useValidatorContract(false)
@@ -191,10 +192,8 @@ public class ValidatorContractTest {
         Stream.of(NODE_ADDRESS, NODE_2_ADDRESS).sorted().collect(Collectors.toList());
 
     createNewBlockAsProposer(context, 1L);
-    remotePeerProposesNewBlock(
-        context,
-        2L); // tickingClock moves forward to avoid the block failing TimestampMoreRecentThanParent
-    // validation rule
+    clock.step(1, SECONDS); // avoid failing the TimestampMoreRecentThanParent validation rule
+    remotePeerProposesNewBlock(context, 2L);
 
     final ValidatorProvider validatorProvider = context.getValidatorProvider();
     final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
@@ -232,7 +231,7 @@ public class ValidatorContractTest {
     ValidatorPeer remoteProposer = peers.getProposer();
     final Block blockToPropose =
         context.createBlockForProposalFromChainHead(
-            tickingClock.millis(), remoteProposer.getNodeAddress());
+            clock.millis(), remoteProposer.getNodeAddress());
     remoteProposer.injectProposal(roundId, blockToPropose);
     remoteProposer.injectCommit(roundId, blockToPropose);
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(blockNumber);
@@ -262,16 +261,5 @@ public class ValidatorContractTest {
                 block,
                 QbftFork.VALIDATOR_SELECTION_MODE_KEY,
                 VALIDATOR_SELECTION_MODE.BLOCKHEADER)));
-  }
-
-  private Clock setupTickingClock() {
-    Clock tickingClock = mock(Clock.class);
-    Instant blockInstant = Instant.ofEpochSecond(blockTimeStamp);
-    // supports creation of up to three blocks
-    when(tickingClock.millis())
-        .thenReturn(blockInstant.toEpochMilli())
-        .thenReturn(blockInstant.plusSeconds(1).toEpochMilli())
-        .thenReturn(blockInstant.plusSeconds(2).toEpochMilli());
-    return tickingClock;
   }
 }
