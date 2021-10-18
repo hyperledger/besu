@@ -38,7 +38,6 @@ sonarqube {
     property "sonar.host.url", "https://sonarcloud.io"
     property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
   }
-
 }
 
 project.tasks["sonarqube"].dependsOn "jacocoRootReport"
