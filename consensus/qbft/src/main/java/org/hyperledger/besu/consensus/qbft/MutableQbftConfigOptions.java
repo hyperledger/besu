@@ -29,7 +29,8 @@ public class MutableQbftConfigOptions extends MutableBftConfigOptions implements
 
   public MutableQbftConfigOptions(final QbftConfigOptions qbftConfigOptions) {
     super(qbftConfigOptions);
-    this.validatorContractAddress = qbftConfigOptions.getValidatorContractAddress();
+    this.validatorContractAddress =
+        qbftConfigOptions.getValidatorContractAddress().map(String::toLowerCase);
   }
 
   @Override

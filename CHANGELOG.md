@@ -1,5 +1,14 @@
 # Changelog
 
+## 21.10.0-RC4
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Early Access Features
+
+
 ## 21.10.0-RC3
 
 ### Additions and Improvements
@@ -8,6 +17,7 @@
 
 ### Bug Fixes
 - Regression in RC1 involving LogOperation and frame memory overwrites [#2908](https://github.com/hyperledger/besu/pull/2908)
+- Allow `eth_call` and `eth_estimateGas` to accept contract address as sender. [#2891](https://github.com/hyperledger/besu/pull/2891)
 
 ### Early Access Features
 - Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
@@ -26,10 +36,6 @@
 - Fix bug with private contracts not able to call public contracts that call public contracts [#2816](https://github.com/hyperledger/besu/pull/2816)
 
 ### Early Access Features
-
-### Download
-https://hyperledger.jfrog.io/native/besu-binaries/besu/21.10.0-RC1/besu-21.10.0-RC1.zip \
-SHA256: 536612e5e4d7a5e7a582f729f01ba591ba68cc389e8379fea3571ed85322ff51
 
 
 ## 21.7.4
