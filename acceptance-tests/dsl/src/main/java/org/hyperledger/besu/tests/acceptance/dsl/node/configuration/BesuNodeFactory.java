@@ -536,7 +536,6 @@ public class BesuNodeFactory {
 
   public BesuNode createQbftNodeWithContractBasedValidators(
       final String name, final String... validators) throws IOException {
-    // TODO: FIXME - Use contract
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
@@ -547,7 +546,9 @@ public class BesuNodeFactory {
             .genesisConfigProvider(
                 nodes ->
                     node.createGenesisConfigForValidators(
-                        asList(validators), nodes, genesis::createQbftGenesisConfig))
+                        asList(validators),
+                        nodes,
+                        genesis::createQbftContractBasedValidatorGenesisConfig))
             .build());
   }
 
