@@ -80,6 +80,7 @@ public class TransactionSimulator {
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
   private final Optional<PrivacyParameters> maybePrivacyParameters;
+  private static final Logger LOG = LogManager.getLogger(TransactionSimulator.class);
 
   public TransactionSimulator(
       final Blockchain blockchain,
@@ -160,8 +161,10 @@ public class TransactionSimulator {
         callParams.getFrom() != null ? callParams.getFrom() : DEFAULT_FROM;
 
     BlockHeader blockHeaderToProcess = header;
+    LOG.info(blockHeaderToProcess.toString());
     if (transactionValidationParams.isAllowExceedingBalance()) {
       updater.getOrCreate(senderAddress).getMutable().setBalance(Wei.of(UInt256.MAX_VALUE));
+      LOG.info("overdrafts allowed, setting balance for "+senderAddress+" to "+Wei.of(UInt256.MAX_VALUE));
       if (header.getBaseFee().isPresent()) {
         blockHeaderToProcess =
             BlockHeaderBuilder.fromHeader(header)
@@ -228,6 +231,7 @@ public class TransactionSimulator {
             false,
             transactionValidationParams,
             operationTracer);
+    LOG.info(result);
     // If GoQuorum privacy enabled, and value = zero, get max gas possible for a PMT hash.
     // It is possible to have a data field that has a lower intrinsic value than the PMT hash.
     // This means a potential over-estimate of gas, but the tx, if sent with this gas, will not
