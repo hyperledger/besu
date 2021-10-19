@@ -203,7 +203,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             proposerSelector,
             uniqueMessageMulticaster,
             new RoundTimer(bftEventQueue, qbftConfig.getRequestTimeoutSeconds(), bftExecutors),
-            new BlockTimer(bftEventQueue, qbftConfig.getBlockPeriodSeconds(), bftExecutors, clock),
+            new BlockTimer(bftEventQueue, qbftForksSchedule, bftExecutors, clock),
             blockCreatorFactory,
             clock);
 
