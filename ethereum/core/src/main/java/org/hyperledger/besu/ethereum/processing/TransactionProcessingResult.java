@@ -189,21 +189,14 @@ public class TransactionProcessingResult {
 
   @Override
   public String toString() {
-    return "TransactionProcessingResult{"
-        + "status="
-        + status
-        + ", estimateGasUsedByTransaction="
-        + estimateGasUsedByTransaction
-        + ", gasRemaining="
-        + gasRemaining
-        + ", logs="
-        + logs
-        + ", output="
-        + output
-        + ", validationResult="
-        + validationResult
-        + ", revertReason="
-        + revertReason
-        + '}';
+    return "TransactionProcessingResult{" +
+            "status=" + status +
+            ", estimateGasUsedByTransaction=" + estimateGasUsedByTransaction +
+            ", gasRemaining=" + gasRemaining +
+            ", logs=" + logs +
+            ", output=" + output +
+            ", validationResult=" + validationResult +
+            ", revertReason=" + revertReason +
+            '}';
   }
 }
