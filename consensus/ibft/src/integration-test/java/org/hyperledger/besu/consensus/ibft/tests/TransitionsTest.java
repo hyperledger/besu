@@ -38,7 +38,7 @@ public class TransitionsTest {
   public void transitionsBlockPeriod() throws InterruptedException {
     final TestClock clock = new TestClock(Instant.EPOCH);
 
-    final List<BftFork> bbftForks =
+    final List<BftFork> bftForks =
         List.of(
             new BftFork(
                 JsonUtil.objectNodeFromMap(
@@ -53,7 +53,7 @@ public class TransitionsTest {
             .indexOfFirstLocallyProposedBlock(0)
             .validatorCount(1)
             .clock(clock)
-            .bftForks(bbftForks)
+            .bftForks(bftForks)
             .eventQueue(bftEventQueue)
             .buildAndStart();
 

@@ -17,7 +17,9 @@ package org.hyperledger.besu.consensus.ibft;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -25,6 +27,7 @@ import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
@@ -44,13 +47,21 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class IbftProtocolScheduleTest {
   private final BftExtraDataCodec bftExtraDataCodec = mock(BftExtraDataCodec.class);
+  private final BftExtraData bftExtraData = mock(BftExtraData.class);
   private final NodeKey proposerNodeKey = NodeKeyUtils.generate();
   private final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
   private final List<Address> validators = singletonList(proposerAddress);
+
+  @Before
+  public void setup() {
+    when(bftExtraDataCodec.decode(any())).thenReturn(bftExtraData);
+    when(bftExtraData.getValidators()).thenReturn(validators);
+  }
 
   @Test
   public void blockModeTransitionsCreatesBlockModeHeaderValidators() {
@@ -108,7 +119,6 @@ public class IbftProtocolScheduleTest {
     return new ProtocolContext(
         null,
         null,
-        setupContextWithBftExtraDataEncoder(
-            BftContext.class, validators, new IbftExtraDataCodec()));
+        setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec));
   }
 }
