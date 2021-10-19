@@ -70,6 +70,7 @@ dependencies {
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':ethereum:api')
   testImplementation project(path: ':ethereum:referencetests')
   testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
   testImplementation project(':testutil')

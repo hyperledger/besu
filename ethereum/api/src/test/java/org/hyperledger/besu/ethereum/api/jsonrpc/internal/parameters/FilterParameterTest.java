@@ -413,6 +413,22 @@ public class FilterParameterTest {
             List.of(LogTopic.fromHexString(TOPIC_FOUR), LogTopic.fromHexString(TOPIC_FIVE)));
   }
 
+  @Test
+  public void fromAndToAddressesShouldDeserializeAsTwoListsOfAddresses()
+      throws java.io.IOException {
+    final FilterParameter filterParameter =
+        readJsonAsFilterParameter("{\"fromAddress\":[\"0x0\"], \"toAddress\":[\"0x1\"]}");
+    assertThat(filterParameter.getFromAddress()).containsExactly(Address.fromHexString("0x0"));
+    assertThat(filterParameter.getToAddress()).containsExactly(Address.fromHexString("0x1"));
+  }
+
+  @Test
+  public void countAndAfterShouldDeserializeCorrectly() throws java.io.IOException {
+    final FilterParameter filterParameter = readJsonAsFilterParameter("{\"after\":1, \"count\":2}");
+    assertThat(filterParameter.getAfter()).contains(1);
+    assertThat(filterParameter.getCount()).contains(2);
+  }
+
   private <T> FilterParameter createFilterWithTopics(final T inputTopics)
       throws JsonProcessingException {
     final Map<String, T> payload = new HashMap<>();
@@ -426,7 +442,11 @@ public class FilterParameterTest {
     return new FilterParameter(
         BlockParameter.LATEST,
         BlockParameter.LATEST,
+        null,
+        null,
         Arrays.stream(addresses).map(Address::fromHexString).collect(toUnmodifiableList()),
+        null,
+        null,
         null,
         null);
   }
@@ -435,9 +455,13 @@ public class FilterParameterTest {
     return new FilterParameter(
         BlockParameter.LATEST,
         BlockParameter.LATEST,
+        null,
+        null,
         singletonList(Address.fromHexString("0x0")),
         singletonList(
             Arrays.stream(topics).map(LogTopic::fromHexString).collect(toUnmodifiableList())),
+        null,
+        null,
         null);
   }
 
@@ -448,8 +472,12 @@ public class FilterParameterTest {
     return new FilterParameter(
         BlockParameter.LATEST,
         BlockParameter.LATEST,
+        null,
+        null,
         singletonList(Address.fromHexString("0x0")),
         topicsListList,
+        null,
+        null,
         null);
   }
 
