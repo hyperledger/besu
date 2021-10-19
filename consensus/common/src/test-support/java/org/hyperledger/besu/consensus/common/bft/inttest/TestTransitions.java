@@ -12,25 +12,42 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.support;
+package org.hyperledger.besu.consensus.common.bft.inttest;
 
+import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 
+import java.util.Collections;
 import java.util.List;
 
 public class TestTransitions extends TransitionsConfigOptions {
 
-  private final List<QbftFork> forks;
+  private final List<QbftFork> qbftForks;
+  private final List<BftFork> ibftForks;
 
-  public TestTransitions(final List<QbftFork> forks) {
+  public static TestTransitions createQbftTestTransitions(final List<QbftFork> qbftForks) {
+    return new TestTransitions(Collections.emptyList(), qbftForks);
+  }
+
+  public static TestTransitions createIbftTestTransitions(final List<BftFork> bftForks) {
+    return new TestTransitions(bftForks, Collections.emptyList());
+  }
+
+  public TestTransitions(final List<BftFork> ibftForks, final List<QbftFork> qbftForks) {
     super(JsonUtil.createEmptyObjectNode());
-    this.forks = forks;
+    this.ibftForks = ibftForks;
+    this.qbftForks = qbftForks;
   }
 
   @Override
   public List<QbftFork> getQbftForks() {
-    return forks;
+    return qbftForks;
+  }
+
+  @Override
+  public List<BftFork> getIbftForks() {
+    return ibftForks;
   }
 }
