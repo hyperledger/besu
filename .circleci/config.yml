@@ -280,6 +280,7 @@ workflows:
     jobs:
       - assemble
       - unitTests:
+          context: SonarCloud
           requires:
             - assemble
       - testWindows:
