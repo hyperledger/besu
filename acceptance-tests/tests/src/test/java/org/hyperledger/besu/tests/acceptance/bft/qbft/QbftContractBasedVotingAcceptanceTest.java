@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.bft.qbft;
 
+import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import org.junit.Test;
@@ -39,5 +40,19 @@ public class QbftContractBasedVotingAcceptanceTest
     cluster.start(validator1, validator2, validator3, nonValidatorNode);
 
     cluster.verify(blockchain.reachesHeight(validator1, 1, 85));
+
+    cluster.verify(bft.validatorsEqual(validator1, validator2, validator3));
+
+    final Account sender = accounts.createAccount("account1");
+    final Account receiver = accounts.createAccount("account2");
+
+    validator1.execute(accountTransactions.createTransfer(sender, 50));
+    cluster.verify(sender.balanceEquals(50));
+
+    validator2.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1));
+    cluster.verify(receiver.balanceEquals(1));
+
+    nonValidatorNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
+    cluster.verify(receiver.balanceEquals(3));
   }
 }

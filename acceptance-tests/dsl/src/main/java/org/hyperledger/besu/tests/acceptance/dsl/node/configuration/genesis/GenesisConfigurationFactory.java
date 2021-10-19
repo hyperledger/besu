@@ -111,7 +111,7 @@ public class GenesisConfigurationFactory {
             .map(hex -> (String.format("%064x", 0) + hex).substring(hex.length()))
             .collect(toList());
 
-    Map<String, String> storageValues = new LinkedHashMap<>();
+    final Map<String, String> storageValues = new LinkedHashMap<>();
     storageValues.put(String.format("%064x", 0), String.format("%064x", addresses.size()));
 
     // this magical location is start of the values in the array in the sample contract our genesis
