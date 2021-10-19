@@ -130,7 +130,7 @@ public class MainnetTransactionValidator {
 
     if (baseFee.isPresent()) {
       final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, baseFee);
-      if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
+      if (!transactionValidationParams.isAllowMaxFeerGasBelowBaseFee()
           && price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
