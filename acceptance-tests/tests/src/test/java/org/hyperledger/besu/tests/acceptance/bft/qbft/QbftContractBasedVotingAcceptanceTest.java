@@ -1,0 +1,43 @@
+/*
+ * Copyright Hyperledger Besu Contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.tests.acceptance.bft.qbft;
+
+import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+
+import org.junit.Test;
+
+public class QbftContractBasedVotingAcceptanceTest
+    extends ParameterizedQbftContractBasedVotingTestBase {
+  public QbftContractBasedVotingAcceptanceTest(
+      final String testName, final QbftContractBasedParameterizedFactoryProvider factoryProvider) {
+    super(testName, factoryProvider);
+  }
+
+  @Test
+  public void shouldMineOnMultipleNodesEvenWhenClusterContainsNonValidator() throws Exception {
+    final String[] validators = {"validator1", "validator2", "validator3"};
+    final BesuNode validator1 =
+        factoryProvider.createNodeWithValidators(besu, "validator1", validators);
+    final BesuNode validator2 =
+        factoryProvider.createNodeWithValidators(besu, "validator2", validators);
+    final BesuNode validator3 =
+        factoryProvider.createNodeWithValidators(besu, "validator3", validators);
+    final BesuNode nonValidatorNode =
+        factoryProvider.createNodeWithValidators(besu, "non-validator", validators);
+    cluster.start(validator1, validator2, validator3, nonValidatorNode);
+
+    cluster.verify(blockchain.reachesHeight(validator1, 1, 85));
+  }
+}
