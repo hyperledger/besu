@@ -174,6 +174,7 @@ public class SubscriptionBuilderTest {
   }
 
   private FilterParameter filterParameter() {
-    return new FilterParameter(BlockParameter.EARLIEST, BlockParameter.LATEST, null, null, null);
+    return new FilterParameter(
+        BlockParameter.EARLIEST, BlockParameter.LATEST, null, null, null, null, null, null, null);
   }
 }
