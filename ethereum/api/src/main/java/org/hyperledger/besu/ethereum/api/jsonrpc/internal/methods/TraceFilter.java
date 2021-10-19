@@ -37,8 +37,12 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class TraceFilter extends TraceBlock {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   public TraceFilter(
       final Supplier<BlockTracer> blockTracerSupplier,
@@ -85,7 +89,7 @@ public class TraceFilter extends TraceBlock {
 
     final Iterator<TransactionTrace> iterator = transactionTraces.iterator();
     while (!arrayNode.isFull() && iterator.hasNext()) {
-      maybeFilterParameter.ifPresent(
+      maybeFilterParameter.ifPresentOrElse(
           filterParameter -> {
             final List<Address> fromAddress = filterParameter.getFromAddress();
             final List<Address> toAddress = filterParameter.getToAddress();
@@ -107,6 +111,12 @@ public class TraceFilter extends TraceBlock {
                                 .map(toAddress::contains)
                                 .orElse(false))
                 .forEachOrdered(arrayNode::addPOJO);
+          },
+          new Runnable() {
+            @Override
+            public void run() {
+              LOG.debug("No filter found. Unable to create traces");
+            }
           });
     }
   }
