@@ -66,7 +66,7 @@ public class ValidatorContractTest {
 
   @Before
   public void setup() {
-    clock = new TestClock(Instant.EPOCH.plus(1, SECONDS));
+    clock = new TestClock(Instant.EPOCH.plus(TestContextBuilder.BLOCK_TIMER_SEC, SECONDS));
   }
 
   @Test
@@ -192,7 +192,6 @@ public class ValidatorContractTest {
         Stream.of(NODE_ADDRESS, NODE_2_ADDRESS).sorted().collect(Collectors.toList());
 
     createNewBlockAsProposer(context, 1L);
-    clock.step(1, SECONDS); // avoid failing the TimestampMoreRecentThanParent validation rule
     remotePeerProposesNewBlock(context, 2L);
 
     final ValidatorProvider validatorProvider = context.getValidatorProvider();
@@ -229,9 +228,12 @@ public class ValidatorContractTest {
 
     RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
     ValidatorPeer remoteProposer = peers.getProposer();
+    clock.step(
+        TestContextBuilder.BLOCK_TIMER_SEC,
+        SECONDS); // avoid failing the TimestampMoreRecentThanParent validation rule
     final Block blockToPropose =
         context.createBlockForProposalFromChainHead(
-            clock.millis(), remoteProposer.getNodeAddress());
+            clock.instant().getEpochSecond(), remoteProposer.getNodeAddress());
     remoteProposer.injectProposal(roundId, blockToPropose);
     remoteProposer.injectCommit(roundId, blockToPropose);
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(blockNumber);
