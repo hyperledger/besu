@@ -33,12 +33,13 @@ public class QbftContractBasedParameterizedFactoryProvider {
     this.creatorWithContractBasedValidatorsFn = creatorWithContractBasedValidatorsFn;
   }
 
-  public BesuNode createNode(BesuNodeFactory factory, String name) throws Exception {
+  public BesuNode createNode(final BesuNodeFactory factory, final String name) throws Exception {
     return creatorFn.create(factory, name);
   }
 
   public BesuNode createNodeWithValidators(
-      BesuNodeFactory factory, String name, String[] validators) throws Exception {
+      final BesuNodeFactory factory, final String name, final String[] validators)
+      throws Exception {
     return creatorWithContractBasedValidatorsFn.create(factory, name, validators);
   }
 
