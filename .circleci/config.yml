@@ -140,6 +140,10 @@ jobs:
           command: |
             ./gradlew --no-daemon build
       - capture_test_results
+      - run:
+          name: SonarQube
+          no_output_timeout: 30m
+          command: ./gradlew --no-daemon jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
 
   integrationTests:
     executor: besu_executor_med
@@ -214,18 +218,6 @@ jobs:
       - store_test_results:
           path: build/quorum-at/openjdk-latest/reports/xml-report
 
-  staticCodeAnalysis:
-    parallelism: 1
-    executor: besu_executor_xl
-    steps:
-      - attach_workspace:
-          at: ~/project
-      - capture_test_results
-      - run:
-          name: SonarQube
-          no_output_timeout: 30m
-          command: ./gradlew jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
-          
   buildDocker:
     executor: besu_executor_med
     steps:
@@ -308,10 +300,6 @@ workflows:
       - buildDocker:
           requires:
             - assemble
-      - staticCodeAnalysis:
-          context: SonarCloud
-          requires:
-            - unitTests
       - publish:
           filters:
             branches:
