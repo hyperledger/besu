@@ -24,10 +24,13 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController.PmtTransactionTracker;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -39,6 +42,11 @@ public class ChainHeadPrivateNonceProviderTest {
   private static final Bytes32 PRIVACY_GROUP_ID =
       Bytes32.wrap(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="));
   private static final Address ADDRESS = Address.fromHexString("55");
+  private static final Address ADDRESS_TWO = Address.fromHexString("22");
+  private static final Hash HASH_ONE =
+      Hash.fromHexString("0x111155949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c6911111");
+  private static final Hash HASH_TWO =
+      Hash.fromHexString("0x222255949038a9610f50fb23b5883af3b4ecb3c3bb79000000001542c6922222");
 
   private Account account;
   private WorldState worldState;
@@ -87,6 +95,47 @@ public class ChainHeadPrivateNonceProviderTest {
     final long nonce = privateNonceProvider.getNonce(ADDRESS, PRIVACY_GROUP_ID);
 
     assertThat(nonce).isEqualTo(4L);
+  }
+
+  @Test
+  public void determineNonceForPrivacyGroupRequestWhenAccountExistsAndNoMatchingTxInPmtPool() {
+    // setup pmtPool
+    final PmtTransactionTracker transactionTracker =
+        new PmtTransactionTracker(ADDRESS_TWO.toHexString(), String.valueOf(PRIVACY_GROUP_ID));
+    final Map<Hash, PmtTransactionTracker> pmtPool = new HashMap<>();
+    pmtPool.put(HASH_ONE, transactionTracker);
+
+    when(account.getNonce()).thenReturn(4L);
+    when(worldState.get(any(Address.class))).thenReturn(account);
+    when(privateStateRootResolver.resolveLastStateRoot(any(Bytes32.class), any(Hash.class)))
+        .thenReturn(Hash.ZERO);
+    when(privateWorldStateArchive.get(any(Hash.class), any(Hash.class)))
+        .thenReturn(Optional.of(worldState));
+
+    final long nonce = privateNonceProvider.getNonce(pmtPool, ADDRESS, PRIVACY_GROUP_ID);
+
+    assertThat(nonce).isEqualTo(4L);
+  }
+
+  @Test
+  public void determineNonceForPrivacyGroupRequestWhenAccountExistsAndMatchingTxInPmtPool() {
+    // setup pmtPool with matching tx
+    final PmtTransactionTracker transactionTracker =
+        new PmtTransactionTracker(ADDRESS.toHexString(), String.valueOf(PRIVACY_GROUP_ID));
+    final Map<Hash, PmtTransactionTracker> pmtPool = new HashMap<>();
+    pmtPool.put(HASH_ONE, transactionTracker);
+    pmtPool.put(HASH_TWO, transactionTracker);
+
+    when(account.getNonce()).thenReturn(4L);
+    when(worldState.get(any(Address.class))).thenReturn(account);
+    when(privateStateRootResolver.resolveLastStateRoot(any(Bytes32.class), any(Hash.class)))
+        .thenReturn(Hash.ZERO);
+    when(privateWorldStateArchive.get(any(Hash.class), any(Hash.class)))
+        .thenReturn(Optional.of(worldState));
+
+    final long nonce = privateNonceProvider.getNonce(pmtPool, ADDRESS, PRIVACY_GROUP_ID);
+
+    assertThat(nonce).isEqualTo(6L);
   }
 
   @Test

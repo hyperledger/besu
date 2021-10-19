@@ -95,9 +95,11 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
         privacyController.buildAndSendAddPayload(
             privateTransaction, Bytes32.wrap(privacyGroupId), privacyUserId);
 
+    // TODO change nonce handling
     final String pmtPayload =
         buildCompoundLookupId(privateTransactionLookupId, addPayloadPrivateTransactionLookupId);
 
+    // TODO but PMT happens after
     return createPrivateMarkerTransaction(
         sender, ONCHAIN_PRIVACY, pmtPayload, privateTransaction, privacyUserId);
   }

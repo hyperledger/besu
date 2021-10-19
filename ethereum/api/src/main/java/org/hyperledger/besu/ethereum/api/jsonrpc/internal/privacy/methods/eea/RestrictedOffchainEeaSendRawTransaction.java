@@ -82,10 +82,14 @@ public class RestrictedOffchainEeaSendRawTransaction extends AbstractEeaSendRawT
         findOffchainPrivacyGroup(
             privacyController, privateTransaction.getPrivacyGroupId(), privacyUserId);
 
+    // TODO add privacyGroupId, sender to the PMT
+    // so that the next transaction can inspect this and will get the private nonce ++
+
     final String privateTransactionLookupId =
         privacyController.createPrivateMarkerTransactionPayload(
             privateTransaction, privacyUserId, maybePrivacyGroup);
 
+    // but the PMT doesn't get created until after
     return createPrivateMarkerTransaction(
         sender, DEFAULT_PRIVACY, privateTransactionLookupId, privateTransaction, privacyUserId);
   }

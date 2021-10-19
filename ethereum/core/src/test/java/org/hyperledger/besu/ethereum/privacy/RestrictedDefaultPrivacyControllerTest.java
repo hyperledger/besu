@@ -133,7 +133,7 @@ public class RestrictedDefaultPrivacyControllerTest {
     privateStateStorage = mock(PrivateStateStorage.class);
     privateNonceProvider = mock(ChainHeadPrivateNonceProvider.class);
     privateStateRootResolver = mock(PrivateStateRootResolver.class);
-    when(privateNonceProvider.getNonce(any(), any())).thenReturn(1L);
+    when(privateNonceProvider.getNonce(any(), any(), any())).thenReturn(1L);
 
     privateWorldStateReader = mock(PrivateWorldStateReader.class);
 
@@ -319,7 +319,11 @@ public class RestrictedDefaultPrivacyControllerTest {
         };
 
     when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
-    when(privateNonceProvider.getNonce(any(Address.class), any(Bytes32.class))).thenReturn(8L);
+    // TODO cleanup here:
+    //    when(privateNonceProvider.getNonce(any(Address.class),
+    // any(Bytes32.class))).thenReturn(8L);
+    when(privateNonceProvider.getNonce(any(), any(Address.class), any(Bytes32.class)))
+        .thenReturn(8L);
 
     final long nonce =
         privacyController.determineEeaNonce(

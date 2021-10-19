@@ -68,6 +68,7 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(user);
 
+    // TODO change nonce handling
     final String payloadFromPlugin =
         privacyController.createPrivateMarkerTransactionPayload(
             privateTransaction, privacyUserId, Optional.empty());
