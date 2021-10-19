@@ -23,8 +23,8 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
@@ -41,9 +41,10 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
-import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
+import org.hyperledger.besu.consensus.ibft.IbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
+import org.hyperledger.besu.consensus.ibft.IbftProtocolSchedule;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
@@ -51,13 +52,13 @@ import org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightManagerFa
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftRoundFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -85,6 +86,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
   private BftConfigOptions bftConfig;
+  private BftForksSchedule<BftConfigOptions> bftForksSchedule;
   private ValidatorPeers peers;
 
   @Override
@@ -101,6 +103,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected void prepForBuild() {
     bftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getBftConfigOptions();
     bftEventQueue = new BftEventQueue(bftConfig.getMessageQueueLimit());
+    bftForksSchedule = IbftForksSchedulesFactory.create(genesisConfig.getConfigOptions());
   }
 
   @Override
@@ -134,7 +137,6 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftBlockCreatorFactory blockCreatorFactory =
         new BftBlockCreatorFactory(
-            gasLimitCalculator,
             transactionPool.getPendingTransactions(),
             protocolContext,
             protocolSchedule,
@@ -166,7 +168,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             proposerSelector,
             uniqueMessageMulticaster,
             new RoundTimer(bftEventQueue, bftConfig.getRequestTimeoutSeconds(), bftExecutors),
-            new BlockTimer(bftEventQueue, bftConfig.getBlockPeriodSeconds(), bftExecutors, clock),
+            new BlockTimer(bftEventQueue, bftForksSchedule, bftExecutors, clock),
             blockCreatorFactory,
             clock);
 
@@ -236,12 +238,13 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
-    return BftProtocolSchedule.create(
+    return IbftProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
+        bftForksSchedule,
         privacyParameters,
         isRevertReasonEnabled,
-        IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
-        bftExtraDataCodec().get());
+        bftExtraDataCodec().get(),
+        evmConfiguration);
   }
 
   @Override

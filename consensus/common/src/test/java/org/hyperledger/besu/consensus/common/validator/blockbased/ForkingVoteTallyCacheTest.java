@@ -19,7 +19,7 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 
 import java.util.HashMap;
 import java.util.List;

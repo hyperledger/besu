@@ -26,7 +26,7 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -43,8 +43,8 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return CliqueRpcApis.CLIQUE;
+  protected String getApiGroup() {
+    return RpcApis.CLIQUE.name();
   }
 
   @Override

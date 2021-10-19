@@ -23,11 +23,16 @@ import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.transaction.GoQuorumPrivateTransactionDetector;
+import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -217,6 +222,33 @@ public class Transaction
         payload,
         Optional.empty(),
         sender,
+        chainId,
+        v);
+  }
+
+  public Transaction(
+      final long nonce,
+      final Wei gasPrice,
+      final long gasLimit,
+      final Address to,
+      final Wei value,
+      final SECPSignature signature,
+      final Bytes payload,
+      final Optional<BigInteger> chainId,
+      final Optional<BigInteger> v) {
+    this(
+        TransactionType.FRONTIER,
+        nonce,
+        Optional.of(gasPrice),
+        Optional.empty(),
+        Optional.empty(),
+        gasLimit,
+        Optional.of(to),
+        value,
+        signature,
+        payload,
+        Optional.empty(),
+        null,
         chainId,
         v);
   }
@@ -635,11 +667,10 @@ public class Transaction
     if (chainId.isPresent()) {
       return false;
     }
-    return v.map(
-            value ->
-                GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN.equals(value)
-                    || GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX.equals(value))
-        .orElse(false);
+    if (!v.isPresent()) {
+      return false;
+    }
+    return GoQuorumPrivateTransactionDetector.isGoQuorumPrivateTransactionV(v.get());
   }
 
   private static Bytes32 computeSenderRecoveryHash(

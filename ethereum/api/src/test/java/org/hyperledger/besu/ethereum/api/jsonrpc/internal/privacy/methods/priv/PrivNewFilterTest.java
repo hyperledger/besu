@@ -24,6 +24,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -35,11 +37,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.Collections;
 import java.util.List;
@@ -99,9 +99,13 @@ public class PrivNewFilterTest {
         new FilterParameter(
             BlockParameter.EARLIEST,
             BlockParameter.LATEST,
+            null,
+            null,
             Collections.emptyList(),
             Collections.emptyList(),
-            Hash.ZERO);
+            Hash.ZERO,
+            null,
+            null);
 
     final JsonRpcRequestContext request = privNewFilterRequest(PRIVACY_GROUP_ID, invalidFilter);
 
@@ -122,7 +126,15 @@ public class PrivNewFilterTest {
 
     final FilterParameter filter =
         new FilterParameter(
-            BlockParameter.EARLIEST, BlockParameter.LATEST, addresses, logTopics, null);
+            BlockParameter.EARLIEST,
+            BlockParameter.LATEST,
+            null,
+            null,
+            addresses,
+            logTopics,
+            null,
+            null,
+            null);
 
     final LogsQuery expectedQuery =
         new LogsQuery.Builder().addresses(addresses).topics(logTopics).build();

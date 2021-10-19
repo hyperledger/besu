@@ -30,17 +30,17 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -91,8 +91,9 @@ public class CliqueMinerExecutorTest {
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
-            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false),
-            new PendingTransactions(
+            CliqueProtocolSchedule.create(
+                GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT),
+            new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
                 5,
@@ -108,8 +109,7 @@ public class CliqueMinerExecutorTest {
                 .enabled(false)
                 .build(),
             mock(CliqueBlockScheduler.class),
-            new EpochManager(EPOCH_LENGTH),
-            GasLimitCalculator.constant());
+            new EpochManager(EPOCH_LENGTH));
 
     // NOTE: Passing in the *parent* block, so must be 1 less than EPOCH
     final BlockHeader header = blockHeaderBuilder.number(EPOCH_LENGTH - 1).buildHeader();
@@ -136,8 +136,9 @@ public class CliqueMinerExecutorTest {
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
-            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false),
-            new PendingTransactions(
+            CliqueProtocolSchedule.create(
+                GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT),
+            new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
                 5,
@@ -153,8 +154,7 @@ public class CliqueMinerExecutorTest {
                 .enabled(false)
                 .build(),
             mock(CliqueBlockScheduler.class),
-            new EpochManager(EPOCH_LENGTH),
-            GasLimitCalculator.constant());
+            new EpochManager(EPOCH_LENGTH));
 
     // Parent block was epoch, so the next block should contain no validators.
     final BlockHeader header = blockHeaderBuilder.number(EPOCH_LENGTH).buildHeader();
@@ -181,8 +181,9 @@ public class CliqueMinerExecutorTest {
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
-            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false),
-            new PendingTransactions(
+            CliqueProtocolSchedule.create(
+                GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT),
+            new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
                 5,
@@ -198,8 +199,7 @@ public class CliqueMinerExecutorTest {
                 .enabled(false)
                 .build(),
             mock(CliqueBlockScheduler.class),
-            new EpochManager(EPOCH_LENGTH),
-            GasLimitCalculator.constant());
+            new EpochManager(EPOCH_LENGTH));
 
     executor.setExtraData(modifiedVanityData);
     final Bytes extraDataBytes = executor.calculateExtraData(blockHeaderBuilder.buildHeader());

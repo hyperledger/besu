@@ -22,13 +22,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Collection;
 import java.util.List;
@@ -171,5 +171,13 @@ public class TransactionValidatorProviderTest {
     final List<Address> expectedValidators =
         validators.stream().sorted().collect(Collectors.toList());
     assertThat(result).containsExactlyElementsOf(expectedValidators);
+  }
+
+  @Test
+  public void voteProviderIsEmpty() {
+    TransactionValidatorProvider transactionValidatorProvider =
+        new TransactionValidatorProvider(blockChain, validatorContractController);
+
+    assertThat(transactionValidatorProvider.getVoteProviderAtHead()).isEmpty();
   }
 }

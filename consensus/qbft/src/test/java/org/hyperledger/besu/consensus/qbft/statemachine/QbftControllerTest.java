@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
@@ -35,6 +36,7 @@ import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.PrepareMessageData;
@@ -45,10 +47,10 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
@@ -63,6 +65,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class QbftControllerTest {
+  private static final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
+
   @Mock private Blockchain blockChain;
   @Mock private BftFinalState bftFinalState;
   @Mock private QbftBlockHeightManagerFactory blockHeightManagerFactory;
@@ -124,7 +128,8 @@ public class QbftControllerTest {
             ibftGossip,
             messageTracker,
             futureMessageBuffer,
-            mock(EthSynchronizerUpdater.class));
+            mock(EthSynchronizerUpdater.class),
+            bftExtraDataCodec);
   }
 
   @Test
@@ -449,7 +454,7 @@ public class QbftControllerTest {
     when(proposal.getAuthor()).thenReturn(validator);
     when(proposal.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(proposalMessageData.getCode()).thenReturn(QbftV1.PROPOSAL);
-    when(proposalMessageData.decode()).thenReturn(proposal);
+    when(proposalMessageData.decode(bftExtraDataCodec)).thenReturn(proposal);
     proposalMessage = new DefaultMessage(null, proposalMessageData);
   }
 
@@ -476,7 +481,7 @@ public class QbftControllerTest {
     when(roundChange.getAuthor()).thenReturn(validator);
     when(roundChange.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(roundChangeMessageData.getCode()).thenReturn(QbftV1.ROUND_CHANGE);
-    when(roundChangeMessageData.decode()).thenReturn(roundChange);
+    when(roundChangeMessageData.decode(bftExtraDataCodec)).thenReturn(roundChange);
     roundChangeMessage = new DefaultMessage(null, roundChangeMessageData);
   }
 }

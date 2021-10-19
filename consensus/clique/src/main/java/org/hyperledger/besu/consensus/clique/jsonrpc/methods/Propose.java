@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 
 public class Propose implements JsonRpcMethod {
   private final ValidatorProvider validatorProvider;
@@ -41,7 +41,8 @@ public class Propose implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    checkState(validatorProvider.getVoteProvider().isPresent(), "Clique requires a vote provider");
+    checkState(
+        validatorProvider.getVoteProviderAtHead().isPresent(), "Clique requires a vote provider");
     final Address address = requestContext.getRequiredParameter(0, Address.class);
     final Boolean auth = requestContext.getRequiredParameter(1, Boolean.class);
     if (address.equals(CliqueBlockInterface.NO_VOTE_SUBJECT)) {
@@ -50,9 +51,9 @@ public class Propose implements JsonRpcMethod {
     }
 
     if (auth) {
-      validatorProvider.getVoteProvider().get().authVote(address);
+      validatorProvider.getVoteProviderAtHead().get().authVote(address);
     } else {
-      validatorProvider.getVoteProvider().get().dropVote(address);
+      validatorProvider.getVoteProviderAtHead().get().dropVote(address);
     }
     // Return true regardless, the vote is always recorded
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);

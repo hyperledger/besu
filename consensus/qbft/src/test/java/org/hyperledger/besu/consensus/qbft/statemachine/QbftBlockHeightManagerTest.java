@@ -40,6 +40,7 @@ import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
+import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagedata.RoundChangeMessageData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
@@ -54,14 +55,14 @@ import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.util.Subscribers;
@@ -148,7 +149,10 @@ public class QbftBlockHeightManagerTest {
 
     protocolContext =
         new ProtocolContext(
-            null, null, setupContextWithBftExtraDataEncoder(validators, new QbftExtraDataCodec()));
+            null,
+            null,
+            setupContextWithBftExtraDataEncoder(
+                QbftContext.class, validators, new QbftExtraDataCodec()));
 
     // Ensure the created IbftRound has the valid ConsensusRoundIdentifier;
     when(roundFactory.createNewRound(any(), anyInt()))
@@ -495,7 +499,7 @@ public class QbftBlockHeightManagerTest {
     assertThat(capturedMessageData).isInstanceOf(RoundChangeMessageData.class);
     final RoundChangeMessageData roundChange = (RoundChangeMessageData) capturedMessageData;
 
-    final RoundChange receivedRoundChange = roundChange.decode();
+    final RoundChange receivedRoundChange = roundChange.decode(bftExtraDataCodec);
 
     Assertions.assertThat(receivedRoundChange.getPreparedRoundMetadata()).isNotEmpty();
 

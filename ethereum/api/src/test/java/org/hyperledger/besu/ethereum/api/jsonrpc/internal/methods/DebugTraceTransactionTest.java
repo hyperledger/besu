@@ -20,6 +20,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
@@ -30,13 +32,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.Gas;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,7 +70,7 @@ public class DebugTraceTransactionTest {
   @Test
   public void shouldTraceTheTransactionUsingTheTransactionTracer() {
     final TransactionWithMetadata transactionWithMetadata =
-        new TransactionWithMetadata(transaction, 12L, blockHash, 2);
+        new TransactionWithMetadata(transaction, 12L, Optional.empty(), blockHash, 2);
     final Map<String, Boolean> map = new HashMap<>();
     map.put("disableStorage", true);
     final Object[] params = new Object[] {transactionHash, map};

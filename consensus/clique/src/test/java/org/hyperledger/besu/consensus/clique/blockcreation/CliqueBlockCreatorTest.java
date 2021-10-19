@@ -37,20 +37,21 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -86,14 +87,17 @@ public class CliqueBlockCreatorTest {
   public void setup() {
     protocolSchedule =
         CliqueProtocolSchedule.create(
-            GenesisConfigFile.DEFAULT.getConfigOptions(), proposerNodeKey, false);
+            GenesisConfigFile.DEFAULT.getConfigOptions(),
+            proposerNodeKey,
+            false,
+            EvmConfiguration.DEFAULT);
 
     final Address otherAddress = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     validatorList.add(otherAddress);
 
     validatorProvider = mock(ValidatorProvider.class);
     voteProvider = mock(VoteProvider.class);
-    when(validatorProvider.getVoteProvider()).thenReturn(Optional.of(voteProvider));
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
 
@@ -124,8 +128,9 @@ public class CliqueBlockCreatorTest {
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             coinbase,
+            () -> Optional.of(10_000_000L),
             parent -> extraData,
-            new PendingTransactions(
+            new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
                 5,
@@ -135,7 +140,6 @@ public class CliqueBlockCreatorTest {
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
-            gasLimit -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
             0.8,
@@ -160,8 +164,9 @@ public class CliqueBlockCreatorTest {
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             coinbase,
+            () -> Optional.of(10_000_000L),
             parent -> extraData,
-            new PendingTransactions(
+            new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
                 5,
@@ -171,7 +176,6 @@ public class CliqueBlockCreatorTest {
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
-            gasLimit -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
             0.8,
@@ -192,14 +196,15 @@ public class CliqueBlockCreatorTest {
         CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), validatorList);
     final Address a1 = Address.fromHexString("5");
     final Address coinbase = AddressHelpers.ofValue(1);
-    when(validatorProvider.getVoteProvider().get().getVoteAfterBlock(any(), any()))
+    when(validatorProvider.getVoteProviderAtHead().get().getVoteAfterBlock(any(), any()))
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             coinbase,
+            () -> Optional.of(10_000_000L),
             parent -> extraData,
-            new PendingTransactions(
+            new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
                 5,
@@ -209,7 +214,6 @@ public class CliqueBlockCreatorTest {
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
-            gasLimit -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
             0.8,

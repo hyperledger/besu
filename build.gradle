@@ -25,7 +25,7 @@ plugins {
   id 'com.github.hierynomus.license' version '0.16.1'
   id 'com.jfrog.artifactory' version '4.24.14'
   id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-  id 'me.champeau.gradle.jmh' version '0.5.3' apply false
+  id 'me.champeau.jmh' version '0.6.6' apply false
   id 'net.ltgt.errorprone' version '2.0.2'
   id 'maven-publish'
 }
@@ -116,7 +116,8 @@ allprojects {
   spotless {
     java {
       // This path needs to be relative to each project
-      target '**/src/*/java/**/*.java'
+      target '**/*.java'
+      targetExclude '**/reference-test/resources/**/*.java'
       removeUnusedImports()
       googleJavaFormat('1.10.0')
       importOrder 'org.hyperledger', 'java', ''
@@ -214,7 +215,7 @@ allprojects {
       'java.base/java.util.concurrent=ALL-UNNAMED',
       '--add-opens',
       'java.base/java.util.concurrent.atomic=ALL-UNNAMED',
-      // errorpone tests need access to the javac compiler
+      // errorprone tests need access to the javac compiler
       '--add-exports',
       'jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED',
       '--add-exports',
@@ -424,7 +425,7 @@ subprojects {
   }
 
   if (file('src/jmh').directory) {
-    apply plugin: 'me.champeau.gradle.jmh'
+    apply plugin: 'me.champeau.jmh'
 
     jmh {
       // Allows to control JMH execution directly from the command line. I typical execution may look
@@ -437,10 +438,10 @@ subprojects {
       fork = _intCmdArg('f')
       iterations = _intCmdArg('i')
       benchmarkMode = _strListCmdArg('bm')
-      include = _strListCmdArg('include', [''])
+      includes = _strListCmdArg('include', [''])
       humanOutputFile = project.file("${project.buildDir}/reports/jmh/results.txt")
       resultFormat = 'JSON'
-      duplicateClassesStrategy = 'warn'
+      duplicateClassesStrategy = DuplicatesStrategy.WARN
     }
 
     dependencies { jmh 'org.apache.logging.log4j:log4j-api' }
@@ -501,6 +502,8 @@ def tweakStartScript(createScriptTask) {
 }
 
 startScripts {
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
   doLast {
     tweakStartScript(startScripts)
   }
@@ -514,15 +517,35 @@ task evmToolStartScripts(type: CreateStartScripts) {
   defaultJvmOpts = [
     "-Dsecp256k1.randomize=false"
   ]
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
   doLast {
     tweakStartScript(evmToolStartScripts)
+  }
+}
+
+task autocomplete(type: JavaExec) {
+  dependsOn compileJava
+  def tempAutocompleteFile = File.createTempFile("besu", ".autocomplete")
+  standardOutput tempAutocompleteFile.newOutputStream()
+  outputs.file "$buildDir/besu.autocomplete.sh"
+
+  mainClass = application.mainClass
+  args "generate-completion"
+  classpath sourceSets.main.runtimeClasspath
+  doLast {
+    copy {
+      from tempAutocompleteFile
+      into "$buildDir"
+      rename tempAutocompleteFile.getName(), 'besu.autocomplete.sh'
+    }
   }
 }
 
 installDist { dependsOn checkLicenses }
 
 distTar {
-  dependsOn checkLicenses
+  dependsOn checkLicenses, autocomplete
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -531,7 +554,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicenses
+  dependsOn checkLicenses, autocomplete
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
@@ -627,6 +650,11 @@ task distDocker {
       executable "sh"
       args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:${dockerBuildVersion}'"
     }
+    // create a static tag for the benchmark target
+    exec {
+      executable "sh"
+      args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:benchmark'"
+    }
   }
 }
 
@@ -642,7 +670,7 @@ task testDocker {
     for (def variant in dockerVariants) {
       exec {
         def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
-        workingDir "docker/${variant}"
+        workingDir "${projectDir}/docker/${variant}"
         executable "sh"
         args "-c", "bash ../test.sh ${image}-${variant}"
       }
@@ -853,6 +881,7 @@ distributions {
       from("build/reports/license/license-dependency.html") { into "." }
       from("./docs/GettingStartedBinaries.md") { into "." }
       from("./docs/DocsArchive0.8.0.html") { into "." }
+      from("build/besu.autocomplete.sh") { into "." }
     }
   }
 }

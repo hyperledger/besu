@@ -20,19 +20,21 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.data.EnodeURL;
@@ -47,6 +49,7 @@ import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
+import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 
@@ -163,6 +166,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .isRevertReasonEnabled(node.isRevertReasonEnabled())
             .storageProvider(storageProvider)
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .pkiBlockCreationConfiguration(
+                node.getPkiKeyStoreConfiguration()
+                    .map(
+                        (pkiConfig) -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
+            .evmConfiguration(EvmConfiguration.DEFAULT)
             .build();
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
@@ -204,6 +212,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .autoLogBloomCaching(false)
             .storageProvider(storageProvider)
             .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdAsBytesList())
+            .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
 
     runner.start();

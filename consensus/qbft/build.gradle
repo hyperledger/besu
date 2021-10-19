@@ -59,12 +59,14 @@ dependencies {
   implementation project(':config')
   implementation project(':consensus:common')
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')
+  implementation project(':evm')
   implementation project(':pki')
   implementation project(':services:kvstore')
 
@@ -72,7 +74,7 @@ dependencies {
   implementation 'io.vertx:vertx-core'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
-  implementation 'org.web3j:abi:5.0.0'
+  implementation 'org.web3j:abi'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
@@ -85,16 +87,19 @@ dependencies {
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
   testImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
+  testImplementation project(':ethereum:core')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':crypto')
+  testImplementation project(':evm')
   testImplementation project(':metrics:core')
   testImplementation project(':testutil')
-  testImplementation project(':crypto')
 
+  integrationTestImplementation project(':crypto')
   integrationTestImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
+  integrationTestImplementation project(':evm')
   integrationTestImplementation project(':metrics:core')
   integrationTestImplementation project(':testutil')
-  integrationTestImplementation project(':crypto')
 
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
@@ -110,6 +115,7 @@ dependencies {
   referenceTestImplementation project(':crypto')
   referenceTestImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   referenceTestImplementation project(':consensus:common')
+  referenceTestImplementation project(':datatypes')
   referenceTestImplementation project(':ethereum:core')
   referenceTestImplementation project(':ethereum:rlp')
   referenceTestImplementation project(':config')

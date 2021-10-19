@@ -14,15 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
-import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater;
-import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater.StackedUpdater;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,7 +51,7 @@ public class BlockTracer {
       // if we have no prior updater, it must be the first TX, so use the block's initial state
       if (chainedUpdater == null) {
         chainedUpdater = mutableWorldState.updater();
-      } else if (chainedUpdater instanceof AbstractWorldUpdater.StackedUpdater) {
+      } else if (chainedUpdater instanceof StackedUpdater) {
         ((StackedUpdater) chainedUpdater).markTransactionBoundary();
       }
       // create an updater for just this tx

@@ -20,6 +20,8 @@ import static org.hyperledger.besu.pki.util.TestCertificateUtils.createCRL;
 import static org.hyperledger.besu.pki.util.TestCertificateUtils.createKeyPair;
 import static org.hyperledger.besu.pki.util.TestCertificateUtils.createSelfSignedCertificate;
 import static org.hyperledger.besu.pki.util.TestCertificateUtils.issueCertificate;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.pki.keystore.SoftwareKeyStoreWrapper;
@@ -27,14 +29,13 @@ import org.hyperledger.besu.pki.keystore.SoftwareKeyStoreWrapper;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.PrivateKey;
-import java.security.cert.CertStore;
 import java.security.cert.Certificate;
-import java.security.cert.CollectionCertStoreParameters;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -54,10 +55,12 @@ import org.junit.Test;
 
 public class CmsCreationAndValidationTest {
 
-  private static KeyStoreWrapper keystoreWrapper;
-  private static KeyStoreWrapper truststoreWrapper;
-  private static CertStore CRLs;
+  private static KeyStore keystore;
+  private static KeyStore truststore;
+  private static List<X509CRL> CRLs;
 
+  private KeyStoreWrapper keystoreWrapper;
+  private KeyStoreWrapper truststoreWrapper;
   private CmsValidator cmsValidator;
 
   @BeforeClass
@@ -150,19 +153,17 @@ public class CmsCreationAndValidationTest {
     /*
      Create truststore wrapper with 3 trusted certificates: 'ca', 'interca' and 'selfsigned'
     */
-    final KeyStore truststore = KeyStore.getInstance("PKCS12");
+    truststore = KeyStore.getInstance("PKCS12");
     truststore.load(null, null);
 
     truststore.setCertificateEntry("ca", caCertificate);
     truststore.setCertificateEntry("interca", interCACertificate);
     truststore.setCertificateEntry("selfsigned", selfsignedCertificate);
 
-    truststoreWrapper = new SoftwareKeyStoreWrapper(truststore, "");
-
     /*
      Create keystore with certificates used in tests
     */
-    final KeyStore keystore = KeyStore.getInstance("PKCS12");
+    keystore = KeyStore.getInstance("PKCS12");
     keystore.load(null, null);
 
     keystore.setKeyEntry(
@@ -195,7 +196,6 @@ public class CmsCreationAndValidationTest {
         untrustedIntermediateKeyPair.getPrivate(),
         "".toCharArray(),
         new Certificate[] {untrustedIntermediateCertificate, untrustedSelfsignedCertificate});
-    keystoreWrapper = new SoftwareKeyStoreWrapper(keystore, "");
 
     /*
      Create CRLs for all CA certificates (mostly empty, only ca has one revoked certificate)
@@ -207,17 +207,24 @@ public class CmsCreationAndValidationTest {
         createCRL(partnerACACertificate, partnerACAPair, Collections.emptyList());
     final X509CRL selfsignedCRL =
         createCRL(selfsignedCertificate, selfsignedKeyPair, Collections.emptyList());
-
-    CRLs =
-        CertStore.getInstance(
-            "Collection",
-            new CollectionCertStoreParameters(
-                Set.of(caCRL, intercaCRL, partnerACACRL, selfsignedCRL)));
+    CRLs = List.of(caCRL, intercaCRL, partnerACACRL, selfsignedCRL);
   }
 
   @Before
   public void before() {
-    cmsValidator = new CmsValidator(truststoreWrapper, CRLs);
+    keystoreWrapper = new SoftwareKeyStoreWrapper(keystore, "");
+
+    truststoreWrapper = spy(new SoftwareKeyStoreWrapper(truststore, ""));
+    when(truststoreWrapper.getCRLs()).thenReturn(CRLs);
+
+    cmsValidator = new CmsValidator(truststoreWrapper);
+  }
+
+  @Test
+  public void cmsValidationWithEmptyCmsMessage() {
+    final Bytes data = Bytes.random(32);
+
+    assertThat(cmsValidator.validate(Bytes.EMPTY, data)).isFalse();
   }
 
   @Test
@@ -285,10 +292,13 @@ public class CmsCreationAndValidationTest {
     final CmsCreator cmsCreator = new CmsCreator(keystoreWrapper, "revoked");
     final Bytes data = Bytes.random(32);
 
+    // Removing CRLs
+    when(truststoreWrapper.getCRLs()).thenReturn(null);
+
     final Bytes cms = cmsCreator.create(data);
 
     // Overriding validator with instance without CRL CertStore
-    cmsValidator = new CmsValidator(truststoreWrapper, null);
+    cmsValidator = new CmsValidator(truststoreWrapper);
 
     // Because we don't have a CRL CertStore, revocation is not checked
     assertThat(cmsValidator.validate(cms, data)).isTrue();

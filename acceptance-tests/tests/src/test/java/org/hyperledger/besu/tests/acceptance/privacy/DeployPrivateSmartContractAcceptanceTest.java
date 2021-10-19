@@ -58,7 +58,6 @@ public class DeployPrivateSmartContractAcceptanceTest extends ParameterizedEncla
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 minerNode.getTransactionSigningKey(),
-                restriction,
                 minerNode.getEnclaveKey()));
 
     privateContractVerifier

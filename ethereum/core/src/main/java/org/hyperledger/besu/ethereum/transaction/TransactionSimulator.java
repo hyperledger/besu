@@ -20,27 +20,27 @@ import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateAndPublicWorldStateUpdater;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -48,7 +48,6 @@ import java.util.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /*
  * Used to process transactions for eth_call and eth_estimateGas.
@@ -159,8 +158,10 @@ public class TransactionSimulator {
 
     BlockHeader blockHeaderToProcess = header;
 
+    final Wei gasPrice;
+    final Wei maxFeePerGas;
+    final Wei maxPriorityFeePerGas;
     if (transactionValidationParams.isAllowExceedingBalance()) {
-      updater.getOrCreate(senderAddress).getMutable().setBalance(Wei.of(UInt256.MAX_VALUE));
       if (header.getBaseFee().isPresent()) {
         blockHeaderToProcess =
             BlockHeaderBuilder.fromHeader(header)
@@ -168,11 +169,17 @@ public class TransactionSimulator {
                 .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions())
                 .buildBlockHeader();
       }
+      gasPrice = Wei.ZERO;
+      maxFeePerGas = Wei.ZERO;
+      maxPriorityFeePerGas = Wei.ZERO;
+    } else {
+      gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
+      maxFeePerGas = callParams.getMaxFeePerGas().orElse(gasPrice);
+      maxPriorityFeePerGas = callParams.getMaxPriorityFeePerGas().orElse(gasPrice);
     }
 
     final Account sender = publicWorldState.get(senderAddress);
     final long nonce = sender != null ? sender.getNonce() : 0L;
-    final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
     final long gasLimit =
         callParams.getGasLimit() >= 0
             ? callParams.getGasLimit()
@@ -198,9 +205,7 @@ public class TransactionSimulator {
     if (header.getBaseFee().isEmpty()) {
       transactionBuilder.gasPrice(gasPrice);
     } else if (protocolSchedule.getChainId().isPresent()) {
-      transactionBuilder
-          .maxFeePerGas(callParams.getMaxFeePerGas().orElse(gasPrice))
-          .maxPriorityFeePerGas(callParams.getMaxPriorityFeePerGas().orElse(gasPrice));
+      transactionBuilder.maxFeePerGas(maxFeePerGas).maxPriorityFeePerGas(maxPriorityFeePerGas);
     } else {
       return Optional.empty();
     }
@@ -233,7 +238,8 @@ public class TransactionSimulator {
     // This means a potential over-estimate of gas, but the tx, if sent with this gas, will not
     // fail.
     if (GoQuorumOptions.goQuorumCompatibilityMode && value.isZero()) {
-      Gas privateGasEstimateAndState = protocolSpec.getGasCalculator().getMaximumPmtCost();
+      Gas privateGasEstimateAndState =
+          protocolSpec.getGasCalculator().getMaximumTransactionCost(64);
       if (privateGasEstimateAndState.toLong() > result.getEstimateGasUsedByTransaction()) {
         // modify the result to have the larger estimate
         TransactionProcessingResult resultPmt =

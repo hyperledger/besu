@@ -16,14 +16,13 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
-import static org.hyperledger.besu.consensus.clique.jsonrpc.CliqueRpcApis.CLIQUE;
-import static org.hyperledger.besu.consensus.ibft.jsonrpc.IbftRpcApis.IBFT;
-import static org.hyperledger.besu.consensus.qbft.jsonrpc.QbftRpcApis.QBFT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ADMIN;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.CLIQUE;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.IBFT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.MINER;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.QBFT;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
@@ -46,23 +45,23 @@ public class NodeConfigurationFactory {
   }
 
   public JsonRpcConfiguration createJsonRpcWithCliqueEnabledConfig() {
-    return createJsonRpcWithRpcApiEnabledConfig(CLIQUE);
+    return createJsonRpcWithRpcApiEnabledConfig(CLIQUE.name());
   }
 
   public JsonRpcConfiguration createJsonRpcWithIbft2EnabledConfig(final boolean minerEnabled) {
     return minerEnabled
-        ? createJsonRpcWithRpcApiEnabledConfig(IBFT, MINER)
-        : createJsonRpcWithRpcApiEnabledConfig(IBFT);
+        ? createJsonRpcWithRpcApiEnabledConfig(IBFT.name(), MINER.name())
+        : createJsonRpcWithRpcApiEnabledConfig(IBFT.name());
   }
 
   public JsonRpcConfiguration createJsonRpcWithIbft2AdminEnabledConfig() {
-    return createJsonRpcWithRpcApiEnabledConfig(IBFT, ADMIN);
+    return createJsonRpcWithRpcApiEnabledConfig(IBFT.name(), ADMIN.name());
   }
 
   public JsonRpcConfiguration createJsonRpcWithQbftEnabledConfig(final boolean minerEnabled) {
     return minerEnabled
-        ? createJsonRpcWithRpcApiEnabledConfig(QBFT, MINER)
-        : createJsonRpcWithRpcApiEnabledConfig(QBFT);
+        ? createJsonRpcWithRpcApiEnabledConfig(QBFT.name(), MINER.name())
+        : createJsonRpcWithRpcApiEnabledConfig(QBFT.name());
   }
 
   public JsonRpcConfiguration createJsonRpcEnabledConfig() {
@@ -81,12 +80,12 @@ public class NodeConfigurationFactory {
   }
 
   public JsonRpcConfiguration jsonRpcConfigWithAdmin() {
-    return createJsonRpcWithRpcApiEnabledConfig(ADMIN);
+    return createJsonRpcWithRpcApiEnabledConfig(ADMIN.name());
   }
 
-  public JsonRpcConfiguration createJsonRpcWithRpcApiEnabledConfig(final RpcApi... rpcApi) {
+  public JsonRpcConfiguration createJsonRpcWithRpcApiEnabledConfig(final String... rpcApi) {
     final JsonRpcConfiguration jsonRpcConfig = createJsonRpcEnabledConfig();
-    final List<RpcApi> rpcApis = new ArrayList<>(jsonRpcConfig.getRpcApis());
+    final List<String> rpcApis = new ArrayList<>(jsonRpcConfig.getRpcApis());
     rpcApis.addAll(Arrays.asList(rpcApi));
     jsonRpcConfig.setRpcApis(rpcApis);
     return jsonRpcConfig;

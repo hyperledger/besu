@@ -160,15 +160,15 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   public BftConfigOptions getBftConfigOptions() {
     final String fieldKey = isIbft2() ? IBFT2_CONFIG_KEY : QBFT_CONFIG_KEY;
     return JsonUtil.getObjectNode(configRoot, fieldKey)
-        .map(BftConfigOptions::new)
-        .orElse(BftConfigOptions.DEFAULT);
+        .map(JsonBftConfigOptions::new)
+        .orElse(JsonBftConfigOptions.DEFAULT);
   }
 
   @Override
   public QbftConfigOptions getQbftConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, QBFT_CONFIG_KEY)
-        .map(QbftConfigOptions::new)
-        .orElse(QbftConfigOptions.DEFAULT);
+        .map(JsonQbftConfigOptions::new)
+        .orElse(JsonQbftConfigOptions.DEFAULT);
   }
 
   @Override
@@ -448,6 +448,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
     if (isIbft2()) {
       builder.put("ibft2", getBftConfigOptions().asMap());
+    }
+    if (isQbft()) {
+      builder.put("qbft", getQbftConfigOptions().asMap());
     }
 
     if (isQuorum()) {

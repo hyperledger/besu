@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -69,7 +69,7 @@ public class BftBlockHashing {
    * @param header The header for which a block hash is to be calculated
    * @return the hash of the header to be used when referencing the header on the blockchain
    */
-  public Hash calculateHashOfBftBlockOnChain(final BlockHeader header) {
+  public Hash calculateHashOfBftBlockOnchain(final BlockHeader header) {
     final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
     return Hash.hash(
         serializeHeader(
@@ -102,7 +102,7 @@ public class BftBlockHashing {
     // create a block header which is a copy of the header supplied as parameter except of the
     // extraData field
     final BlockHeaderBuilder builder = BlockHeaderBuilder.fromHeader(header);
-    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec));
+    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec));
 
     // set the extraData field using the supplied extraDataSerializer if the block height is not 0
     if (header.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {

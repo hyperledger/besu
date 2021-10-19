@@ -20,6 +20,8 @@ import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.math.BigInteger;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -71,6 +73,18 @@ public class TransactionGoQuorumTest {
     assertThat(transaction.getV()).isEqualTo(38);
     assertThat(transaction.isGoQuorumPrivateTransaction()).isTrue();
     assertThat(transaction.hasCostParams()).isFalse();
+  }
+
+  @Test
+  public void givenTransactionWithChainId_assertThatIsGoQuorumFlagIsFalse() {
+    final Transaction transaction = Transaction.builder().chainId(BigInteger.valueOf(0)).build();
+    assertThat(transaction.isGoQuorumPrivateTransaction()).isFalse();
+  }
+
+  @Test
+  public void givenTransactionWithoutChainIdAndV37_assertThatIsGoQuorumFlagIsTrue() {
+    final Transaction transaction = Transaction.builder().v(BigInteger.valueOf(37)).build();
+    assertThat(transaction.isGoQuorumPrivateTransaction()).isTrue();
   }
 
   private static RLPInput toRLP(final String bytes) {

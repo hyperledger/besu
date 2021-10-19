@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +64,7 @@ public class BlockResultFactory {
           new TransactionWithMetadata(
               block.getBody().getTransactions().get(i),
               block.getHeader().getNumber(),
+              block.getHeader().getBaseFee(),
               block.getHash(),
               i));
     }

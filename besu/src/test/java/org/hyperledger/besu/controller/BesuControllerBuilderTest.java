@@ -26,8 +26,8 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.Keccak256ConfigOptions;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguratio
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -140,6 +141,7 @@ public class BesuControllerBuilderTest {
             .transactionPoolConfiguration(poolConfiguration)
             .nodeKey(nodeKey)
             .storageProvider(storageProvider)
+            .evmConfiguration(EvmConfiguration.DEFAULT)
             .networkId(networkId);
   }
 

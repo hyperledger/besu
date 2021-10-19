@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
-import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE;
 import static org.hyperledger.besu.plugin.data.Restriction.RESTRICTED;
 import static org.hyperledger.besu.plugin.data.Restriction.UNRESTRICTED;
 import static org.hyperledger.besu.plugin.data.Restriction.UNSUPPORTED;
@@ -26,9 +25,9 @@ import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -204,14 +203,6 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
           .restriction(restriction)
           .build();
     }
-  }
-
-  public boolean isGroupRemovalTransaction() {
-    return this.getTo().isPresent()
-        && this.getTo().get().equals(Address.ONCHAIN_PRIVACY_PROXY)
-        && this.getPayload()
-            .toHexString()
-            .startsWith(REMOVE_PARTICIPANT_METHOD_SIGNATURE.toHexString());
   }
 
   private static Object resolvePrivateForOrPrivacyGroupId(final RLPInput item) {

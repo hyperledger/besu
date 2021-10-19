@@ -16,12 +16,11 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
-import org.hyperledger.besu.tests.web3j.privacy.OnChainPrivacyAcceptanceTestBase;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
@@ -42,7 +41,7 @@ import org.testcontainers.containers.Network;
 
 @RunWith(Parameterized.class)
 public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
-    extends OnChainPrivacyAcceptanceTestBase {
+    extends OnchainPrivacyAcceptanceTestBase {
 
   private final EnclaveType enclaveType;
 
@@ -65,14 +64,14 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
     final Network containerNetwork = Network.newNetwork();
 
     aliceNode =
-        privacyBesu.createOnChainPrivacyGroupEnabledMinerNode(
+        privacyBesu.createOnchainPrivacyGroupEnabledMinerNode(
             "alice-node",
             PrivacyAccountResolver.ALICE,
             false,
             enclaveType,
             Optional.of(containerNetwork));
     bobNode =
-        privacyBesu.createOnChainPrivacyGroupEnabledNode(
+        privacyBesu.createOnchainPrivacyGroupEnabledNode(
             "bob-node",
             PrivacyAccountResolver.BOB,
             false,
@@ -84,7 +83,7 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
 
   @Test
   public void nodesInGroupShouldHaveSameStateRoot() {
-    final String privacyGroupId = createOnChainPrivacyGroup(aliceNode, bobNode);
+    final String privacyGroupId = createOnchainPrivacyGroup(aliceNode, bobNode);
 
     final Hash aliceStateRootId =
         aliceNode
@@ -117,7 +116,7 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
     waitForBlockHeight(aliceNode, 2);
     waitForBlockHeight(bobNode, 2);
 
-    final String privacyGroupId = createOnChainPrivacyGroup(aliceNode, bobNode);
+    final String privacyGroupId = createOnchainPrivacyGroup(aliceNode, bobNode);
 
     waitForBlockHeight(aliceNode, 10);
     waitForBlockHeight(bobNode, 10);
@@ -145,7 +144,7 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
 
   @Test
   public void canInteractWithPrivateGenesisPreCompile() throws Exception {
-    final String privacyGroupId = createOnChainPrivacyGroup(aliceNode, bobNode);
+    final String privacyGroupId = createOnchainPrivacyGroup(aliceNode, bobNode);
 
     final EventEmitter eventEmitter =
         aliceNode.execute(
@@ -156,7 +155,8 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
                 aliceNode.getEnclaveKey(),
                 privacyGroupId));
 
-    eventEmitter.store(BigInteger.valueOf(42)).send();
+    privateTransactionVerifier.existingPrivateTransactionReceipt(
+        eventEmitter.store(BigInteger.valueOf(42)).send().getTransactionHash());
 
     final String aliceResponse =
         aliceNode

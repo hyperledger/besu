@@ -24,8 +24,8 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -127,7 +127,7 @@ public class TestContext {
     final List<ValidatorPeer> nonProposers = new ArrayList<>(remotePeers.values());
     nonProposers.remove(proposer);
 
-    return new RoundSpecificPeers(proposer, remotePeers.values(), nonProposers);
+    return new RoundSpecificPeers(proposer, remotePeers.values(), nonProposers, bftExtraDataCodec);
   }
 
   public NodeParams getLocalNodeParams() {

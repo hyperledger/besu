@@ -36,11 +36,12 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -50,8 +51,6 @@ import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -60,6 +59,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -67,6 +67,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -78,6 +79,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -107,7 +109,7 @@ public class TransactionPoolTest {
       mock(MainnetTransactionValidator.class);
   private MutableBlockchain blockchain;
 
-  private PendingTransactions transactions;
+  private GasPricePendingTransactionsSorter transactions;
   private final Transaction transaction1 = createTransaction(1);
   private final Transaction transaction2 = createTransaction(2);
   private final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
@@ -124,7 +126,7 @@ public class TransactionPoolTest {
   public void setUp() {
     blockchain = executionContext.getBlockchain();
     transactions =
-        new PendingTransactions(
+        new GasPricePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             MAX_TRANSACTIONS,
             MAX_TRANSACTION_HASHES,
@@ -160,6 +162,12 @@ public class TransactionPoolTest {
     blockchain.observeBlockAdded(transactionPool);
   }
 
+  @After
+  public void tearDown() {
+    GoQuorumOptions.goQuorumCompatibilityMode =
+        GoQuorumOptions.GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
+  }
+
   @Test
   public void mainNetValueTransferSucceeds() {
     final Transaction transaction =
@@ -193,7 +201,7 @@ public class TransactionPoolTest {
   }
 
   @Test
-  public void shouldRemoveTransactionsFromPendingListWhenIncludedInBlockOnChain() {
+  public void shouldRemoveTransactionsFromPendingListWhenIncludedInBlockOnchain() {
     transactions.addRemoteTransaction(transaction1);
     assertTransactionPending(transaction1);
     appendBlock(transaction1);
@@ -418,7 +426,8 @@ public class TransactionPoolTest {
 
   @Test
   public void shouldDiscardRemoteTransactionThatAlreadyExistsBeforeValidation() {
-    final PendingTransactions pendingTransactions = mock(PendingTransactions.class);
+    final GasPricePendingTransactionsSorter pendingTransactions =
+        mock(GasPricePendingTransactionsSorter.class);
     final TransactionPool transactionPool =
         new TransactionPool(
             pendingTransactions,
@@ -783,7 +792,8 @@ public class TransactionPoolTest {
             Wei.ZERO,
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ONE).build());
-    when(protocolSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(100L)));
+    // pre-London feemarket
+    when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.legacy());
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
         .thenReturn(valid());
     when(transactionValidator.validateForSender(
@@ -847,6 +857,8 @@ public class TransactionPoolTest {
 
   @Test
   public void shouldRejectGoQuorumTransactionWithNonZeroValue() {
+    GoQuorumOptions.goQuorumCompatibilityMode = true;
+
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final EthContext ethContext = ethProtocolManager.ethContext();
     final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();

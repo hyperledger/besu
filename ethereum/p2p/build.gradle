@@ -29,6 +29,7 @@ jar {
 
 dependencies {
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(':ethereum:rlp')
   implementation project(':pki')

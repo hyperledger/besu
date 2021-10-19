@@ -15,9 +15,9 @@
 package org.hyperledger.besu.consensus.qbft.messagewrappers;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
@@ -33,7 +33,6 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class RoundChange extends BftMessage<RoundChangePayload> {
 
-  private static final QbftExtraDataCodec QBFT_EXTRA_DATA_ENCODER = new QbftExtraDataCodec();
   private final Optional<Block> proposedBlock;
   private final List<SignedData<PreparePayload>> prepares;
 
@@ -73,7 +72,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     return rlpOut.encoded();
   }
 
-  public static RoundChange decode(final Bytes data) {
+  public static RoundChange decode(final Bytes data, final BftExtraDataCodec bftExtraDataCodec) {
 
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
@@ -86,8 +85,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     } else {
       block =
           Optional.of(
-              Block.readFrom(
-                  rlpIn, BftBlockHeaderFunctions.forCommittedSeal(QBFT_EXTRA_DATA_ENCODER)));
+              Block.readFrom(rlpIn, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec)));
     }
 
     final List<SignedData<PreparePayload>> prepares =

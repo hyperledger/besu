@@ -16,14 +16,14 @@ package org.hyperledger.besu.ethereum.chain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.evm.account.Account;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -88,8 +88,8 @@ public final class GenesisStateTest {
     assertThat(header.getParentHash()).isEqualTo(Hash.ZERO);
   }
 
-  private void assertContractInvariants(
-      final String sourceFile, final String blockHash, final int version) throws Exception {
+  private void assertContractInvariants(final String sourceFile, final String blockHash)
+      throws Exception {
     final GenesisState genesisState =
         GenesisState.fromJson(
             Resources.toString(GenesisStateTest.class.getResource(sourceFile), Charsets.UTF_8),
@@ -102,7 +102,6 @@ public final class GenesisStateTest {
     final Account contract =
         worldState.get(Address.fromHexString("0x3850000000000000000000000000000000000000"));
     assertThat(contract.getCode()).isEqualTo(Bytes.fromHexString(EXPECTED_CODE));
-    assertThat(contract.getVersion()).isEqualTo(version);
     assertStorageValue(
         contract,
         "c2575a0e9e593c00f959f8c92f12db2869c3395a3b0502d05e2516446f71f85d",
@@ -116,13 +115,7 @@ public final class GenesisStateTest {
   @Test
   public void createFromJsonWithContract() throws Exception {
     assertContractInvariants(
-        "genesis3.json", "0xe7fd8db206dcaf066b7c97b8a42a0abc18653613560748557ab44868652a78b6", 0);
-  }
-
-  @Test
-  public void createFromJsonWithVersion() throws Exception {
-    assertContractInvariants(
-        "genesis4.json", "0x3224ddae856381f5fb67492b4561ecbc0cb1e9e50e6cf3238f6e049fe95a8604", 1);
+        "genesis3.json", "0xe7fd8db206dcaf066b7c97b8a42a0abc18653613560748557ab44868652a78b6");
   }
 
   @Test

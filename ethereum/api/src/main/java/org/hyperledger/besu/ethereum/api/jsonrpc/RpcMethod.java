@@ -151,6 +151,7 @@ public enum RpcMethod {
   TRACE_REPLAY_BLOCK_TRANSACTIONS("trace_replayBlockTransactions"),
   TRACE_BLOCK("trace_block"),
   TRACE_TRANSACTION("trace_transaction"),
+  TRACE_FILTER("trace_filter"),
   TX_POOL_BESU_STATISTICS("txpool_besuStatistics"),
   TX_POOL_BESU_TRANSACTIONS("txpool_besuTransactions"),
   TX_POOL_BESU_PENDING_TRANSACTIONS("txpool_besuPendingTransactions"),

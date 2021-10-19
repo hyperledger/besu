@@ -27,19 +27,20 @@ import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraData;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -87,7 +88,8 @@ public class BftBlockCreatorTest {
         IbftProtocolSchedule.create(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
                 .getConfigOptions(),
-            false);
+            false,
+            EvmConfiguration.DEFAULT);
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,
@@ -97,11 +99,12 @@ public class BftBlockCreatorTest {
     final IbftBlockCreator blockCreator =
         new IbftBlockCreator(
             Address.fromHexString(String.format("%020d", 0)),
+            () -> Optional.of(10_000_000L),
             parent ->
                 new IbftExtraData(
                         Bytes.wrap(new byte[32]), Lists.newArrayList(), null, initialValidatorList)
                     .encode(),
-            new PendingTransactions(
+            new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
                 5,
@@ -111,7 +114,6 @@ public class BftBlockCreatorTest {
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protContext,
             protocolSchedule,
-            parentGasLimit -> parentGasLimit,
             nodeKeys,
             Wei.ZERO,
             0.8,

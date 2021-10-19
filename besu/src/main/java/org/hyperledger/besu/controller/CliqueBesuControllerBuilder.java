@@ -26,11 +26,11 @@ import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueJsonRpcMethods;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -89,8 +89,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
                 protocolContext.getConsensusState(CliqueContext.class).getValidatorProvider(),
                 localAddress,
                 secondsBetweenBlocks),
-            epochManager,
-            gasLimitCalculator);
+            epochManager);
     final CliqueMiningCoordinator miningCoordinator =
         new CliqueMiningCoordinator(
             protocolContext.getBlockchain(),
@@ -110,7 +109,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         nodeKey,
         privacyParameters,
-        isRevertReasonEnabled);
+        isRevertReasonEnabled,
+        evmConfiguration);
   }
 
   @Override

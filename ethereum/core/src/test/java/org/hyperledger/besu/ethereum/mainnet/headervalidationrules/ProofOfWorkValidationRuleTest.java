@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
@@ -28,11 +28,13 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ValidationTestUtils;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
@@ -53,7 +55,7 @@ public class ProofOfWorkValidationRuleTest {
     parentHeader = ValidationTestUtils.readHeader(blockNum);
     validationRule =
         new ProofOfWorkValidationRule(
-            new EpochCalculator.DefaultEpochCalculator(), false, PoWHasher.ETHASH_LIGHT);
+            new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT);
   }
 
   @Parameters(name = "block {1}")
@@ -142,7 +144,9 @@ public class ProofOfWorkValidationRuleTest {
   public void failsWithNonEip1559BlockAfterFork() {
     final ProofOfWorkValidationRule proofOfWorkValidationRule =
         new ProofOfWorkValidationRule(
-            new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT);
+            new EpochCalculator.DefaultEpochCalculator(),
+            PoWHasher.ETHASH_LIGHT,
+            Optional.of(FeeMarket.london(0L)));
 
     final BlockHeaderBuilder headerBuilder =
         BlockHeaderBuilder.fromHeader(blockHeader)
@@ -168,7 +172,7 @@ public class ProofOfWorkValidationRuleTest {
   public void failsWithEip1559BlockBeforeFork() {
     final ProofOfWorkValidationRule proofOfWorkValidationRule =
         new ProofOfWorkValidationRule(
-            new EpochCalculator.DefaultEpochCalculator(), false, PoWHasher.ETHASH_LIGHT);
+            new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT);
 
     final BlockHeaderBuilder headerBuilder =
         BlockHeaderBuilder.fromHeader(blockHeader)

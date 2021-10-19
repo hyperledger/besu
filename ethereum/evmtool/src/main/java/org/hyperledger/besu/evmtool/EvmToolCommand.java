@@ -18,26 +18,25 @@ package org.hyperledger.besu.evmtool;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.MainnetMessageCallProcessor;
-import org.hyperledger.besu.ethereum.mainnet.PrecompileContractRegistry;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.EVM;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
+import org.hyperledger.besu.evm.processor.MessageCallProcessor;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 
 import java.io.File;
 import java.io.IOException;
@@ -223,13 +222,16 @@ public class EvmToolCommand implements Runnable {
                 ? new StandardJsonTracer(System.out, !noMemory)
                 : OperationTracer.NO_TRACING;
 
+        var updater = component.getWorldUpdater();
+        updater.getOrCreate(sender);
+        updater.getOrCreate(receiver);
+
         final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
         messageFrameStack.add(
             MessageFrame.builder()
                 .type(MessageFrame.Type.MESSAGE_CALL)
                 .messageFrameStack(messageFrameStack)
-                .blockchain(component.getBlockchain())
-                .worldState(component.getWorldUpdater())
+                .worldUpdater(updater)
                 .initialGas(gas)
                 .contract(Address.ZERO)
                 .address(receiver)
@@ -239,17 +241,15 @@ public class EvmToolCommand implements Runnable {
                 .inputData(callData)
                 .value(ethValue)
                 .apparentValue(ethValue)
-                .code(new Code(codeHexString))
-                .blockHeader(blockHeader)
+                .code(new Code(codeHexString, Hash.hash(codeHexString)))
+                .blockValues(blockHeader)
                 .depth(0)
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new BlockHashLookup(blockHeader, component.getBlockchain()))
-                .contractAccountVersion(Account.DEFAULT_VERSION)
                 .build());
 
-        final MainnetMessageCallProcessor mcp =
-            new MainnetMessageCallProcessor(evm, precompileContractRegistry);
+        final MessageCallProcessor mcp = new MessageCallProcessor(evm, precompileContractRegistry);
         stopwatch.start();
         while (!messageFrameStack.isEmpty()) {
           final MessageFrame messageFrame = messageFrameStack.peek();
@@ -287,8 +287,11 @@ public class EvmToolCommand implements Runnable {
             final Gas intrinsicGasCost =
                 protocolSpec
                     .getGasCalculator()
-                    .transactionIntrinsicGasCostAndAccessedState(tx)
-                    .getGas();
+                    .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
+            final Gas accessListCost =
+                tx.getAccessList()
+                    .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
+                    .orElse(Gas.ZERO);
             final Gas evmGas = gas.minus(messageFrame.getRemainingGas());
             out.println();
             out.println(
@@ -296,7 +299,13 @@ public class EvmToolCommand implements Runnable {
                     .put("gasUser", evmGas.asUInt256().toShortHexString())
                     .put("timens", lastTime)
                     .put("time", lastTime / 1000)
-                    .put("gasTotal", evmGas.plus(intrinsicGasCost).asUInt256().toShortHexString()));
+                    .put(
+                        "gasTotal",
+                        evmGas
+                            .plus(intrinsicGasCost)
+                            .plus(accessListCost)
+                            .asUInt256()
+                            .toShortHexString()));
           }
         }
         lastTime = stopwatch.elapsed().toNanos();

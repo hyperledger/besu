@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.validator;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Collection;
@@ -28,5 +28,14 @@ public interface ValidatorProvider {
 
   Collection<Address> getValidatorsForBlock(BlockHeader header);
 
-  Optional<VoteProvider> getVoteProvider();
+  Optional<VoteProvider> getVoteProviderAtHead();
+
+  /*
+   * ForkingValidatorProvider has a specific implementation but we don't want the client code to
+   * know it's using a ForkingValidatorProvider. ForkingValidatorProvider's voteProvider can be
+   * different per block. Other ValidatorProviders yield the same voteProvider at every block.
+   */
+  default Optional<VoteProvider> getVoteProviderAfterBlock(final BlockHeader header) {
+    return getVoteProviderAtHead();
+  }
 }

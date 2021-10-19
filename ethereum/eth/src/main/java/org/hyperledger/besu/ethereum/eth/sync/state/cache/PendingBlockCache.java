@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.state.cache;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Comparator;
 import java.util.List;

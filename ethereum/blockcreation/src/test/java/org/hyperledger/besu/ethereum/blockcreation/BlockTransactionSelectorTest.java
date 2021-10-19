@@ -24,25 +24,24 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -50,6 +49,9 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -72,8 +74,8 @@ public class BlockTransactionSelectorTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private final Blockchain blockchain = new ReferenceTestBlockchain();
-  private final PendingTransactions pendingTransactions =
-      new PendingTransactions(
+  private final GasPricePendingTransactionsSorter pendingTransactions =
+      new GasPricePendingTransactionsSorter(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           5,
           5,
@@ -111,7 +113,8 @@ public class BlockTransactionSelectorTest {
   @Test
   public void emptyPendingTransactionsResultsInEmptyVettingResult() {
     final ProtocolSchedule protocolSchedule =
-        FixedDifficultyProtocolSchedule.create(GenesisConfigFile.development().getConfigOptions());
+        FixedDifficultyProtocolSchedule.create(
+            GenesisConfigFile.development().getConfigOptions(), EvmConfiguration.DEFAULT);
     final MainnetTransactionProcessor mainnetTransactionProcessor =
         protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
 
@@ -318,8 +321,8 @@ public class BlockTransactionSelectorTest {
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(300);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
-    final PendingTransactions pendingTransactions1559 =
-        new PendingTransactions(
+    final BaseFeePendingTransactionsSorter pendingTransactions1559 =
+        new BaseFeePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             5,
             5,
@@ -343,7 +346,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            FeeMarket.london());
+            FeeMarket.london(0L));
 
     // this should fill up all the block space
     final Transaction fillingLegacyTx =

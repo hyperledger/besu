@@ -21,12 +21,12 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 
 import java.util.Optional;
 
@@ -47,7 +47,7 @@ public class IbftProposeValidatorVoteTest {
   @Before
   public void setup() {
     method = new IbftProposeValidatorVote(validatorProvider);
-    when(validatorProvider.getVoteProvider()).thenReturn(Optional.of(voteProvider));
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
   }
 
   @Test

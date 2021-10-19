@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -35,7 +36,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 
@@ -143,7 +143,8 @@ public class EthGetUncleByBlockNumberAndIndexTest {
     for (int i = 0; i < 3; i++) {
       final Transaction transaction = transactionTestFixture.createTransaction(keyPair);
       transactions.add(
-          new TransactionWithMetadata(transaction, header.getNumber(), header.getHash(), 0));
+          new TransactionWithMetadata(
+              transaction, header.getNumber(), Optional.empty(), header.getHash(), 0));
     }
 
     final List<Hash> ommers = new ArrayList<>();

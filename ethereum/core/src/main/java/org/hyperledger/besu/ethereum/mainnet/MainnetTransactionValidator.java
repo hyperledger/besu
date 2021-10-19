@@ -16,14 +16,15 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -151,7 +152,10 @@ public class MainnetTransactionValidator {
     }
 
     final Gas intrinsicGasCost =
-        gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction).getGas();
+        gasCalculator
+            .transactionIntrinsicGasCost(transaction.getPayload(), transaction.isContractCreation())
+            .plus(
+                transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(Gas.ZERO));
     if (intrinsicGasCost.compareTo(Gas.of(transaction.getGasLimit())) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
@@ -169,10 +173,12 @@ public class MainnetTransactionValidator {
       final TransactionValidationParams validationParams) {
     Wei senderBalance = Account.DEFAULT_BALANCE;
     long senderNonce = Account.DEFAULT_NONCE;
+    Hash codeHash = Hash.EMPTY;
 
     if (sender != null) {
       senderBalance = sender.getBalance();
       senderNonce = sender.getNonce();
+      if (sender.getCodeHash() != null) codeHash = sender.getCodeHash();
     }
 
     if (transaction.getUpfrontCost().compareTo(senderBalance) > 0) {
@@ -197,6 +203,14 @@ public class MainnetTransactionValidator {
           String.format(
               "transaction nonce %s does not match sender account nonce %s.",
               transaction.getNonce(), senderNonce));
+    }
+
+    if (!validationParams.isAllowContractAddressAsSender() && !codeHash.equals(Hash.EMPTY)) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
+          String.format(
+              "Sender %s has deployed code and so is not authorized to send transactions",
+              transaction.getSender()));
     }
 
     if (!isSenderAllowed(transaction, validationParams)) {

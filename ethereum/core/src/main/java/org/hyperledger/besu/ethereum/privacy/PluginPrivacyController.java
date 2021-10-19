@@ -16,13 +16,13 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.readFrom;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -153,7 +153,7 @@ public class PluginPrivacyController implements PrivacyController {
   }
 
   @Override
-  public PrivacyGroup[] findOffChainPrivacyGroupByMembers(
+  public PrivacyGroup[] findOffchainPrivacyGroupByMembers(
       final List<String> addresses, final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
         "Method not supported when using PrivacyPlugin");
@@ -241,7 +241,7 @@ public class PluginPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
+  public Optional<PrivacyGroup> findOffchainPrivacyGroupByGroupId(
       final String toBase64String, final String privacyUserId) {
 
     return findPrivacyGroupByGroupId(toBase64String, privacyUserId);
@@ -262,14 +262,14 @@ public class PluginPrivacyController implements PrivacyController {
   }
 
   @Override
-  public List<PrivacyGroup> findOnChainPrivacyGroupByMembers(
+  public List<PrivacyGroup> findOnchainPrivacyGroupByMembers(
       final List<String> asList, final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
         "Method not supported when using PrivacyPlugin");
   }
 
   @Override
-  public Optional<PrivacyGroup> findOnChainPrivacyGroupAndAddNewMembers(
+  public Optional<PrivacyGroup> findOnchainPrivacyGroupAndAddNewMembers(
       final Bytes privacyGroupId,
       final String privacyUserId,
       final PrivateTransaction privateTransaction) {

@@ -14,21 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.PoWBlockCreator;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.retesteth.RetestethClock;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
+
+import java.util.Optional;
 
 public class TestMineBlocks implements JsonRpcMethod {
   private final RetestethContext context;
@@ -63,11 +64,11 @@ public class TestMineBlocks implements JsonRpcMethod {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             context.getCoinbase(),
+            () -> Optional.of(10_000_000L),
             header -> context.getExtraData(),
             context.getTransactionPool().getPendingTransactions(),
             protocolContext,
             protocolSchedule,
-            GasLimitCalculator.constant(),
             context.getEthHashSolver(),
             Wei.ZERO,
             0.0,

@@ -56,6 +56,9 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalInt stackSizeLimit = OptionalInt.empty();
   private final OptionalLong ecip1017EraRounds = OptionalLong.empty();
   private Optional<String> ecCurve = Optional.empty();
+  private QbftConfigOptions qbftConfigOptions = JsonQbftConfigOptions.DEFAULT;
+  private BftConfigOptions bftConfigOptions = JsonBftConfigOptions.DEFAULT;
+  private TransitionsConfigOptions transitions = TransitionsConfigOptions.DEFAULT;
 
   @Override
   public String getConsensusEngine() {
@@ -109,12 +112,12 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public BftConfigOptions getBftConfigOptions() {
-    return BftConfigOptions.DEFAULT;
+    return bftConfigOptions;
   }
 
   @Override
   public QbftConfigOptions getQbftConfigOptions() {
-    return QbftConfigOptions.DEFAULT;
+    return qbftConfigOptions;
   }
 
   @Override
@@ -333,7 +336,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public TransitionsConfigOptions getTransitions() {
-    return TransitionsConfigOptions.DEFAULT;
+    return transitions;
   }
 
   @Override
@@ -490,6 +493,21 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions ecCurve(final Optional<String> ecCurve) {
     this.ecCurve = ecCurve;
+    return this;
+  }
+
+  public StubGenesisConfigOptions qbftConfigOptions(final QbftConfigOptions qbftConfigOptions) {
+    this.qbftConfigOptions = qbftConfigOptions;
+    return this;
+  }
+
+  public StubGenesisConfigOptions bftConfigOptions(final BftConfigOptions bftConfigOptions) {
+    this.bftConfigOptions = bftConfigOptions;
+    return this;
+  }
+
+  public StubGenesisConfigOptions transitions(final TransitionsConfigOptions transitions) {
+    this.transitions = transitions;
     return this;
   }
 }

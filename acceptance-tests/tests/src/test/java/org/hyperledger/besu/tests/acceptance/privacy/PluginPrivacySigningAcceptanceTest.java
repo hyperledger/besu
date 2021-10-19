@@ -16,7 +16,6 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver.BOB;
-import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.privacy.PrivacyNodeConfiguration;
@@ -77,7 +76,6 @@ public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBas
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 minerNode.getTransactionSigningKey(),
-                UNRESTRICTED,
                 minerNode.getEnclaveKey()));
 
     privateContractVerifier
@@ -89,11 +87,10 @@ public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBas
         minerNode
             .execute(
                 ethTransactions.getTransactionReceipt(
-                    "0x5586b8321e26cdabd68e0139955b90f97c0fc082519d07e1c0b9db26862ff2ff"))
+                    "0xa65bc3b91e85a864a90be966f7b6da88cb7a1dcefe972c8840dfa5f6d25a4299"))
             .get();
 
     assertThat(pmtReceipt.getStatus()).isEqualTo("0x1");
-
     assertThat(pmtReceipt.getFrom()).isEqualTo("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   }
 }

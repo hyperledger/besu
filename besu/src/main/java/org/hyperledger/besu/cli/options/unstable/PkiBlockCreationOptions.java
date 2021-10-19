@@ -19,7 +19,6 @@ import static java.util.Arrays.asList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
 
 import org.hyperledger.besu.cli.util.CommandLineUtils;
-import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 
 import java.nio.file.Path;
@@ -119,14 +118,11 @@ public class PkiBlockCreationOptions {
         new PkiKeyStoreConfiguration.Builder()
             .withKeyStoreType(keyStoreType)
             .withKeyStorePath(keyStoreFile)
-            .withKeyStorePasswordSupplier(new FileBasedPasswordProvider(keyStorePasswordFile))
+            .withKeyStorePasswordPath(keyStorePasswordFile)
             .withCertificateAlias(certificateAlias)
             .withTrustStoreType(trustStoreType)
             .withTrustStorePath(trustStoreFile)
-            .withTrustStorePasswordSupplier(
-                null == trustStorePasswordFile
-                    ? null
-                    : new FileBasedPasswordProvider(trustStorePasswordFile))
+            .withTrustStorePasswordPath(trustStorePasswordFile)
             .withCrlFilePath(crlFile)
             .build());
   }

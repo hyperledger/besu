@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX;
 import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
@@ -23,16 +22,16 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 
-import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.AccessListEntry;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.transaction.GoQuorumPrivateTransactionDetector;
+import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -104,7 +103,7 @@ public class TransactionDecoder {
     final BigInteger v = input.readBigIntegerScalar();
     final byte recId;
     Optional<BigInteger> chainId = Optional.empty();
-    if (isGoQuorumPrivateTransaction(v)) {
+    if (GoQuorumPrivateTransactionDetector.isGoQuorumPrivateTransactionV(v)) {
       builder.v(v);
       recId = v.subtract(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN).byteValueExact();
     } else if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
@@ -204,11 +203,5 @@ public class TransactionDecoder {
             .build();
     input.leaveList();
     return transaction;
-  }
-
-  private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {
-    return GoQuorumOptions.goQuorumCompatibilityMode
-        && (v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
-            || v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN));
   }
 }

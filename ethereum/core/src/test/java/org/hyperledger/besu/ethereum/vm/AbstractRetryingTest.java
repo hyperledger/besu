@@ -58,7 +58,7 @@ public abstract class AbstractRetryingTest {
   public void execution() {
     try {
       runTest();
-    } catch (final AssertionError e) {
+    } catch (final RuntimeException | AssertionError e) {
       if (!"trace".equalsIgnoreCase(originalRootLogLevel)
           || !"trace".equalsIgnoreCase(originalEvmLogLevel)) {
         // try again, this time with more logging so we can capture more information.

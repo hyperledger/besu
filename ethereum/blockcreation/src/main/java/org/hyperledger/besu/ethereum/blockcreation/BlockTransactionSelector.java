@@ -14,17 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
@@ -34,6 +32,8 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collections;
 import java.util.List;
@@ -102,7 +102,7 @@ public class BlockTransactionSelector {
   private final ProcessableBlockHeader processableBlockHeader;
   private final Blockchain blockchain;
   private final MutableWorldState worldState;
-  private final PendingTransactions pendingTransactions;
+  private final AbstractPendingTransactionsSorter pendingTransactions;
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final Address miningBeneficiary;
   private final FeeMarket feeMarket;
@@ -114,7 +114,7 @@ public class BlockTransactionSelector {
       final MainnetTransactionProcessor transactionProcessor,
       final Blockchain blockchain,
       final MutableWorldState worldState,
-      final PendingTransactions pendingTransactions,
+      final AbstractPendingTransactionsSorter pendingTransactions,
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei minTransactionGasPrice,

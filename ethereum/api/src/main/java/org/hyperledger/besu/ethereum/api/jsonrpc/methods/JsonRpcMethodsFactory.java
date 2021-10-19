@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.RpcModules;
@@ -61,9 +60,9 @@ public class JsonRpcMethodsFactory {
       final MiningCoordinator miningCoordinator,
       final ObservableMetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
-      final Optional<AccountLocalConfigPermissioningController> accountsWhitelistController,
-      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistController,
-      final Collection<RpcApi> rpcApis,
+      final Optional<AccountLocalConfigPermissioningController> accountsAllowlistController,
+      final Optional<NodeLocalConfigPermissioningController> nodeAllowlistController,
+      final Collection<String> rpcApis,
       final PrivacyParameters privacyParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
@@ -111,7 +110,7 @@ public class JsonRpcMethodsFactory {
                   webSocketConfiguration,
                   metricsConfiguration),
               new MinerJsonRpcMethods(miningCoordinator),
-              new PermJsonRpcMethods(accountsWhitelistController, nodeWhitelistController),
+              new PermJsonRpcMethods(accountsAllowlistController, nodeAllowlistController),
               new PrivJsonRpcMethods(
                   blockchainQueries,
                   protocolSchedule,

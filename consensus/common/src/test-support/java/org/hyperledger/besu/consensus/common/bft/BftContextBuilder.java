@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;
 
@@ -40,7 +40,14 @@ public class BftContextBuilder {
 
   public static BftContext setupContextWithBftExtraData(
       final Collection<Address> validators, final BftExtraData bftExtraData) {
-    final BftContext bftContext = mock(BftContext.class, withSettings().lenient());
+    return setupContextWithBftExtraData(BftContext.class, validators, bftExtraData);
+  }
+
+  public static <T extends BftContext> T setupContextWithBftExtraData(
+      final Class<T> contextClazz,
+      final Collection<Address> validators,
+      final BftExtraData bftExtraData) {
+    final T bftContext = mock(contextClazz, withSettings().lenient());
     final ValidatorProvider mockValidatorProvider =
         mock(ValidatorProvider.class, withSettings().lenient());
     final BftBlockInterface mockBftBlockInterface =
@@ -54,7 +61,14 @@ public class BftContextBuilder {
 
   public static BftContext setupContextWithBftExtraDataEncoder(
       final Collection<Address> validators, final BftExtraDataCodec bftExtraDataCodec) {
-    final BftContext bftContext = mock(BftContext.class, withSettings().lenient());
+    return setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec);
+  }
+
+  public static <T extends BftContext> T setupContextWithBftExtraDataEncoder(
+      final Class<T> contextClazz,
+      final Collection<Address> validators,
+      final BftExtraDataCodec bftExtraDataCodec) {
+    final T bftContext = mock(contextClazz, withSettings().lenient());
     final ValidatorProvider mockValidatorProvider =
         mock(ValidatorProvider.class, withSettings().lenient());
     when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);

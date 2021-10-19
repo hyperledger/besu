@@ -34,7 +34,6 @@ dependencies {
   api project(':util')
 
   implementation 'com.google.guava:guava'
-  implementation 'io.vertx:vertx-core'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
 

@@ -15,14 +15,14 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.BaseFeeMarketBlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.CalculatedDifficultyValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ExtraDataMaxLengthValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
-import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.LondonFeeMarketBlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ProofOfWorkValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
@@ -42,15 +42,15 @@ public final class MainnetBlockHeaderValidator {
       Bytes.fromHexString("0x94365e3a8c0b35089c1d1195081fe7489b528a84b22199c916180db8b28ade7f");
 
   public static BlockHeaderValidator.Builder create() {
-    return createValidator(PoWHasher.ETHASH_LIGHT);
+    return createLegacyFeeMarketValidator(PoWHasher.ETHASH_LIGHT);
   }
 
   public static BlockHeaderValidator.Builder create(final PoWHasher hasher) {
-    return createValidator(hasher);
+    return createLegacyFeeMarketValidator(hasher);
   }
 
   public static BlockHeaderValidator.Builder createDaoValidator() {
-    return createValidator()
+    return createLegacyFeeMarketValidator()
         .addRule(
             new ConstantFieldValidationRule<>(
                 "extraData", BlockHeader::getExtraData, DAO_EXTRA_DATA));
@@ -61,7 +61,7 @@ public final class MainnetBlockHeaderValidator {
   }
 
   public static BlockHeaderValidator.Builder createClassicValidator(final PoWHasher hasher) {
-    return createValidator(hasher)
+    return createLegacyFeeMarketValidator(hasher)
         .addRule(
             new ConstantFieldValidationRule<>(
                 "hash",
@@ -77,16 +77,17 @@ public final class MainnetBlockHeaderValidator {
     return header.getNumber() != 1_920_000 || header.getHash().equals(CLASSIC_FORK_BLOCK_HEADER);
   }
 
-  static BlockHeaderValidator.Builder createOmmerValidator() {
-    return createOmmerValidator(
+  static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator() {
+    return createLegacyFeeMarketOmmerValidator(
         new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT);
   }
 
-  static BlockHeaderValidator.Builder createOmmerValidator(final PoWHasher hasher) {
-    return createOmmerValidator(new EpochCalculator.DefaultEpochCalculator(), hasher);
+  static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator(final PoWHasher hasher) {
+    return createLegacyFeeMarketOmmerValidator(
+        new EpochCalculator.DefaultEpochCalculator(), hasher);
   }
 
-  static BlockHeaderValidator.Builder createOmmerValidator(
+  static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator(
       final EpochCalculator epochCalculator, final PoWHasher hasher) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
@@ -95,18 +96,19 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new GasUsageValidationRule())
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
-        .addRule(new ProofOfWorkValidationRule(epochCalculator, false, hasher));
+        .addRule(new ProofOfWorkValidationRule(epochCalculator, hasher, Optional.empty()));
   }
 
-  private static BlockHeaderValidator.Builder createValidator() {
-    return createValidator(PoWHasher.ETHASH_LIGHT);
+  private static BlockHeaderValidator.Builder createLegacyFeeMarketValidator() {
+    return createLegacyFeeMarketValidator(PoWHasher.ETHASH_LIGHT);
   }
 
-  private static BlockHeaderValidator.Builder createValidator(final PoWHasher hasher) {
-    return createBlockHeaderValidator(new EpochCalculator.DefaultEpochCalculator(), hasher);
+  private static BlockHeaderValidator.Builder createLegacyFeeMarketValidator(
+      final PoWHasher hasher) {
+    return createLegacyBlockHeaderValidator(new EpochCalculator.DefaultEpochCalculator(), hasher);
   }
 
-  static BlockHeaderValidator.Builder createBlockHeaderValidator(
+  static BlockHeaderValidator.Builder createLegacyBlockHeaderValidator(
       final EpochCalculator epochCalculator, final PoWHasher hasher) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
@@ -116,45 +118,45 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
-        .addRule(new ProofOfWorkValidationRule(epochCalculator, false, hasher));
+        .addRule(new ProofOfWorkValidationRule(epochCalculator, hasher, Optional.empty()));
   }
 
-  static BlockHeaderValidator.Builder createEip1559Validator(final EIP1559 eip1559) {
+  static BlockHeaderValidator.Builder createBaseFeeMarketValidator(
+      final BaseFeeMarket baseFeeMarket) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
         .addRule(
             new GasLimitRangeAndDeltaValidationRule(
-                MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(eip1559)))
+                MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(baseFeeMarket)))
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(
             new ProofOfWorkValidationRule(
                 new EpochCalculator.DefaultEpochCalculator(),
-                true,
                 PoWHasher.ETHASH_LIGHT,
-                Optional.of(eip1559)))
-        .addRule((new LondonFeeMarketBlockHeaderGasPriceValidationRule(eip1559)));
+                Optional.of(baseFeeMarket)))
+        .addRule((new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket)));
   }
 
-  static BlockHeaderValidator.Builder createEip1559OmmerValidator(final EIP1559 eip1559) {
+  static BlockHeaderValidator.Builder createBaseFeeMarketOmmerValidator(
+      final BaseFeeMarket baseFeeMarket) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
         .addRule(
             new GasLimitRangeAndDeltaValidationRule(
-                MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(eip1559)))
+                MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(baseFeeMarket)))
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(
             new ProofOfWorkValidationRule(
                 new EpochCalculator.DefaultEpochCalculator(),
-                true,
                 PoWHasher.ETHASH_LIGHT,
-                Optional.of(eip1559)))
-        .addRule((new LondonFeeMarketBlockHeaderGasPriceValidationRule(eip1559)));
+                Optional.of(baseFeeMarket)))
+        .addRule((new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket)));
   }
 }

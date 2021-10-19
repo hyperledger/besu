@@ -49,34 +49,33 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
+import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -94,6 +93,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -316,7 +316,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final Path toml = createTempFile("toml", updatedConfig.getBytes(UTF_8));
 
-    final List<RpcApi> expectedApis = asList(ETH, WEB3);
+    final List<String> expectedApis = asList(ETH.name(), WEB3.name());
 
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setEnabled(false);
@@ -1581,7 +1581,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove --ethstats-contact or provide an url (via --ethstats=nodename:secret@host:port)");
+            "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove --ethstats-contact or provide a URL (via --ethstats=nodename:secret@host:port)");
   }
 
   @Test
@@ -1824,7 +1824,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         .warn("Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
-        .containsExactlyInAnyOrder(ETH, NET, PERM);
+        .containsExactlyInAnyOrder(ETH.name(), NET.name(), PERM.name());
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1838,7 +1838,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
-        .containsExactlyInAnyOrder(ETH, NET);
+        .containsExactlyInAnyOrder(ETH.name(), NET.name());
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -1926,6 +1926,24 @@ public class BesuCommandTest extends CommandTestAbstract {
     // PicoCLI uses longest option name for message when option has multiple names, so here plural.
     assertThat(commandErrorOutput.toString())
         .contains("Invalid value for option '--rpc-http-apis'");
+  }
+
+  @Test
+  public void rpcApisPropertyWithPluginNamespaceAreValid() {
+
+    rpcEndpointServiceImpl.registerRPCEndpoint(
+        "bob", "method", (Function<PluginRpcRequest, Object>) request -> "nothing");
+
+    parseCommand("--rpc-http-api", "BOB");
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
+        .containsExactlyInAnyOrder("BOB");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test
@@ -2683,7 +2701,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(wsRpcConfigArgumentCaptor.getValue().getRpcApis())
-        .containsExactlyInAnyOrder(ETH, NET);
+        .containsExactlyInAnyOrder(ETH.name(), NET.name());
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -3417,7 +3435,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void onChainPrivacyGroupEnabledFlagDefaultValueIsFalse() {
+  public void onchainPrivacyGroupEnabledFlagDefaultValueIsFalse() {
     parseCommand(
         "--privacy-enabled",
         "--privacy-public-key-file",
@@ -3439,7 +3457,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void onChainPrivacyGroupEnabledFlagValueIsSet() {
+  public void onchainPrivacyGroupEnabledFlagValueIsSet() {
     parseCommand(
         "--privacy-enabled",
         "--privacy-public-key-file",
@@ -3730,17 +3748,17 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--target-gas-limit=10000000");
 
     @SuppressWarnings("unchecked")
-    final ArgumentCaptor<GasLimitCalculator> gasLimitCalculatorArgumentCaptor =
-        ArgumentCaptor.forClass(GasLimitCalculator.class);
+    final ArgumentCaptor<MiningParameters> miningParametersArgumentCaptor =
+        ArgumentCaptor.forClass(MiningParameters.class);
 
-    verify(mockControllerBuilder).gasLimitCalculator(gasLimitCalculatorArgumentCaptor.capture());
+    verify(mockControllerBuilder).miningParameters(miningParametersArgumentCaptor.capture());
     verify(mockControllerBuilder).build();
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
 
-    assertThat(gasLimitCalculatorArgumentCaptor.getValue())
-        .isEqualTo(new TargetingGasLimitCalculator(10_000_000L));
+    assertThat(miningParametersArgumentCaptor.getValue().getTargetGasLimit().get().longValue())
+        .isEqualTo(10_000_000L);
   }
 
   @Test
@@ -4288,7 +4306,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     SignatureAlgorithmFactory.resetInstance();
     parseCommand("--Xsecp256k1-native-enabled", "false");
 
-    verify(mockLogger).info("Using the Java implementation of secp256k1");
+    verify(mockLogger).info("Using the Java implementation of the signature algorithm");
     assertThat(SignatureAlgorithmFactory.getInstance().isNative()).isFalse();
   }
 
@@ -4309,7 +4327,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand();
 
     assertThat(SignatureAlgorithmFactory.getInstance().isNative()).isTrue();
-    verify(mockLogger).info("Using native secp256k1");
+    verify(mockLogger).info("Using the native implementation of the signature algorithm");
 
     assertThat(AbstractAltBnPrecompiledContract.isNative()).isTrue();
     verify(mockLogger).info("Using LibEthPairings native alt bn128");

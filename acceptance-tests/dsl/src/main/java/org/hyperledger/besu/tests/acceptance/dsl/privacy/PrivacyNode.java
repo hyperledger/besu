@@ -17,12 +17,12 @@ package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.EnclaveIOException;
 import org.hyperledger.besu.enclave.EnclaveServerException;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
@@ -123,6 +123,7 @@ public class PrivacyNode implements AutoCloseable {
             besuConfig.isDnsEnabled(),
             besuConfig.getPrivacyParameters(),
             List.of(),
+            Optional.empty(),
             Optional.empty());
   }
 

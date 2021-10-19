@@ -23,6 +23,8 @@ import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -33,9 +35,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogTopic;
+import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.Collections;
 import java.util.List;
@@ -66,7 +66,8 @@ public class EthNewFilterTest {
 
   @Test
   public void newFilterWithoutFromBlockParamUsesLatestAsDefault() {
-    final FilterParameter filterParameter = new FilterParameter(null, null, null, null, null);
+    final FilterParameter filterParameter =
+        new FilterParameter(null, null, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = ethNewFilter(filterParameter);
 
     method.response(request);
@@ -76,7 +77,8 @@ public class EthNewFilterTest {
 
   @Test
   public void newFilterWithoutToBlockParamUsesLatestAsDefault() {
-    final FilterParameter filterParameter = new FilterParameter(null, null, null, null, null);
+    final FilterParameter filterParameter =
+        new FilterParameter(null, null, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = ethNewFilter(filterParameter);
 
     method.response(request);
@@ -87,7 +89,8 @@ public class EthNewFilterTest {
   @Test
   public void newFilterWithoutAddressAndTopicsParamsInstallsEmptyLogFilter() {
     final FilterParameter filterParameter =
-        new FilterParameter(BlockParameter.LATEST, BlockParameter.LATEST, null, null, null);
+        new FilterParameter(
+            BlockParameter.LATEST, BlockParameter.LATEST, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = ethNewFilter(filterParameter);
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), "0x1");
@@ -168,9 +171,13 @@ public class EthNewFilterTest {
         new FilterParameter(
             BlockParameter.EARLIEST,
             BlockParameter.LATEST,
+            null,
+            null,
             Collections.emptyList(),
             Collections.emptyList(),
-            Hash.ZERO);
+            Hash.ZERO,
+            null,
+            null);
 
     final JsonRpcRequestContext request = ethNewFilter(invalidFilter);
 
@@ -194,8 +201,12 @@ public class EthNewFilterTest {
     return new FilterParameter(
         BlockParameter.LATEST,
         BlockParameter.LATEST,
+        null,
+        null,
         Optional.ofNullable(address).map(Collections::singletonList).orElse(emptyList()),
         topics,
+        null,
+        null,
         null);
   }
 

@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.eth.messages;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.ForkId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;

@@ -14,9 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -31,6 +35,7 @@ public class MiningParameters {
   public static final int DEFAULT_MAX_OMMERS_DEPTH = 8;
 
   private final Optional<Address> coinbase;
+  private final Optional<AtomicLong> targetGasLimit;
   private final Wei minTransactionGasPrice;
   private final Bytes extraData;
   private final boolean enabled;
@@ -47,6 +52,7 @@ public class MiningParameters {
 
   private MiningParameters(
       final Address coinbase,
+      final Long targetGasLimit,
       final Wei minTransactionGasPrice,
       final Bytes extraData,
       final boolean enabled,
@@ -61,6 +67,7 @@ public class MiningParameters {
       final long powJobTimeToLive,
       final int maxOmmerDepth) {
     this.coinbase = Optional.ofNullable(coinbase);
+    this.targetGasLimit = Optional.ofNullable(targetGasLimit).map(AtomicLong::new);
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.extraData = extraData;
     this.enabled = enabled;
@@ -78,6 +85,10 @@ public class MiningParameters {
 
   public Optional<Address> getCoinbase() {
     return coinbase;
+  }
+
+  public Optional<AtomicLong> getTargetGasLimit() {
+    return targetGasLimit;
   }
 
   public Wei getMinTransactionGasPrice() {
@@ -139,6 +150,7 @@ public class MiningParameters {
     MiningParameters that = (MiningParameters) o;
     return stratumPort == that.stratumPort
         && Objects.equals(coinbase, that.coinbase)
+        && Objects.equals(targetGasLimit, that.targetGasLimit)
         && Objects.equals(minTransactionGasPrice, that.minTransactionGasPrice)
         && Objects.equals(extraData, that.extraData)
         && enabled == that.enabled
@@ -155,6 +167,7 @@ public class MiningParameters {
   public int hashCode() {
     return Objects.hash(
         coinbase,
+        targetGasLimit,
         minTransactionGasPrice,
         extraData,
         enabled,
@@ -173,6 +186,8 @@ public class MiningParameters {
     return "MiningParameters{"
         + "coinbase="
         + coinbase
+        + ", targetGasLimit="
+        + targetGasLimit.map(Object::toString).orElse("null")
         + ", minTransactionGasPrice="
         + minTransactionGasPrice
         + ", extraData="
@@ -205,6 +220,7 @@ public class MiningParameters {
   public static class Builder {
 
     private Address coinbase = null;
+    private Long targetGasLimit = null;
     private Wei minTransactionGasPrice = Wei.ZERO;
     private Bytes extraData = Bytes.EMPTY;
     private boolean enabled = false;
@@ -221,6 +237,11 @@ public class MiningParameters {
 
     public Builder coinbase(final Address address) {
       this.coinbase = address;
+      return this;
+    }
+
+    public Builder targetGasLimit(final Long targetGasLimit) {
+      this.targetGasLimit = targetGasLimit;
       return this;
     }
 
@@ -292,6 +313,7 @@ public class MiningParameters {
     public MiningParameters build() {
       return new MiningParameters(
           coinbase,
+          targetGasLimit,
           minTransactionGasPrice,
           extraData,
           enabled,

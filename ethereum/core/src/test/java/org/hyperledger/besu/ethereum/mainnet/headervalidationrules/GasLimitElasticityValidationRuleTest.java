@@ -19,7 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,7 +35,7 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class GasLimitElasticityValidationRuleTest {
 
-  private static final Optional<EIP1559> EIP1559 = Optional.of(new EIP1559(10));
+  private static final Optional<BaseFeeMarket> baseFeeMarket = Optional.of(new LondonFeeMarket(10));
 
   @Parameter public long headerGasLimit;
 
@@ -48,7 +49,7 @@ public class GasLimitElasticityValidationRuleTest {
   public boolean expectedResult;
 
   public GasLimitRangeAndDeltaValidationRule uut =
-      new GasLimitRangeAndDeltaValidationRule(5000, MAX_VALUE, EIP1559);
+      new GasLimitRangeAndDeltaValidationRule(5000, MAX_VALUE, baseFeeMarket);
 
   @Parameters
   public static Collection<Object[]> data() {

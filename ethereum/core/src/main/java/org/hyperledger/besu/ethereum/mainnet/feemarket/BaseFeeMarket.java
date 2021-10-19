@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+
 public interface BaseFeeMarket extends FeeMarket {
 
   @Override
@@ -26,4 +28,25 @@ public interface BaseFeeMarket extends FeeMarket {
   long getInitialBasefee();
 
   long getSlackCoefficient();
+
+  /**
+   * Compute the "gas target" for this block, which results in no baseFee adjustment in a subsequent
+   * block.
+   *
+   * @param blockHeader block header to compute gas target of.
+   * @return long target gas value.
+   */
+  default long targetGasUsed(final BlockHeader blockHeader) {
+    return blockHeader.getGasLimit() / getSlackCoefficient();
+  }
+
+  long computeBaseFee(
+      final long blockNumber,
+      final long parentBaseFee,
+      final long parentBlockGasUsed,
+      final long targetGasUsed);
+
+  boolean isForkBlock(final long blockNumber);
+
+  boolean isBeforeForkBlock(final long blockNumber);
 }

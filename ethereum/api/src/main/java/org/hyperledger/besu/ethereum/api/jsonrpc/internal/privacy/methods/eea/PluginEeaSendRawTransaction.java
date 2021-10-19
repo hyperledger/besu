@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
+
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -23,7 +25,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.util.NonceProvider;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Optional;
@@ -71,7 +73,7 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
             privateTransaction, privacyUserId, Optional.empty());
 
     return createPrivateMarkerTransaction(
-        sender, Address.PLUGIN_PRIVACY, payloadFromPlugin, privateTransaction, privacyUserId);
+        sender, PLUGIN_PRIVACY, payloadFromPlugin, privateTransaction, privacyUserId);
   }
 
   @Override
@@ -82,12 +84,7 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
     return Math.max(
         privateTransaction.getGasLimit(),
         gasCalculator
-            .transactionIntrinsicGasCostAndAccessedState(
-                new Transaction.Builder()
-                    .to(Address.PLUGIN_PRIVACY)
-                    .payload(Bytes.fromBase64String(pmtPayload))
-                    .build())
-            .getGas()
+            .transactionIntrinsicGasCost(Bytes.fromBase64String(pmtPayload), false)
             .toLong());
   }
 }

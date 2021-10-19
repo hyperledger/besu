@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 
 public class CliqueBlockHeaderFunctions implements BlockHeaderFunctions {

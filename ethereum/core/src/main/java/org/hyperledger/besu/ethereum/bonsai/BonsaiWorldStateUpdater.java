@@ -16,16 +16,16 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
+import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
+import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -105,7 +105,6 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
             balance,
             Hash.EMPTY_TRIE_HASH,
             Hash.EMPTY,
-            Account.DEFAULT_VERSION,
             true);
     bonsaiValue.setUpdated(newAccount);
     return new WrappedEvmAccount(track(new UpdateTrackingAccount<>(newAccount)));
@@ -375,8 +374,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                   oldValue.getNonce(),
                   oldValue.getBalance(),
                   oldValue.getStorageRoot(),
-                  oldValue.getCodeHash(),
-                  oldValue.getVersion());
+                  oldValue.getCodeHash());
       final BonsaiAccount newValue = bonsaiValue.getUpdated();
       final StateTrieAccountValue newAccount =
           newValue == null
@@ -385,8 +383,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                   newValue.getNonce(),
                   newValue.getBalance(),
                   newValue.getStorageRoot(),
-                  newValue.getCodeHash(),
-                  newValue.getVersion());
+                  newValue.getCodeHash());
       layer.addAccountChange(updatedAccount.getKey(), oldAccount, newAccount);
     }
 

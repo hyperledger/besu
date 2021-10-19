@@ -19,6 +19,7 @@ import static java.util.Objects.isNull;
 import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 import static org.hyperledger.besu.controller.BesuController.CACHE_PATH;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
@@ -32,7 +33,6 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.ReadinessCheck;
@@ -55,14 +55,12 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnchainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -110,6 +108,7 @@ import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
+import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.io.IOException;
@@ -176,6 +175,7 @@ public class RunnerBuilder {
   private boolean randomPeerPriority;
   private StorageProvider storageProvider;
   private Supplier<List<Bytes>> forkIdSupplier;
+  private RpcEndpointServiceImpl rpcEndpointServiceImpl;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -366,6 +366,11 @@ public class RunnerBuilder {
 
   public RunnerBuilder forkIdSupplier(final Supplier<List<Bytes>> forkIdSupplier) {
     this.forkIdSupplier = forkIdSupplier;
+    return this;
+  }
+
+  public RunnerBuilder rpcEndpointService(final RpcEndpointServiceImpl rpcEndpointService) {
+    this.rpcEndpointServiceImpl = rpcEndpointService;
     return this;
   }
 
@@ -568,7 +573,8 @@ public class RunnerBuilder {
               metricsConfiguration,
               natService,
               besuPluginContext.getNamedPlugins(),
-              dataDir);
+              dataDir,
+              rpcEndpointServiceImpl);
       jsonRpcHttpService =
           Optional.of(
               new JsonRpcHttpService(
@@ -635,7 +641,8 @@ public class RunnerBuilder {
               metricsConfiguration,
               natService,
               besuPluginContext.getNamedPlugins(),
-              dataDir);
+              dataDir,
+              rpcEndpointServiceImpl);
 
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool, blockchainQueries);
@@ -817,7 +824,7 @@ public class RunnerBuilder {
       final MiningCoordinator miningCoordinator,
       final ObservableMetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
-      final Collection<RpcApi> jsonRpcApis,
+      final Collection<String> jsonRpcApis,
       final FilterManager filterManager,
       final Optional<AccountLocalConfigPermissioningController> accountAllowlistController,
       final Optional<NodeLocalConfigPermissioningController> nodeAllowlistController,
@@ -827,7 +834,8 @@ public class RunnerBuilder {
       final MetricsConfiguration metricsConfiguration,
       final NatService natService,
       final Map<String, BesuPlugin> namedPlugins,
-      final Path dataDir) {
+      final Path dataDir,
+      final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -855,6 +863,16 @@ public class RunnerBuilder {
                 dataDir,
                 besuController.getProtocolManager().ethContext().getEthPeers());
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
+
+    var pluginMethods = rpcEndpointServiceImpl.getPluginMethods(jsonRpcConfiguration.getRpcApis());
+
+    var overriddenMethods =
+        methods.keySet().stream().filter(pluginMethods::containsKey).collect(Collectors.toList());
+    if (overriddenMethods.size() > 0) {
+      throw new RuntimeException("You can not override built in methods " + overriddenMethods);
+    }
+
+    methods.putAll(pluginMethods);
     return methods;
   }
 
@@ -910,13 +928,13 @@ public class RunnerBuilder {
     // register privateTransactionObserver as observer of events fired by the onchain precompile.
     if (privacyParameters.isOnchainPrivacyGroupsEnabled()
         && privacyParameters.isMultiTenancyEnabled()) {
-      final OnChainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
-          (OnChainPrivacyPrecompiledContract)
+      final OnchainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
+          (OnchainPrivacyPrecompiledContract)
               besuController
                   .getProtocolSchedule()
                   .getByBlockNumber(1)
                   .getPrecompileContractRegistry()
-                  .get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION);
+                  .get(ONCHAIN_PRIVACY);
       onchainPrivacyPrecompiledContract.addPrivateTransactionObserver(privateTransactionObserver);
     }
   }
@@ -955,6 +973,11 @@ public class RunnerBuilder {
 
       privateWebSocketMethodsFactory.methods().forEach(websocketMethodsFactory::addMethods);
     }
+
+    rpcEndpointServiceImpl
+        .getPluginMethods(configuration.getRpcApis())
+        .values()
+        .forEach(websocketMethodsFactory::addMethods);
 
     final WebSocketRequestHandler websocketRequestHandler =
         new WebSocketRequestHandler(

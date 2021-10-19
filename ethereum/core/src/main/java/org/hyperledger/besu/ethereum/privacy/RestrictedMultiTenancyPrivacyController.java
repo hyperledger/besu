@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -113,14 +113,14 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   }
 
   @Override
-  public PrivacyGroup[] findOffChainPrivacyGroupByMembers(
+  public PrivacyGroup[] findOffchainPrivacyGroupByMembers(
       final List<String> addresses, final String privacyUserId) {
     if (!addresses.contains(privacyUserId)) {
       throw new MultiTenancyValidationException(
           "Privacy group addresses must contain the enclave public key");
     }
     final PrivacyGroup[] resultantGroups =
-        privacyController.findOffChainPrivacyGroupByMembers(addresses, privacyUserId);
+        privacyController.findOffchainPrivacyGroupByMembers(addresses, privacyUserId);
     return Arrays.stream(resultantGroups)
         .filter(g -> g.getMembers().contains(privacyUserId))
         .toArray(PrivacyGroup[]::new);
@@ -181,10 +181,10 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   }
 
   @Override
-  public Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
+  public Optional<PrivacyGroup> findOffchainPrivacyGroupByGroupId(
       final String privacyGroupId, final String privacyUserId) {
     final Optional<PrivacyGroup> maybePrivacyGroup =
-        privacyController.findOffChainPrivacyGroupByGroupId(privacyGroupId, privacyUserId);
+        privacyController.findOffchainPrivacyGroupByGroupId(privacyGroupId, privacyUserId);
     checkGroupParticipation(maybePrivacyGroup, privacyUserId);
     return maybePrivacyGroup;
   }
@@ -208,14 +208,14 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   }
 
   @Override
-  public List<PrivacyGroup> findOnChainPrivacyGroupByMembers(
+  public List<PrivacyGroup> findOnchainPrivacyGroupByMembers(
       final List<String> addresses, final String privacyUserId) {
     if (!addresses.contains(privacyUserId)) {
       throw new MultiTenancyValidationException(
           "Privacy group addresses must contain the enclave public key");
     }
     final List<PrivacyGroup> resultantGroups =
-        privacyController.findOnChainPrivacyGroupByMembers(addresses, privacyUserId);
+        privacyController.findOnchainPrivacyGroupByMembers(addresses, privacyUserId);
     return resultantGroups.stream()
         .filter(g -> g.getMembers().contains(privacyUserId))
         .collect(Collectors.toList());
@@ -243,12 +243,12 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   }
 
   @Override
-  public Optional<PrivacyGroup> findOnChainPrivacyGroupAndAddNewMembers(
+  public Optional<PrivacyGroup> findOnchainPrivacyGroupAndAddNewMembers(
       final Bytes privacyGroupId,
       final String privacyUserId,
       final PrivateTransaction privateTransaction) {
     final Optional<PrivacyGroup> maybePrivacyGroup =
-        privacyController.findOnChainPrivacyGroupAndAddNewMembers(
+        privacyController.findOnchainPrivacyGroupAndAddNewMembers(
             privacyGroupId, privacyUserId, privateTransaction);
     // The check that the privacyUserId is a member (if the group already exists) is done in the
     // DefaultPrivacyController.

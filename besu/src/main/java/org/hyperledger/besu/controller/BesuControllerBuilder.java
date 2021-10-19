@@ -19,9 +19,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -29,7 +30,6 @@ import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -64,6 +64,7 @@ import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
@@ -109,6 +110,7 @@ public abstract class BesuControllerBuilder {
       DataStorageConfiguration.DEFAULT_CONFIG;
   private List<NodeMessagePermissioningProvider> messagePermissioningProviders =
       Collections.emptyList();
+  protected EvmConfiguration evmConfiguration;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -227,6 +229,11 @@ public abstract class BesuControllerBuilder {
     return this;
   }
 
+  public BesuControllerBuilder evmConfiguration(final EvmConfiguration evmConfiguration) {
+    this.evmConfiguration = evmConfiguration;
+    return this;
+  }
+
   public BesuController build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -241,7 +248,7 @@ public abstract class BesuControllerBuilder {
     checkNotNull(nodeKey, "Missing node key");
     checkNotNull(storageProvider, "Must supply a storage provider");
     checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
-
+    checkNotNull(evmConfiguration, "Missing evm config");
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();

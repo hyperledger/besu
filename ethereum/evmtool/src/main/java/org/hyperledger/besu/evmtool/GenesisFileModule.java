@@ -106,6 +106,8 @@ public class GenesisFileModule {
       return new IBFTGenesisFileModule(genesisConfig);
     } else if (config.containsKey("clique")) {
       return new CliqueGenesisFileModule(genesisConfig);
+    } else if (config.containsKey("qbft")) {
+      return new QBFTGenesisFileModule(genesisConfig);
     } else {
       // default is mainnet
       return new MainnetGenesisFileModule(genesisConfig);

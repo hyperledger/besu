@@ -18,8 +18,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -319,6 +317,34 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
                   String.valueOf(
                       permissioningConfiguration.getNodeSmartContractInterfaceVersion()));
             });
+
+    node.getPkiKeyStoreConfiguration()
+        .ifPresent(
+            pkiConfig -> {
+              params.add("--Xpki-block-creation-enabled");
+
+              params.add("--Xpki-block-creation-keystore-certificate-alias");
+              params.add(pkiConfig.getCertificateAlias());
+
+              params.add("--Xpki-block-creation-keystore-type");
+              params.add(pkiConfig.getKeyStoreType());
+
+              params.add("--Xpki-block-creation-keystore-file");
+              params.add(pkiConfig.getKeyStorePath().toAbsolutePath().toString());
+
+              params.add("--Xpki-block-creation-keystore-password-file");
+              params.add(pkiConfig.getKeyStorePasswordPath().toAbsolutePath().toString());
+
+              params.add("--Xpki-block-creation-truststore-type");
+              params.add(pkiConfig.getTrustStoreType());
+
+              params.add("--Xpki-block-creation-truststore-file");
+              params.add(pkiConfig.getTrustStorePath().toAbsolutePath().toString());
+
+              params.add("--Xpki-block-creation-truststore-password-file");
+              params.add(pkiConfig.getTrustStorePasswordPath().toAbsolutePath().toString());
+            });
+
     params.addAll(node.getExtraCLIOptions());
 
     params.add("--key-value-storage");
@@ -419,8 +445,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     StaticNodesUtils.createStaticNodesFile(node.homeDirectory(), node.getStaticNodes());
   }
 
-  private String apiList(final Collection<RpcApi> rpcApis) {
-    return rpcApis.stream().map(RpcApis::getValue).collect(Collectors.joining(","));
+  private String apiList(final Collection<String> rpcApis) {
+    return String.join(",", rpcApis);
   }
 
   @Override

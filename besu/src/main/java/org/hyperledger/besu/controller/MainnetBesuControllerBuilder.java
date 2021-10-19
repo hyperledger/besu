@@ -53,7 +53,6 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
                 MainnetBlockHeaderValidator.MINIMUM_SECONDS_SINCE_PARENT,
                 MainnetBlockHeaderValidator.TIMESTAMP_TOLERANCE_S,
                 clock),
-            gasLimitCalculator,
             epochCalculator,
             miningParameters.getPowJobTimeToLive(),
             miningParameters.getMaxOmmerDepth());
@@ -93,7 +92,8 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
     return MainnetProtocolSchedule.fromConfig(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
-        isRevertReasonEnabled);
+        isRevertReasonEnabled,
+        evmConfiguration);
   }
 
   @Override

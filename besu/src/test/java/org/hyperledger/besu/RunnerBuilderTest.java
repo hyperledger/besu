@@ -57,6 +57,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
+import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -142,6 +143,7 @@ public final class RunnerBuilderTest {
             .dataDir(dataDir.getRoot().toPath())
             .storageProvider(mock(KeyValueStorageProvider.class))
             .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
+            .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
     runner.start();
 
@@ -185,6 +187,7 @@ public final class RunnerBuilderTest {
             .dataDir(dataDir.getRoot().toPath())
             .storageProvider(storageProvider)
             .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
+            .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
     runner.start();
     when(besuController.getProtocolSchedule().streamMilestoneBlocks())

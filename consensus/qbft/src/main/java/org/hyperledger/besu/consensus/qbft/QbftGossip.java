@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.bft.payload.Authored;
@@ -22,7 +23,7 @@ import org.hyperledger.besu.consensus.qbft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.messagedata.RoundChangeMessageData;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
@@ -34,14 +35,18 @@ import com.google.common.collect.Lists;
 public class QbftGossip implements Gossiper {
 
   private final ValidatorMulticaster multicaster;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   /**
    * Constructor that attaches gossip logic to a set of multicaster
    *
    * @param multicaster Network connections to the remote validators
+   * @param bftExtraDataCodec Codec used when decoding MessageData
    */
-  public QbftGossip(final ValidatorMulticaster multicaster) {
+  public QbftGossip(
+      final ValidatorMulticaster multicaster, final BftExtraDataCodec bftExtraDataCodec) {
     this.multicaster = multicaster;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   /**
@@ -55,7 +60,7 @@ public class QbftGossip implements Gossiper {
     final Authored decodedMessage;
     switch (messageData.getCode()) {
       case QbftV1.PROPOSAL:
-        decodedMessage = ProposalMessageData.fromMessageData(messageData).decode();
+        decodedMessage = ProposalMessageData.fromMessageData(messageData).decode(bftExtraDataCodec);
         break;
       case QbftV1.PREPARE:
         decodedMessage = PrepareMessageData.fromMessageData(messageData).decode();
@@ -64,7 +69,8 @@ public class QbftGossip implements Gossiper {
         decodedMessage = CommitMessageData.fromMessageData(messageData).decode();
         break;
       case QbftV1.ROUND_CHANGE:
-        decodedMessage = RoundChangeMessageData.fromMessageData(messageData).decode();
+        decodedMessage =
+            RoundChangeMessageData.fromMessageData(messageData).decode(bftExtraDataCodec);
         break;
       default:
         throw new IllegalArgumentException(
