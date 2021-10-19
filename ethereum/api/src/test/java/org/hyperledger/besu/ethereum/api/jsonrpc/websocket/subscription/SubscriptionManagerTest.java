@@ -219,7 +219,16 @@ public class SubscriptionManagerTest {
   public void shouldUnsubscribeIfUserRemovedFromPrivacyGroup() {
     final String enclavePublicKey = "C1bVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
     final FilterParameter filterParameter =
-        new FilterParameter(BlockParameter.EARLIEST, BlockParameter.LATEST, null, null, null);
+        new FilterParameter(
+            BlockParameter.EARLIEST,
+            BlockParameter.LATEST,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
     final String privacyGroupId = "ZDmkMK7CyxA1F1rktItzKFTfRwApg7aWzsTtm2IOZ5Y=";
     final PrivateSubscribeRequest privateSubscribeRequest =
         new PrivateSubscribeRequest(
