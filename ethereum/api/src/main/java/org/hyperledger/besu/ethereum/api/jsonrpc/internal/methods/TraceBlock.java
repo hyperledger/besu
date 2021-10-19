@@ -17,11 +17,13 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.RewardTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
@@ -29,16 +31,16 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 
 public class TraceBlock extends AbstractBlockParameterMethod {
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private final Supplier<BlockTracer> blockTracerSupplier;
-  private final ProtocolSchedule protocolSchedule;
+  protected final ProtocolSchedule protocolSchedule;
 
   public TraceBlock(
       final Supplier<BlockTracer> blockTracerSupplier,
@@ -64,22 +66,24 @@ public class TraceBlock extends AbstractBlockParameterMethod {
       final JsonRpcRequestContext request, final long blockNumber) {
     if (blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER) {
       // Nothing to trace for the genesis block
-      return emptyResult();
+      return emptyResult().getArrayNode();
     }
 
     return getBlockchainQueries()
         .getBlockchain()
         .getBlockByNumber(blockNumber)
-        .map(this::traceBlock)
+        .map(block -> traceBlock(block, Optional.empty()))
+        .map(ArrayNodeWrapper::getArrayNode)
         .orElse(null);
   }
 
-  private Object traceBlock(final Block block) {
+  protected ArrayNodeWrapper traceBlock(
+      final Block block, final Optional<FilterParameter> filterParameter) {
 
     if (block == null) {
       return emptyResult();
     }
-    final ArrayNode resultArrayNode = MAPPER.createArrayNode();
+    final ArrayNodeWrapper resultArrayNode = new ArrayNodeWrapper(MAPPER.createArrayNode());
 
     blockTracerSupplier
         .get()
@@ -87,18 +91,18 @@ public class TraceBlock extends AbstractBlockParameterMethod {
         .ifPresent(
             blockTrace ->
                 generateTracesFromTransactionTraceAndBlock(
-                    blockTrace.getTransactionTraces(), block, resultArrayNode));
+                    filterParameter, blockTrace.getTransactionTraces(), block, resultArrayNode));
 
-    generateRewardsFromBlock(block, resultArrayNode);
+    generateRewardsFromBlock(filterParameter, block, resultArrayNode);
 
     return resultArrayNode;
   }
 
-  private void generateTracesFromTransactionTraceAndBlock(
+  protected void generateTracesFromTransactionTraceAndBlock(
+      final Optional<FilterParameter> filterParameter,
       final List<TransactionTrace> transactionTraces,
       final Block block,
-      final ArrayNode resultArrayNode) {
-
+      final ArrayNodeWrapper resultArrayNode) {
     transactionTraces.forEach(
         transactionTrace ->
             FlatTraceGenerator.generateFromTransactionTraceAndBlock(
@@ -106,12 +110,15 @@ public class TraceBlock extends AbstractBlockParameterMethod {
                 .forEachOrdered(resultArrayNode::addPOJO));
   }
 
-  private void generateRewardsFromBlock(final Block block, final ArrayNode resultArrayNode) {
+  protected void generateRewardsFromBlock(
+      final Optional<FilterParameter> maybeFilterParameter,
+      final Block block,
+      final ArrayNodeWrapper resultArrayNode) {
     RewardTraceGenerator.generateFromBlock(protocolSchedule, block)
         .forEachOrdered(resultArrayNode::addPOJO);
   }
 
-  private Object emptyResult() {
-    return MAPPER.createArrayNode();
+  private ArrayNodeWrapper emptyResult() {
+    return new ArrayNodeWrapper(MAPPER.createArrayNode());
   }
 }

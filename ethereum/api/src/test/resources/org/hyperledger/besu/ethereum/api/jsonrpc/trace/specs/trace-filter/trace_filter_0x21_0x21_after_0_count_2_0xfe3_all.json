@@ -1,0 +1,42 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_filter",
+    "params": [
+      {
+        "fromBlock": "0x21",
+        "toBlock": "0x21",
+        "after": 0,
+        "count": 2,
+        "fromAddress": [
+          "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"
+        ]
+      }
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "action": {
+          "creationMethod": "create",
+          "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas": "0x46e824",
+          "init": "0x602af300",
+          "value": "0x0"
+        },
+        "blockHash": "0x156fa7f1633c5dd82d41b7c7d79049f620b25638ca87da137d13e1a27a210e49",
+        "blockNumber": 33,
+        "error": "Stack underflow",
+        "subtraces": 0,
+        "traceAddress": [],
+        "transactionHash": "0xf0378e1bf579b23aff89255d93ade14fe9136a7cedd9c4985e9bec2d18ce65e9",
+        "transactionPosition": 0,
+        "type": "create"
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}
