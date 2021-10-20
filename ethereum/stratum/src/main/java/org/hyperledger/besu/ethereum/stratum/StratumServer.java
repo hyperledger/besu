@@ -18,12 +18,15 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
+import org.hyperledger.besu.ethereum.mainnet.EthHash;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
+import java.math.BigInteger;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -45,12 +48,11 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class StratumServer implements PoWObserver {
 
   private static final Logger logger = getLogger();
-  private static final UInt256 DIFFICULTY_1_TARGET = UInt256.valueOf(2).pow(256);
 
   private final Vertx vertx;
   private final int port;
   private final String networkInterface;
-  private final AtomicBoolean started = new AtomicBoolean(false);
+  protected final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicLong numberOfMiners = new AtomicLong(0);
   private final AtomicDouble currentDifficulty = new AtomicDouble(0.0);
   private final StratumProtocol[] protocols;
@@ -159,7 +161,16 @@ public class StratumServer implements PoWObserver {
     for (StratumProtocol protocol : protocols) {
       protocol.setCurrentWorkTask(poWSolverInputs);
     }
-    UInt256 difficulty = poWSolverInputs.getTarget().divide(DIFFICULTY_1_TARGET);
+
+    // reverse the target calculation to get the difficulty
+    // and ensure we do not get divide by zero:
+    UInt256 difficulty =
+        Optional.of(poWSolverInputs.getTarget().toUnsignedBigInteger())
+            .filter(td -> td.compareTo(BigInteger.ONE) > 0)
+            .map(EthHash.TARGET_UPPER_BOUND::divide)
+            .map(UInt256::valueOf)
+            .orElse(UInt256.MAX_VALUE);
+
     currentDifficulty.set(difficulty.toUnsignedBigInteger().doubleValue());
   }
 
