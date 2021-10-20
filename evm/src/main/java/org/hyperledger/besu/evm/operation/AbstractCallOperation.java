@@ -47,17 +47,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       final String name,
       final int stackItemsConsumed,
       final int stackItemsProduced,
-      final boolean updatesProgramCounter,
       final int opSize,
       final GasCalculator gasCalculator) {
-    super(
-        opcode,
-        name,
-        stackItemsConsumed,
-        stackItemsProduced,
-        updatesProgramCounter,
-        opSize,
-        gasCalculator);
+    super(opcode, name, stackItemsConsumed, stackItemsProduced, opSize, gasCalculator);
   }
 
   /**
@@ -224,7 +216,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       frame.getMessageFrameStack().addFirst(childFrame);
       frame.setState(MessageFrame.State.CODE_SUSPENDED);
     }
-    return new OperationResult(optionalCost, Optional.empty());
+    return new OperationResult(optionalCost, Optional.empty(), 0);
   }
 
   protected abstract Gas cost(final MessageFrame frame);

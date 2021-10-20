@@ -23,7 +23,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class MSizeOperation extends AbstractFixedCostOperation {
 
   public MSizeOperation(final GasCalculator gasCalculator) {
-    super(0x59, "MSIZE", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x59, "MSIZE", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

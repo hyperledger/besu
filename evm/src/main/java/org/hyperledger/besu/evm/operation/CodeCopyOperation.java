@@ -28,7 +28,7 @@ import java.util.Optional;
 public class CodeCopyOperation extends AbstractOperation {
 
   public CodeCopyOperation(final GasCalculator gasCalculator) {
-    super(0x39, "CODECOPY", 3, 0, false, 1, gasCalculator);
+    super(0x39, "CODECOPY", 3, 0, 1, gasCalculator);
   }
 
   @Override

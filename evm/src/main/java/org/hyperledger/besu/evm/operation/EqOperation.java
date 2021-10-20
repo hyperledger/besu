@@ -23,7 +23,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class EqOperation extends AbstractFixedCostOperation {
 
   public EqOperation(final GasCalculator gasCalculator) {
-    super(0x14, "EQ", 2, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x14, "EQ", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

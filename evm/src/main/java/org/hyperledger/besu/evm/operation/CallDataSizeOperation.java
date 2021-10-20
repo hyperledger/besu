@@ -24,7 +24,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class CallDataSizeOperation extends AbstractFixedCostOperation {
 
   public CallDataSizeOperation(final GasCalculator gasCalculator) {
-    super(0x36, "CALLDATASIZE", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x36, "CALLDATASIZE", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
