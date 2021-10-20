@@ -26,7 +26,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class SLtOperation extends AbstractFixedCostOperation {
 
   public SLtOperation(final GasCalculator gasCalculator) {
-    super(0x12, "SLT", 2, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x12, "SLT", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

@@ -43,7 +43,7 @@ public class MStoreOperation extends AbstractOperation {
       return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
-    frame.writeMemory32ByteAligned(location, 32, value, true);
+    frame.writeMemoryRightAligned(location, 32, value, true);
     return new OperationResult(optionalCost, Optional.empty());
   }
 }

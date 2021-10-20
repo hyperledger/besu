@@ -153,41 +153,41 @@ public class MemoryTest {
   }
 
   @Test
-  public void shouldSetMemory32ByteAlignedWhenLengthEqualToSourceLength() {
+  public void shouldSetMemoryRightAlignedWhenLengthEqualToSourceLength() {
     final Bytes value = Bytes.concatenate(WORD1, WORD2, WORD3);
-    memory.setBytes32Aligned(0, value.size(), value);
+    memory.setBytesRightAligned(0, value.size(), value);
     assertThat(memory.getWord(0)).isEqualTo(WORD1);
     assertThat(memory.getWord(32)).isEqualTo(WORD2);
     assertThat(memory.getWord(64)).isEqualTo(WORD3);
   }
 
   @Test
-  public void shouldSetMemory32ByteAlignedWhenLengthLessThanSourceLength() {
+  public void shouldSetMemoryRightAlignedWhenLengthLessThanSourceLength() {
     final Bytes value = Bytes.concatenate(WORD1, WORD2, WORD3);
-    memory.setBytes32Aligned(0, 64, value);
+    memory.setBytesRightAligned(0, 64, value);
     assertThat(memory.getWord(0)).isEqualTo(WORD1);
     assertThat(memory.getWord(32)).isEqualTo(WORD2);
     assertThat(memory.getWord(64)).isEqualTo(Bytes32.ZERO);
   }
 
   @Test
-  public void shouldSetMemory32ByteAlignedWhenLengthGreaterThanSourceLength() {
+  public void shouldSetMemoryRightAlignedWhenLengthGreaterThanSourceLength() {
     final Bytes value = Bytes.concatenate(WORD1, WORD2);
-    memory.setBytes32Aligned(0, 96, value);
+    memory.setBytesRightAligned(0, 96, value);
     assertThat(memory.getWord(0)).isEqualTo(Bytes32.ZERO);
     assertThat(memory.getWord(32)).isEqualTo(WORD1);
     assertThat(memory.getWord(64)).isEqualTo(WORD2);
   }
 
   @Test
-  public void shouldClearMemory32ByteAlignedAfterSourceDataWhenLengthGreaterThanSourceLength() {
+  public void shouldClearMemoryRightAlignedAfterSourceDataWhenLengthGreaterThanSourceLength() {
     memory.setWord(64, WORD3);
     memory.setWord(96, WORD4);
     assertThat(memory.getWord(64)).isEqualTo(WORD3);
     assertThat(memory.getWord(96)).isEqualTo(WORD4);
 
     final Bytes value = Bytes.concatenate(WORD1, WORD2);
-    memory.setBytes32Aligned(0, 96, value);
+    memory.setBytesRightAligned(0, 96, value);
     assertThat(memory.getWord(0)).isEqualTo(Bytes32.ZERO);
     assertThat(memory.getWord(32)).isEqualTo(WORD1);
     assertThat(memory.getWord(64)).isEqualTo(WORD2);
@@ -196,14 +196,14 @@ public class MemoryTest {
 
   @Test
   public void
-      shouldClearMemory32ByteAlignedAfterSourceDataWhenLengthGreaterThanSourceLengthWithMemoryOffset() {
+      shouldClearMemoryRightAlignedAfterSourceDataWhenLengthGreaterThanSourceLengthWithMemoryOffset() {
     memory.setWord(64, WORD3);
     memory.setWord(96, WORD4);
     assertThat(memory.getWord(64)).isEqualTo(WORD3);
     assertThat(memory.getWord(96)).isEqualTo(WORD4);
 
     final Bytes value = Bytes.concatenate(WORD1, WORD2);
-    memory.setBytes32Aligned(10, 96, value);
+    memory.setBytesRightAligned(10, 96, value);
     assertThat(memory.getWord(10)).isEqualTo(Bytes32.ZERO);
     assertThat(memory.getWord(42)).isEqualTo(WORD1);
     assertThat(memory.getWord(74)).isEqualTo(WORD2);
@@ -215,11 +215,11 @@ public class MemoryTest {
   }
 
   @Test
-  public void shouldClearMemory32ByteAlignedWhenSourceDataIsEmpty() {
+  public void shouldClearMemoryRightAlignedWhenSourceDataIsEmpty() {
     memory.setWord(64, WORD3);
     assertThat(memory.getWord(64)).isEqualTo(WORD3);
 
-    memory.setBytes32Aligned(0, 96, Bytes.EMPTY);
+    memory.setBytesRightAligned(0, 96, Bytes.EMPTY);
 
     assertThat(memory.getWord(0)).isEqualTo(Bytes32.ZERO);
     assertThat(memory.getWord(32)).isEqualTo(Bytes32.ZERO);

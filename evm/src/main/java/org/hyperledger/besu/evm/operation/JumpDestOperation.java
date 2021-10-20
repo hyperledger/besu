@@ -28,7 +28,6 @@ public class JumpDestOperation extends AbstractFixedCostOperation {
         "JUMPDEST",
         0,
         0,
-        false,
         1,
         gasCalculator,
         gasCalculator.getJumpDestOperationGasCost());

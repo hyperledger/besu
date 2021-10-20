@@ -275,41 +275,42 @@ public class Memory {
   }
 
   /**
-   * Copy the bytes from the provided number of bytes from the provided value to memory from the
-   * provided offset.
+   * Copy the bytes from the value param into memory at the specified offset. In cases where the
+   * value does not have numBytes bytes  the appropriate amount of zero bytes will be added before
+   * writing the value bytes.
    *
    * <p>Note that this method will extend memory to accommodate the location assigned and bytes
    * copied and so never fails.
    *
-   * @param location the location in memory at which to start copying the bytes of {@code value}.
+   * @param location the location in memory at which to start writing the padding and {@code value} bytes.
    * @param numBytes the number of bytes to set in memory. Note that this value may differ from
    *     {@code value.size()}: if {@code numBytes < value.size()} bytes, only {@code numBytes} will
    *     be copied from {@code value}; if {@code numBytes > value.size()}, then only the bytes in
    *     {@code value} will be copied, but the memory will be expanded if necessary to cover {@code
    *     numBytes} (in other words, {@link #getActiveWords()} will return a value consistent with
    *     having set {@code numBytes} bytes, even if less than that have been concretely set due to
-   *     {@code value} being smaller).
-   * @param taintedValue the bytes to copy to memory from {@code location}.
+   *     {@code value} being smaller). These create bytes will be added to the left as needed.
+   * @param value the bytes to copy into memory starting at {@code location}.
    */
-  public void setBytes32Aligned(
-      final long location, final long numBytes, final Bytes taintedValue) {
+  public void setBytesRightAligned(
+      final long location, final long numBytes, final Bytes value) {
     if (numBytes == 0) {
       return;
     }
 
     final int start = asByteIndex(location);
     final int length = asByteLength(numBytes);
-    final int srcLength = taintedValue.size();
+    final int srcLength = value.size();
     final int end = Math.addExact(start, length);
 
     ensureCapacityForBytes(start, length);
     if (srcLength >= length) {
-      System.arraycopy(taintedValue.toArrayUnsafe(), 0, memBytes, start, length);
+      System.arraycopy(value.toArrayUnsafe(), 0, memBytes, start, length);
     } else {
       int divider = end - srcLength;
       Arrays.fill(memBytes, start, divider, (byte) 0);
       if (srcLength > 0) {
-        System.arraycopy(taintedValue.toArrayUnsafe(), 0, memBytes, divider, srcLength);
+        System.arraycopy(value.toArrayUnsafe(), 0, memBytes, divider, srcLength);
       }
     }
   }

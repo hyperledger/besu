@@ -39,7 +39,6 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
       final String name,
       final int stackItemsConsumed,
       final int stackItemsProduced,
-      final boolean updatesProgramCounter,
       final int opSize,
       final GasCalculator gasCalculator,
       final Gas fixedCost) {

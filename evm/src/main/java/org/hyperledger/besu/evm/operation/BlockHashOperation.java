@@ -34,7 +34,6 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
         "BLOCKHASH",
         1,
         1,
-        false,
         1,
         gasCalculator,
         gasCalculator.getBlockHashOperationGasCost());

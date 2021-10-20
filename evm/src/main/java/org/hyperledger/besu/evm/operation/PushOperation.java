@@ -38,7 +38,6 @@ public class PushOperation extends AbstractFixedCostOperation {
         "PUSH" + length,
         0,
         1,
-        false,
         length + 1,
         gasCalculator,
         gasCalculator.getVeryLowTierGasCost());

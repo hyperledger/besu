@@ -23,7 +23,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class GasLimitOperation extends AbstractFixedCostOperation {
 
   public GasLimitOperation(final GasCalculator gasCalculator) {
-    super(0x45, "GASLIMIT", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x45, "GASLIMIT", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

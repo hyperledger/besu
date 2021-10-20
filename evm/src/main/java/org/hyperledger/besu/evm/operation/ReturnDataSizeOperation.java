@@ -25,7 +25,7 @@ public class ReturnDataSizeOperation extends AbstractFixedCostOperation {
 
   public ReturnDataSizeOperation(final GasCalculator gasCalculator) {
     super(
-        0x3D, "RETURNDATASIZE", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+        0x3D, "RETURNDATASIZE", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

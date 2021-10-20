@@ -30,7 +30,7 @@ public class JumpiOperation extends AbstractFixedCostOperation {
   private final OperationResult jumpResponse;
 
   public JumpiOperation(final GasCalculator gasCalculator) {
-    super(0x57, "JUMPI", 2, 0, true, 1, gasCalculator, gasCalculator.getHighTierGasCost());
+    super(0x57, "JUMPI", 2, 0, 1, gasCalculator, gasCalculator.getHighTierGasCost());
     invalidJumpResponse =
         new Operation.OperationResult(
             Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));

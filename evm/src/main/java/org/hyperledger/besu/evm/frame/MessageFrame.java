@@ -634,18 +634,20 @@ public class MessageFrame {
   }
 
   /**
-   * Write bytes to memory
+   * Copy the bytes from the value param into memory at the specified offset. In cases where the
+   * value does not have numBytes bytes  the appropriate amount of zero bytes will be added before
+   * writing the value bytes.
    *
    * @param offset The offset in memory
    * @param length The length of the bytes to write
    * @param value The value to write
    * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
    */
-  public void writeMemory32ByteAligned(
+  public void writeMemoryRightAligned(
       final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
-    memory.setBytes32Aligned(offset, length, value);
+    memory.setBytesRightAligned(offset, length, value);
     if (explicitMemoryUpdate) {
-      setUpdatedMemory32ByteAligned(offset, length, value);
+      setUpdatedMemoryRightAligned(offset, length, value);
     }
   }
 
@@ -700,14 +702,14 @@ public class MessageFrame {
     }
   }
 
-  private void setUpdatedMemory32ByteAligned(
+  private void setUpdatedMemoryRightAligned(
       final long offset, final long length, final Bytes value) {
     if (length > 0) {
       final int srcSize = value.size();
       if (length > srcSize) {
         final MutableBytes paddedAnswer = MutableBytes.create((int) length);
         if ((long) 0 < srcSize) {
-          value.slice(0, (int) ((long) srcSize)).copyTo(paddedAnswer, (int) (length - srcSize));
+          value.slice(0, srcSize).copyTo(paddedAnswer, (int) (length - srcSize));
         }
         setUpdatedMemory(offset, paddedAnswer.copy());
       } else {

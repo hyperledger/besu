@@ -27,7 +27,7 @@ public class CallDataLoadOperation extends AbstractFixedCostOperation {
 
   public CallDataLoadOperation(final GasCalculator gasCalculator) {
     super(
-        0x35, "CALLDATALOAD", 1, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+        0x35, "CALLDATALOAD", 1, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
