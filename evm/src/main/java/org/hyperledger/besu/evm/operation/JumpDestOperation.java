@@ -23,14 +23,7 @@ public class JumpDestOperation extends AbstractFixedCostOperation {
   public static final int OPCODE = 0x5B;
 
   public JumpDestOperation(final GasCalculator gasCalculator) {
-    super(
-        OPCODE,
-        "JUMPDEST",
-        0,
-        0,
-        1,
-        gasCalculator,
-        gasCalculator.getJumpDestOperationGasCost());
+    super(OPCODE, "JUMPDEST", 0, 0, 1, gasCalculator, gasCalculator.getJumpDestOperationGasCost());
   }
 
   @Override

@@ -29,14 +29,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
   private static final int MAX_RELATIVE_BLOCK = 255;
 
   public BlockHashOperation(final GasCalculator gasCalculator) {
-    super(
-        0x40,
-        "BLOCKHASH",
-        1,
-        1,
-        1,
-        gasCalculator,
-        gasCalculator.getBlockHashOperationGasCost());
+    super(0x40, "BLOCKHASH", 1, 1, 1, gasCalculator, gasCalculator.getBlockHashOperationGasCost());
   }
 
   @Override

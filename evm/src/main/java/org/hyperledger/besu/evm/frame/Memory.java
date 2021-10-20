@@ -206,6 +206,30 @@ public class Memory {
   }
 
   /**
+   * Returns a copy of bytes from memory.
+   *
+   * @param location The location in memory to start with.
+   * @param numBytes The number of bytes to get.
+   * @return A fresh copy of the bytes from memory starting at {@code location} and extending {@code
+   *     numBytes}.
+   */
+  public Bytes getMutableBytes(final long location, final long numBytes) {
+    // Note: if length == 0, we don't require any memory expansion, whatever location is. So
+    // we must call asByteIndex(location) after this check so as it doesn't throw if the location
+    // is too big but the length is 0 (which is somewhat nonsensical, but is exercise by some
+    // tests).
+    final int length = asByteLength(numBytes);
+    if (length == 0) {
+      return Bytes.EMPTY;
+    }
+
+    final int start = asByteIndex(location);
+
+    ensureCapacityForBytes(start, length);
+    return Bytes.wrap(memBytes, start, length);
+  }
+
+  /**
    * Copy the bytes from the provided number of bytes from the provided value to memory from the
    * provided offset.
    *
@@ -276,13 +300,14 @@ public class Memory {
 
   /**
    * Copy the bytes from the value param into memory at the specified offset. In cases where the
-   * value does not have numBytes bytes  the appropriate amount of zero bytes will be added before
+   * value does not have numBytes bytes the appropriate amount of zero bytes will be added before
    * writing the value bytes.
    *
    * <p>Note that this method will extend memory to accommodate the location assigned and bytes
    * copied and so never fails.
    *
-   * @param location the location in memory at which to start writing the padding and {@code value} bytes.
+   * @param location the location in memory at which to start writing the padding and {@code value}
+   *     bytes.
    * @param numBytes the number of bytes to set in memory. Note that this value may differ from
    *     {@code value.size()}: if {@code numBytes < value.size()} bytes, only {@code numBytes} will
    *     be copied from {@code value}; if {@code numBytes > value.size()}, then only the bytes in
@@ -292,8 +317,7 @@ public class Memory {
    *     {@code value} being smaller). These create bytes will be added to the left as needed.
    * @param value the bytes to copy into memory starting at {@code location}.
    */
-  public void setBytesRightAligned(
-      final long location, final long numBytes, final Bytes value) {
+  public void setBytesRightAligned(final long location, final long numBytes, final Bytes value) {
     if (numBytes == 0) {
       return;
     }

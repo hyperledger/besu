@@ -585,7 +585,7 @@ public class MessageFrame {
    */
   public Bytes readMutableMemory(
       final long offset, final long length, final boolean explicitMemoryRead) {
-    final Bytes value = memory.getBytes(offset, length);
+    final Bytes value = memory.getMutableBytes(offset, length);
     if (explicitMemoryRead) {
       setUpdatedMemory(offset, value);
     }
@@ -635,7 +635,7 @@ public class MessageFrame {
 
   /**
    * Copy the bytes from the value param into memory at the specified offset. In cases where the
-   * value does not have numBytes bytes  the appropriate amount of zero bytes will be added before
+   * value does not have numBytes bytes the appropriate amount of zero bytes will be added before
    * writing the value bytes.
    *
    * @param offset The offset in memory
