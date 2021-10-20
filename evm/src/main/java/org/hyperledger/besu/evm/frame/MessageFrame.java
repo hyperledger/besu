@@ -559,7 +559,7 @@ public class MessageFrame {
    * @param length The length of the bytes to read
    * @return The bytes in the specified range
    */
-  public Bytes readMutableMemory(final long offset, final long length) {
+  public MutableBytes readMutableMemory(final long offset, final long length) {
     return readMutableMemory(offset, length, false);
   }
 
@@ -583,9 +583,9 @@ public class MessageFrame {
    * @param explicitMemoryRead true if triggered by a memory opcode, false otherwise
    * @return The bytes in the specified range
    */
-  public Bytes readMutableMemory(
+  public MutableBytes readMutableMemory(
       final long offset, final long length, final boolean explicitMemoryRead) {
-    final Bytes value = memory.getMutableBytes(offset, length);
+    final MutableBytes value = memory.getMutableBytes(offset, length);
     if (explicitMemoryRead) {
       setUpdatedMemory(offset, value);
     }
