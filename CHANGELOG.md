@@ -5,6 +5,7 @@
 ### Additions and Improvements
 
 ### Bug Fixes
+- Do not change the sender balance, but set gas fee to zero, when simulating a transaction without enforcing balance checks. [#2454](https://github.com/hyperledger/besu/pull/2454)
 
 ### Early Access Features
 

@@ -125,7 +125,7 @@ public class Transaction
    * @param transactionType the transaction type
    * @param nonce the nonce
    * @param gasPrice the gas price
-   * @param maxPriorityFeePerGas the max priorty fee per gas
+   * @param maxPriorityFeePerGas the max priority fee per gas
    * @param maxFeePerGas the max fee per gas
    * @param gasLimit the gas limit
    * @param to the transaction recipient
