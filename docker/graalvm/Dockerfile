@@ -1,5 +1,5 @@
 
-FROM ghcr.io/graalvm/graalvm-ce:ol7-java11-21.0.0
+FROM ghcr.io/graalvm/graalvm-ce:ol7-java11
 ARG VERSION="dev"
 
 RUN adduser --home /opt/besu besu && \
