@@ -20,6 +20,8 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public class PushOperation extends AbstractFixedCostOperation {
@@ -28,17 +30,19 @@ public class PushOperation extends AbstractFixedCostOperation {
 
   private final int length;
 
+  private final OperationResult pushResponse;
+
   public PushOperation(final int length, final GasCalculator gasCalculator) {
     super(
         PUSH_BASE + length,
         "PUSH" + length,
         0,
         1,
-        false,
         length + 1,
         gasCalculator,
         gasCalculator.getVeryLowTierGasCost());
     this.length = length;
+    pushResponse = new OperationResult(Optional.of(gasCost), Optional.empty(), length + 1);
   }
 
   @Override
@@ -50,6 +54,6 @@ public class PushOperation extends AbstractFixedCostOperation {
     final int copyLength = min(length, code.size() - pc - 1);
     frame.pushStackItem(code.slice(pc + 1, copyLength));
 
-    return successResponse;
+    return pushResponse;
   }
 }

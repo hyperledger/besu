@@ -55,7 +55,7 @@ public abstract class AbstractVoteProposerMethodTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest(JSON_RPC_VERSION, getMethodName(), new Object[] {}));
 
-    when(validatorProvider.getVoteProvider()).thenReturn(Optional.of(voteProvider));
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
     when(voteProvider.getProposals())
         .thenReturn(
             ImmutableMap.of(
@@ -85,7 +85,7 @@ public abstract class AbstractVoteProposerMethodTest {
             new JsonRpcRequest(JSON_RPC_VERSION, getMethodName(), new Object[] {}));
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.METHOD_NOT_ENABLED);
-    when(validatorProvider.getVoteProvider()).thenReturn(Optional.empty());
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.empty());
 
     final JsonRpcResponse response = getMethod().response(request);
 

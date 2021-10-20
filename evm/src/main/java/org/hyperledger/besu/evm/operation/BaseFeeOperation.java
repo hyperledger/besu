@@ -28,7 +28,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class BaseFeeOperation extends AbstractFixedCostOperation {
 
   public BaseFeeOperation(final GasCalculator gasCalculator) {
-    super(0x48, "BASEFEE", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x48, "BASEFEE", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

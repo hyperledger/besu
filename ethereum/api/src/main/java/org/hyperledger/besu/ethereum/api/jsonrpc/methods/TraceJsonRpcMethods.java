@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceBlock;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceReplayBlockTransactions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
@@ -53,6 +54,7 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
     return mapOf(
         new TraceReplayBlockTransactions(
             () -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),
+        new TraceFilter(() -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),
         new TraceTransaction(
             () -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),
         new TraceBlock(() -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries));

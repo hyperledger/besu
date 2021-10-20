@@ -130,7 +130,7 @@ public class MainnetTransactionValidator {
 
     if (baseFee.isPresent()) {
       final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, baseFee);
-      if (!transactionValidationParams.isAllowMaxFeerGasBelowBaseFee()
+      if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
           && price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
@@ -205,7 +205,7 @@ public class MainnetTransactionValidator {
               transaction.getNonce(), senderNonce));
     }
 
-    if (!codeHash.equals(Hash.EMPTY)) {
+    if (!validationParams.isAllowContractAddressAsSender() && !codeHash.equals(Hash.EMPTY)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
           String.format(

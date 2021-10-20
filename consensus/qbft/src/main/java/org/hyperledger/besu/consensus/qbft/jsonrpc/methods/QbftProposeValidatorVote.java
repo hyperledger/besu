@@ -43,7 +43,7 @@ public class QbftProposeValidatorVote implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    if (validatorProvider.getVoteProvider().isPresent()) {
+    if (validatorProvider.getVoteProviderAtHead().isPresent()) {
       final Address validatorAddress = requestContext.getRequiredParameter(0, Address.class);
       final Boolean add = requestContext.getRequiredParameter(1, Boolean.class);
       LOG.trace(
@@ -53,9 +53,9 @@ public class QbftProposeValidatorVote implements JsonRpcMethod {
           validatorAddress);
 
       if (add) {
-        validatorProvider.getVoteProvider().get().authVote(validatorAddress);
+        validatorProvider.getVoteProviderAtHead().get().authVote(validatorAddress);
       } else {
-        validatorProvider.getVoteProvider().get().dropVote(validatorAddress);
+        validatorProvider.getVoteProviderAtHead().get().dropVote(validatorAddress);
       }
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
     } else {
