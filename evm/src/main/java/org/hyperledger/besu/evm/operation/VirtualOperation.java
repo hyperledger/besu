@@ -28,7 +28,8 @@ public class VirtualOperation implements Operation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    return delegate.execute(frame, evm);
+    OperationResult result = delegate.execute(frame, evm);
+    return new OperationResult(result.getGasCost(), result.getHaltReason(), 0);
   }
 
   @Override
@@ -49,11 +50,6 @@ public class VirtualOperation implements Operation {
   @Override
   public int getStackItemsProduced() {
     return delegate.getStackItemsProduced();
-  }
-
-  @Override
-  public boolean getUpdatesProgramCounter() {
-    return delegate.getUpdatesProgramCounter();
   }
 
   @Override

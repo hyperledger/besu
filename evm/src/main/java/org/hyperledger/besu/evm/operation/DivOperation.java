@@ -26,7 +26,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class DivOperation extends AbstractFixedCostOperation {
 
   public DivOperation(final GasCalculator gasCalculator) {
-    super(0x04, "DIV", 2, 1, false, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x04, "DIV", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override

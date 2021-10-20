@@ -23,7 +23,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class StopOperation extends AbstractFixedCostOperation {
 
   public StopOperation(final GasCalculator gasCalculator) {
-    super(0x00, "STOP", 0, 0, false, 1, gasCalculator, gasCalculator.getZeroTierGasCost());
+    super(0x00, "STOP", 0, 0, 1, gasCalculator, gasCalculator.getZeroTierGasCost());
   }
 
   @Override

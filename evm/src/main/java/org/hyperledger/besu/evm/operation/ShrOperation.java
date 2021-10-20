@@ -26,7 +26,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class ShrOperation extends AbstractFixedCostOperation {
 
   public ShrOperation(final GasCalculator gasCalculator) {
-    super(0x1c, "SHR", 2, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x1c, "SHR", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

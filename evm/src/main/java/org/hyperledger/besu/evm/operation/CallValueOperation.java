@@ -22,7 +22,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 public class CallValueOperation extends AbstractFixedCostOperation {
 
   public CallValueOperation(final GasCalculator gasCalculator) {
-    super(0x34, "CALLVALUE", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x34, "CALLVALUE", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
