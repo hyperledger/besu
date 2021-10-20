@@ -3,6 +3,7 @@
 ## 21.10.0-RC4
 
 ### Additions and Improvements
+- Upgrade CircleCI OpenJDK docker image to version 11.0.12. [#2928](https://github.com/hyperledger/besu/pull/2928)
 
 ### Bug Fixes
 - Do not change the sender balance, but set gas fee to zero, when simulating a transaction without enforcing balance checks. [#2454](https://github.com/hyperledger/besu/pull/2454)
