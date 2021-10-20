@@ -207,7 +207,7 @@ public interface Blockchain {
   }
 
   /**
-   * Removes an previously added observer of any type.
+   * Removes a previously added observer of any type.
    *
    * @param observerId the ID of the observer to remove
    * @return {@code true} if the observer was removed; otherwise {@code false}
