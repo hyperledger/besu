@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.AfterClass;
 import org.junit.Test;
 
 public class TransactionDecoderTest {
@@ -38,6 +39,12 @@ public class TransactionDecoderTest {
       "b8a902f8a686796f6c6f7632800285012a05f20082753094000000000000000000000000000000000000aaaa8080f838f794000000000000000000000000000000000000aaaae1a0000000000000000000000000000000000000000000000000000000000000000001a00c1d69648e348fe26155b45de45004f0e4195f6352d8f0935bc93e98a3e2a862a060064e5b9765c0ac74223b0cf49635c59ae0faf82044fd17bcc68a549ade6f95";
   private static final String GOQUORUM_PRIVATE_TX_RLP =
       "0xf88d0b808347b7608080b840290a80a37d198ff06abe189b638ff53ac8a8dc51a0aff07609d2aa75342783ae493b3e3c6b564c0eebe49284b05a0726fb33087b9e0231d349ea0c7b5661c8c526a07144db7045a395e608cda6ab051c86cc4fb42e319960b82087f3b26f0cbc3c2da00223ac129b22aec7a6c2ace3c3ef39c5eaaa54070fd82d8ee2140b0e70b1dca9";
+
+  @AfterClass
+  public static void afterClass() {
+    GoQuorumOptions.goQuorumCompatibilityMode =
+        GoQuorumOptions.GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
+  }
 
   @Test
   public void decodeGoQuorumPrivateTransactionRlp() {
