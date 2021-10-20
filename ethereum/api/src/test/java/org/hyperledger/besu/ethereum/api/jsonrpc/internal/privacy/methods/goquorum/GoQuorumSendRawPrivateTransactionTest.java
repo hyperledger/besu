@@ -53,6 +53,7 @@ import java.util.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -81,6 +82,12 @@ public class GoQuorumSendRawPrivateTransactionTest {
   @Before
   public void before() {
     method = new GoQuorumSendRawPrivateTransaction(enclave, transactionPool, privacyIdProvider);
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    GoQuorumOptions.goQuorumCompatibilityMode =
+        GoQuorumOptions.GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
   }
 
   @Test
