@@ -46,7 +46,7 @@ public interface TransactionValidationParams {
   }
 
   @Value.Default
-  default boolean isAllowMaxFeerGasBelowBaseFee() {
+  default boolean isAllowMaxFeeGasBelowBaseFee() {
     return false;
   }
 
