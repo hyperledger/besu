@@ -37,9 +37,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong muirGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong berlinBlockNumber = OptionalLong.empty();
   private OptionalLong londonBlockNumber = OptionalLong.empty();
-
-  // TODO EIP-1559 change for the actual fork name when known
-  private final OptionalLong aleutBlockNumber = OptionalLong.empty();
+  private OptionalLong baseFeePerGas = OptionalLong.empty();
   private OptionalLong classicForkBlock = OptionalLong.empty();
   private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
   private OptionalLong diehardBlockNumber = OptionalLong.empty();
@@ -181,18 +179,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  // TODO EIP-1559 change for the actual fork name when known
-  public OptionalLong getAleutBlockNumber() {
-    return aleutBlockNumber;
-  }
-
-  @Override
-  public OptionalLong getEIP1559BlockNumber() {
-    if (getAleutBlockNumber().isPresent()) {
-      return getAleutBlockNumber();
-    } else {
-      return getLondonBlockNumber();
-    }
+  public OptionalLong getBaseFeePerGas() {
+    return baseFeePerGas;
   }
 
   @Override
@@ -295,7 +283,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
-    getAleutBlockNumber().ifPresent(l -> builder.put("aleutBlock", l));
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
     getEcip1015BlockNumber().ifPresent(l -> builder.put("ecip1015Block", l));
@@ -413,6 +400,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions londonBlock(final long blockNumber) {
     londonBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions baseFeePerGas(final long baseFeeOverride) {
+    baseFeePerGas = OptionalLong.of(baseFeeOverride);
     return this;
   }
 
