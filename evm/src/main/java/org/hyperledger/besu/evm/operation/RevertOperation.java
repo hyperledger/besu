@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class RevertOperation extends AbstractOperation {
 
   public RevertOperation(final GasCalculator gasCalculator) {
-    super(0xFD, "REVERT", 2, 0, false, 1, gasCalculator);
+    super(0xFD, "REVERT", 2, 0, 1, gasCalculator);
   }
 
   @Override

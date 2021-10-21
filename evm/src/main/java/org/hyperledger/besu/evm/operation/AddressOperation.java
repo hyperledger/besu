@@ -21,7 +21,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 public class AddressOperation extends AbstractFixedCostOperation {
 
   public AddressOperation(final GasCalculator gasCalculator) {
-    super(0x30, "ADDRESS", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x30, "ADDRESS", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

@@ -95,7 +95,7 @@ public class QbftBlockHeaderUtils {
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             singletonList(proposerNodeKey),
-            0x2A,
+            ROUND_NUMBER,
             qbftExtraDataEncoder);
 
     builder.extraData(qbftExtraDataEncoder.encode(bftExtraData));
@@ -114,7 +114,7 @@ public class QbftBlockHeaderUtils {
     }
     builder.number(number);
     builder.gasLimit(5000);
-    builder.timestamp(6000 * number);
+    builder.timestamp(6 * number);
     builder.mixHash(
         Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
     builder.difficulty(Difficulty.ONE);

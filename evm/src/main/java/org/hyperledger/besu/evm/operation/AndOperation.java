@@ -23,7 +23,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class AndOperation extends AbstractFixedCostOperation {
 
   public AndOperation(final GasCalculator gasCalculator) {
-    super(0x16, "AND", 2, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x16, "AND", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

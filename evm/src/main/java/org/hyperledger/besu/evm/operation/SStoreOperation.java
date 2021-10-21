@@ -38,7 +38,7 @@ public class SStoreOperation extends AbstractOperation {
   private final Gas minumumGasRemaining;
 
   public SStoreOperation(final GasCalculator gasCalculator, final Gas minumumGasRemaining) {
-    super(0x55, "SSTORE", 2, 0, false, 1, gasCalculator);
+    super(0x55, "SSTORE", 2, 0, 1, gasCalculator);
     this.minumumGasRemaining = minumumGasRemaining;
   }
 
