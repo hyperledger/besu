@@ -98,11 +98,12 @@ public class GenesisConfigFile {
     Map<String, String> overridesRef = overrides;
 
     // if baseFeePerGas has been explicitly configured, pass it as an override:
-    if (getBaseFeePerGas().isPresent()) {
+    final var optBaseFee = getBaseFeePerGas();
+    if (optBaseFee.isPresent()) {
       overridesRef =
           Streams.concat(
                   overrides.entrySet().stream(),
-                  Stream.of(Map.entry("baseFeePerGas", getBaseFeePerGas().get().toString())))
+                  Stream.of(Map.entry("baseFeePerGas", optBaseFee.get().toString())))
               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
