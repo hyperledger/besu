@@ -17,13 +17,15 @@ package org.hyperledger.besu.consensus.qbft.validator;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
+import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -34,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
@@ -47,18 +50,20 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class TransactionValidatorProviderTest {
   @Mock private ValidatorContractController validatorContractController;
-  @Mock private BftForksSchedule<QbftConfigOptions> forksSchedule;
 
   protected MutableBlockchain blockChain;
   protected Block genesisBlock;
   protected Block block_1;
   protected Block block_2;
   private Block block_3;
+  private BftForksSchedule<QbftConfigOptions> forksSchedule;
 
   private final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
+  private static final Address CONTRACT_ADDRESS = Address.fromHexString("1");
 
   @Before
   public void setup() {
+    forksSchedule = new BftForksSchedule<>(createContractFork(0L, CONTRACT_ADDRESS), emptyList());
     genesisBlock = createEmptyBlock(0, Hash.ZERO);
     blockChain = createInMemoryBlockchain(genesisBlock);
     headerBuilder.extraData(Bytes.wrap(new byte[32]));
@@ -84,8 +89,8 @@ public class TransactionValidatorProviderTest {
     final List<Address> validatorsAt3 =
         Lists.newArrayList(
             Address.fromHexString("5"), Address.fromHexString("6"), Address.fromHexString("7"));
-    when(validatorContractController.getValidators(2, any())).thenReturn(validatorsAt2);
-    when(validatorContractController.getValidators(3, any())).thenReturn(validatorsAt3);
+    when(validatorContractController.getValidators(2, CONTRACT_ADDRESS)).thenReturn(validatorsAt2);
+    when(validatorContractController.getValidators(3, CONTRACT_ADDRESS)).thenReturn(validatorsAt3);
 
     final TransactionValidatorProvider validatorProvider =
         new TransactionValidatorProvider(blockChain, validatorContractController, forksSchedule);
@@ -103,8 +108,8 @@ public class TransactionValidatorProviderTest {
     final List<Address> validatorsAt3 =
         Lists.newArrayList(
             Address.fromHexString("5"), Address.fromHexString("6"), Address.fromHexString("7"));
-    when(validatorContractController.getValidators(2, any())).thenReturn(validatorsAt2);
-    when(validatorContractController.getValidators(3, any())).thenReturn(validatorsAt3);
+    when(validatorContractController.getValidators(2, CONTRACT_ADDRESS)).thenReturn(validatorsAt2);
+    when(validatorContractController.getValidators(3, CONTRACT_ADDRESS)).thenReturn(validatorsAt3);
 
     final TransactionValidatorProvider validatorProvider =
         new TransactionValidatorProvider(blockChain, validatorContractController, forksSchedule);
@@ -119,7 +124,7 @@ public class TransactionValidatorProviderTest {
   public void validatorsAtHeadAreRetrievedUsingContractController() {
     final List<Address> validators =
         Lists.newArrayList(Address.fromHexString("5"), Address.fromHexString("6"));
-    when(validatorContractController.getValidators(3, any())).thenReturn(validators);
+    when(validatorContractController.getValidators(3, CONTRACT_ADDRESS)).thenReturn(validators);
 
     final TransactionValidatorProvider validatorProvider =
         new TransactionValidatorProvider(blockChain, validatorContractController, forksSchedule);
@@ -131,13 +136,13 @@ public class TransactionValidatorProviderTest {
   public void validatorsAtHeadContractCallIsCached() {
     final List<Address> validators =
         Lists.newArrayList(Address.fromHexString("5"), Address.fromHexString("6"));
-    when(validatorContractController.getValidators(3, any())).thenReturn(validators);
+    when(validatorContractController.getValidators(3, CONTRACT_ADDRESS)).thenReturn(validators);
 
     final TransactionValidatorProvider validatorProvider =
         new TransactionValidatorProvider(blockChain, validatorContractController, forksSchedule);
 
     assertThat(validatorProvider.getValidatorsAtHead()).containsExactlyElementsOf(validators);
-    verify(validatorContractController).getValidators(3, any());
+    verify(validatorContractController).getValidators(3, CONTRACT_ADDRESS);
 
     assertThat(validatorProvider.getValidatorsAtHead()).containsExactlyElementsOf(validators);
     verifyNoMoreInteractions(validatorContractController);
@@ -147,7 +152,7 @@ public class TransactionValidatorProviderTest {
   public void validatorsAfterBlockContractCallIsCached() {
     final List<Address> validators =
         Lists.newArrayList(Address.fromHexString("5"), Address.fromHexString("6"));
-    when(validatorContractController.getValidators(2, any())).thenReturn(validators);
+    when(validatorContractController.getValidators(2, CONTRACT_ADDRESS)).thenReturn(validators);
 
     final TransactionValidatorProvider validatorProvider =
         new TransactionValidatorProvider(blockChain, validatorContractController, forksSchedule);
@@ -155,7 +160,7 @@ public class TransactionValidatorProviderTest {
     final Collection<Address> result =
         validatorProvider.getValidatorsAfterBlock(block_2.getHeader());
     assertThat(result).containsExactlyElementsOf(validators);
-    verify(validatorContractController).getValidators(2, any());
+    verify(validatorContractController).getValidators(2, CONTRACT_ADDRESS);
 
     final Collection<Address> resultCached =
         validatorProvider.getValidatorsAfterBlock(block_2.getHeader());
@@ -168,7 +173,7 @@ public class TransactionValidatorProviderTest {
     final List<Address> validators =
         Lists.newArrayList(
             Address.fromHexString("9"), Address.fromHexString("8"), Address.fromHexString("7"));
-    when(validatorContractController.getValidators(3, any())).thenReturn(validators);
+    when(validatorContractController.getValidators(3, CONTRACT_ADDRESS)).thenReturn(validators);
 
     final TransactionValidatorProvider validatorProvider =
         new TransactionValidatorProvider(blockChain, validatorContractController, forksSchedule);
@@ -185,5 +190,13 @@ public class TransactionValidatorProviderTest {
         new TransactionValidatorProvider(blockChain, validatorContractController, forksSchedule);
 
     assertThat(transactionValidatorProvider.getVoteProviderAtHead()).isEmpty();
+  }
+
+  private BftForkSpec<QbftConfigOptions> createContractFork(
+          final long block, final Address contractAddress) {
+    final MutableQbftConfigOptions qbftConfigOptions =
+            new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+    qbftConfigOptions.setValidatorContractAddress(Optional.of(contractAddress.toHexString()));
+    return new BftForkSpec<>(block, qbftConfigOptions);
   }
 }
