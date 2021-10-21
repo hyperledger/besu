@@ -105,7 +105,7 @@ public class ForkingValidatorProviderTest {
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
 
-    when(blockValidatorProvider.getValidatorsAtHead()).thenReturn(BLOCK_ADDRESSES);
+    when(blockValidatorProvider.getValidatorsAfterBlock(header2)).thenReturn(BLOCK_ADDRESSES);
     when(blockValidatorProvider.getValidatorsAfterBlock(header1)).thenReturn(BLOCK_ADDRESSES);
 
     assertThat(validatorProvider.getValidatorsAtHead()).isEqualTo(BLOCK_ADDRESSES);
@@ -141,7 +141,8 @@ public class ForkingValidatorProviderTest {
     assertThat(validatorProvider.getValidatorsForBlock(genesisHeader))
         .isEqualTo(CONTRACT_ADDRESSES_1);
     assertThat(validatorProvider.getValidatorsForBlock(header1)).isEqualTo(CONTRACT_ADDRESSES_1);
-    assertThat(validatorProvider.getValidatorsForBlock(header2)).isEqualTo(BLOCK_ADDRESSES);
+    // should use previous validatorProvider's validators
+    assertThat(validatorProvider.getValidatorsForBlock(header2)).isEqualTo(CONTRACT_ADDRESSES_1);
   }
 
   @Test
