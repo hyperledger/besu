@@ -31,7 +31,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class Sha3Operation extends AbstractOperation {
 
   public Sha3Operation(final GasCalculator gasCalculator) {
-    super(0x20, "SHA3", 2, 1, false, 1, gasCalculator);
+    super(0x20, "SHA3", 2, 1, 1, gasCalculator);
   }
 
   @Override

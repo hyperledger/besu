@@ -24,7 +24,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class CodeSizeOperation extends AbstractFixedCostOperation {
 
   public CodeSizeOperation(final GasCalculator gasCalculator) {
-    super(0x38, "CODESIZE", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x38, "CODESIZE", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

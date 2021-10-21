@@ -27,7 +27,7 @@ import org.hyperledger.besu.evm.internal.Words;
 public class StaticCallOperation extends AbstractCallOperation {
 
   public StaticCallOperation(final GasCalculator gasCalculator) {
-    super(0xFA, "STATICCALL", 6, 1, false, 1, gasCalculator);
+    super(0xFA, "STATICCALL", 6, 1, 1, gasCalculator);
   }
 
   @Override

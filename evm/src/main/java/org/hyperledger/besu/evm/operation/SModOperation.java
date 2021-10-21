@@ -27,7 +27,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class SModOperation extends AbstractFixedCostOperation {
 
   public SModOperation(final GasCalculator gasCalculator) {
-    super(0x07, "SMOD", 2, 1, false, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x07, "SMOD", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override
