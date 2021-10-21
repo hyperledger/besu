@@ -15,16 +15,13 @@
 
 package org.hyperledger.besu.controller;
 
+import com.google.common.base.Suppliers;
+import java.util.function.Supplier;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-
-import java.util.function.Supplier;
-
-import com.google.common.base.Suppliers;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -41,6 +38,7 @@ public abstract class BftBesuControllerBuilder extends BesuControllerBuilder {
 
   protected abstract BftConfigOptions bftConfigOptions();
 
+  @Override
   protected abstract BftMiningCoordinator createMiningCoordinator(
       ProtocolSchedule protocolSchedule,
       ProtocolContext protocolContext,

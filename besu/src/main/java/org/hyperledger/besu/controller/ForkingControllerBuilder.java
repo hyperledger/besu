@@ -16,15 +16,15 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.consensus.common.forking.ForkingBftMiningCoordinator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.ForkingBftMiningCoordinator;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
@@ -56,11 +57,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ForkingBftControllerBuilder extends BesuControllerBuilder {
+public class ForkingControllerBuilder extends BesuControllerBuilder {
 
   private final List<BftBesuControllerBuilder> besuControllerBuilders;
+  private Blockchain blockchain;
 
-  public ForkingBftControllerBuilder(final List<BftBesuControllerBuilder> besuControllerBuilders) {
+  public ForkingControllerBuilder(final List<BftBesuControllerBuilder> besuControllerBuilders) {
     this.besuControllerBuilders = besuControllerBuilders;
   }
 
@@ -114,6 +116,7 @@ public class ForkingBftControllerBuilder extends BesuControllerBuilder {
                 builder ->
                     builder.createConsensusContext(blockchain, worldStateArchive, protocolSchedule))
             .collect(Collectors.toList());
+    this.blockchain = blockchain;
     return contexts.get(0);
   }
 
@@ -144,8 +147,11 @@ public class ForkingBftControllerBuilder extends BesuControllerBuilder {
   @Override
   protected SubProtocolConfiguration createSubProtocolConfiguration(
       final EthProtocolManager ethProtocolManager) {
+    // TODO-jf creating forking subprotocol and unified SubProtocolConfiguration
     besuControllerBuilders.forEach(
         builder -> builder.createSubProtocolConfiguration(ethProtocolManager));
+
+    final SubProtocolConfiguration subProtocolConfiguration = new SubProtocolConfiguration();
     return super.createSubProtocolConfiguration(ethProtocolManager);
   }
 
@@ -335,5 +341,12 @@ public class ForkingBftControllerBuilder extends BesuControllerBuilder {
     besuControllerBuilders.forEach(
         builder -> builder.dataStorageConfiguration(dataStorageConfiguration));
     return super.dataStorageConfiguration(dataStorageConfiguration);
+  }
+
+  @Override
+  public BesuControllerBuilder evmConfiguration(final EvmConfiguration evmConfiguration) {
+    besuControllerBuilders.forEach(
+        builder -> builder.evmConfiguration(evmConfiguration));
+    return super.evmConfiguration(evmConfiguration);
   }
 }

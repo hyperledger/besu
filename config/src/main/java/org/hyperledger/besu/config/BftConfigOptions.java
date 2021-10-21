@@ -36,6 +36,8 @@ public interface BftConfigOptions {
 
   int getFutureMessagesMaxDistance();
 
+  long getBlock();
+
   Optional<String> getMiningBeneficiary();
 
   BigInteger getBlockRewardWei();

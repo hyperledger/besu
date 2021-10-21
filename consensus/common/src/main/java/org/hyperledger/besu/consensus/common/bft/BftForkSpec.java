@@ -14,11 +14,9 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.config.BftConfigOptions;
-
 import java.util.Objects;
 
-public class BftForkSpec<C extends BftConfigOptions> {
+public class BftForkSpec<C> {
 
   private final long block;
   private final C configOptions;

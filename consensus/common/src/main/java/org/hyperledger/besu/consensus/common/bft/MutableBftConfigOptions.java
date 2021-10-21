@@ -35,6 +35,7 @@ public class MutableBftConfigOptions implements BftConfigOptions {
   private int futureMessageMaxDistance;
   private Optional<String> miningBeneficiary;
   private BigInteger blockRewardWei;
+  private long block;
 
   public MutableBftConfigOptions(final BftConfigOptions bftConfigOptions) {
     this.epochLength = bftConfigOptions.getEpochLength();
@@ -47,6 +48,7 @@ public class MutableBftConfigOptions implements BftConfigOptions {
     this.futureMessageMaxDistance = bftConfigOptions.getFutureMessagesMaxDistance();
     this.miningBeneficiary = bftConfigOptions.getMiningBeneficiary();
     this.blockRewardWei = bftConfigOptions.getBlockRewardWei();
+    this.block = bftConfigOptions.getBlock();
   }
 
   @Override
@@ -87,6 +89,11 @@ public class MutableBftConfigOptions implements BftConfigOptions {
   @Override
   public int getFutureMessagesMaxDistance() {
     return futureMessageMaxDistance;
+  }
+
+  @Override
+  public long getBlock() {
+    return block;
   }
 
   @Override
@@ -142,5 +149,9 @@ public class MutableBftConfigOptions implements BftConfigOptions {
 
   public void setBlockRewardWei(final BigInteger blockRewardWei) {
     this.blockRewardWei = blockRewardWei;
+  }
+
+  public void setBlock(final long block) {
+    this.block = block;
   }
 }
