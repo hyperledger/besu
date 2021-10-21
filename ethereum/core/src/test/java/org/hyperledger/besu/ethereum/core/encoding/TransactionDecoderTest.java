@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -41,16 +40,15 @@ public class TransactionDecoderTest {
 
   @Test
   public void decodeGoQuorumPrivateTransactionRlp() {
-    GoQuorumOptions.goQuorumCompatibilityMode = true;
+    boolean goQuorumCompatibilityMode = true;
     RLPInput input = RLP.input(Bytes.fromHexString(GOQUORUM_PRIVATE_TX_RLP));
 
-    final Transaction transaction = TransactionDecoder.decodeForWire(input);
+    final Transaction transaction =
+        TransactionDecoder.decodeForWire(input, goQuorumCompatibilityMode);
     assertThat(transaction).isNotNull();
     assertThat(transaction.getV()).isEqualTo(38);
     assertThat(transaction.getSender())
         .isEqualByComparingTo(Address.fromHexString("0xed9d02e382b34818e88b88a309c7fe71e65f419d"));
-    GoQuorumOptions.goQuorumCompatibilityMode =
-        GoQuorumOptions.GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
   }
 
   @Test

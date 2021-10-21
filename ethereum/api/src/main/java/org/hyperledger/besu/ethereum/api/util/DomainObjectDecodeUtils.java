@@ -31,7 +31,7 @@ public class DomainObjectDecodeUtils {
       throws InvalidJsonRpcRequestException {
     try {
       Bytes txnBytes = Bytes.fromHexString(rawTransaction);
-      final boolean isGoQuorumCompatibilityMode = GoQuorumOptions.goQuorumCompatibilityMode;
+      final boolean isGoQuorumCompatibilityMode = GoQuorumOptions.getGoQuorumCompatibilityMode();
       return TransactionDecoder.decodeOpaqueBytes(txnBytes, isGoQuorumCompatibilityMode);
     } catch (final IllegalArgumentException | RLPException e) {
       LOG.debug(e);

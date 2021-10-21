@@ -62,7 +62,7 @@ public class TransactionDecoder {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   public static Transaction decodeForWire(final RLPInput rlpInput) {
-    return decodeForWire(rlpInput, GoQuorumOptions.goQuorumCompatibilityMode);
+    return decodeForWire(rlpInput, GoQuorumOptions.getGoQuorumCompatibilityMode());
   }
 
   public static Transaction decodeForWire(

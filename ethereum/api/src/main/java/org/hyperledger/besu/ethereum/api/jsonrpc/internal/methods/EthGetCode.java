@@ -64,7 +64,7 @@ public class EthGetCode extends AbstractBlockParameterOrBlockHashMethod {
   @Override
   protected String resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
     final Address address = request.getRequiredParameter(0, Address.class);
-    final boolean isGoQuorumCompatibilityMode = GoQuorumOptions.goQuorumCompatibilityMode;
+    final boolean isGoQuorumCompatibilityMode = GoQuorumOptions.getGoQuorumCompatibilityMode();
     if (isGoQuorumCompatibilityMode && privacyParameters.isPresent()) {
       // get from private state if we can
       final Optional<BlockHeader> blockHeader =

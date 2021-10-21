@@ -190,12 +190,12 @@ public class TransactionAdapter extends AdapterBase {
   public boolean getIsPrivate() {
     return transactionWithMetadata
         .getTransaction()
-        .isGoQuorumPrivateTransaction(GoQuorumOptions.goQuorumCompatibilityMode);
+        .isGoQuorumPrivateTransaction(GoQuorumOptions.getGoQuorumCompatibilityMode());
   }
 
   public Optional<Bytes> getPrivateInputData() {
     final Transaction transaction = transactionWithMetadata.getTransaction();
-    if (transaction.isGoQuorumPrivateTransaction(GoQuorumOptions.goQuorumCompatibilityMode)) {
+    if (transaction.isGoQuorumPrivateTransaction(GoQuorumOptions.getGoQuorumCompatibilityMode())) {
       return Optional.ofNullable(transaction.getPayload());
     }
     return Optional.of(Bytes.EMPTY);

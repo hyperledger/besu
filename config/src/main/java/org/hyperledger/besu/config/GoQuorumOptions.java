@@ -19,8 +19,29 @@ package org.hyperledger.besu.config;
  * with MainNet.
  */
 public class GoQuorumOptions {
-  // To make it easier for tests to reset the value to default
-  public static final boolean GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE = false;
+  private static final boolean GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE = false;
 
-  public static boolean goQuorumCompatibilityMode = GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
+  private static Boolean goQuorumCompatibilityMode;
+
+  public static void setGoQuorumCompatibilityMode(final boolean goQuorumCompatibilityMode) {
+    if (GoQuorumOptions.goQuorumCompatibilityMode == null) {
+      GoQuorumOptions.goQuorumCompatibilityMode = goQuorumCompatibilityMode;
+    } else {
+      throw new Error("goQuorumCompatibilityMode can not be changed after having been assigned");
+    }
+  }
+
+  public static boolean getGoQuorumCompatibilityMode() {
+    if (goQuorumCompatibilityMode == null) {
+      // If the quorum mode has never been set, we default it
+      // here. This allows running individual unit tests that
+      // query the quorum mode without having to include a
+      // setGoQuorumCompatibilityMode call in their setup
+      // procedure. For production use, this case is not
+      // triggered as we set the quorum mode very early during
+      // startup.
+      goQuorumCompatibilityMode = GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
+    }
+    return goQuorumCompatibilityMode;
+  }
 }
