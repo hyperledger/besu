@@ -209,8 +209,9 @@ public class ValidatorContractTest {
     final List<Address> block1Addresses =
         Stream.of(NODE_ADDRESS, NODE_2_ADDRESS).sorted().collect(Collectors.toList());
 
-    createNewBlockAsProposer(context, 1L);
-    remotePeerProposesNewBlock(context, 2L);
+    remotePeerProposesNewBlock(context, 1L);
+    clock.step(TestContextBuilder.BLOCK_TIMER_SEC, SECONDS);
+    createNewBlockAsProposer(context, 2L);
 
     final ValidatorProvider validatorProvider = context.getValidatorProvider();
     final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
@@ -234,8 +235,15 @@ public class ValidatorContractTest {
   private void createNewBlockAsProposer(final TestContext context, final long blockNumber) {
     ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(blockNumber, 0);
 
+    // trigger proposal
     context.getController().handleBlockTimerExpiry(new BlockTimerExpiry(roundId));
-    assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(blockNumber);
+
+    // peers commit proposed block
+    Block proposedBlock = context.createBlockForProposalFromChainHead(clock.instant().getEpochSecond());
+    RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
+    peers.commitForNonProposing(roundId, proposedBlock);
+
+    assertThat(context.getCurrentChainHeight()).isEqualTo(blockNumber);
     context
         .getController()
         .handleNewBlockEvent(new NewChainHead(context.getBlockchain().getChainHeadHeader()));
@@ -246,15 +254,12 @@ public class ValidatorContractTest {
 
     RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
     ValidatorPeer remoteProposer = peers.getProposer();
-    clock.step(
-        TestContextBuilder.BLOCK_TIMER_SEC,
-        SECONDS); // avoid failing the TimestampMoreRecentThanParent validation rule
     final Block blockToPropose =
         context.createBlockForProposalFromChainHead(
             clock.instant().getEpochSecond(), remoteProposer.getNodeAddress());
     remoteProposer.injectProposal(roundId, blockToPropose);
     remoteProposer.injectCommit(roundId, blockToPropose);
-    assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(blockNumber);
+    assertThat(context.getCurrentChainHeight()).isEqualTo(blockNumber);
 
     context
         .getController()
