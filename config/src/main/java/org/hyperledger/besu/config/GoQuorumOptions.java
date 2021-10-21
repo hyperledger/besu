@@ -27,7 +27,8 @@ public class GoQuorumOptions {
     if (GoQuorumOptions.goQuorumCompatibilityMode == null) {
       GoQuorumOptions.goQuorumCompatibilityMode = goQuorumCompatibilityMode;
     } else {
-      throw new Error("goQuorumCompatibilityMode can not be changed after having been assigned");
+      throw new IllegalStateException(
+          "goQuorumCompatibilityMode can not be changed after having been assigned");
     }
   }
 
