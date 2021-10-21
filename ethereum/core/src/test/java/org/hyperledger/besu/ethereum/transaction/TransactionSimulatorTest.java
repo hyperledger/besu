@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -85,11 +86,15 @@ public class TransactionSimulatorTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private MainnetTransactionProcessor transactionProcessor;
+  @Mock private MainnetTransactionValidator transactionValidator;
 
   @Before
   public void setUp() {
     this.transactionSimulator =
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
+
+    when(transactionProcessor.getTransactionValidator()).thenReturn(transactionValidator);
+    when(transactionValidator.getGoQuorumCompatibilityMode()).thenReturn(false);
   }
 
   @Test

@@ -76,8 +76,11 @@ public class TransactionDecoderTest {
   public void doesNotDecodeEIP1559WithLargeMaxFeePerGasOrLargeMaxPriorityFeePerGas() {
     final String txWithBigFees =
         "0x02f84e0101a1648a5f8b2dcad5ea5ba6b720ff069c1d87c21a4a6a5b3766b39e2c2792367bb066a1ffa5ffaf5b0560d3a9fb186c2ede2ae6751bc0b4fef9107cf36389630b6196a38805800180c0010203";
+    final boolean goQuorumCompatibilityMode = false;
     assertThatThrownBy(
-            () -> TransactionDecoder.decodeOpaqueBytes(Bytes.fromHexString(txWithBigFees)))
+            () ->
+                TransactionDecoder.decodeOpaqueBytes(
+                    Bytes.fromHexString(txWithBigFees), goQuorumCompatibilityMode))
         .isInstanceOf(RLPException.class);
   }
 }

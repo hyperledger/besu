@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.util;
 
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
@@ -30,7 +31,8 @@ public class DomainObjectDecodeUtils {
       throws InvalidJsonRpcRequestException {
     try {
       Bytes txnBytes = Bytes.fromHexString(rawTransaction);
-      return TransactionDecoder.decodeOpaqueBytes(txnBytes);
+      final boolean isGoQuorumCompatibilityMode = GoQuorumOptions.goQuorumCompatibilityMode;
+      return TransactionDecoder.decodeOpaqueBytes(txnBytes, isGoQuorumCompatibilityMode);
     } catch (final IllegalArgumentException | RLPException e) {
       LOG.debug(e);
       throw new InvalidJsonRpcRequestException("Invalid raw transaction hex", e);

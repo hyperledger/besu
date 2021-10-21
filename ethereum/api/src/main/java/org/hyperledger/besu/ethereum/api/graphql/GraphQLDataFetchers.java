@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.graphql;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -282,7 +283,9 @@ public class GraphQLDataFetchers {
   private TransactionAdapter getTransactionAdapter(
       final TransactionWithMetadata transactionWithMetadata) {
     final Transaction transaction = transactionWithMetadata.getTransaction();
-    return goQuorumPrivacyParameters.isPresent() && transaction.isGoQuorumPrivateTransaction()
+    final boolean isGoQuorumPrivateTransaction =
+        transaction.isGoQuorumPrivateTransaction(GoQuorumOptions.goQuorumCompatibilityMode);
+    return isGoQuorumPrivateTransaction && goQuorumPrivacyParameters.isPresent()
         ? updatePrivatePayload(transaction)
         : new TransactionAdapter(transactionWithMetadata);
   }

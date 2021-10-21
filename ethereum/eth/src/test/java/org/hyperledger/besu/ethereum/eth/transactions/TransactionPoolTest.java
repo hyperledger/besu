@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -36,7 +37,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Wei;
@@ -79,12 +79,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @SuppressWarnings("unchecked")
+@RunWith(MockitoJUnitRunner.class)
 public class TransactionPoolTest {
 
   private static final int MAX_TRANSACTIONS = 5;
@@ -92,21 +95,20 @@ public class TransactionPoolTest {
   private static final KeyPair KEY_PAIR1 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
 
-  private final PendingTransactionListener listener = mock(PendingTransactionListener.class);
-  private final TransactionPool.TransactionBatchAddedListener batchAddedListener =
-      mock(TransactionPool.TransactionBatchAddedListener.class);
-  private final TransactionPool.TransactionBatchAddedListener pendingBatchAddedListener =
-      mock(TransactionPool.TransactionBatchAddedListener.class);
+  @Mock private MainnetTransactionValidator transactionValidator;
+  @Mock private PendingTransactionListener listener;
+  @Mock private TransactionPool.TransactionBatchAddedListener batchAddedListener;
+  @Mock private TransactionPool.TransactionBatchAddedListener pendingBatchAddedListener;
+
+  @SuppressWarnings("unchecked")
+  @Mock
+  private ProtocolSchedule protocolSchedule;
+
+  @SuppressWarnings("unchecked")
+  @Mock
+  private ProtocolSpec protocolSpec;
+
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
-
-  @SuppressWarnings("unchecked")
-  private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
-
-  @SuppressWarnings("unchecked")
-  private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
-
-  private final MainnetTransactionValidator transactionValidator =
-      mock(MainnetTransactionValidator.class);
   private MutableBlockchain blockchain;
 
   private GasPricePendingTransactionsSorter transactions;
@@ -160,12 +162,6 @@ public class TransactionPoolTest {
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);
     blockchain.observeBlockAdded(transactionPool);
-  }
-
-  @After
-  public void tearDown() {
-    GoQuorumOptions.goQuorumCompatibilityMode =
-        GoQuorumOptions.GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
   }
 
   @Test
@@ -359,7 +355,9 @@ public class TransactionPoolTest {
     givenTransactionIsValid(transaction2);
     when(transactionValidator.validate(eq(transaction1), any(Optional.class), any()))
         .thenReturn(valid());
-    when(transactionValidator.validateForSender(transaction1, null, true))
+    // TODO: This mock should be called but is not. Make it happen and remove the lenient.
+    lenient()
+        .when(transactionValidator.validateForSender(transaction1, null, true))
         .thenReturn(ValidationResult.invalid(NONCE_TOO_LOW));
 
     transactionPool.addRemoteTransactions(asList(transaction1, transaction2));
@@ -545,7 +543,10 @@ public class TransactionPoolTest {
     when(peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65)).thenReturn(false);
     when(peerPendingTransactionTracker.isPeerSupported(validPeer, EthProtocol.ETH65))
         .thenReturn(true);
-    when(transactionValidator.validate(any(), any(Optional.class), any())).thenReturn(valid());
+    // TODO: This mock should be called but is not. Make it happen and remove the lenient.
+    lenient()
+        .when(transactionValidator.validate(any(), any(Optional.class), any()))
+        .thenReturn(valid());
     transactionPool.addTransactionHash(transaction1.getHash());
     transactionPool.handleConnect(peer);
     verify(peerPendingTransactionTracker, never()).addToPeerSendQueue(peer, transaction1.getHash());
@@ -587,16 +588,24 @@ public class TransactionPoolTest {
     final Transaction transaction2 = builder.nonce(2).createTransaction(KEY_PAIR1);
     final Transaction transaction3 = builder.nonce(3).createTransaction(KEY_PAIR1);
 
-    when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
+    // TODO: This mock should be called but is not. Make it happen and remove the lenient.
+    lenient()
+        .when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
         .thenReturn(valid());
-    when(transactionValidator.validateForSender(
-            eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
+    lenient()
+        .when(
+            transactionValidator.validateForSender(
+                eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
-    when(transactionValidator.validateForSender(
-            eq(transaction2), nullable(Account.class), any(TransactionValidationParams.class)))
+    lenient()
+        .when(
+            transactionValidator.validateForSender(
+                eq(transaction2), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
-    when(transactionValidator.validateForSender(
-            eq(transaction3), nullable(Account.class), any(TransactionValidationParams.class)))
+    lenient()
+        .when(
+            transactionValidator.validateForSender(
+                eq(transaction3), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
 
     transactionPool.addRemoteTransactions(asList(transaction3, transaction1, transaction2));
@@ -752,10 +761,12 @@ public class TransactionPoolTest {
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ONE).build());
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
         .thenReturn(valid());
-    when(transactionValidator.validateForSender(
-            any(Transaction.class),
-            nullable(Account.class),
-            any(TransactionValidationParams.class)))
+    lenient()
+        .when(
+            transactionValidator.validateForSender(
+                any(Transaction.class),
+                nullable(Account.class),
+                any(TransactionValidationParams.class)))
         .thenReturn(valid());
     final Transaction transaction =
         new TransactionTestFixture()
@@ -796,10 +807,12 @@ public class TransactionPoolTest {
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.legacy());
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
         .thenReturn(valid());
-    when(transactionValidator.validateForSender(
-            any(Transaction.class),
-            nullable(Account.class),
-            any(TransactionValidationParams.class)))
+    lenient()
+        .when(
+            transactionValidator.validateForSender(
+                any(Transaction.class),
+                nullable(Account.class),
+                any(TransactionValidationParams.class)))
         .thenReturn(valid());
     final Transaction transaction =
         new TransactionTestFixture()
@@ -857,7 +870,7 @@ public class TransactionPoolTest {
 
   @Test
   public void shouldRejectGoQuorumTransactionWithNonZeroValue() {
-    GoQuorumOptions.goQuorumCompatibilityMode = true;
+    when(transactionValidator.getGoQuorumCompatibilityMode()).thenReturn(true);
 
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final EthContext ethContext = ethProtocolManager.ethContext();

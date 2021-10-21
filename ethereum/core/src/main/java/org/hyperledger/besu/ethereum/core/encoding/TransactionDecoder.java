@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -61,8 +62,13 @@ public class TransactionDecoder {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   public static Transaction decodeForWire(final RLPInput rlpInput) {
+    return decodeForWire(rlpInput, GoQuorumOptions.goQuorumCompatibilityMode);
+  }
+
+  public static Transaction decodeForWire(
+      final RLPInput rlpInput, final boolean goQuorumCompatibilityMode) {
     if (rlpInput.nextIsList()) {
-      return decodeFrontier(rlpInput);
+      return decodeFrontier(rlpInput, goQuorumCompatibilityMode);
     } else {
       final Bytes typedTransactionBytes = rlpInput.readBytes();
       final TransactionType transactionType =
@@ -71,12 +77,13 @@ public class TransactionDecoder {
     }
   }
 
-  public static Transaction decodeOpaqueBytes(final Bytes input) {
+  public static Transaction decodeOpaqueBytes(
+      final Bytes input, final boolean goQuorumCompatibilityMode) {
     final TransactionType transactionType;
     try {
       transactionType = TransactionType.of(input.get(0));
     } catch (final IllegalArgumentException __) {
-      return decodeForWire(RLP.input(input));
+      return decodeForWire(RLP.input(input), goQuorumCompatibilityMode);
     }
     return getDecoder(transactionType).decode(RLP.input(input.slice(1)));
   }
@@ -88,7 +95,7 @@ public class TransactionDecoder {
         transactionType);
   }
 
-  static Transaction decodeFrontier(final RLPInput input) {
+  static Transaction decodeFrontier(final RLPInput input, final boolean goQuorumCompatibilityMode) {
     input.enterList();
     final Transaction.Builder builder =
         Transaction.builder()
@@ -103,7 +110,8 @@ public class TransactionDecoder {
     final BigInteger v = input.readBigIntegerScalar();
     final byte recId;
     Optional<BigInteger> chainId = Optional.empty();
-    if (GoQuorumPrivateTransactionDetector.isGoQuorumPrivateTransactionV(v)) {
+    if (goQuorumCompatibilityMode
+        && GoQuorumPrivateTransactionDetector.isGoQuorumPrivateTransactionV(v)) {
       builder.v(v);
       recId = v.subtract(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN).byteValueExact();
     } else if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
