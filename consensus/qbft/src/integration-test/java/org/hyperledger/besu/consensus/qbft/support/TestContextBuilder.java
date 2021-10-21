@@ -423,7 +423,7 @@ public class TestContextBuilder {
             blockChain, epochManager, blockInterface, validatorOverrides);
     final TransactionValidatorProvider transactionValidatorProvider =
         new TransactionValidatorProvider(
-            blockChain, new ValidatorContractController(transactionSimulator, forksSchedule));
+            blockChain, new ValidatorContractController(transactionSimulator), forksSchedule);
     final ValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, transactionValidatorProvider);

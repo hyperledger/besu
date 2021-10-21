@@ -333,7 +333,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
     transactionValidatorProvider =
         new TransactionValidatorProvider(
-            blockchain, new ValidatorContractController(transactionSimulator, qbftForksSchedule));
+            blockchain, new ValidatorContractController(transactionSimulator), qbftForksSchedule);
 
     final ValidatorProvider validatorProvider =
         new ForkingValidatorProvider(

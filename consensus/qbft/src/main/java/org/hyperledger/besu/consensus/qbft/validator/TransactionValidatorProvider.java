@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.validator;
 
+import org.hyperledger.besu.config.QbftConfigOptions;
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.datatypes.Address;
@@ -32,34 +34,47 @@ public class TransactionValidatorProvider implements ValidatorProvider {
 
   private final Blockchain blockchain;
   private final ValidatorContractController validatorContractController;
+  private final BftForksSchedule<QbftConfigOptions> forksSchedule;
   private final Cache<Long, Collection<Address>> validatorCache =
       CacheBuilder.newBuilder().maximumSize(100).build();
 
   public TransactionValidatorProvider(
-      final Blockchain blockchain, final ValidatorContractController validatorContractController) {
+      final Blockchain blockchain,
+      final ValidatorContractController validatorContractController,
+      final BftForksSchedule<QbftConfigOptions> forksSchedule) {
     this.blockchain = blockchain;
     this.validatorContractController = validatorContractController;
+    this.forksSchedule = forksSchedule;
   }
 
   @Override
   public Collection<Address> getValidatorsAtHead() {
-    return getValidatorsForBlock(blockchain.getChainHeadHeader());
+    return getValidatorsAfterBlock(blockchain.getChainHeadBlock().getHeader());
   }
 
   @Override
-  public Collection<Address> getValidatorsAfterBlock(final BlockHeader header) {
-    // For the validator contract we determine the vote from the previous block
-    return getValidatorsForBlock(header);
+  public Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
+    // For the validator contract we determine the validators from the previous block but the
+    // address from block about to be created
+    final long nextBlock = parentHeader.getNumber() + 1;
+    final Address contractAddress = resolveContractAddress(nextBlock);
+    return getValidatorsFromContract(parentHeader, contractAddress);
   }
 
   @Override
   public Collection<Address> getValidatorsForBlock(final BlockHeader header) {
+    final Address contractAddress = resolveContractAddress(header.getNumber());
+    return getValidatorsFromContract(header, contractAddress);
+  }
+
+  private Collection<Address> getValidatorsFromContract(
+      final BlockHeader header, final Address contractAddress) {
     final long blockNumber = header.getNumber();
     try {
       return validatorCache.get(
           blockNumber,
           () ->
-              validatorContractController.getValidators(blockNumber).stream()
+              validatorContractController.getValidators(blockNumber, contractAddress).stream()
                   .sorted()
                   .collect(Collectors.toList()));
     } catch (final ExecutionException e) {
@@ -70,5 +85,17 @@ public class TransactionValidatorProvider implements ValidatorProvider {
   @Override
   public Optional<VoteProvider> getVoteProviderAtHead() {
     return Optional.empty();
+  }
+
+  private Address resolveContractAddress(final long blockNumber) {
+    return forksSchedule
+        .getFork(blockNumber)
+        .getConfigOptions()
+        .getValidatorContractAddress()
+        .map(Address::fromHexString)
+        .orElseThrow(
+            () ->
+                new RuntimeException(
+                    "Error resolving smart contract address unable to make validator contract call"));
   }
 }

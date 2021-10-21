@@ -49,18 +49,23 @@ public class ForkingValidatorProvider implements ValidatorProvider {
 
   @Override
   public Collection<Address> getValidatorsAtHead() {
-    final BlockHeader header = blockchain.getChainHeadHeader();
-    return getValidators(header.getNumber(), ValidatorProvider::getValidatorsAtHead);
+    final BlockHeader chainHead = blockchain.getChainHeadHeader();
+    return getValidatorsAfterBlock(chainHead);
   }
 
   @Override
-  public Collection<Address> getValidatorsAfterBlock(final BlockHeader header) {
-    return getValidators(header.getNumber(), p -> p.getValidatorsAfterBlock(header));
+  public Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
+    final long nextBlock = parentHeader.getNumber() + 1;
+    final ValidatorProvider validatorProvider = resolveValidatorProvider(nextBlock);
+    final BftForkSpec<QbftConfigOptions> forkSpec = forksSchedule.getFork(nextBlock);
+    return getValidators(validatorProvider, forkSpec, p -> p.getValidatorsAfterBlock(parentHeader));
   }
 
   @Override
   public Collection<Address> getValidatorsForBlock(final BlockHeader header) {
-    return getValidators(header.getNumber(), p -> p.getValidatorsForBlock(header));
+    final ValidatorProvider validatorProvider = resolveValidatorProvider(header.getNumber());
+    final BftForkSpec<QbftConfigOptions> forkSpec = forksSchedule.getFork(header.getNumber());
+    return getValidators(validatorProvider, forkSpec, p -> p.getValidatorsForBlock(header));
   }
 
   @Override
@@ -75,15 +80,15 @@ public class ForkingValidatorProvider implements ValidatorProvider {
   }
 
   private Collection<Address> getValidators(
-      final long block, final Function<ValidatorProvider, Collection<Address>> getValidators) {
-    final BftForkSpec<QbftConfigOptions> forkSpec = forksSchedule.getFork(block);
-    final ValidatorProvider validatorProvider = resolveValidatorProvider(block);
+      final ValidatorProvider validatorProvider,
+      final BftForkSpec<QbftConfigOptions> forkSpec,
+      final Function<ValidatorProvider, Collection<Address>> getValidators) {
 
     // when moving to a block validator the first block needs to be initialised or created with
     // the previous block state otherwise we would have no validators
-    if (!forkSpec.getConfigOptions().isValidatorContractMode()) {
-      if (block > 0 && block == forkSpec.getBlock()) {
-        final long prevBlockNumber = block - 1L;
+    if (forkSpec.getConfigOptions().isValidatorBlockHeaderMode()) {
+      if (forkSpec.getBlock() > 0) {
+        final long prevBlockNumber = forkSpec.getBlock() - 1L;
         final Optional<BlockHeader> prevBlockHeader = blockchain.getBlockHeader(prevBlockNumber);
         if (prevBlockHeader.isPresent()) {
           return resolveValidatorProvider(prevBlockNumber)
