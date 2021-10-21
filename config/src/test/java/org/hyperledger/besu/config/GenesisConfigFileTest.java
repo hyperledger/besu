@@ -172,6 +172,13 @@ public class GenesisConfigFileTest {
   }
 
   @Test
+  public void shouldOverrideConfigOptionsBaseFeeWhenSpecified() {
+    GenesisConfigOptions withOverrides =
+        EMPTY_CONFIG.getConfigOptions(Map.of("baseFeePerGas", "8"));
+    assertThat(withOverrides.getBaseFeePerGas().getAsLong()).isEqualTo(8L);
+  }
+
+  @Test
   public void shouldDefaultTimestampToZero() {
     assertThat(EMPTY_CONFIG.getTimestamp()).isZero();
   }

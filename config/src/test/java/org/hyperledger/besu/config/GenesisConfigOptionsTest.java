@@ -185,12 +185,6 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
-  public void shouldGetBaikalBlockNumber() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("calaverasblock", 1000));
-    assertThat(config.getLondonBlockNumber()).hasValue(1000);
-  }
-
-  @Test
   // TODO ECIP-1049 change for the actual fork name when known
   public void shouldGetECIP1049BlockNumber() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ecip1049block", 1000));
