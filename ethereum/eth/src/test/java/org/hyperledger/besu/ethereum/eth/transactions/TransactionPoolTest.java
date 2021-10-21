@@ -28,7 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -355,16 +355,21 @@ public class TransactionPoolTest {
     givenTransactionIsValid(transaction2);
     when(transactionValidator.validate(eq(transaction1), any(Optional.class), any()))
         .thenReturn(valid());
-    // TODO: This mock should be called but is not. Make it happen and remove the lenient.
-    lenient()
-        .when(transactionValidator.validateForSender(transaction1, null, true))
+    when(transactionValidator.validateForSender(
+            eq(transaction1), eq(null), any(TransactionValidationParams.class)))
         .thenReturn(ValidationResult.invalid(NONCE_TOO_LOW));
-
     transactionPool.addRemoteTransactions(asList(transaction1, transaction2));
 
     assertTransactionNotPending(transaction1);
     assertTransactionPending(transaction2);
     verify(batchAddedListener).onTransactionsAdded(singleton(transaction2));
+    verify(transactionValidator).validate(eq(transaction1), any(Optional.class), any());
+    verify(transactionValidator)
+        .validateForSender(eq(transaction1), eq(null), any(TransactionValidationParams.class));
+    verify(transactionValidator).validate(eq(transaction2), any(Optional.class), any());
+    verify(transactionValidator).validateForSender(eq(transaction2), any(), any());
+    verify(transactionValidator, atLeastOnce()).getGoQuorumCompatibilityMode();
+    verifyNoMoreInteractions(transactionValidator);
   }
 
   @Test
@@ -543,10 +548,7 @@ public class TransactionPoolTest {
     when(peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65)).thenReturn(false);
     when(peerPendingTransactionTracker.isPeerSupported(validPeer, EthProtocol.ETH65))
         .thenReturn(true);
-    // TODO: This mock should be called but is not. Make it happen and remove the lenient.
-    lenient()
-        .when(transactionValidator.validate(any(), any(Optional.class), any()))
-        .thenReturn(valid());
+
     transactionPool.addTransactionHash(transaction1.getHash());
     transactionPool.handleConnect(peer);
     verify(peerPendingTransactionTracker, never()).addToPeerSendQueue(peer, transaction1.getHash());
@@ -587,26 +589,6 @@ public class TransactionPoolTest {
     final Transaction transaction1 = builder.nonce(1).createTransaction(KEY_PAIR1);
     final Transaction transaction2 = builder.nonce(2).createTransaction(KEY_PAIR1);
     final Transaction transaction3 = builder.nonce(3).createTransaction(KEY_PAIR1);
-
-    // TODO: This mock should be called but is not. Make it happen and remove the lenient.
-    lenient()
-        .when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
-        .thenReturn(valid());
-    lenient()
-        .when(
-            transactionValidator.validateForSender(
-                eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
-        .thenReturn(valid());
-    lenient()
-        .when(
-            transactionValidator.validateForSender(
-                eq(transaction2), nullable(Account.class), any(TransactionValidationParams.class)))
-        .thenReturn(valid());
-    lenient()
-        .when(
-            transactionValidator.validateForSender(
-                eq(transaction3), nullable(Account.class), any(TransactionValidationParams.class)))
-        .thenReturn(valid());
 
     transactionPool.addRemoteTransactions(asList(transaction3, transaction1, transaction2));
 
@@ -761,13 +743,6 @@ public class TransactionPoolTest {
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ONE).build());
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
         .thenReturn(valid());
-    lenient()
-        .when(
-            transactionValidator.validateForSender(
-                any(Transaction.class),
-                nullable(Account.class),
-                any(TransactionValidationParams.class)))
-        .thenReturn(valid());
     final Transaction transaction =
         new TransactionTestFixture()
             .nonce(1)
@@ -806,13 +781,6 @@ public class TransactionPoolTest {
     // pre-London feemarket
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.legacy());
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
-        .thenReturn(valid());
-    lenient()
-        .when(
-            transactionValidator.validateForSender(
-                any(Transaction.class),
-                nullable(Account.class),
-                any(TransactionValidationParams.class)))
         .thenReturn(valid());
     final Transaction transaction =
         new TransactionTestFixture()
