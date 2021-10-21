@@ -548,7 +548,7 @@ public class BesuNodeFactory {
                     node.createGenesisConfigForValidators(
                         asList(validators),
                         nodes,
-                        genesis::createQbftContractBasedValidatorGenesisConfig))
+                        genesis::createQbftValidatorContractGenesisConfig))
             .build());
   }
 

@@ -14,29 +14,25 @@
  */
 package org.hyperledger.besu.tests.acceptance.bft.qbft;
 
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import org.junit.Test;
 
-public class QbftContractBasedVotingAcceptanceTest
-    extends ParameterizedQbftContractBasedVotingTestBase {
-  public QbftContractBasedVotingAcceptanceTest(
-      final String testName, final QbftContractBasedParameterizedFactoryProvider factoryProvider) {
-    super(testName, factoryProvider);
-  }
+public class QbftContractBasedVotingAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldMineOnMultipleNodesEvenWhenClusterContainsNonValidator() throws Exception {
     final String[] validators = {"validator1", "validator2", "validator3"};
     final BesuNode validator1 =
-        factoryProvider.createNodeWithValidators(besu, "validator1", validators);
+        besu.createQbftNodeWithContractBasedValidators("validator1", validators);
     final BesuNode validator2 =
-        factoryProvider.createNodeWithValidators(besu, "validator2", validators);
+        besu.createQbftNodeWithContractBasedValidators("validator2", validators);
     final BesuNode validator3 =
-        factoryProvider.createNodeWithValidators(besu, "validator3", validators);
+        besu.createQbftNodeWithContractBasedValidators("validator3", validators);
     final BesuNode nonValidatorNode =
-        factoryProvider.createNodeWithValidators(besu, "non-validator", validators);
+        besu.createQbftNodeWithContractBasedValidators("non-validator", validators);
     cluster.start(validator1, validator2, validator3, nonValidatorNode);
 
     cluster.verify(blockchain.reachesHeight(validator1, 1, 85));
