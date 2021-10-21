@@ -18,7 +18,6 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -41,11 +40,14 @@ import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class TransactionValidatorProviderTest {
-  private final ValidatorContractController validatorContractController =
-      mock(ValidatorContractController.class);
-  private final BftForksSchedule<QbftConfigOptions> forksSchedule = mock(BftForksSchedule.class);
+  @Mock private ValidatorContractController validatorContractController;
+  @Mock private BftForksSchedule<QbftConfigOptions> forksSchedule;
 
   protected MutableBlockchain blockChain;
   protected Block genesisBlock;
