@@ -20,7 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import org.junit.Test;
 
-public class QbftContractBasedVotingAcceptanceTest extends AcceptanceTestBase {
+public class QbftContractAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldMineOnMultipleNodesEvenWhenClusterContainsNonValidator() throws Exception {
