@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.qbft.validator;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -165,6 +166,28 @@ public class TransactionValidatorProviderTest {
     final Collection<Address> resultCached =
         validatorProvider.getValidatorsAfterBlock(block_2.getHeader());
     assertThat(resultCached).containsExactlyElementsOf(validators);
+    verifyNoMoreInteractions(validatorContractController);
+  }
+
+  @Test
+  public void getValidatorsAfterBlock_and_getValidatorsForBlock_useDifferentCaches() {
+    final List<Address> validators =
+            Lists.newArrayList(Address.fromHexString("5"), Address.fromHexString("6"));
+    when(validatorContractController.getValidators(2, CONTRACT_ADDRESS)).thenReturn(validators);
+
+    final TransactionValidatorProvider validatorProvider =
+            new TransactionValidatorProvider(blockChain, validatorContractController, forksSchedule);
+
+    validatorProvider.getValidatorsAfterBlock(block_2.getHeader()); // cache miss
+    verify(validatorContractController, times(1)).getValidators(2, CONTRACT_ADDRESS);
+
+    validatorProvider.getValidatorsAfterBlock(block_2.getHeader()); // cache hit
+    verifyNoMoreInteractions(validatorContractController);
+
+    validatorProvider.getValidatorsForBlock(block_2.getHeader()); // cache miss
+    verify(validatorContractController, times(2)).getValidators(2, CONTRACT_ADDRESS);
+
+    validatorProvider.getValidatorsAfterBlock(block_2.getHeader()); // cache hit
     verifyNoMoreInteractions(validatorContractController);
   }
 

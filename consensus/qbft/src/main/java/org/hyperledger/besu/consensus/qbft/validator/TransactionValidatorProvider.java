@@ -35,8 +35,10 @@ public class TransactionValidatorProvider implements ValidatorProvider {
   private final Blockchain blockchain;
   private final ValidatorContractController validatorContractController;
   private final BftForksSchedule<QbftConfigOptions> forksSchedule;
-  private final Cache<Long, Collection<Address>> validatorCache =
+  private final Cache<Long, Collection<Address>> afterBlockValidatorCache =
       CacheBuilder.newBuilder().maximumSize(100).build();
+  private final Cache<Long, Collection<Address>> forBlockValidatorCache =
+          CacheBuilder.newBuilder().maximumSize(100).build();
 
   public TransactionValidatorProvider(
       final Blockchain blockchain,
@@ -58,17 +60,19 @@ public class TransactionValidatorProvider implements ValidatorProvider {
     // address from block about to be created
     final long nextBlock = parentHeader.getNumber() + 1;
     final Address contractAddress = resolveContractAddress(nextBlock);
-    return getValidatorsFromContract(parentHeader, contractAddress);
+    return getValidatorsFromContract(afterBlockValidatorCache, parentHeader, contractAddress);
   }
 
   @Override
   public Collection<Address> getValidatorsForBlock(final BlockHeader header) {
     final Address contractAddress = resolveContractAddress(header.getNumber());
-    return getValidatorsFromContract(header, contractAddress);
+    return getValidatorsFromContract(forBlockValidatorCache, header, contractAddress);
   }
 
   private Collection<Address> getValidatorsFromContract(
-      final BlockHeader header, final Address contractAddress) {
+          final Cache<Long, Collection<Address>> validatorCache,
+          final BlockHeader header,
+          final Address contractAddress) {
     final long blockNumber = header.getNumber();
     try {
       return validatorCache.get(
