@@ -27,7 +27,6 @@ import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
-import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.support.TestContextBuilder;
@@ -97,9 +96,11 @@ public class ValidatorContractTest {
         List.of(createContractFork(1, TestContextBuilder.VALIDATOR_CONTRACT_ADDRESS));
     final TestContext context =
         new TestContextBuilder()
-            .indexOfFirstLocallyProposedBlock(0)
+            .indexOfFirstLocallyProposedBlock(1)
             .nodeParams(
-                List.of(new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY))))
+                List.of(
+                    new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY)),
+                    new NodeParams(NODE_2_ADDRESS, NodeKeyUtils.createFrom(NODE_2_PRIVATE_KEY))))
             .clock(TestClock.fixed())
             .genesisFile(
                 Resources.getResource("genesis_migrating_validator_contract.json").getFile())
@@ -113,24 +114,7 @@ public class ValidatorContractTest {
     final List<Address> block1Addresses =
         Stream.of(NODE_ADDRESS, NODE_2_ADDRESS).sorted().collect(Collectors.toList());
 
-    // Create remote for newly added validator in the qbft fork for block 2. Since this doesn't
-    // exist at the time network was setup so must be manually constructed as a peer.
-    final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(1, 0);
-    clock.step(TestContextBuilder.BLOCK_TIMER_SEC, SECONDS);
-    final Block blockToPropose =
-        context.createBlockForProposalFromChainHead(
-            clock.instant().getEpochSecond(), NODE_2_ADDRESS);
-    final NodeParams node2Params =
-        new NodeParams(NODE_2_ADDRESS, NodeKeyUtils.createFrom(NODE_2_PRIVATE_KEY));
-    final ValidatorPeer remoteProposer =
-        new ValidatorPeer(
-            node2Params,
-            new MessageFactory(node2Params.getNodeKey()),
-            context.getEventMultiplexer());
-
-    // Send proposal and commit from new remote peer to create a new block
-    remoteProposer.injectProposal(roundId, blockToPropose);
-    remoteProposer.injectCommit(roundId, blockToPropose);
+    remotePeerProposesNewBlock(context, 1L);
 
     final ValidatorProvider validatorProvider = context.getValidatorProvider();
     final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
