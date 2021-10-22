@@ -73,10 +73,7 @@ public interface GenesisConfigOptions {
 
   OptionalLong getLondonBlockNumber();
 
-  // TODO EIP-1559 change for the actual fork name when known
-  OptionalLong getAleutBlockNumber();
-
-  OptionalLong getEIP1559BlockNumber();
+  OptionalLong getBaseFeePerGas();
 
   Optional<UInt256> getTerminalTotalDifficulty();
 
