@@ -282,7 +282,11 @@ public class GraphQLDataFetchers {
   private TransactionAdapter getTransactionAdapter(
       final TransactionWithMetadata transactionWithMetadata) {
     final Transaction transaction = transactionWithMetadata.getTransaction();
-    return goQuorumPrivacyParameters.isPresent() && transaction.isGoQuorumPrivateTransaction()
+    final boolean isGoQuorumCompatbilityMode = goQuorumPrivacyParameters.isPresent();
+    final boolean isGoQuorumPrivateTransaction =
+        isGoQuorumCompatbilityMode
+            && transaction.isGoQuorumPrivateTransaction(isGoQuorumCompatbilityMode);
+    return isGoQuorumPrivateTransaction
         ? updatePrivatePayload(transaction)
         : new TransactionAdapter(transactionWithMetadata);
   }
