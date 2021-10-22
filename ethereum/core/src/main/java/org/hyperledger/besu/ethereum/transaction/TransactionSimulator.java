@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldStateAtBlock;
 
-import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -237,7 +236,10 @@ public class TransactionSimulator {
     // It is possible to have a data field that has a lower intrinsic value than the PMT hash.
     // This means a potential over-estimate of gas, but the tx, if sent with this gas, will not
     // fail.
-    if (GoQuorumOptions.goQuorumCompatibilityMode && value.isZero()) {
+    final boolean goQuorumCompatibilityMode =
+        transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode();
+
+    if (goQuorumCompatibilityMode && value.isZero()) {
       Gas privateGasEstimateAndState =
           protocolSpec.getGasCalculator().getMaximumTransactionCost(64);
       if (privateGasEstimateAndState.toLong() > result.getEstimateGasUsedByTransaction()) {
