@@ -667,9 +667,13 @@ public class Transaction
    * A GoQuorum private transaction has its <i>v</i> value equal to 37 or 38, and does not contain a
    * chainId.
    *
+   * @param goQuorumCompatibilityMode true if GoQuorum compatbility mode is set
    * @return true if GoQuorum private transaction, false otherwise
    */
-  public boolean isGoQuorumPrivateTransaction() {
+  public boolean isGoQuorumPrivateTransaction(final boolean goQuorumCompatibilityMode) {
+    if (!goQuorumCompatibilityMode) {
+      return false;
+    }
     if (chainId.isPresent()) {
       return false;
     }

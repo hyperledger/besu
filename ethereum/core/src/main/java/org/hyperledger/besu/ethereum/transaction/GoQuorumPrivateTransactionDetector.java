@@ -18,8 +18,6 @@ package org.hyperledger.besu.ethereum.transaction;
 import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX;
 import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN;
 
-import org.hyperledger.besu.config.GoQuorumOptions;
-
 import java.math.BigInteger;
 
 public class GoQuorumPrivateTransactionDetector {
@@ -30,8 +28,7 @@ public class GoQuorumPrivateTransactionDetector {
    * @return true if GoQuorum private transaction, false otherwise
    */
   public static final boolean isGoQuorumPrivateTransactionV(final BigInteger v) {
-    return GoQuorumOptions.goQuorumCompatibilityMode
-        && ((v.compareTo(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX) <= 0)
-            && (v.compareTo(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN)) >= 0);
+    return ((v.compareTo(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX) <= 0)
+        && (v.compareTo(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN)) >= 0);
   }
 }
