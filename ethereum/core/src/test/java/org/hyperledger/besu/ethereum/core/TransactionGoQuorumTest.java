@@ -16,15 +16,13 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.config.GoQuorumOptions;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class TransactionGoQuorumTest {
@@ -39,52 +37,47 @@ public class TransactionGoQuorumTest {
       toRLP(
           "0xf88d0b808347b7608080b840290a80a37d198ff06abe189b638ff53ac8a8dc51a0aff07609d2aa75342783ae493b3e3c6b564c0eebe49284b05a0726fb33087b9e0231d349ea0c7b5661c8c526a07144db7045a395e608cda6ab051c86cc4fb42e319960b82087f3b26f0cbc3c2da00223ac129b22aec7a6c2ace3c3ef39c5eaaa54070fd82d8ee2140b0e70b1dca9");
 
-  @BeforeClass
-  public static void beforeClass() {
-    GoQuorumOptions.goQuorumCompatibilityMode = true;
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    GoQuorumOptions.goQuorumCompatibilityMode =
-        GoQuorumOptions.GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
-  }
+  private static final boolean goQuorumCompatibilityMode = true;
 
   @Test
   public void givenPublicTransaction_assertThatIsGoQuorumFlagIsFalse() {
-    final Transaction transaction = Transaction.readFrom(ETHEREUM_PUBLIC_TX_RLP);
-    assertThat(transaction.isGoQuorumPrivateTransaction()).isFalse();
+    final Transaction transaction =
+        TransactionDecoder.decodeForWire(ETHEREUM_PUBLIC_TX_RLP, goQuorumCompatibilityMode);
+
+    assertThat(transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)).isFalse();
     assertThat(transaction.hasCostParams()).isTrue();
   }
 
   @Test
   public void givenGoQuorumTransactionV37_assertThatIsGoQuorumFlagIsTrue() {
-    final Transaction transaction = Transaction.readFrom(GOQUORUM_PRIVATE_TX_RLP_V37);
+    final Transaction transaction =
+        TransactionDecoder.decodeForWire(GOQUORUM_PRIVATE_TX_RLP_V37, goQuorumCompatibilityMode);
 
     assertThat(transaction.getV()).isEqualTo(37);
-    assertThat(transaction.isGoQuorumPrivateTransaction()).isTrue();
+    assertThat(transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)).isTrue();
     assertThat(transaction.hasCostParams()).isFalse();
   }
 
   @Test
   public void givenGoQuorumTransactionV38_assertThatIsGoQuorumFlagIsTrue() {
-    final Transaction transaction = Transaction.readFrom(GOQUORUM_PRIVATE_TX_RLP_V38);
+    final Transaction transaction =
+        TransactionDecoder.decodeForWire(GOQUORUM_PRIVATE_TX_RLP_V38, goQuorumCompatibilityMode);
 
     assertThat(transaction.getV()).isEqualTo(38);
-    assertThat(transaction.isGoQuorumPrivateTransaction()).isTrue();
+    assertThat(transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)).isTrue();
     assertThat(transaction.hasCostParams()).isFalse();
   }
 
   @Test
   public void givenTransactionWithChainId_assertThatIsGoQuorumFlagIsFalse() {
     final Transaction transaction = Transaction.builder().chainId(BigInteger.valueOf(0)).build();
-    assertThat(transaction.isGoQuorumPrivateTransaction()).isFalse();
+    assertThat(transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)).isFalse();
   }
 
   @Test
   public void givenTransactionWithoutChainIdAndV37_assertThatIsGoQuorumFlagIsTrue() {
     final Transaction transaction = Transaction.builder().v(BigInteger.valueOf(37)).build();
-    assertThat(transaction.isGoQuorumPrivateTransaction()).isTrue();
+    assertThat(transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)).isTrue();
   }
 
   private static RLPInput toRLP(final String bytes) {
