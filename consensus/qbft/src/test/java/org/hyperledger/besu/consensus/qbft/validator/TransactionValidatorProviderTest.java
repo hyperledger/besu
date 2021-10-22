@@ -16,17 +16,15 @@ package org.hyperledger.besu.consensus.qbft.validator;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.consensus.qbft.validator.ValidatorTestUtils.createContractForkSpec;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
-import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -37,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
@@ -64,7 +61,7 @@ public class TransactionValidatorProviderTest {
 
   @Before
   public void setup() {
-    forksSchedule = new BftForksSchedule<>(createContractFork(0L, CONTRACT_ADDRESS), emptyList());
+    forksSchedule = new BftForksSchedule<>(createContractForkSpec(0L, CONTRACT_ADDRESS), emptyList());
     genesisBlock = createEmptyBlock(0, Hash.ZERO);
     blockChain = createInMemoryBlockchain(genesisBlock);
     headerBuilder.extraData(Bytes.wrap(new byte[32]));
@@ -213,13 +210,5 @@ public class TransactionValidatorProviderTest {
         new TransactionValidatorProvider(blockChain, validatorContractController, forksSchedule);
 
     assertThat(transactionValidatorProvider.getVoteProviderAtHead()).isEmpty();
-  }
-
-  private BftForkSpec<QbftConfigOptions> createContractFork(
-          final long block, final Address contractAddress) {
-    final MutableQbftConfigOptions qbftConfigOptions =
-            new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
-    qbftConfigOptions.setValidatorContractAddress(Optional.of(contractAddress.toHexString()));
-    return new BftForkSpec<>(block, qbftConfigOptions);
   }
 }
