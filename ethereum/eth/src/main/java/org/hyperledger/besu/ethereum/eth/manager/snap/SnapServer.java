@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.RangedStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -103,16 +104,16 @@ class SnapServer {
             Function.identity(),
             Function.identity());
 
-    final SnapStorageEntriesCollector collector =
-        SnapStorageEntriesCollector.createCollector(
+    final RangedStorageEntriesCollector collector =
+        RangedStorageEntriesCollector.createCollector(
             range.startKeyHash(), range.endKeyHash(), MAX_ENTRIES_PER_REQUEST, maxResponseBytes);
-    final TrieIterator<Bytes> visitor = SnapStorageEntriesCollector.createVisitor(collector);
+    final TrieIterator<Bytes> visitor = RangedStorageEntriesCollector.createVisitor(collector);
 
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(
                 root ->
-                    SnapStorageEntriesCollector.collectEntries(
+                    RangedStorageEntriesCollector.collectEntries(
                         collector, visitor, root, range.startKeyHash()));
 
     final List<Bytes> proof =
@@ -139,10 +140,10 @@ class SnapServer {
 
     LOGGER.info("Receive get storage range message from {}", range.startKeyHash().toHexString());
 
-    final SnapStorageEntriesCollector collector =
-        SnapStorageEntriesCollector.createCollector(
+    final RangedStorageEntriesCollector collector =
+        RangedStorageEntriesCollector.createCollector(
             range.startKeyHash(), range.endKeyHash(), MAX_ENTRIES_PER_REQUEST, maxResponseBytes);
-    final TrieIterator<Bytes> visitor = SnapStorageEntriesCollector.createVisitor(collector);
+    final TrieIterator<Bytes> visitor = RangedStorageEntriesCollector.createVisitor(collector);
 
     final ArrayDeque<TreeMap<Bytes32, Bytes>> slots = new ArrayDeque<>();
     final List<Bytes> proofs = new ArrayDeque<>();
@@ -164,7 +165,7 @@ class SnapServer {
           (TreeMap<Bytes32, Bytes>)
               trie.entriesFrom(
                   root ->
-                      SnapStorageEntriesCollector.collectEntries(
+                      RangedStorageEntriesCollector.collectEntries(
                           collector, visitor, root, range.startKeyHash())));
 
       proofs.addAll(

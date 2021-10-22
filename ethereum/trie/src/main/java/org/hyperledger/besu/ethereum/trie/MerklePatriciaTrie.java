@@ -69,6 +69,13 @@ public interface MerklePatriciaTrie<K, V> {
   void remove(K key);
 
   /**
+   * Deletes the node mapped to the specified path, if such a node exists (Optional operation).
+   *
+   * @param path of the node to be deleted.
+   */
+  void removePath(K path);
+
+  /**
    * Returns the KECCAK256 hash of the root node of the trie.
    *
    * @return The KECCAK256 hash of the root node of the trie.

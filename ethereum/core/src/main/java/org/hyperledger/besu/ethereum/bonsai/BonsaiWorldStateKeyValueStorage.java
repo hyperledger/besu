@@ -95,15 +95,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (codeHash != null && !codeHash.equals(Hash.EMPTY)) {
       return codeStorage.get(codeHash.toArrayUnsafe()).map(Bytes::wrap);
     }
-    System.out.println(
-        codeHash
-            + " "
-            + codeStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap).orElse(Bytes.EMPTY)
-            + " "
-            + codeStorage
-                .get(accountHash.toArrayUnsafe())
-                .flatMap(codeStorage::get)
-                .map(Bytes::wrap));
     return codeStorage.get(accountHash.toArrayUnsafe()).flatMap(codeStorage::get).map(Bytes::wrap);
   }
 
@@ -322,7 +313,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       if (newCodeCounter.equals(BigInteger.ZERO)) {
         codeStorageTransaction.remove(
             Bytes.concatenate(CODE_COUNTER_PREFIX, codeHash).toArrayUnsafe());
-        // codeStorageTransaction.remove(codeHash.toArrayUnsafe());
+        codeStorageTransaction.remove(codeHash.toArrayUnsafe());
       } else {
         codeStorageTransaction.put(
             Bytes.concatenate(CODE_COUNTER_PREFIX, codeHash).toArrayUnsafe(),

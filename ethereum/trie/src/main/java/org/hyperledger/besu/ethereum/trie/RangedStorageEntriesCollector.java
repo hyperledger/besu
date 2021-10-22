@@ -12,12 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager.snap;
-
-import org.hyperledger.besu.ethereum.trie.CompactEncoding;
-import org.hyperledger.besu.ethereum.trie.Node;
-import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
-import org.hyperledger.besu.ethereum.trie.TrieIterator;
+package org.hyperledger.besu.ethereum.trie;
 
 import java.util.Map;
 import java.util.Optional;
@@ -25,13 +20,13 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class SnapStorageEntriesCollector extends StorageEntriesCollector<Bytes> {
+public class RangedStorageEntriesCollector extends StorageEntriesCollector<Bytes> {
 
   private int currentSize = 0;
   private final Optional<Bytes32> endKeyHash;
   private final Integer maxResponseBytes;
 
-  public SnapStorageEntriesCollector(
+  public RangedStorageEntriesCollector(
       final Bytes32 startKeyHash,
       final Optional<Bytes32> endKeyHash,
       final int limit,
@@ -41,26 +36,27 @@ public class SnapStorageEntriesCollector extends StorageEntriesCollector<Bytes> 
     this.maxResponseBytes = maxResponseBytes;
   }
 
-  public static SnapStorageEntriesCollector createCollector(
+  public static RangedStorageEntriesCollector createCollector(
       final Bytes32 startKeyHash,
       final Bytes32 endKeyHash,
       final int limit,
       final int maxResponseBytes) {
-    return new SnapStorageEntriesCollector(
+    return new RangedStorageEntriesCollector(
         startKeyHash, Optional.ofNullable(endKeyHash), limit, maxResponseBytes);
   }
 
-  public static SnapStorageEntriesCollector createCollector(
+  public static RangedStorageEntriesCollector createCollector(
       final Bytes32 startKeyHash, final int limit, final int maxResponseBytes) {
-    return new SnapStorageEntriesCollector(startKeyHash, Optional.empty(), limit, maxResponseBytes);
+    return new RangedStorageEntriesCollector(
+        startKeyHash, Optional.empty(), limit, maxResponseBytes);
   }
 
-  public static TrieIterator<Bytes> createVisitor(final SnapStorageEntriesCollector collector) {
+  public static TrieIterator<Bytes> createVisitor(final RangedStorageEntriesCollector collector) {
     return new TrieIterator<>(collector, false);
   }
 
   public static Map<Bytes32, Bytes> collectEntries(
-      final SnapStorageEntriesCollector collector,
+      final RangedStorageEntriesCollector collector,
       final TrieIterator<Bytes> visitor,
       final Node<Bytes> root,
       final Bytes32 startKeyHash) {

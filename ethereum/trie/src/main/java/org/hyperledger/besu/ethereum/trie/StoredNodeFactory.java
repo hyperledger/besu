@@ -33,7 +33,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   @SuppressWarnings("rawtypes")
   private static final NullNode NULL_NODE = NullNode.instance();
 
-  private final NodeLoader nodeLoader;
+  protected final NodeLoader nodeLoader;
   private final Function<V, Bytes> valueSerializer;
   private final Function<Bytes, V> valueDeserializer;
 
@@ -109,7 +109,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
     return decode(location, rlp, () -> String.format("Failed to decode value %s", rlp.toString()));
   }
 
-  private Node<V> decode(final Bytes location, final Bytes rlp, final Supplier<String> errMessage)
+  protected Node<V> decode(final Bytes location, final Bytes rlp, final Supplier<String> errMessage)
       throws MerkleTrieException {
     try {
       return decode(location, RLP.input(rlp), errMessage);
@@ -158,7 +158,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
     }
   }
 
-  private Node<V> decodeExtension(
+  protected Node<V> decodeExtension(
       final Bytes location,
       final Bytes path,
       final RLPInput valueRlp,
@@ -178,7 +178,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   }
 
   @SuppressWarnings("unchecked")
-  private BranchNode<V> decodeBranch(
+  protected BranchNode<V> decodeBranch(
       final Bytes location, final RLPInput nodeRLPs, final Supplier<String> errMessage) {
     final ArrayList<Node<V>> children = new ArrayList<>(BranchNode.RADIX);
     for (int i = 0; i < BranchNode.RADIX; ++i) {
