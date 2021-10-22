@@ -1118,7 +1118,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
-  private Boolean isGoQuorumCompatibilityMode = false;
+  protected Boolean isGoQuorumCompatibilityMode = false;
 
   public BesuCommand(
       final Logger logger,
@@ -1208,9 +1208,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (genesisFile != null) {
         genesisConfigOptions = readGenesisConfigOptions();
         if (genesisConfigOptions.isQuorum()) {
-          // this static flag is read by the RLP decoder
-          GoQuorumOptions.goQuorumCompatibilityMode = true;
-          isGoQuorumCompatibilityMode = true;
+          enableGoQuorumCompatibilityMode();
         }
       }
 
@@ -2761,5 +2759,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       return Optional.empty();
     }
     return genesisConfigOptions.getEcCurve();
+  }
+
+  protected void enableGoQuorumCompatibilityMode() {
+    // this static flag is read by the RLP decoder
+    GoQuorumOptions.setGoQuorumCompatibilityMode(true);
+    isGoQuorumCompatibilityMode = true;
   }
 }

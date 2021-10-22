@@ -99,10 +99,10 @@ public class DiscoveryConfiguration {
               .map(EnodeURLImpl::fromString)
               .collect(toList()));
 
-  public static final List<EnodeURL> CALAVERAS_BOOTSTRAP_NODES =
+  public static final List<EnodeURL> SEPOLIA_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
-                  "enode://9e1096aa59862a6f164994cb5cb16f5124d6c992cdbf4535ff7dea43ea1512afe5448dca9df1b7ab0726129603f1a3336b631e4d7a1a44c94daddd03241587f9@3.9.20.133:30303")
+                  "enode://7c9740e4d64674801fe62b76798d46778a038c49caebb15843d8c0f2b2f80d7ceba2585b4be366e6161988f81ddcfcd6fca98b5da52ae9a6f22c1b2a84b24a04@18.130.169.73:30303")
               .map(EnodeURLImpl::fromString)
               .collect(toList()));
 
