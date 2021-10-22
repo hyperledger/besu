@@ -97,8 +97,9 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
           frame.getWorldUpdater().getOrCreate(frame.getContractAddress()).getMutable();
       if (accountExists(contract)) {
         LOG.trace(
-            "Contract creation error: account as already been created for address {}",
+            "Contract creation error: account has already been created for address {}",
             frame.getContractAddress());
+        frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         operationTracer.traceAccountCreationResult(
             frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
@@ -109,7 +110,8 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         frame.setState(MessageFrame.State.CODE_EXECUTING);
       }
     } catch (final ModificationNotAllowedException ex) {
-      LOG.trace("Contract creation error: illegal modification not allowed from private state");
+      LOG.trace("Contract creation error: attempt to mutate an immutable account");
+      frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     }
   }
@@ -129,6 +131,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
           depositFee);
       if (requireCodeDepositToSucceed) {
         LOG.trace("Contract creation error: insufficient funds for code deposit");
+        frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         operationTracer.traceAccountCreationResult(
             frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
@@ -150,6 +153,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
             frame.getRemainingGas());
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
       } else {
+        frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         operationTracer.traceAccountCreationResult(
             frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));

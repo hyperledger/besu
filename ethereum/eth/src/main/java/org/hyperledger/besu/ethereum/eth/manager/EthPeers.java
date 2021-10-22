@@ -23,14 +23,15 @@ import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioni
 import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Clock;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,7 +55,7 @@ public class EthPeers {
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
-  private final Collection<PendingPeerRequest> pendingRequests = new ArrayList<>();
+  private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
 
   public EthPeers(final String protocolName, final Clock clock, final MetricsSystem metricsSystem) {
     this(protocolName, clock, metricsSystem, Collections.emptyList());
@@ -100,11 +101,13 @@ public class EthPeers {
 
   private void abortPendingRequestsAssignedToDisconnectedPeers() {
     synchronized (this) {
-      pendingRequests.stream()
-          .filter(
-              pendingPeerRequest ->
-                  pendingPeerRequest.getAssignedPeer().map(EthPeer::isDisconnected).orElse(false))
-          .forEach(PendingPeerRequest::abort);
+      final Iterator<PendingPeerRequest> iterator = pendingRequests.iterator();
+      while (iterator.hasNext()) {
+        final PendingPeerRequest request = iterator.next();
+        if (request.getAssignedPeer().map(EthPeer::isDisconnected).orElse(false)) {
+          request.abort();
+        }
+      }
     }
   }
 

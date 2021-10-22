@@ -22,29 +22,37 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes;
 
 public class JumpOperation extends AbstractFixedCostOperation {
 
   private final Operation.OperationResult invalidJumpResponse;
+  private final OperationResult jumpResponse;
 
   public JumpOperation(final GasCalculator gasCalculator) {
-    super(0x56, "JUMP", 2, 0, true, 1, gasCalculator, gasCalculator.getMidTierGasCost());
+    super(0x56, "JUMP", 2, 0, 1, gasCalculator, gasCalculator.getMidTierGasCost());
     invalidJumpResponse =
         new Operation.OperationResult(
             Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
+    jumpResponse = new OperationResult(Optional.of(gasCost), Optional.empty(), 0);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
+    final int jumpDestination;
+    Bytes bytes = frame.popStackItem().trimLeadingZeros();
+    try {
+      jumpDestination = bytes.toInt();
+    } catch (RuntimeException iae) {
+      return invalidJumpResponse;
+    }
     final Code code = frame.getCode();
-    if (!code.isValidJumpDestination(evm, frame, jumpDestination)) {
+    if (!evm.isValidJumpDestination(jumpDestination, code)) {
       return invalidJumpResponse;
     } else {
-      frame.setPC(jumpDestination.intValue());
-      return successResponse;
+      frame.setPC(jumpDestination);
+      return jumpResponse;
     }
   }
 }

@@ -52,7 +52,7 @@ public class AccountPermissioningController {
   public boolean isPermitted(
       final Transaction transaction,
       final boolean includeLocalCheck,
-      final boolean includeOnChainCheck) {
+      final boolean includeOnchainCheck) {
     final boolean checkPermissions =
         goQuorumQip714Gate.map(GoQuorumQip714Gate::shouldCheckPermissions).orElse(true);
     if (!checkPermissions) {
@@ -76,7 +76,7 @@ public class AccountPermissioningController {
               .orElse(true);
     }
 
-    if (includeOnChainCheck) {
+    if (includeOnchainCheck) {
       permittedOnchain =
           transactionSmartContractPermissioningController
               .map(c -> c.isPermitted(transaction))

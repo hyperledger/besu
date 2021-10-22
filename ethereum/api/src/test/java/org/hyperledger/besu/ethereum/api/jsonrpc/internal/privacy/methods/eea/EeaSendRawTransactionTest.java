@@ -56,13 +56,13 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
   final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
-  RestrictedOffChainEeaSendRawTransaction method;
+  RestrictedOffchainEeaSendRawTransaction method;
 
   @Before
   public void before() {
 
     method =
-        new RestrictedOffChainEeaSendRawTransaction(
+        new RestrictedOffchainEeaSendRawTransaction(
             transactionPool,
             privacyIdProvider,
             privateMarkerTransactionFactory,

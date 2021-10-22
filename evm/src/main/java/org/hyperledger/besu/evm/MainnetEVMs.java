@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.AddressOperation;
@@ -114,13 +115,13 @@ public abstract class MainnetEVMs {
 
   public static final BigInteger DEV_NET_CHAIN_ID = BigInteger.valueOf(1337);
 
-  public static EVM frontier() {
-    return frontier(new FrontierGasCalculator());
+  public static EVM frontier(final EvmConfiguration evmConfiguration) {
+    return frontier(new FrontierGasCalculator(), evmConfiguration);
   }
 
-  public static EVM frontier(final GasCalculator gasCalculator) {
-
-    return new EVM(frontierOperations(gasCalculator), gasCalculator);
+  public static EVM frontier(
+      final GasCalculator gasCalculator, final EvmConfiguration evmConfiguration) {
+    return new EVM(frontierOperations(gasCalculator), gasCalculator, evmConfiguration);
   }
 
   public static OperationRegistry frontierOperations(final GasCalculator gasCalculator) {
@@ -214,12 +215,13 @@ public abstract class MainnetEVMs {
     }
   }
 
-  public static EVM homestead() {
-    return homestead(new FrontierGasCalculator());
+  public static EVM homestead(final EvmConfiguration evmConfiguration) {
+    return homestead(new FrontierGasCalculator(), evmConfiguration);
   }
 
-  public static EVM homestead(final GasCalculator gasCalculator) {
-    return new EVM(homesteadOperations(gasCalculator), gasCalculator);
+  public static EVM homestead(
+      final GasCalculator gasCalculator, final EvmConfiguration evmConfiguration) {
+    return new EVM(homesteadOperations(gasCalculator), gasCalculator, evmConfiguration);
   }
 
   public static OperationRegistry homesteadOperations(final GasCalculator gasCalculator) {
@@ -234,20 +236,21 @@ public abstract class MainnetEVMs {
     registry.put(new DelegateCallOperation(gasCalculator));
   }
 
-  public static EVM spuriousDragon() {
-    return homestead(new SpuriousDragonGasCalculator());
+  public static EVM spuriousDragon(final EvmConfiguration evmConfiguration) {
+    return homestead(new SpuriousDragonGasCalculator(), evmConfiguration);
   }
 
-  public static EVM tangerineWhistle() {
-    return homestead(new TangerineWhistleGasCalculator());
+  public static EVM tangerineWhistle(final EvmConfiguration evmConfiguration) {
+    return homestead(new TangerineWhistleGasCalculator(), evmConfiguration);
   }
 
-  public static EVM byzantium() {
-    return byzantium(new ByzantiumGasCalculator());
+  public static EVM byzantium(final EvmConfiguration evmConfiguration) {
+    return byzantium(new ByzantiumGasCalculator(), evmConfiguration);
   }
 
-  public static EVM byzantium(final GasCalculator gasCalculator) {
-    return new EVM(byzantiumOperations(gasCalculator), gasCalculator);
+  public static EVM byzantium(
+      final GasCalculator gasCalculator, final EvmConfiguration evmConfiguration) {
+    return new EVM(byzantiumOperations(gasCalculator), gasCalculator, evmConfiguration);
   }
 
   public static OperationRegistry byzantiumOperations(final GasCalculator gasCalculator) {
@@ -265,12 +268,13 @@ public abstract class MainnetEVMs {
     registry.put(new StaticCallOperation(gasCalculator));
   }
 
-  public static EVM constantinople() {
-    return constantinople(new ConstantinopleGasCalculator());
+  public static EVM constantinople(final EvmConfiguration evmConfiguration) {
+    return constantinople(new ConstantinopleGasCalculator(), evmConfiguration);
   }
 
-  public static EVM constantinople(final GasCalculator gasCalculator) {
-    return new EVM(constantinopleOperations(gasCalculator), gasCalculator);
+  public static EVM constantinople(
+      final GasCalculator gasCalculator, final EvmConfiguration evmConfiguration) {
+    return new EVM(constantinopleOperations(gasCalculator), gasCalculator, evmConfiguration);
   }
 
   public static OperationRegistry constantinopleOperations(final GasCalculator gasCalculator) {
@@ -289,20 +293,23 @@ public abstract class MainnetEVMs {
     registry.put(new ExtCodeHashOperation(gasCalculator));
   }
 
-  public static EVM petersburg() {
-    return constantinople(new PetersburgGasCalculator());
+  public static EVM petersburg(final EvmConfiguration evmConfiguration) {
+    return constantinople(new PetersburgGasCalculator(), evmConfiguration);
   }
 
-  public static EVM istanbul() {
-    return istanbul(DEV_NET_CHAIN_ID);
+  public static EVM istanbul(final EvmConfiguration evmConfiguration) {
+    return istanbul(DEV_NET_CHAIN_ID, evmConfiguration);
   }
 
-  public static EVM istanbul(final BigInteger chainId) {
-    return istanbul(new IstanbulGasCalculator(), chainId);
+  public static EVM istanbul(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return istanbul(new IstanbulGasCalculator(), chainId, evmConfiguration);
   }
 
-  public static EVM istanbul(final GasCalculator gasCalculator, final BigInteger chainId) {
-    return new EVM(istanbulOperations(gasCalculator, chainId), gasCalculator);
+  public static EVM istanbul(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(istanbulOperations(gasCalculator, chainId), gasCalculator, evmConfiguration);
   }
 
   public static OperationRegistry istanbulOperations(
@@ -323,24 +330,27 @@ public abstract class MainnetEVMs {
     registry.put(new SStoreOperation(gasCalculator, SStoreOperation.EIP_1706_MINIMUM));
   }
 
-  public static EVM berlin() {
-    return berlin(DEV_NET_CHAIN_ID);
+  public static EVM berlin(final EvmConfiguration evmConfiguration) {
+    return berlin(DEV_NET_CHAIN_ID, evmConfiguration);
   }
 
-  public static EVM berlin(final BigInteger chainId) {
-    return istanbul(new BerlinGasCalculator(), chainId);
+  public static EVM berlin(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return istanbul(new BerlinGasCalculator(), chainId, evmConfiguration);
   }
 
-  public static EVM london() {
-    return london(DEV_NET_CHAIN_ID);
+  public static EVM london(final EvmConfiguration evmConfiguration) {
+    return london(DEV_NET_CHAIN_ID, evmConfiguration);
   }
 
-  public static EVM london(final BigInteger chainId) {
-    return london(new LondonGasCalculator(), chainId);
+  public static EVM london(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return london(new LondonGasCalculator(), chainId, evmConfiguration);
   }
 
-  public static EVM london(final GasCalculator gasCalculator, final BigInteger chainId) {
-    return new EVM(londonOperations(gasCalculator, chainId), gasCalculator);
+  public static EVM london(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(londonOperations(gasCalculator, chainId), gasCalculator, evmConfiguration);
   }
 
   public static OperationRegistry londonOperations(

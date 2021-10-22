@@ -24,12 +24,15 @@ import org.hyperledger.besu.consensus.common.validator.VoteType;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public abstract class AbstractVoteProposerMethodTest {
@@ -52,7 +55,7 @@ public abstract class AbstractVoteProposerMethodTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest(JSON_RPC_VERSION, getMethodName(), new Object[] {}));
 
-    when(validatorProvider.getVoteProvider()).thenReturn(Optional.of(voteProvider));
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
     when(voteProvider.getProposals())
         .thenReturn(
             ImmutableMap.of(
@@ -73,5 +76,19 @@ public abstract class AbstractVoteProposerMethodTest {
     final JsonRpcResponse response = getMethod().response(request);
 
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void methodNotEnabledWhenNoVoteProvider() {
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(JSON_RPC_VERSION, getMethodName(), new Object[] {}));
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.METHOD_NOT_ENABLED);
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.empty());
+
+    final JsonRpcResponse response = getMethod().response(request);
+
+    Assertions.assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 }

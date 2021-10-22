@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
+
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 
@@ -37,7 +39,7 @@ public class JsonRpcConfiguration {
   private int port;
   private String host;
   private List<String> corsAllowedDomains = Collections.emptyList();
-  private List<RpcApi> rpcApis;
+  private List<String> rpcApis;
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
@@ -51,7 +53,7 @@ public class JsonRpcConfiguration {
     config.setEnabled(false);
     config.setPort(DEFAULT_JSON_RPC_PORT);
     config.setHost(DEFAULT_JSON_RPC_HOST);
-    config.rpcApis = RpcApis.DEFAULT_JSON_RPC_APIS;
+    config.setRpcApis(DEFAULT_RPC_APIS);
     config.httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
     config.setMaxActiveConnections(DEFAULT_MAX_ACTIVE_CONNECTIONS);
     return config;
@@ -93,15 +95,15 @@ public class JsonRpcConfiguration {
     }
   }
 
-  public Collection<RpcApi> getRpcApis() {
+  public Collection<String> getRpcApis() {
     return rpcApis;
   }
 
-  public void setRpcApis(final List<RpcApi> rpcApis) {
+  public void setRpcApis(final List<String> rpcApis) {
     this.rpcApis = rpcApis;
   }
 
-  public void addRpcApi(final RpcApi rpcApi) {
+  public void addRpcApi(final String rpcApi) {
     this.rpcApis = new ArrayList<>(rpcApis);
     rpcApis.add(rpcApi);
   }
@@ -110,8 +112,8 @@ public class JsonRpcConfiguration {
     return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
 
-  public void setHostsAllowlist(final List<String> hostsWhitelist) {
-    this.hostsAllowlist = hostsWhitelist;
+  public void setHostsAllowlist(final List<String> hostsAllowlist) {
+    this.hostsAllowlist = hostsAllowlist;
   }
 
   public boolean isAuthenticationEnabled() {

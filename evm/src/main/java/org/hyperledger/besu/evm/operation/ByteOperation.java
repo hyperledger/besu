@@ -24,7 +24,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class ByteOperation extends AbstractFixedCostOperation {
 
   public ByteOperation(final GasCalculator gasCalculator) {
-    super(0x1A, "BYTE", 2, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x1A, "BYTE", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   private UInt256 getByte(final UInt256 seq, final UInt256 offset) {

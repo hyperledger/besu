@@ -42,15 +42,15 @@ public class QbftDiscardValidatorVote implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    if (validatorProvider.getVoteProvider().isPresent()) {
+    if (validatorProvider.getVoteProviderAtHead().isPresent()) {
       final Address validatorAddress = requestContext.getRequiredParameter(0, Address.class);
       LOG.trace("Received RPC rpcName={} address={}", getName(), validatorAddress);
-      validatorProvider.getVoteProvider().get().discardVote(validatorAddress);
+      validatorProvider.getVoteProviderAtHead().get().discardVote(validatorAddress);
 
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
     } else {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.METHOD_UNIMPLEMENTED);
+          requestContext.getRequest().getId(), JsonRpcError.METHOD_NOT_ENABLED);
     }
   }
 }

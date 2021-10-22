@@ -21,7 +21,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -80,7 +79,10 @@ public class GoQuorumSendRawPrivateTransactionTest {
 
   @Before
   public void before() {
-    method = new GoQuorumSendRawPrivateTransaction(enclave, transactionPool, privacyIdProvider);
+    boolean goQuorumCompatibilityMode = true;
+    method =
+        new GoQuorumSendRawPrivateTransaction(
+            enclave, transactionPool, privacyIdProvider, goQuorumCompatibilityMode);
   }
 
   @Test
@@ -126,8 +128,6 @@ public class GoQuorumSendRawPrivateTransactionTest {
 
   @Test
   public void validTransactionIsSentToTransactionPool() {
-    GoQuorumOptions.goQuorumCompatibilityMode = true;
-
     when(enclave.sendSignedTransaction(any(), any())).thenReturn(null);
 
     when(transactionPool.addLocalTransaction(any(Transaction.class)))

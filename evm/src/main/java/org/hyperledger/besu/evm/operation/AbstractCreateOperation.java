@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -38,22 +39,14 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       new OperationResult(
           Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
 
-  AbstractCreateOperation(
+  protected AbstractCreateOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,
       final int stackItemsProduced,
-      final boolean updatesProgramCounter,
       final int opSize,
       final GasCalculator gasCalculator) {
-    super(
-        opcode,
-        name,
-        stackItemsConsumed,
-        stackItemsProduced,
-        updatesProgramCounter,
-        opSize,
-        gasCalculator);
+    super(opcode, name, stackItemsConsumed, stackItemsProduced, opSize, gasCalculator);
   }
 
   @Override
@@ -115,7 +108,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final Wei value = Wei.wrap(frame.getStackItem(0));
     final long inputOffset = clampedToLong(frame.getStackItem(1));
     final long inputSize = clampedToLong(frame.getStackItem(2));
-    final Bytes inputData = frame.readMutableMemory(inputOffset, inputSize);
+    final Bytes inputData = frame.readMemory(inputOffset, inputSize);
 
     final Address contractAddress = targetContractAddress(frame);
 
@@ -136,7 +129,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .sender(frame.getRecipientAddress())
             .value(value)
             .apparentValue(value)
-            .code(new Code(inputData))
+            .code(new Code(inputData, Hash.EMPTY))
             .blockValues(frame.getBlockValues())
             .depth(frame.getMessageStackDepth() + 1)
             .completer(child -> complete(frame, child))

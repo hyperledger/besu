@@ -6,7 +6,7 @@ orbs:
 executors:
   besu_executor_med: # 2cpu, 4G ram
     docker:
-      - image: circleci/openjdk:11.0.8-jdk-buster
+      - image: circleci/openjdk:11.0.12-jdk-buster
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -14,7 +14,7 @@ executors:
 
   besu_executor_xl: # 8cpu, 16G ram
     docker:
-      - image: circleci/openjdk:11.0.8-jdk-buster
+      - image: circleci/openjdk:11.0.12-jdk-buster
     resource_class: xlarge
     working_directory: ~/project
     environment:
@@ -51,6 +51,10 @@ commands:
     description: "Capture test results"
     steps:
       - run:
+          name: Jacoco
+          command: |
+            ./gradlew --no-daemon jacocoTestReport
+      - run:
           name: Gather test results
           when: always
           command: |
@@ -64,6 +68,8 @@ commands:
             done
       - store_test_results:
           path: build/test-results
+      - store_artifacts:
+          path: besu/build/reports/jacoco
 
   capture_test_logs:
     description: "Capture test logs"
@@ -134,6 +140,10 @@ jobs:
           command: |
             ./gradlew --no-daemon build
       - capture_test_results
+      - run:
+          name: SonarQube
+          no_output_timeout: 30m
+          command: ./gradlew --no-daemon jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
 
   integrationTests:
     executor: besu_executor_med
@@ -270,6 +280,7 @@ workflows:
     jobs:
       - assemble
       - unitTests:
+          context: SonarCloud
           requires:
             - assemble
       - testWindows:
@@ -320,4 +331,3 @@ workflows:
             - besu-dockerhub-ro
             - besu-dockerhub-rw
             - besu-acr-rw
-

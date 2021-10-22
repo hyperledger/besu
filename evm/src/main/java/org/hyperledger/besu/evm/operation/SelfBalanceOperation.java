@@ -25,7 +25,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class SelfBalanceOperation extends AbstractFixedCostOperation {
 
   public SelfBalanceOperation(final GasCalculator gasCalculator) {
-    super(0x47, "SELFBALANCE", 0, 1, false, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x47, "SELFBALANCE", 0, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override

@@ -172,4 +172,12 @@ public class TransactionValidatorProviderTest {
         validators.stream().sorted().collect(Collectors.toList());
     assertThat(result).containsExactlyElementsOf(expectedValidators);
   }
+
+  @Test
+  public void voteProviderIsEmpty() {
+    TransactionValidatorProvider transactionValidatorProvider =
+        new TransactionValidatorProvider(blockChain, validatorContractController);
+
+    assertThat(transactionValidatorProvider.getVoteProviderAtHead()).isEmpty();
+  }
 }

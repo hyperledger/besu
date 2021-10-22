@@ -32,7 +32,20 @@ import org.apache.tuweni.bytes.Bytes;
 public class ExtCodeCopyOperation extends AbstractOperation {
 
   public ExtCodeCopyOperation(final GasCalculator gasCalculator) {
-    super(0x3C, "EXTCODECOPY", 4, 0, false, 1, gasCalculator);
+    super(0x3C, "EXTCODECOPY", 4, 0, 1, gasCalculator);
+  }
+
+  protected Gas cost(
+      final MessageFrame frame,
+      final long memOffset,
+      final long length,
+      final boolean accountIsWarm) {
+    return gasCalculator()
+        .extCodeCopyOperationGasCost(frame, memOffset, length)
+        .plus(
+            accountIsWarm
+                ? gasCalculator().getWarmStorageReadCost()
+                : gasCalculator().getColdAccountAccessCost());
   }
 
   @Override
@@ -44,13 +57,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
 
     final boolean accountIsWarm =
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-    final Gas cost =
-        gasCalculator()
-            .extCodeCopyOperationGasCost(frame, memOffset, numBytes)
-            .plus(
-                accountIsWarm
-                    ? gasCalculator().getWarmStorageReadCost()
-                    : gasCalculator().getColdAccountAccessCost());
+    final Gas cost = cost(frame, memOffset, numBytes, accountIsWarm);
 
     final Optional<Gas> optionalCost = Optional.of(cost);
     if (frame.getRemainingGas().compareTo(cost) < 0) {

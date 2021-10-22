@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 /** A ProtocolSchedule which behaves similarly to MainNet, but with a much reduced difficulty. */
 public class FixedDifficultyProtocolSchedule {
@@ -26,7 +27,8 @@ public class FixedDifficultyProtocolSchedule {
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final EvmConfiguration evmConfiguration) {
     return new ProtocolScheduleBuilder(
             config,
             ProtocolSpecAdapters.create(
@@ -35,16 +37,20 @@ public class FixedDifficultyProtocolSchedule {
                     builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config))),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum())
+            config.isQuorum(),
+            evmConfiguration)
         .createProtocolSchedule();
   }
 
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
-    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
+      final GenesisConfigOptions config,
+      final boolean isRevertReasonEnabled,
+      final EvmConfiguration evmConfiguration) {
+    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, evmConfiguration);
   }
 
-  public static ProtocolSchedule create(final GenesisConfigOptions config) {
-    return create(config, PrivacyParameters.DEFAULT, false);
+  public static ProtocolSchedule create(
+      final GenesisConfigOptions config, final EvmConfiguration evmConfiguration) {
+    return create(config, PrivacyParameters.DEFAULT, false, evmConfiguration);
   }
 }

@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.controller;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.hyperledger.besu.config.BftFork;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
@@ -24,6 +26,7 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
@@ -43,6 +46,7 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.QbftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
@@ -57,8 +61,7 @@ import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
-import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorConfig;
-import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorForksSchedule;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorModeTransitionLogger;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -84,7 +87,6 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -97,8 +99,9 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
   private QbftConfigOptions qbftConfig;
-  private ValidatorSelectorForksSchedule qbftForksSchedule;
+  private BftForksSchedule<QbftConfigOptions> qbftForksSchedule;
   private ValidatorPeers peers;
+  private TransactionValidatorProvider transactionValidatorProvider;
 
   @Override
   protected Supplier<BftExtraDataCodec> bftExtraDataCodec() {
@@ -116,13 +119,30 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected void prepForBuild() {
     qbftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getQbftConfigOptions();
     bftEventQueue = new BftEventQueue(qbftConfig.getMessageQueueLimit());
-    qbftForksSchedule = createQbftForksSchedule(genesisConfig.getConfigOptions());
+    qbftForksSchedule = QbftForksSchedulesFactory.create(genesisConfig.getConfigOptions());
   }
 
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
       final ProtocolContext protocolContext) {
-    return new QbftJsonRpcMethods(protocolContext);
+
+    return new QbftJsonRpcMethods(
+        protocolContext, createReadOnlyValidatorProvider(protocolContext.getBlockchain()));
+  }
+
+  private ValidatorProvider createReadOnlyValidatorProvider(final Blockchain blockchain) {
+    checkNotNull(
+        transactionValidatorProvider, "transactionValidatorProvider should have been initialised");
+    final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength());
+    // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
+    final BlockValidatorProvider readOnlyBlockValidatorProvider =
+        BlockValidatorProvider.nonForkingValidatorProvider(
+            blockchain, epochManager, bftBlockInterface().get());
+    return new ForkingValidatorProvider(
+        blockchain,
+        qbftForksSchedule,
+        readOnlyBlockValidatorProvider,
+        transactionValidatorProvider);
   }
 
   @Override
@@ -192,7 +212,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             proposerSelector,
             uniqueMessageMulticaster,
             new RoundTimer(bftEventQueue, qbftConfig.getRequestTimeoutSeconds(), bftExecutors),
-            new BlockTimer(bftEventQueue, qbftConfig.getBlockPeriodSeconds(), bftExecutors, clock),
+            new BlockTimer(bftEventQueue, qbftForksSchedule, bftExecutors, clock),
             blockCreatorFactory,
             clock);
 
@@ -229,7 +249,8 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
                     messageFactory,
                     bftExtraDataCodec().get()),
                 messageValidatorFactory,
-                messageFactory),
+                messageFactory,
+                new ValidatorModeTransitionLogger(qbftForksSchedule)),
             gossiper,
             duplicateMessageTracker,
             futureMessageBuffer,
@@ -265,18 +286,43 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected ProtocolSchedule createProtocolSchedule() {
     return QbftProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
+        qbftForksSchedule,
         privacyParameters,
         isRevertReasonEnabled,
-        bftExtraDataCodec().get());
+        bftExtraDataCodec().get(),
+        evmConfiguration);
   }
 
   @Override
   protected void validateContext(final ProtocolContext context) {
     final BlockHeader genesisBlockHeader = context.getBlockchain().getGenesisBlock().getHeader();
 
-    if (bftBlockInterface().get().validatorsInBlock(genesisBlockHeader).isEmpty()) {
+    if (usingValidatorContractModeButSignersExistIn(genesisBlockHeader)) {
+      LOG.warn(
+          "Using validator contract mode but genesis block contains signers - the genesis block signers will not be used.");
+    }
+
+    if (usingValidatorBlockHeaderModeButNoSignersIn(genesisBlockHeader)) {
       LOG.warn("Genesis block contains no signers - chain will not progress.");
     }
+  }
+
+  private boolean usingValidatorContractModeButSignersExistIn(
+      final BlockHeader genesisBlockHeader) {
+    return isValidatorContractMode(genesisConfig) && signersExistIn(genesisBlockHeader);
+  }
+
+  private boolean usingValidatorBlockHeaderModeButNoSignersIn(
+      final BlockHeader genesisBlockHeader) {
+    return !isValidatorContractMode(genesisConfig) && !signersExistIn(genesisBlockHeader);
+  }
+
+  private boolean isValidatorContractMode(final GenesisConfigFile genesisConfig) {
+    return genesisConfig.getConfigOptions().getQbftConfigOptions().isValidatorContractMode();
+  }
+
+  private boolean signersExistIn(final BlockHeader genesisBlockHeader) {
+    return bftBlockInterface().get().validatorsInBlock(genesisBlockHeader).size() > 0;
   }
 
   @Override
@@ -288,31 +334,22 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
     final BftValidatorOverrides validatorOverrides =
         convertBftForks(genesisConfig.getConfigOptions().getTransitions().getQbftForks());
-    final TransactionSimulator transactionSimulator =
-        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
-
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
             blockchain, epochManager, bftBlockInterface().get(), validatorOverrides);
-    final TransactionValidatorProvider transactionValidatorProvider =
+
+    final TransactionSimulator transactionSimulator =
+        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
+    transactionValidatorProvider =
         new TransactionValidatorProvider(
             blockchain, new ValidatorContractController(transactionSimulator, qbftForksSchedule));
+
     final ValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
             blockchain, qbftForksSchedule, blockValidatorProvider, transactionValidatorProvider);
 
     return new QbftContext(
         validatorProvider, epochManager, bftBlockInterface().get(), pkiBlockCreationConfiguration);
-  }
-
-  private ValidatorSelectorForksSchedule createQbftForksSchedule(
-      final GenesisConfigOptions configOptions) {
-    final ValidatorSelectorConfig initialFork =
-        ValidatorSelectorConfig.fromQbftConfig(configOptions.getQbftConfigOptions());
-    final List<ValidatorSelectorConfig> validatorSelectionForks =
-        convertToValidatorSelectionConfig(
-            genesisConfig.getConfigOptions().getTransitions().getQbftForks());
-    return new ValidatorSelectorForksSchedule(initialFork, validatorSelectionForks);
   }
 
   private BftValidatorOverrides convertBftForks(final List<QbftFork> bftForks) {
@@ -330,14 +367,6 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     }
 
     return new BftValidatorOverrides(result);
-  }
-
-  private List<ValidatorSelectorConfig> convertToValidatorSelectionConfig(
-      final List<QbftFork> qbftForks) {
-    return qbftForks.stream()
-        .map(ValidatorSelectorConfig::fromQbftFork)
-        .flatMap(Optional::stream)
-        .collect(Collectors.toList());
   }
 
   private static MinedBlockObserver blockLogger(

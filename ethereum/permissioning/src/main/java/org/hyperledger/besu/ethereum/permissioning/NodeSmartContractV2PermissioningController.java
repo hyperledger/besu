@@ -25,6 +25,8 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.util.List;
 
 import com.google.common.net.InetAddresses;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.jetbrains.annotations.NotNull;
 import org.web3j.abi.FunctionEncoder;
@@ -38,6 +40,8 @@ import org.web3j.abi.datatypes.Function;
  */
 public class NodeSmartContractV2PermissioningController
     extends AbstractNodeSmartContractPermissioningController {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   public static final Bytes TRUE_RESPONSE = Bytes.fromHexString(TypeEncoder.encode(new Bool(true)));
   public static final Bytes FALSE_RESPONSE =
@@ -56,7 +60,13 @@ public class NodeSmartContractV2PermissioningController
   }
 
   private boolean isPermitted(final EnodeURL enode) {
-    return getCallResult(enode) || (boolean) getCallResult(ipToDNS(enode));
+    final boolean isIpEnodePermitted = getCallResult(enode);
+    LOG.trace("Permitted? {} for IP {}", isIpEnodePermitted, enode);
+    if (isIpEnodePermitted) return true;
+    final EnodeURL ipToDNSEnode = ipToDNS(enode);
+    final boolean isIpToDNSEnodePermitted = getCallResult(ipToDNSEnode);
+    LOG.trace("Permitted? {} for DNS {}", isIpToDNSEnodePermitted, ipToDNSEnode);
+    return isIpToDNSEnodePermitted;
   }
 
   @NotNull

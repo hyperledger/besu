@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValuePrivacyStorageFactory;
@@ -86,10 +87,10 @@ public class PrivacyTest {
     final PrecompiledContract onchainPrecompiledContract =
         getPrecompile(besuController, ONCHAIN_PRIVACY);
 
-    assertThat(onchainPrecompiledContract.getName()).isEqualTo("OnChainPrivacy");
+    assertThat(onchainPrecompiledContract.getName()).isEqualTo("OnchainPrivacy");
   }
 
-  private BesuController setUpControllerWithPrivacyEnabled(final boolean onChainEnabled)
+  private BesuController setUpControllerWithPrivacyEnabled(final boolean onchainEnabled)
       throws IOException, URISyntaxException {
     final Path dataDir = folder.newFolder().toPath();
     final Path dbDir = dataDir.resolve("database");
@@ -99,7 +100,7 @@ public class PrivacyTest {
             .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
             .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
             .setEnclaveFactory(new EnclaveFactory(vertx))
-            .setOnchainPrivacyGroupsEnabled(onChainEnabled)
+            .setOnchainPrivacyGroupsEnabled(onchainEnabled)
             .build();
     return new BesuController.Builder()
         .fromGenesisConfig(GenesisConfigFile.mainnet())
@@ -115,6 +116,7 @@ public class PrivacyTest {
         .privacyParameters(privacyParameters)
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .gasLimitCalculator(GasLimitCalculator.constant())
+        .evmConfiguration(EvmConfiguration.DEFAULT)
         .build();
   }
 

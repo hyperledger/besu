@@ -23,7 +23,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class NumberOperation extends AbstractFixedCostOperation {
 
   public NumberOperation(final GasCalculator gasCalculator) {
-    super(0x43, "NUMBER", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x43, "NUMBER", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

@@ -244,7 +244,7 @@ public class PrivacyNodeFactory {
         containerNetwork);
   }
 
-  public PrivacyNode createOnChainPrivacyGroupEnabledMinerNode(
+  public PrivacyNode createOnchainPrivacyGroupEnabledMinerNode(
       final String name,
       final PrivacyAccount privacyAccount,
       final boolean multiTenancyEnabled,
@@ -278,7 +278,7 @@ public class PrivacyNodeFactory {
         containerNetwork);
   }
 
-  public PrivacyNode createOnChainPrivacyGroupEnabledNode(
+  public PrivacyNode createOnchainPrivacyGroupEnabledNode(
       final String name,
       final PrivacyAccount privacyAccount,
       final boolean multiTenancyEnabled,

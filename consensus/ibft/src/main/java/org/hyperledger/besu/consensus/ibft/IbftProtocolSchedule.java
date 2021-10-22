@@ -14,13 +14,15 @@
  */
 package org.hyperledger.besu.consensus.ibft;
 
-import org.hyperledger.besu.config.BftFork;
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.function.Supplier;
 
@@ -29,32 +31,40 @@ public class IbftProtocolSchedule extends BaseBftProtocolSchedule {
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
+      final BftForksSchedule<BftConfigOptions> bftForksSchedule,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final EvmConfiguration evmConfiguration) {
     return new IbftProtocolSchedule()
         .createProtocolSchedule(
-            config, privacyParameters, isRevertReasonEnabled, bftExtraDataCodec);
+            config,
+            bftForksSchedule,
+            privacyParameters,
+            isRevertReasonEnabled,
+            bftExtraDataCodec,
+            evmConfiguration);
   }
 
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config, final BftExtraDataCodec bftExtraDataCodec) {
-    return create(config, PrivacyParameters.DEFAULT, false, bftExtraDataCodec);
+      final GenesisConfigOptions config,
+      final BftForksSchedule<BftConfigOptions> bftForksSchedule,
+      final BftExtraDataCodec bftExtraDataCodec,
+      final EvmConfiguration evmConfiguration) {
+    return create(
+        config,
+        bftForksSchedule,
+        PrivacyParameters.DEFAULT,
+        false,
+        bftExtraDataCodec,
+        evmConfiguration);
   }
 
   @Override
-  protected Supplier<BlockHeaderValidator.Builder> createForkBlockHeaderRuleset(
-      final GenesisConfigOptions config, final BftFork fork) {
+  protected Supplier<BlockHeaderValidator.Builder> createBlockHeaderRuleset(
+      final BftConfigOptions config) {
     return () ->
         IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-            config.getBftConfigOptions().getBlockPeriodSeconds());
-  }
-
-  @Override
-  protected Supplier<BlockHeaderValidator.Builder> createGenesisBlockHeaderRuleset(
-      final GenesisConfigOptions config) {
-    return () ->
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-            config.getBftConfigOptions().getBlockPeriodSeconds());
+            config.getBlockPeriodSeconds());
   }
 }

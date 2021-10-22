@@ -23,36 +23,41 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class JumpiOperation extends AbstractFixedCostOperation {
 
-  private final Operation.OperationResult invalidJumpResponse;
+  private final OperationResult invalidJumpResponse;
+  private final OperationResult jumpResponse;
 
   public JumpiOperation(final GasCalculator gasCalculator) {
-    super(0x57, "JUMPI", 2, 0, true, 1, gasCalculator, gasCalculator.getHighTierGasCost());
+    super(0x57, "JUMPI", 2, 0, 1, gasCalculator, gasCalculator.getHighTierGasCost());
     invalidJumpResponse =
         new Operation.OperationResult(
             Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
+    jumpResponse = new OperationResult(Optional.of(gasCost), Optional.empty(), 0);
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
-    final UInt256 jumpDestination = UInt256.fromBytes(frame.popStackItem());
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
+    final Bytes dest = frame.popStackItem().trimLeadingZeros();
     final Bytes condition = frame.popStackItem();
 
     // If condition is zero (false), no jump is will be performed. Therefore skip the test.
     if (condition.isZero()) {
-      frame.setPC(frame.getPC() + 1);
+      return successResponse;
     } else {
-      final Code code = frame.getCode();
-      if (!code.isValidJumpDestination(evm, frame, jumpDestination)) {
+      final int jumpDestination;
+      try {
+        jumpDestination = dest.toInt();
+      } catch (RuntimeException re) {
         return invalidJumpResponse;
       }
-      frame.setPC(jumpDestination.intValue());
+      final Code code = frame.getCode();
+      if (!evm.isValidJumpDestination(jumpDestination, code)) {
+        return invalidJumpResponse;
+      }
+      frame.setPC(jumpDestination);
+      return jumpResponse;
     }
-
-    return successResponse;
   }
 }

@@ -14,13 +14,12 @@
  */
 package org.hyperledger.besu.evm;
 
-import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** Represents EVM code associated with an account. */
 public class Code {
@@ -28,21 +27,34 @@ public class Code {
   /** The bytes representing the code. */
   private final Bytes bytes;
 
+  /** The hash of the code, needed for accessing metadata about the bytecode */
+  private final Hash codeHash;
+
   /** Used to cache valid jump destinations. */
-  //  private BitSet validJumpDestinations;
   long[] validJumpDestinations;
+
+  /** Syntactic sugar for an empty contract */
+  public static Code EMPTY = new Code(Bytes.EMPTY, Hash.EMPTY);
 
   /**
    * Public constructor.
    *
    * @param bytes The byte representation of the code.
+   * @param codeHash the Hash of the bytes in the code.
    */
-  public Code(final Bytes bytes) {
+  public Code(final Bytes bytes, final Hash codeHash) {
     this.bytes = bytes;
+    this.codeHash = codeHash;
+  }
+
+  public Code(final Bytes bytecode, final Hash codeHash, final long[] validJumpDestinations) {
+    this.bytes = bytecode;
+    this.validJumpDestinations = validJumpDestinations;
+    this.codeHash = codeHash;
   }
 
   public Code() {
-    this(Bytes.EMPTY);
+    this(Bytes.EMPTY, Hash.EMPTY);
   }
 
   /**
@@ -75,51 +87,33 @@ public class Code {
     return bytes.size();
   }
 
-  /**
-   * Determine whether a specified destination is a valid jump target.
-   *
-   * @param evm the EVM executing this code
-   * @param frame The current message frame
-   * @param destination The destination we're checking for validity.
-   * @return Whether or not this location is a valid jump destination.
-   */
-  public boolean isValidJumpDestination(
-      final EVM evm, final MessageFrame frame, final UInt256 destination) {
-    if (!destination.fitsInt()) return false;
-
-    final int jumpDestination = destination.intValue();
-    if (jumpDestination >= getSize()) return false;
-
-    if (validJumpDestinations == null) {
-      // Calculate valid jump destinations
-      int size = getSize();
-      validJumpDestinations = new long[(size >> 6) + 1];
-      byte[] rawCode = getBytes().toArrayUnsafe();
-      int length = rawCode.length;
-      for (int i = 0; i < length; ) {
-        long thisEntry = 0L;
-        int entryPos = i >> 6;
-        int max = Math.min(64, length - (entryPos << 6));
-        int j = i & 0x3F;
-        for (; j < max; i++, j++) {
-          byte operationNum = rawCode[i];
-          if (operationNum == JumpDestOperation.OPCODE) {
-            thisEntry |= 1L << j;
-          } else if (operationNum > PushOperation.PUSH_BASE) {
-            // not needed - && operationNum <= PushOperation.PUSH_MAX
-            // Java quirk, all bytes are signed, and PUSH32 is 127, which is Byte.MAX_VALUE
-            // so we don't need to check the upper bound as it will never be violated
-            int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
-            j += multiByteDataLen;
-            i += multiByteDataLen;
-          }
+  public long[] calculateJumpDests() {
+    int size = getSize();
+    long[] bitmap = new long[(size >> 6) + 1];
+    byte[] rawCode = getBytes().toArrayUnsafe();
+    int length = rawCode.length;
+    for (int i = 0; i < length; ) {
+      long thisEntry = 0L;
+      int entryPos = i >> 6;
+      int max = Math.min(64, length - (entryPos << 6));
+      int j = i & 0x3F;
+      for (; j < max; i++, j++) {
+        byte operationNum = rawCode[i];
+        if (operationNum == JumpDestOperation.OPCODE) {
+          thisEntry |= 1L << j;
+        } else if (operationNum > PushOperation.PUSH_BASE) {
+          // not needed - && operationNum <= PushOperation.PUSH_MAX
+          // Java quirk, all bytes are signed, and PUSH32 is 127, which is Byte.MAX_VALUE
+          // so we don't need to check the upper bound as it will never be violated
+          int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
+          j += multiByteDataLen;
+          i += multiByteDataLen;
         }
-        validJumpDestinations[entryPos] = thisEntry;
       }
+      bitmap[entryPos] = thisEntry;
     }
-    long targetLong = validJumpDestinations[jumpDestination >> 6];
-    long targetBit = 1L << (jumpDestination & 0x3F);
-    return (targetLong & targetBit) != 0L;
+    this.validJumpDestinations = bitmap;
+    return bitmap;
   }
 
   public Bytes getBytes() {
@@ -129,5 +123,13 @@ public class Code {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this).add("bytes", bytes).toString();
+  }
+
+  public Hash getCodeHash() {
+    return codeHash;
+  }
+
+  public long[] getValidJumpDestinations() {
+    return validJumpDestinations;
   }
 }

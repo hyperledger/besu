@@ -164,7 +164,7 @@ public class RestrictedDefaultPrivacyControllerTest {
   }
 
   @Test
-  public void findOnChainPrivacyGroups() {
+  public void findOnchainPrivacyGroups() {
     final List<String> privacyGroupAddresses = newArrayList(ENCLAVE_PUBLIC_KEY, ENCLAVE_KEY2);
 
     final PrivacyGroup privacyGroup =
@@ -193,7 +193,7 @@ public class RestrictedDefaultPrivacyControllerTest {
                     Optional.empty())));
 
     final List<PrivacyGroup> privacyGroups =
-        privacyController.findOnChainPrivacyGroupByMembers(
+        privacyController.findOnchainPrivacyGroupByMembers(
             privacyGroupAddresses, ENCLAVE_PUBLIC_KEY);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups.get(0)).isEqualToComparingFieldByField(privacyGroup);
@@ -297,7 +297,7 @@ public class RestrictedDefaultPrivacyControllerTest {
     when(enclave.findPrivacyGroup(any())).thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final PrivacyGroup[] privacyGroups =
-        privacyController.findOffChainPrivacyGroupByMembers(
+        privacyController.findOffchainPrivacyGroupByMembers(
             PRIVACY_GROUP_ADDRESSES, ENCLAVE_PUBLIC_KEY);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);

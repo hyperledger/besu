@@ -16,12 +16,15 @@ package org.hyperledger.besu.evm;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
+import org.hyperledger.besu.evm.internal.JumpDestCache;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
@@ -31,7 +34,6 @@ import org.hyperledger.besu.evm.operation.VirtualOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Optional;
-import java.util.function.BiConsumer;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.Logger;
@@ -50,11 +52,16 @@ public class EVM {
   private final OperationRegistry operations;
   private final GasCalculator gasCalculator;
   private final Operation endOfScriptStop;
+  private final JumpDestCache jumpDestCache;
 
-  public EVM(final OperationRegistry operations, final GasCalculator gasCalculator) {
+  public EVM(
+      final OperationRegistry operations,
+      final GasCalculator gasCalculator,
+      final EvmConfiguration evmConfiguration) {
     this.operations = operations;
     this.gasCalculator = gasCalculator;
     this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
+    this.jumpDestCache = new JumpDestCache(evmConfiguration);
   }
 
   public GasCalculator getGasCalculator() {
@@ -67,17 +74,6 @@ public class EVM {
     }
   }
 
-  void forEachOperation(final Code code, final BiConsumer<Operation, Integer> operationDelegate) {
-    int pc = 0;
-    final int length = code.getSize();
-
-    while (pc < length) {
-      final Operation curOp = operationAtOffset(code, pc);
-      operationDelegate.accept(curOp, pc);
-      pc += curOp.getOpSize();
-    }
-  }
-
   private void executeNextOperation(
       final MessageFrame frame, final OperationTracer operationTracer) {
     frame.setCurrentOperation(operationAtOffset(frame.getCode(), frame.getPC()));
@@ -85,8 +81,9 @@ public class EVM {
         frame,
         () -> {
           OperationResult result;
+          Operation operation = frame.getCurrentOperation();
           try {
-            result = frame.getCurrentOperation().execute(frame, this);
+            result = operation.execute(frame, this);
           } catch (final OverflowException oe) {
             result = OVERFLOW_RESPONSE;
           } catch (final UnderflowException ue) {
@@ -102,19 +99,14 @@ public class EVM {
           } else if (result.getGasCost().isPresent()) {
             frame.decrementRemainingGas(result.getGasCost().get());
           }
-          incrementProgramCounter(frame);
+          if (frame.getState() == State.CODE_EXECUTING) {
+            final int currentPC = frame.getPC();
+            final int opSize = result.getPcIncrement();
+            frame.setPC(currentPC + opSize);
+          }
 
           return result;
         });
-  }
-
-  private void incrementProgramCounter(final MessageFrame frame) {
-    final Operation operation = frame.getCurrentOperation();
-    if (frame.getState() == State.CODE_EXECUTING && !operation.getUpdatesProgramCounter()) {
-      final int currentPC = frame.getPC();
-      final int opSize = operation.getOpSize();
-      frame.setPC(currentPC + opSize);
-    }
   }
 
   private static void logState(final MessageFrame frame, final Gas currentGasCost) {
@@ -149,5 +141,31 @@ public class EVM {
     } else {
       return operation;
     }
+  }
+
+  /**
+   * Determine whether a specified destination is a valid jump target.
+   *
+   * @param jumpDestination The destination we're checking for validity.
+   * @param code The code within which we are looking for the destination.
+   * @return Whether or not this location is a valid jump destination.
+   */
+  public boolean isValidJumpDestination(final int jumpDestination, final Code code) {
+    if (jumpDestination < 0 || jumpDestination >= code.getSize()) return false;
+    long[] validJumpDestinations = code.getValidJumpDestinations();
+    if (validJumpDestinations == null || validJumpDestinations.length == 0) {
+      validJumpDestinations = jumpDestCache.getIfPresent(code.getCodeHash());
+      if (validJumpDestinations == null) {
+        validJumpDestinations = code.calculateJumpDests();
+        if (code.getCodeHash() != null && !code.getCodeHash().equals(Hash.EMPTY)) {
+          jumpDestCache.put(code.getCodeHash(), validJumpDestinations);
+        } else {
+          LOG.debug("not caching jumpdest for unhashed contract code");
+        }
+      }
+    }
+    long targetLong = validJumpDestinations[jumpDestination >>> 6];
+    long targetBit = 1L << (jumpDestination & 0x3F);
+    return (targetLong & targetBit) != 0L;
   }
 }
