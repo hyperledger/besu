@@ -22,7 +22,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class StorageEntriesCollector<V> implements TrieIterator.LeafHandler<V> {
 
   protected final Bytes32 startKeyHash;
-  protected int limit = 0;
+  protected final int limit;
   protected final Map<Bytes32, V> values = new TreeMap<>();
 
   public StorageEntriesCollector(final Bytes32 startKeyHash, final int limit) {

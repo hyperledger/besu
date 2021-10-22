@@ -42,7 +42,7 @@ public interface MerklePatriciaTrie<K, V> {
    */
   Optional<V> get(K key);
 
-  Optional<Node<V>> getNode(K path);
+  Optional<Node<V>> getNodeWithPath(K path);
 
   /**
    * Returns value and ordered proof-related nodes mapped to the hash if it exists; otherwise empty.
@@ -93,8 +93,7 @@ public interface MerklePatriciaTrie<K, V> {
   Map<Bytes32, V> entriesFrom(Bytes32 startKeyHash, int limit);
 
   /**
-   * Retrieve up to {@code limit} storage entries beginning from the first entry with hash equal to
-   * or greater than {@code startKeyHash}.
+   * Retrieve up thanks to a custom trie collector
    *
    * @param handler a custom trie collector.
    * @return the requested storage entries as a map of key hash to value.

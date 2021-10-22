@@ -86,7 +86,7 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
-  public Optional<Node<V>> getNode(final K path) {
+  public Optional<Node<V>> getNodeWithPath(final K path) {
     checkNotNull(path);
     final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);
     root.accept(proofVisitor, path).getValue();

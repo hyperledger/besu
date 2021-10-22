@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.messages;
+package org.hyperledger.besu.ethereum.eth.messages.snap;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
@@ -22,86 +22,91 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
+import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.immutables.value.Value;
 
-public final class GetAccountRangeMessage extends AbstractSnapMessageData {
+public final class GetTrieNodes extends AbstractSnapMessageData {
 
-  public static GetAccountRangeMessage readFrom(final MessageData message) {
-    if (message instanceof GetAccountRangeMessage) {
-      return (GetAccountRangeMessage) message;
+  public static GetTrieNodes readFrom(final MessageData message) {
+    if (message instanceof GetTrieNodes) {
+      return (GetTrieNodes) message;
     }
     final int code = message.getCode();
-    if (code != SnapV1.GET_ACCOUNT_RANGE) {
+    if (code != SnapV1.GET_TRIE_NODES) {
       throw new IllegalArgumentException(
-          String.format("Message has code %d and thus is not a GetAccountRangeMessage.", code));
+          String.format("Message has code %d and thus is not a GetTrieNodes.", code));
     }
-    return new GetAccountRangeMessage(message.getData());
+    return new GetTrieNodes(message.getData());
   }
 
-  public static GetAccountRangeMessage create(
+  public static GetTrieNodes create(
       final Hash worldStateRootHash,
-      final Hash startKeyHash,
-      final Hash endKeyHash,
+      final List<List<Bytes>> paths,
+      final BigInteger responseBytes) {
+    return create(Optional.empty(), worldStateRootHash, paths, responseBytes);
+  }
+
+  public static GetTrieNodes create(
+      final Optional<BigInteger> requestId,
+      final Hash worldStateRootHash,
+      final List<List<Bytes>> paths,
       final BigInteger responseBytes) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
+    requestId.ifPresent(tmp::writeBigIntegerScalar);
     tmp.writeBytes(worldStateRootHash);
-    tmp.writeBytes(startKeyHash);
-    tmp.writeBytes(endKeyHash);
+    tmp.writeList(
+        paths,
+        (path, rlpOutput) ->
+            rlpOutput.writeList(path, (b, subRlpOutput) -> subRlpOutput.writeBytes(b)));
     tmp.writeBigIntegerScalar(responseBytes);
     tmp.endList();
-    return new GetAccountRangeMessage(tmp.encoded());
+    return new GetTrieNodes(tmp.encoded());
   }
 
-  private GetAccountRangeMessage(final Bytes data) {
+  private GetTrieNodes(final Bytes data) {
     super(data);
   }
 
   @Override
   protected Bytes wrap(final BigInteger requestId) {
-    final Range range = range(false);
-    final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
-    tmp.startList();
-    tmp.writeBigIntegerScalar(requestId);
-    tmp.writeBytes(range.worldStateRootHash());
-    tmp.writeBytes(range.startKeyHash());
-    tmp.writeBytes(range.endKeyHash());
-    tmp.writeBigIntegerScalar(range.responseBytes());
-    tmp.endList();
-    return tmp.encoded();
+    final TrieNodesPaths paths = paths(false);
+    return create(
+            Optional.of(requestId),
+            paths.worldStateRootHash(),
+            paths.paths(),
+            paths.responseBytes())
+        .getData();
   }
 
   @Override
   public int getCode() {
-    return SnapV1.GET_ACCOUNT_RANGE;
+    return SnapV1.GET_TRIE_NODES;
   }
 
-  public Range range(final boolean withRequestId) {
+  public TrieNodesPaths paths(final boolean withRequestId) {
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
     if (withRequestId) input.skipNext();
-    final ImmutableRange range =
-        ImmutableRange.builder()
+    final ImmutableTrieNodesPaths.Builder paths =
+        ImmutableTrieNodesPaths.builder()
             .worldStateRootHash(Hash.wrap(Bytes32.wrap(input.readBytes32())))
-            .startKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())))
-            .endKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())))
-            .responseBytes(input.readBigIntegerScalar())
-            .build();
+            .paths(input.readList(rlpInput -> rlpInput.readList(RLPInput::readBytes)))
+            .responseBytes(input.readBigIntegerScalar());
     input.leaveList();
-    return range;
+    return paths.build();
   }
 
   @Value.Immutable
-  public interface Range {
+  public interface TrieNodesPaths {
 
     Hash worldStateRootHash();
 
-    Hash startKeyHash();
-
-    Hash endKeyHash();
+    List<List<Bytes>> paths();
 
     BigInteger responseBytes();
   }

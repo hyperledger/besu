@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth;
 
-import org.hyperledger.besu.ethereum.eth.messages.SnapV1;
+import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
@@ -72,6 +72,18 @@ public class SnapProtocol implements SubProtocol {
         return "GetAccountRange";
       case SnapV1.ACCOUNT_RANGE:
         return "AccountRange";
+      case SnapV1.GET_STORAGE_RANGE:
+        return "GetStorageRange";
+      case SnapV1.STORAGE_RANGE:
+        return "StorageRange";
+      case SnapV1.GET_BYTECODES:
+        return "GetBytecodes";
+      case SnapV1.BYTECODES:
+        return "Bytecodes";
+      case SnapV1.GET_TRIE_NODES:
+        return "GetTrieNodes";
+      case SnapV1.TRIE_NODES:
+        return "TrieNodes";
       default:
         return INVALID_MESSAGE_NAME;
     }

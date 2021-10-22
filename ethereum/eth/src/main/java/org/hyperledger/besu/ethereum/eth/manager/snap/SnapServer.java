@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,15 +17,15 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
-import org.hyperledger.besu.ethereum.eth.messages.AccountRangeMessage;
-import org.hyperledger.besu.ethereum.eth.messages.ByteCodesMessage;
-import org.hyperledger.besu.ethereum.eth.messages.GetAccountRangeMessage;
-import org.hyperledger.besu.ethereum.eth.messages.GetByteCodesMessage;
-import org.hyperledger.besu.ethereum.eth.messages.GetStorageRangeMessage;
-import org.hyperledger.besu.ethereum.eth.messages.GetTrieNodes;
-import org.hyperledger.besu.ethereum.eth.messages.SnapV1;
-import org.hyperledger.besu.ethereum.eth.messages.StorageRangeMessage;
-import org.hyperledger.besu.ethereum.eth.messages.TrieNodes;
+import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.GetByteCodesMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.GetStorageRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.GetTrieNodes;
+import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
+import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodes;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -219,6 +219,7 @@ class SnapServer {
     final AtomicInteger currentResponseSize = new AtomicInteger();
 
     LOGGER.info("Receive get trie nodes range message");
+
     final ArrayList<Bytes> trieNodes = new ArrayList<>();
     final Iterator<List<Bytes>> pathsIterator = paths.paths().iterator();
 
@@ -234,7 +235,7 @@ class SnapServer {
       List<Bytes> pathset = pathsIterator.next();
       if (pathset.size() == 1) {
         accountTrie
-            .getNode(CompactEncoding.decode(pathset.get(0)))
+            .getNodeWithPath(CompactEncoding.decode(pathset.get(0)))
             .map(Node::getRlp)
             .ifPresent(
                 rlp -> {
@@ -254,7 +255,7 @@ class SnapServer {
                   Function.identity(),
                   Function.identity());
           storageTrie
-              .getNode(CompactEncoding.decode(pathset.get(i)))
+              .getNodeWithPath(CompactEncoding.decode(pathset.get(i)))
               .map(Node::getRlp)
               .ifPresent(
                   rlp -> {

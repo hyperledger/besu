@@ -33,9 +33,9 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection.PeerSendHandler;
-import org.hyperledger.besu.ethereum.eth.messages.AccountRangeMessage;
-import org.hyperledger.besu.ethereum.eth.messages.GetAccountRangeMessage;
-import org.hyperledger.besu.ethereum.eth.messages.SnapV1;
+import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
@@ -102,6 +102,7 @@ public final class SnapProtocolManagerTest {
               .wrapMessageData(BigInteger.ONE);
       final MockPeerConnection peer =
           setupPeerWithoutStatusExchange(snapManager, (cap, msg, conn) -> {});
+      assertThat(peer.isDisconnected()).isFalse();
       snapManager.processMessage(SnapProtocol.SNAP1, new DefaultMessage(peer, messageData));
       assertThat(peer.isDisconnected()).isTrue();
     }
