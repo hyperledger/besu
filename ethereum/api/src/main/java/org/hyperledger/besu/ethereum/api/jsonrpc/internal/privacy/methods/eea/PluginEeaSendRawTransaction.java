@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Privac
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -45,7 +46,8 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
       final NonceProvider publicNonceProvider,
       final PrivacyController privacyController,
       final GasCalculator gasCalculator) {
-    super(transactionPool, privacyIdProvider, privateMarkerTransactionFactory, publicNonceProvider);
+    super(transactionPool, new PmtTransactionPool(), privacyIdProvider, privateMarkerTransactionFactory, publicNonceProvider);
+    // TODO fix this ^^ does plugin privacy nee the PmtPool or not?
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
     this.gasCalculator = gasCalculator;

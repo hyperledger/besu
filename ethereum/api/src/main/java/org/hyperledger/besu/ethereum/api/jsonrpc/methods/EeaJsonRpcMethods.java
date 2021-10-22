@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.util.NonceProvider;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
@@ -35,6 +36,7 @@ import java.util.Map;
 public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
   private final TransactionPool transactionPool;
+  private final PmtTransactionPool pmtTransactionPool;
   private final PrivacyParameters privacyParameters;
   private final NonceProvider nonceProvider;
 
@@ -42,9 +44,11 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
+      final PmtTransactionPool pmtTransactionPool,
       final PrivacyParameters privacyParameters) {
-    super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);
+    super(blockchainQueries, protocolSchedule, transactionPool, pmtTransactionPool, privacyParameters);
     this.transactionPool = transactionPool;
+    this.pmtTransactionPool = pmtTransactionPool;
     this.privacyParameters = privacyParameters;
     this.nonceProvider =
         new LatestNonceProvider(blockchainQueries, transactionPool.getPendingTransactions());
@@ -70,6 +74,7 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       return mapOf(
           new RestrictedOnchainEeaSendRawTransaction(
               transactionPool,
+              pmtTransactionPool,
               privacyIdProvider,
               privateMarkerTransactionFactory,
               nonceProvider,
@@ -79,6 +84,7 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       return mapOf(
           new RestrictedOffchainEeaSendRawTransaction(
               transactionPool,
+              pmtTransactionPool,
               privacyIdProvider,
               privateMarkerTransactionFactory,
               nonceProvider,

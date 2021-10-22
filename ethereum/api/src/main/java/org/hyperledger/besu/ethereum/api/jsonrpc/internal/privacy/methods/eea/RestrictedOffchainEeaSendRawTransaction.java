@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Privac
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -43,11 +44,12 @@ public class RestrictedOffchainEeaSendRawTransaction extends AbstractEeaSendRawT
 
   public RestrictedOffchainEeaSendRawTransaction(
       final TransactionPool transactionPool,
+      final PmtTransactionPool pmtTransactionPool,
       final PrivacyIdProvider privacyIdProvider,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final NonceProvider publicNonceProvider,
       final PrivacyController privacyController) {
-    super(transactionPool, privacyIdProvider, privateMarkerTransactionFactory, publicNonceProvider);
+    super(transactionPool, pmtTransactionPool, privacyIdProvider, privateMarkerTransactionFactory, publicNonceProvider);
     this.privacyIdProvider = privacyIdProvider;
     this.privacyController = privacyController;
   }
@@ -82,14 +84,10 @@ public class RestrictedOffchainEeaSendRawTransaction extends AbstractEeaSendRawT
         findOffchainPrivacyGroup(
             privacyController, privateTransaction.getPrivacyGroupId(), privacyUserId);
 
-    // TODO add privacyGroupId, sender to the PMT
-    // so that the next transaction can inspect this and will get the private nonce ++
-
     final String privateTransactionLookupId =
         privacyController.createPrivateMarkerTransactionPayload(
             privateTransaction, privacyUserId, maybePrivacyGroup);
 
-    // but the PMT doesn't get created until after
     return createPrivateMarkerTransaction(
         sender, DEFAULT_PRIVACY, privateTransactionLookupId, privateTransaction, privacyUserId);
   }

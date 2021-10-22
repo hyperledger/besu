@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import java.util.Arrays;
 import java.util.Optional;
 
+import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +50,7 @@ public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTr
     method =
         new RestrictedOnchainEeaSendRawTransaction(
             transactionPool,
+            new PmtTransactionPool(),
             privacyIdProvider,
             privateMarkerTransactionFactory,
             address -> 0,

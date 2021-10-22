@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PluginPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
@@ -40,16 +41,19 @@ public class PrivateWebSocketMethodsFactory {
   private final SubscriptionManager subscriptionManager;
   private final ProtocolSchedule protocolSchedule;
   private final BlockchainQueries blockchainQueries;
+  private final PmtTransactionPool pmtTransactionPool;
 
   public PrivateWebSocketMethodsFactory(
       final PrivacyParameters privacyParameters,
       final SubscriptionManager subscriptionManager,
       final ProtocolSchedule protocolSchedule,
-      final BlockchainQueries blockchainQueries) {
+      final BlockchainQueries blockchainQueries,
+      final PmtTransactionPool pmtTransactionPool) {
     this.privacyParameters = privacyParameters;
     this.subscriptionManager = subscriptionManager;
     this.protocolSchedule = protocolSchedule;
     this.blockchainQueries = blockchainQueries;
+    this.pmtTransactionPool = pmtTransactionPool;
   }
 
   public Collection<JsonRpcMethod> methods() {
@@ -105,6 +109,7 @@ public class PrivateWebSocketMethodsFactory {
     return new ChainHeadPrivateNonceProvider(
         blockchainQueries.getBlockchain(),
         privacyParameters.getPrivateStateRootResolver(),
-        privacyParameters.getPrivateWorldStateArchive());
+        privacyParameters.getPrivateWorldStateArchive(),
+        pmtTransactionPool);
   }
 }

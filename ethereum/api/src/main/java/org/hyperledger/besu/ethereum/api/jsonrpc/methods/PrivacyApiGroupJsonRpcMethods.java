@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PluginPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
@@ -54,6 +55,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
+      final PmtTransactionPool pmtTransactionPool,
       final PrivacyParameters privacyParameters) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
@@ -64,7 +66,8 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         new ChainHeadPrivateNonceProvider(
             blockchainQueries.getBlockchain(),
             privacyParameters.getPrivateStateRootResolver(),
-            privacyParameters.getPrivateWorldStateArchive());
+            privacyParameters.getPrivateWorldStateArchive(),
+            pmtTransactionPool);
 
     this.privacyQueries =
         new PrivacyQueries(blockchainQueries, privacyParameters.getPrivateWorldStateReader());

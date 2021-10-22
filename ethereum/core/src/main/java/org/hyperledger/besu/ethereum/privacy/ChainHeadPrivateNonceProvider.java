@@ -18,11 +18,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController.PmtTransactionTracker;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
-
-import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -30,62 +27,39 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
   private final Blockchain blockchain;
   private final PrivateStateRootResolver privateStateRootResolver;
   private final WorldStateArchive privateWorldStateArchive;
+  private final PmtTransactionPool pmtTransactionPool;
 
   public ChainHeadPrivateNonceProvider(
       final Blockchain blockchain,
       final PrivateStateRootResolver privateStateRootResolver,
-      final WorldStateArchive privateWorldStateArchive) {
+      final WorldStateArchive privateWorldStateArchive,
+      final PmtTransactionPool pmtTransactionPool) {
     this.blockchain = blockchain;
     this.privateStateRootResolver = privateStateRootResolver;
     this.privateWorldStateArchive = privateWorldStateArchive;
+    this.pmtTransactionPool = pmtTransactionPool;
   }
 
-  @Override
-  public long getNonce(final Address sender, final Bytes32 privacyGroupId) {
-    final BlockHeader chainHeadHeader = blockchain.getChainHeadHeader();
-    Hash chainHeadHash = chainHeadHeader.getHash();
-
-    final Hash stateRoot =
-        privateStateRootResolver.resolveLastStateRoot(privacyGroupId, chainHeadHash);
-    return privateWorldStateArchive
-        .get(stateRoot, chainHeadHash)
-        .map(
-            privateWorldState -> {
-              final Account account = privateWorldState.get(sender);
-              return account == null ? 0L : account.getNonce();
-            })
-        .orElse(Account.DEFAULT_NONCE);
-  }
 
   /**
    * Calculate the nonce while taking into account any PMT that are already in progress. This makes
    * nonce management for private tx slightly cleaner.
    *
-   * @param pmtPool the pool
    * @param sender the sender of the transaction
    * @param privacyGroupId the privacy group ID this tx is for
    * @return the nonce, taking into account the PMT in the pool
    */
   @Override
-  public long getNonce(
-      final Map<Hash, PmtTransactionTracker> pmtPool,
-      final Address sender,
-      final Bytes32 privacyGroupId) {
+  public long getNonce(final Address sender, final Bytes32 privacyGroupId) {
     final BlockHeader chainHeadHeader = blockchain.getChainHeadHeader();
-    Hash chainHeadHash = chainHeadHeader.getHash();
-    // TODO privacyGroupID Bytes32 vs String
-    long countPending =
-        pmtPool.values().stream()
-            .filter(
-                pmt ->
-                    pmt.getSender().equals(sender.toString())
-                        && pmt.getPrivacyGroupId().equals(privacyGroupId.toHexString()))
-            .count();
+    final Hash chainHeadHash = chainHeadHeader.getHash();
+
     System.out.println(
-        "pmtPool = " + pmtPool + ", sender = " + sender + ", privacyGroupId = " + privacyGroupId);
+        "checking for matches for sender " + sender + " and privacyGroupID " + privacyGroupId);
+    long countPending =
+        pmtTransactionPool.getCountMatchingPmt(sender.toHexString(), privacyGroupId.toBase64String());
     System.out.println("number of matching PMTs in the pool = " + countPending);
-    // TODO do we need to add the privateNonce to the pool
-    // pendingNonce
+    // TODO get pendingNonce
     // if latestNonce > pendingNonce return latestNonce (as below)
     // else return pendingNonce + 1
 

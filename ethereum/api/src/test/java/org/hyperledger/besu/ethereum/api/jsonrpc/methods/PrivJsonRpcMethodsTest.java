@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Map;
 
+import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,7 +52,7 @@ public class PrivJsonRpcMethodsTest {
   public void setup() {
     privJsonRpcMethods =
         new PrivJsonRpcMethods(
-            blockchainQueries, protocolSchedule, transactionPool, privacyParameters, filterManager);
+            blockchainQueries, protocolSchedule, transactionPool, new PmtTransactionPool(), privacyParameters, filterManager);
 
     lenient().when(privacyParameters.isEnabled()).thenReturn(true);
   }

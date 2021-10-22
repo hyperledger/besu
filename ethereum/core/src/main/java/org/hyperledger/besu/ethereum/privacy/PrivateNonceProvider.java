@@ -15,15 +15,10 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController.PmtTransactionTracker;
-
-import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes32;
 
 public interface PrivateNonceProvider {
   long getNonce(Address sender, Bytes32 privacyGroupId);
 
-  long getNonce(Map<Hash, PmtTransactionTracker> pmtPool, Address sender, Bytes32 privacyGroupId);
 }

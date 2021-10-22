@@ -86,6 +86,7 @@ import org.hyperledger.besu.ethereum.permissioning.account.AccountPermissioningC
 import org.hyperledger.besu.ethereum.permissioning.node.InsufficientPeersPermissioningProvider;
 import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.node.PeerPermissionsAdapter;
+import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
@@ -492,6 +493,7 @@ public class RunnerBuilder {
                 new InsufficientPeersPermissioningProvider(network, bootnodes)));
 
     final TransactionPool transactionPool = besuController.getTransactionPool();
+    final PmtTransactionPool pmtTransactionPool = besuController.getPmtTransactionPool();
     final MiningCoordinator miningCoordinator = besuController.getMiningCoordinator();
 
     final BlockchainQueries blockchainQueries =
@@ -560,6 +562,7 @@ public class RunnerBuilder {
               blockchainQueries,
               synchronizer,
               transactionPool,
+              pmtTransactionPool,
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
@@ -628,6 +631,7 @@ public class RunnerBuilder {
               blockchainQueries,
               synchronizer,
               transactionPool,
+              pmtTransactionPool,
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
@@ -821,6 +825,7 @@ public class RunnerBuilder {
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
       final TransactionPool transactionPool,
+      final PmtTransactionPool pmtTransactionPool,
       final MiningCoordinator miningCoordinator,
       final ObservableMetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
@@ -848,6 +853,7 @@ public class RunnerBuilder {
                 protocolSchedule,
                 filterManager,
                 transactionPool,
+                pmtTransactionPool,
                 miningCoordinator,
                 metricsSystem,
                 supportedCapabilities,
@@ -969,7 +975,11 @@ public class RunnerBuilder {
     if (privacyParameters.isEnabled()) {
       final PrivateWebSocketMethodsFactory privateWebSocketMethodsFactory =
           new PrivateWebSocketMethodsFactory(
-              privacyParameters, subscriptionManager, protocolSchedule, blockchainQueries);
+              privacyParameters,
+              subscriptionManager,
+              protocolSchedule,
+              blockchainQueries,
+              besuController.getPmtTransactionPool());
 
       privateWebSocketMethodsFactory.methods().forEach(websocketMethodsFactory::addMethods);
     }

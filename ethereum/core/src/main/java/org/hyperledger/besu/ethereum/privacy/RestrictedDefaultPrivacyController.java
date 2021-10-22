@@ -28,8 +28,6 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
-import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
-import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -48,9 +46,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -62,7 +58,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class RestrictedDefaultPrivacyController implements PrivacyController, BlockAddedObserver {
+public class RestrictedDefaultPrivacyController implements PrivacyController {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -75,7 +71,6 @@ public class RestrictedDefaultPrivacyController implements PrivacyController, Bl
   private final PrivateWorldStateReader privateWorldStateReader;
   private final PrivateTransactionLocator privateTransactionLocator;
   private final PrivateStateRootResolver privateStateRootResolver;
-  private final Map<Hash, PmtTransactionTracker> pmtPool;
 
   public RestrictedDefaultPrivacyController(
       final Blockchain blockchain,
@@ -114,7 +109,6 @@ public class RestrictedDefaultPrivacyController implements PrivacyController, Bl
     this.privateTransactionLocator =
         new PrivateTransactionLocator(blockchain, enclave, privateStateStorage);
     this.privateStateRootResolver = privateStateRootResolver;
-    this.pmtPool = new HashMap<>();
   }
 
   @Override
@@ -129,13 +123,9 @@ public class RestrictedDefaultPrivacyController implements PrivacyController, Bl
       final String privacyUserId,
       final Optional<PrivacyGroup> maybePrivacyGroup) {
     try {
-      LOG.trace("Storing private transaction in enclave");
+      LOG.info("Storing private transaction in enclave");
       final SendResponse sendResponse =
           sendRequest(privateTransaction, privacyUserId, maybePrivacyGroup);
-      if (maybePrivacyGroup.isPresent()) {
-        addPmtTransactionTracker(
-            privateTransaction, maybePrivacyGroup.get().getPrivacyGroupId(), privacyUserId);
-      }
       return sendResponse.getKey();
     } catch (final Exception e) {
       LOG.error("Failed to store private transaction in enclave", e);
@@ -212,7 +202,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController, Bl
   public long determineBesuNonce(
       final Address sender, final String privacyGroupId, final String privacyUserId) {
     return privateNonceProvider.getNonce(
-        pmtPool, sender, Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)));
+        sender, Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)));
   }
 
   @Override
@@ -558,47 +548,5 @@ public class RestrictedDefaultPrivacyController implements PrivacyController, Bl
             block ->
                 privateStateRootResolver.resolveLastStateRoot(
                     Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)), block.getHash()));
-  }
-
-  @Override
-  public void onBlockAdded(final BlockAddedEvent event) {
-    // remove from the map any transactions that went into this block
-    // TODO here we are checking PMT hash... we could use PMT data? ie the tessera lookup ID
-    LOG.info("before size of pmtPool = {}", pmtPool.size());
-//    event.getAddedTransactions().forEach(tx -> pmtPool.remove(tx.getHash()));
-    // TODO - it is an optional but PMT will always have data field
-    event.getAddedTransactions().forEach(tx -> {if (tx.getData().isPresent()) {LOG.info("removing " + tx.getData().get());pmtPool.remove(Hash.hash(tx.getData().get()));};});
-    LOG.info("after: size of pmtPool = {}", pmtPool.size());
-  }
-
-  private void addPmtTransactionTracker(
-      final PrivateTransaction privateTx, final String sender, final String privacyGroupId) {
-    // TODO here what goes in is the privateTx hash which is not the same.
-    pmtPool.put(Hash.hash(privateTx.getPayload()), new PmtTransactionTracker(sender, privacyGroupId));
-    LOG.info("adding pmtPool tracker: {} {} {}", Hash.hash(privateTx.getPayload()), sender, privacyGroupId);
-  }
-
-  // this is what txPool does
-  //  public void onBlockAdded(final BlockAddedEvent event) {
-  //    event.getAddedTransactions().forEach(pendingTransactions::transactionAddedToBlock);
-  //    pendingTransactions.manageBlockAdded(event.getBlock());
-  //    addRemoteTransactions(event.getRemovedTransactions());
-  //  }
-  protected static class PmtTransactionTracker {
-    private final String sender;
-    private final String privacyGroupId;
-
-    protected PmtTransactionTracker(final String sender, final String privacyGroupId) {
-      this.sender = sender;
-      this.privacyGroupId = privacyGroupId;
-    }
-
-    public String getSender() {
-      return sender;
-    }
-
-    public String getPrivacyGroupId() {
-      return privacyGroupId;
-    }
   }
 }

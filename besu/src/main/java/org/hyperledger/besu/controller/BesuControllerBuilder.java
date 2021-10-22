@@ -53,6 +53,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
+import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -324,6 +325,10 @@ public abstract class BesuControllerBuilder {
             miningParameters.getMinTransactionGasPrice(),
             transactionPoolConfiguration);
 
+    final PmtTransactionPool pmtTransactionPool = new PmtTransactionPool();
+    // TODO pass blockchain to the pmtPool and move this line there:
+    blockchain.observeBlockAdded(pmtTransactionPool);
+
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
             protocolContext,
@@ -383,6 +388,7 @@ public abstract class BesuControllerBuilder {
         synchronizer,
         syncState,
         transactionPool,
+        pmtTransactionPool,
         miningCoordinator,
         privacyParameters,
         miningParameters,

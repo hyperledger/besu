@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
 import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOnchainPrivacyGroup;
 
@@ -24,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -34,6 +36,7 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 import java.util.Optional;
 
 import io.vertx.ext.auth.User;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -41,16 +44,19 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
 
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
+  private final PmtTransactionPool pmtTransactionPool;
 
   public RestrictedOnchainEeaSendRawTransaction(
       final TransactionPool transactionPool,
+      final PmtTransactionPool pmtTransactionPool,
       final PrivacyIdProvider privacyIdProvider,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final NonceProvider publicNonceProvider,
       final PrivacyController privacyController) {
-    super(transactionPool, privacyIdProvider, privateMarkerTransactionFactory, publicNonceProvider);
+    super(transactionPool, pmtTransactionPool, privacyIdProvider, privateMarkerTransactionFactory, publicNonceProvider);
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
+    this.pmtTransactionPool = pmtTransactionPool;
   }
 
   @Override
@@ -95,13 +101,15 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
         privacyController.buildAndSendAddPayload(
             privateTransaction, Bytes32.wrap(privacyGroupId), privacyUserId);
 
-    // TODO change nonce handling
     final String pmtPayload =
         buildCompoundLookupId(privateTransactionLookupId, addPayloadPrivateTransactionLookupId);
 
-    // TODO but PMT happens after
-    return createPrivateMarkerTransaction(
-        sender, ONCHAIN_PRIVACY, pmtPayload, privateTransaction, privacyUserId);
+    final Transaction pmt =
+        createPrivateMarkerTransaction(
+            sender, ONCHAIN_PRIVACY, pmtPayload, privateTransaction, privacyUserId);
+    pmtTransactionPool.addPmtTransactionTracker(
+        pmt.getHash(), privateTransaction, privacyGroupId.toBase64String());
+    return pmt;
   }
 
   @Override
