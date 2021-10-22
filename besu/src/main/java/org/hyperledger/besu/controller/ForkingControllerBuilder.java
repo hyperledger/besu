@@ -16,8 +16,9 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.consensus.common.forking.ForkingBftMiningCoordinator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
+import org.hyperledger.besu.consensus.common.forking.ForkingBftMiningCoordinator;
+import org.hyperledger.besu.consensus.common.forking.ForkingProtocolManager;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -42,6 +43,8 @@ import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
+import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
@@ -53,6 +56,7 @@ import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioni
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -62,8 +66,27 @@ public class ForkingControllerBuilder extends BesuControllerBuilder {
   private final List<BftBesuControllerBuilder> besuControllerBuilders;
   private Blockchain blockchain;
 
+  private static class ForkingContext {
+
+    private final Map<BftBesuControllerBuilder, Object> contexts;
+
+    public ForkingContext(final Map<BftBesuControllerBuilder, Object> contexts) {
+      this.contexts = contexts;
+    }
+
+    public Object getContext(final BftBesuControllerBuilder builder) {
+      return contexts.get(builder);
+    }
+  }
+
   public ForkingControllerBuilder(final List<BftBesuControllerBuilder> besuControllerBuilders) {
     this.besuControllerBuilders = besuControllerBuilders;
+  }
+
+  private ProtocolContext createProtocolContext(final ProtocolContext protocolContext,
+      final ForkingContext forkingContext, final BftBesuControllerBuilder builder) {
+    return new ProtocolContext(protocolContext.getBlockchain(), protocolContext.getWorldStateArchive(), forkingContext.getContext(
+        builder));
   }
 
   @Override
@@ -74,16 +97,24 @@ public class ForkingControllerBuilder extends BesuControllerBuilder {
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
-    final Map<Long, BftMiningCoordinator> miningCoordinatorForks = besuControllerBuilders.stream()
-        .collect(Collectors.toMap(builder -> builder.bftConfigOptions().getBlock(), builder ->
-            builder.createMiningCoordinator(
-                protocolSchedule,
-                protocolContext,
-                transactionPool,
-                miningParameters,
-                syncState,
-                ethProtocolManager)));
-    return new ForkingBftMiningCoordinator(miningCoordinatorForks);
+    final ForkingContext forkingContext = protocolContext.getConsensusState(ForkingContext.class);
+    final Map<Long, BftMiningCoordinator> miningCoordinatorForks =
+        besuControllerBuilders.stream()
+            .collect(
+                Collectors.toMap(
+                    builder -> builder.bftConfigOptions().getBlock(),
+                    builder ->
+                        builder.createMiningCoordinator(
+                            protocolSchedule,
+                            createProtocolContext(protocolContext, forkingContext, builder),
+                            transactionPool,
+                            miningParameters,
+                            syncState,
+                            ethProtocolManager)));
+    final ForkingBftMiningCoordinator forkingBftMiningCoordinator = new ForkingBftMiningCoordinator(
+        miningCoordinatorForks);
+    blockchain.observeBlockAdded(forkingBftMiningCoordinator);
+    return forkingBftMiningCoordinator;
   }
 
   @Override
@@ -110,22 +141,21 @@ public class ForkingControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    final List<Object> contexts =
+    final Map<BftBesuControllerBuilder, Object> contexts =
         besuControllerBuilders.stream()
-            .map(
-                builder ->
-                    builder.createConsensusContext(blockchain, worldStateArchive, protocolSchedule))
-            .collect(Collectors.toList());
+            .collect(Collectors.toMap(k -> k, builder ->
+                builder.createConsensusContext(blockchain, worldStateArchive, protocolSchedule)));
     this.blockchain = blockchain;
-    return contexts.get(0);
+    return new ForkingContext(contexts);
   }
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext) {
+    final ForkingContext forkingContext = protocolContext.getConsensusState(ForkingContext.class);
     final List<PluginServiceFactory> pluginServices =
         besuControllerBuilders.stream()
-            .map(builder -> builder.createAdditionalPluginServices(blockchain, protocolContext))
+            .map(builder -> builder.createAdditionalPluginServices(blockchain, createProtocolContext(protocolContext, forkingContext, builder)))
             .collect(Collectors.toList());
     return pluginServices.get(0);
   }
@@ -139,20 +169,37 @@ public class ForkingControllerBuilder extends BesuControllerBuilder {
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
       final ProtocolContext protocolContext) {
+    final ForkingContext forkingContext = protocolContext.getConsensusState(ForkingContext.class);
     besuControllerBuilders.forEach(
-        builder -> builder.createAdditionalJsonRpcMethodFactory(protocolContext));
+        builder -> builder.createAdditionalJsonRpcMethodFactory(createProtocolContext(protocolContext, forkingContext, builder)));
     return super.createAdditionalJsonRpcMethodFactory(protocolContext);
   }
 
   @Override
   protected SubProtocolConfiguration createSubProtocolConfiguration(
       final EthProtocolManager ethProtocolManager) {
-    // TODO-jf creating forking subprotocol and unified SubProtocolConfiguration
-    besuControllerBuilders.forEach(
-        builder -> builder.createSubProtocolConfiguration(ethProtocolManager));
+    final SubProtocolConfiguration unifiedSubProtocolConfiguration = new SubProtocolConfiguration();
 
-    final SubProtocolConfiguration subProtocolConfiguration = new SubProtocolConfiguration();
-    return super.createSubProtocolConfiguration(ethProtocolManager);
+    besuControllerBuilders.forEach(
+        builder -> {
+          final SubProtocolConfiguration subProtocolConfiguration =
+              builder.createSubProtocolConfiguration(ethProtocolManager);
+          for (int i = 0; i < subProtocolConfiguration.getSubProtocols().size(); i++) {
+            final SubProtocol subProtocol = subProtocolConfiguration.getSubProtocols().get(i);
+            final ProtocolManager protocolManager =
+                subProtocolConfiguration.getProtocolManagers().get(i);
+
+            final Map<Long, ProtocolManager> protocolManagerForks = new HashMap<>();
+            protocolManagerForks.put(builder.bftConfigOptions().getBlock(), protocolManager);
+
+            final ForkingProtocolManager forkingProtocolManager =
+                new ForkingProtocolManager(protocolManagerForks);
+            blockchain.observeBlockAdded(forkingProtocolManager);
+            unifiedSubProtocolConfiguration.withSubProtocol(subProtocol, protocolManager);
+          }
+        });
+
+    return unifiedSubProtocolConfiguration;
   }
 
   @Override
@@ -172,11 +219,12 @@ public class ForkingControllerBuilder extends BesuControllerBuilder {
       final EthMessages ethMessages,
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators) {
+    final ForkingContext forkingContext = protocolContext.getConsensusState(ForkingContext.class);
     final List<BftBesuControllerBuilder> besuControllerBuilders = this.besuControllerBuilders;
     besuControllerBuilders.forEach(
         builder ->
             builder.createEthProtocolManager(
-                protocolContext,
+                createProtocolContext(protocolContext, forkingContext, builder),
                 fastSyncEnabled,
                 transactionPool,
                 ethereumWireProtocolConfiguration,
@@ -198,9 +246,10 @@ public class ForkingControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected void validateContext(final ProtocolContext context) {
-    besuControllerBuilders.forEach(builder -> builder.validateContext(context));
-    super.validateContext(context);
+  protected void validateContext(final ProtocolContext protocolContext) {
+    final ForkingContext forkingContext = protocolContext.getConsensusState(ForkingContext.class);
+    besuControllerBuilders.forEach(builder -> builder.validateContext(createProtocolContext(protocolContext, forkingContext, builder)));
+    super.validateContext(protocolContext);
   }
 
   // Initialise delegate BesuControllerBuilders values
@@ -345,8 +394,7 @@ public class ForkingControllerBuilder extends BesuControllerBuilder {
 
   @Override
   public BesuControllerBuilder evmConfiguration(final EvmConfiguration evmConfiguration) {
-    besuControllerBuilders.forEach(
-        builder -> builder.evmConfiguration(evmConfiguration));
+    besuControllerBuilders.forEach(builder -> builder.evmConfiguration(evmConfiguration));
     return super.evmConfiguration(evmConfiguration);
   }
 }

@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.consensus.common.forking;
 
-import java.util.List;
-import java.util.Map;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
@@ -25,14 +24,28 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
+import org.apache.logging.log4j.Logger;
+
 public class ForkingProtocolManager implements ProtocolManager, BlockAddedObserver {
+  private static final Logger LOG = getLogger();
 
   private final Map<Long, ProtocolManager> protocolManagerForks;
   private ProtocolManager activeProtocolManager;
 
   public ForkingProtocolManager(final Map<Long, ProtocolManager> protocolManagerForks) {
     this.protocolManagerForks = protocolManagerForks;
-    this.activeProtocolManager = protocolManagerForks.get(0L);
+
+    final List<ProtocolManager> sorted =
+        protocolManagerForks.entrySet().stream()
+            .sorted(Entry.comparingByKey())
+            .map(Entry::getValue)
+            .collect(Collectors.toList());
+    this.activeProtocolManager = sorted.get(0);
   }
 
   @Override
@@ -66,7 +79,8 @@ public class ForkingProtocolManager implements ProtocolManager, BlockAddedObserv
   }
 
   @Override
-  public void handleDisconnect(final PeerConnection peerConnection,
+  public void handleDisconnect(
+      final PeerConnection peerConnection,
       final DisconnectReason disconnectReason,
       final boolean initiatedByPeer) {
     activeProtocolManager.handleDisconnect(peerConnection, disconnectReason, initiatedByPeer);
@@ -75,9 +89,14 @@ public class ForkingProtocolManager implements ProtocolManager, BlockAddedObserv
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     if (event.isNewCanonicalHead()) {
-      final long blockNumber = event.getBlock().getHeader().getNumber();
-      if (protocolManagerForks.containsKey(blockNumber)) {
-        final ProtocolManager newProtocolManager = protocolManagerForks.get(blockNumber);
+      final long nextBlock = event.getBlock().getHeader().getNumber() + 1;
+      if (protocolManagerForks.containsKey(nextBlock)) {
+        final ProtocolManager newProtocolManager = protocolManagerForks.get(nextBlock);
+        LOG.debug(
+            "Switching protocol manager at block {} from {} to {}",
+            event.getBlock().getHeader().getNumber(),
+            activeProtocolManager.getClass().getSimpleName(),
+            newProtocolManager.getClass().getSimpleName());
         activeProtocolManager.stop();
         activeProtocolManager = newProtocolManager;
       }

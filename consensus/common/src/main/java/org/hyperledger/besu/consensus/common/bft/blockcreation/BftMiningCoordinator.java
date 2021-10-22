@@ -89,13 +89,14 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
     if (state.compareAndSet(State.RUNNING, State.STOPPED)) {
       blockchain.removeObserver(blockAddedObserverId);
       bftProcessor.stop();
+      // TODO Fix stop blocking shutdown when on same thread
       // Make sure the processor has stopped before shutting down the executors
-      try {
-        bftProcessor.awaitStop();
-      } catch (final InterruptedException e) {
-        LOG.debug("Interrupted while waiting for IbftProcessor to stop.", e);
-        Thread.currentThread().interrupt();
-      }
+//      try {
+//        bftProcessor.awaitStop();
+//      } catch (final InterruptedException e) {
+//        LOG.debug("Interrupted while waiting for IbftProcessor to stop.", e);
+//        Thread.currentThread().interrupt();
+//      }
       bftExecutors.stop();
     }
   }

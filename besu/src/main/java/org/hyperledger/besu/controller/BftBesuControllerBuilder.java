@@ -15,8 +15,6 @@
 
 package org.hyperledger.besu.controller;
 
-import com.google.common.base.Suppliers;
-import java.util.function.Supplier;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
@@ -27,6 +25,10 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
 
 public abstract class BftBesuControllerBuilder extends BesuControllerBuilder {
 

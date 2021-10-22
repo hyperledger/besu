@@ -39,14 +39,13 @@ public class BftExecutors {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Duration shutdownTimeout = Duration.ofSeconds(30);
-  private final MetricsSystem metricsSystem;
 
   private volatile ScheduledExecutorService timerExecutor;
   private volatile ExecutorService bftProcessorExecutor;
   private volatile State state = State.IDLE;
 
+  @SuppressWarnings("unused")
   private BftExecutors(final MetricsSystem metricsSystem) {
-    this.metricsSystem = metricsSystem;
   }
 
   public static BftExecutors create(final MetricsSystem metricsSystem) {
@@ -59,8 +58,9 @@ public class BftExecutors {
       return;
     }
     state = State.RUNNING;
+    // TODO handle multiple exectors with same name for the metrics. ATM metric names clash and cause failure
     bftProcessorExecutor = Executors.newSingleThreadExecutor();
-    timerExecutor = MonitoredExecutors.newScheduledThreadPool("BftTimerExecutor", 1, metricsSystem);
+    timerExecutor = Executors.newScheduledThreadPool(1);
   }
 
   public void stop() {

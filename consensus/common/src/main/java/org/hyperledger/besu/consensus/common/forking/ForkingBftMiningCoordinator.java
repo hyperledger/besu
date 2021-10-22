@@ -104,12 +104,15 @@ public class ForkingBftMiningCoordinator implements MiningCoordinator, BlockAdde
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
-    // TODO how we make sure only this coordinator receives the event and not the delegate ones?
-
     if (event.isNewCanonicalHead()) {
-      final long blockNumber = event.getBlock().getHeader().getNumber();
-      if (miningCoordinatorForks.containsKey(blockNumber)) {
-        final BftMiningCoordinator newMiningCoordinator = miningCoordinatorForks.get(blockNumber);
+      final long nextBlock = event.getBlock().getHeader().getNumber() + 1;
+      if (miningCoordinatorForks.containsKey(nextBlock)) {
+        final BftMiningCoordinator newMiningCoordinator = miningCoordinatorForks.get(nextBlock);
+        LOG.debug(
+            "Switching mining coordinator at block {} from {} to {}",
+            event.getBlock().getHeader().getNumber(),
+            activeMiningCoordinator.getClass().getSimpleName(),
+            newMiningCoordinator.getClass().getSimpleName());
 
         activeMiningCoordinator.stop();
         newMiningCoordinator.start();

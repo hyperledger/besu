@@ -88,7 +88,7 @@ public class JsonBftConfigOptions implements BftConfigOptions {
 
   @Override
   public long getBlock() {
-    return JsonUtil.getLong(bftConfigRoot,"block", DEFAULT_BLOCK);
+    return JsonUtil.getLong(bftConfigRoot, "block", DEFAULT_BLOCK);
   }
 
   @Override

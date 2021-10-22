@@ -263,7 +263,7 @@ public class QbftRound {
         "Importing block to chain. round={}, hash={}",
         getRoundIdentifier(),
         blockToImport.getHash());
-    LOG.trace("Importing block with extraData={}", extraData);
+    LOG.trace("Importing block with extraData={} headers={}", extraData, blockToImport.getHeader());
     final boolean result =
         blockImporter.importBlock(protocolContext, blockToImport, HeaderValidationMode.FULL);
     if (!result) {
