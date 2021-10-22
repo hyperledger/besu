@@ -85,7 +85,8 @@ public class ValidatorContractControllerTest {
 
     final ValidatorContractController validatorContractController =
         new ValidatorContractController(transactionSimulator);
-    final Collection<Address> validators = validatorContractController.getValidators(1, CONTRACT_ADDRESS);
+    final Collection<Address> validators =
+        validatorContractController.getValidators(1, CONTRACT_ADDRESS);
     assertThat(validators).containsExactly(VALIDATOR_ADDRESS);
   }
 
@@ -101,7 +102,8 @@ public class ValidatorContractControllerTest {
 
     final ValidatorContractController validatorContractController =
         new ValidatorContractController(transactionSimulator);
-    Assertions.assertThatThrownBy(() -> validatorContractController.getValidators(1, CONTRACT_ADDRESS))
+    Assertions.assertThatThrownBy(
+            () -> validatorContractController.getValidators(1, CONTRACT_ADDRESS))
         .hasMessage("Failed validator smart contract call");
   }
 
@@ -120,7 +122,8 @@ public class ValidatorContractControllerTest {
 
     final ValidatorContractController validatorContractController =
         new ValidatorContractController(transactionSimulator);
-    Assertions.assertThatThrownBy(() -> validatorContractController.getValidators(1, CONTRACT_ADDRESS))
+    Assertions.assertThatThrownBy(
+            () -> validatorContractController.getValidators(1, CONTRACT_ADDRESS))
         .hasMessage("Failed validator smart contract call");
   }
 
@@ -130,7 +133,8 @@ public class ValidatorContractControllerTest {
 
     final ValidatorContractController validatorContractController =
         new ValidatorContractController(transactionSimulator);
-    Assertions.assertThatThrownBy(() -> validatorContractController.getValidators(1, CONTRACT_ADDRESS))
+    Assertions.assertThatThrownBy(
+            () -> validatorContractController.getValidators(1, CONTRACT_ADDRESS))
         .hasMessage("Failed validator smart contract call");
   }
 }

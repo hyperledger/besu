@@ -61,7 +61,8 @@ public class TransactionValidatorProviderTest {
 
   @Before
   public void setup() {
-    forksSchedule = new BftForksSchedule<>(createContractForkSpec(0L, CONTRACT_ADDRESS), emptyList());
+    forksSchedule =
+        new BftForksSchedule<>(createContractForkSpec(0L, CONTRACT_ADDRESS), emptyList());
     genesisBlock = createEmptyBlock(0, Hash.ZERO);
     blockChain = createInMemoryBlockchain(genesisBlock);
     headerBuilder.extraData(Bytes.wrap(new byte[32]));
@@ -169,11 +170,11 @@ public class TransactionValidatorProviderTest {
   @Test
   public void getValidatorsAfterBlock_and_getValidatorsForBlock_useDifferentCaches() {
     final List<Address> validators =
-            Lists.newArrayList(Address.fromHexString("5"), Address.fromHexString("6"));
+        Lists.newArrayList(Address.fromHexString("5"), Address.fromHexString("6"));
     when(validatorContractController.getValidators(2, CONTRACT_ADDRESS)).thenReturn(validators);
 
     final TransactionValidatorProvider validatorProvider =
-            new TransactionValidatorProvider(blockChain, validatorContractController, forksSchedule);
+        new TransactionValidatorProvider(blockChain, validatorContractController, forksSchedule);
 
     validatorProvider.getValidatorsAfterBlock(block_2.getHeader()); // cache miss
     verify(validatorContractController, times(1)).getValidators(2, CONTRACT_ADDRESS);

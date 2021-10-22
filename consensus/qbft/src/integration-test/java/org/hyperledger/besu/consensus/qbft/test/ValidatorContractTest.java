@@ -239,7 +239,8 @@ public class ValidatorContractTest {
     context.getController().handleBlockTimerExpiry(new BlockTimerExpiry(roundId));
 
     // peers commit proposed block
-    Block proposedBlock = context.createBlockForProposalFromChainHead(clock.instant().getEpochSecond());
+    Block proposedBlock =
+        context.createBlockForProposalFromChainHead(clock.instant().getEpochSecond());
     RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
     peers.commitForNonProposing(roundId, proposedBlock);
 

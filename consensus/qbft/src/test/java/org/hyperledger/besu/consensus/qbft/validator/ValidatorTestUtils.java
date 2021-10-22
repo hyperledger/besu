@@ -25,9 +25,9 @@ import java.util.Optional;
 class ValidatorTestUtils {
 
   static BftForkSpec<QbftConfigOptions> createContractForkSpec(
-          final long block, final Address contractAddress) {
+      final long block, final Address contractAddress) {
     final MutableQbftConfigOptions qbftConfigOptions =
-            new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+        new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
     qbftConfigOptions.setValidatorContractAddress(Optional.of(contractAddress.toHexString()));
     return new BftForkSpec<>(block, qbftConfigOptions);
   }

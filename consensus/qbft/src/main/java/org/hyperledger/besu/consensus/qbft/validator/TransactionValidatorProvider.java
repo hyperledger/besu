@@ -38,7 +38,7 @@ public class TransactionValidatorProvider implements ValidatorProvider {
   private final Cache<Long, Collection<Address>> afterBlockValidatorCache =
       CacheBuilder.newBuilder().maximumSize(100).build();
   private final Cache<Long, Collection<Address>> forBlockValidatorCache =
-          CacheBuilder.newBuilder().maximumSize(100).build();
+      CacheBuilder.newBuilder().maximumSize(100).build();
 
   public TransactionValidatorProvider(
       final Blockchain blockchain,
@@ -70,9 +70,9 @@ public class TransactionValidatorProvider implements ValidatorProvider {
   }
 
   private Collection<Address> getValidatorsFromContract(
-          final Cache<Long, Collection<Address>> validatorCache,
-          final BlockHeader header,
-          final Address contractAddress) {
+      final Cache<Long, Collection<Address>> validatorCache,
+      final BlockHeader header,
+      final Address contractAddress) {
     final long blockNumber = header.getNumber();
     try {
       return validatorCache.get(
