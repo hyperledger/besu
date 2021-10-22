@@ -88,7 +88,7 @@ public class GenesisConfigurationFactory {
   public Optional<String> createQbftValidatorContractGenesisConfig(
       final Collection<? extends RunnableNode> validators) throws UncheckedIOException {
     final String template = readGenesisFile("/qbft/qbft-emptyextradata.json");
-    final String contractAlloc = "0x0000000000000000000000000000000000008888";
+    final String contractAddress = "0x0000000000000000000000000000000000008888";
 
     try {
       // convert genesis json to Map for modification
@@ -99,19 +99,19 @@ public class GenesisConfigurationFactory {
       // update config/qbft to add contract address
       final Map<String, Object> configMap = (Map<String, Object>) genesisMap.get("config");
       final Map<String, Object> qbftMap = (Map<String, Object>) configMap.get("qbft");
-      qbftMap.put("validatorcontractaddress", contractAlloc);
+      qbftMap.put("validatorcontractaddress", contractAddress);
 
       // update alloc to add contract code and storage
       final Map<String, Object> allocMap = (Map<String, Object>) genesisMap.get("alloc");
       final Map<String, Object> contractConfig =
           new QbftValidatorContractConfigFactory().buildContractConfig(validators);
-      allocMap.put(contractAlloc, contractConfig);
+      allocMap.put(contractAddress, contractConfig);
 
       // regenerate genesis json again
       final String genesisJson =
           objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(genesisMap);
       return Optional.of(genesisJson);
-    } catch (JsonProcessingException e) {
+    } catch (final JsonProcessingException e) {
       throw new UncheckedIOException(e);
     }
   }
