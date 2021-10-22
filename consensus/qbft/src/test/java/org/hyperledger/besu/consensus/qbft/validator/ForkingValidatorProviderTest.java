@@ -141,8 +141,7 @@ public class ForkingValidatorProviderTest {
     assertThat(validatorProvider.getValidatorsForBlock(genesisHeader))
         .isEqualTo(CONTRACT_ADDRESSES_1);
     assertThat(validatorProvider.getValidatorsForBlock(header1)).isEqualTo(CONTRACT_ADDRESSES_1);
-    // should use previous validatorProvider's validators
-    assertThat(validatorProvider.getValidatorsForBlock(header2)).isEqualTo(CONTRACT_ADDRESSES_1);
+    assertThat(validatorProvider.getValidatorsForBlock(header2)).isEqualTo(BLOCK_ADDRESSES);
   }
 
   @Test

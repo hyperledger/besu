@@ -57,15 +57,13 @@ public class ForkingValidatorProvider implements ValidatorProvider {
   public Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
     final long nextBlock = parentHeader.getNumber() + 1;
     final ValidatorProvider validatorProvider = resolveValidatorProvider(nextBlock);
-    final BftForkSpec<QbftConfigOptions> forkSpec = forksSchedule.getFork(nextBlock);
-    return getValidators(validatorProvider, forkSpec, p -> p.getValidatorsAfterBlock(parentHeader));
+    return getValidators(validatorProvider, nextBlock, p -> p.getValidatorsAfterBlock(parentHeader));
   }
 
   @Override
   public Collection<Address> getValidatorsForBlock(final BlockHeader header) {
     final ValidatorProvider validatorProvider = resolveValidatorProvider(header.getNumber());
-    final BftForkSpec<QbftConfigOptions> forkSpec = forksSchedule.getFork(header.getNumber());
-    return getValidators(validatorProvider, forkSpec, p -> p.getValidatorsForBlock(header));
+    return getValidators(validatorProvider, header.getNumber(), p -> p.getValidatorsForBlock(header));
   }
 
   @Override
@@ -81,14 +79,16 @@ public class ForkingValidatorProvider implements ValidatorProvider {
 
   private Collection<Address> getValidators(
       final ValidatorProvider validatorProvider,
-      final BftForkSpec<QbftConfigOptions> forkSpec,
+      final long blockNumber,
       final Function<ValidatorProvider, Collection<Address>> getValidators) {
+
+    final BftForkSpec<QbftConfigOptions> forkSpec = forksSchedule.getFork(blockNumber);
 
     // when moving to a block validator the first block needs to be initialised or created with
     // the previous block state otherwise we would have no validators
     if (forkSpec.getConfigOptions().isValidatorBlockHeaderMode()) {
-      if (forkSpec.getBlock() > 0) {
-        final long prevBlockNumber = forkSpec.getBlock() - 1L;
+      if (forkSpec.getBlock() > 0 && blockNumber == forkSpec.getBlock()) {
+        final long prevBlockNumber = blockNumber - 1L;
         final Optional<BlockHeader> prevBlockHeader = blockchain.getBlockHeader(prevBlockNumber);
         if (prevBlockHeader.isPresent()) {
           return resolveValidatorProvider(prevBlockNumber)
