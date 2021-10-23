@@ -342,6 +342,7 @@ public class Transaction
 
   @JsonCreator
   public Transaction Transaction(final String hexString) {
+
     return TransactionDecoder.decodeOpaqueBytes(Bytes.fromHexString(hexString));
   }
 

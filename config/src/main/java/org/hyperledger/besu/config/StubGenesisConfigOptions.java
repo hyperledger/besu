@@ -40,8 +40,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong londonBlockNumber = OptionalLong.empty();
   private Optional<UInt256> terminalTotalDifficulty = Optional.empty();
 
-  // TODO EIP-1559 change for the actual fork name when known
-  private final OptionalLong aleutBlockNumber = OptionalLong.empty();
   private OptionalLong baseFeePerGas = OptionalLong.empty();
   private OptionalLong classicForkBlock = OptionalLong.empty();
   private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
