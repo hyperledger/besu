@@ -47,7 +47,7 @@ public class IbftProposeValidatorVoteTest {
   @Before
   public void setup() {
     method = new IbftProposeValidatorVote(validatorProvider);
-    when(validatorProvider.getVoteProvider()).thenReturn(Optional.of(voteProvider));
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
   }
 
   @Test

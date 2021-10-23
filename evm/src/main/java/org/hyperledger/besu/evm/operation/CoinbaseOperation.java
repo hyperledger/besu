@@ -22,7 +22,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 public class CoinbaseOperation extends AbstractFixedCostOperation {
 
   public CoinbaseOperation(final GasCalculator gasCalculator) {
-    super(0x41, "COINBASE", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x41, "COINBASE", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

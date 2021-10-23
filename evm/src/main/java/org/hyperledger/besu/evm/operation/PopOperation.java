@@ -21,7 +21,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 public class PopOperation extends AbstractFixedCostOperation {
 
   public PopOperation(final GasCalculator gasCalculator) {
-    super(0x50, "POP", 1, 0, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x50, "POP", 1, 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

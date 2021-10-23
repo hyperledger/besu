@@ -429,6 +429,14 @@ public abstract class CommandTestAbstract {
       return vertx;
     }
 
+    @Override
+    protected void enableGoQuorumCompatibilityMode() {
+      // We do *not* set the static GoQuorumOptions for test runs as
+      // these are only allowed to be set once during the program
+      // runtime.
+      isGoQuorumCompatibilityMode = true;
+    }
+
     public CommandSpec getSpec() {
       return spec;
     }

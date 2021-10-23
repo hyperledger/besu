@@ -1,1 +1,0 @@
-[{"constant":true,"inputs":[],"name":"revertWithRevertReason","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"pure","type":"function"},{"constant":true,"inputs":[],"name":"revertWithoutRevertReason","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"pure","type":"function"}]

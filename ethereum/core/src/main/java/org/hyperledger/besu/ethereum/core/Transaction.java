@@ -126,7 +126,7 @@ public class Transaction
    * @param transactionType the transaction type
    * @param nonce the nonce
    * @param gasPrice the gas price
-   * @param maxPriorityFeePerGas the max priorty fee per gas
+   * @param maxPriorityFeePerGas the max priority fee per gas
    * @param maxFeePerGas the max fee per gas
    * @param gasLimit the gas limit
    * @param to the transaction recipient
@@ -342,6 +342,7 @@ public class Transaction
 
   @JsonCreator
   public Transaction Transaction(final String hexString) {
+
     return TransactionDecoder.decodeOpaqueBytes(Bytes.fromHexString(hexString));
   }
 
@@ -667,9 +668,13 @@ public class Transaction
    * A GoQuorum private transaction has its <i>v</i> value equal to 37 or 38, and does not contain a
    * chainId.
    *
+   * @param goQuorumCompatibilityMode true if GoQuorum compatbility mode is set
    * @return true if GoQuorum private transaction, false otherwise
    */
-  public boolean isGoQuorumPrivateTransaction() {
+  public boolean isGoQuorumPrivateTransaction(final boolean goQuorumCompatibilityMode) {
+    if (!goQuorumCompatibilityMode) {
+      return false;
+    }
     if (chainId.isPresent()) {
       return false;
     }

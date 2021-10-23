@@ -27,7 +27,7 @@ import org.hyperledger.besu.evm.internal.Words;
 public class CallCodeOperation extends AbstractCallOperation {
 
   public CallCodeOperation(final GasCalculator gasCalculator) {
-    super(0xF2, "CALLCODE", 7, 1, false, 1, gasCalculator);
+    super(0xF2, "CALLCODE", 7, 1, 1, gasCalculator);
   }
 
   @Override

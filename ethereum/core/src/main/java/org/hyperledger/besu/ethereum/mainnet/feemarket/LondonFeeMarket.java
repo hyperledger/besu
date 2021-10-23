@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
 import static java.lang.Math.max;
 
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.BaseFee;
@@ -23,23 +24,32 @@ import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class LondonFeeMarket implements BaseFeeMarket {
-  static final long DEFAULT_BASEFEE_INITIAL_VALUE = 1000000000L;
+  static final long DEFAULT_BASEFEE_INITIAL_VALUE =
+      GenesisConfigFile.BASEFEE_AT_GENESIS_DEFAULT_VALUE;
   static final long DEFAULT_BASEFEE_MAX_CHANGE_DENOMINATOR = 8L;
   static final long DEFAULT_SLACK_COEFFICIENT = 2L;
   private static final Logger LOG = LogManager.getLogger();
 
+  private final long baseFeeInitialValue;
   private final long londonForkBlockNumber;
   private final TransactionPriceCalculator txPriceCalculator;
 
   public LondonFeeMarket(final long londonForkBlockNumber) {
+    this(londonForkBlockNumber, OptionalLong.empty());
+  }
+
+  public LondonFeeMarket(
+      final long londonForkBlockNumber, final OptionalLong baseFeePerGasOverride) {
     this.txPriceCalculator = TransactionPriceCalculator.eip1559();
     this.londonForkBlockNumber = londonForkBlockNumber;
+    this.baseFeeInitialValue = baseFeePerGasOverride.orElse(DEFAULT_BASEFEE_INITIAL_VALUE);
   }
 
   @Override
@@ -49,7 +59,7 @@ public class LondonFeeMarket implements BaseFeeMarket {
 
   @Override
   public long getInitialBasefee() {
-    return DEFAULT_BASEFEE_INITIAL_VALUE;
+    return baseFeeInitialValue;
   }
 
   @Override

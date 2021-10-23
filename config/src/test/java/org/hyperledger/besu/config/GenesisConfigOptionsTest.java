@@ -58,7 +58,7 @@ public class GenesisConfigOptionsTest {
   public void shouldUseIbftLegacyWhenIbftInConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ibft", emptyMap()));
     assertThat(config.isIbftLegacy()).isTrue();
-    assertThat(config.getIbftLegacyConfigOptions()).isNotSameAs(BftConfigOptions.DEFAULT);
+    assertThat(config.getIbftLegacyConfigOptions()).isNotSameAs(JsonBftConfigOptions.DEFAULT);
     assertThat(config.getConsensusEngine()).isEqualTo("ibft");
   }
 
@@ -181,14 +181,6 @@ public class GenesisConfigOptionsTest {
   @Test
   public void shouldGetLondonBlockNumber() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("londonblock", 1000));
-    assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
-    assertThat(config.getLondonBlockNumber()).hasValue(1000);
-  }
-
-  @Test
-  public void shouldGetBaikalBlockNumber() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("calaverasblock", 1000));
-    assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
     assertThat(config.getLondonBlockNumber()).hasValue(1000);
   }
 
@@ -213,7 +205,6 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getMuirGlacierBlockNumber()).isEmpty();
     assertThat(config.getBerlinBlockNumber()).isEmpty();
     assertThat(config.getLondonBlockNumber()).isEmpty();
-    assertThat(config.getAleutBlockNumber()).isEmpty();
     assertThat(config.getEcip1049BlockNumber()).isEmpty();
   }
 
