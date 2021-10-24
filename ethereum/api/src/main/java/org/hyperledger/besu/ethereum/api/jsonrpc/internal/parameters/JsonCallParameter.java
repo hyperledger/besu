@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.json.GasDeserializer;
@@ -30,6 +28,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -69,9 +69,10 @@ public class JsonCallParameter extends CallParameter {
 
   @JsonAnySetter
   public void logUnknownProperties(String key, Object value) {
-    LOG.info("unknown property - {} with value - {} and type - {} caught during serialization", key
-        , value, value.getClass());
+    LOG.debug(
+        "unknown property - {} with value - {} and type - {} caught during serialization",
+        key,
+        value,
+        value.getClass());
   }
-
-
 }
