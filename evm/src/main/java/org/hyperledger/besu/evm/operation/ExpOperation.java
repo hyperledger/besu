@@ -27,7 +27,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class ExpOperation extends AbstractOperation {
 
   public ExpOperation(final GasCalculator gasCalculator) {
-    super(0x0A, "EXP", 2, 1, false, 1, gasCalculator);
+    super(0x0A, "EXP", 2, 1, 1, gasCalculator);
   }
 
   @Override

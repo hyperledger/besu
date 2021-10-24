@@ -21,7 +21,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 public class OriginOperation extends AbstractFixedCostOperation {
 
   public OriginOperation(final GasCalculator gasCalculator) {
-    super(0x32, "ORIGIN", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x32, "ORIGIN", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

@@ -154,7 +154,7 @@ public final class GenesisState {
         .mixHash(parseMixHash(genesis))
         .nonce(parseNonce(genesis))
         .blockHeaderFunctions(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))
-        .baseFee(genesis.getBaseFeePerGas().orElse(null))
+        .baseFee(genesis.getGenesisBaseFeePerGas().orElse(null))
         .buildBlockHeader();
   }
 

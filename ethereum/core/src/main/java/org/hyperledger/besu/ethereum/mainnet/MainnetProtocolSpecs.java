@@ -506,8 +506,9 @@ public abstract class MainnetProtocolSpecs {
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final long londonForkBlockNumber =
-        genesisConfigOptions.getEIP1559BlockNumber().orElse(Long.MAX_VALUE);
-    final BaseFeeMarket londonFeeMarket = FeeMarket.london(londonForkBlockNumber);
+        genesisConfigOptions.getLondonBlockNumber().orElse(Long.MAX_VALUE);
+    final BaseFeeMarket londonFeeMarket =
+        FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
     return berlinDefinition(
             chainId,
             configContractSizeLimit,

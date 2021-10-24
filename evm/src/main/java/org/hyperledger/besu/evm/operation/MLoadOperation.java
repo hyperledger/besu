@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class MLoadOperation extends AbstractOperation {
 
   public MLoadOperation(final GasCalculator gasCalculator) {
-    super(0x51, "MLOAD", 1, 1, false, 1, gasCalculator);
+    super(0x51, "MLOAD", 1, 1, 1, gasCalculator);
   }
 
   @Override

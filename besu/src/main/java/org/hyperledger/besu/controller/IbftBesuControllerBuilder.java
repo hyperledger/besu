@@ -163,7 +163,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             proposerSelector,
             uniqueMessageMulticaster,
             new RoundTimer(bftEventQueue, bftConfig.getRequestTimeoutSeconds(), bftExecutors),
-            new BlockTimer(bftEventQueue, bftConfig.getBlockPeriodSeconds(), bftExecutors, clock),
+            new BlockTimer(bftEventQueue, bftForksSchedule, bftExecutors, clock),
             blockCreatorFactory,
             clock);
 

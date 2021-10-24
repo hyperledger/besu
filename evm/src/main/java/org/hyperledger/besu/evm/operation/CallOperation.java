@@ -31,7 +31,7 @@ import java.util.Optional;
 public class CallOperation extends AbstractCallOperation {
 
   public CallOperation(final GasCalculator gasCalculator) {
-    super(0xF1, "CALL", 7, 1, false, 1, gasCalculator);
+    super(0xF1, "CALL", 7, 1, 1, gasCalculator);
   }
 
   @Override

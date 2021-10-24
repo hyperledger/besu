@@ -30,7 +30,7 @@ import java.util.Optional;
 public class SelfDestructOperation extends AbstractOperation {
 
   public SelfDestructOperation(final GasCalculator gasCalculator) {
-    super(0xFF, "SELFDESTRUCT", 1, 0, false, 1, gasCalculator);
+    super(0xFF, "SELFDESTRUCT", 1, 0, 1, gasCalculator);
   }
 
   @Override
