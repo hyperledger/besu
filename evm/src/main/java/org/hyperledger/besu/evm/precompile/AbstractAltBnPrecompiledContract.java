@@ -42,11 +42,16 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
   }
 
   private final byte operationId;
+  private final int inputLen;
 
   AbstractAltBnPrecompiledContract(
-      final String name, final GasCalculator gasCalculator, final byte operationId) {
+      final String name,
+      final GasCalculator gasCalculator,
+      final byte operationId,
+      final int inputLen) {
     super(name, gasCalculator);
     this.operationId = operationId;
+    this.inputLen = inputLen + 1;
 
     if (!LibEthPairings.ENABLED) {
       LOG.info("Native alt bn128 not available");
@@ -61,9 +66,16 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
         new IntByReference(LibEthPairings.EIP196_PREALLOCATE_FOR_RESULT_BYTES);
     final IntByReference err_len =
         new IntByReference(LibEthPairings.EIP2537_PREALLOCATE_FOR_ERROR_BYTES);
+    int inputSize = Math.min(inputLen, input.size());
     final int errorNo =
         LibEthPairings.eip196_perform_operation(
-            operationId, input.toArrayUnsafe(), input.size(), result, o_len, error, err_len);
+            operationId,
+            input.slice(0, inputSize).toArrayUnsafe(),
+            inputSize,
+            result,
+            o_len,
+            error,
+            err_len);
     if (errorNo == 0) {
       return Bytes.wrap(result, 0, o_len.getValue());
     } else {
