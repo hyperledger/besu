@@ -47,7 +47,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     BlockValidator blockValidator =
         protocolSchedule.getByBlockNumber(Long.MAX_VALUE).getBlockValidator();
 
-    // TODO: revisit how we stop/manage the synchronizer when merge sync process is better defined
+    // TODO: revisit how we stop/manage the synchronizer
+    // https://github.com/hyperledger/besu/issues/2898
     this.syncState.set(syncState);
 
     return new MergeCoordinator(

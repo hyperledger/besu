@@ -36,7 +36,7 @@ public class MergeBlockImporter extends MainnetBlockImporter {
     var res = super.importBlock(context, block, headerValidationMode, ommerValidationMode);
 
     // TODO: for now optimistically import blocks post-TTD, this should only come from initial sync
-    // pre-TTD
+    // this can/should be removed as part of https://github.com/hyperledger/besu/issues/2912
     if (res && context.getConsensusContext(MergeContext.class).isPostMerge()) {
       context.getConsensusContext(MergeContext.class).setConsensusValidated(block.getHash());
     }

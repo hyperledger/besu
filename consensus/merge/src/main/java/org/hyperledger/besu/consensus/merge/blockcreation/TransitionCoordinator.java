@@ -80,7 +80,6 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
 
   @Override
   public void setExtraData(final Bytes extraData) {
-    // todo check if this makes sense to do for both
     miningCoordinator.setExtraData(extraData);
     mergeCoordinator.setExtraData(extraData);
   }
@@ -108,7 +107,6 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
 
   @Override
   public void changeTargetGasLimit(final Long targetGasLimit) {
-    // todo check if this makes sense to do for both
     miningCoordinator.changeTargetGasLimit(targetGasLimit);
     mergeCoordinator.changeTargetGasLimit(targetGasLimit);
   }

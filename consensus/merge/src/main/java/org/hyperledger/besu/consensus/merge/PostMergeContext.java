@@ -51,7 +51,7 @@ public class PostMergeContext implements MergeContext {
   AtomicReference<CandidateBlock> candidateBlock = new AtomicReference<>();
 
   // latest finalized block
-  // TODO: persist this to storage https://github.com/ConsenSys/protocol-misc/issues/478
+  // TODO: persist this to storage https://github.com/hyperledger/besu/issues/2913
   AtomicReference<BlockHeader> lastFinalized = new AtomicReference<>();
 
   private PostMergeContext() {
@@ -60,7 +60,7 @@ public class PostMergeContext implements MergeContext {
   }
 
   public static synchronized PostMergeContext get() {
-    // TODO: get rid of singleton
+    // TODO: get rid of singleton if possible: https://github.com/hyperledger/besu/issues/2898
     if (singleton == null) {
       singleton = new PostMergeContext();
     }

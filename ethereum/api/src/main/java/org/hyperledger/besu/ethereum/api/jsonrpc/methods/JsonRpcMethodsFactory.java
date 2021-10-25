@@ -128,6 +128,8 @@ public class JsonRpcMethodsFactory {
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
 
+      // TODO: Implement engine-specific json-rpc endpoint rather than including consensus here
+      // https://github.com/hyperledger/besu/issues/2914
       MergeOptions.doIfMergeEnabled(
           () ->
               enabled.putAll(

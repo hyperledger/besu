@@ -102,10 +102,10 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
             blockchain);
 
     // TODO: this setting happening here makes me think we actually might have the invariant in the
-    // code base right now where a block is only a candidate if it's been sucessfully executed. That
-    // means we don't need to do this setting anywhere and can flush a candidate as soon as we get a
-    // consensusValidated. Especially since setConsensusValidated is a noop if there isn't a
-    // candidate block already
+    // code base right now where a block is only a candidate if it's been successfully executed.
+    // That  means we don't need to do this setting anywhere and can flush a candidate as soon as
+    // we get a consensusValidated. Especially since setConsensusValidated is a noop if there isn't
+    // a candidate block already
     candidateBlock.setBlockProcessorResult(
         super.executeBlock(
             blockchain,
@@ -228,6 +228,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
                   });
 
       // TODO: ensure head is a descendant of finalized!
+      // https://github.com/hyperledger/besu/issues/2946
       // set the new head
       blockchain.rewindToBlock(newHead.getHash());
       return newFinalized.map(Block::getHeader);

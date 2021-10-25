@@ -182,6 +182,8 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public boolean validateProcessAndSetAsCandidate(final Block block) {
+    // TODO: if we are missing the parentHash, attempt backwards sync
+    // https://github.com/hyperledger/besu/issues/2912
     return blockValidator
         .validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE)
