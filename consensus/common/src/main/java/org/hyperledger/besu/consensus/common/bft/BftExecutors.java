@@ -15,7 +15,6 @@
 
 package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
@@ -45,8 +44,7 @@ public class BftExecutors {
   private volatile State state = State.IDLE;
 
   @SuppressWarnings("unused")
-  private BftExecutors(final MetricsSystem metricsSystem) {
-  }
+  private BftExecutors(final MetricsSystem metricsSystem) {}
 
   public static BftExecutors create(final MetricsSystem metricsSystem) {
     return new BftExecutors(metricsSystem);
@@ -58,7 +56,8 @@ public class BftExecutors {
       return;
     }
     state = State.RUNNING;
-    // TODO handle multiple exectors with same name for the metrics. ATM metric names clash and cause failure
+    // TODO handle multiple exectors with same name for the metrics. ATM metric names clash and
+    // cause failure
     bftProcessorExecutor = Executors.newSingleThreadExecutor();
     timerExecutor = Executors.newScheduledThreadPool(1);
   }

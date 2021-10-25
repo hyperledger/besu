@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 
 import java.util.Collection;
@@ -30,13 +29,13 @@ import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 
-public class BftForksSchedule<C extends BftConfigOptions> {
+public class BftForksSchedule<C> {
 
   private final NavigableSet<BftForkSpec<C>> forks =
       new TreeSet<>(
           Comparator.comparing((Function<BftForkSpec<C>, Long>) BftForkSpec::getBlock).reversed());
 
-  public interface BftSpecCreator<T extends BftConfigOptions, U extends BftFork> {
+  public interface BftSpecCreator<T, U extends BftFork> {
     T create(BftForkSpec<T> lastSpec, U fork);
   }
 
@@ -47,7 +46,7 @@ public class BftForksSchedule<C extends BftConfigOptions> {
     this.forks.addAll(forks);
   }
 
-  public static <T extends BftConfigOptions, U extends BftFork> BftForksSchedule<T> create(
+  public static <T, U extends BftFork> BftForksSchedule<T> create(
       final T initial, final List<U> forks, final BftSpecCreator<T, U> specCreator) {
     checkArgument(
         forks.stream().allMatch(f -> f.getForkBlock() > 0),

@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.common.forking;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -27,7 +28,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
@@ -36,12 +36,15 @@ import org.apache.tuweni.bytes.Bytes;
 public class ForkingBftMiningCoordinator implements MiningCoordinator, BlockAddedObserver {
   private static final Logger LOG = getLogger();
 
-  private final Map<Long, BftMiningCoordinator> miningCoordinatorForks;
+  private final BftForksSchedule<BftMiningCoordinator> miningCoordinatorForkSchedule;
   private BftMiningCoordinator activeMiningCoordinator;
 
-  public ForkingBftMiningCoordinator(final Map<Long, BftMiningCoordinator> miningCoordinatorForks) {
-    this.miningCoordinatorForks = miningCoordinatorForks;
-    this.activeMiningCoordinator = miningCoordinatorForks.get(0L);
+  public ForkingBftMiningCoordinator(
+      final BftForksSchedule<BftMiningCoordinator> miningCoordinatorForkSchedule,
+      final long chainHeadBlockNumber) {
+    this.miningCoordinatorForkSchedule = miningCoordinatorForkSchedule;
+    this.activeMiningCoordinator =
+        miningCoordinatorForkSchedule.getFork(chainHeadBlockNumber).getConfigOptions();
   }
 
   @Override
@@ -106,17 +109,18 @@ public class ForkingBftMiningCoordinator implements MiningCoordinator, BlockAdde
   public void onBlockAdded(final BlockAddedEvent event) {
     if (event.isNewCanonicalHead()) {
       final long nextBlock = event.getBlock().getHeader().getNumber() + 1;
-      if (miningCoordinatorForks.containsKey(nextBlock)) {
-        final BftMiningCoordinator newMiningCoordinator = miningCoordinatorForks.get(nextBlock);
+      final BftMiningCoordinator nextMiningCoordinator =
+          miningCoordinatorForkSchedule.getFork(nextBlock).getConfigOptions();
+      if (!nextMiningCoordinator.equals(activeMiningCoordinator)) {
         LOG.debug(
             "Switching mining coordinator at block {} from {} to {}",
             event.getBlock().getHeader().getNumber(),
             activeMiningCoordinator.getClass().getSimpleName(),
-            newMiningCoordinator.getClass().getSimpleName());
+            nextMiningCoordinator.getClass().getSimpleName());
 
         activeMiningCoordinator.stop();
-        newMiningCoordinator.start();
-        activeMiningCoordinator = newMiningCoordinator;
+        nextMiningCoordinator.start();
+        activeMiningCoordinator = nextMiningCoordinator;
       }
       LOG.trace("New canonical head detected");
       activeMiningCoordinator.onBlockAdded(event);

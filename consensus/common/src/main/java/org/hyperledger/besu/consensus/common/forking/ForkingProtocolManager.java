@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.common.forking;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
@@ -25,27 +26,21 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Logger;
 
 public class ForkingProtocolManager implements ProtocolManager, BlockAddedObserver {
   private static final Logger LOG = getLogger();
 
-  private final Map<Long, ProtocolManager> protocolManagerForks;
+  private final BftForksSchedule<ProtocolManager> protocolManagerBftForksSchedule;
   private ProtocolManager activeProtocolManager;
 
-  public ForkingProtocolManager(final Map<Long, ProtocolManager> protocolManagerForks) {
-    this.protocolManagerForks = protocolManagerForks;
-
-    final List<ProtocolManager> sorted =
-        protocolManagerForks.entrySet().stream()
-            .sorted(Entry.comparingByKey())
-            .map(Entry::getValue)
-            .collect(Collectors.toList());
-    this.activeProtocolManager = sorted.get(0);
+  public ForkingProtocolManager(
+      final BftForksSchedule<ProtocolManager> protocolManagerBftForksSchedule,
+      final long chainHeadBlockNumber) {
+    this.protocolManagerBftForksSchedule = protocolManagerBftForksSchedule;
+    this.activeProtocolManager =
+        protocolManagerBftForksSchedule.getFork(chainHeadBlockNumber).getConfigOptions();
   }
 
   @Override
@@ -90,15 +85,16 @@ public class ForkingProtocolManager implements ProtocolManager, BlockAddedObserv
   public void onBlockAdded(final BlockAddedEvent event) {
     if (event.isNewCanonicalHead()) {
       final long nextBlock = event.getBlock().getHeader().getNumber() + 1;
-      if (protocolManagerForks.containsKey(nextBlock)) {
-        final ProtocolManager newProtocolManager = protocolManagerForks.get(nextBlock);
+      final ProtocolManager nextProtocolManager =
+          protocolManagerBftForksSchedule.getFork(nextBlock).getConfigOptions();
+      if (!nextProtocolManager.equals(activeProtocolManager)) {
         LOG.debug(
             "Switching protocol manager at block {} from {} to {}",
             event.getBlock().getHeader().getNumber(),
             activeProtocolManager.getClass().getSimpleName(),
-            newProtocolManager.getClass().getSimpleName());
+            nextProtocolManager.getClass().getSimpleName());
         activeProtocolManager.stop();
-        activeProtocolManager = newProtocolManager;
+        activeProtocolManager = nextProtocolManager;
       }
     }
   }
