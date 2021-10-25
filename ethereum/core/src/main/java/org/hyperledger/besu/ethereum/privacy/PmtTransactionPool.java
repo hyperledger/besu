@@ -44,16 +44,16 @@ public class PmtTransactionPool implements BlockAddedObserver {
   }
 
   public Hash addPmtTransactionTracker(
-      final Hash pmtHash, final PrivateTransaction privateTx, final String privacyGroupId) {
+      final Hash pmtHash, final PrivateTransaction privateTx, final String privacyGroupId, final long publicNonce) {
     LOG.info("size of pmtPool = {}", pmtPool.size());
     return addPmtTransactionTracker(
-        pmtHash, privateTx.sender.toHexString(), privacyGroupId, privateTx.getNonce());
+        pmtHash, privateTx.sender.toHexString(), privacyGroupId, privateTx.getNonce(), publicNonce);
   }
 
   public Hash addPmtTransactionTracker(
-      final Hash pmtHash, final String sender, final String privacyGroupId, final long nonce) {
+      final Hash pmtHash, final String sender, final String privacyGroupId, final long privateNonce, final long publicNonce) {
 
-    final PmtTransactionTracker pmtTracker = new PmtTransactionTracker(sender, privacyGroupId, nonce);
+    final PmtTransactionTracker pmtTracker = new PmtTransactionTracker(sender, privacyGroupId, privateNonce, publicNonce);
     pmtPool.put(pmtHash, pmtTracker);
     LOG.info(
         "adding pmtPool tracker: pmtHash: {} pmtTracker {}",
@@ -65,13 +65,15 @@ public class PmtTransactionPool implements BlockAddedObserver {
   protected static class PmtTransactionTracker {
     private final String sender;
     private final String privacyGroupIdBase64;
-    private final long nonce;
+    private final long privateNonce;
+    private final long publicNonce;
 
     protected PmtTransactionTracker(
-        final String sender, final String privacyGroupIdBase64, final long nonce) {
+        final String sender, final String privacyGroupIdBase64, final long privateNonce, final long publicNonce) {
       this.sender = sender;
       this.privacyGroupIdBase64 = privacyGroupIdBase64;
-      this.nonce = nonce;
+      this.privateNonce = privateNonce;
+      this.publicNonce = publicNonce;
     }
 
     public String getSender() {
@@ -82,8 +84,12 @@ public class PmtTransactionPool implements BlockAddedObserver {
       return privacyGroupIdBase64;
     }
 
-    public long getNonce() {
-      return nonce;
+    public long getPrivateNonce() {
+      return privateNonce;
+    }
+
+    public long getPublicNonce() {
+      return publicNonce;
     }
 
     @Override
@@ -92,7 +98,8 @@ public class PmtTransactionPool implements BlockAddedObserver {
       sb.append("PmtTransactionTracker ").append("{");
       sb.append("sender=").append(getSender()).append(", ");
       sb.append("privacyGroupId=").append(getPrivacyGroupIdBase64()).append(", ");
-      sb.append("nonce=").append(getNonce()).append(", ");
+      sb.append("private nonce=").append(getPrivateNonce()).append(", ");
+      sb.append("public nonce=").append(getPublicNonce()).append(", ");
       return sb.append("}").toString();
     }
   }

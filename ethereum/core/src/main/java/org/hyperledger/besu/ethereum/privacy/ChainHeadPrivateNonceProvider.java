@@ -58,7 +58,7 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
     final Hash chainHeadHash = chainHeadHeader.getHash();
 
     LOG.info(
-        "checking for matches for sender " + sender + " and privacyGroupID (base 64) " + privacyGroupId.toBase64String());
+        "checking for PMT matches for sender " + sender + " and privacyGroupID (base 64) " + privacyGroupId.toBase64String());
     long countPending =
         pmtTransactionPool.getCountMatchingPmt(sender.toHexString(), privacyGroupId.toBase64String());
     LOG.info("number of matching PMTs in the pool = " + countPending);

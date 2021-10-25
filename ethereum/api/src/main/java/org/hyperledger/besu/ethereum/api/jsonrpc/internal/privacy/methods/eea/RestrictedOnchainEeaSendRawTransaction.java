@@ -110,7 +110,7 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
             sender, ONCHAIN_PRIVACY, pmtPayload, privateTransaction, privacyUserId);
     LOG.info("created a PMT sender {}, privacyUserId {}, nonce {}", sender, privacyUserId, pmt.getNonce());
     pmtTransactionPool.addPmtTransactionTracker(
-        pmt.getHash(), privateTransaction, privacyGroupId.toBase64String());
+        pmt.getHash(), privateTransaction, privacyGroupId.toBase64String(), pmt.getNonce());
     return pmt;
   }
 

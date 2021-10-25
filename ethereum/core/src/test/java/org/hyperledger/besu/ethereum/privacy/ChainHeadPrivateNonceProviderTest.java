@@ -98,7 +98,7 @@ public class ChainHeadPrivateNonceProviderTest {
   @Test
   public void determineNonceForPrivacyGroupRequestWhenAccountExistsAndNoMatchingTxInPmtPool() {
     pmtPool.addPmtTransactionTracker(
-        HASH_TWO, ADDRESS_TWO.toHexString(), PRIVACY_GROUP_ID.toBase64String(), 5L);
+        HASH_TWO, ADDRESS_TWO.toHexString(), PRIVACY_GROUP_ID.toBase64String(), 5L, 99L);
 
     when(account.getNonce()).thenReturn(4L);
     when(worldState.get(any(Address.class))).thenReturn(account);
@@ -115,9 +115,9 @@ public class ChainHeadPrivateNonceProviderTest {
   @Test
   public void determineNonceForPrivacyGroupRequestWhenAccountExistsAndMatchingTxInPmtPool() {
     pmtPool.addPmtTransactionTracker(
-        HASH_ONE, ADDRESS.toHexString(), PRIVACY_GROUP_ID.toBase64String(), 5L);
+        HASH_ONE, ADDRESS.toHexString(), PRIVACY_GROUP_ID.toBase64String(), 5L, 99L);
     pmtPool.addPmtTransactionTracker(
-        HASH_TWO, ADDRESS_TWO.toHexString(), PRIVACY_GROUP_ID.toBase64String(), 99L);
+        HASH_TWO, ADDRESS_TWO.toHexString(), PRIVACY_GROUP_ID.toBase64String(), 99L, 99L);
 
     when(account.getNonce()).thenReturn(4L);
     when(worldState.get(any(Address.class))).thenReturn(account);
