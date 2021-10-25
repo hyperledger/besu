@@ -76,6 +76,8 @@ dependencyManagement {
 
     dependency 'io.pkts:pkts-core:3.0.10'
 
+    dependency 'com.sun.activation:jakarta.activation:1.2.2'
+
     dependency 'io.prometheus:simpleclient:0.9.0'
     dependency 'io.prometheus:simpleclient_common:0.9.0'
     dependency 'io.prometheus:simpleclient_hotspot:0.9.0'
