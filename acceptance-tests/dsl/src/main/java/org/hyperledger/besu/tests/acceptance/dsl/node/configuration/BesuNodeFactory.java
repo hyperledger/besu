@@ -534,6 +534,24 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createQbftNodeWithContractBasedValidators(
+      final String name, final String... validators) throws IOException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .genesisConfigProvider(
+                nodes ->
+                    node.createGenesisConfigForValidators(
+                        asList(validators),
+                        nodes,
+                        genesis::createQbftValidatorContractGenesisConfig))
+            .build());
+  }
+
   public BesuNode createPkiQbftJKSNodeWithValidators(final String name, final String... validators)
       throws IOException {
     return createPkiQbftNodeWithValidators(KeyStoreWrapper.KEYSTORE_TYPE_JKS, name, validators);

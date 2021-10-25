@@ -30,6 +30,7 @@ import java.util.Optional;
 
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.utils.Convert;
 import org.web3j.utils.Convert.Unit;
 import org.web3j.utils.Numeric;
@@ -95,8 +96,13 @@ public class TransferTransaction
 
   private Hash sendRawTransaction(final NodeRequests node, final String signedTransactionData) {
     try {
-      return Hash.fromHexString(
-          node.eth().ethSendRawTransaction(signedTransactionData).send().getTransactionHash());
+      final EthSendTransaction transaction =
+          node.eth().ethSendRawTransaction(signedTransactionData).send();
+      if (transaction.getResult() == null && transaction.getError() != null) {
+        throw new RuntimeException(
+            "Error sending transaction: " + transaction.getError().getMessage());
+      }
+      return Hash.fromHexString(transaction.getTransactionHash());
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
