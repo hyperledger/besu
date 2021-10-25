@@ -55,13 +55,6 @@ public class QbftExtraDataCodecTest {
           + "00b841000000000000000000000000000000000000000000000000000000000000000a0000000000000000"
           + "00000000000000000000000000000000000000000000000100";
 
-  private final String IBFT_RAW_HEX_ENCODING_STRING =
-      "f8f1a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea9400000000000000000000000000000000000"
-          + "00001940000000000000000000000000000000000000002d794000000000000000000000000000000000000000181ff8400fedc"
-          + "baf886b841000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000"
-          + "0000000000000000000000000000000000a00b84100000000000000000000000000000000000000000000000000000000000000"
-          + "0a000000000000000000000000000000000000000000000000000000000000000100";
-
   private final BftExtraData DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING =
       getDecodedExtraDataForRawHexEncodingString();
   private final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
@@ -81,13 +74,6 @@ public class QbftExtraDataCodecTest {
     final Bytes vanity_data = Bytes.wrap(vanity_bytes);
 
     return new BftExtraData(vanity_data, committerSeals, vote, round, validators);
-  }
-
-  @Test
-  public void decodeIbftData() {
-    final BftExtraData bftExtraData = bftExtraDataCodec.decodeRaw(
-        Bytes.fromHexString(IBFT_RAW_HEX_ENCODING_STRING));
-    System.out.println("bftExtraData = " + bftExtraData);
   }
 
   @Test
