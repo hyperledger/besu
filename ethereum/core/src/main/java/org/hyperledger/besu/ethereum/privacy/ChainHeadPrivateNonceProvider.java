@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -24,6 +26,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
+  private static final Logger LOG = LogManager.getLogger();
   private final Blockchain blockchain;
   private final PrivateStateRootResolver privateStateRootResolver;
   private final WorldStateArchive privateWorldStateArchive;
@@ -42,7 +45,7 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
 
 
   /**
-   * Calculate the nonce while taking into account any PMT that are already in progress. This makes
+   * Calculate the nonce while taking into account any PMTs that are already in progress. This makes
    * nonce management for private tx slightly cleaner.
    *
    * @param sender the sender of the transaction
@@ -54,11 +57,11 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
     final BlockHeader chainHeadHeader = blockchain.getChainHeadHeader();
     final Hash chainHeadHash = chainHeadHeader.getHash();
 
-    System.out.println(
-        "checking for matches for sender " + sender + " and privacyGroupID " + privacyGroupId);
+    LOG.info(
+        "checking for matches for sender " + sender + " and privacyGroupID (base 64) " + privacyGroupId.toBase64String());
     long countPending =
         pmtTransactionPool.getCountMatchingPmt(sender.toHexString(), privacyGroupId.toBase64String());
-    System.out.println("number of matching PMTs in the pool = " + countPending);
+    LOG.info("number of matching PMTs in the pool = " + countPending);
     // TODO get pendingNonce
     // if latestNonce > pendingNonce return latestNonce (as below)
     // else return pendingNonce + 1

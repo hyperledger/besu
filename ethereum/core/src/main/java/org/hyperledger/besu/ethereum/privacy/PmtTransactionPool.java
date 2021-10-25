@@ -30,7 +30,6 @@ public class PmtTransactionPool implements BlockAddedObserver {
               LOG.info("removing " + pmtPool.containsKey(tx.getHash()));
               pmtPool.remove(tx.getHash());
             });
-    LOG.info("after processing blockAddedEvent: size of pmtPool = {}", pmtPool.size());
   }
 
   public long getCountMatchingPmt(final String sender, final String privacyGroupId) {
@@ -54,12 +53,12 @@ public class PmtTransactionPool implements BlockAddedObserver {
   public Hash addPmtTransactionTracker(
       final Hash pmtHash, final String sender, final String privacyGroupId, final long nonce) {
 
-    pmtPool.put(pmtHash, new PmtTransactionTracker(sender, privacyGroupId, nonce));
+    final PmtTransactionTracker pmtTracker = new PmtTransactionTracker(sender, privacyGroupId, nonce);
+    pmtPool.put(pmtHash, pmtTracker);
     LOG.info(
-        "adding pmtPool tracker: pmtHash: {} sender: {} privacyGroupID: {}",
+        "adding pmtPool tracker: pmtHash: {} pmtTracker {}",
         pmtHash,
-        sender,
-        privacyGroupId);
+        pmtTracker);
     return pmtHash;
   }
 
@@ -85,6 +84,16 @@ public class PmtTransactionPool implements BlockAddedObserver {
 
     public long getNonce() {
       return nonce;
+    }
+
+    @Override
+    public String toString() {
+      final StringBuilder sb = new StringBuilder();
+      sb.append("PmtTransactionTracker ").append("{");
+      sb.append("sender=").append(getSender()).append(", ");
+      sb.append("privacyGroupId=").append(getPrivacyGroupIdBase64()).append(", ");
+      sb.append("nonce=").append(getNonce()).append(", ");
+      return sb.append("}").toString();
     }
   }
 }
