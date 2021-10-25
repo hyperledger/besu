@@ -233,7 +233,7 @@ public class MainnetTransactionValidator {
               transaction.getChainId().get(), chainId.get()));
     }
 
-    if (!transaction.isGoQuorumPrivateTransaction()
+    if (!transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)
         && !chainId.isPresent()
         && transaction.getChainId().isPresent()) {
       return ValidationResult.invalid(
@@ -304,5 +304,9 @@ public class MainnetTransactionValidator {
     final TransactionValidationParams validationParams =
         ImmutableTransactionValidationParams.builder().isAllowFutureNonce(allowFutureNonce).build();
     return validateForSender(transaction, sender, validationParams);
+  }
+
+  public boolean getGoQuorumCompatibilityMode() {
+    return goQuorumCompatibilityMode;
   }
 }
