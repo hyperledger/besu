@@ -1,5 +1,5 @@
 
-FROM openjdk:11-jre-slim-buster
+FROM openjdk:11-slim-buster
 
 ARG VERSION="dev"
 
@@ -15,14 +15,17 @@ COPY --chown=besu:besu besu /opt/besu/
 # 8545 HTTP JSON-RPC
 # 8546 WS JSON-RPC
 # 8547 HTTP GraphQL
+# 9545 Metrics
 # 30303 P2P
-EXPOSE 8545 8546 8547 30303
+EXPOSE 8545 8546 8547 9545 30303
 
 # defaults for host interfaces
 ENV BESU_RPC_HTTP_HOST 0.0.0.0
 ENV BESU_RPC_WS_HOST 0.0.0.0
 ENV BESU_GRAPHQL_HTTP_HOST 0.0.0.0
+ENV BESU_METRICS_HOST 0.0.0.0
 ENV BESU_PID_PATH "/tmp/pid"
+ENV BESU_LOGGING "DEBUG"
 
 ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu,service.version=$VERSION"
 
