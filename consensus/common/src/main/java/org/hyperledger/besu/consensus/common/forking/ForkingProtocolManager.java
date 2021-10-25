@@ -91,8 +91,8 @@ public class ForkingProtocolManager implements ProtocolManager, BlockAddedObserv
         LOG.debug(
             "Switching protocol manager at block {} from {} to {}",
             event.getBlock().getHeader().getNumber(),
-            activeProtocolManager.getClass().getSimpleName(),
-            nextProtocolManager.getClass().getSimpleName());
+            activeProtocolManager.getSupportedProtocol(),
+            nextProtocolManager.getSupportedProtocol());
         activeProtocolManager.stop();
         activeProtocolManager = nextProtocolManager;
       }

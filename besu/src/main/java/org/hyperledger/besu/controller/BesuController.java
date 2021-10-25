@@ -217,7 +217,7 @@ public class BesuController implements java.io.Closeable {
             builders.stream()
                 .map(BftBesuControllerBuilder.class::cast)
                 .collect(Collectors.toList());
-        return new ForkingControllerBuilder(bftBesuControllerBuilders)
+        return new ForkingBesuControllerBuilder(bftBesuControllerBuilders)
             .genesisConfigFile(genesisConfig);
       } else if (builders.size() == 1) {
         return builders.get(0).genesisConfigFile(genesisConfig);

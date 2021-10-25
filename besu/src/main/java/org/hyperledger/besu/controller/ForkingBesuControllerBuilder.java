@@ -62,7 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ForkingControllerBuilder extends BesuControllerBuilder {
+public class ForkingBesuControllerBuilder extends BesuControllerBuilder {
 
   private final List<BftBesuControllerBuilder> besuControllerBuilders;
   private Blockchain blockchain;
@@ -80,7 +80,7 @@ public class ForkingControllerBuilder extends BesuControllerBuilder {
     }
   }
 
-  public ForkingControllerBuilder(final List<BftBesuControllerBuilder> besuControllerBuilders) {
+  public ForkingBesuControllerBuilder(final List<BftBesuControllerBuilder> besuControllerBuilders) {
     this.besuControllerBuilders = besuControllerBuilders;
   }
 
@@ -121,7 +121,7 @@ public class ForkingControllerBuilder extends BesuControllerBuilder {
     final List<BftForkSpec<BftMiningCoordinator>> forks =
         miningCoordinatorForks.subList(1, miningCoordinatorForks.size());
     final BftForksSchedule<BftMiningCoordinator> forksSchedule =
-        new BftForksSchedule<BftMiningCoordinator>(genesisFork, forks);
+        new BftForksSchedule<>(genesisFork, forks);
 
     final ForkingBftMiningCoordinator forkingBftMiningCoordinator =
         new ForkingBftMiningCoordinator(forksSchedule, blockchain.getChainHeadBlockNumber());
@@ -219,7 +219,7 @@ public class ForkingControllerBuilder extends BesuControllerBuilder {
                                 new BftForkSpec<>(subProtocolSpec.getBlock(), protocolManager)))
             .collect(Collectors.toList());
 
-    final List<SubProtocolConfiguration> collect =
+    final List<SubProtocolConfiguration> subProtocolConfigurations =
         subProtocolSpecs.stream()
             .flatMap(
                 subProtocolSpec -> {
@@ -244,7 +244,7 @@ public class ForkingControllerBuilder extends BesuControllerBuilder {
                 })
             .collect(Collectors.toList());
 
-    return unifiedSubProtocolConfiguration(collect);
+    return unifiedSubProtocolConfiguration(subProtocolConfigurations);
   }
 
   private SubProtocolConfiguration unifiedSubProtocolConfiguration(
