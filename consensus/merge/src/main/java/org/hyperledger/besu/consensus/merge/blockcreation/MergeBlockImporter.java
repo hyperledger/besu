@@ -32,10 +32,15 @@ public class MergeBlockImporter extends MainnetBlockImporter {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
-    if (context.getConsensusContext(MergeContext.class).isPostMerge()) {
-      // TODO: for now optimistically import, this should only come from initial sync pre-TTD
-      // return true;
+
+    var res = super.importBlock(context, block, headerValidationMode, ommerValidationMode);
+
+    // TODO: for now optimistically import blocks post-TTD, this should only come from initial sync
+    // pre-TTD
+    if (res && context.getConsensusContext(MergeContext.class).isPostMerge()) {
+      context.getConsensusContext(MergeContext.class).setConsensusValidated(block.getHash());
     }
-    return super.importBlock(context, block, headerValidationMode, ommerValidationMode);
+
+    return res;
   }
 }
