@@ -496,15 +496,6 @@ public class IbftExtraDataEncoderTest {
         .hasMessage("Invalid Bytes supplied - Bft Extra Data required.");
   }
 
-  @Test
-  public void test() {
-    final Bytes bytes =
-        Bytes.fromHexString(
-            "0xf83ea00000000000000000000000000000000000000000000000000000000000000000d59489abefc83377592802c8e001e41143a7aed15347808400000000c0");
-    final BftExtraData bftExtraData = bftExtraDataEncoder.decodeRaw(bytes);
-    System.out.println("bftExtraData = " + bftExtraData);
-  }
-
   private static byte[] createNonEmptyVanityData() {
     final byte[] vanity_bytes = new byte[32];
     for (int i = 0; i < vanity_bytes.length; i++) {
