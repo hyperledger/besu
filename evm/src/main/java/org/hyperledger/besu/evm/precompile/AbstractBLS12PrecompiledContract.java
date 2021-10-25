@@ -48,10 +48,12 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
 
   private final String name;
   private final byte operationId;
+  private final int inputLen;
 
-  AbstractBLS12PrecompiledContract(final String name, final byte operationId) {
+  AbstractBLS12PrecompiledContract(final String name, final byte operationId, final int inputLen) {
     this.name = name;
     this.operationId = operationId;
+    this.inputLen = inputLen + 1;
   }
 
   @Override
@@ -68,9 +70,16 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
         new IntByReference(LibEthPairings.EIP2537_PREALLOCATE_FOR_RESULT_BYTES);
     final IntByReference err_len =
         new IntByReference(LibEthPairings.EIP2537_PREALLOCATE_FOR_ERROR_BYTES);
+    final int inputSize = Math.min(inputLen, input.size());
     final int errorNo =
         LibEthPairings.eip2537_perform_operation(
-            operationId, input.toArrayUnsafe(), input.size(), result, o_len, error, err_len);
+            operationId,
+            input.slice(0, inputSize).toArrayUnsafe(),
+            inputSize,
+            result,
+            o_len,
+            error,
+            err_len);
     if (errorNo == 0) {
       return Bytes.wrap(result, 0, o_len.getValue());
     } else {

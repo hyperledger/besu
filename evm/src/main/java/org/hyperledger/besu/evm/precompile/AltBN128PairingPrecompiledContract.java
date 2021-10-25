@@ -47,7 +47,11 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
 
   private AltBN128PairingPrecompiledContract(
       final GasCalculator gasCalculator, final Gas pairingGasCost, final Gas baseGasCost) {
-    super("AltBN128Pairing", gasCalculator, LibEthPairings.EIP196_PAIR_OPERATION_RAW_VALUE);
+    super(
+        "AltBN128Pairing",
+        gasCalculator,
+        LibEthPairings.EIP196_PAIR_OPERATION_RAW_VALUE,
+        Integer.MAX_VALUE / PARAMETER_LENGTH * PARAMETER_LENGTH);
     this.pairingGasCost = pairingGasCost;
     this.baseGasCost = baseGasCost;
   }
