@@ -108,6 +108,7 @@ public class FastDownloaderFactory {
                 ethContext,
                 syncState,
                 metricsSystem),
+            worldStateStorage,
             worldStateDownloader,
             fastSyncStateStorage,
             taskCollection,
