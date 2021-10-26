@@ -20,6 +20,14 @@ executors:
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
 
+  besu_arm64_executor_med: # 2cpu, 8G ram
+    docker:
+      - image: circleci/openjdk:11.0.12-jdk-buster
+    resource_class: arm.medium
+    working_directory: ~/project
+    environment:
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
+
   besu_executor_xl: # 8cpu, 16G ram
     docker:
       - image: cimg/openjdk:11.0
@@ -318,6 +326,36 @@ jobs:
             curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-amd64 -o ./docker/tests/goss-linux-amd64
             ./gradlew --no-daemon testDocker
 
+  buildArm64Docker:
+    executor: besu_arm64_executor_med
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - setup_remote_docker
+      - run:
+          name: hadoLint_openjdk_11
+          command: |
+            docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
+      - run:
+          name: hadoLint_openjdk_latest
+          command: |
+            docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
+      - run:
+          name: hadoLint_graalvm
+          command: |
+            docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
+      - run:
+          name: build image
+          command: |
+            ./gradlew --no-daemon distDocker
+      - run:
+          name: test image
+          command: |
+            mkdir -p docker/reports
+            curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-arm -o ./docker/tests/goss-linux-amd64
+            ./gradlew --no-daemon testDocker
+
   publish:
     executor: besu_executor_med
     steps:
@@ -344,6 +382,20 @@ jobs:
             # docker login "${ACR_REPO}" --username "${ACR_USER_RW}" --password "${ACR_PASSWORD_RW}"
             ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
 
+  publishArm64Docker:
+    executor: besu_arm64_executor_med
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - setup_remote_docker
+      - run:
+          name: Publish Docker
+          command: |
+            docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
+            # temporarily commented out because AWS credentials are broken
+            # docker login "${ACR_REPO}" --username "${ACR_USER_RW}" --password "${ACR_PASSWORD_RW}"
+            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
 workflows:
   version: 2
   default:
@@ -373,6 +425,9 @@ workflows:
       - buildDocker:
           requires:
             - assemble
+      - buildArm64Docker:
+          requires:
+            - assemble
       - publish:
           filters:
             branches:
@@ -399,6 +454,23 @@ workflows:
             - acceptanceTests
             - referenceTests
             - buildDocker
+          context:
+            - besu-dockerhub-ro
+            - besu-dockerhub-rw
+            - besu-acr-rw
+      - publishArm64Docker:
+          filters:
+            branches:
+              only:
+                - main
+                - /^release-.*/
+          requires:
+            - integrationTests
+            - unitTests
+            - acceptanceTests
+            - acceptanceTestsQuorum
+            - referenceTests
+            - buildArm64Docker
           context:
             - besu-dockerhub-ro
             - besu-dockerhub-rw
