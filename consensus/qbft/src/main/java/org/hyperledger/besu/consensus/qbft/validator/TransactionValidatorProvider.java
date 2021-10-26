@@ -51,7 +51,7 @@ public class TransactionValidatorProvider implements ValidatorProvider {
 
   @Override
   public Collection<Address> getValidatorsAtHead() {
-    return getValidatorsAfterBlock(blockchain.getChainHeadBlock().getHeader());
+    return getValidatorsAfterBlock(blockchain.getChainHeadHeader());
   }
 
   @Override

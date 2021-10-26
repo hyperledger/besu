@@ -60,6 +60,9 @@ public class ValidatorContractTest {
   private static final Bytes32 NODE_2_PRIVATE_KEY =
       Bytes32.fromHexString("0xa3bdf521b0f286a80918c4b67000dfd2a2bdef97e94d268016ef9ec86648eac4");
 
+  final Address NEW_VALIDATOR_CONTRACT_ADDRESS =
+      Address.fromHexString("0x0000000000000000000000000000000000009999");
+
   private TestClock clock;
 
   private final QbftExtraDataCodec extraDataCodec = new QbftExtraDataCodec();
@@ -122,6 +125,46 @@ public class ValidatorContractTest {
 
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
     assertThat(extraDataCodec.decode(genesisBlock).getValidators()).containsExactly(NODE_ADDRESS);
+
+    // contract block extra data cannot contain validators or vote
+    assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
+    assertThat(extraDataCodec.decode(block1).getValidators()).isEmpty();
+    assertThat(extraDataCodec.decode(block1).getVote()).isEmpty();
+  }
+
+  @Test
+  public void transitionsFromValidatorContractModeToValidatorContractMode() {
+    final List<QbftFork> qbftForks = List.of(createContractFork(1, NEW_VALIDATOR_CONTRACT_ADDRESS));
+
+    final TestContext context =
+        new TestContextBuilder()
+            .indexOfFirstLocallyProposedBlock(1)
+            .nodeParams(
+                List.of(
+                    new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY)),
+                    new NodeParams(NODE_2_ADDRESS, NodeKeyUtils.createFrom(NODE_2_PRIVATE_KEY))))
+            .clock(clock)
+            .genesisFile(Resources.getResource("genesis_validator_contract.json").getFile())
+            .useValidatorContract(true)
+            .qbftForks(qbftForks)
+            .buildAndStart();
+
+    // block 0 uses validator contract with 1 validator
+    // block 1 uses validator contract with 2 validators
+    final List<Address> block0Addresses = List.of(NODE_ADDRESS);
+    final List<Address> block1Addresses =
+        Stream.of(NODE_ADDRESS, NODE_2_ADDRESS).sorted().collect(Collectors.toList());
+
+    remotePeerProposesNewBlock(context, 1L);
+
+    final ValidatorProvider validatorProvider = context.getValidatorProvider();
+    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
+    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+
+    // contract block extra data cannot contain validators or vote
+    assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
+    assertThat(extraDataCodec.decode(genesisBlock).getValidators()).isEmpty();
+    assertThat(extraDataCodec.decode(genesisBlock).getVote()).isEmpty();
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
@@ -217,11 +260,8 @@ public class ValidatorContractTest {
 
   @Test
   public void transitionsFromValidatorContractModeToBlockHeaderModeThenBackToNewContract() {
-    final Address newValidatorContractAddress =
-        Address.fromHexString("0x0000000000000000000000000000000000009999");
-
     final List<QbftFork> qbftForks =
-        List.of(createBlockHeaderFork(1), createContractFork(2, newValidatorContractAddress));
+        List.of(createBlockHeaderFork(1), createContractFork(2, NEW_VALIDATOR_CONTRACT_ADDRESS));
 
     final TestContext context =
         new TestContextBuilder()
