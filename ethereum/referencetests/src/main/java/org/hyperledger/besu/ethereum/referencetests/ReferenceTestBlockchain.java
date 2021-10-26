@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -166,4 +167,15 @@ public class ReferenceTestBlockchain implements Blockchain {
       super(message);
     }
   }
+
+  @Override
+  public Comparator<BlockHeader> getBlockChoiceRule() {
+    return (a, b) -> {
+      throw new NonDeterministicOperationException(
+          "ReferenceTestBlockchian for VMTest Chains do not support fork choice rules");
+    };
+  }
+
+  @Override
+  public void setBlockChoiceRule(final Comparator<BlockHeader> blockChoiceRule) {}
 }

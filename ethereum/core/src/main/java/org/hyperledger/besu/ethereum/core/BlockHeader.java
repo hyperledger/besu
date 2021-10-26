@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** A mined Ethereum block header. */
 public class BlockHeader extends SealableBlockHeader
@@ -62,6 +63,7 @@ public class BlockHeader extends SealableBlockHeader
       final Long baseFee,
       final Hash mixHash,
       final long nonce,
+      final Bytes32 random,
       final BlockHeaderFunctions blockHeaderFunctions,
       final Optional<LogsBloomFilter> privateLogsBloom) {
     super(
@@ -78,7 +80,8 @@ public class BlockHeader extends SealableBlockHeader
         gasUsed,
         timestamp,
         extraData,
-        baseFee);
+        baseFee,
+        random);
     this.mixHash = mixHash;
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
@@ -103,6 +106,7 @@ public class BlockHeader extends SealableBlockHeader
       final Long baseFee,
       final Hash mixHash,
       final long nonce,
+      final Bytes32 random,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
@@ -118,7 +122,8 @@ public class BlockHeader extends SealableBlockHeader
         gasUsed,
         timestamp,
         extraData,
-        baseFee);
+        baseFee,
+        random);
     this.mixHash = mixHash;
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
@@ -220,6 +225,10 @@ public class BlockHeader extends SealableBlockHeader
     if (baseFee != null) {
       out.writeLongScalar(baseFee);
     }
+    // TODO: merge-interop specifies we ignore random for now
+    //    if (random != null) {
+    //      out.writeBytes(random);
+    //    }
     out.endList();
   }
 
@@ -242,6 +251,7 @@ public class BlockHeader extends SealableBlockHeader
     final Hash mixHash = Hash.wrap(input.readBytes32());
     final long nonce = input.readLong();
     final Long baseFee = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
+    final Bytes32 random = !input.isEndOfCurrentList() ? input.readBytes32() : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -260,6 +270,7 @@ public class BlockHeader extends SealableBlockHeader
         baseFee,
         mixHash,
         nonce,
+        random,
         blockHeaderFunctions);
   }
 
@@ -299,6 +310,7 @@ public class BlockHeader extends SealableBlockHeader
     sb.append("timestamp=").append(timestamp).append(", ");
     sb.append("extraData=").append(extraData).append(", ");
     sb.append("baseFee=").append(baseFee).append(", ");
+    sb.append("random=").append(random).append(", ");
     sb.append("mixHash=").append(mixHash).append(", ");
     sb.append("nonce=").append(nonce);
     return sb.append("}").toString();
@@ -324,6 +336,7 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getBaseFee().orElse(null),
         Hash.fromHexString(pluginBlockHeader.getMixHash().toHexString()),
         pluginBlockHeader.getNonce(),
+        pluginBlockHeader.getRandom().orElse(null),
         blockHeaderFunctions);
   }
 }

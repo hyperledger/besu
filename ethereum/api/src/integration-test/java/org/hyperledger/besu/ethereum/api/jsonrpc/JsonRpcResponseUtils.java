@@ -26,6 +26,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.NONCE
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.NUMBER;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.OMMERS_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.PARENT_HASH;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.RANDOM;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.RECEIPTS_ROOT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.SIZE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.STATE_ROOT;
@@ -62,6 +63,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class JsonRpcResponseUtils {
@@ -97,6 +99,7 @@ public class JsonRpcResponseUtils {
     final Long baseFee = values.containsKey(BASEFEE) ? unsignedLong(values.get(BASEFEE)) : null;
     final Difficulty totalDifficulty = Difficulty.of(unsignedInt256(values.get(TOTAL_DIFFICULTY)));
     final int size = unsignedInt(values.get(SIZE));
+    final Bytes32 random = values.containsKey(RANDOM) ? bytes32(values.get(RANDOM)) : null;
 
     final List<JsonNode> ommers = new ArrayList<>();
 
@@ -118,6 +121,7 @@ public class JsonRpcResponseUtils {
             baseFee,
             mixHash,
             nonce,
+            random,
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(
@@ -238,5 +242,9 @@ public class JsonRpcResponseUtils {
 
   private Bytes bytes(final String hex) {
     return Bytes.fromHexString(hex);
+  }
+
+  private Bytes32 bytes32(final String hex) {
+    return Bytes32.fromHexString(hex);
   }
 }

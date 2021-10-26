@@ -462,7 +462,7 @@ public class TestContextBuilder {
     final BftExecutors bftExecutors = BftExecutors.create(new NoOpMetricsSystem());
     final BftFinalState finalState =
         new BftFinalState(
-            protocolContext.getConsensusState(BftContext.class).getValidatorProvider(),
+            protocolContext.getConsensusContext(BftContext.class).getValidatorProvider(),
             nodeKey,
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,

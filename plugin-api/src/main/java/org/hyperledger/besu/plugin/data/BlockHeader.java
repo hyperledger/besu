@@ -14,11 +14,10 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
-
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * The minimum set of data for a BlockHeader, as defined in the <a href=
@@ -164,8 +163,11 @@ public interface BlockHeader {
    *
    * @return TheBASEFEE of this header.
    */
-  @Unstable
   default Optional<Long> getBaseFee() {
+    return Optional.empty();
+  }
+
+  default Optional<Bytes32> getRandom() {
     return Optional.empty();
   }
 }

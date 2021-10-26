@@ -14,6 +14,23 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
+import org.hyperledger.besu.consensus.merge.MergeBlockProcessor.CandidateBlock;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-public interface MergeMiningCoordinator extends MiningCoordinator {}
+import org.apache.tuweni.bytes.Bytes32;
+
+public interface MergeMiningCoordinator extends MiningCoordinator {
+  PayloadIdentifier preparePayload(
+      final BlockHeader parentHeader,
+      final Long timestamp,
+      final Bytes32 random,
+      final Address feeRecipient);
+
+  boolean validateProcessAndSetAsCandidate(final Block block);
+
+  CandidateBlock setExistingAsCandidate(final Block block);
+}

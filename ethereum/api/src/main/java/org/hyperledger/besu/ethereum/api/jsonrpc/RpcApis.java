@@ -26,6 +26,7 @@ public enum RpcApis {
   WEB3,
   ADMIN,
   EEA,
+  EXECUTION,
   PRIV,
   TXPOOL,
   TRACE,

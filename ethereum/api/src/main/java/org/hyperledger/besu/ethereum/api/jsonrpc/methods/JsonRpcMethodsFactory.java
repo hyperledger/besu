@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.experimental.MergeOptions;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -55,6 +57,7 @@ public class JsonRpcMethodsFactory {
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
       final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final FilterManager filterManager,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
@@ -124,6 +127,15 @@ public class JsonRpcMethodsFactory {
               new TraceJsonRpcMethods(blockchainQueries, protocolSchedule),
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
+
+      // TODO: Implement engine-specific json-rpc endpoint rather than including consensus here
+      // https://github.com/hyperledger/besu/issues/2914
+      MergeOptions.doIfMergeEnabled(
+          () ->
+              enabled.putAll(
+                  new ExecutionEngineJsonRpcMethods(
+                          miningCoordinator, protocolContext, protocolSchedule)
+                      .create(rpcApis)));
 
       for (final JsonRpcMethods apiGroup : availableApiGroups) {
         enabled.putAll(apiGroup.create(rpcApis));

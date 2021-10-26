@@ -53,7 +53,7 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
       final BlockHeader header,
       final List<BlockHeader> ommers,
       final boolean skipZeroBlockRewards) {
-    if (skipZeroBlockRewards && blockReward.isZero()) {
+    if ((skipZeroBlockRewards && blockReward.isZero())) {
       return true;
     }
 

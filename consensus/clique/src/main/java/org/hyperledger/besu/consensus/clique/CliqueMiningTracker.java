@@ -31,7 +31,8 @@ public class CliqueMiningTracker {
   public boolean isProposerAfter(final BlockHeader header) {
     final Address nextProposer =
         CliqueHelpers.getProposerForBlockAfter(
-            header, protocolContext.getConsensusState(CliqueContext.class).getValidatorProvider());
+            header,
+            protocolContext.getConsensusContext(CliqueContext.class).getValidatorProvider());
     return localAddress.equals(nextProposer);
   }
 
