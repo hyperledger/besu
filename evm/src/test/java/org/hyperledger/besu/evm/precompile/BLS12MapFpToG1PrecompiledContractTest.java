@@ -45,11 +45,11 @@ public class BLS12MapFpToG1PrecompiledContractTest {
   @Parameterized.Parameters
   public static Iterable<String[]> parameters() throws IOException {
     return CharStreams.readLines(
-            new InputStreamReader(
-                Objects.requireNonNull(
-                    BLS12MapFpToG1PrecompiledContractTest.class.getResourceAsStream(
-                        "fp_to_g1.csv")),
-                UTF_8))
+        new InputStreamReader(
+            Objects.requireNonNull(
+                BLS12MapFpToG1PrecompiledContractTest.class.getResourceAsStream(
+                    "fp_to_g1.csv")),
+            UTF_8))
         .stream()
         .map(line -> line.split(",", 4))
         .collect(Collectors.toList());

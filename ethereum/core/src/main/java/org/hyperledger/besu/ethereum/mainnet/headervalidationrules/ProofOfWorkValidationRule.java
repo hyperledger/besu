@@ -70,6 +70,8 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
       return false;
     }
 
+    //TODO: remove this rule bypass, use post-merge headervalidation rules
+    // https://github.com/hyperledger/besu/issues/2898
     if (MergeOptions.isMergeEnabled()) {
       return true;
     }
