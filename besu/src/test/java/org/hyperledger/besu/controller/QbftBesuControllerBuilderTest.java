@@ -151,7 +151,7 @@ public class QbftBesuControllerBuilderTest {
     final ValidatorProvider validatorProvider =
         besuController
             .getProtocolContext()
-            .getConsensusState(BftContext.class)
+            .getConsensusContext(BftContext.class)
             .getValidatorProvider();
     assertThat(validatorProvider).isInstanceOf(ForkingValidatorProvider.class);
   }

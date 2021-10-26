@@ -86,7 +86,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             miningParameters,
             new CliqueBlockScheduler(
                 clock,
-                protocolContext.getConsensusState(CliqueContext.class).getValidatorProvider(),
+                protocolContext.getConsensusContext(CliqueContext.class).getValidatorProvider(),
                 localAddress,
                 secondsBetweenBlocks),
             epochManager);
@@ -98,8 +98,10 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             new CliqueMiningTracker(localAddress, protocolContext));
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
 
-    // Clique mining is implicitly enabled.
-    miningCoordinator.enable();
+    if (miningParameters.isMiningEnabled()) {
+      miningCoordinator.enable();
+    }
+
     return miningCoordinator;
   }
 

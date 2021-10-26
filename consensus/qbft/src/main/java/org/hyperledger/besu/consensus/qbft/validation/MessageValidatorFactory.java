@@ -49,7 +49,7 @@ public class MessageValidatorFactory {
 
   private Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
     return protocolContext
-        .getConsensusState(BftContext.class)
+        .getConsensusContext(BftContext.class)
         .getValidatorProvider()
         .getValidatorsAfterBlock(parentHeader);
   }
@@ -92,7 +92,7 @@ public class MessageValidatorFactory {
             bftExtraDataCodec);
 
     final BftBlockInterface blockInterface =
-        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
+        protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
     return new MessageValidator(
         block ->
             new SubsequentMessageValidator(

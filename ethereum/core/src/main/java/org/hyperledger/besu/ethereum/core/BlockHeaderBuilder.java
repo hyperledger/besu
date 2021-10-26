@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** A utility class for building block headers. */
 public class BlockHeaderBuilder {
@@ -58,6 +59,8 @@ public class BlockHeaderBuilder {
 
   private Long baseFee = null;
 
+  private Bytes32 random = null;
+
   private Hash mixHash;
 
   private BlockHeaderFunctions blockHeaderFunctions;
@@ -87,7 +90,8 @@ public class BlockHeaderBuilder {
         .extraData(header.getExtraData())
         .baseFee(header.getBaseFee().orElse(null))
         .mixHash(header.getMixHash())
-        .nonce(header.getNonce());
+        .nonce(header.getNonce())
+        .random(header.getRandom().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -108,6 +112,7 @@ public class BlockHeaderBuilder {
             .extraData(fromBuilder.extraData)
             .mixHash(fromBuilder.mixHash)
             .baseFee(fromBuilder.baseFee)
+            .random(fromBuilder.random)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -133,6 +138,7 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHash,
         nonce.getAsLong(),
+        random,
         blockHeaderFunctions);
   }
 
@@ -140,7 +146,7 @@ public class BlockHeaderBuilder {
     validateProcessableBlockHeader();
 
     return new ProcessableBlockHeader(
-        parentHash, coinbase, difficulty, number, gasLimit, timestamp, baseFee);
+        parentHash, coinbase, difficulty, number, gasLimit, timestamp, baseFee, random);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -160,7 +166,8 @@ public class BlockHeaderBuilder {
         gasUsed,
         timestamp,
         extraData,
-        baseFee);
+        baseFee,
+        random);
   }
 
   private void validateBlockHeader() {
@@ -199,6 +206,7 @@ public class BlockHeaderBuilder {
     gasLimit(processableBlockHeader.getGasLimit());
     timestamp(processableBlockHeader.getTimestamp());
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
+    random(processableBlockHeader.getRandom().orElse(null));
     return this;
   }
 
@@ -218,6 +226,7 @@ public class BlockHeaderBuilder {
     timestamp(sealableBlockHeader.getTimestamp());
     extraData(sealableBlockHeader.getExtraData());
     baseFee(sealableBlockHeader.getBaseFee().orElse(null));
+    random(sealableBlockHeader.getRandom().orElse(null));
     return this;
   }
 
@@ -318,6 +327,11 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder baseFee(final Long baseFee) {
     this.baseFee = baseFee;
+    return this;
+  }
+
+  public BlockHeaderBuilder random(final Bytes32 random) {
+    this.random = random;
     return this;
   }
 }

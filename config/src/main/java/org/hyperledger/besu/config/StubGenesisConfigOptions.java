@@ -23,6 +23,7 @@ import java.util.OptionalInt;
 import java.util.OptionalLong;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
@@ -37,6 +38,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong muirGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong berlinBlockNumber = OptionalLong.empty();
   private OptionalLong londonBlockNumber = OptionalLong.empty();
+  private Optional<UInt256> terminalTotalDifficulty = Optional.empty();
+
   private OptionalLong baseFeePerGas = OptionalLong.empty();
   private OptionalLong classicForkBlock = OptionalLong.empty();
   private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
@@ -181,6 +184,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getBaseFeePerGas() {
     return baseFeePerGas;
+  }
+
+  @Override
+  public Optional<UInt256> getTerminalTotalDifficulty() {
+    return terminalTotalDifficulty;
   }
 
   @Override
@@ -400,6 +408,12 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions londonBlock(final long blockNumber) {
     londonBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions terminalTotalDifficulty(
+      final UInt256 updatedTerminalTotalDifficulty) {
+    terminalTotalDifficulty = Optional.of(updatedTerminalTotalDifficulty);
     return this;
   }
 
