@@ -12,12 +12,13 @@ WORKDIR /opt/besu
 COPY --chown=besu:besu besu /opt/besu/
 
 # Expose services ports
+# 8000 JDWP for attaching remote debuggers
 # 8545 HTTP JSON-RPC
 # 8546 WS JSON-RPC
 # 8547 HTTP GraphQL
 # 9545 Metrics
 # 30303 P2P
-EXPOSE 8545 8546 8547 9545 30303
+EXPOSE 5005 8545 8546 8547 9545 30303
 
 # defaults for host interfaces
 ENV BESU_RPC_HTTP_HOST 0.0.0.0
@@ -28,7 +29,8 @@ ENV BESU_PID_PATH "/tmp/pid"
 
 #debug options for maximum observability
 ENV BESU_LOGGING "DEBUG"
-ENV BESU_RPC_HTTP_API  "ETH, NET, TRACE, DEBUG, ADMIN, TXPOOL"
+ENV BESU_RPC_HTTP_API  "ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL"
+ENV JAVA_OPTS "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -XX:NativeMemoryTracking=detail -XX:+UnlockDiagnosticVMOptions -XX:+PrintNMTStatistics "
 
 ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu,service.version=$VERSION"
 

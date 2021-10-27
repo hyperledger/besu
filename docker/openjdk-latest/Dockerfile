@@ -1,5 +1,5 @@
 
-FROM debian:slim-bullseye
+FROM debian:bullsye-slim
 ARG VERSION="dev"
 
 RUN apt update
