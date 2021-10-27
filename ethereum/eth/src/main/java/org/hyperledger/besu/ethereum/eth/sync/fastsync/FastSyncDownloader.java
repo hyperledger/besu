@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
-import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.NodeDataRequest;
@@ -80,7 +80,7 @@ public class FastSyncDownloader {
 
   private CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
     LOG.info("Starting fast sync.");
-    if (worldStateStorage instanceof BonsaiPersistedWorldState) {
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       worldStateStorage.clear();
     }
     return exceptionallyCompose(
