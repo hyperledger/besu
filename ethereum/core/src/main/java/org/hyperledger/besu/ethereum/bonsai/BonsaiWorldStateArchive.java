@@ -200,6 +200,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             rollBacks.add(getTrieLogLayer(persistedBlockHash).get());
             persistedHeader =
                 blockchain.getBlockHeader(fromPlugin(persistedHeader.getParentHash())).get();
+            persistedBlockHash = fromPlugin(persistedHeader.getBlockHash());
           }
           // roll forward to target
           Hash targetBlockHash = fromPlugin(targetHeader.getBlockHash());
@@ -222,6 +223,9 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             rollBacks.add(getTrieLogLayer(persistedBlockHash).get());
             persistedHeader =
                 blockchain.getBlockHeader(fromPlugin(persistedHeader.getParentHash())).get();
+
+            persistedBlockHash = fromPlugin(persistedHeader.getBlockHash());
+            targetBlockHash = fromPlugin(targetHeader.getBlockHash());
           }
         }
 
