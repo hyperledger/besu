@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class GenesisConfigOptionsTest {
@@ -222,6 +223,20 @@ public class GenesisConfigOptionsTest {
     assertThat(config.isIbftLegacy()).isFalse();
     assertThat(config.isClique()).isFalse();
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
+  }
+
+  @Test
+  public void shouldGetTerminalTotalDifficultyWhenSpecified() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(singletonMap("terminalTotalDifficulty", BigInteger.valueOf(1000)));
+    assertThat(config.getTerminalTotalDifficulty()).isPresent();
+    assertThat(config.getTerminalTotalDifficulty().get()).isEqualTo(UInt256.valueOf(1000));
+  }
+
+  @Test
+  public void shouldNotReturnTerminalTotalDifficultyWhenNotSpecified() {
+    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getTerminalTotalDifficulty()).isNotPresent();
   }
 
   @Test

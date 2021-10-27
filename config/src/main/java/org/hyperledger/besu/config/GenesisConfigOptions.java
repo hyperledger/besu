@@ -21,6 +21,8 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 
+import org.apache.tuweni.units.bigints.UInt256;
+
 public interface GenesisConfigOptions {
 
   boolean isEthHash();
@@ -72,6 +74,8 @@ public interface GenesisConfigOptions {
   OptionalLong getLondonBlockNumber();
 
   OptionalLong getBaseFeePerGas();
+
+  Optional<UInt256> getTerminalTotalDifficulty();
 
   List<Long> getForks();
 
