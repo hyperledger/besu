@@ -42,6 +42,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -75,6 +76,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
@@ -3504,11 +3506,81 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void privateMarkerTransactionSigningKeyFileRequiredIfMinGasPriceNonZero() {
-    parseCommand("--privacy-enabled", "--privacy-public-key-file", ENCLAVE_PUBLIC_KEY_PATH);
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH,
+        "--min-gas-price",
+        "1");
 
     assertThat(commandErrorOutput.toString())
         .startsWith(
             "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified");
+  }
+
+  @Test
+  public void
+      privateMarkerTransactionSigningKeyFileNotRequiredIfMinGasPriceNonZeroAndUsingPluginPrivateMarkerTransactionFactory() {
+
+    when(privacyPluginService.getPrivateMarkerTransactionFactory())
+        .thenReturn(mock(PrivateMarkerTransactionFactory.class));
+
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH,
+        "--min-gas-price",
+        "1");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void
+      privateMarkerTransactionSigningKeyFileNotCanNotBeUsedWithPluginPrivateMarkerTransactionFactory()
+          throws IOException {
+    privacyPluginService.setPrivateMarkerTransactionFactory(
+        mock(PrivateMarkerTransactionFactory.class));
+    final Path toml =
+        createTempFile(
+            "key",
+            "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63".getBytes(UTF_8));
+
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH,
+        "--privacy-marker-transaction-signing-key-file",
+        toml.toString());
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void mustProvidePayloadWhenPrivacyPluginEnabled() {
+    parseCommand("--privacy-enabled", "--Xprivacy-plugin-enabled", "--min-gas-price", "0");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
+  }
+
+  @Test
+  public void canNotUseFlexiblePrivacyWhenPrivacyPluginEnabled() {
+    parseCommand(
+        "--privacy-enabled",
+        "--Xprivacy-plugin-enabled",
+        "--min-gas-price",
+        "0",
+        "--privacy-flexible-groups-enabled");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
   }
 
   private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {

@@ -163,6 +163,7 @@ public abstract class CommandTestAbstract {
   @Mock protected MutableBlockchain mockMutableBlockchain;
   @Mock protected WorldStateArchive mockWorldStateArchive;
   @Mock protected TransactionPool mockTransactionPool;
+  @Mock protected PrivacyPluginServiceImpl privacyPluginService;
 
   @SuppressWarnings("PrivateStaticFinalLoggers") // @Mocks are inited by JUnit
   @Mock
@@ -362,7 +363,8 @@ public abstract class CommandTestAbstract {
             environment,
             storageService,
             securityModuleService,
-            mockPkiBlockCreationConfigProvider);
+            mockPkiBlockCreationConfigProvider,
+            privacyPluginService);
     besuCommands.add(besuCommand);
 
     File defaultKeyFile =
@@ -400,7 +402,8 @@ public abstract class CommandTestAbstract {
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
-        final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider) {
+        final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
+        final PrivacyPluginServiceImpl privacyPluginService) {
       super(
           mockLogger,
           mockBlockImporter,
@@ -413,7 +416,7 @@ public abstract class CommandTestAbstract {
           storageService,
           securityModuleService,
           new PermissioningServiceImpl(),
-          new PrivacyPluginServiceImpl(),
+          privacyPluginService,
           pkiBlockCreationConfigProvider,
           rpcEndpointServiceImpl);
     }
