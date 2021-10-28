@@ -231,12 +231,20 @@ public class GenesisConfigOptionsTest {
         fromConfigOptions(singletonMap("terminalTotalDifficulty", BigInteger.valueOf(1000)));
     assertThat(config.getTerminalTotalDifficulty()).isPresent();
     assertThat(config.getTerminalTotalDifficulty().get()).isEqualTo(UInt256.valueOf(1000));
+
+    // stubJsonGenesis
+    final GenesisConfigOptions stub =
+        new StubGenesisConfigOptions().terminalTotalDifficulty(UInt256.valueOf(500));
+    assertThat(stub.getTerminalTotalDifficulty()).isPresent();
+    assertThat(stub.getTerminalTotalDifficulty().get()).isEqualTo(UInt256.valueOf(500));
   }
 
   @Test
   public void shouldNotReturnTerminalTotalDifficultyWhenNotSpecified() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.getTerminalTotalDifficulty()).isNotPresent();
+    // stubJsonGenesis
+    assertThat(new StubGenesisConfigOptions().getTerminalTotalDifficulty()).isNotPresent();
   }
 
   @Test
