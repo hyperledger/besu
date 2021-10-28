@@ -46,6 +46,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -314,6 +315,11 @@ public abstract class PeerDiscoveryAgent {
                 if (err instanceof SocketException && err.getMessage().contains("unreachable")) {
                   LOG.debug(
                       "Peer {} is unreachable, packet: {}", peer, wrapBuffer(packet.encode()), err);
+                } else if (err instanceof UnsupportedAddressTypeException) {
+                  LOG.warn(
+                          "Sending to peer failed - this is likely due to disabled ipv6 at runtime {}, packet: {}",
+                          peer,
+                          wrapBuffer(packet.encode()));
                 } else {
                   LOG.warn(
                       "Sending to peer {} failed, packet: {}",
