@@ -44,8 +44,8 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
   }
 
   /**
-   * Calculate the nonce while taking into account any PMTs that are already in progress. This makes
-   * nonce management for private tx slightly cleaner.
+   * Calculate the nonce, while taking into account any PMTs that are already in progress. This makes
+   * nonce management for private tx slightly more robust.
    *
    * @param sender the sender of the transaction
    * @param privacyGroupId the privacy group ID this tx is for
@@ -61,7 +61,6 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
             + sender
             + " and privacyGroupID (base 64) "
             + privacyGroupId.toBase64String());
-    // TODO get pendingNonce
     // if latestNonce > pendingNonce return latestNonce (as below)
     // else return pendingNonce + 1
     long pendingPrivateNonceFromPmtPool =
@@ -85,7 +84,7 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
     }
     if (pendingPrivateNonceFromPmtPool >= stateBasedPrivateNonce) {
       LOG.info("using pending nonce {}", pendingPrivateNonceFromPmtPool + 1);
-      return pendingPrivateNonceFromPmtPool + 1; // TODO is +1 right here?
+      return pendingPrivateNonceFromPmtPool + 1;
     } else {
       LOG.info("using state based nonce {} ", stateBasedPrivateNonce);
       return stateBasedPrivateNonce;
