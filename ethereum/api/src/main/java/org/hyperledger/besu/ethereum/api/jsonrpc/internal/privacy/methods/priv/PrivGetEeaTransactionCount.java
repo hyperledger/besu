@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -31,13 +29,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivGetEeaTransactionCount implements JsonRpcMethod {
 
@@ -89,17 +89,17 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
   }
 
   private long determineEeaNonce(
-          final String privateFrom,
-          final String[] privateFor,
-          final Address address,
-          final String privacyUserId) {
+      final String privateFrom,
+      final String[] privateFor,
+      final Address address,
+      final String privacyUserId) {
 
     final Bytes from = Bytes.fromBase64String(privateFrom);
-    final List<Bytes> tos = Arrays.stream(privateFor).map(s -> Bytes.fromBase64String(s)).collect(Collectors.toList());
+    final List<Bytes> tos =
+        Arrays.stream(privateFor).map(s -> Bytes.fromBase64String(s)).collect(Collectors.toList());
 
     final Bytes32 privacyGroupId = PrivacyGroupUtil.calculateEeaPrivacyGroupId(from, tos);
-    return privacyController.determineNonce(address, privacyGroupId.toBase64String(), privacyUserId);
+    return privacyController.determineNonce(
+        address, privacyGroupId.toBase64String(), privacyUserId);
   }
-
-
 }

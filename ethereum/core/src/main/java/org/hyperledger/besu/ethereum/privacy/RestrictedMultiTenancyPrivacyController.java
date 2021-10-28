@@ -37,9 +37,9 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   private final PrivateTransactionValidator privateTransactionValidator;
 
   public RestrictedMultiTenancyPrivacyController(
-          final PrivacyController privacyController,
-          final Optional<BigInteger> chainId,
-          final Enclave enclave) {
+      final PrivacyController privacyController,
+      final Optional<BigInteger> chainId,
+      final Enclave enclave) {
     this.privacyController = privacyController;
     this.enclave = enclave;
     privateTransactionValidator = new PrivateTransactionValidator(chainId);
@@ -175,7 +175,8 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   public void verifyPrivacyGroupContainsPrivacyUserId(
       final String privacyGroupId, final String privacyUserId, final Optional<Long> blockNumber)
       throws MultiTenancyValidationException {
-    privacyController.verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId, blockNumber);
+    privacyController.verifyPrivacyGroupContainsPrivacyUserId(
+        privacyGroupId, privacyUserId, blockNumber);
   }
 
   @Override

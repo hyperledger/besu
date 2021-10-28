@@ -83,21 +83,28 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
 
       final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
 
-      if (onchainPrivacyGroupsEnabled
-          && maybePrivacyGroupId.isEmpty()) {
+      if (onchainPrivacyGroupsEnabled && maybePrivacyGroupId.isEmpty()) {
         return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
       }
 
       Optional<PrivacyGroup> maybePrivacyGroup =
           maybePrivacyGroupId.flatMap(
-              gId -> privacyController.findPrivacyGroupByGroupId(gId.toBase64String(), privacyUserId));
+              gId ->
+                  privacyController.findPrivacyGroupByGroupId(gId.toBase64String(), privacyUserId));
 
       if (onchainPrivacyGroupsEnabled) {
         if (OnchainUtil.isGroupAdditionTransaction(privateTransaction)) {
           final List<String> participantsFromParameter =
-                  OnchainUtil.getParticipantsFromParameter(privateTransaction.getPayload());
+              OnchainUtil.getParticipantsFromParameter(privateTransaction.getPayload());
           if (maybePrivacyGroup.isEmpty()) {
-            maybePrivacyGroup = Optional.of(new PrivacyGroup(maybePrivacyGroupId.get().toBase64String(), PrivacyGroup.Type.ONCHAIN, "", "", participantsFromParameter));
+            maybePrivacyGroup =
+                Optional.of(
+                    new PrivacyGroup(
+                        maybePrivacyGroupId.get().toBase64String(),
+                        PrivacyGroup.Type.ONCHAIN,
+                        "",
+                        "",
+                        participantsFromParameter));
           }
           maybePrivacyGroup.get().addMembers(participantsFromParameter);
         }

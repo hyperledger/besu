@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVA
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
@@ -27,7 +26,6 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
@@ -36,7 +34,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -173,27 +170,26 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
 
   @Override
   public void verifyPrivacyGroupContainsPrivacyUserId(
-          final String privacyGroupId, final String privacyUserId) {
+      final String privacyGroupId, final String privacyUserId) {
     verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId, Optional.empty());
   }
 
   @Override
   public void verifyPrivacyGroupContainsPrivacyUserId(
-          final String privacyGroupId, final String privacyUserId, final Optional<Long> blockNumber) {
+      final String privacyGroupId, final String privacyUserId, final Optional<Long> blockNumber) {
     final Optional<PrivacyGroup> maybePrivacyGroup =
-            onchainPrivacyGroupContract.getPrivacyGroupByIdAndBlockNumber(privacyGroupId, blockNumber);
+        onchainPrivacyGroupContract.getPrivacyGroupByIdAndBlockNumber(privacyGroupId, blockNumber);
     // IF the group exists, check member
     // ELSE member is valid if the group doesn't exist yet - this is normal for onchain privacy
     // groups
     maybePrivacyGroup.ifPresent(
-            (group) -> {
-              if (!group.getMembers().contains(privacyUserId)) {
-                throw new MultiTenancyValidationException(
-                        "Privacy group must contain the enclave public key");
-              }
-            });
+        (group) -> {
+          if (!group.getMembers().contains(privacyUserId)) {
+            throw new MultiTenancyValidationException(
+                "Privacy group must contain the enclave public key");
+          }
+        });
   }
-
 
   private List<String> getParticipantsFromParameter(final Bytes input) {
     final List<String> participants = new ArrayList<>();
@@ -314,14 +310,14 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
   }
 
   private String buildCompoundLookupId(
-          final String privateTransactionLookupId,
-          final Optional<String> maybePrivateTransactionLookupId) {
+      final String privateTransactionLookupId,
+      final Optional<String> maybePrivateTransactionLookupId) {
     return maybePrivateTransactionLookupId.isPresent()
-            ? Bytes.concatenate(
-                    Bytes.fromBase64String(privateTransactionLookupId),
-                    Bytes.fromBase64String(maybePrivateTransactionLookupId.get()))
+        ? Bytes.concatenate(
+                Bytes.fromBase64String(privateTransactionLookupId),
+                Bytes.fromBase64String(maybePrivateTransactionLookupId.get()))
             .toBase64String()
-            : privateTransactionLookupId;
+        : privateTransactionLookupId;
   }
 
   private Bytes serializeAddToGroupPayload(

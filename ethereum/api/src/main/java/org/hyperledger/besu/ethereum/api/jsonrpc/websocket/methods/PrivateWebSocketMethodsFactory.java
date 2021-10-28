@@ -98,10 +98,7 @@ public class PrivateWebSocketMethodsFactory {
       }
       return privacyParameters.isMultiTenancyEnabled()
           ? new RestrictedMultiTenancyPrivacyController(
-              restrictedPrivacyController,
-              chainId,
-              privacyParameters.getEnclave()
-      )
+              restrictedPrivacyController, chainId, privacyParameters.getEnclave())
           : restrictedPrivacyController;
     }
   }

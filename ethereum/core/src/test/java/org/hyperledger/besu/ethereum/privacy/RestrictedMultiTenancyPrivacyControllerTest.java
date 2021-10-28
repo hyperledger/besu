@@ -293,8 +293,7 @@ public class RestrictedMultiTenancyPrivacyControllerTest {
         multiTenancyPrivacyController.determineNonce(
             Address.ZERO, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY1);
     assertThat(nonce).isEqualTo(10);
-    verify(privacyController)
-        .determineNonce(Address.ZERO, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY1);
+    verify(privacyController).determineNonce(Address.ZERO, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY1);
   }
 
   @Test
