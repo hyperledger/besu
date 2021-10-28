@@ -106,7 +106,9 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       WorldUpdater effectiveWorldUpdater = null;
       Transaction effectiveTransaction;
 
-      final boolean isGoQuorumPrivateTransaction = transaction.isGoQuorumPrivateTransaction();
+      final boolean isGoQuorumPrivateTransaction =
+          transaction.isGoQuorumPrivateTransaction(
+              transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode());
 
       if (isGoQuorumPrivateTransaction) { // private transaction
         try {

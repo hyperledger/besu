@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.function.Supplier;
 
 public interface FeeMarket {
@@ -33,7 +34,12 @@ public interface FeeMarket {
       Transaction transaction, Supplier<Optional<Long>> baseFeeSupplier);
 
   static BaseFeeMarket london(final long londonForkBlockNumber) {
-    return new LondonFeeMarket(londonForkBlockNumber);
+    return london(londonForkBlockNumber, OptionalLong.empty());
+  }
+
+  static BaseFeeMarket london(
+      final long londonForkBlockNumber, final OptionalLong baseFeePerGasOverride) {
+    return new LondonFeeMarket(londonForkBlockNumber, baseFeePerGasOverride);
   }
 
   static FeeMarket legacy() {
