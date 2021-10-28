@@ -27,7 +27,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class SDivOperation extends AbstractFixedCostOperation {
 
   public SDivOperation(final GasCalculator gasCalculator) {
-    super(0x05, "SDIV", 2, 1, false, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x05, "SDIV", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override

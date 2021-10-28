@@ -31,7 +31,7 @@ public class InvalidOperation extends AbstractOperation {
   }
 
   public InvalidOperation(final int opcode, final GasCalculator gasCalculator) {
-    super(opcode, "INVALID", -1, -1, false, 1, gasCalculator);
+    super(opcode, "INVALID", -1, -1, 1, gasCalculator);
     invalidOperation =
         new OperationResult(
             Optional.of(Gas.ZERO), Optional.of(ExceptionalHaltReason.INVALID_OPERATION));

@@ -23,7 +23,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class PCOperation extends AbstractFixedCostOperation {
 
   public PCOperation(final GasCalculator gasCalculator) {
-    super(0x58, "PC", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x58, "PC", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override

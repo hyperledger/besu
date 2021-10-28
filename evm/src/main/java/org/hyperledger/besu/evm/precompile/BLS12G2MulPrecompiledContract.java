@@ -22,8 +22,10 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class BLS12G2MulPrecompiledContract extends AbstractBLS12PrecompiledContract {
 
+  private static final int PARAMETER_LENGTH = 288;
+
   public BLS12G2MulPrecompiledContract() {
-    super("BLS12_G2MUL", LibEthPairings.BLS12_G2MUL_OPERATION_RAW_VALUE);
+    super("BLS12_G2MUL", LibEthPairings.BLS12_G2MUL_OPERATION_RAW_VALUE, PARAMETER_LENGTH);
   }
 
   @Override

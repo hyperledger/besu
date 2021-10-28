@@ -26,7 +26,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class SGtOperation extends AbstractFixedCostOperation {
 
   public SGtOperation(final GasCalculator gasCalculator) {
-    super(0x13, "SGT", 2, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x13, "SGT", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

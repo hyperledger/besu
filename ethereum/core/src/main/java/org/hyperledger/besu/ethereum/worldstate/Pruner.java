@@ -171,7 +171,7 @@ public class Pruner {
       System.exit(1);
     } catch (final Exception e) {
       LOG.error(
-          "An unexpected error ocurred in the {} pruning phase: {}. Reattempting.",
+          "An unexpected error occurred in the {} pruning phase: {}. Reattempting.",
           getPruningPhase(),
           e.getMessage());
       pruningStrategy.clearMarks();

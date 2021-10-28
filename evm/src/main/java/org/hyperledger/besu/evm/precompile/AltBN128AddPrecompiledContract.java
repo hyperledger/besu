@@ -29,10 +29,16 @@ import org.apache.tuweni.bytes.MutableBytes;
 
 public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
+  private static final int PARAMETER_LENGTH = 128;
+
   private final Gas gasCost;
 
   private AltBN128AddPrecompiledContract(final GasCalculator gasCalculator, final Gas gasCost) {
-    super("AltBN128Add", gasCalculator, LibEthPairings.EIP196_ADD_OPERATION_RAW_VALUE);
+    super(
+        "AltBN128Add",
+        gasCalculator,
+        LibEthPairings.EIP196_ADD_OPERATION_RAW_VALUE,
+        PARAMETER_LENGTH);
     this.gasCost = gasCost;
   }
 

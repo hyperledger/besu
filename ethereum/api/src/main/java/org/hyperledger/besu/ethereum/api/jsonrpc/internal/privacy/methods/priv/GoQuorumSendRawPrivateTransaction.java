@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConve
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
 
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.GoQuorumSendRawTxArgs;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -47,14 +49,28 @@ public class GoQuorumSendRawPrivateTransaction implements JsonRpcMethod {
   final TransactionPool transactionPool;
   private final PrivacyIdProvider privacyIdProvider;
   private final GoQuorumEnclave enclave;
+  private final boolean goQuorumCompatibilityMode;
 
   public GoQuorumSendRawPrivateTransaction(
       final GoQuorumEnclave enclave,
       final TransactionPool transactionPool,
       final PrivacyIdProvider privacyIdProvider) {
+    this(
+        enclave,
+        transactionPool,
+        privacyIdProvider,
+        GoQuorumOptions.getGoQuorumCompatibilityMode());
+  }
+
+  public GoQuorumSendRawPrivateTransaction(
+      final GoQuorumEnclave enclave,
+      final TransactionPool transactionPool,
+      final PrivacyIdProvider privacyIdProvider,
+      final boolean goQuorumCompatibilityMode) {
     this.enclave = enclave;
     this.transactionPool = transactionPool;
     this.privacyIdProvider = privacyIdProvider;
+    this.goQuorumCompatibilityMode = goQuorumCompatibilityMode;
   }
 
   @Override
@@ -72,7 +88,8 @@ public class GoQuorumSendRawPrivateTransaction implements JsonRpcMethod {
 
     try {
       final Transaction transaction =
-          Transaction.readFrom(RLP.input(Bytes.fromHexString(rawPrivateTransaction)));
+          TransactionDecoder.decodeForWire(
+              RLP.input(Bytes.fromHexString(rawPrivateTransaction)), goQuorumCompatibilityMode);
 
       checkAndHandlePrivateTransaction(transaction, rawTxArgs, requestContext);
 

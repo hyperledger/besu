@@ -21,19 +21,19 @@ import org.immutables.value.Value;
 public interface TransactionValidationParams {
 
   TransactionValidationParams processingBlockParams =
-      ImmutableTransactionValidationParams.of(false, false, false, true, false);
+      ImmutableTransactionValidationParams.of(false, false, false, true, false, false);
 
   TransactionValidationParams transactionPoolParams =
-      ImmutableTransactionValidationParams.of(true, false, true, true, true);
+      ImmutableTransactionValidationParams.of(true, false, true, true, true, false);
 
   TransactionValidationParams miningParams =
-      ImmutableTransactionValidationParams.of(false, false, false, true, true);
+      ImmutableTransactionValidationParams.of(false, false, false, true, true, false);
 
   TransactionValidationParams blockReplayParams =
-      ImmutableTransactionValidationParams.of(false, false, false, false, false);
+      ImmutableTransactionValidationParams.of(false, false, false, false, false, false);
 
   TransactionValidationParams transactionSimulatorParams =
-      ImmutableTransactionValidationParams.of(false, false, false, false, false);
+      ImmutableTransactionValidationParams.of(false, false, false, false, false, true);
 
   @Value.Default
   default boolean isAllowFutureNonce() {
@@ -46,7 +46,7 @@ public interface TransactionValidationParams {
   }
 
   @Value.Default
-  default boolean isAllowMaxFeerGasBelowBaseFee() {
+  default boolean isAllowMaxFeeGasBelowBaseFee() {
     return false;
   }
 
@@ -58,6 +58,11 @@ public interface TransactionValidationParams {
   @Value.Default
   default boolean checkLocalPermissions() {
     return true;
+  }
+
+  @Value.Default
+  default boolean isAllowContractAddressAsSender() {
+    return false;
   }
 
   static TransactionValidationParams transactionSimulator() {

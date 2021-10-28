@@ -44,17 +44,9 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       final String name,
       final int stackItemsConsumed,
       final int stackItemsProduced,
-      final boolean updatesProgramCounter,
       final int opSize,
       final GasCalculator gasCalculator) {
-    super(
-        opcode,
-        name,
-        stackItemsConsumed,
-        stackItemsProduced,
-        updatesProgramCounter,
-        opSize,
-        gasCalculator);
+    super(opcode, name, stackItemsConsumed, stackItemsProduced, opSize, gasCalculator);
   }
 
   @Override
