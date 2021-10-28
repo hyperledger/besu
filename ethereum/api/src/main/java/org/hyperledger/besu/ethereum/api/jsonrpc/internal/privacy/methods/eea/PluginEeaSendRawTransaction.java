@@ -52,7 +52,7 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
         privacyIdProvider,
         privateMarkerTransactionFactory,
         publicNonceProvider);
-    // TODO fix this ^^ does plugin privacy nee the PmtPool or not?
+    // TODO fix this ^^ does plugin privacy need the PmtPool or not?
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
     this.gasCalculator = gasCalculator;
@@ -75,7 +75,6 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(user);
 
-    // TODO change nonce handling
     final String payloadFromPlugin =
         privacyController.createPrivateMarkerTransactionPayload(
             privateTransaction, privacyUserId, Optional.empty());
