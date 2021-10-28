@@ -59,22 +59,31 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
 
     LOG.info(
         "checking for PMT matches for sender " + sender + " and privacyGroupID (base 64) " + privacyGroupId.toBase64String());
-    long countPending =
-        pmtTransactionPool.getCountMatchingPmt(sender.toHexString(), privacyGroupId.toBase64String());
-    LOG.info("number of matching PMTs in the pool = " + countPending);
     // TODO get pendingNonce
     // if latestNonce > pendingNonce return latestNonce (as below)
     // else return pendingNonce + 1
+    long pendingPrivateNonceFromPmtPool = pmtTransactionPool.getMaxMatchingNonce(sender.toHexString(), privacyGroupId.toBase64String());
 
     final Hash stateRoot =
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, chainHeadHash);
-    return privateWorldStateArchive
+    long stateBasedPrivateNonce = privateWorldStateArchive
         .get(stateRoot, chainHeadHash)
         .map(
             privateWorldState -> {
               final Account account = privateWorldState.get(sender);
-              return account == null ? 0L : account.getNonce() + countPending;
+              return account == null ? 0L : account.getNonce();
             })
         .orElse(Account.DEFAULT_NONCE);
+
+    if (pendingPrivateNonceFromPmtPool == 0 && stateBasedPrivateNonce == 0) {
+      return 0L;
+    }
+    if (pendingPrivateNonceFromPmtPool >= stateBasedPrivateNonce) {
+      LOG.info("using pending nonce {}", pendingPrivateNonceFromPmtPool + 1);
+      return pendingPrivateNonceFromPmtPool + 1 ; // TODO is +1 right here?
+    } else {
+      LOG.info("using state based nonce {} ", stateBasedPrivateNonce);
+      return stateBasedPrivateNonce;
+    }
   }
 }

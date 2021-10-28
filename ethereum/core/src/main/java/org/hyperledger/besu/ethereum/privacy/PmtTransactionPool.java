@@ -15,7 +15,6 @@ public class PmtTransactionPool implements BlockAddedObserver {
   private final Map<Hash, PmtTransactionTracker> pmtPool;
 
   public PmtTransactionPool() {
-    LOG.info("creating a new PmtTransactionPool");
     this.pmtPool = new HashMap<>();
   }
 
@@ -27,25 +26,25 @@ public class PmtTransactionPool implements BlockAddedObserver {
         .getAddedTransactions()
         .forEach(
             tx -> {
-              LOG.info("removing " + pmtPool.containsKey(tx.getHash()));
+              LOG.debug("removing " + pmtPool.containsKey(tx.getHash()));
               pmtPool.remove(tx.getHash());
             });
   }
 
-  public long getCountMatchingPmt(final String sender, final String privacyGroupId) {
+  public long getMaxMatchingNonce(final String sender, final String privacyGroupId) {
 
-    // TODO take into account the nonce - get the max nonce from this collection:
     return pmtPool.values().stream()
         .filter(
             pmt ->
                 pmt.getSender().equals(sender)
                     && pmt.getPrivacyGroupIdBase64().equals(privacyGroupId))
-        .count();
+        .map(pmt -> pmt.getPrivateNonce())
+        .max(Long::compare)
+        .orElse(0L);
   }
 
   public Hash addPmtTransactionTracker(
       final Hash pmtHash, final PrivateTransaction privateTx, final String privacyGroupId, final long publicNonce) {
-    LOG.info("size of pmtPool = {}", pmtPool.size());
     return addPmtTransactionTracker(
         pmtHash, privateTx.sender.toHexString(), privacyGroupId, privateTx.getNonce(), publicNonce);
   }
@@ -55,10 +54,10 @@ public class PmtTransactionPool implements BlockAddedObserver {
 
     final PmtTransactionTracker pmtTracker = new PmtTransactionTracker(sender, privacyGroupId, privateNonce, publicNonce);
     pmtPool.put(pmtHash, pmtTracker);
-    LOG.info(
-        "adding pmtPool tracker: pmtHash: {} pmtTracker {}",
-        pmtHash,
-        pmtTracker);
+    LOG.debug(
+        "adding pmtPool tracker: pmtTracker {} pmtHash: {} ",
+        pmtTracker,
+        pmtHash);
     return pmtHash;
   }
 
@@ -96,10 +95,10 @@ public class PmtTransactionPool implements BlockAddedObserver {
     public String toString() {
       final StringBuilder sb = new StringBuilder();
       sb.append("PmtTransactionTracker ").append("{");
-      sb.append("sender=").append(getSender()).append(", ");
-      sb.append("privacyGroupId=").append(getPrivacyGroupIdBase64()).append(", ");
       sb.append("private nonce=").append(getPrivateNonce()).append(", ");
       sb.append("public nonce=").append(getPublicNonce()).append(", ");
+      sb.append("sender=").append(getSender()).append(", ");
+      sb.append("privacyGroupId=").append(getPrivacyGroupIdBase64()).append(", ");
       return sb.append("}").toString();
     }
   }
