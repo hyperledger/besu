@@ -29,6 +29,8 @@ import org.apache.tuweni.bytes.MutableBytes;
 
 public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
+  private static final int PARAMETER_LENGTH = 96;
+
   private static final BigInteger MAX_N =
       new BigInteger(
           "115792089237316195423570985008687907853269984665640564039457584007913129639935");
@@ -36,7 +38,11 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
   private final Gas gasCost;
 
   private AltBN128MulPrecompiledContract(final GasCalculator gasCalculator, final Gas gasCost) {
-    super("AltBN128Mul", gasCalculator, LibEthPairings.EIP196_MUL_OPERATION_RAW_VALUE);
+    super(
+        "AltBN128Mul",
+        gasCalculator,
+        LibEthPairings.EIP196_MUL_OPERATION_RAW_VALUE,
+        PARAMETER_LENGTH);
     this.gasCost = gasCost;
   }
 
