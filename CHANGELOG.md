@@ -5,6 +5,8 @@
 ### Additions and Improvements
 
 ### Bug Fixes
+- Fixes the exit condition for loading a BonsaiPersistedWorldState for a sibling block of the last one persisted [#2967](https://github.com/hyperledger/besu/pull/2967)
+- Fixes bonsai getMutable regression affecting fast-sync [#2934](https://github.com/hyperledger/besu/pull/2934)
 
 ### Early Access Features
 
