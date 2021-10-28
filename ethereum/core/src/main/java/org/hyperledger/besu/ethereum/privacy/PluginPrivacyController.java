@@ -31,11 +31,9 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -143,29 +141,6 @@ public class PluginPrivacyController implements PrivacyController {
   public String deletePrivacyGroup(final String privacyGroupId, final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
         "Method not supported when using PrivacyPlugin");
-  }
-
-  @Override
-  public long determineEeaNonce(
-      final String privateFrom,
-      final String[] privateFor,
-      final Address address,
-      final String privacyUserId) {
-
-    final String privacyGroupId = createPrivacyGroupId(privateFrom, privateFor);
-
-    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId);
-
-    return determineNonce(address, privacyGroupId, privacyUserId);
-  }
-
-  private String createPrivacyGroupId(final String privateFrom, final String[] privateFor) {
-    final Bytes32 privacyGroupId =
-        PrivacyGroupUtil.calculateEeaPrivacyGroupId(
-            Bytes.fromBase64String(privateFrom),
-            Arrays.stream(privateFor).map(Bytes::fromBase64String).collect(Collectors.toList()));
-
-    return privacyGroupId.toBase64String();
   }
 
   @Override

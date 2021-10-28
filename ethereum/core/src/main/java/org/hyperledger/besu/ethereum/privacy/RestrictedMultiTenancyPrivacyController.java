@@ -33,7 +33,6 @@ import org.apache.tuweni.bytes.Bytes;
 public class RestrictedMultiTenancyPrivacyController implements PrivacyController {
 
   private final PrivacyController privacyController;
-  private final Enclave enclave;
   private final PrivateTransactionValidator privateTransactionValidator;
 
   public RestrictedMultiTenancyPrivacyController(
@@ -41,7 +40,6 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
       final Optional<BigInteger> chainId,
       final Enclave enclave) {
     this.privacyController = privacyController;
-    this.enclave = enclave;
     privateTransactionValidator = new PrivateTransactionValidator(chainId);
   }
 
