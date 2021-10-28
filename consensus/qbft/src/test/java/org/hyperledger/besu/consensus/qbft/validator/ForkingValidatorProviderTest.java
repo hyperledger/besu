@@ -144,6 +144,25 @@ public class ForkingValidatorProviderTest {
   }
 
   @Test
+  public void migratesFromContractToBlockValidatorProviderWithValidatorOverrides() {
+    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+        new BftForksSchedule<>(
+            createContractForkSpec(0, CONTRACT_ADDRESS_1),
+            List.of(ValidatorTestUtils.createBlockForkSpec(1, true)));
+    final ForkingValidatorProvider validatorProvider =
+        new ForkingValidatorProvider(
+            blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
+
+    when(contractValidatorProvider.getValidatorsForBlock(genesisHeader))
+        .thenReturn(CONTRACT_ADDRESSES_1);
+
+    assertThat(validatorProvider.getValidatorsForBlock(genesisHeader))
+        .isEqualTo(CONTRACT_ADDRESSES_1);
+    assertThat(validatorProvider.getValidatorsForBlock(header1)).isEqualTo(BLOCK_ADDRESSES);
+    assertThat(validatorProvider.getValidatorsForBlock(header2)).isEqualTo(BLOCK_ADDRESSES);
+  }
+
+  @Test
   public void migratesFromContractToContractValidatorProvider() {
     final BftForksSchedule<QbftConfigOptions> forksSchedule =
         new BftForksSchedule<>(

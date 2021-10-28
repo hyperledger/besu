@@ -45,6 +45,7 @@ public class QbftForksSchedulesFactory {
       final VALIDATOR_SELECTION_MODE mode = fork.getValidatorSelectionMode().get();
       if (mode == VALIDATOR_SELECTION_MODE.BLOCKHEADER) {
         bftConfigOptions.setValidatorContractAddress(Optional.empty());
+        bftConfigOptions.setHasValidatorOverrides(fork.getValidators().isPresent());
       } else if (mode == VALIDATOR_SELECTION_MODE.CONTRACT
           && fork.getValidatorContractAddress().isPresent()) {
         bftConfigOptions.setValidatorContractAddress(fork.getValidatorContractAddress());

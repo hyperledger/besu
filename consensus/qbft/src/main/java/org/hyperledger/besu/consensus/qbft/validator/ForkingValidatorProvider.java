@@ -88,7 +88,9 @@ public class ForkingValidatorProvider implements ValidatorProvider {
 
     // when moving to a block validator the first block needs to be initialised or created with
     // the previous block state otherwise we would have no validators
-    if (forkSpec.getConfigOptions().isValidatorBlockHeaderMode()) {
+    // unless the validators are being explicitly overridden
+    if (forkSpec.getConfigOptions().isValidatorBlockHeaderMode()
+        && !forkSpec.getConfigOptions().hasValidatorOverrides()) {
       if (forkSpec.getBlock() > 0 && blockNumber == forkSpec.getBlock()) {
         final long prevBlockNumber = blockNumber - 1L;
         final Optional<BlockHeader> prevBlockHeader = blockchain.getBlockHeader(prevBlockNumber);

@@ -35,6 +35,11 @@ public class JsonQbftConfigOptions extends JsonBftConfigOptions implements QbftC
   }
 
   @Override
+  public boolean hasValidatorOverrides() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public Map<String, Object> asMap() {
     final Map<String, Object> map = super.asMap();
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();

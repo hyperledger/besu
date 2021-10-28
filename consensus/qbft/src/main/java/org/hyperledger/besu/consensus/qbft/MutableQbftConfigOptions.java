@@ -26,6 +26,7 @@ import java.util.Optional;
  */
 public class MutableQbftConfigOptions extends MutableBftConfigOptions implements QbftConfigOptions {
   private Optional<String> validatorContractAddress;
+  private boolean hasValidatorOverrides;
 
   public MutableQbftConfigOptions(final QbftConfigOptions qbftConfigOptions) {
     super(qbftConfigOptions);
@@ -40,5 +41,14 @@ public class MutableQbftConfigOptions extends MutableBftConfigOptions implements
 
   public void setValidatorContractAddress(final Optional<String> validatorContractAddress) {
     this.validatorContractAddress = validatorContractAddress;
+  }
+
+  @Override
+  public boolean hasValidatorOverrides() {
+    return hasValidatorOverrides;
+  }
+
+  public void setHasValidatorOverrides(final boolean hasValidatorOverrides) {
+    this.hasValidatorOverrides = hasValidatorOverrides;
   }
 }
