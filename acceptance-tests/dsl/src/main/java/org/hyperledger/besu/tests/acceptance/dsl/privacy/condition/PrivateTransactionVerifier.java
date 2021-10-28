@@ -39,6 +39,11 @@ public class PrivateTransactionVerifier {
     return new ExpectValidPrivateTransactionReceipt(transactions, transactionHash, receipt);
   }
 
+  public ExpectValidPrivateTransactionReceipt validPrivateTransactionReceipt(
+          final String transactionHash, final PrivateTransactionReceipt receipt, final boolean ignoreOutput) {
+    return new ExpectValidPrivateTransactionReceipt(transactions, transactionHash, receipt, ignoreOutput);
+  }
+
   public ExpectExistingPrivateTransactionReceipt existingPrivateTransactionReceipt(
       final String transactionHash) {
     return new ExpectExistingPrivateTransactionReceipt(transactions, transactionHash);

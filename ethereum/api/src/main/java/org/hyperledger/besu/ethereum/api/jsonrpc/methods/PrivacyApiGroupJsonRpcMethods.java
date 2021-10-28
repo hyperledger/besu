@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
+import org.hyperledger.besu.ethereum.privacy.OnchainPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PluginPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
@@ -135,22 +136,33 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
           privateNonceProvider,
           privacyParameters.getPrivateWorldStateReader());
     } else {
-      final RestrictedDefaultPrivacyController restrictedDefaultPrivacyController =
-          new RestrictedDefaultPrivacyController(
-              getBlockchainQueries().getBlockchain(),
-              privacyParameters,
-              chainId,
-              createPrivateTransactionSimulator(),
-              privateNonceProvider,
-              privacyParameters.getPrivateWorldStateReader());
-
+      final PrivacyController privacyController;
+      if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
+        privacyController =
+            new OnchainPrivacyController(
+                getBlockchainQueries().getBlockchain(),
+                privacyParameters,
+                chainId,
+                createPrivateTransactionSimulator(),
+                privateNonceProvider,
+                privacyParameters.getPrivateWorldStateReader());
+      } else {
+        privacyController =
+            new RestrictedDefaultPrivacyController(
+                getBlockchainQueries().getBlockchain(),
+                privacyParameters,
+                chainId,
+                createPrivateTransactionSimulator(),
+                privateNonceProvider,
+                privacyParameters.getPrivateWorldStateReader());
+      }
       return privacyParameters.isMultiTenancyEnabled()
           ? new RestrictedMultiTenancyPrivacyController(
-              restrictedDefaultPrivacyController,
+              privacyController,
               chainId,
-              privacyParameters.getEnclave(),
-              privacyParameters.isOnchainPrivacyGroupsEnabled())
-          : restrictedDefaultPrivacyController;
+              privacyParameters.getEnclave()
+      )
+          : privacyController;
     }
   }
 

@@ -66,8 +66,8 @@ public class RestrictedMultiTenancyPrivacyControllerOnchainTest {
         new RestrictedMultiTenancyPrivacyController(
             privacyController,
             Optional.of(BigInteger.valueOf(2018)),
-            enclave,
-            Optional.of(onchainPrivacyGroupContract));
+            enclave
+        );
   }
 
   @Test

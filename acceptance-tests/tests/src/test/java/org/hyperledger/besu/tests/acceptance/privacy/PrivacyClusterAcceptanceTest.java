@@ -55,8 +55,9 @@ import org.web3j.utils.Numeric;
 @RunWith(Parameterized.class)
 public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
 
-  private static final String eventEmitterDeployed =
-      "0x608060405234801561001057600080fd5b506004361061005d577c010000000000000000000000000000000000000000000000000000000060003504633fa4f24581146100625780636057361d1461007c57806367e404ce1461009b575b600080fd5b61006a6100cc565b60408051918252519081900360200190f35b6100996004803603602081101561009257600080fd5b50356100d2565b005b6100a3610131565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b60025490565b604080513381526020810183905281517fc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5929181900390910190a16002556001805473ffffffffffffffffffffffffffffffffffffffff191633179055565b60015473ffffffffffffffffffffffffffffffffffffffff169056fea265627a7a7231582090b93fa1c20946b6f8b2ad11f1b2c0aa357217287877d3d1cfeef69bd7f4788564736f6c63430005110032";
+  //  private static final String eventEmitterDeployed =
+  //
+  // "0x608060405234801561001057600080fd5b506004361061005d577c010000000000000000000000000000000000000000000000000000000060003504633fa4f24581146100625780636057361d1461007c57806367e404ce1461009b575b600080fd5b61006a6100cc565b60408051918252519081900360200190f35b6100996004803603602081101561009257600080fd5b50356100d2565b005b6100a3610131565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b60025490565b604080513381526020810183905281517fc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5929181900390910190a16002556001805473ffffffffffffffffffffffffffffffffffffffff191633179055565b60015473ffffffffffffffffffffffffffffffffffffffff169056fea265627a7a72315820a9ddc239a97a721056267e5c4de388a41cf545a836af3975092bbcabeb1f2b8464736f6c63430005100032";
 
   private final PrivacyNode alice;
   private final PrivacyNode bob;
@@ -220,7 +221,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             contractAddress,
             "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
             null,
-            eventEmitterDeployed,
+            null,  // ignored in the following call, checked separately below
             Collections.emptyList(),
             "0x023955c49d6265c579561940287449242704d5fd239ff07ea36a3fc7aface61c",
             "0x82e521ee16ff13104c5f81e8354ecaaafd5450b710b07f620204032bfe76041a",
@@ -233,11 +234,18 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     alice.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(
-            transactionHash, expectedReceipt));
+            transactionHash, expectedReceipt, true));
+
+    final PrivateTransactionReceipt alicePrivateTransactionReceipt = alice.execute(privacyTransactions.getPrivateTransactionReceipt(transactionHash));
+    assertThat(EventEmitter.BINARY).contains(alicePrivateTransactionReceipt.getOutput());
 
     bob.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(
             transactionHash, expectedReceipt));
+
+    final PrivateTransactionReceipt bobPrivateTransactionReceipt = bob.execute(privacyTransactions.getPrivateTransactionReceipt(transactionHash));
+    assertThat(EventEmitter.BINARY).contains(bobPrivateTransactionReceipt.getOutput());
+
   }
 
   @Test

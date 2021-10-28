@@ -42,7 +42,6 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -54,7 +53,6 @@ import org.hyperledger.enclave.testutil.EnclaveKeyUtils;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.base.Supplier;
@@ -90,10 +88,8 @@ public class RestrictedDefaultPrivacyControllerTest {
   private static final String ENCLAVE_KEY2 = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
   private static final String PRIVACY_GROUP_ID = "DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=";
   private static final ArrayList<Log> LOGS = new ArrayList<>();
-  private static final String MOCK_TRANSACTION_SIMULATOR_RESULT_OUTPUT_BYTES_PREFIX =
-      "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002";
 
-  private PrivacyController privacyController;
+  private RestrictedDefaultPrivacyController privacyController;
   private PrivacyController brokenPrivacyController;
   private PrivateTransactionValidator privateTransactionValidator;
   private Enclave enclave;
@@ -161,44 +157,6 @@ public class RestrictedDefaultPrivacyControllerTest {
             privateNonceProvider,
             privateWorldStateReader,
             privateStateRootResolver);
-  }
-
-  @Test
-  public void findOnchainPrivacyGroups() {
-    final List<String> privacyGroupAddresses = newArrayList(ENCLAVE_PUBLIC_KEY, ENCLAVE_KEY2);
-
-    final PrivacyGroup privacyGroup =
-        new PrivacyGroup(
-            PRIVACY_GROUP_ID, PrivacyGroup.Type.ONCHAIN, "", "", privacyGroupAddresses);
-
-    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
-        new PrivacyGroupHeadBlockMap(
-            Map.of(Bytes32.wrap(Bytes.fromBase64String(PRIVACY_GROUP_ID)), Hash.ZERO));
-    when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
-        .thenReturn(Optional.of(privacyGroupHeadBlockMap));
-
-    when(privateTransactionSimulator.process(any(), any()))
-        .thenReturn(
-            Optional.of(
-                new TransactionProcessingResult(
-                    TransactionProcessingResult.Status.SUCCESSFUL,
-                    emptyList(),
-                    0,
-                    0,
-                    Bytes.fromHexString(
-                        MOCK_TRANSACTION_SIMULATOR_RESULT_OUTPUT_BYTES_PREFIX
-                            + Bytes.fromBase64String(ENCLAVE_PUBLIC_KEY).toUnprefixedHexString()
-                            + Bytes.fromBase64String(ENCLAVE_KEY2).toUnprefixedHexString()),
-                    ValidationResult.valid(),
-                    Optional.empty())));
-
-    final List<PrivacyGroup> privacyGroups =
-        privacyController.findOnchainPrivacyGroupByMembers(
-            privacyGroupAddresses, ENCLAVE_PUBLIC_KEY);
-    assertThat(privacyGroups).hasSize(1);
-    assertThat(privacyGroups.get(0)).isEqualToComparingFieldByField(privacyGroup);
-    verify(privateStateStorage).getPrivacyGroupHeadBlockMap(any());
-    verify(privateTransactionSimulator).process(any(), any());
   }
 
   @Test
@@ -297,76 +255,10 @@ public class RestrictedDefaultPrivacyControllerTest {
     when(enclave.findPrivacyGroup(any())).thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final PrivacyGroup[] privacyGroups =
-        privacyController.findOffchainPrivacyGroupByMembers(
-            PRIVACY_GROUP_ADDRESSES, ENCLAVE_PUBLIC_KEY);
+        privacyController.findPrivacyGroupByMembers(PRIVACY_GROUP_ADDRESSES, ENCLAVE_PUBLIC_KEY);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);
     verify(enclave).findPrivacyGroup(PRIVACY_GROUP_ADDRESSES);
-  }
-
-  @Test
-  public void determinesNonceForEeaRequest() {
-    final Address address = Address.fromHexString("55");
-    final long reportedNonce = 8L;
-    final PrivacyGroup[] returnedGroups =
-        new PrivacyGroup[] {
-          new PrivacyGroup(
-              PRIVACY_GROUP_ID,
-              PrivacyGroup.Type.LEGACY,
-              "Group1_Name",
-              "Group1_Desc",
-              emptyList()),
-        };
-
-    when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
-    when(privateNonceProvider.getNonce(any(Address.class), any(Bytes32.class))).thenReturn(8L);
-
-    final long nonce =
-        privacyController.determineEeaNonce(
-            ENCLAVE_PUBLIC_KEY, new String[] {ENCLAVE_KEY2}, address, ENCLAVE_PUBLIC_KEY);
-
-    assertThat(nonce).isEqualTo(reportedNonce);
-    verify(enclave)
-        .findPrivacyGroup(
-            argThat((m) -> m.containsAll(newArrayList(ENCLAVE_PUBLIC_KEY, ENCLAVE_KEY2))));
-  }
-
-  @Test
-  public void determineNonceForEeaRequestWithNoMatchingGroupReturnsZero() {
-    final long reportedNonce = 0L;
-    final Address address = Address.fromHexString("55");
-    final PrivacyGroup[] returnedGroups = new PrivacyGroup[0];
-
-    when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
-
-    final long nonce =
-        privacyController.determineEeaNonce(
-            "privateFrom", new String[] {"first", "second"}, address, ENCLAVE_PUBLIC_KEY);
-
-    assertThat(nonce).isEqualTo(reportedNonce);
-    verify(enclave)
-        .findPrivacyGroup(
-            argThat((m) -> m.containsAll(newArrayList("first", "second", "privateFrom"))));
-  }
-
-  @Test
-  public void determineNonceForEeaRequestWithMoreThanOneMatchingGroupThrowsException() {
-    final Address address = Address.fromHexString("55");
-    final PrivacyGroup[] returnedGroups =
-        new PrivacyGroup[] {
-          new PrivacyGroup(
-              "Group1", PrivacyGroup.Type.LEGACY, "Group1_Name", "Group1_Desc", emptyList()),
-          new PrivacyGroup(
-              "Group2", PrivacyGroup.Type.LEGACY, "Group2_Name", "Group2_Desc", emptyList()),
-        };
-
-    when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
-
-    assertThatExceptionOfType(RuntimeException.class)
-        .isThrownBy(
-            () ->
-                privacyController.determineEeaNonce(
-                    "privateFrom", new String[] {"first", "second"}, address, ENCLAVE_PUBLIC_KEY));
   }
 
   @Test

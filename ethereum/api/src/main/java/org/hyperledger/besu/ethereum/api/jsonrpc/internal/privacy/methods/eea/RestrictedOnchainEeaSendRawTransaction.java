@@ -15,11 +15,11 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
-import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOnchainPrivacyGroup;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.OnchainUtil;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -31,11 +31,11 @@ import org.hyperledger.besu.ethereum.util.NonceProvider;
 import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
+import java.util.List;
 import java.util.Optional;
 
 import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
@@ -69,34 +69,47 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
       final Address sender,
       final PrivateTransaction privateTransaction,
       final Optional<User> user) {
-    if (privateTransaction.getPrivacyGroupId().isEmpty()) {
+    final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
+    if (maybePrivacyGroupId.isEmpty()) {
       throw new JsonRpcErrorResponseException(JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
     }
+    final Bytes privacyGroupId = maybePrivacyGroupId.get();
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(user);
 
-    final Optional<PrivacyGroup> privacyGroup =
-        findOnchainPrivacyGroup(
-            privacyController,
-            privateTransaction.getPrivacyGroupId(),
-            privacyUserId,
-            privateTransaction);
+    Optional<PrivacyGroup> maybePrivacyGroup =
+        privacyController.findPrivacyGroupByGroupId(privacyGroupId.toBase64String(), privacyUserId);
 
-    if (privacyGroup.isEmpty()) {
+    final boolean isGroupAdditionTransaction =
+        OnchainUtil.isGroupAdditionTransaction(privateTransaction);
+    if (maybePrivacyGroup.isEmpty() && !isGroupAdditionTransaction) {
       throw new JsonRpcErrorResponseException(JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
     }
 
-    final Bytes privacyGroupId = privateTransaction.getPrivacyGroupId().get();
+    if (isGroupAdditionTransaction) {
+      final List<String> participantsFromParameter =
+          OnchainUtil.getParticipantsFromParameter(privateTransaction.getPayload());
+      if (maybePrivacyGroup.isEmpty()) {
+        maybePrivacyGroup =
+            Optional.of(
+                new PrivacyGroup(
+                    privacyGroupId.toBase64String(),
+                    PrivacyGroup.Type.ONCHAIN,
+                    null,
+                    null,
+                    participantsFromParameter));
+      } else {
+        maybePrivacyGroup.get().addMembers(participantsFromParameter);
+      }
+    }
 
-    final String privateTransactionLookupId =
-        privacyController.createPrivateMarkerTransactionPayload(
-            privateTransaction, privacyUserId, privacyGroup);
-    final Optional<String> addPayloadPrivateTransactionLookupId =
-        privacyController.buildAndSendAddPayload(
-            privateTransaction, Bytes32.wrap(privacyGroupId), privacyUserId);
+    if (!maybePrivacyGroup.get().getMembers().contains(privacyUserId)) {
+      throw new JsonRpcErrorResponseException(JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
+    }
 
     final String pmtPayload =
-        buildCompoundLookupId(privateTransactionLookupId, addPayloadPrivateTransactionLookupId);
+        privacyController.createPrivateMarkerTransactionPayload(
+            privateTransaction, privacyUserId, maybePrivacyGroup);
 
     return createPrivateMarkerTransaction(
         sender, ONCHAIN_PRIVACY, pmtPayload, privateTransaction, privacyUserId);
@@ -105,16 +118,5 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
   @Override
   protected long getGasLimit(final PrivateTransaction privateTransaction, final String pmtPayload) {
     return privateTransaction.getGasLimit();
-  }
-
-  private String buildCompoundLookupId(
-      final String privateTransactionLookupId,
-      final Optional<String> maybePrivateTransactionLookupId) {
-    return maybePrivateTransactionLookupId.isPresent()
-        ? Bytes.concatenate(
-                Bytes.fromBase64String(privateTransactionLookupId),
-                Bytes.fromBase64String(maybePrivateTransactionLookupId.get()))
-            .toBase64String()
-        : privateTransactionLookupId;
   }
 }

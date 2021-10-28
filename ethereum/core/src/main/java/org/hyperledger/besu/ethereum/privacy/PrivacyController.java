@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public interface PrivacyController {
 
@@ -39,22 +38,19 @@ public interface PrivacyController {
       String privacyUserId,
       Optional<PrivacyGroup> privacyGroup);
 
-  ReceiveResponse retrieveTransaction(String enclaveKey, String privacyUserId);
-
   PrivacyGroup createPrivacyGroup(
       List<String> addresses, String name, String description, String privacyUserId);
 
   String deletePrivacyGroup(String privacyGroupId, String privacyUserId);
 
-  PrivacyGroup[] findOffchainPrivacyGroupByMembers(List<String> addresses, String privacyUserId);
+  PrivacyGroup[] findPrivacyGroupByMembers(List<String> addresses, String privacyUserId);
+
+  Optional<PrivacyGroup> findPrivacyGroupByGroupId(String privacyGroupId, String privacyUserId);
 
   ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       PrivateTransaction privateTransaction, String privacyUserId);
 
-  long determineEeaNonce(
-      String privateFrom, String[] privateFor, Address address, String privacyUserId);
-
-  long determineBesuNonce(Address sender, String privacyGroupId, String privacyUserId);
+  long determineNonce(Address sender, String privacyGroupId, String privacyUserId);
 
   Optional<TransactionProcessingResult> simulatePrivateTransaction(
       final String privacyGroupId,
@@ -62,29 +58,11 @@ public interface PrivacyController {
       final CallParameter callParams,
       final long blockNumber);
 
-  Optional<String> buildAndSendAddPayload(
-      PrivateTransaction privateTransaction, Bytes32 privacyGroupId, String privacyUserId);
-
-  Optional<PrivacyGroup> findOffchainPrivacyGroupByGroupId(
-      String privacyGroupId, String privacyUserId);
-
-  Optional<PrivacyGroup> findPrivacyGroupByGroupId(
-      final String privacyGroupId, final String privacyUserId);
-
-  List<PrivacyGroup> findOnchainPrivacyGroupByMembers(List<String> asList, String privacyUserId);
-
   Optional<Bytes> getContractCode(
       final String privacyGroupId,
       final Address contractAddress,
       final Hash blockHash,
       final String privacyUserId);
-
-  Optional<PrivacyGroup> findOnchainPrivacyGroupAndAddNewMembers(
-      Bytes privacyGroupId, String privacyUserId, final PrivateTransaction privateTransaction);
-
-  List<PrivateTransactionWithMetadata> retrieveAddBlob(String addDataKey);
-
-  boolean isGroupAdditionTransaction(PrivateTransaction privateTransaction);
 
   void verifyPrivacyGroupContainsPrivacyUserId(
       final String privacyGroupId, final String privacyUserId)
@@ -93,8 +71,6 @@ public interface PrivacyController {
   void verifyPrivacyGroupContainsPrivacyUserId(
       final String privacyGroupId, final String privacyUserId, final Optional<Long> blockNumber)
       throws MultiTenancyValidationException;
-
-  PrivateTransactionSimulator getTransactionSimulator();
 
   Optional<Hash> getStateRootByBlockNumber(
       final String privacyGroupId, final String privacyUserId, final long blockNumber);

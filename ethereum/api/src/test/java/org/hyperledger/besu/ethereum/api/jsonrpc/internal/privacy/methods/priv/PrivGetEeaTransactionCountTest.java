@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -61,7 +62,7 @@ public class PrivGetEeaTransactionCountTest {
     final PrivGetEeaTransactionCount method =
         new PrivGetEeaTransactionCount(privacyController, privacyIdProvider);
 
-    when(privacyController.determineEeaNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
+    when(privacyController.determineNonce(any(), any(), ENCLAVE_PUBLIC_KEY))
         .thenReturn(reportedNonce);
 
     final JsonRpcResponse response = method.response(request);
@@ -77,7 +78,7 @@ public class PrivGetEeaTransactionCountTest {
     final PrivGetEeaTransactionCount method =
         new PrivGetEeaTransactionCount(privacyController, privacyIdProvider);
 
-    when(privacyController.determineEeaNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
+    when(privacyController.determineNonce(any(), any(), ENCLAVE_PUBLIC_KEY))
         .thenThrow(EnclaveClientException.class);
 
     final JsonRpcResponse response = method.response(request);
@@ -93,7 +94,7 @@ public class PrivGetEeaTransactionCountTest {
     final PrivGetEeaTransactionCount method =
         new PrivGetEeaTransactionCount(privacyController, privacyIdProvider);
 
-    when(privacyController.determineEeaNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
+    when(privacyController.determineNonce(any(), any(), ENCLAVE_PUBLIC_KEY))
         .thenThrow(EnclaveClientException.class);
 
     final JsonRpcResponse response = method.response(request);
@@ -109,7 +110,7 @@ public class PrivGetEeaTransactionCountTest {
     final PrivGetEeaTransactionCount method =
         new PrivGetEeaTransactionCount(privacyController, privacyIdProvider);
 
-    when(privacyController.determineEeaNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
+    when(privacyController.determineNonce(any(), any(), ENCLAVE_PUBLIC_KEY))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
 
     final JsonRpcResponse response = method.response(request);

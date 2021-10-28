@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -28,43 +27,21 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class RestrictedMultiTenancyPrivacyController implements PrivacyController {
 
   private final PrivacyController privacyController;
   private final Enclave enclave;
   private final PrivateTransactionValidator privateTransactionValidator;
-  private final Optional<OnchainPrivacyGroupContract> onchainPrivacyGroupContract;
 
   public RestrictedMultiTenancyPrivacyController(
-      final PrivacyController privacyController,
-      final Optional<BigInteger> chainId,
-      final Enclave enclave,
-      final boolean onchainPrivacyGroupsEnabled) {
+          final PrivacyController privacyController,
+          final Optional<BigInteger> chainId,
+          final Enclave enclave) {
     this.privacyController = privacyController;
     this.enclave = enclave;
-    this.onchainPrivacyGroupContract =
-        onchainPrivacyGroupsEnabled
-            ? Optional.of(
-                new OnchainPrivacyGroupContract(privacyController.getTransactionSimulator()))
-            : Optional.empty();
-    privateTransactionValidator = new PrivateTransactionValidator(chainId);
-  }
-
-  @VisibleForTesting
-  RestrictedMultiTenancyPrivacyController(
-      final PrivacyController privacyController,
-      final Optional<BigInteger> chainId,
-      final Enclave enclave,
-      final Optional<OnchainPrivacyGroupContract> onchainPrivacyGroupContract) {
-    this.privacyController = privacyController;
-    this.enclave = enclave;
-    this.onchainPrivacyGroupContract = onchainPrivacyGroupContract;
     privateTransactionValidator = new PrivateTransactionValidator(chainId);
   }
 
@@ -90,12 +67,6 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   }
 
   @Override
-  public ReceiveResponse retrieveTransaction(final String enclaveKey, final String privacyUserId) {
-    // no validation necessary as the enclave receive only returns data for the enclave public key
-    return privacyController.retrieveTransaction(enclaveKey, privacyUserId);
-  }
-
-  @Override
   public PrivacyGroup createPrivacyGroup(
       final List<String> addresses,
       final String name,
@@ -113,14 +84,14 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   }
 
   @Override
-  public PrivacyGroup[] findOffchainPrivacyGroupByMembers(
+  public PrivacyGroup[] findPrivacyGroupByMembers(
       final List<String> addresses, final String privacyUserId) {
     if (!addresses.contains(privacyUserId)) {
       throw new MultiTenancyValidationException(
           "Privacy group addresses must contain the enclave public key");
     }
     final PrivacyGroup[] resultantGroups =
-        privacyController.findOffchainPrivacyGroupByMembers(addresses, privacyUserId);
+        privacyController.findPrivacyGroupByMembers(addresses, privacyUserId);
     return Arrays.stream(resultantGroups)
         .filter(g -> g.getMembers().contains(privacyUserId))
         .toArray(PrivacyGroup[]::new);
@@ -134,25 +105,15 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
     verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId);
     return privateTransactionValidator.validate(
         privateTransaction,
-        determineBesuNonce(privateTransaction.getSender(), privacyGroupId, privacyUserId),
+        determineNonce(privateTransaction.getSender(), privacyGroupId, privacyUserId),
         true);
   }
 
   @Override
-  public long determineEeaNonce(
-      final String privateFrom,
-      final String[] privateFor,
-      final Address address,
-      final String privacyUserId) {
-    verifyPrivateFromMatchesPrivacyUserId(privateFrom, privacyUserId);
-    return privacyController.determineEeaNonce(privateFrom, privateFor, address, privacyUserId);
-  }
-
-  @Override
-  public long determineBesuNonce(
+  public long determineNonce(
       final Address sender, final String privacyGroupId, final String privacyUserId) {
     verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId);
-    return privacyController.determineBesuNonce(sender, privacyGroupId, privacyUserId);
+    return privacyController.determineNonce(sender, privacyGroupId, privacyUserId);
   }
 
   @Override
@@ -165,28 +126,6 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
         privacyGroupId, privacyUserId, Optional.of(blockNumber));
     return privacyController.simulatePrivateTransaction(
         privacyGroupId, privacyUserId, callParams, blockNumber);
-  }
-
-  @Override
-  public Optional<String> buildAndSendAddPayload(
-      final PrivateTransaction privateTransaction,
-      final Bytes32 privacyGroupId,
-      final String privacyUserId) {
-    verifyPrivateFromMatchesPrivacyUserId(
-        privateTransaction.getPrivateFrom().toBase64String(), privacyUserId);
-    verifyPrivacyGroupContainsPrivacyUserId(
-        privateTransaction.getPrivacyGroupId().get().toBase64String(), privacyUserId);
-    return privacyController.buildAndSendAddPayload(
-        privateTransaction, privacyGroupId, privacyUserId);
-  }
-
-  @Override
-  public Optional<PrivacyGroup> findOffchainPrivacyGroupByGroupId(
-      final String privacyGroupId, final String privacyUserId) {
-    final Optional<PrivacyGroup> maybePrivacyGroup =
-        privacyController.findOffchainPrivacyGroupByGroupId(privacyGroupId, privacyUserId);
-    checkGroupParticipation(maybePrivacyGroup, privacyUserId);
-    return maybePrivacyGroup;
   }
 
   @Override
@@ -208,30 +147,6 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   }
 
   @Override
-  public List<PrivacyGroup> findOnchainPrivacyGroupByMembers(
-      final List<String> addresses, final String privacyUserId) {
-    if (!addresses.contains(privacyUserId)) {
-      throw new MultiTenancyValidationException(
-          "Privacy group addresses must contain the enclave public key");
-    }
-    final List<PrivacyGroup> resultantGroups =
-        privacyController.findOnchainPrivacyGroupByMembers(addresses, privacyUserId);
-    return resultantGroups.stream()
-        .filter(g -> g.getMembers().contains(privacyUserId))
-        .collect(Collectors.toList());
-  }
-
-  @Override
-  public List<PrivateTransactionWithMetadata> retrieveAddBlob(final String addDataKey) {
-    return privacyController.retrieveAddBlob(addDataKey);
-  }
-
-  @Override
-  public boolean isGroupAdditionTransaction(final PrivateTransaction privateTransaction) {
-    return privacyController.isGroupAdditionTransaction(privateTransaction);
-  }
-
-  @Override
   public Optional<Bytes> getContractCode(
       final String privacyGroupId,
       final Address contractAddress,
@@ -240,19 +155,6 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
     verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId);
     return privacyController.getContractCode(
         privacyGroupId, contractAddress, blockHash, privacyUserId);
-  }
-
-  @Override
-  public Optional<PrivacyGroup> findOnchainPrivacyGroupAndAddNewMembers(
-      final Bytes privacyGroupId,
-      final String privacyUserId,
-      final PrivateTransaction privateTransaction) {
-    final Optional<PrivacyGroup> maybePrivacyGroup =
-        privacyController.findOnchainPrivacyGroupAndAddNewMembers(
-            privacyGroupId, privacyUserId, privateTransaction);
-    // The check that the privacyUserId is a member (if the group already exists) is done in the
-    // DefaultPrivacyController.
-    return maybePrivacyGroup;
   }
 
   private void verifyPrivateFromMatchesPrivacyUserId(
@@ -273,47 +175,7 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   public void verifyPrivacyGroupContainsPrivacyUserId(
       final String privacyGroupId, final String privacyUserId, final Optional<Long> blockNumber)
       throws MultiTenancyValidationException {
-    onchainPrivacyGroupContract.ifPresentOrElse(
-        (contract) -> {
-          verifyOnchainPrivacyGroupContainsMember(
-              contract, privacyGroupId, privacyUserId, blockNumber);
-        },
-        () -> {
-          verifyOffchainPrivacyGroupContainsMember(privacyGroupId, privacyUserId);
-        });
-  }
-
-  private void verifyOffchainPrivacyGroupContainsMember(
-      final String privacyGroupId, final String privacyUserId) {
-    final PrivacyGroup offchainPrivacyGroup = enclave.retrievePrivacyGroup(privacyGroupId);
-    if (!offchainPrivacyGroup.getMembers().contains(privacyUserId)) {
-      throw new MultiTenancyValidationException(
-          "Privacy group must contain the enclave public key");
-    }
-  }
-
-  private void verifyOnchainPrivacyGroupContainsMember(
-      final OnchainPrivacyGroupContract contract,
-      final String privacyGroupId,
-      final String privacyUserId,
-      final Optional<Long> blockNumber) {
-    final Optional<PrivacyGroup> maybePrivacyGroup =
-        contract.getPrivacyGroupByIdAndBlockNumber(privacyGroupId, blockNumber);
-    // IF the group exists, check member
-    // ELSE member is valid if the group doesn't exist yet - this is normal for onchain privacy
-    // groups
-    maybePrivacyGroup.ifPresent(
-        (group) -> {
-          if (!group.getMembers().contains(privacyUserId)) {
-            throw new MultiTenancyValidationException(
-                "Privacy group must contain the enclave public key");
-          }
-        });
-  }
-
-  @Override
-  public PrivateTransactionSimulator getTransactionSimulator() {
-    return privacyController.getTransactionSimulator();
+    privacyController.verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId, blockNumber);
   }
 
   @Override
