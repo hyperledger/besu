@@ -44,20 +44,25 @@ public class PmtTransactionPool implements BlockAddedObserver {
   }
 
   public Hash addPmtTransactionTracker(
-      final Hash pmtHash, final PrivateTransaction privateTx, final String privacyGroupId, final long publicNonce) {
+      final Hash pmtHash,
+      final PrivateTransaction privateTx,
+      final String privacyGroupId,
+      final long publicNonce) {
     return addPmtTransactionTracker(
         pmtHash, privateTx.sender.toHexString(), privacyGroupId, privateTx.getNonce(), publicNonce);
   }
 
   public Hash addPmtTransactionTracker(
-      final Hash pmtHash, final String sender, final String privacyGroupId, final long privateNonce, final long publicNonce) {
+      final Hash pmtHash,
+      final String sender,
+      final String privacyGroupId,
+      final long privateNonce,
+      final long publicNonce) {
 
-    final PmtTransactionTracker pmtTracker = new PmtTransactionTracker(sender, privacyGroupId, privateNonce, publicNonce);
+    final PmtTransactionTracker pmtTracker =
+        new PmtTransactionTracker(sender, privacyGroupId, privateNonce, publicNonce);
     pmtPool.put(pmtHash, pmtTracker);
-    LOG.debug(
-        "adding pmtPool tracker: pmtTracker {} pmtHash: {} ",
-        pmtTracker,
-        pmtHash);
+    LOG.debug("adding pmtPool tracker: pmtTracker {} pmtHash: {} ", pmtTracker, pmtHash);
     return pmtHash;
   }
 
@@ -68,7 +73,10 @@ public class PmtTransactionPool implements BlockAddedObserver {
     private final long publicNonce;
 
     protected PmtTransactionTracker(
-        final String sender, final String privacyGroupIdBase64, final long privateNonce, final long publicNonce) {
+        final String sender,
+        final String privacyGroupIdBase64,
+        final long privateNonce,
+        final long publicNonce) {
       this.sender = sender;
       this.privacyGroupIdBase64 = privacyGroupIdBase64;
       this.privateNonce = privateNonce;

@@ -20,5 +20,4 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public interface PrivateNonceProvider {
   long getNonce(Address sender, Bytes32 privacyGroupId);
-
 }

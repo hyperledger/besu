@@ -46,7 +46,12 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
       final NonceProvider publicNonceProvider,
       final PrivacyController privacyController,
       final GasCalculator gasCalculator) {
-    super(transactionPool, new PmtTransactionPool(), privacyIdProvider, privateMarkerTransactionFactory, publicNonceProvider);
+    super(
+        transactionPool,
+        new PmtTransactionPool(),
+        privacyIdProvider,
+        privateMarkerTransactionFactory,
+        publicNonceProvider);
     // TODO fix this ^^ does plugin privacy nee the PmtPool or not?
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;

@@ -46,7 +46,12 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final TransactionPool transactionPool,
       final PmtTransactionPool pmtTransactionPool,
       final PrivacyParameters privacyParameters) {
-    super(blockchainQueries, protocolSchedule, transactionPool, pmtTransactionPool, privacyParameters);
+    super(
+        blockchainQueries,
+        protocolSchedule,
+        transactionPool,
+        pmtTransactionPool,
+        privacyParameters);
     this.transactionPool = transactionPool;
     this.pmtTransactionPool = pmtTransactionPool;
     this.privacyParameters = privacyParameters;

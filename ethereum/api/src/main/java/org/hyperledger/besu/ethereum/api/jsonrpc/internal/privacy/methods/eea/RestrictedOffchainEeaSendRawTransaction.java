@@ -49,7 +49,12 @@ public class RestrictedOffchainEeaSendRawTransaction extends AbstractEeaSendRawT
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final NonceProvider publicNonceProvider,
       final PrivacyController privacyController) {
-    super(transactionPool, pmtTransactionPool, privacyIdProvider, privateMarkerTransactionFactory, publicNonceProvider);
+    super(
+        transactionPool,
+        pmtTransactionPool,
+        privacyIdProvider,
+        privateMarkerTransactionFactory,
+        publicNonceProvider);
     this.privacyIdProvider = privacyIdProvider;
     this.privacyController = privacyController;
   }

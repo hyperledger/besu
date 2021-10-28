@@ -93,9 +93,17 @@ public class JsonRpcMethodsFactory {
               new DebugJsonRpcMethods(
                   blockchainQueries, protocolSchedule, metricsSystem, transactionPool, dataDir),
               new EeaJsonRpcMethods(
-                  blockchainQueries, protocolSchedule, transactionPool, pmtTransactionPool, privacyParameters),
+                  blockchainQueries,
+                  protocolSchedule,
+                  transactionPool,
+                  pmtTransactionPool,
+                  privacyParameters),
               new GoQuorumJsonRpcPrivacyMethods(
-                  blockchainQueries, protocolSchedule, transactionPool, pmtTransactionPool, privacyParameters),
+                  blockchainQueries,
+                  protocolSchedule,
+                  transactionPool,
+                  pmtTransactionPool,
+                  privacyParameters),
               new EthJsonRpcMethods(
                   blockchainQueries,
                   synchronizer,
@@ -121,7 +129,11 @@ public class JsonRpcMethodsFactory {
                   privacyParameters,
                   filterManager),
               new PrivxJsonRpcMethods(
-                  blockchainQueries, protocolSchedule, transactionPool, pmtTransactionPool, privacyParameters),
+                  blockchainQueries,
+                  protocolSchedule,
+                  transactionPool,
+                  pmtTransactionPool,
+                  privacyParameters),
               new Web3JsonRpcMethods(clientVersion),
               // TRACE Methods (Disabled while under development)
               new TraceJsonRpcMethods(blockchainQueries, protocolSchedule),

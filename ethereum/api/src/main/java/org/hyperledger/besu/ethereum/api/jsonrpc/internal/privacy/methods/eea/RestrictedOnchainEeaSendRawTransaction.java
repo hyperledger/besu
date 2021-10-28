@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
 import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOnchainPrivacyGroup;
 
-import org.apache.logging.log4j.LogManager;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
@@ -36,13 +35,11 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 import java.util.Optional;
 
 import io.vertx.ext.auth.User;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
-  private static final Logger LOG = LogManager.getLogger();
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
   private final PmtTransactionPool pmtTransactionPool;
@@ -54,7 +51,12 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final NonceProvider publicNonceProvider,
       final PrivacyController privacyController) {
-    super(transactionPool, pmtTransactionPool, privacyIdProvider, privateMarkerTransactionFactory, publicNonceProvider);
+    super(
+        transactionPool,
+        pmtTransactionPool,
+        privacyIdProvider,
+        privateMarkerTransactionFactory,
+        publicNonceProvider);
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
     this.pmtTransactionPool = pmtTransactionPool;

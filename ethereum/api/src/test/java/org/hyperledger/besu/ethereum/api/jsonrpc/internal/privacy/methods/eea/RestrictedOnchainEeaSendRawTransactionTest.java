@@ -27,11 +27,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
 
 import java.util.Arrays;
 import java.util.Optional;
 
-import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

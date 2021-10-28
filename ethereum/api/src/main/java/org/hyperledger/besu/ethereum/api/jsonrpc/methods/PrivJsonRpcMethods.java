@@ -55,7 +55,12 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final PmtTransactionPool pmtTransactionPool,
       final PrivacyParameters privacyParameters,
       final FilterManager filterManager) {
-    super(blockchainQueries, protocolSchedule, transactionPool, pmtTransactionPool, privacyParameters);
+    super(
+        blockchainQueries,
+        protocolSchedule,
+        transactionPool,
+        pmtTransactionPool,
+        privacyParameters);
     this.filterManager = filterManager;
   }
 
