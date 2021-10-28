@@ -813,6 +813,11 @@ public class PeerDiscoveryAgentTest {
     assertThat(false).isTrue();
   }
 
+  @Test
+  public void eachInstanceShouldLogIPV6WarningExactlyOnce() {
+    assertThat(false).isTrue();
+  }
+
   protected void bondViaIncomingPing(
       final MockPeerDiscoveryAgent agent, final MockPeerDiscoveryAgent otherNode) {
     final Packet pingPacket = helper.createPingPacket(otherNode, agent);
