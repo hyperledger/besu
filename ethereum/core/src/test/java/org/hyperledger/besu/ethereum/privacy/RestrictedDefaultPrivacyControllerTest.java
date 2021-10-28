@@ -322,8 +322,7 @@ public class RestrictedDefaultPrivacyControllerTest {
         };
 
     when(enclave.findPrivacyGroup(any())).thenReturn(returnedGroups);
-    when(privateNonceProvider.getNonce(any(Address.class), any(Bytes32.class)))
-        .thenReturn(8L);
+    when(privateNonceProvider.getNonce(any(Address.class), any(Bytes32.class))).thenReturn(8L);
 
     final long nonce =
         privacyController.determineEeaNonce(

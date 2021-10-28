@@ -44,8 +44,8 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
   }
 
   /**
-   * Calculate the nonce, while taking into account any PMTs that are already in progress. This makes
-   * nonce management for private tx slightly more robust.
+   * Calculate the nonce, while taking into account any PMTs that are already in progress. This
+   * makes nonce management for private tx slightly more robust.
    *
    * @param sender the sender of the transaction
    * @param privacyGroupId the privacy group ID this tx is for
