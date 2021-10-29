@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.common;
 
-public interface PoaContext {
+import org.hyperledger.besu.ethereum.ConsensusContext;
+
+public interface PoaContext extends ConsensusContext {
   BlockInterface getBlockInterface();
 }

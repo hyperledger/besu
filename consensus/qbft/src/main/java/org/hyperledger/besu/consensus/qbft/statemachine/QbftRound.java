@@ -298,7 +298,7 @@ public class QbftRound {
 
   private Block createCommitBlock(final Block block) {
     final BftBlockInterface bftBlockInterface =
-        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
+        protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
     return bftBlockInterface.replaceRoundInBlock(
         block,
         getRoundIdentifier().getRoundNumber(),

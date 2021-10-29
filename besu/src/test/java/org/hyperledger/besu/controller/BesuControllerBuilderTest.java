@@ -127,22 +127,25 @@ public class BesuControllerBuilderTest {
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
     when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
 
-    besuControllerBuilder =
-        new MainnetBesuControllerBuilder()
-            .gasLimitCalculator(gasLimitCalculator)
-            .genesisConfigFile(genesisConfigFile)
-            .synchronizerConfiguration(synchronizerConfiguration)
-            .ethProtocolConfiguration(ethProtocolConfiguration)
-            .miningParameters(miningParameters)
-            .metricsSystem(observableMetricsSystem)
-            .privacyParameters(privacyParameters)
-            .dataDirectory(tempDirRule.getRoot().toPath())
-            .clock(clock)
-            .transactionPoolConfiguration(poolConfiguration)
-            .nodeKey(nodeKey)
-            .storageProvider(storageProvider)
-            .evmConfiguration(EvmConfiguration.DEFAULT)
-            .networkId(networkId);
+    besuControllerBuilder = visitWithMockConfigs(new MainnetBesuControllerBuilder());
+  }
+
+  BesuControllerBuilder visitWithMockConfigs(final BesuControllerBuilder builder) {
+    return builder
+        .gasLimitCalculator(gasLimitCalculator)
+        .genesisConfigFile(genesisConfigFile)
+        .synchronizerConfiguration(synchronizerConfiguration)
+        .ethProtocolConfiguration(ethProtocolConfiguration)
+        .miningParameters(miningParameters)
+        .metricsSystem(observableMetricsSystem)
+        .privacyParameters(privacyParameters)
+        .dataDirectory(tempDirRule.getRoot().toPath())
+        .clock(clock)
+        .transactionPoolConfiguration(poolConfiguration)
+        .nodeKey(nodeKey)
+        .storageProvider(storageProvider)
+        .evmConfiguration(EvmConfiguration.DEFAULT)
+        .networkId(networkId);
   }
 
   @Test
