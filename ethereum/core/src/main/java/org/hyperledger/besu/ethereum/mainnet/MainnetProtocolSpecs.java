@@ -578,17 +578,16 @@ public abstract class MainnetProtocolSpecs {
       final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
     return londonDefinition(
-        chainId,
-        configContractSizeLimit,
-        configStackSizeLimit,
-        enableRevertReason,
-        genesisConfigOptions,
-        quorumCompatibilityMode,
-        evmConfiguration)
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
         .difficultyCalculator(MainnetDifficultyCalculators.ARROW_GLACIER)
         .name("ArrowGlacier");
   }
-
 
   private static TransactionReceipt frontierTransactionReceiptFactory(
       // ignored because it's always FRONTIER

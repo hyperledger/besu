@@ -150,7 +150,8 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
-  public ProtocolSpecBuilder arrowGlacierDefinition(final GenesisConfigOptions genesisConfigOptions) {
+  public ProtocolSpecBuilder arrowGlacierDefinition(
+      final GenesisConfigOptions genesisConfigOptions) {
     return MainnetProtocolSpecs.arrowGlacierDefinition(
         chainId,
         contractSizeLimit,
