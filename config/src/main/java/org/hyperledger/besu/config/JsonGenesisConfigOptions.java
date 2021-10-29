@@ -505,6 +505,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getMuirGlacierBlockNumber(),
             getBerlinBlockNumber(),
             getLondonBlockNumber(),
+            getArrowGlacierBlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
             getGothamBlockNumber(),
