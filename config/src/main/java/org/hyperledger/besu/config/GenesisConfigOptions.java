@@ -73,6 +73,8 @@ public interface GenesisConfigOptions {
 
   OptionalLong getLondonBlockNumber();
 
+  OptionalLong getArrowGlacierBlockNumber();
+
   OptionalLong getBaseFeePerGas();
 
   Optional<UInt256> getTerminalTotalDifficulty();

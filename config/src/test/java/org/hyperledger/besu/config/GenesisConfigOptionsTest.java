@@ -186,6 +186,12 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetArrowGlacierBlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("arrowGlacierBlock", 1000));
+    assertThat(config.getArrowGlacierBlockNumber()).hasValue(1000);
+  }
+
+  @Test
   // TODO ECIP-1049 change for the actual fork name when known
   public void shouldGetECIP1049BlockNumber() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ecip1049block", 1000));
@@ -206,6 +212,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getMuirGlacierBlockNumber()).isEmpty();
     assertThat(config.getBerlinBlockNumber()).isEmpty();
     assertThat(config.getLondonBlockNumber()).isEmpty();
+    assertThat(config.getArrowGlacierBlockNumber()).isEmpty();
     assertThat(config.getEcip1049BlockNumber()).isEmpty();
   }
 
