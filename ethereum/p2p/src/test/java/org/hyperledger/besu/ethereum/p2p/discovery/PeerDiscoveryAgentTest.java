@@ -807,17 +807,6 @@ public class PeerDiscoveryAgentTest {
     assertThat(agent.isActive()).isFalse();
   }
 
-  @Test
-  public void shouldNotLogStacktraceIfIPV6Disabled() {
-    // TODO: Write a documentation test
-    assertThat(false).isTrue();
-  }
-
-  @Test
-  public void eachInstanceShouldLogIPV6WarningExactlyOnce() {
-    assertThat(false).isTrue();
-  }
-
   protected void bondViaIncomingPing(
       final MockPeerDiscoveryAgent agent, final MockPeerDiscoveryAgent otherNode) {
     final Packet pingPacket = helper.createPingPacket(otherNode, agent);

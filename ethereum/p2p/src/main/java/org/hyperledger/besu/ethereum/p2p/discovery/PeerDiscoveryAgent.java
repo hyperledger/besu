@@ -317,9 +317,9 @@ public abstract class PeerDiscoveryAgent {
                       "Peer {} is unreachable, packet: {}", peer, wrapBuffer(packet.encode()), err);
                 } else if (err instanceof UnsupportedAddressTypeException) {
                   LOG.warn(
-                          "Sending to peer failed - this is likely due to disabled ipv6 at runtime {}, packet: {}",
-                          peer,
-                          wrapBuffer(packet.encode()));
+                      "Sending to peer failed - this is likely due to disabled ipv6 at runtime {}, packet: {}",
+                      peer,
+                      wrapBuffer(packet.encode()));
                 } else {
                   LOG.warn(
                       "Sending to peer {} failed, packet: {}",
