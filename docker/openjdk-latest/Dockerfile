@@ -2,8 +2,8 @@
 FROM debian:bullseye-slim
 ARG VERSION="dev"
 
-RUN apt update
-RUN apt install -q --assume-yes openjdk-17-jre-headless
+RUN apt-get update
+RUN apt-get install -q --assume-yes openjdk-17-jre-headless
 RUN adduser --disabled-password --gecos "" --home /opt/besu besu && \
     chown besu:besu /opt/besu
 

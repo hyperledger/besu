@@ -3,7 +3,7 @@ FROM openjdk:11-slim-buster
 
 ARG VERSION="dev"
 RUN apt update
-RUN apt install -q --assume-yes curl wget jq procps net-tools
+RUN apt-get install -q --assume-yes curl wget jq procps net-tools
 RUN adduser --disabled-password --gecos "" --home /opt/besu besu && \
     chown besu:besu /opt/besu
 
@@ -36,8 +36,7 @@ ENV BESU_LOGGING "DEBUG"
 ENV BESU_RPC_HTTP_API  "ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL"
 ENV JDWP_OPTS "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
 ENV NATIVE_MEMORY_OPTS "-XX:NativeMemoryTracking=detail -XX:+UnlockDiagnosticVMOptions -XX:+PrintNMTStatistics"
-ENV JMX_OPTS "-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.rmi.port=1098 -Djava.rmi.server.hostname=${BESU_JMX_HOST} -Dcom.sun.management.jmxremote.local.only=false"
-ENV JAVA_OPTS "${JDWP_OPTS} ${NATIVE_MEMORY_OPTS} ${JMX_OPTS}"
+ENV JAVA_OPTS "${JDWP_OPTS} ${NATIVE_MEMORY_OPTS} "
 
 ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu,service.version=$VERSION"
 
