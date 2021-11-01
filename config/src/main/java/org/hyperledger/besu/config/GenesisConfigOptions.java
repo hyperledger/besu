@@ -73,8 +73,6 @@ public interface GenesisConfigOptions {
 
   OptionalLong getArrowGlacierBlockNumber();
 
-  OptionalLong getBaseFeePerGas();
-
   OptionalLong getEIP1559BlockNumber();
 
   List<Long> getForks();

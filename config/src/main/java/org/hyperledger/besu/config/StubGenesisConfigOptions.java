@@ -39,7 +39,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong londonBlockNumber = OptionalLong.empty();
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
 
-  private OptionalLong baseFeePerGas = OptionalLong.empty();
   private OptionalLong classicForkBlock = OptionalLong.empty();
   private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
   private OptionalLong diehardBlockNumber = OptionalLong.empty();
@@ -182,11 +181,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getArrowGlacierBlockNumber() {
     return arrowGlacierBlockNumber;
-  }
-
-  @Override
-  public OptionalLong getBaseFeePerGas() {
-    return baseFeePerGas;
   }
 
   @Override
@@ -417,11 +411,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions arrowGlacierBlock(final long blockNumber) {
     arrowGlacierBlockNumber = OptionalLong.of(blockNumber);
-    return this;
-  }
-
-  public StubGenesisConfigOptions baseFeePerGas(final long baseFeeOverride) {
-    baseFeePerGas = OptionalLong.of(baseFeeOverride);
     return this;
   }
 

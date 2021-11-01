@@ -261,14 +261,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getBaseFeePerGas() {
-    return Optional.ofNullable(configOverrides.get("baseFeePerGas"))
-        .map(Long::parseLong)
-        .map(OptionalLong::of)
-        .orElse(OptionalLong.empty());
-  }
-
-  @Override
   public OptionalLong getEIP1559BlockNumber() {
     return getLondonBlockNumber();
   }
