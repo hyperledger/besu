@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.common.forking;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import java.util.stream.Collectors;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
@@ -50,7 +51,10 @@ public class ForkingProtocolManager implements ProtocolManager, BlockAddedObserv
 
   @Override
   public List<Capability> getSupportedCapabilities() {
-    return activeProtocolManager.getSupportedCapabilities();
+    final List<Capability> collect = protocolManagerBftForksSchedule.getForks().stream()
+        .flatMap(s -> s.getConfigOptions().getSupportedCapabilities().stream()).distinct()
+        .collect(Collectors.toList());
+    return collect;
   }
 
   @Override

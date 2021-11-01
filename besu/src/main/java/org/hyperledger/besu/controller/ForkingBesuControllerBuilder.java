@@ -15,12 +15,22 @@
 
 package org.hyperledger.besu.controller;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.consensus.common.forking.ForkingBftMiningCoordinator;
 import org.hyperledger.besu.consensus.common.forking.ForkingProtocolManager;
+import org.hyperledger.besu.consensus.common.forking.NoopProtocolManager;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -200,55 +210,90 @@ public class ForkingBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected SubProtocolConfiguration createSubProtocolConfiguration(
       final EthProtocolManager ethProtocolManager) {
-    final List<BftForkSpec<SubProtocolConfiguration>> subProtocolSpecs =
-        besuControllerBuilders.stream()
-            .map(
-                builder ->
-                    new BftForkSpec<>(
-                        builder.bftConfigOptions().getBlock(),
-                        builder.createSubProtocolConfiguration(ethProtocolManager)))
-            .collect(Collectors.toList());
 
-    final List<BftForkSpec<ProtocolManager>> protocolManagerSpecs =
-        subProtocolSpecs.stream()
-            .flatMap(
-                subProtocolSpec ->
-                    subProtocolSpec.getConfigOptions().getProtocolManagers().stream()
-                        .map(
-                            protocolManager ->
-                                new BftForkSpec<>(subProtocolSpec.getBlock(), protocolManager)))
-            .collect(Collectors.toList());
+    // TODO replace with stream
+    final Map<String, List<BftForkSpec<SubProtocolConfiguration>>> bftForksSpecsByProtocolName = new HashMap<>();
+    for (BftBesuControllerBuilder besuControllerBuilder: besuControllerBuilders) {
+      final SubProtocolConfiguration subProtocolConfiguration = besuControllerBuilder.createSubProtocolConfiguration(
+          ethProtocolManager);
+      final List<SubProtocol> subProtocols = subProtocolConfiguration.getSubProtocols();
+      final List<ProtocolManager> protocolManagers = subProtocolConfiguration.getProtocolManagers();
+      for (int i=0; i < subProtocols.size(); i++) {
+        final SubProtocol subProtocol = subProtocols.get(i);
+        final List<BftForkSpec<SubProtocolConfiguration>> bftForkSpecs = bftForksSpecsByProtocolName.getOrDefault(
+            subProtocol.getName(),
+            new ArrayList<>());
+        bftForkSpecs.add(new BftForkSpec<>(besuControllerBuilder.bftConfigOptions().getBlock(), new SubProtocolConfiguration().withSubProtocol(subProtocol, protocolManagers.get(i))));
+        bftForksSpecsByProtocolName.put(subProtocol.getName(), bftForkSpecs);
+      }
+    }
 
-    final List<SubProtocolConfiguration> subProtocolConfigurations =
-        subProtocolSpecs.stream()
-            .flatMap(
-                subProtocolSpec -> {
-                  final BftForkSpec<ProtocolManager> genesisFork = protocolManagerSpecs.get(0);
-                  final List<BftForkSpec<ProtocolManager>> forks =
-                      protocolManagerSpecs.subList(1, protocolManagerSpecs.size());
+    // TODO replace with stream?
+    final Map<String, List<BftForkSpec<ProtocolManager>>> bftForksSpecsByProtocolManager = new HashMap<>();
+    for (BftBesuControllerBuilder besuControllerBuilder: besuControllerBuilders) {
+      final SubProtocolConfiguration subProtocolConfiguration = besuControllerBuilder.createSubProtocolConfiguration(
+          ethProtocolManager);
+      final List<SubProtocol> subProtocols = subProtocolConfiguration.getSubProtocols();
+      final List<ProtocolManager> protocolManagers = subProtocolConfiguration.getProtocolManagers();
+      for (int i=0; i < subProtocols.size(); i++) {
+        final SubProtocol subProtocol = subProtocols.get(i);
+        final List<BftForkSpec<ProtocolManager>> bftForkSpecs = bftForksSpecsByProtocolManager.getOrDefault(
+            subProtocol.getName(),
+            new ArrayList<>());
+        bftForkSpecs.add(new BftForkSpec<>(besuControllerBuilder.bftConfigOptions().getBlock(), protocolManagers.get(i)));
+        bftForksSpecsByProtocolManager.put(subProtocol.getName(), bftForkSpecs);
+      }
+    }
 
-                  return subProtocolSpec.getConfigOptions().getSubProtocols().stream()
-                      .map(
-                          subProtocol -> {
-                            final BftForksSchedule<ProtocolManager>
-                                protocolManagerBftForksSchedule =
-                                    new BftForksSchedule<>(genesisFork, forks);
-                            final ForkingProtocolManager forkingProtocolManager =
-                                new ForkingProtocolManager(
-                                    protocolManagerBftForksSchedule,
-                                    blockchain.getChainHeadBlockNumber());
+    final List<SubProtocolConfiguration> subProtocolConfigurations = bftForksSpecsByProtocolName.values().stream()
+        .flatMap(Collection::stream)
+        .map(a -> wrapWithForkingProtocolManager(a, bftForksSpecsByProtocolManager))
+        .map(BftForkSpec::getConfigOptions).collect(Collectors.toList());
 
-                            return new SubProtocolConfiguration()
-                                .withSubProtocol(subProtocol, forkingProtocolManager);
-                          });
-                })
-            .collect(Collectors.toList());
+    final Set<SubProtocolConfiguration> uniqueSubProtocolConfigurations = subProtocolConfigurations.stream()
+        .filter(distinctByKey(SubProtocolConfiguration::getSubProtocols))
+        .collect(Collectors.toSet());
 
-    return unifiedSubProtocolConfiguration(subProtocolConfigurations);
+    final SubProtocolConfiguration subProtocolConfiguration = unifiedSubProtocolConfiguration(
+        uniqueSubProtocolConfigurations);
+    return subProtocolConfiguration;
+  }
+
+  // TODO find better way
+  // Stackoverflow https://stackoverflow.com/questions/23699371/java-8-distinct-by-property
+  public static <T> Predicate<T> distinctByKey(final Function<? super T, ?> keyExtractor) {
+    Set<Object> seen = ConcurrentHashMap.newKeySet();
+    return t -> seen.add(keyExtractor.apply(t));
+  }
+
+  private BftForkSpec<SubProtocolConfiguration> wrapWithForkingProtocolManager(final BftForkSpec<SubProtocolConfiguration> subProtocolConfiguration, final Map<String, List<BftForkSpec<ProtocolManager>>> forks) {
+    final SubProtocolConfiguration configOptions = subProtocolConfiguration.getConfigOptions();
+    final SubProtocolConfiguration unifiedConfig = new SubProtocolConfiguration();
+    for (int i=0; i < configOptions.getSubProtocols().size(); i++) {
+      final SubProtocol subProtocol = configOptions.getSubProtocols().get(i);
+      final List<BftForkSpec<ProtocolManager>> forkSpecs = forks.get(subProtocol.getName());
+      final List<BftForkSpec<ProtocolManager>> genesisForks = forkSpecs.stream()
+          .filter(b -> b.getBlock() == 0).collect(Collectors.toList());
+      final BftForkSpec<ProtocolManager> genesisFork = genesisForks.size() == 1 ? genesisForks.get(0) : new BftForkSpec<>(0, new NoopProtocolManager(subProtocol.getName()));
+      final List<BftForkSpec<ProtocolManager>> otherForks = forkSpecs.stream().filter(b -> b.getBlock() > 0).collect(
+          Collectors.toList());
+
+      final BftForksSchedule<ProtocolManager> protocolManagerBftForksSchedule = new BftForksSchedule<>(
+          genesisFork, otherForks);
+
+      final ForkingProtocolManager forkingProtocolManager = new ForkingProtocolManager(
+          protocolManagerBftForksSchedule,
+          blockchain.getChainHeadBlockNumber());
+      blockchain.observeBlockAdded(forkingProtocolManager);
+
+      unifiedConfig.withSubProtocol(subProtocol, forkingProtocolManager);
+    }
+
+    return new BftForkSpec<>(subProtocolConfiguration.getBlock(), unifiedConfig);
   }
 
   private SubProtocolConfiguration unifiedSubProtocolConfiguration(
-      final List<SubProtocolConfiguration> subProtocolConfigurations) {
+      final Set<SubProtocolConfiguration> subProtocolConfigurations) {
     final SubProtocolConfiguration unifiedSubProtocolConfiguration = new SubProtocolConfiguration();
     for (SubProtocolConfiguration subProtocolConfiguration : subProtocolConfigurations) {
       for (int i = 0; i < subProtocolConfiguration.getSubProtocols().size(); i++) {
