@@ -169,6 +169,24 @@ public class WebSocketServiceTest {
   }
 
   @Test
+  public void websocketServiceHandlesBinaryFrames (final TestContext context) {
+    final Async async = context.async();
+
+    httpClient.webSocket(
+        "/",
+        future -> {
+          if (future.succeeded()) {
+            WebSocket ws = future.result();
+            ws.writeFinalBinaryFrame(Buffer.buffer((byte) 1));
+          } else {
+            context.fail("websocket connection failed");
+          }
+        });
+
+    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+  }
+
+  @Test
   public void websocketServiceRemoveSubscriptionOnConnectionClose(final TestContext context) {
     final Async async = context.async();
 
