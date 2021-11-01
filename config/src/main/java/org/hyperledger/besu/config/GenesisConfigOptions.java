@@ -71,8 +71,9 @@ public interface GenesisConfigOptions {
 
   OptionalLong getLondonBlockNumber();
 
-  // TODO EIP-1559 change for the actual fork name when known
-  OptionalLong getAleutBlockNumber();
+  OptionalLong getArrowGlacierBlockNumber();
+
+  OptionalLong getBaseFeePerGas();
 
   OptionalLong getEIP1559BlockNumber();
 

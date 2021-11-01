@@ -252,31 +252,25 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getLondonBlockNumber() {
-    final OptionalLong londonBlock = getOptionalLong("londonblock");
-    final OptionalLong calaverasblock = getOptionalLong("calaverasblock");
-    if (calaverasblock.isPresent()) {
-      if (londonBlock.isPresent()) {
-        throw new RuntimeException(
-            "Genesis files cannot specify both londonblock and calaverasblock.");
-      }
-      return calaverasblock;
-    }
-    return londonBlock;
+    return getOptionalLong("londonblock");
   }
 
   @Override
-  public OptionalLong getAleutBlockNumber() {
-    return getOptionalLong("aleutblock");
+  public OptionalLong getArrowGlacierBlockNumber() {
+    return getOptionalLong("arrowglacierblock");
   }
 
   @Override
-  // TODO EIP-1559 change for the actual fork name when known
+  public OptionalLong getBaseFeePerGas() {
+    return Optional.ofNullable(configOverrides.get("baseFeePerGas"))
+        .map(Long::parseLong)
+        .map(OptionalLong::of)
+        .orElse(OptionalLong.empty());
+  }
+
+  @Override
   public OptionalLong getEIP1559BlockNumber() {
-    if (getAleutBlockNumber().isPresent()) {
-      return getAleutBlockNumber();
-    } else {
-      return getLondonBlockNumber();
-    }
+    return getLondonBlockNumber();
   }
 
   @Override
@@ -405,7 +399,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
-    getAleutBlockNumber().ifPresent(l -> builder.put("aleutBlock", l));
+    getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
 
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
@@ -507,7 +501,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getMuirGlacierBlockNumber(),
             getBerlinBlockNumber(),
             getLondonBlockNumber(),
-            getAleutBlockNumber(),
+            getArrowGlacierBlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
             getGothamBlockNumber(),

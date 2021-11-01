@@ -11,6 +11,30 @@
 ### Early Access Features
 
 
+## 21.10.0-RC5
+
+### Additions and Improvements
+
+### Bug Fixes
+- add support for ArrowGlacier hardfork [#2943](https://github.com/hyperledger/besu/issues/2943)
+
+### Early Access Features
+### Download Link
+
+
+## 21.10.0-RC4
+
+### Additions and Improvements
+
+### Bug Fixes
+- Fixes the exit condition for loading a BonsaiPersistedWorldState for a sibling block of the last one persisted [#2967](https://github.com/hyperledger/besu/pull/2967)
+- Fixes bonsai getMutable regression affecting fast-sync [#2934](https://github.com/hyperledger/besu/pull/2934)
+
+### Early Access Features
+### Download Link
+https://hyperledger.jfrog.io/native/besu-binaries/besu/21.10.0-RC4/besu-21.10.0-RC4.zip \
+SHA256: b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793
+
 ## 21.10.0-RC3
 
 ### Additions and Improvements
