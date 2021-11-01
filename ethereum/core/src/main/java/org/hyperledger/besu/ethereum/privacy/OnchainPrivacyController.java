@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -121,7 +121,11 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
       if (rlpInput.nextSize() > 0) {
         return Optional.of(
             new PrivacyGroup(
-                privacyGroupId, PrivacyGroup.Type.ONCHAIN, "", "", decodeList(rlpInput.raw())));
+                privacyGroupId,
+                PrivacyGroup.Type.ONCHAIN,
+                "",
+                "",
+                decodeParticipantList(rlpInput.raw())));
       } else {
         return Optional.empty();
       }
@@ -200,7 +204,7 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
     return participants;
   }
 
-  private List<String> decodeList(final Bytes rlpEncodedList) {
+  private List<String> decodeParticipantList(final Bytes rlpEncodedList) {
     final ArrayList<String> decodedElements = new ArrayList<>();
     // first 32 bytes is dynamic list offset
     final UInt256 lengthOfList = UInt256.fromBytes(rlpEncodedList.slice(32, 32)); // length of list

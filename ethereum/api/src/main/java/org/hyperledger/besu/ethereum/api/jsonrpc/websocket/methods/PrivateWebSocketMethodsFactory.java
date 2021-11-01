@@ -22,13 +22,13 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.OnchainPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PluginPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
-import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -97,8 +97,7 @@ public class PrivateWebSocketMethodsFactory {
                 privacyParameters.getPrivateWorldStateReader());
       }
       return privacyParameters.isMultiTenancyEnabled()
-          ? new RestrictedMultiTenancyPrivacyController(
-              restrictedPrivacyController, chainId, privacyParameters.getEnclave())
+          ? new MultiTenancyPrivacyController(restrictedPrivacyController)
           : restrictedPrivacyController;
     }
   }

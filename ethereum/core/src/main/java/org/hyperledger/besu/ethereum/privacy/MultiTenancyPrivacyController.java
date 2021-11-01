@@ -16,31 +16,23 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
-import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class RestrictedMultiTenancyPrivacyController implements PrivacyController {
+public class MultiTenancyPrivacyController implements PrivacyController {
 
   private final PrivacyController privacyController;
-  private final PrivateTransactionValidator privateTransactionValidator;
 
-  public RestrictedMultiTenancyPrivacyController(
-      final PrivacyController privacyController,
-      final Optional<BigInteger> chainId,
-      final Enclave enclave) {
+  public MultiTenancyPrivacyController(final PrivacyController privacyController) {
     this.privacyController = privacyController;
-    privateTransactionValidator = new PrivateTransactionValidator(chainId);
   }
 
   @Override
@@ -54,8 +46,6 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
       final PrivateTransaction privateTransaction,
       final String privacyUserId,
       final Optional<PrivacyGroup> maybePrivacyGroup) {
-    verifyPrivateFromMatchesPrivacyUserId(
-        privateTransaction.getPrivateFrom().toBase64String(), privacyUserId);
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
       verifyPrivacyGroupContainsPrivacyUserId(
           privateTransaction.getPrivacyGroupId().get().toBase64String(), privacyUserId);
@@ -70,8 +60,10 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
       final String name,
       final String description,
       final String privacyUserId) {
-    // no validation necessary as the enclave createPrivacyGroup fails if the addresses don't
-    // include the from (privacyUserId)
+    if (!addresses.contains(privacyUserId)) {
+      throw new MultiTenancyValidationException(
+          "Privacy group addresses must contain the enclave public key");
+    }
     return privacyController.createPrivacyGroup(addresses, name, description, privacyUserId);
   }
 
@@ -88,11 +80,7 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
       throw new MultiTenancyValidationException(
           "Privacy group addresses must contain the enclave public key");
     }
-    final PrivacyGroup[] resultantGroups =
-        privacyController.findPrivacyGroupByMembers(addresses, privacyUserId);
-    return Arrays.stream(resultantGroups)
-        .filter(g -> g.getMembers().contains(privacyUserId))
-        .toArray(PrivacyGroup[]::new);
+    return privacyController.findPrivacyGroupByMembers(addresses, privacyUserId);
   }
 
   @Override
@@ -101,10 +89,7 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
 
     final String privacyGroupId = privateTransaction.determinePrivacyGroupId().toBase64String();
     verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId);
-    return privateTransactionValidator.validate(
-        privateTransaction,
-        determineNonce(privateTransaction.getSender(), privacyGroupId, privacyUserId),
-        true);
+    return privacyController.validatePrivateTransaction(privateTransaction, privacyUserId);
   }
 
   @Override
@@ -155,18 +140,10 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
         privacyGroupId, contractAddress, blockHash, privacyUserId);
   }
 
-  private void verifyPrivateFromMatchesPrivacyUserId(
-      final String privateFrom, final String privacyUserId) {
-    if (!privateFrom.equals(privacyUserId)) {
-      throw new MultiTenancyValidationException(
-          "Transaction privateFrom must match enclave public key");
-    }
-  }
-
   @Override
   public void verifyPrivacyGroupContainsPrivacyUserId(
       final String privacyGroupId, final String privacyUserId) {
-    verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId, Optional.empty());
+    privacyController.verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId);
   }
 
   @Override
