@@ -568,6 +568,26 @@ public abstract class MainnetProtocolSpecs {
         .name(LONDON_FORK_NAME);
   }
 
+  static ProtocolSpecBuilder arrowGlacierDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+    return londonDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .difficultyCalculator(MainnetDifficultyCalculators.ARROW_GLACIER)
+        .name("ArrowGlacier");
+  }
+
   private static TransactionReceipt frontierTransactionReceiptFactory(
       // ignored because it's always FRONTIER
       final TransactionType __,
