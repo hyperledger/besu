@@ -3,7 +3,7 @@ FROM openjdk:11-slim-buster
 
 ARG VERSION="dev"
 RUN apt-get update  && \
- apt-get install --no-install-recommends -q --assume-yes curl=7* wget=1.20* jq=1.5* procps=3* net-tools=1.60*  && \
+ apt-get install --no-install-recommends -q --assume-yes curl=7* wget=1.20* jq=1.5* net-tools=1.60*  && \
  apt-get clean  && \
  rm -rf /var/lib/apt/lists/*  && \
  adduser --disabled-password --gecos "" --home /opt/besu besu && \
