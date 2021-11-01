@@ -2,9 +2,11 @@
 FROM openjdk:11-slim-buster
 
 ARG VERSION="dev"
-RUN apt update
-RUN apt-get install -q --assume-yes curl wget jq procps net-tools
-RUN adduser --disabled-password --gecos "" --home /opt/besu besu && \
+RUN apt-get update  && \
+ apt-get install --no-install-recommends -q --assume-yes curl=7* wget=1.20* jq=1.5* procps=3.3* net-tools=1.60*  && \
+ apt-get clean  && \
+ rm -rf /var/lib/apt/lists/*  && \
+ adduser --disabled-password --gecos "" --home /opt/besu besu && \
     chown besu:besu /opt/besu
 
 USER besu
