@@ -153,7 +153,7 @@ public class EIP2124Test {
             empty()
           },
           {
-            "Mainnet // First Istanbul and first Muir Glacier block",
+            "Mainnet // First Istanbul block",
             Network.MAINNET,
             9069000L,
             ForkIdTestUtil.wantForkId("0x879d6e30", 9200000L),
@@ -161,7 +161,7 @@ public class EIP2124Test {
             empty()
           },
           {
-            "Mainnet // Last Istanbul and first Muir Glacier block",
+            "Mainnet // Last Istanbul block",
             Network.MAINNET,
             9199999L,
             ForkIdTestUtil.wantForkId("0x879d6e30", 9200000L),
@@ -172,15 +172,63 @@ public class EIP2124Test {
             "Mainnet // First Muir Glacier block",
             Network.MAINNET,
             9200000L,
-            ForkIdTestUtil.wantForkId("0xe029e991", 0L),
+            ForkIdTestUtil.wantForkId("0xe029e991", 12244000L),
             Optional.of(ForkIds.MAINNET),
             empty()
           },
           {
-            "Mainnet // Future Muir Glacier block",
+            "Mainnet // Last Muir Glacier block",
             Network.MAINNET,
-            10000000L,
-            ForkIdTestUtil.wantForkId("0xe029e991", 0L),
+            12243999L,
+            ForkIdTestUtil.wantForkId("0xe029e991", 12244000L),
+            Optional.of(ForkIds.MAINNET),
+            empty()
+          },
+          {
+            "Mainnet // First Berlin block",
+            Network.MAINNET,
+            12244000L,
+            ForkIdTestUtil.wantForkId("0x0eb440f6", 12965000L),
+            Optional.of(ForkIds.MAINNET),
+            empty()
+          },
+          {
+            "Mainnet // Last Berlin block",
+            Network.MAINNET,
+            12964999L,
+            ForkIdTestUtil.wantForkId("0x0eb440f6", 12965000L),
+            Optional.of(ForkIds.MAINNET),
+            empty()
+          },
+          {
+            "Mainnet // First London block",
+            Network.MAINNET,
+            12965000L,
+            ForkIdTestUtil.wantForkId("0xb715077d", 13773000L),
+            Optional.of(ForkIds.MAINNET),
+            empty()
+          },
+          {
+            "Mainnet // Last London block",
+            Network.MAINNET,
+            13772999L,
+            ForkIdTestUtil.wantForkId("0xb715077d", 13773000L),
+            Optional.of(ForkIds.MAINNET),
+            empty()
+          },
+          {
+            "Mainnet // First Arrow Glacier block",
+            Network.MAINNET,
+            13773000L,
+            ForkIdTestUtil.wantForkId("0x20c327fc", 0L),
+            Optional.of(ForkIds.MAINNET),
+            empty()
+          },
+          {
+            "Mainnet // Future Arrow Glacier block",
+            Network.MAINNET,
+            20000000L,
+            ForkIdTestUtil.wantForkId("0x20c327fc", 0L),
             Optional.of(ForkIds.MAINNET),
             empty()
           },

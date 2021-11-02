@@ -9,13 +9,39 @@
 - Upgrade CircleCI OpenJDK docker image to version 11.0.12. [#2928](https://github.com/hyperledger/besu/pull/2928)
 - Update JDK 11 to latest version in Besu Docker images. [#2925](https://github.com/hyperledger/besu/pull/2925)
 - Add Sepolia proof-of-work testnet configurations [#2920](https://github.com/hyperledger/besu/pull/2920)
+- Allow block period to be configured for IBFT2 and QBFT using transitions [\#2902](https://github.com/hyperledger/besu/pull/2902)
 
 ### Bug Fixes
 - Do not change the sender balance, but set gas fee to zero, when simulating a transaction without enforcing balance checks. [#2454](https://github.com/hyperledger/besu/pull/2454)
 - Ensure genesis block has the default base fee if london is at block 0 [#2920](https://github.com/hyperledger/besu/pull/2920) 
+- Fixes the exit condition for loading a BonsaiPersistedWorldState for a sibling block of the last one persisted [#2967](https://github.com/hyperledger/besu/pull/2967)
 
 ### Early Access Features
 - Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
+
+## 21.10.0-RC5
+
+### Additions and Improvements
+
+### Bug Fixes
+- add support for ArrowGlacier hardfork [#2943](https://github.com/hyperledger/besu/issues/2943)
+
+### Early Access Features
+### Download Link
+
+
+## 21.10.0-RC4
+
+### Additions and Improvements
+
+### Bug Fixes
+- Fixes the exit condition for loading a BonsaiPersistedWorldState for a sibling block of the last one persisted [#2967](https://github.com/hyperledger/besu/pull/2967)
+- Fixes bonsai getMutable regression affecting fast-sync [#2934](https://github.com/hyperledger/besu/pull/2934)
+
+### Early Access Features
+### Download Link
+https://hyperledger.jfrog.io/native/besu-binaries/besu/21.10.0-RC4/besu-21.10.0-RC4.zip \
+SHA256: b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793
 
 ## 21.10.0-RC3
 
