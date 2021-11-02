@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
@@ -256,11 +257,21 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getArrowGlacierBlockNumber() {
+    return getOptionalLong("arrowglacierblock");
+  }
+
+  @Override
   public OptionalLong getBaseFeePerGas() {
     return Optional.ofNullable(configOverrides.get("baseFeePerGas"))
         .map(Long::parseLong)
         .map(OptionalLong::of)
         .orElse(OptionalLong.empty());
+  }
+
+  @Override
+  public Optional<UInt256> getTerminalTotalDifficulty() {
+    return getOptionalBigInteger("terminaltotaldifficulty").map(UInt256::valueOf);
   }
 
   @Override
@@ -389,6 +400,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
+    getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
 
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
@@ -493,6 +505,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getMuirGlacierBlockNumber(),
             getBerlinBlockNumber(),
             getLondonBlockNumber(),
+            getArrowGlacierBlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
             getGothamBlockNumber(),
