@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import java.util.Optional;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
+
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,7 +47,8 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
 
   /**
    * Calculate the nonce, while taking into account any PMTs that are already in progress. This
-   * reduces the window where successive private transactions would get the same nonce based on priv_getTransactionCount.
+   * reduces the window where successive private transactions would get the same nonce based on
+   * priv_getTransactionCount.
    *
    * @param sender the sender of the transaction
    * @param privacyGroupId the privacy group ID this tx is for
@@ -78,6 +80,11 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
                 })
             .orElse(Account.DEFAULT_NONCE);
 
-    return (maybePendingPrivateNonceFromPmtPool.map(pending -> {return (pending >= stateBasedPrivateNonce ? pending + 1 : stateBasedPrivateNonce);}).orElse(stateBasedPrivateNonce));
+    return (maybePendingPrivateNonceFromPmtPool
+        .map(
+            pending -> {
+              return (pending >= stateBasedPrivateNonce ? pending + 1 : stateBasedPrivateNonce);
+            })
+        .orElse(stateBasedPrivateNonce));
   }
 }
