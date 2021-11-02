@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
@@ -57,6 +58,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private TransactionPool transactionPool;
+  @Mock private PmtTransactionPool pmtTransactionPool;
   @Mock private PrivacyParameters privacyParameters;
 
   private TestPrivacyApiGroupJsonRpcMethods privacyApiGroupJsonRpcMethods;
@@ -67,7 +69,12 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
 
     privacyApiGroupJsonRpcMethods =
         new TestPrivacyApiGroupJsonRpcMethods(
-            blockchainQueries, protocolSchedule, transactionPool, privacyParameters, rpcMethod);
+            blockchainQueries,
+            protocolSchedule,
+            transactionPool,
+            pmtTransactionPool,
+            privacyParameters,
+            rpcMethod);
   }
 
   @Test
@@ -171,9 +178,15 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
         final BlockchainQueries blockchainQueries,
         final ProtocolSchedule protocolSchedule,
         final TransactionPool transactionPool,
+        final PmtTransactionPool pmtTransactionPool,
         final PrivacyParameters privacyParameters,
         final JsonRpcMethod rpcMethod) {
-      super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);
+      super(
+          blockchainQueries,
+          protocolSchedule,
+          transactionPool,
+          pmtTransactionPool,
+          privacyParameters);
       this.rpcMethod = rpcMethod;
     }
 
