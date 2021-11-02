@@ -109,7 +109,6 @@ public class RocksDBColumnarKeyValueStorage
 
       txOptions = new TransactionDBOptions();
       final List<ColumnFamilyHandle> columnHandles = new ArrayList<>(columnDescriptors.size());
-
       db =
           OptimisticTransactionDB.open(
               options, configuration.getDatabaseDir().toString(), columnDescriptors, columnHandles);

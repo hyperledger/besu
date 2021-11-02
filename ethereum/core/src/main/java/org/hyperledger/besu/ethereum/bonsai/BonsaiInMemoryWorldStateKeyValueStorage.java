@@ -20,6 +20,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.javatuples.Pair;
 
 public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage
     implements WorldStateStorage {
@@ -32,16 +33,14 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage,
-      final KeyValueStorage snapTrieBranchBucketStorage,
-      final KeyValueStorage snapTrieBranchSecondBucketStorage) {
+      final Pair<KeyValueStorage, KeyValueStorage> snapTrieBranchSecondBucketsStorage) {
     super(
         accountStorage,
         codeStorage,
         storageStorage,
         trieBranchStorage,
         trieLogStorage,
-        snapTrieBranchBucketStorage,
-        snapTrieBranchSecondBucketStorage);
+        snapTrieBranchSecondBucketsStorage);
   }
 
   @Override
@@ -53,8 +52,9 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
         storageStorage.startTransaction(),
         trieBranchStorage.startTransaction(),
         trieLogStorage.startTransaction(),
-        snapTrieBranchBucketStorage.startTransaction(),
-        snapTrieBranchSecondBucketStorage.startTransaction());
+        Pair.with(
+            snapTrieBranchBucketsStorage.getValue0().startTransaction(),
+            snapTrieBranchBucketsStorage.getValue1().startTransaction()));
   }
 
   public static class InMemoryUpdater extends BonsaiWorldStateKeyValueStorage.Updater
@@ -67,8 +67,8 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
         final KeyValueStorageTransaction storageStorageTransaction,
         final KeyValueStorageTransaction trieBranchStorageTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction,
-        final KeyValueStorageTransaction snapTrieBranchBucketStorageTransaction,
-        final KeyValueStorageTransaction snapTrieBranchSecondBucketStorageTransaction) {
+        final Pair<KeyValueStorageTransaction, KeyValueStorageTransaction>
+            snapTrieBranchBucketsStorageTransaction) {
       super(
           bonsaiWorldStateKeyValueStorage,
           accountStorageTransaction,
@@ -76,8 +76,7 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
           storageStorageTransaction,
           trieBranchStorageTransaction,
           trieLogStorageTransaction,
-          snapTrieBranchBucketStorageTransaction,
-          snapTrieBranchSecondBucketStorageTransaction);
+          snapTrieBranchBucketsStorageTransaction);
     }
 
     @Override

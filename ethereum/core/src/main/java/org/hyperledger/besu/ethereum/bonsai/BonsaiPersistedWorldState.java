@@ -42,6 +42,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.javatuples.Pair;
 
 public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorldView {
 
@@ -82,8 +83,9 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             worldStateStorage.storageStorage,
             worldStateStorage.trieBranchStorage,
             worldStateStorage.trieLogStorage,
-            worldStateStorage.snapTrieBranchBucketStorage,
-            worldStateStorage.snapTrieBranchSecondBucketStorage));
+            Pair.with(
+                worldStateStorage.snapTrieBranchBucketsStorage.getValue0(),
+                worldStateStorage.snapTrieBranchBucketsStorage.getValue1())));
   }
 
   @Override
@@ -359,7 +361,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   public Hash frontierRootHash() {
     return calculateRootHash(
         new BonsaiWorldStateKeyValueStorage.Updater(
-            worldStateStorage, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx));
+            worldStateStorage, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx, Pair.with(noOpTx, noOpTx)));
   }
 
   public Hash blockHash() {
