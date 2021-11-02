@@ -77,7 +77,8 @@ public class PrivGetLogsTest {
   @Before
   public void before() {
     method =
-        new PrivGetLogs(blockchainQueries, privacyQueries, privacyController, privacyIdProvider, false);
+        new PrivGetLogs(
+            blockchainQueries, privacyQueries, privacyController, privacyIdProvider, false);
   }
 
   @Test

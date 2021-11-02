@@ -43,7 +43,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurati
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

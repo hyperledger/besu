@@ -251,8 +251,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
       final String privacyGroupId, final String privacyUserId) {
     final PrivacyGroup offchainPrivacyGroup = enclave.retrievePrivacyGroup(privacyGroupId);
     if (!offchainPrivacyGroup.getMembers().contains(privacyUserId)) {
-      throw new RuntimeException(
-          "Privacy group must contain the enclave public key");
+      throw new RuntimeException("Privacy group must contain the enclave public key");
     }
   }
 

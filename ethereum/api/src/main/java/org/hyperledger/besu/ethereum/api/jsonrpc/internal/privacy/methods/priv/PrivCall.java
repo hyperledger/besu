@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;

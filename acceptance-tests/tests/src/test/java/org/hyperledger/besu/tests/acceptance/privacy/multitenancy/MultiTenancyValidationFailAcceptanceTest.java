@@ -60,7 +60,8 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
 
   private static final String PRIVACY_GROUP_ID = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final String ENCLAVE_PUBLIC_KEY = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
-  private static final String OTHER_ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+  private static final String OTHER_ENCLAVE_PUBLIC_KEY =
+      "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private final Address senderAddress =
       Address.wrap(Bytes.fromHexString(accounts.getPrimaryBenefactor().getAddress()));
 
@@ -171,7 +172,9 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
     final Transaction<Integer> transaction =
         privacyTransactions.getEeaTransactionCount(
             accountAddress, OTHER_ENCLAVE_PUBLIC_KEY, privateFor);
-    node.verify(priv.multiTenancyValidationFail(transaction, PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY));
+    node.verify(
+        priv.multiTenancyValidationFail(
+            transaction, PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY));
   }
 
   @Test

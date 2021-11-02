@@ -72,7 +72,8 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
 
     if (!privateFrom.equals(privacyUserId)) {
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
     }
 
     try {

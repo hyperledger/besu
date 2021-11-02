@@ -44,10 +44,11 @@ public class PrivGetLogs implements JsonRpcMethod {
   private final boolean multiTenancyEnabled;
 
   public PrivGetLogs(
-          final BlockchainQueries blockchainQueries,
-          final PrivacyQueries privacyQueries,
-          final PrivacyController privacyController,
-          final PrivacyIdProvider privacyIdProvider, final boolean multiTenancyEnabled) {
+      final BlockchainQueries blockchainQueries,
+      final PrivacyQueries privacyQueries,
+      final PrivacyController privacyController,
+      final PrivacyIdProvider privacyIdProvider,
+      final boolean multiTenancyEnabled) {
     this.blockchainQueries = blockchainQueries;
     this.privacyQueries = privacyQueries;
     this.privacyController = privacyController;
@@ -74,9 +75,9 @@ public class PrivGetLogs implements JsonRpcMethod {
         filter
             .getBlockHash()
             .map(
-                blockHash -> findLogsForBlockHash(requestContext, privacyGroupId, filter, blockHash))
-            .orElseGet(
-                () -> findLogsForBlockRange(requestContext, privacyGroupId, filter));
+                blockHash ->
+                    findLogsForBlockHash(requestContext, privacyGroupId, filter, blockHash))
+            .orElseGet(() -> findLogsForBlockRange(requestContext, privacyGroupId, filter));
 
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(), new LogsResult(matchingLogs));
@@ -91,7 +92,7 @@ public class PrivGetLogs implements JsonRpcMethod {
         filter.getToBlock().getNumber().orElse(blockchainQueries.headBlockNumber());
     if (multiTenancyEnabled) {
       PrivUtil.checkMembershipForAuthenticatedUser(
-              privacyController, privacyIdProvider, requestContext, privacyGroupId, toBlockNumber);
+          privacyController, privacyIdProvider, requestContext, privacyGroupId, toBlockNumber);
     }
     return privacyQueries.matchingLogs(
         privacyGroupId, fromBlockNumber, toBlockNumber, filter.getLogsQuery());
@@ -109,7 +110,7 @@ public class PrivGetLogs implements JsonRpcMethod {
     final long blockNumber = blockHeader.get().getNumber();
     if (multiTenancyEnabled) {
       PrivUtil.checkMembershipForAuthenticatedUser(
-              privacyController, privacyIdProvider, requestContext, privacyGroupId, blockNumber);
+          privacyController, privacyIdProvider, requestContext, privacyGroupId, blockNumber);
     }
     return privacyQueries.matchingLogs(privacyGroupId, blockHash, filter.getLogsQuery());
   }
