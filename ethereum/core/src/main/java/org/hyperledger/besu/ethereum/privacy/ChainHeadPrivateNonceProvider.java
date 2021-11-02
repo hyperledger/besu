@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import java.util.Optional;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -45,11 +46,11 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
 
   /**
    * Calculate the nonce, while taking into account any PMTs that are already in progress. This
-   * makes nonce management for private tx slightly more robust.
+   * reduces the window where successive private transactions would get the same nonce based on priv_getTransactionCount.
    *
    * @param sender the sender of the transaction
    * @param privacyGroupId the privacy group ID this tx is for
-   * @return the nonce, taking into account the PMT in the pool
+   * @return the nonce, taking into account any PMT in the pool
    */
   @Override
   public long getNonce(final Address sender, final Bytes32 privacyGroupId) {
@@ -61,9 +62,7 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
             + sender
             + " and privacyGroupID (base 64) "
             + privacyGroupId.toBase64String());
-    // if latestNonce > pendingNonce return latestNonce (as below)
-    // else return pendingNonce + 1
-    long pendingPrivateNonceFromPmtPool =
+    final Optional<Long> maybePendingPrivateNonceFromPmtPool =
         pmtTransactionPool.getMaxMatchingNonce(
             sender.toHexString(), privacyGroupId.toBase64String());
 
@@ -79,15 +78,6 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
                 })
             .orElse(Account.DEFAULT_NONCE);
 
-    if (pendingPrivateNonceFromPmtPool == 0 && stateBasedPrivateNonce == 0) {
-      return 0L;
-    }
-    if (pendingPrivateNonceFromPmtPool >= stateBasedPrivateNonce) {
-      LOG.info("using pending nonce {}", pendingPrivateNonceFromPmtPool + 1);
-      return pendingPrivateNonceFromPmtPool + 1;
-    } else {
-      LOG.info("using state based nonce {} ", stateBasedPrivateNonce);
-      return stateBasedPrivateNonce;
-    }
+    return (maybePendingPrivateNonceFromPmtPool.map(pending -> {return (pending >= stateBasedPrivateNonce ? pending + 1 : stateBasedPrivateNonce);}).orElse(stateBasedPrivateNonce));
   }
 }

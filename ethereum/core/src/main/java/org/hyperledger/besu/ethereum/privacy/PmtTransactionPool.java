@@ -1,5 +1,6 @@
 package org.hyperledger.besu.ethereum.privacy;
 
+import java.util.Optional;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
@@ -31,7 +32,7 @@ public class PmtTransactionPool implements BlockAddedObserver {
             });
   }
 
-  public long getMaxMatchingNonce(final String sender, final String privacyGroupId) {
+  public Optional<Long> getMaxMatchingNonce(final String sender, final String privacyGroupId) {
 
     return pmtPool.values().stream()
         .filter(
@@ -39,8 +40,7 @@ public class PmtTransactionPool implements BlockAddedObserver {
                 pmt.getSender().equals(sender)
                     && pmt.getPrivacyGroupIdBase64().equals(privacyGroupId))
         .map(pmt -> pmt.getPrivateNonce())
-        .max(Long::compare)
-        .orElse(0L);
+        .max(Long::compare);
   }
 
   public Hash addPmtTransactionTracker(

@@ -128,7 +128,7 @@ public class ChainHeadPrivateNonceProviderTest {
 
     final long nonce = privateNonceProvider.getNonce(ADDRESS, PRIVACY_GROUP_ID);
 
-    assertThat(nonce).isEqualTo(5L);
+    assertThat(nonce).isEqualTo(6L);
   }
 
   @Test
