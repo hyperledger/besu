@@ -108,9 +108,10 @@ public class ForkIdsTest {
               new ForkId(Bytes.ofUnsignedInt(0x668db0afL), 9069000L),
               new ForkId(Bytes.ofUnsignedInt(0x879d6e30L), 9200000L),
               new ForkId(Bytes.ofUnsignedInt(0xe029e991L), 12244000L),
-              new ForkId(Bytes.ofUnsignedInt(0xeb440f6L), 12965000),
-              new ForkId(Bytes.ofUnsignedInt(0xb715077dL), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0xb715077dL), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0xeb440f6L), 12965000L),
+              new ForkId(Bytes.ofUnsignedInt(0xb715077dL), 13773000L),
+              new ForkId(Bytes.ofUnsignedInt(0x20c327fc), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0x20c327fc), 0L))
         },
         new Object[] {
           NetworkName.MORDOR,
