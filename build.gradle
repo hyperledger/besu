@@ -613,9 +613,9 @@ artifactoryPublish {
 
 def dockerVariants = [
   "openjdk-11",
+  "openjdk-11-debug",
   "graalvm",
-  "openjdk-latest",
-  "openjdk-11-debug"
+  "openjdk-latest"
 ]
 
 // rename the top level dir from besu-<version> to besu and this makes it really
