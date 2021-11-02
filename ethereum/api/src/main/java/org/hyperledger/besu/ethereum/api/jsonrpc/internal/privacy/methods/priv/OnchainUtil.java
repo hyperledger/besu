@@ -17,18 +17,21 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class OnchainUtil {
 
   public static boolean isGroupAdditionTransaction(final PrivateTransaction privateTransaction) {
-    return privateTransaction.getTo().isPresent()
-        && privateTransaction.getTo().get().equals(ONCHAIN_PRIVACY_PROXY)
+    final Optional<Address> to = privateTransaction.getTo();
+    return to.isPresent()
+        && to.get().equals(ONCHAIN_PRIVACY_PROXY)
         && privateTransaction
             .getPayload()
             .toHexString()

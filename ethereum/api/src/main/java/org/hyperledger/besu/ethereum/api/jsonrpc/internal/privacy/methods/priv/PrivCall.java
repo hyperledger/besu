@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -59,9 +60,6 @@ public class PrivCall extends AbstractBlockParameterMethod {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
-
-    PrivUtil.checkMembershipForAuthenticatedUser(
-        privacyController, privacyIdProvider, request, privacyGroupId, blockNumber);
 
     return privacyController
         .simulatePrivateTransaction(privacyGroupId, privacyUserId, callParams, blockNumber)

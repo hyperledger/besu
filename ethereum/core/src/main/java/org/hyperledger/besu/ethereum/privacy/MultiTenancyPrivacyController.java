@@ -46,9 +46,10 @@ public class MultiTenancyPrivacyController implements PrivacyController {
       final PrivateTransaction privateTransaction,
       final String privacyUserId,
       final Optional<PrivacyGroup> maybePrivacyGroup) {
-    if (privateTransaction.getPrivacyGroupId().isPresent()) {
+    final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
+    if (maybePrivacyGroupId.isPresent()) {
       verifyPrivacyGroupContainsPrivacyUserId(
-          privateTransaction.getPrivacyGroupId().get().toBase64String(), privacyUserId);
+          maybePrivacyGroupId.get().toBase64String(), privacyUserId);
     }
     return privacyController.createPrivateMarkerTransactionPayload(
         privateTransaction, privacyUserId, maybePrivacyGroup);

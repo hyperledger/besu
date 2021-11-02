@@ -78,7 +78,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
                 getPrivacyParameters().isOnchainPrivacyGroupsEnabled()),
             new PrivGetCode(getBlockchainQueries(), privacyController, privacyIdProvider),
             new PrivGetLogs(
-                getBlockchainQueries(), getPrivacyQueries(), privacyController, privacyIdProvider),
+                getBlockchainQueries(), getPrivacyQueries(), privacyController, privacyIdProvider, getPrivacyParameters().isMultiTenancyEnabled()),
             new PrivGetPrivateTransaction(privacyController, privacyIdProvider),
             new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
             new PrivGetTransactionCount(privacyController, privacyIdProvider),

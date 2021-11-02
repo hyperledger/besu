@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -67,6 +68,12 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
     final Address address = requestContext.getRequiredParameter(0, Address.class);
     final String privateFrom = requestContext.getRequiredParameter(1, String.class);
     final String[] privateFor = requestContext.getRequiredParameter(2, String[].class);
+
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
+
+    if (!privateFrom.equals(privacyUserId)) {
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
+    }
 
     try {
       final long nonce =

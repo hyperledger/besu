@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVA
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
@@ -187,7 +188,7 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
     // ELSE member is valid if the group doesn't exist yet - this is normal for onchain privacy
     // groups
     maybePrivacyGroup.ifPresent(
-        (group) -> {
+        group -> {
           if (!group.getMembers().contains(privacyUserId)) {
             throw new MultiTenancyValidationException(
                 "Privacy group must contain the enclave public key");
@@ -278,8 +279,9 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
   }
 
   private boolean isGroupAdditionTransaction(final PrivateTransaction privateTransaction) {
-    return privateTransaction.getTo().isPresent()
-        && privateTransaction.getTo().get().equals(ONCHAIN_PRIVACY_PROXY)
+    final Optional<Address> to = privateTransaction.getTo();
+    return to.isPresent()
+        && to.get().equals(ONCHAIN_PRIVACY_PROXY)
         && privateTransaction
             .getPayload()
             .toHexString()
@@ -299,7 +301,7 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
     if (isGroupAdditionTransaction(privateTransaction)) {
       final List<PrivateTransactionMetadata> privateTransactionMetadataList =
           buildTransactionMetadataList(privacyGroupId);
-      if (privateTransactionMetadataList.size() > 0) {
+      if (!privateTransactionMetadataList.isEmpty()) {
         final List<PrivateTransactionWithMetadata> privateTransactionWithMetadataList =
             retrievePrivateTransactions(
                 privacyGroupId, privateTransactionMetadataList, privacyUserId);

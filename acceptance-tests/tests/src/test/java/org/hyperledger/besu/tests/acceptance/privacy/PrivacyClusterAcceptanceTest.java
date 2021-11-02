@@ -238,15 +238,15 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     final PrivateTransactionReceipt alicePrivateTransactionReceipt =
         alice.execute(privacyTransactions.getPrivateTransactionReceipt(transactionHash));
-    assertThat(EventEmitter.BINARY).contains(alicePrivateTransactionReceipt.getOutput());
+    assertThat(EventEmitter.BINARY).contains(alicePrivateTransactionReceipt.getOutput().substring(2));
 
     bob.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(
-            transactionHash, expectedReceipt));
+            transactionHash, expectedReceipt, true));
 
     final PrivateTransactionReceipt bobPrivateTransactionReceipt =
         bob.execute(privacyTransactions.getPrivateTransactionReceipt(transactionHash));
-    assertThat(EventEmitter.BINARY).contains(bobPrivateTransactionReceipt.getOutput());
+    assertThat(EventEmitter.BINARY).contains(bobPrivateTransactionReceipt.getOutput().substring(2));
   }
 
   @Test

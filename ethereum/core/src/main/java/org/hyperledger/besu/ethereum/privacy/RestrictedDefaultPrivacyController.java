@@ -251,15 +251,14 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
       final String privacyGroupId, final String privacyUserId) {
     final PrivacyGroup offchainPrivacyGroup = enclave.retrievePrivacyGroup(privacyGroupId);
     if (!offchainPrivacyGroup.getMembers().contains(privacyUserId)) {
-      throw new MultiTenancyValidationException(
+      throw new RuntimeException(
           "Privacy group must contain the enclave public key");
     }
   }
 
   @Override
   public void verifyPrivacyGroupContainsPrivacyUserId(
-      final String privacyGroupId, final String privacyUserId, final Optional<Long> blockNumber)
-      throws MultiTenancyValidationException {
+      final String privacyGroupId, final String privacyUserId, final Optional<Long> blockNumber) {
     verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId);
   }
 
