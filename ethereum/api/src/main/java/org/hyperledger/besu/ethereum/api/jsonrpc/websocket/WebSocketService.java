@@ -123,6 +123,21 @@ public class WebSocketService {
 
       LOG.debug("Websocket Connected ({})", socketAddressAsString(socketAddress));
 
+      websocket.handler(
+          buffer -> {
+            LOG.debug(
+                "Received Websocket request (binary frame) {} ({})",
+                buffer.toString(),
+                socketAddressAsString(socketAddress));
+
+            AuthenticationUtils.getUser(
+                authenticationService,
+                token,
+                user ->
+                    websocketRequestHandler.handle(
+                        authenticationService, connectionId, buffer.toString(), user));
+          });
+
       websocket.textMessageHandler(
           payload -> {
             LOG.debug(

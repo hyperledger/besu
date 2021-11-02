@@ -41,6 +41,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.http.WebSocketFrame;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -169,7 +170,7 @@ public class WebSocketServiceTest {
   }
 
   @Test
-  public void websocketServiceHandlesBinaryFrames (final TestContext context) {
+  public void websocketServiceHandlesBinaryFrames(final TestContext context) {
     final Async async = context.async();
 
     httpClient.webSocket(
@@ -177,7 +178,13 @@ public class WebSocketServiceTest {
         future -> {
           if (future.succeeded()) {
             WebSocket ws = future.result();
-            ws.writeFinalBinaryFrame(Buffer.buffer((byte) 1));
+            final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
+            ws.handler(
+                // we don't really care what the response is
+                buffer -> {
+                  async.complete();
+                });
+            ws.writeFinalBinaryFrame(Buffer.buffer(requestJson.toString()));
           } else {
             context.fail("websocket connection failed");
           }
