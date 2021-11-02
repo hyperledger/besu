@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
@@ -41,7 +43,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
   private Optional<UInt256> terminalTotalDifficulty = Optional.empty();
 
-  private OptionalLong baseFeePerGas = OptionalLong.empty();
+  private Optional<Wei> baseFeePerGas = Optional.empty();
   private OptionalLong classicForkBlock = OptionalLong.empty();
   private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
   private OptionalLong diehardBlockNumber = OptionalLong.empty();
@@ -194,7 +196,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getBaseFeePerGas() {
+  public Optional<Wei> getBaseFeePerGas() {
     return baseFeePerGas;
   }
 
@@ -436,7 +438,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   public StubGenesisConfigOptions baseFeePerGas(final long baseFeeOverride) {
-    baseFeePerGas = OptionalLong.of(baseFeeOverride);
+    baseFeePerGas = Optional.of(Wei.of(baseFeeOverride));
     return this;
   }
 
