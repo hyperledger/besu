@@ -268,8 +268,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
             bonsaiPersistedWorldState.getWorldStateStorage().storageStorage,
             bonsaiPersistedWorldState.getWorldStateStorage().trieBranchStorage,
             bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().snapTrieBranchBucketStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().snapTrieBranchSecondBucketStorage));
+            bonsaiPersistedWorldState.getWorldStateStorage().snapTrieBranchBucketsStorage));
   }
 
   @Override
