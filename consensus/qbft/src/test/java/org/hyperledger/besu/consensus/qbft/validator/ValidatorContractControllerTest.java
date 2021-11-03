@@ -138,9 +138,9 @@ public class ValidatorContractControllerTest {
     when(transactionSimulator.process(callParameter, 1)).thenReturn(Optional.of(result));
 
     final ValidatorContractController validatorContractController =
-        new ValidatorContractController(transactionSimulator, qbftForksSchedule);
+        new ValidatorContractController(transactionSimulator);
 
-    Assertions.assertThatThrownBy(() -> validatorContractController.getValidators(1))
+    Assertions.assertThatThrownBy(() -> validatorContractController.getValidators(1, CONTRACT_ADDRESS))
         .hasMessage("Unexpected empty result from validator smart contract call");
   }
 
