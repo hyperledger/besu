@@ -128,6 +128,23 @@ public class ValidatorContractControllerTest {
   }
 
   @Test
+  public void throwErrorIfUnexpectedSuccessfulEmptySimulationResult() {
+    final TransactionSimulatorResult result =
+        new TransactionSimulatorResult(
+            transaction,
+            TransactionProcessingResult.successful(
+                List.of(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
+
+    when(transactionSimulator.process(callParameter, 1)).thenReturn(Optional.of(result));
+
+    final ValidatorContractController validatorContractController =
+        new ValidatorContractController(transactionSimulator, qbftForksSchedule);
+
+    Assertions.assertThatThrownBy(() -> validatorContractController.getValidators(1))
+        .hasMessage("Unexpected empty result from validator smart contract call");
+  }
+
+  @Test
   public void throwErrorIfEmptySimulationResult() {
     when(transactionSimulator.process(callParameter, 1)).thenReturn(Optional.empty());
 

@@ -16,7 +16,7 @@
 apply plugin: 'java-library'
 
 jar {
-  archiveBaseName = 'besu-config'
+  archiveBaseName = 'besu-merge'
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -27,20 +27,22 @@ jar {
   }
 }
 
+repositories { mavenCentral() }
+
 dependencies {
-  implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation project(':config')
+  implementation project(':datatypes')
+  implementation project(':ethereum:blockcreation')
+  implementation project(':ethereum:core')
+  implementation project(':ethereum:eth')
+  implementation project(':evm')
+  implementation project(':util')
+
   implementation 'com.google.guava:guava'
-  implementation 'org.apache.logging.log4j:log4j-api'
-  implementation 'info.picocli:picocli'
+  implementation 'io.vertx:vertx-core'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
-
-  testImplementation project(':testutil')
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.mockito:mockito-core'
 }
-
-configurations { testArtifacts }

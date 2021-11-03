@@ -80,8 +80,16 @@ public class ValidatorContractController {
   private List<Type> decodeResult(
       final TransactionSimulatorResult result, final Function function) {
     if (result.isSuccessful()) {
-      return DefaultFunctionReturnDecoder.decode(
-          result.getResult().getOutput().toHexString(), function.getOutputParameters());
+      final List<Type> decodedList =
+          DefaultFunctionReturnDecoder.decode(
+              result.getResult().getOutput().toHexString(), function.getOutputParameters());
+
+      if (decodedList.isEmpty()) {
+        throw new IllegalStateException(
+            "Unexpected empty result from validator smart contract call");
+      }
+
+      return decodedList;
     } else {
       throw new IllegalStateException("Failed validator smart contract call");
     }
