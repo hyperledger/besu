@@ -44,7 +44,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class RestrictedDefaultPrivacyController implements PrivacyController {
+public class RestrictedDefaultPrivacyController extends AbstractPrivacyController {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -144,34 +144,6 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
-      final PrivateTransaction privateTransaction, final String privacyUserId) {
-    final String privacyGroupId = privateTransaction.determinePrivacyGroupId().toBase64String();
-    return privateTransactionValidator.validate(
-        privateTransaction,
-        determineNonce(privateTransaction.getSender(), privacyGroupId, privacyUserId),
-        true);
-  }
-
-  @Override
-  public long determineNonce(
-      final Address sender, final String privacyGroupId, final String privacyUserId) {
-    return privateNonceProvider.getNonce(
-        sender, Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)));
-  }
-
-  @Override
-  public Optional<TransactionProcessingResult> simulatePrivateTransaction(
-      final String privacyGroupId,
-      final String privacyUserId,
-      final CallParameter callParams,
-      final long blockNumber) {
-    final Optional<TransactionProcessingResult> result =
-        privateTransactionSimulator.process(privacyGroupId, callParams, blockNumber);
-    return result;
-  }
-
-  @Override
   public Optional<PrivacyGroup> findPrivacyGroupByGroupId(
       final String privacyGroupId, final String privacyUserId) {
     return Optional.ofNullable(enclave.retrievePrivacyGroup(privacyGroupId));
@@ -180,15 +152,6 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
   CallParameter buildCallParams(final Bytes methodCall) {
     return new CallParameter(
         Address.ZERO, ONCHAIN_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
-  }
-
-  @Override
-  public Optional<Bytes> getContractCode(
-      final String privacyGroupId,
-      final Address contractAddress,
-      final Hash blockHash,
-      final String privacyUserId) {
-    return privateWorldStateReader.getContractCode(privacyGroupId, blockHash, contractAddress);
   }
 
   private SendResponse sendRequest(
@@ -259,16 +222,5 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
   public void verifyPrivacyGroupContainsPrivacyUserId(
       final String privacyGroupId, final String privacyUserId, final Optional<Long> blockNumber) {
     verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId);
-  }
-
-  @Override
-  public Optional<Hash> getStateRootByBlockNumber(
-      final String privacyGroupId, final String privacyUserId, final long blockNumber) {
-    return blockchain
-        .getBlockByNumber(blockNumber)
-        .map(
-            block ->
-                privateStateRootResolver.resolveLastStateRoot(
-                    Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)), block.getHash()));
   }
 }
