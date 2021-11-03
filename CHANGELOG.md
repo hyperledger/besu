@@ -1,5 +1,14 @@
 # Changelog
 
+## 21.10.2
+
+### Additions and Improvements
+- Add support for binary messages (0x02) for websocket. [#2980](https://github.com/hyperledger/besu/pull/2980)
+
+### Bug Fixes
+
+### Early Access Features
+
 ## 21.10.1
 
 ### Additions and Improvements
