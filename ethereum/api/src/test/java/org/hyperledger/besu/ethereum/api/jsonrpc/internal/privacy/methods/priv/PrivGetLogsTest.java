@@ -50,7 +50,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.collect.Lists;
-import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
@@ -62,7 +61,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PrivGetLogsTest {
 
-  private final String ENCLAVE_KEY = "enclave_key";
   private final String PRIVACY_GROUP_ID = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
 
   @Mock private BlockchainQueries blockchainQueries;
@@ -211,13 +209,6 @@ public class PrivGetLogsTest {
       final String privacyGroupId, final FilterParameter filterParameter) {
     return new JsonRpcRequestContext(
         new JsonRpcRequest("2.0", "priv_getLogs", new Object[] {privacyGroupId, filterParameter}));
-  }
-
-  private JsonRpcRequestContext privGetLogRequestWithUser(
-      final String privacyGroupId, final FilterParameter filterParameter, final User user) {
-    return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", "priv_getLogs", new Object[] {privacyGroupId, filterParameter}),
-        user);
   }
 
   private List<LogWithMetadata> logWithMetadataList(final int length) {

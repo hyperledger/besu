@@ -37,7 +37,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class PrivUninstallFilterTest {
 
   private final String FILTER_ID = "0xdbdb02abb65a2ba57a1cc0336c17ef75";
-  private final String ENCLAVE_KEY = "enclave_key";
   private final String PRIVACY_GROUP_ID = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
 
   @Mock private FilterManager filterManager;
