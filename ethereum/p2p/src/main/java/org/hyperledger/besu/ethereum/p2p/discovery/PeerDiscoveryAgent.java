@@ -317,7 +317,8 @@ public abstract class PeerDiscoveryAgent {
                       "Peer {} is unreachable, packet: {}", peer, wrapBuffer(packet.encode()), err);
                 } else if (err instanceof UnsupportedAddressTypeException) {
                   LOG.warn(
-                      "Unsupported address type exception when connecting to peer {}, this is likely due to ipv6 not being enabled at runtime. Enable debug trace to see full stacktrace",
+                      "Unsupported address type exception when connecting to peer {}, this is likely due to ipv6 not being enabled at runtime. "
+                          + "Set logging level to TRACE to see full stacktrace",
                       peer);
                   LOG.trace(
                       "Sending to peer {} failed, packet: {}, stacktrace: {}",
