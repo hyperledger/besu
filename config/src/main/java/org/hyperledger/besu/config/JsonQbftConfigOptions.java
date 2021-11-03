@@ -35,13 +35,6 @@ public class JsonQbftConfigOptions extends JsonBftConfigOptions implements QbftC
   }
 
   @Override
-  public boolean hasValidatorOverrides() {
-    // Only MutableQbftConfigOptions can have validatorOverrides
-    // as they are configured with a transition
-    return false;
-  }
-
-  @Override
   public Map<String, Object> asMap() {
     final Map<String, Object> map = super.asMap();
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();

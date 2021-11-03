@@ -90,7 +90,7 @@ public class ForkingValidatorProvider implements ValidatorProvider {
     // the previous block state otherwise we would have no validators
     // unless the validators are being explicitly overridden
     if (forkSpec.getConfigOptions().isValidatorBlockHeaderMode()
-        && !forkSpec.getConfigOptions().hasValidatorOverrides()) {
+        && noValidatorOverridesForBlockNumber(blockNumber)) {
       if (forkSpec.getBlock() > 0 && blockNumber == forkSpec.getBlock()) {
         final long prevBlockNumber = blockNumber - 1L;
         final Optional<BlockHeader> prevBlockHeader = blockchain.getBlockHeader(prevBlockNumber);
@@ -110,5 +110,14 @@ public class ForkingValidatorProvider implements ValidatorProvider {
     return fork.getConfigOptions().isValidatorContractMode()
         ? transactionValidatorProvider
         : blockValidatorProvider;
+  }
+
+  private boolean noValidatorOverridesForBlockNumber(final long blockNumber) {
+    final BftForkSpec<QbftConfigOptions> fork = forksSchedule.getFork(blockNumber);
+    if (fork.getConfigOptions().isValidatorBlockHeaderMode()) {
+      return !blockValidatorProvider.hasValidatorOverridesForBlockNumber(blockNumber);
+    } else {
+      return true;
+    }
   }
 }

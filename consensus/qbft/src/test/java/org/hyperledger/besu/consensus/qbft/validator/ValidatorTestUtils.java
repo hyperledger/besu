@@ -33,14 +33,8 @@ class ValidatorTestUtils {
   }
 
   static BftForkSpec<QbftConfigOptions> createBlockForkSpec(final long block) {
-    return createBlockForkSpec(block, false);
-  }
-
-  static BftForkSpec<QbftConfigOptions> createBlockForkSpec(
-      final long block, final boolean hasValidatorOverrides) {
     final MutableQbftConfigOptions qbftConfigOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
-    qbftConfigOptions.setHasValidatorOverrides(hasValidatorOverrides);
     return new BftForkSpec<>(block, qbftConfigOptions);
   }
 }

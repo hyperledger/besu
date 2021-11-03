@@ -20,8 +20,6 @@ public interface QbftConfigOptions extends BftConfigOptions {
 
   Optional<String> getValidatorContractAddress();
 
-  boolean hasValidatorOverrides();
-
   default boolean isValidatorContractMode() {
     return getValidatorContractAddress().isPresent();
   }
