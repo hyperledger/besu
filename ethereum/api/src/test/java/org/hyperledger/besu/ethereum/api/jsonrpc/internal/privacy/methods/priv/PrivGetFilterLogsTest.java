@@ -16,10 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,14 +34,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Collections;
 import java.util.List;
 
 import com.google.common.collect.Lists;
-import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
@@ -141,34 +136,10 @@ public class PrivGetFilterLogsTest {
     assertThat(response).isEqualTo(expectedResponse);
   }
 
-  @Test
-  public void multiTenancyCheckFailure() {
-    final User user = mock(User.class);
-
-    when(privacyIdProvider.getPrivacyUserId(any())).thenReturn(ENCLAVE_KEY);
-    doThrow(new MultiTenancyValidationException("msg"))
-        .when(privacyController)
-        .verifyPrivacyGroupContainsPrivacyUserId(eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY));
-
-    final JsonRpcRequestContext request =
-        privGetFilterLogsRequestWithUser(PRIVACY_GROUP_ID, FILTER_ID, user);
-
-    assertThatThrownBy(() -> method.response(request))
-        .isInstanceOf(MultiTenancyValidationException.class)
-        .hasMessageContaining("msg");
-  }
-
   private JsonRpcRequestContext privGetFilterLogsRequest(
       final String privacyGroupId, final String filterId) {
     return new JsonRpcRequestContext(
         new JsonRpcRequest("2.0", "priv_getFilterLogs", new Object[] {privacyGroupId, filterId}));
-  }
-
-  private JsonRpcRequestContext privGetFilterLogsRequestWithUser(
-      final String privacyGroupId, final String filterId, final User user) {
-    return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", "priv_getFilterLogs", new Object[] {privacyGroupId, filterId}),
-        user);
   }
 
   private LogWithMetadata logWithMetadata() {

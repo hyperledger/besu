@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,7 +40,6 @@ import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.evm.log.LogTopic;
 
@@ -207,29 +205,6 @@ public class PrivGetLogsTest {
     final LogsResult logsResult = (LogsResult) response.getResult();
 
     assertThat(logsResult).usingRecursiveComparison().isEqualTo(expectedLogsResult);
-  }
-
-  @Test
-  public void multiTenancyCheckFailure() {
-    final User user = mock(User.class);
-    final FilterParameter filterParameter = mock(FilterParameter.class);
-    final BlockParameter blockParameter = new BlockParameter(100L);
-
-    when(privacyIdProvider.getPrivacyUserId(any())).thenReturn(ENCLAVE_KEY);
-    when(filterParameter.isValid()).thenReturn(true);
-    when(filterParameter.getBlockHash()).thenReturn(Optional.empty());
-    when(filterParameter.getFromBlock()).thenReturn(blockParameter);
-    when(filterParameter.getToBlock()).thenReturn(blockParameter);
-    doThrow(new MultiTenancyValidationException("msg"))
-        .when(privacyController)
-        .verifyPrivacyGroupContainsPrivacyUserId(
-            eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY), eq(Optional.of(99L)));
-
-    final JsonRpcRequestContext request =
-        privGetLogRequestWithUser(PRIVACY_GROUP_ID, filterParameter, user);
-
-    assertThatThrownBy(() -> method.response(request))
-        .isInstanceOf(MultiTenancyValidationException.class);
   }
 
   private JsonRpcRequestContext privGetLogRequest(

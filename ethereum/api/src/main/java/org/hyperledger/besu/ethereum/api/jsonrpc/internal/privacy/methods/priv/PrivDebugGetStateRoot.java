@@ -76,7 +76,12 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), FIND_PRIVACY_GROUP_ERROR);
     } catch (final EnclaveClientException e) {
-      if (e.getMessage().equals(JsonRpcError.ENCLAVE_PRIVACY_GROUP_MISSING.getMessage())) {
+      if (e.getMessage().equals(JsonRpcError.ENCLAVE_PRIVACY_GROUP_MISSING.getMessage())
+          || (e.getMessage().contains("Privacy group")
+              && e.getMessage()
+                  .contains("not found"))) { // TODO: In Tessera we are throwing this: new
+        // PrivacyGroupNotFoundException("Privacy group " +
+        // privacyGroupId + " not found")
         LOG.error("Failed to retrieve privacy group");
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), FIND_PRIVACY_GROUP_ERROR);
