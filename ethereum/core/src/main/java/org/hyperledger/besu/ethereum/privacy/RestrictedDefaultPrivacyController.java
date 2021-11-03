@@ -45,15 +45,8 @@ public class RestrictedDefaultPrivacyController extends AbstractPrivacyControlle
 
   private static final Logger LOG = LogManager.getLogger();
 
-  final Blockchain blockchain;
-  final PrivateStateStorage privateStateStorage;
   final Enclave enclave;
-  final PrivateTransactionValidator privateTransactionValidator;
-  final PrivateTransactionSimulator privateTransactionSimulator;
-  final PrivateNonceProvider privateNonceProvider;
-  final PrivateWorldStateReader privateWorldStateReader;
   final PrivateTransactionLocator privateTransactionLocator;
-  final PrivateStateRootResolver privateStateRootResolver;
 
   public RestrictedDefaultPrivacyController(
       final Blockchain blockchain,
@@ -82,16 +75,17 @@ public class RestrictedDefaultPrivacyController extends AbstractPrivacyControlle
       final PrivateNonceProvider privateNonceProvider,
       final PrivateWorldStateReader privateWorldStateReader,
       final PrivateStateRootResolver privateStateRootResolver) {
-    this.blockchain = blockchain;
-    this.privateStateStorage = privateStateStorage;
+    super(
+        blockchain,
+        privateStateStorage,
+        privateTransactionValidator,
+        privateTransactionSimulator,
+        privateNonceProvider,
+        privateWorldStateReader,
+        privateStateRootResolver);
     this.enclave = enclave;
-    this.privateTransactionValidator = privateTransactionValidator;
-    this.privateTransactionSimulator = privateTransactionSimulator;
-    this.privateNonceProvider = privateNonceProvider;
-    this.privateWorldStateReader = privateWorldStateReader;
     this.privateTransactionLocator =
         new PrivateTransactionLocator(blockchain, enclave, privateStateStorage);
-    this.privateStateRootResolver = privateStateRootResolver;
   }
 
   @Override
