@@ -206,8 +206,10 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
                 transactionNode.getTransactionSigningKey(),
                 transactionNode.getEnclaveKey()));
 
-    privateRemoteSimpleStorage.setRemote(reallyRemoteSimpleStorage.getContractAddress()).send();
+    privateRemoteSimpleStorage.setRemote(simpleStorage.getContractAddress()).send();
+    assertThat(privateRemoteSimpleStorage.get().send()).isEqualTo(BigInteger.valueOf(42));
 
+    privateRemoteSimpleStorage.setRemote(reallyRemoteSimpleStorage.getContractAddress()).send();
     assertThat(privateRemoteSimpleStorage.get().send()).isEqualTo(BigInteger.valueOf(42));
   }
 }
