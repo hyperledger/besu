@@ -140,7 +140,8 @@ public class ValidatorContractControllerTest {
     final ValidatorContractController validatorContractController =
         new ValidatorContractController(transactionSimulator);
 
-    Assertions.assertThatThrownBy(() -> validatorContractController.getValidators(1, CONTRACT_ADDRESS))
+    Assertions.assertThatThrownBy(
+            () -> validatorContractController.getValidators(1, CONTRACT_ADDRESS))
         .hasMessage("Unexpected empty result from validator smart contract call");
   }
 
