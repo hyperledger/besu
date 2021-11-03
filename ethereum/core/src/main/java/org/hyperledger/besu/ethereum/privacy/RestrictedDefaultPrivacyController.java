@@ -26,12 +26,10 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
-import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -42,7 +40,6 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class RestrictedDefaultPrivacyController extends AbstractPrivacyController {
 
