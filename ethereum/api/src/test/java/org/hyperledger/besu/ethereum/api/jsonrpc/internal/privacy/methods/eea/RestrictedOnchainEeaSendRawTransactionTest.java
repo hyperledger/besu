@@ -50,7 +50,7 @@ public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTr
     method =
         new RestrictedOnchainEeaSendRawTransaction(
             transactionPool,
-            new PmtTransactionPool(),
+            pmtTransactionPool,
             privacyIdProvider,
             privateMarkerTransactionFactory,
             address -> 0,
