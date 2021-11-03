@@ -54,7 +54,7 @@ public class PrivGetFilterLogs implements JsonRpcMethod {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
     final String filterId = request.getRequiredParameter(1, String.class);
 
-    if (privacyIdProvider instanceof MultiTenancyPrivacyController) {
+    if (privacyController instanceof MultiTenancyPrivacyController) {
       checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(request, privacyGroupId);
     }
 
