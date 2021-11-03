@@ -36,7 +36,7 @@ public class JsonQbftConfigOptions extends JsonBftConfigOptions implements QbftC
 
   @Override
   public boolean hasValidatorOverrides() {
-    throw new UnsupportedOperationException();
+    return false; // Only MutableQbftConfigOptions can have validatorOverrides as they are configured with a transition
   }
 
   @Override
