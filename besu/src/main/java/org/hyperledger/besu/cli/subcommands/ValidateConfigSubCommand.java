@@ -31,7 +31,7 @@ import picocli.CommandLine.ParentCommand;
 
 @Command(
     name = COMMAND_NAME,
-    description = "This command provides basic Besu config validation.",
+    description = "This command provides basic Besu config validation (syntax only).",
     mixinStandardHelpOptions = true)
 public class ValidateConfigSubCommand implements Runnable {
 
@@ -64,6 +64,7 @@ public class ValidateConfigSubCommand implements Runnable {
       this.out.print(e);
       return;
     }
-    this.out.print("TOML config file is valid on basic inspection. .");
+    this.out.print(
+        "TOML config file is valid on basic inspection. Further dependencies between related options are checked when Besu starts.");
   }
 }

@@ -30,7 +30,7 @@ public class ValidateConfigSubCommandTest extends CommandTestAbstract {
   private static final String EXPECTED_PUBLIC_KEY_USAGE =
       "Usage: besu validate-config [-hV] [--config-file=<PATH>]"
           + System.lineSeparator()
-          + "This command provides Besu config validation."
+          + "This command provides basic Besu config validation (syntax only)."
           + System.lineSeparator()
           + "      --config-file=<PATH>   Path to Besu config file"
           + System.lineSeparator()
