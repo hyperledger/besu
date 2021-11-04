@@ -14,17 +14,18 @@
  */
 package org.hyperledger.besu.cli.subcommands;
 
+import static org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand.COMMAND_NAME;
+
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.ethereum.permissioning.TomlConfigFileParser;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.ParentCommand;
 
 import java.io.PrintStream;
 import java.nio.file.Path;
 
-import static org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand.COMMAND_NAME;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.ParentCommand;
 
 @Command(
     name = COMMAND_NAME,
@@ -35,9 +36,9 @@ public class ValidateConfigSubCommand implements Runnable {
   public static final String COMMAND_NAME = "validate-config";
 
   @Option(
-          names = "--config-file",
-          paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
-          description = "The path to Besu config file")
+      names = "--config-file",
+      paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
+      description = "The path to Besu config file")
   private final Path dataPath = DefaultCommandValues.getDefaultBesuDataPath(this);
 
   @SuppressWarnings("unused")
