@@ -1,5 +1,5 @@
 
-FROM openjdk:11-slim-buster
+FROM openjdk:11-jre-slim-buster
 
 ARG VERSION="dev"
 
