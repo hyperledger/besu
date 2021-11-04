@@ -254,6 +254,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private CommandLine commandLine;
 
+  public CommandLine getCommandLine() {
+    return commandLine;
+  }
+
   private final Supplier<RlpBlockImporter> rlpBlockImporter;
   private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
   private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;

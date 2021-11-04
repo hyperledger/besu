@@ -18,7 +18,7 @@ import static org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand.COMM
 
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
-import org.hyperledger.besu.ethereum.permissioning.TomlConfigFileParser;
+import org.hyperledger.besu.cli.util.TomlConfigFileDefaultProvider;
 
 import java.io.PrintStream;
 import java.nio.file.Path;
@@ -54,10 +54,12 @@ public class ValidateConfigSubCommand implements Runnable {
   @Override
   public void run() {
     try {
-      TomlConfigFileParser.loadConfigurationFromFile(dataPath.toString());
+      new TomlConfigFileDefaultProvider(parentCommand.getCommandLine(), dataPath.toFile())
+          .loadConfigurationFromFile();
     } catch (Exception e) {
       this.out.print(e);
+      return;
     }
-    this.out.print("This toml config file is valid.");
+    this.out.print("TOML config file is valid.");
   }
 }
