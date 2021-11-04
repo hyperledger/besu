@@ -22,13 +22,18 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class BLS12G1MultiExpPrecompiledContract extends AbstractBLS12PrecompiledContract {
 
+  private static final int PARAMETER_LENGTH = 160;
+
   public BLS12G1MultiExpPrecompiledContract() {
-    super("BLS12_G1MULTIEXP", LibEthPairings.BLS12_G1MULTIEXP_OPERATION_RAW_VALUE);
+    super(
+        "BLS12_G1MULTIEXP",
+        LibEthPairings.BLS12_G1MULTIEXP_OPERATION_RAW_VALUE,
+        Integer.MAX_VALUE / PARAMETER_LENGTH * PARAMETER_LENGTH);
   }
 
   @Override
   public Gas gasRequirement(final Bytes input) {
-    final int k = input.size() / 160;
+    final int k = input.size() / PARAMETER_LENGTH;
     return Gas.of(12L * k * getDiscount(k));
   }
 }

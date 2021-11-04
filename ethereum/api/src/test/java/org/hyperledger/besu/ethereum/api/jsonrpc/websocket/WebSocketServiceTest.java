@@ -41,6 +41,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.http.WebSocketFrame;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -160,6 +161,30 @@ public class WebSocketServiceTest {
                 });
 
             ws.writeTextMessage(request);
+          } else {
+            context.fail("websocket connection failed");
+          }
+        });
+
+    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+  }
+
+  @Test
+  public void websocketServiceHandlesBinaryFrames(final TestContext context) {
+    final Async async = context.async();
+
+    httpClient.webSocket(
+        "/",
+        future -> {
+          if (future.succeeded()) {
+            WebSocket ws = future.result();
+            final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
+            ws.handler(
+                // we don't really care what the response is
+                buffer -> {
+                  async.complete();
+                });
+            ws.writeFinalBinaryFrame(Buffer.buffer(requestJson.toString()));
           } else {
             context.fail("websocket connection failed");
           }

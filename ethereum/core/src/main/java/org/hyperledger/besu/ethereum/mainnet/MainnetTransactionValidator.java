@@ -284,7 +284,7 @@ public class MainnetTransactionValidator {
   }
 
   /**
-   * Asserts whether a transaction is valid for the sender accounts current state.
+   * Asserts whether a transaction is valid for the sender account's current state.
    *
    * <p>Note: {@code validate} should be called before getting the sender {@link Account} used in
    * this method to ensure that a sender can be extracted from the {@link Transaction}.
