@@ -24,6 +24,8 @@ import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;
 
+import org.mockito.Mockito;
+
 public class BftContextBuilder {
 
   public static BftContext setupContextWithValidators(final Collection<Address> validators) {
@@ -35,6 +37,7 @@ public class BftContextBuilder {
     when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
     when(bftContext.getBlockInterface()).thenReturn(mockBftBlockInterface);
+    when(bftContext.as(Mockito.any())).thenReturn(bftContext);
     return bftContext;
   }
 
@@ -56,6 +59,7 @@ public class BftContextBuilder {
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
     when(bftContext.getBlockInterface()).thenReturn(mockBftBlockInterface);
     when(mockBftBlockInterface.getExtraData(any())).thenReturn(bftExtraData);
+    when(bftContext.as(Mockito.any())).thenReturn(bftContext);
     return bftContext;
   }
 
@@ -74,6 +78,7 @@ public class BftContextBuilder {
     when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
     when(bftContext.getBlockInterface()).thenReturn(new BftBlockInterface(bftExtraDataCodec));
+    when(bftContext.as(Mockito.any())).thenReturn(bftContext);
 
     return bftContext;
   }

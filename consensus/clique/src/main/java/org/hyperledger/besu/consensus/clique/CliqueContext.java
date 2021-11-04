@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.PoaContext;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 
 /**
  * Holds the data which lives "in parallel" with the importation of blocks etc. when using the
@@ -49,5 +50,10 @@ public class CliqueContext implements PoaContext {
   @Override
   public BlockInterface getBlockInterface() {
     return blockInterface;
+  }
+
+  @Override
+  public <C extends ConsensusContext> C as(final Class<C> klass) {
+    return klass.cast(this);
   }
 }
