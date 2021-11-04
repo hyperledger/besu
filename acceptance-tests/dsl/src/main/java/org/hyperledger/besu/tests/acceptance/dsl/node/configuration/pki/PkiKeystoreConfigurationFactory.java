@@ -23,6 +23,7 @@ import static org.hyperledger.besu.pki.util.TestCertificateUtils.createSelfSigne
 import static org.hyperledger.besu.pki.util.TestCertificateUtils.issueCertificate;
 
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
+import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -35,44 +36,87 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 import java.util.UUID;
 
 public class PkiKeystoreConfigurationFactory {
 
-  public static final String KEYSTORE_DEFAULT_TYPE = "PKCS12";
+  /*
+   PKCS11 config files
+  */
+  final String NSSCONFIG_PATH_STRING = "/pki-certs/%s/nss.cfg";
+  final String NSSPIN_PATH_STRING = "/pki-certs/%s/nsspin.txt";
+  final String TRUSTSTORE_PATH_STRING = "/pki-certs/%s/truststore.jks";
+  final String CRL_PATH_STRING = "/pki-certs/%s/crl.pem";
+
+  /*
+   Software keystore config
+  */
   public static final String KEYSTORE_DEFAULT_PASSWORD = "password";
-  public static final String KEYSTORE_DEFAULT_CERT_ALIAS = "validator";
 
   private KeyPair caKeyPair;
   private X509Certificate caCertificate;
   private Path trustStoreFile;
   private Path passwordFile;
 
-  public PkiKeyStoreConfiguration createPkiConfig() {
-    PkiKeyStoreConfiguration.Builder pkiKeyStoreConfigBuilder =
+  public PkiKeyStoreConfiguration createPkiConfig(final String type, final String name) {
+    if (KeyStoreWrapper.KEYSTORE_TYPE_PKCS11.equals(type)) {
+      return createPKCS11PkiConfig(name);
+    } else {
+      return createSoftwareKeyStorePkiConfig(type, name);
+    }
+  }
+
+  private PkiKeyStoreConfiguration createPKCS11PkiConfig(final String name) {
+    final PkiKeyStoreConfiguration.Builder pkiKeyStoreConfigBuilder =
         new PkiKeyStoreConfiguration.Builder();
 
-    pkiKeyStoreConfigBuilder.withTrustStoreType(KEYSTORE_DEFAULT_TYPE);
-    pkiKeyStoreConfigBuilder.withTrustStorePath(createTrustStore());
-    pkiKeyStoreConfigBuilder.withTrustStorePasswordPath(passwordFile);
+    try {
+      pkiKeyStoreConfigBuilder
+          .withKeyStoreType(KeyStoreWrapper.KEYSTORE_TYPE_PKCS11)
+          .withKeyStorePath(
+              PKCS11Utils.initNSSConfigFile(
+                  readResourceAsPath(String.format(NSSCONFIG_PATH_STRING, name))))
+          .withKeyStorePasswordPath(readResourceAsPath(String.format(NSSPIN_PATH_STRING, name)))
+          .withTrustStoreType(KeyStoreWrapper.KEYSTORE_TYPE_JKS)
+          .withTrustStorePath(readResourceAsPath(String.format(TRUSTSTORE_PATH_STRING, name)))
+          .withTrustStorePasswordPath(readResourceAsPath(String.format(NSSPIN_PATH_STRING, name)))
+          .withCrlFilePath(readResourceAsPath(String.format(CRL_PATH_STRING, name)))
+          .withCertificateAlias(name);
 
-    pkiKeyStoreConfigBuilder.withKeyStoreType(KEYSTORE_DEFAULT_TYPE);
-    pkiKeyStoreConfigBuilder.withKeyStorePath(createKeyStore());
-    pkiKeyStoreConfigBuilder.withKeyStorePasswordPath(passwordFile);
-
-    pkiKeyStoreConfigBuilder.withCertificateAlias(KEYSTORE_DEFAULT_CERT_ALIAS);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
 
     return pkiKeyStoreConfigBuilder.build();
   }
 
-  private Path createTrustStore() {
+  private PkiKeyStoreConfiguration createSoftwareKeyStorePkiConfig(
+      final String type, final String name) {
+    PkiKeyStoreConfiguration.Builder pkiKeyStoreConfigBuilder =
+        new PkiKeyStoreConfiguration.Builder();
+
+    pkiKeyStoreConfigBuilder.withTrustStoreType(type);
+    pkiKeyStoreConfigBuilder.withTrustStorePath(createTrustStore(type));
+    pkiKeyStoreConfigBuilder.withTrustStorePasswordPath(passwordFile);
+
+    pkiKeyStoreConfigBuilder.withKeyStoreType(type);
+    pkiKeyStoreConfigBuilder.withKeyStorePath(createKeyStore(type, name));
+    pkiKeyStoreConfigBuilder.withKeyStorePasswordPath(passwordFile);
+
+    pkiKeyStoreConfigBuilder.withCertificateAlias(name);
+
+    return pkiKeyStoreConfigBuilder.build();
+  }
+
+  private Path createTrustStore(final String type) {
     // Only create the truststore if this is the first time this method is being called
     if (caKeyPair == null) {
       try {
         caKeyPair = createKeyPair();
         caCertificate = createSelfSignedCertificate("ca", notBefore(), notAfter(), caKeyPair);
 
-        final KeyStore truststore = KeyStore.getInstance(KEYSTORE_DEFAULT_TYPE);
+        final KeyStore truststore = KeyStore.getInstance(type);
         truststore.load(null, null);
         truststore.setCertificateEntry("ca", caCertificate);
 
@@ -87,9 +131,9 @@ public class PkiKeystoreConfigurationFactory {
     return trustStoreFile;
   }
 
-  private Path createKeyStore() {
+  private Path createKeyStore(final String type, final String alias) {
     if (caKeyPair == null) {
-      createTrustStore();
+      createTrustStore(type);
     }
 
     final KeyPair kp = createKeyPair();
@@ -97,10 +141,10 @@ public class PkiKeystoreConfigurationFactory {
         issueCertificate(caCertificate, caKeyPair, "validator", notBefore(), notAfter(), kp, false);
 
     try {
-      final KeyStore keyStore = KeyStore.getInstance(KEYSTORE_DEFAULT_TYPE);
+      final KeyStore keyStore = KeyStore.getInstance(type);
       keyStore.load(null, null);
       keyStore.setKeyEntry(
-          "validator",
+          alias,
           kp.getPrivate(),
           KEYSTORE_DEFAULT_PASSWORD.toCharArray(),
           new Certificate[] {certificate, caCertificate});
@@ -143,5 +187,9 @@ public class PkiKeystoreConfigurationFactory {
 
   private Instant notAfter() {
     return Instant.now().plus(10, ChronoUnit.DAYS);
+  }
+
+  private Path readResourceAsPath(final String path) throws Exception {
+    return Path.of(Objects.requireNonNull(this.getClass().getResource(path)).toURI());
   }
 }

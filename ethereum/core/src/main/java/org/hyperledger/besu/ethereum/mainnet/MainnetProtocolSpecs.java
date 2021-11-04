@@ -506,8 +506,9 @@ public abstract class MainnetProtocolSpecs {
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final long londonForkBlockNumber =
-        genesisConfigOptions.getEIP1559BlockNumber().orElse(Long.MAX_VALUE);
-    final BaseFeeMarket londonFeeMarket = FeeMarket.london(londonForkBlockNumber);
+        genesisConfigOptions.getLondonBlockNumber().orElse(Long.MAX_VALUE);
+    final BaseFeeMarket londonFeeMarket =
+        FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
     return berlinDefinition(
             chainId,
             configContractSizeLimit,
@@ -566,6 +567,26 @@ public abstract class MainnetProtocolSpecs {
                 MainnetBlockHeaderValidator.createBaseFeeMarketOmmerValidator(londonFeeMarket))
         .blockBodyValidatorBuilder(BaseFeeBlockBodyValidator::new)
         .name(LONDON_FORK_NAME);
+  }
+
+  static ProtocolSpecBuilder arrowGlacierDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+    return londonDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .difficultyCalculator(MainnetDifficultyCalculators.ARROW_GLACIER)
+        .name("ArrowGlacier");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.validator;
 
+import org.hyperledger.besu.config.QbftConfigOptions;
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -36,12 +38,12 @@ public class ValidatorContractController {
   public static final String GET_VALIDATORS = "getValidators";
   public static final String CONTRACT_ERROR_MSG = "Failed validator smart contract call";
   private final TransactionSimulator transactionSimulator;
-  private final ValidatorSelectorForksSchedule forksSchedule;
+  private final BftForksSchedule<QbftConfigOptions> forksSchedule;
   private final Function getValidatorsFunction;
 
   public ValidatorContractController(
       final TransactionSimulator transactionSimulator,
-      final ValidatorSelectorForksSchedule forksSchedule) {
+      final BftForksSchedule<QbftConfigOptions> forksSchedule) {
     this.transactionSimulator = transactionSimulator;
     this.forksSchedule = forksSchedule;
 
@@ -84,7 +86,8 @@ public class ValidatorContractController {
   private Address resolveContractAddress(final long blockNumber) {
     return forksSchedule
         .getFork(blockNumber)
-        .flatMap(ValidatorSelectorConfig::getContractAddress)
+        .getConfigOptions()
+        .getValidatorContractAddress()
         .map(Address::fromHexString)
         .orElseThrow(
             () ->
@@ -96,8 +99,16 @@ public class ValidatorContractController {
   private List<Type> decodeResult(
       final TransactionSimulatorResult result, final Function function) {
     if (result.isSuccessful()) {
-      return DefaultFunctionReturnDecoder.decode(
-          result.getResult().getOutput().toHexString(), function.getOutputParameters());
+      final List<Type> decodedList =
+          DefaultFunctionReturnDecoder.decode(
+              result.getResult().getOutput().toHexString(), function.getOutputParameters());
+
+      if (decodedList.isEmpty()) {
+        throw new IllegalStateException(
+            "Unexpected empty result from validator smart contract call");
+      }
+
+      return decodedList;
     } else {
       throw new IllegalStateException("Failed validator smart contract call");
     }

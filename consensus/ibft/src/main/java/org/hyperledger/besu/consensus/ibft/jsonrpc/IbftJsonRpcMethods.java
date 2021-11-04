@@ -27,7 +27,7 @@ import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetValidatorsByBl
 import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetValidatorsByBlockNumber;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftProposeValidatorVote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -44,8 +44,8 @@ public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return IbftRpcApis.IBFT;
+  protected String getApiGroup() {
+    return RpcApis.IBFT.name();
   }
 
   @Override

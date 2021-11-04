@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
+
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 
 import java.io.File;
 import java.util.Arrays;
@@ -30,14 +30,12 @@ import com.google.common.base.MoreObjects;
 public class WebSocketConfiguration {
   public static final String DEFAULT_WEBSOCKET_HOST = "127.0.0.1";
   public static final int DEFAULT_WEBSOCKET_PORT = 8546;
-  public static final List<RpcApi> DEFAULT_WEBSOCKET_APIS =
-      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
   public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
 
   private boolean enabled;
   private int port;
   private String host;
-  private List<RpcApi> rpcApis;
+  private List<String> rpcApis;
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
@@ -50,7 +48,7 @@ public class WebSocketConfiguration {
     config.setEnabled(false);
     config.setHost(DEFAULT_WEBSOCKET_HOST);
     config.setPort(DEFAULT_WEBSOCKET_PORT);
-    config.setRpcApis(DEFAULT_WEBSOCKET_APIS);
+    config.setRpcApis(DEFAULT_RPC_APIS);
     config.setTimeoutSec(TimeoutOptions.defaultOptions().getTimeoutSeconds());
     config.setMaxActiveConnections(DEFAULT_MAX_ACTIVE_CONNECTIONS);
     return config;
@@ -82,11 +80,11 @@ public class WebSocketConfiguration {
     return port;
   }
 
-  public Collection<RpcApi> getRpcApis() {
+  public Collection<String> getRpcApis() {
     return rpcApis;
   }
 
-  public void setRpcApis(final List<RpcApi> rpcApis) {
+  public void setRpcApis(final List<String> rpcApis) {
     this.rpcApis = rpcApis;
   }
 

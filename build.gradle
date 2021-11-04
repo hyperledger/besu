@@ -28,7 +28,19 @@ plugins {
   id 'me.champeau.jmh' version '0.6.6' apply false
   id 'net.ltgt.errorprone' version '2.0.2'
   id 'maven-publish'
+  id 'org.sonarqube' version '3.3'
 }
+
+sonarqube {
+  properties {
+    property "sonar.projectKey", "hyperledger_besu"
+    property "sonar.organization", "hyperledger"
+    property "sonar.host.url", "https://sonarcloud.io"
+    property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
+  }
+}
+
+project.tasks["sonarqube"].dependsOn "jacocoRootReport"
 
 if (!JavaVersion.current().java11Compatible) {
   throw new GradleException("Java 11 or later is required to build Besu.\n" +
@@ -524,10 +536,28 @@ task evmToolStartScripts(type: CreateStartScripts) {
   }
 }
 
+task autocomplete(type: JavaExec) {
+  dependsOn compileJava
+  def tempAutocompleteFile = File.createTempFile("besu", ".autocomplete")
+  standardOutput tempAutocompleteFile.newOutputStream()
+  outputs.file "$buildDir/besu.autocomplete.sh"
+
+  mainClass = application.mainClass
+  args "generate-completion"
+  classpath sourceSets.main.runtimeClasspath
+  doLast {
+    copy {
+      from tempAutocompleteFile
+      into "$buildDir"
+      rename tempAutocompleteFile.getName(), 'besu.autocomplete.sh'
+    }
+  }
+}
+
 installDist { dependsOn checkLicenses }
 
 distTar {
-  dependsOn checkLicenses
+  dependsOn checkLicenses, autocomplete
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -536,7 +566,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicenses
+  dependsOn checkLicenses, autocomplete
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
@@ -763,10 +793,13 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
   sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
-  classDirectories.from files(subprojects.sourceSets.main.output)
+  classDirectories.from files(subprojects.sourceSets.main.output).asFileTree.matching {
+    exclude 'org/hyperledger/besu/tests/acceptance/**'
+  }
   executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
   reports {
     xml.required = true
+    xml.enabled = true
     csv.required = true
     html.destination file("build/reports/jacocoHtml")
   }
@@ -863,6 +896,7 @@ distributions {
       from("build/reports/license/license-dependency.html") { into "." }
       from("./docs/GettingStartedBinaries.md") { into "." }
       from("./docs/DocsArchive0.8.0.html") { into "." }
+      from("build/besu.autocomplete.sh") { into "." }
     }
   }
 }

@@ -27,6 +27,12 @@ public class TestClock extends Clock {
 
   private Instant now = Instant.ofEpochSecond(24982948294L);
 
+  public TestClock() {}
+
+  public TestClock(final Instant now) {
+    this.now = now;
+  }
+
   @Override
   public ZoneId getZone() {
     return ZoneOffset.UTC;

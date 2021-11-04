@@ -21,6 +21,8 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 
+import org.apache.tuweni.units.bigints.UInt256;
+
 public interface GenesisConfigOptions {
 
   boolean isEthHash();
@@ -71,10 +73,11 @@ public interface GenesisConfigOptions {
 
   OptionalLong getLondonBlockNumber();
 
-  // TODO EIP-1559 change for the actual fork name when known
-  OptionalLong getAleutBlockNumber();
+  OptionalLong getArrowGlacierBlockNumber();
 
-  OptionalLong getEIP1559BlockNumber();
+  OptionalLong getBaseFeePerGas();
+
+  Optional<UInt256> getTerminalTotalDifficulty();
 
   List<Long> getForks();
 

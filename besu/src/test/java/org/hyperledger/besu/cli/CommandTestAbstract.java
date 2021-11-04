@@ -75,6 +75,7 @@ import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactor
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
+import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -132,6 +133,9 @@ public abstract class CommandTestAbstract {
 
   private final List<TestBesuCommand> besuCommands = new ArrayList<>();
   private KeyPair keyPair;
+
+  protected static final RpcEndpointServiceImpl rpcEndpointServiceImpl =
+      new RpcEndpointServiceImpl();
 
   @Mock protected RunnerBuilder mockRunnerBuilder;
   @Mock protected Runner mockRunner;
@@ -275,6 +279,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.ethstatsContact(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.storageProvider(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.forkIdSupplier(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.rpcEndpointService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
     final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
@@ -409,7 +414,8 @@ public abstract class CommandTestAbstract {
           securityModuleService,
           new PermissioningServiceImpl(),
           new PrivacyPluginServiceImpl(),
-          pkiBlockCreationConfigProvider);
+          pkiBlockCreationConfigProvider,
+          rpcEndpointServiceImpl);
     }
 
     @Override
@@ -421,6 +427,14 @@ public abstract class CommandTestAbstract {
     protected Vertx createVertx(final VertxOptions vertxOptions) {
       vertx = super.createVertx(vertxOptions);
       return vertx;
+    }
+
+    @Override
+    protected void enableGoQuorumCompatibilityMode() {
+      // We do *not* set the static GoQuorumOptions for test runs as
+      // these are only allowed to be set once during the program
+      // runtime.
+      isGoQuorumCompatibilityMode = true;
     }
 
     public CommandSpec getSpec() {

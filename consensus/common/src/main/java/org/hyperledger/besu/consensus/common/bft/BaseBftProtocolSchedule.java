@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
-import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -32,7 +31,6 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -45,44 +43,27 @@ public abstract class BaseBftProtocolSchedule {
 
   public ProtocolSchedule createProtocolSchedule(
       final GenesisConfigOptions config,
+      final BftForksSchedule<? extends BftConfigOptions> bftForksSchedule,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
 
-    specMap.put(
-        0L,
-        builder ->
-            applyBftChanges(
-                config.getBftConfigOptions(),
-                builder,
-                config.isQuorum(),
-                createGenesisBlockHeaderRuleset(config),
-                bftExtraDataCodec,
-                Optional.of(config.getBftConfigOptions().getBlockRewardWei())));
-
-    final Supplier<List<? extends BftFork>> forks;
-    if (config.isIbft2()) {
-      forks = () -> config.getTransitions().getIbftForks();
-    } else {
-      forks = () -> config.getTransitions().getQbftForks();
-    }
-
-    forks
-        .get()
+    bftForksSchedule
+        .getForks()
         .forEach(
-            fork ->
+            bftForkSpec ->
                 specMap.put(
-                    fork.getForkBlock(),
+                    bftForkSpec.getBlock(),
                     builder ->
                         applyBftChanges(
-                            config.getBftConfigOptions(),
+                            bftForkSpec.getConfigOptions(),
                             builder,
                             config.isQuorum(),
-                            createForkBlockHeaderRuleset(config, fork),
+                            createBlockHeaderRuleset(bftForkSpec.getConfigOptions()),
                             bftExtraDataCodec,
-                            fork.getBlockRewardWei())));
+                            Optional.of(bftForkSpec.getConfigOptions().getBlockRewardWei()))));
 
     final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
 
@@ -97,11 +78,8 @@ public abstract class BaseBftProtocolSchedule {
         .createProtocolSchedule();
   }
 
-  protected abstract Supplier<BlockHeaderValidator.Builder> createForkBlockHeaderRuleset(
-      final GenesisConfigOptions config, BftFork fork);
-
-  protected abstract Supplier<BlockHeaderValidator.Builder> createGenesisBlockHeaderRuleset(
-      final GenesisConfigOptions config);
+  protected abstract Supplier<BlockHeaderValidator.Builder> createBlockHeaderRuleset(
+      final BftConfigOptions config);
 
   private ProtocolSpecBuilder applyBftChanges(
       final BftConfigOptions configOptions,

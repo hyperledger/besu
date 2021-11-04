@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorModeTransitionLogger;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class QbftBlockHeightManagerFactory {
@@ -26,19 +27,24 @@ public class QbftBlockHeightManagerFactory {
   private final BftFinalState finalState;
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
+  private final ValidatorModeTransitionLogger validatorModeTransitionLogger;
 
   public QbftBlockHeightManagerFactory(
       final BftFinalState finalState,
       final QbftRoundFactory roundFactory,
       final MessageValidatorFactory messageValidatorFactory,
-      final MessageFactory messageFactory) {
+      final MessageFactory messageFactory,
+      final ValidatorModeTransitionLogger validatorModeTransitionLogger) {
     this.roundFactory = roundFactory;
     this.finalState = finalState;
     this.messageValidatorFactory = messageValidatorFactory;
     this.messageFactory = messageFactory;
+    this.validatorModeTransitionLogger = validatorModeTransitionLogger;
   }
 
   public BaseQbftBlockHeightManager create(final BlockHeader parentHeader) {
+    validatorModeTransitionLogger.logTransitionChange(parentHeader);
+
     if (finalState.isLocalNodeValidator()) {
       return createFullBlockHeightManager(parentHeader);
     } else {
