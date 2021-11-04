@@ -63,7 +63,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
-public class P2PPassThroughNetworkTest {
+public class P2PPlainNetworkTest {
   private final Vertx vertx = Vertx.vertx();
   private final NetworkingConfiguration config =
       NetworkingConfiguration.create()
@@ -376,7 +376,7 @@ public class P2PPassThroughNetworkTest {
   }
 
   private static Path toPath(final String path) throws Exception {
-    return Path.of(P2PPassThroughNetworkTest.class.getResource(path).toURI());
+    return Path.of(P2PPlainNetworkTest.class.getResource(path).toURI());
   }
 
   public Optional<TLSConfiguration> p2pTLSEnabled(final String name, final String type) {

@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.passthrough;
+package org.hyperledger.besu.ethereum.p2p.plain;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -32,7 +32,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class PassThroughHandshaker implements Handshaker {
+public class PlainHandshaker implements Handshaker {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -56,7 +56,7 @@ public class PassThroughHandshaker implements Handshaker {
     this.nodeKey = nodeKey;
     this.partyPubKey = theirPubKey;
     LOG.trace(
-        "Prepared passthrough handshake with node {}... under INITIATOR role",
+        "Prepared plain handshake with node {}... under INITIATOR role",
         theirPubKey.getEncodedBytes().slice(0, 16));
   }
 
@@ -69,7 +69,7 @@ public class PassThroughHandshaker implements Handshaker {
 
     this.initiator = false;
     this.nodeKey = nodeKey;
-    LOG.trace("Prepared passthrough handshake under RESPONDER role");
+    LOG.trace("Prepared plain handshake under RESPONDER role");
   }
 
   @Override
@@ -82,7 +82,7 @@ public class PassThroughHandshaker implements Handshaker {
     initiatorMsg =
         MessageHandler.buildMessage(MessageType.PING, nodeKey.getPublicKey().getEncoded());
 
-    LOG.trace("First passthrough handshake message under INITIATOR role");
+    LOG.trace("First plain handshake message under INITIATOR role");
 
     return Unpooled.wrappedBuffer(initiatorMsg.toArray());
   }
@@ -93,7 +93,7 @@ public class PassThroughHandshaker implements Handshaker {
         status.get() == Handshaker.HandshakeStatus.IN_PROGRESS,
         "illegal invocation of onMessage on handshake that is not in progress");
 
-    PassThroughMessage message = MessageHandler.parseMessage(buf);
+    PlainMessage message = MessageHandler.parseMessage(buf);
 
     Optional<Bytes> nextMsg = Optional.empty();
     if (initiator) {
@@ -107,7 +107,7 @@ public class PassThroughHandshaker implements Handshaker {
       responderMsg = message.getData();
 
       LOG.trace(
-          "Received responder's passthrough handshake message from node {}...: {}",
+          "Received responder's plain handshake message from node {}...: {}",
           partyPubKey.getEncodedBytes().slice(0, 16),
           responderMsg);
 
@@ -121,7 +121,7 @@ public class PassThroughHandshaker implements Handshaker {
 
       initiatorMsg = message.getData();
       LOG.trace(
-          "[{}] Received initiator's passthrough handshake message: {}",
+          "[{}] Received initiator's plain handshake message: {}",
           nodeKey.getPublicKey().getEncodedBytes(),
           initiatorMsg);
 
@@ -131,7 +131,7 @@ public class PassThroughHandshaker implements Handshaker {
           MessageHandler.buildMessage(MessageType.PONG, nodeKey.getPublicKey().getEncoded());
 
       LOG.trace(
-          "Generated responder's passthrough handshake message against peer {}...: {}",
+          "Generated responder's plain handshake message against peer {}...: {}",
           partyPubKey.getEncodedBytes().slice(0, 16),
           responderMsg);
 

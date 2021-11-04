@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.passthrough;
+package org.hyperledger.besu.ethereum.p2p.plain;
 
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -23,7 +23,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class MessageHandler {
 
-  public static Bytes buildMessage(final PassThroughMessage message) {
+  public static Bytes buildMessage(final PlainMessage message) {
     final BytesValueRLPOutput ret = new BytesValueRLPOutput();
     ret.startList();
     ret.writeInt(message.getMessageType().getValue());
@@ -36,20 +36,20 @@ public class MessageHandler {
   }
 
   public static Bytes buildMessage(final MessageType messageType, final Bytes data) {
-    return buildMessage(new PassThroughMessage(messageType, data));
+    return buildMessage(new PlainMessage(messageType, data));
   }
 
   public static Bytes buildMessage(
       final MessageType messageType, final int code, final Bytes data) {
-    return buildMessage(new PassThroughMessage(messageType, code, data));
+    return buildMessage(new PlainMessage(messageType, code, data));
   }
 
   public static Bytes buildMessage(final MessageType messageType, final byte[] data) {
-    return buildMessage(new PassThroughMessage(messageType, data));
+    return buildMessage(new PlainMessage(messageType, data));
   }
 
-  public static PassThroughMessage parseMessage(final ByteBuf buf) {
-    PassThroughMessage ret = null;
+  public static PlainMessage parseMessage(final ByteBuf buf) {
+    PlainMessage ret = null;
     final ByteBuf bufferedBytes = buf.readSlice(buf.readableBytes());
     final byte[] byteArr = new byte[bufferedBytes.readableBytes()];
     bufferedBytes.getBytes(0, byteArr);
@@ -58,9 +58,9 @@ public class MessageHandler {
     input.enterList();
     MessageType type = MessageType.forNumber(input.readInt());
     if (MessageType.DATA.equals(type)) {
-      ret = new PassThroughMessage(type, input.readInt(), input.readBytes());
+      ret = new PlainMessage(type, input.readInt(), input.readBytes());
     } else {
-      ret = new PassThroughMessage(type, input.readBytes());
+      ret = new PlainMessage(type, input.readBytes());
     }
     return ret;
   }

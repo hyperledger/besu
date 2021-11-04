@@ -12,31 +12,31 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.passthrough;
+package org.hyperledger.besu.ethereum.p2p.plain;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class PassThroughMessage {
+public class PlainMessage {
 
   private final MessageType messageType;
   private final int code;
   private final Bytes data;
 
-  public PassThroughMessage(final MessageType messageType, final byte[] data) {
+  public PlainMessage(final MessageType messageType, final byte[] data) {
     super();
     this.messageType = messageType;
     this.code = -1;
     this.data = Bytes.wrap(data);
   }
 
-  public PassThroughMessage(final MessageType messageType, final Bytes data) {
+  public PlainMessage(final MessageType messageType, final Bytes data) {
     super();
     this.messageType = messageType;
     this.code = -1;
     this.data = data;
   }
 
-  public PassThroughMessage(final MessageType messageType, final int code, final Bytes data) {
+  public PlainMessage(final MessageType messageType, final int code, final Bytes data) {
     super();
     this.messageType = messageType;
     this.code = code;

@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.passthrough;
+package org.hyperledger.besu.ethereum.p2p.plain;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -25,10 +25,10 @@ import io.netty.buffer.ByteBuf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class PassThroughFramer extends Framer {
+public class PlainFramer extends Framer {
   private static final Logger LOG = LogManager.getLogger();
 
-  public PassThroughFramer() {
+  public PlainFramer() {
     LOG.trace("Init");
   }
 
@@ -38,7 +38,7 @@ public class PassThroughFramer extends Framer {
     if (buf == null || !buf.isReadable()) {
       return null;
     }
-    PassThroughMessage message = MessageHandler.parseMessage(buf);
+    PlainMessage message = MessageHandler.parseMessage(buf);
     checkState(
         MessageType.DATA.equals(message.getMessageType()), "unexpected message: needs to be data");
     return new RawMessage(message.getCode(), message.getData());

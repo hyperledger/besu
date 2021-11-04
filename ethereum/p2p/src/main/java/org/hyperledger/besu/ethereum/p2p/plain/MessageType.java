@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.passthrough;
+package org.hyperledger.besu.ethereum.p2p.plain;
 
 public enum MessageType {
   PING(0),

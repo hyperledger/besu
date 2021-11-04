@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.passthrough;
+package org.hyperledger.besu.ethereum.p2p.plain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,8 +36,7 @@ public class MessageHandlerTest {
   public void buildPingMessage() throws Exception {
     Bytes message = MessageHandler.buildMessage(MessageType.PING, PING_DATA);
     assertThat(message).isNotNull();
-    PassThroughMessage parsed =
-        MessageHandler.parseMessage(Unpooled.wrappedBuffer(message.toArray()));
+    PlainMessage parsed = MessageHandler.parseMessage(Unpooled.wrappedBuffer(message.toArray()));
     assertThat(parsed).isNotNull();
     assertThat(parsed.getMessageType()).isEqualTo(MessageType.PING);
     assertThat(parsed.getData().toArray()).isEqualTo(PING_DATA);
@@ -47,8 +46,7 @@ public class MessageHandlerTest {
   public void buildPongMessage() throws Exception {
     Bytes message = MessageHandler.buildMessage(MessageType.PONG, PONG_DATA);
     assertThat(message).isNotNull();
-    PassThroughMessage parsed =
-        MessageHandler.parseMessage(Unpooled.wrappedBuffer(message.toArray()));
+    PlainMessage parsed = MessageHandler.parseMessage(Unpooled.wrappedBuffer(message.toArray()));
     assertThat(parsed).isNotNull();
     assertThat(parsed.getMessageType()).isEqualTo(MessageType.PONG);
     assertThat(parsed.getData().toArray()).isEqualTo(PONG_DATA);
@@ -58,8 +56,7 @@ public class MessageHandlerTest {
   public void buildDataMessage() throws Exception {
     Bytes message = MessageHandler.buildMessage(MessageType.DATA, DATA_CODE, MESSAGE);
     assertThat(message).isNotNull();
-    PassThroughMessage parsed =
-        MessageHandler.parseMessage(Unpooled.wrappedBuffer(message.toArray()));
+    PlainMessage parsed = MessageHandler.parseMessage(Unpooled.wrappedBuffer(message.toArray()));
     assertThat(parsed).isNotNull();
     assertThat(parsed.getMessageType()).isEqualTo(MessageType.DATA);
     assertThat(parsed.getCode()).isEqualTo(DATA_CODE);
