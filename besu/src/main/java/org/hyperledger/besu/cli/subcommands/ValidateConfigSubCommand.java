@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.subcommands;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.cli.BesuCommand;
@@ -29,7 +30,7 @@ import picocli.CommandLine.ParentCommand;
 
 @Command(
     name = COMMAND_NAME,
-    description = "This command provides config validation related actions.",
+    description = "This command provides Besu config validation.",
     mixinStandardHelpOptions = true)
 public class ValidateConfigSubCommand implements Runnable {
 
@@ -38,7 +39,7 @@ public class ValidateConfigSubCommand implements Runnable {
   @Option(
       names = "--config-file",
       paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
-      description = "The path to Besu config file")
+      description = "Path to Besu config file")
   private final Path dataPath = DefaultCommandValues.getDefaultBesuDataPath(this);
 
   @SuppressWarnings("unused")
@@ -53,6 +54,7 @@ public class ValidateConfigSubCommand implements Runnable {
 
   @Override
   public void run() {
+    checkNotNull(parentCommand);
     try {
       new TomlConfigFileDefaultProvider(parentCommand.getCommandLine(), dataPath.toFile())
           .loadConfigurationFromFile();
