@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
@@ -306,6 +307,58 @@ public class ValidatorContractTest {
     assertThat(extraDataCodec.decode(block2).getVote()).isEmpty();
   }
 
+  @Test
+  public void
+      transitionsFromValidatorContractModeToBlockHeaderModeWithOverriddenValidatorsThenBackToNewContract() {
+    final List<QbftFork> qbftForks =
+        List.of(
+            createBlockHeaderForkWithValidators(1, List.of(NODE_2_ADDRESS)),
+            createContractFork(2, NEW_VALIDATOR_CONTRACT_ADDRESS));
+
+    final TestContext context =
+        new TestContextBuilder()
+            .indexOfFirstLocallyProposedBlock(0)
+            .nodeParams(
+                List.of(
+                    new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY)),
+                    new NodeParams(NODE_2_ADDRESS, NodeKeyUtils.createFrom(NODE_2_PRIVATE_KEY))))
+            .clock(clock)
+            .genesisFile(Resources.getResource("genesis_validator_contract.json").getFile())
+            .useValidatorContract(true)
+            .qbftForks(qbftForks)
+            .buildAndStart();
+
+    // block 0 uses validator contract with 1 validator
+    // block 1 uses block header voting with overridden validator
+    // block 2 uses validator contract with 2 validators
+    final List<Address> block0Addresses = List.of(NODE_ADDRESS);
+    final List<Address> block1Addresses = List.of(NODE_2_ADDRESS);
+    final List<Address> block2Addresses =
+        Stream.of(NODE_ADDRESS, NODE_2_ADDRESS).sorted().collect(Collectors.toList());
+
+    createNewBlockAsProposer(context, 1L);
+    clock.step(TestContextBuilder.BLOCK_TIMER_SEC, SECONDS);
+    remotePeerProposesNewBlock(context, 2L);
+
+    final ValidatorProvider validatorProvider = context.getValidatorProvider();
+    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
+    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+    final BlockHeader block2 = context.getBlockchain().getBlockHeader(2).get();
+
+    // contract block extra data cannot contain validators or vote
+    assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
+    assertThat(extraDataCodec.decode(genesisBlock).getValidators()).isEmpty();
+    assertThat(extraDataCodec.decode(genesisBlock).getVote()).isEmpty();
+
+    assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
+    assertThat(extraDataCodec.decode(block1).getValidators()).containsExactly(NODE_2_ADDRESS);
+
+    // contract block extra data cannot contain validators or vote
+    assertThat(validatorProvider.getValidatorsForBlock(block2)).isEqualTo(block2Addresses);
+    assertThat(extraDataCodec.decode(block2).getValidators()).isEmpty();
+    assertThat(extraDataCodec.decode(block2).getVote()).isEmpty();
+  }
+
   private void createNewBlockAsProposer(final TestContext context, final long blockNumber) {
     ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(blockNumber, 0);
 
@@ -361,5 +414,24 @@ public class ValidatorContractTest {
                 block,
                 QbftFork.VALIDATOR_SELECTION_MODE_KEY,
                 VALIDATOR_SELECTION_MODE.BLOCKHEADER)));
+  }
+
+  private QbftFork createBlockHeaderForkWithValidators(
+      final long block, final List<Address> validators) {
+
+    final List<TextNode> jsonValidators =
+        validators.stream()
+            .map(v -> TextNode.valueOf(v.toHexString()))
+            .collect(Collectors.toList());
+
+    return new QbftFork(
+        JsonUtil.objectNodeFromMap(
+            Map.of(
+                BftFork.FORK_BLOCK_KEY,
+                block,
+                QbftFork.VALIDATOR_SELECTION_MODE_KEY,
+                VALIDATOR_SELECTION_MODE.BLOCKHEADER,
+                BftFork.VALIDATORS_KEY,
+                JsonUtil.getObjectMapper().createArrayNode().addAll(jsonValidators))));
   }
 }
