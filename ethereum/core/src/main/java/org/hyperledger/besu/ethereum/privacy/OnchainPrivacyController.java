@@ -20,9 +20,6 @@ import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
 
-import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
@@ -47,6 +44,9 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -105,8 +105,7 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
     final String firstPart;
     try {
       LOG.trace("Storing private transaction in enclave");
-      final SendResponse sendResponse =
-              sendRequest(privateTransaction, privacyGroup);
+      final SendResponse sendResponse = sendRequest(privateTransaction, privacyGroup);
       firstPart = sendResponse.getKey();
     } catch (final Exception e) {
       LOG.error("Failed to store private transaction in enclave", e);
@@ -353,25 +352,25 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
   }
 
   private SendResponse sendRequest(
-          final PrivateTransaction privateTransaction,
-          final Optional<PrivacyGroup> maybePrivacyGroup) {
+      final PrivateTransaction privateTransaction, final Optional<PrivacyGroup> maybePrivacyGroup) {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
 
     final PrivacyGroup privacyGroup = maybePrivacyGroup.orElseThrow();
     final Optional<TransactionProcessingResult> version =
-            privateTransactionSimulator.process(
-                    privateTransaction.getPrivacyGroupId().get().toBase64String(),
-                    buildCallParams(GET_VERSION_METHOD_SIGNATURE));
+        privateTransactionSimulator.process(
+            privateTransaction.getPrivacyGroupId().get().toBase64String(),
+            buildCallParams(GET_VERSION_METHOD_SIGNATURE));
     new VersionedPrivateTransaction(privateTransaction, version).writeTo(rlpOutput);
     final List<String> onchainPrivateFor = privacyGroup.getMembers();
     return enclave.send(
-            rlpOutput.encoded().toBase64String(),
-            privateTransaction.getPrivateFrom().toBase64String(),
-            onchainPrivateFor);
+        rlpOutput.encoded().toBase64String(),
+        privateTransaction.getPrivateFrom().toBase64String(),
+        onchainPrivateFor);
   }
 
   @VisibleForTesting
-  public void setOnchainPrivacyGroupContract(final OnchainPrivacyGroupContract onchainPrivacyGroupContract) {
+  public void setOnchainPrivacyGroupContract(
+      final OnchainPrivacyGroupContract onchainPrivacyGroupContract) {
     this.onchainPrivacyGroupContract = onchainPrivacyGroupContract;
   }
 }

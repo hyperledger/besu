@@ -160,7 +160,12 @@ public class RestrictedDefaultPrivacyController extends AbstractPrivacyControlle
             privateTransaction.getPrivacyGroupId().get().toBase64String());
       } else {
         // this should not happen
-        throw new RuntimeException("Wrong privacy group type " + privacyGroup.getType() + " when " + PrivacyGroup.Type.PANTHEON + "was expected.");
+        throw new RuntimeException(
+            "Wrong privacy group type "
+                + privacyGroup.getType()
+                + " when "
+                + PrivacyGroup.Type.PANTHEON
+                + "was expected.");
       }
     }
     // legacy transaction
