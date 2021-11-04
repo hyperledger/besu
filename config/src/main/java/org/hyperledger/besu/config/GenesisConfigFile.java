@@ -32,10 +32,6 @@ import com.google.common.io.Resources;
 
 public class GenesisConfigFile {
 
-  // TODO: refer to / move LondonBaseFeeMarket.DEFAULT_BASEFEE_INITIAL_VALUE rather than duplicating
-  // here
-  public static final long DEFAULT_BASEFEE_INITIAL_VALUE = 1000000000L;
-
   public static final GenesisConfigFile DEFAULT =
       new GenesisConfigFile(JsonUtil.createEmptyObjectNode());
 

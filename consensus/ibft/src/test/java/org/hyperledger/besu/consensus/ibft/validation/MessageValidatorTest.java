@@ -91,7 +91,7 @@ public class MessageValidatorTest {
         .thenReturn(true);
 
     BftContext mockBftCtx = mock(BftContext.class);
-    when(mockBftCtx.get(Mockito.any())).thenReturn(mockBftCtx);
+    when(mockBftCtx.as(Mockito.any())).thenReturn(mockBftCtx);
 
     protocolContext =
         new ProtocolContext(
