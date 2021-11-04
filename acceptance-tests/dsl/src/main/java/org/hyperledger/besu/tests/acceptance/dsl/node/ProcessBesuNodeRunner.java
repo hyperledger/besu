@@ -144,9 +144,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       }
     }
 
-    params.add("--bootnodes");
-
     if (!node.getBootnodes().isEmpty()) {
+      params.add("--bootnodes");
       params.add(node.getBootnodes().stream().map(URI::toString).collect(Collectors.joining(",")));
     }
 
