@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -27,7 +26,6 @@ import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
@@ -153,19 +151,7 @@ public class RestrictedDefaultPrivacyController extends AbstractPrivacyControlle
 
     if (maybePrivacyGroup.isPresent()) {
       final PrivacyGroup privacyGroup = maybePrivacyGroup.get();
-      if (privacyGroup.getType() == PrivacyGroup.Type.ONCHAIN) {
-        // onchain privacy group
-        final Optional<TransactionProcessingResult> version =
-            privateTransactionSimulator.process(
-                privateTransaction.getPrivacyGroupId().get().toBase64String(),
-                buildCallParams(GET_VERSION_METHOD_SIGNATURE));
-        new VersionedPrivateTransaction(privateTransaction, version).writeTo(rlpOutput);
-        final List<String> onchainPrivateFor = privacyGroup.getMembers();
-        return enclave.send(
-            rlpOutput.encoded().toBase64String(),
-            privateTransaction.getPrivateFrom().toBase64String(),
-            onchainPrivateFor);
-      } else if (privacyGroup.getType() == PrivacyGroup.Type.PANTHEON) {
+      if (privacyGroup.getType() == PrivacyGroup.Type.PANTHEON) {
         // offchain privacy group
         privateTransaction.writeTo(rlpOutput);
         return enclave.send(
@@ -174,7 +160,7 @@ public class RestrictedDefaultPrivacyController extends AbstractPrivacyControlle
             privateTransaction.getPrivacyGroupId().get().toBase64String());
       } else {
         // this should not happen
-        throw new RuntimeException();
+        throw new RuntimeException("Wrong privacy group type " + privacyGroup.getType() + " when " + PrivacyGroup.Type.PANTHEON + "was expected.");
       }
     }
     // legacy transaction
