@@ -72,7 +72,7 @@ public class MessageValidator {
     }
 
     final BftBlockInterface blockInterface =
-        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
+        protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
     return proposalConsistencyValidator.validateProposalMatchesBlock(
         msg.getSignedPayload(), msg.getBlock(), blockInterface);
   }
