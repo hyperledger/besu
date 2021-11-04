@@ -254,10 +254,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private CommandLine commandLine;
 
-  public CommandLine getCommandLine() {
-    return commandLine;
-  }
-
   private final Supplier<RlpBlockImporter> rlpBlockImporter;
   private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
   private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
@@ -1261,7 +1257,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.addSubcommand(
         OperatorSubCommand.COMMAND_NAME, new OperatorSubCommand(resultHandler.out()));
     commandLine.addSubcommand(
-        ValidateConfigSubCommand.COMMAND_NAME, new ValidateConfigSubCommand(resultHandler.out()));
+        ValidateConfigSubCommand.COMMAND_NAME,
+        new ValidateConfigSubCommand(commandLine, resultHandler.out()));
     final String generateCompletionSubcommandName = "generate-completion";
     commandLine.addSubcommand(
         generateCompletionSubcommandName, AutoComplete.GenerateCompletion.class);

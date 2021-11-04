@@ -24,13 +24,14 @@ import org.hyperledger.besu.cli.util.TomlConfigFileDefaultProvider;
 import java.io.PrintStream;
 import java.nio.file.Path;
 
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
 @Command(
     name = COMMAND_NAME,
-    description = "This command provides Besu config validation.",
+    description = "This command provides basic Besu config validation.",
     mixinStandardHelpOptions = true)
 public class ValidateConfigSubCommand implements Runnable {
 
@@ -47,21 +48,22 @@ public class ValidateConfigSubCommand implements Runnable {
   private BesuCommand parentCommand;
 
   final PrintStream out;
+  final CommandLine commandLine;
 
-  public ValidateConfigSubCommand(final PrintStream out) {
+  public ValidateConfigSubCommand(final CommandLine commandLine, final PrintStream out) {
     this.out = out;
+    this.commandLine = commandLine;
   }
 
   @Override
   public void run() {
     checkNotNull(parentCommand);
     try {
-      new TomlConfigFileDefaultProvider(parentCommand.getCommandLine(), dataPath.toFile())
-          .loadConfigurationFromFile();
+      new TomlConfigFileDefaultProvider(commandLine, dataPath.toFile()).loadConfigurationFromFile();
     } catch (Exception e) {
       this.out.print(e);
       return;
     }
-    this.out.print("TOML config file is valid.");
+    this.out.print("TOML config file is valid on basic inspection. .");
   }
 }
