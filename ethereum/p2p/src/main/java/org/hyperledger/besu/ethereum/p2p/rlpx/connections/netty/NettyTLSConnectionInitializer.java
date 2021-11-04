@@ -16,8 +16,13 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
+import org.hyperledger.besu.ethereum.p2p.passthrough.PassThroughFramer;
+import org.hyperledger.besu.ethereum.p2p.passthrough.PassThroughHandshaker;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
+import org.hyperledger.besu.ethereum.p2p.rlpx.framing.Framer;
+import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
+import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.io.IOException;
@@ -60,5 +65,15 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
           TLSContextFactory.buildFrom(p2pTLSConfiguration.get()).createNettyServerSslContext();
       ch.pipeline().addLast("ssl", sslContext.newHandler(ch.alloc()));
     }
+  }
+
+  @Override
+  public Handshaker buildInstance() {
+    return new PassThroughHandshaker();
+  }
+
+  @Override
+  public Framer buildFramer(final HandshakeSecrets secrets) {
+    return new PassThroughFramer();
   }
 }
