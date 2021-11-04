@@ -68,7 +68,7 @@ public class JsonCallParameter extends CallParameter {
   }
 
   @JsonAnySetter
-  public void logUnknownProperties(String key, Object value) {
+  public void logUnknownProperties(final String key, final Object value) {
     LOG.debug(
         "unknown property - {} with value - {} and type - {} caught during serialization",
         key,
