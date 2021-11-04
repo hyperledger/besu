@@ -35,7 +35,7 @@ public class IbftLegacyContextBuilder {
         mock(ValidatorProvider.class, withSettings().lenient());
     when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
-    when(bftContext.get(Mockito.any())).thenReturn(bftContext);
+    when(bftContext.as(Mockito.any())).thenReturn(bftContext);
     return bftContext;
   }
 }

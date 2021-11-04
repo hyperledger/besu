@@ -49,7 +49,7 @@ public class BftContext implements PoaContext {
   }
 
   @Override
-  public <C extends ConsensusContext> C get(final Class<C> klass) {
+  public <C extends ConsensusContext> C as(final Class<C> klass) {
     return klass.cast(this);
   }
 }

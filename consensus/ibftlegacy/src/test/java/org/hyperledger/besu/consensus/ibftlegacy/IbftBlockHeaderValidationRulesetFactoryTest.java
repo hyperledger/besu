@@ -56,7 +56,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final ValidatorProvider mockValidatorProvider = mock(ValidatorProvider.class);
     when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
-    when(bftContext.get(Mockito.any())).thenReturn(bftContext);
+    when(bftContext.as(Mockito.any())).thenReturn(bftContext);
     return new ProtocolContext(null, null, bftContext);
   }
 
