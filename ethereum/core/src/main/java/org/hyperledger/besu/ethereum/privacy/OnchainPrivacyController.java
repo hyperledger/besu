@@ -358,7 +358,7 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
     final PrivacyGroup privacyGroup = maybePrivacyGroup.orElseThrow();
     final Optional<TransactionProcessingResult> version =
         privateTransactionSimulator.process(
-            privateTransaction.getPrivacyGroupId().get().toBase64String(),
+            privateTransaction.getPrivacyGroupId().orElseThrow().toBase64String(),
             buildCallParams(GET_VERSION_METHOD_SIGNATURE));
     new VersionedPrivateTransaction(privateTransaction, version).writeTo(rlpOutput);
     final List<String> onchainPrivateFor = privacyGroup.getMembers();
