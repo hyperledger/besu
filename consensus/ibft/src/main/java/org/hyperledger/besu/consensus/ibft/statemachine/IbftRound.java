@@ -113,7 +113,7 @@ public class IbftRound {
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
 
       final BftBlockInterface bftBlockInterface =
-          protocolContext.getConsensusState(BftContext.class).getBlockInterface();
+          protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
       blockToPublish =
           bftBlockInterface.replaceRoundInBlock(
               bestBlockFromRoundChange.get(),

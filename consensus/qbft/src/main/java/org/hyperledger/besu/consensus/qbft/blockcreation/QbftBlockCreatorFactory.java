@@ -61,7 +61,7 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
   @Override
   public BlockCreator create(final BlockHeader parentHeader, final int round) {
     final BlockCreator blockCreator = super.create(parentHeader, round);
-    final QbftContext qbftContext = protocolContext.getConsensusState(QbftContext.class);
+    final QbftContext qbftContext = protocolContext.getConsensusContext(QbftContext.class);
     if (qbftContext.getPkiBlockCreationConfiguration().isEmpty()) {
       return blockCreator;
     } else {

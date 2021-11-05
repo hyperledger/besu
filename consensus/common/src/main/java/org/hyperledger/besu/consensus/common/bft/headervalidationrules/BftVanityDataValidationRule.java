@@ -31,7 +31,7 @@ public class BftVanityDataValidationRule implements AttachedBlockHeaderValidatio
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
-    final BftContext bftContext = protocolContext.getConsensusState(BftContext.class);
+    final BftContext bftContext = protocolContext.getConsensusContext(BftContext.class);
     final BftExtraData bftExtraData = bftContext.getBlockInterface().getExtraData(header);
 
     if (bftExtraData.getVanityData().size() != BftExtraDataCodec.EXTRA_VANITY_LENGTH) {

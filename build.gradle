@@ -613,6 +613,7 @@ artifactoryPublish {
 
 def dockerVariants = [
   "openjdk-11",
+  "openjdk-11-debug",
   "graalvm",
   "openjdk-latest"
 ]

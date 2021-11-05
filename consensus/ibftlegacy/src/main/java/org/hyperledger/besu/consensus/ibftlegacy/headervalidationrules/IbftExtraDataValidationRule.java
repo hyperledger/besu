@@ -57,7 +57,7 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
     try {
       final Collection<Address> storedValidators =
           context
-              .getConsensusState(IbftLegacyContext.class)
+              .getConsensusContext(IbftLegacyContext.class)
               .getValidatorProvider()
               .getValidatorsAfterBlock(parent);
       final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
