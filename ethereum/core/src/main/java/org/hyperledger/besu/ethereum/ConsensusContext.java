@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,15 +14,7 @@
  */
 package org.hyperledger.besu.ethereum;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-
 @FunctionalInterface
-public interface ConsensusContextFactory {
-
-  ConsensusContext create(
-      Blockchain blockchain,
-      WorldStateArchive worldStateArchive,
-      ProtocolSchedule protocolSchedule);
+public interface ConsensusContext {
+  <C extends ConsensusContext> C as(final Class<C> klass);
 }
