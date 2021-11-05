@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -29,12 +29,12 @@ public class PlainFramer extends Framer {
   private static final Logger LOG = LogManager.getLogger();
 
   public PlainFramer() {
-    LOG.trace("Init");
+    LOG.trace("Initialising PlainFramer");
   }
 
   @Override
   public synchronized MessageData deframe(final ByteBuf buf) throws FramingException {
-    LOG.trace("deframe");
+    LOG.trace("Deframing Message");
     if (buf == null || !buf.isReadable()) {
       return null;
     }
@@ -46,7 +46,7 @@ public class PlainFramer extends Framer {
 
   @Override
   public synchronized void frame(final MessageData message, final ByteBuf output) {
-    LOG.trace("frame");
+    LOG.trace("Framing Message");
     output.writeBytes(
         MessageHandler.buildMessage(MessageType.DATA, message.getCode(), message.getData())
             .toArray());

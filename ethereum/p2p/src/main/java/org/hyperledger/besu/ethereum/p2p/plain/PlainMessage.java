@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,17 +23,11 @@ public class PlainMessage {
   private final Bytes data;
 
   public PlainMessage(final MessageType messageType, final byte[] data) {
-    super();
-    this.messageType = messageType;
-    this.code = -1;
-    this.data = Bytes.wrap(data);
+    this(messageType, Bytes.wrap(data));
   }
 
   public PlainMessage(final MessageType messageType, final Bytes data) {
-    super();
-    this.messageType = messageType;
-    this.code = -1;
-    this.data = data;
+    this(messageType, -1, data);
   }
 
   public PlainMessage(final MessageType messageType, final int code, final Bytes data) {
