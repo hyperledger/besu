@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,15 +40,24 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.enclave.testutil.EnclaveKeyUtils;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -70,7 +80,9 @@ public class OnchainPrivacyControllerTest {
   private static final String ADDRESS1 = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final String ADDRESS2 = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
   private static final String PRIVACY_GROUP_ID = "DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=";
-  private static final String KEY = "this is the key";
+  private static final String KEY = "C2bVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+  private static final String HEX_STRING_32BYTES_VALUE1 =
+      "0x0000000000000000000000000000000000000000000000000000000000000001";
 
   private OnchainPrivacyController privacyController;
   private PrivateTransactionValidator privateTransactionValidator;
@@ -107,38 +119,6 @@ public class OnchainPrivacyControllerTest {
                   .createPrivateKey(
                       new BigInteger(
                           "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
-
-  private Enclave mockEnclave() {
-    final Enclave mockEnclave = mock(Enclave.class);
-    return mockEnclave;
-  }
-
-  private PrivateTransactionValidator mockPrivateTransactionValidator() {
-    final PrivateTransactionValidator validator = mock(PrivateTransactionValidator.class);
-    return validator;
-  }
-
-  private void mockingForFindPrivacyGroupByMembers() {
-    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
-        new PrivacyGroupHeadBlockMap(
-            Map.of(Bytes32.wrap(Bytes.fromBase64String(PRIVACY_GROUP_ID)), Hash.ZERO));
-    when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
-        .thenReturn(Optional.of(privacyGroupHeadBlockMap));
-  }
-
-  private void mockingForFindPrivacyGroupById() {
-    when(privateTransactionSimulator.process(any(), any()))
-        .thenReturn(
-            Optional.of(
-                new TransactionProcessingResult(
-                    TransactionProcessingResult.Status.SUCCESSFUL,
-                    emptyList(),
-                    0,
-                    0,
-                    SIMULATOR_RESULT,
-                    ValidationResult.valid(),
-                    Optional.empty())));
-  }
 
   @Before
   public void setUp() throws Exception {
@@ -187,6 +167,24 @@ public class OnchainPrivacyControllerTest {
             privateTransaction, ADDRESS1, Optional.of(EXPECTED_PRIVACY_GROUP));
     assertThat(payload).isNotNull();
     assertThat(payload).isEqualTo(KEY);
+  }
+
+  @Test
+  public void createsPayloadForAdding() {
+    mockingForCreatesPayloadForAdding();
+    final PrivateTransaction privateTransaction =
+        buildPrivateTransaction(1)
+            .payload(OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE)
+            .to(PrivacyParameters.ONCHAIN_PRIVACY_PROXY)
+            .signAndBuild(KEY_PAIR);
+    final String payload =
+        privacyController.createPrivateMarkerTransactionPayload(
+            privateTransaction, ADDRESS1, Optional.of(EXPECTED_PRIVACY_GROUP));
+    assertThat(payload).isNotNull();
+    assertThat(payload)
+        .isEqualTo(
+            Bytes.concatenate(Bytes.fromBase64String(KEY), Bytes.fromBase64String(KEY))
+                .toBase64String());
   }
 
   @Test
@@ -329,5 +327,83 @@ public class OnchainPrivacyControllerTest {
         .restriction(Restriction.RESTRICTED)
         .privateFrom(Base64.decode(ADDRESS1))
         .privacyGroupId(Base64.decode(PRIVACY_GROUP_ID));
+  }
+
+  private Enclave mockEnclave() {
+    final Enclave mockEnclave = mock(Enclave.class);
+    return mockEnclave;
+  }
+
+  private PrivateTransactionValidator mockPrivateTransactionValidator() {
+    final PrivateTransactionValidator validator = mock(PrivateTransactionValidator.class);
+    return validator;
+  }
+
+  private void mockingForFindPrivacyGroupByMembers() {
+    final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
+        new PrivacyGroupHeadBlockMap(
+            Map.of(Bytes32.wrap(Bytes.fromBase64String(PRIVACY_GROUP_ID)), Hash.ZERO));
+    when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
+        .thenReturn(Optional.of(privacyGroupHeadBlockMap));
+  }
+
+  private void mockingForFindPrivacyGroupById() {
+    when(privateTransactionSimulator.process(any(), any()))
+        .thenReturn(
+            Optional.of(
+                new TransactionProcessingResult(
+                    TransactionProcessingResult.Status.SUCCESSFUL,
+                    emptyList(),
+                    0,
+                    0,
+                    SIMULATOR_RESULT,
+                    ValidationResult.valid(),
+                    Optional.empty())));
+  }
+
+  private void mockingForCreatesPayloadForAdding() {
+    final SendResponse key = new SendResponse(KEY);
+    when(enclave.send(any(), any(), anyList())).thenReturn(key);
+    final Map<Bytes32, Hash> bytes32HashMap = new HashMap<>();
+    final Bytes32 pgBytes = Bytes32.wrap(Base64.decode(PRIVACY_GROUP_ID));
+    bytes32HashMap.put(pgBytes, Hash.ZERO);
+    when(blockchain.getChainHeadHash()).thenReturn(Hash.ZERO);
+    final Optional<PrivacyGroupHeadBlockMap> privacyGroupHeadBlockMap =
+        Optional.of(new PrivacyGroupHeadBlockMap(bytes32HashMap));
+    when(privateStateStorage.getPrivacyGroupHeadBlockMap(Hash.ZERO))
+        .thenReturn(privacyGroupHeadBlockMap);
+    final List<PrivateTransactionMetadata> privateTransactionMetadata =
+        List.of(new PrivateTransactionMetadata(Hash.ZERO, Hash.ZERO));
+    final PrivateBlockMetadata privateBlockMetadata =
+        new PrivateBlockMetadata(privateTransactionMetadata);
+    when(privateStateStorage.getPrivateBlockMetadata(any(), eq(pgBytes)))
+        .thenReturn(Optional.of(privateBlockMetadata));
+    final BlockHeader blockHeaderMock = mock(BlockHeader.class);
+    final Optional<BlockHeader> maybeBlockHeader = Optional.of(blockHeaderMock);
+    when(blockchain.getBlockHeader(any())).thenReturn(maybeBlockHeader);
+    final Hash hash0x01 = Hash.fromHexString(HEX_STRING_32BYTES_VALUE1);
+    when(blockHeaderMock.getParentHash()).thenReturn(hash0x01);
+    when(privateStateStorage.getPrivacyGroupHeadBlockMap(hash0x01)).thenReturn(Optional.empty());
+    final Transaction transaction =
+        Transaction.builder()
+            .gasLimit(0)
+            .gasPrice(Wei.ZERO)
+            .nonce(0)
+            .payload(Bytes.fromHexString(HEX_STRING_32BYTES_VALUE1))
+            .value(Wei.ZERO)
+            .to(null)
+            .guessType()
+            .signAndBuild(KEY_PAIR);
+    when(blockchain.getTransactionByHash(any())).thenReturn(Optional.ofNullable(transaction));
+    final PrivateTransactionWithMetadata privateTransactionWithMetadata =
+        new PrivateTransactionWithMetadata(
+            buildPrivateTransaction(3).signAndBuild(KEY_PAIR),
+            new PrivateTransactionMetadata(Hash.ZERO, Hash.ZERO));
+    final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
+    privateTransactionWithMetadata.writeTo(bytesValueRLPOutput);
+    final byte[] txPayload =
+        bytesValueRLPOutput.encoded().toBase64String().getBytes(StandardCharsets.UTF_8);
+    when(enclave.receive(any(), any()))
+        .thenReturn(new ReceiveResponse(txPayload, PRIVACY_GROUP_ID, ADDRESS2));
   }
 }
