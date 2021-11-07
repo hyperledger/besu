@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.Logger;
 
@@ -76,12 +77,9 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), FIND_PRIVACY_GROUP_ERROR);
     } catch (final EnclaveClientException e) {
+      final Pattern pattern = Pattern.compile("^Privacy group.*not found$");
       if (e.getMessage().equals(JsonRpcError.ENCLAVE_PRIVACY_GROUP_MISSING.getMessage())
-          || (e.getMessage().contains("Privacy group")
-              && e.getMessage()
-                  .contains("not found"))) { // TODO: In Tessera we are throwing this: new
-        // PrivacyGroupNotFoundException("Privacy group " +
-        // privacyGroupId + " not found")
+          || pattern.matcher(e.getMessage()).find()) {
         LOG.error("Failed to retrieve privacy group");
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), FIND_PRIVACY_GROUP_ERROR);

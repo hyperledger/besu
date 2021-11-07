@@ -209,15 +209,6 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
         });
   }
 
-  private List<String> getParticipantsFromParameter(final Bytes input) {
-    final List<String> participants = new ArrayList<>();
-    final Bytes mungedParticipants = input.slice(4 + 32 + 32);
-    for (int i = 0; i <= mungedParticipants.size() - 32; i += 32) {
-      participants.add(mungedParticipants.slice(i, 32).toBase64String());
-    }
-    return participants;
-  }
-
   private List<String> decodeParticipantList(final Bytes rlpEncodedList) {
     final ArrayList<String> decodedElements = new ArrayList<>();
     // first 32 bytes is dynamic list offset
@@ -291,16 +282,6 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
     return privateTransactions;
   }
 
-  private boolean isGroupAdditionTransaction(final PrivateTransaction privateTransaction) {
-    final Optional<Address> to = privateTransaction.getTo();
-    return to.isPresent()
-        && to.get().equals(ONCHAIN_PRIVACY_PROXY)
-        && privateTransaction
-            .getPayload()
-            .toHexString()
-            .startsWith(ADD_PARTICIPANTS_METHOD_SIGNATURE.toHexString());
-  }
-
   private List<PrivateTransactionWithMetadata> retrieveAddBlob(final String addDataKey) {
     final ReceiveResponse addReceiveResponse = enclave.receive(addDataKey);
     return PrivateTransactionWithMetadata.readListFromPayload(
@@ -311,7 +292,7 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
       final PrivateTransaction privateTransaction,
       final Bytes32 privacyGroupId,
       final String privacyUserId) {
-    if (isGroupAdditionTransaction(privateTransaction)) {
+    if (OnchainUtil.isGroupAdditionTransaction(privateTransaction)) {
       final List<PrivateTransactionMetadata> privateTransactionMetadataList =
           buildTransactionMetadataList(privacyGroupId);
       if (!privateTransactionMetadataList.isEmpty()) {
@@ -320,7 +301,7 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
                 privacyGroupId, privateTransactionMetadataList, privacyUserId);
         final Bytes bytes = serializeAddToGroupPayload(privateTransactionWithMetadataList);
         final List<String> privateFor =
-            getParticipantsFromParameter(privateTransaction.getPayload());
+            OnchainUtil.getParticipantsFromParameter(privateTransaction.getPayload());
         return Optional.of(
             enclave.send(bytes.toBase64String(), privacyUserId, privateFor).getKey());
       }

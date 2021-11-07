@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
+package org.hyperledger.besu.ethereum.privacy;
 
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE;

@@ -81,8 +81,8 @@ public class RestrictedOffchainEeaSendRawTransaction extends AbstractEeaSendRawT
         privateTransaction
             .getPrivacyGroupId()
             .flatMap(
-                g ->
-                    privacyController.findPrivacyGroupByGroupId(g.toBase64String(), privacyUserId));
+                privacyGroupId ->
+                    privacyController.findPrivacyGroupByGroupId(privacyGroupId.toBase64String(), privacyUserId));
 
     final String privateTransactionLookupId =
         privacyController.createPrivateMarkerTransactionPayload(

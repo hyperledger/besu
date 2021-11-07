@@ -19,7 +19,7 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVA
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.OnchainUtil;
+import org.hyperledger.besu.ethereum.privacy.OnchainUtil;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
