@@ -86,6 +86,13 @@ public class Framer {
   // have we ever successfully uncompressed a packet?
   private boolean compressionSuccessful = false;
 
+  protected Framer() {
+    this.secrets = null;
+    this.encryptor = null;
+    this.decryptor = null;
+    this.macEncryptor = null;
+  }
+
   /**
    * Creates a new framer out of the handshake secrets derived during the cryptographic handshake.
    *
