@@ -32,7 +32,7 @@ import org.bouncycastle.util.io.pem.PemReader;
 
 public class JWTAuthOptionsFactory {
 
-  private static final String ALGORITHM = "RS256";
+  private static final String DEFAULT_ALGORITHM = "RS256";
   private static final String PERMISSIONS = "permissions";
 
   public JWTAuthOptions createForExternalPublicKey(final File externalPublicKeyFile) {
@@ -41,7 +41,19 @@ public class JWTAuthOptionsFactory {
     return new JWTAuthOptions()
         .setPermissionsClaimKey(PERMISSIONS)
         .addPubSecKey(
-            new PubSecKeyOptions().setAlgorithm(ALGORITHM).setPublicKey(base64EncodedPublicKey));
+            new PubSecKeyOptions()
+                .setAlgorithm(DEFAULT_ALGORITHM)
+                .setPublicKey(base64EncodedPublicKey));
+  }
+
+  public JWTAuthOptions createForExtrenalPublicKeyWithAlgorithm(
+      final File externalPublicKeyFile, final String algorithm) {
+    final byte[] externalJwtPublicKey = readPublicKey(externalPublicKeyFile);
+    final String base64EncodedPublicKey = Base64.getEncoder().encodeToString(externalJwtPublicKey);
+    return new JWTAuthOptions()
+        .setPermissionsClaimKey(PERMISSIONS)
+        .addPubSecKey(
+            new PubSecKeyOptions().setAlgorithm(algorithm).setPublicKey(base64EncodedPublicKey));
   }
 
   public JWTAuthOptions createWithGeneratedKeyPair() {
@@ -50,7 +62,7 @@ public class JWTAuthOptionsFactory {
         .setPermissionsClaimKey(PERMISSIONS)
         .addPubSecKey(
             new PubSecKeyOptions()
-                .setAlgorithm(ALGORITHM)
+                .setAlgorithm(DEFAULT_ALGORITHM)
                 .setPublicKey(Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded()))
                 .setSecretKey(
                     Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded())));

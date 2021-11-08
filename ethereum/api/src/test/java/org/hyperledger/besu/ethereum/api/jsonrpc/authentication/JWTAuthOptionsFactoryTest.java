@@ -30,7 +30,7 @@ import org.junit.Test;
 
 public class JWTAuthOptionsFactoryTest {
 
-  private static final String JWT_PUBLIC_KEY =
+  private static final String JWT_PUBLIC_KEY_RS256 =
       "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw6tMhjogMulRbYby7bCL"
           + "rFhukDnxvm4XR3KSXLKdLLQHHyouMOQaLac9M+/Z1KkIpqfZPjLfW2/yUg2IKx4T"
           + "dvFVzbVq17X6dq49ZS8jJtb8l2+Vius4d3LnpvxCOematRG9Acn+2qLwC+sK7RPY"
@@ -38,6 +38,10 @@ public class JWTAuthOptionsFactoryTest {
           + "NYf4cAzu/1d5MgspyZwnRo468gqaak3wQzkmk69Z25L1N7TXZvk2b7rT7/ssFnt+"
           + "//fKVpD6qkQ3OopD+7gOziAYUxChw6RUWekV+uRgNADQhaqV6wDdogBz77wTJedV"
           + "YwIDAQAB";
+
+  private static final String JWT_PUBLIC_KEY_ES256 =
+      "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE6PzW5LsKpsgbq568WqKmQ6bthPkn"
+          + "DBZG7SinCv+Ic44BzdlkCECvzPQGX/oLak2HtWDpNzc595ix0h58FMKUfw==";
 
   @Test
   public void createsOptionsWithGeneratedKeyPair() {
@@ -76,7 +80,26 @@ public class JWTAuthOptionsFactoryTest {
     assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(1);
     assertThat(jwtAuthOptions.getPubSecKeys().get(0).getAlgorithm()).isEqualTo("RS256");
     assertThat(jwtAuthOptions.getPubSecKeys().get(0).getSecretKey()).isNull();
-    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getPublicKey()).isEqualTo(JWT_PUBLIC_KEY);
+    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getPublicKey())
+        .isEqualTo(JWT_PUBLIC_KEY_RS256);
+  }
+
+  @Test
+  public void createOptionsUsingECDASPublicKeyFile() throws URISyntaxException {
+    final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
+    final File enclavePublicKeyFile =
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_ecdsa").toURI())
+            .toAbsolutePath()
+            .toFile();
+
+    final JWTAuthOptions jwtAuthOptions =
+        jwtAuthOptionsFactory.createForExtrenalPublicKeyWithAlgorithm(
+            enclavePublicKeyFile, "ES256");
+    assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(1);
+    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getAlgorithm()).isEqualTo("ES256");
+    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getSecretKey()).isNull();
+    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getPublicKey())
+        .isEqualTo(JWT_PUBLIC_KEY_ES256);
   }
 
   @Test
