@@ -24,7 +24,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.InvalidAlgorithmParameterException;
 import java.util.Arrays;
 
 import io.vertx.ext.auth.PubSecKeyOptions;
@@ -107,22 +106,6 @@ public class JWTAuthOptionsFactoryTest {
     } catch (Exception e) {
       fail("Should not have exceptions thrown" + Arrays.toString(e.getStackTrace()));
     }
-  }
-
-  @Test
-  public void failstoCreateOptionsWhenAlgorithmIsInvalid() throws URISyntaxException {
-    final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
-    final File enclavePublicKeyFile =
-        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_ecdsa").toURI())
-            .toAbsolutePath()
-            .toFile();
-
-    assertThatThrownBy(
-            () ->
-                jwtAuthOptionsFactory.createForExtrenalPublicKeyWithAlgorithm(
-                    enclavePublicKeyFile, "INVALID"))
-        .isInstanceOf(InvalidAlgorithmParameterException.class)
-        .hasMessage("Invalid JWT key algorithm");
   }
 
   @Test

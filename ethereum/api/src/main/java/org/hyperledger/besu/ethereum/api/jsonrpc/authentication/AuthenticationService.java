@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 
 import java.io.File;
-import java.security.InvalidAlgorithmParameterException;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -62,8 +61,7 @@ public class AuthenticationService {
    *     on this service
    */
   public static Optional<AuthenticationService> create(
-      final Vertx vertx, final JsonRpcConfiguration config)
-      throws InvalidAlgorithmParameterException {
+      final Vertx vertx, final JsonRpcConfiguration config) {
     return create(
         vertx,
         config.isAuthenticationEnabled(),
@@ -83,8 +81,7 @@ public class AuthenticationService {
    *     on this service
    */
   public static Optional<AuthenticationService> create(
-      final Vertx vertx, final WebSocketConfiguration config)
-      throws InvalidAlgorithmParameterException {
+      final Vertx vertx, final WebSocketConfiguration config) {
     return create(
         vertx,
         config.isAuthenticationEnabled(),
@@ -98,8 +95,7 @@ public class AuthenticationService {
       final boolean authenticationEnabled,
       final String authenticationCredentialsFile,
       final File authenticationPublicKeyFile,
-      final String authenticationAlgorithm)
-      throws InvalidAlgorithmParameterException {
+      final String authenticationAlgorithm) {
     if (!authenticationEnabled) {
       return Optional.empty();
     }

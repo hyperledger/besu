@@ -1850,6 +1850,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
     }
 
+    final String[] allowedJWTAlgs =
+        new String[] {"RS256", "RS384", "RS512", "ES256", "ES384", "ES512", null};
+
+    if (!Arrays.asList(allowedJWTAlgs).contains(rpcHttpAuthenticationAlgorithm)) {
+      throw new ParameterException(commandLine, "Invalid JWT key algorithm");
+    }
+
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
     jsonRpcConfiguration.setHost(rpcHttpHost);
