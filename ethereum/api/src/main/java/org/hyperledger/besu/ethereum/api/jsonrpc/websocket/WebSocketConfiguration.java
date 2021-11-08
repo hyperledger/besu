@@ -40,6 +40,7 @@ public class WebSocketConfiguration {
   private String authenticationCredentialsFile;
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private File authenticationPublicKeyFile;
+  private String authenticationAlgorithm = null;
   private long timeoutSec;
   private int maxActiveConnections;
 
@@ -118,6 +119,14 @@ public class WebSocketConfiguration {
 
   public void setAuthenticationPublicKeyFile(final File authenticationPublicKeyFile) {
     this.authenticationPublicKeyFile = authenticationPublicKeyFile;
+  }
+
+  public String getAuthenticationAlgorithm() {
+    return authenticationAlgorithm;
+  }
+
+  public void setAuthenticationAlgorithm(final String algorithm) {
+    authenticationAlgorithm = algorithm;
   }
 
   public long getTimeoutSec() {

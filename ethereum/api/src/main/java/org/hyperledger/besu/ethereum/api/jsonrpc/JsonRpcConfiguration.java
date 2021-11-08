@@ -43,6 +43,7 @@ public class JsonRpcConfiguration {
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
+  private String authenticationAlgorithm = null;
   private File authenticationPublicKeyFile;
   private Optional<TlsConfiguration> tlsConfiguration = Optional.empty();
   private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
@@ -138,6 +139,14 @@ public class JsonRpcConfiguration {
 
   public void setAuthenticationPublicKeyFile(final File authenticationPublicKeyFile) {
     this.authenticationPublicKeyFile = authenticationPublicKeyFile;
+  }
+
+  public String getAuthenticationAlgorithm() {
+    return authenticationAlgorithm;
+  }
+
+  public void setAuthenticationAlgorithm(final String authenticationAlgorithm) {
+    this.authenticationAlgorithm = authenticationAlgorithm;
   }
 
   public Optional<TlsConfiguration> getTlsConfiguration() {

@@ -583,6 +583,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final File rpcHttpAuthenticationPublicKeyFile = null;
 
   @Option(
+      names = {"--rpc-http-authentication-jwt-algorithm"},
+      description =
+          "JWT encryption algorithm used by the public key - must be one of RS256, RS384, RS512, ES256, ES384 and ES512",
+      arity = "1")
+  private final String rpcHttpAuthenticationAlgorithm = null;
+
+  @Option(
       names = {"--rpc-http-tls-enabled"},
       description = "Enable TLS for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcHttpTlsEnabled = false;
@@ -1854,6 +1861,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
+    jsonRpcConfiguration.setAuthenticationAlgorithm(rpcHttpAuthenticationAlgorithm);
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
     jsonRpcConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
     return jsonRpcConfiguration;

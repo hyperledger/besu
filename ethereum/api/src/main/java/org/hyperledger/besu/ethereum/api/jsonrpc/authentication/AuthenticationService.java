@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 
 import java.io.File;
+import java.security.InvalidAlgorithmParameterException;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -61,12 +62,14 @@ public class AuthenticationService {
    *     on this service
    */
   public static Optional<AuthenticationService> create(
-      final Vertx vertx, final JsonRpcConfiguration config) {
+      final Vertx vertx, final JsonRpcConfiguration config)
+      throws InvalidAlgorithmParameterException {
     return create(
         vertx,
         config.isAuthenticationEnabled(),
         config.getAuthenticationCredentialsFile(),
-        config.getAuthenticationPublicKeyFile());
+        config.getAuthenticationPublicKeyFile(),
+        config.getAuthenticationAlgorithm());
   }
 
   /**
@@ -80,28 +83,37 @@ public class AuthenticationService {
    *     on this service
    */
   public static Optional<AuthenticationService> create(
-      final Vertx vertx, final WebSocketConfiguration config) {
+      final Vertx vertx, final WebSocketConfiguration config)
+      throws InvalidAlgorithmParameterException {
     return create(
         vertx,
         config.isAuthenticationEnabled(),
         config.getAuthenticationCredentialsFile(),
-        config.getAuthenticationPublicKeyFile());
+        config.getAuthenticationPublicKeyFile(),
+        config.getAuthenticationAlgorithm());
   }
 
   private static Optional<AuthenticationService> create(
       final Vertx vertx,
       final boolean authenticationEnabled,
       final String authenticationCredentialsFile,
-      final File authenticationPublicKeyFile) {
+      final File authenticationPublicKeyFile,
+      final String authenticationAlgorithm)
+      throws InvalidAlgorithmParameterException {
     if (!authenticationEnabled) {
       return Optional.empty();
     }
 
-    final JWTAuthOptions jwtAuthOptions =
-        authenticationPublicKeyFile == null
-            ? jwtAuthOptionsFactory.createWithGeneratedKeyPair()
-            : jwtAuthOptionsFactory.createForExternalPublicKey(authenticationPublicKeyFile);
-
+    final JWTAuthOptions jwtAuthOptions;
+    if (authenticationPublicKeyFile == null) {
+      jwtAuthOptions = jwtAuthOptionsFactory.createWithGeneratedKeyPair();
+    } else {
+      jwtAuthOptions =
+          authenticationAlgorithm == null
+              ? jwtAuthOptionsFactory.createForExternalPublicKey(authenticationPublicKeyFile)
+              : jwtAuthOptionsFactory.createForExtrenalPublicKeyWithAlgorithm(
+                  authenticationPublicKeyFile, authenticationAlgorithm);
+    }
     final Optional<AuthProvider> credentialAuthProvider =
         makeCredentialAuthProvider(vertx, authenticationEnabled, authenticationCredentialsFile);
 
