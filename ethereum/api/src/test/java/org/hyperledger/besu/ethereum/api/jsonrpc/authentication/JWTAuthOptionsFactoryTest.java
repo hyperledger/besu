@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +24,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.InvalidAlgorithmParameterException;
+import java.util.Arrays;
 
 import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
@@ -92,14 +95,34 @@ public class JWTAuthOptionsFactoryTest {
             .toAbsolutePath()
             .toFile();
 
-    final JWTAuthOptions jwtAuthOptions =
-        jwtAuthOptionsFactory.createForExtrenalPublicKeyWithAlgorithm(
-            enclavePublicKeyFile, "ES256");
-    assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(1);
-    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getAlgorithm()).isEqualTo("ES256");
-    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getSecretKey()).isNull();
-    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getPublicKey())
-        .isEqualTo(JWT_PUBLIC_KEY_ES256);
+    try {
+      final JWTAuthOptions jwtAuthOptions =
+          jwtAuthOptionsFactory.createForExtrenalPublicKeyWithAlgorithm(
+              enclavePublicKeyFile, "ES256");
+      assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(1);
+      assertThat(jwtAuthOptions.getPubSecKeys().get(0).getAlgorithm()).isEqualTo("ES256");
+      assertThat(jwtAuthOptions.getPubSecKeys().get(0).getSecretKey()).isNull();
+      assertThat(jwtAuthOptions.getPubSecKeys().get(0).getPublicKey())
+          .isEqualTo(JWT_PUBLIC_KEY_ES256);
+    } catch (Exception e) {
+      fail("Should not have exceptions thrown" + Arrays.toString(e.getStackTrace()));
+    }
+  }
+
+  @Test
+  public void failstoCreateOptionsWhenAlgorithmIsInvalid() throws URISyntaxException {
+    final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
+    final File enclavePublicKeyFile =
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_ecdsa").toURI())
+            .toAbsolutePath()
+            .toFile();
+
+    assertThatThrownBy(
+            () ->
+                jwtAuthOptionsFactory.createForExtrenalPublicKeyWithAlgorithm(
+                    enclavePublicKeyFile, "INVALID"))
+        .isInstanceOf(InvalidAlgorithmParameterException.class)
+        .hasMessage("Invalid JWT key algorithm");
   }
 
   @Test

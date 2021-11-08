@@ -20,9 +20,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Base64;
 
 import io.vertx.ext.auth.PubSecKeyOptions;
@@ -47,9 +49,18 @@ public class JWTAuthOptionsFactory {
   }
 
   public JWTAuthOptions createForExtrenalPublicKeyWithAlgorithm(
-      final File externalPublicKeyFile, final String algorithm) {
+      final File externalPublicKeyFile, final String algorithm)
+      throws InvalidAlgorithmParameterException {
     final byte[] externalJwtPublicKey = readPublicKey(externalPublicKeyFile);
     final String base64EncodedPublicKey = Base64.getEncoder().encodeToString(externalJwtPublicKey);
+
+    final String[] allowedAlgs =
+        new String[] {"RS256", "RS384", "RS512", "ES256", "ES384", "ES512"};
+
+    if (!Arrays.asList(allowedAlgs).contains(algorithm)) {
+      throw new InvalidAlgorithmParameterException("Invalid JWT key algorithm");
+    }
+
     return new JWTAuthOptions()
         .setPermissionsClaimKey(PERMISSIONS)
         .addPubSecKey(
