@@ -69,6 +69,68 @@ public class JsonUtilTest {
   }
 
   @Test
+  public void normalizeKeys_arrayNode() {
+    final ObjectNode originalObj =
+        mapper
+            .createObjectNode()
+            .set(
+                "ArrAy",
+                mapper
+                    .createArrayNode()
+                    .add(mapper.createObjectNode().put("lower", "foo"))
+                    .add(mapper.createObjectNode().put("UPPER", "BAR"))
+                    .add(mapper.createObjectNode().put("Camel", "Ziz"))
+                    .add(mapper.createObjectNode().put("MiXeD", "LoL")));
+
+    final ObjectNode expectedObj =
+        mapper
+            .createObjectNode()
+            .set(
+                "array",
+                mapper
+                    .createArrayNode()
+                    .add(mapper.createObjectNode().put("lower", "foo"))
+                    .add(mapper.createObjectNode().put("upper", "BAR"))
+                    .add(mapper.createObjectNode().put("camel", "Ziz"))
+                    .add(mapper.createObjectNode().put("mixed", "LoL")));
+
+    final ObjectNode normalized = JsonUtil.normalizeKeys(originalObj);
+
+    assertThat(normalized).isEqualTo(expectedObj);
+  }
+
+  @Test
+  public void normalizeKeys_arrayNode_depth() {
+    final ObjectNode originalObj =
+        mapper
+            .createObjectNode()
+            .set(
+                "ArrAy",
+                mapper
+                    .createArrayNode()
+                    .add(
+                        mapper
+                            .createArrayNode()
+                            .add(mapper.createObjectNode().put("dEpTh", "Foo"))));
+
+    final ObjectNode expectedObj =
+        mapper
+            .createObjectNode()
+            .set(
+                "array",
+                mapper
+                    .createArrayNode()
+                    .add(
+                        mapper
+                            .createArrayNode()
+                            .add(mapper.createObjectNode().put("depth", "Foo"))));
+
+    final ObjectNode normalized = JsonUtil.normalizeKeys(originalObj);
+
+    assertThat(normalized).isEqualTo(expectedObj);
+  }
+
+  @Test
   public void getLong_nonExistentKey() {
     final ObjectNode node = mapper.createObjectNode();
     final OptionalLong result = JsonUtil.getLong(node, "test");

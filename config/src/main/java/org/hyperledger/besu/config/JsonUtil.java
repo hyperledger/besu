@@ -50,11 +50,26 @@ public class JsonUtil {
               final String normalizedKey = key.toLowerCase(Locale.US);
               if (value instanceof ObjectNode) {
                 normalized.set(normalizedKey, normalizeKeys((ObjectNode) value));
+              } else if (value instanceof ArrayNode) {
+                normalized.set(normalizedKey, normalizeKeysInArray((ArrayNode) value));
               } else {
                 normalized.set(normalizedKey, value);
               }
             });
     return normalized;
+  }
+
+  private static ArrayNode normalizeKeysInArray(final ArrayNode arrayNode) {
+    final ArrayNode normalizedArray = JsonUtil.createEmptyArrayNode();
+    arrayNode.forEach(
+        value -> {
+          if (value instanceof ObjectNode) {
+            normalizedArray.add(normalizeKeys((ObjectNode) value));
+          } else if (value instanceof ArrayNode) {
+            normalizedArray.add(normalizeKeysInArray((ArrayNode) value));
+          }
+        });
+    return normalizedArray;
   }
 
   /**
@@ -151,6 +166,11 @@ public class JsonUtil {
   public static ObjectNode createEmptyObjectNode() {
     final ObjectMapper mapper = getObjectMapper();
     return mapper.createObjectNode();
+  }
+
+  public static ArrayNode createEmptyArrayNode() {
+    final ObjectMapper mapper = getObjectMapper();
+    return mapper.createArrayNode();
   }
 
   public static ObjectNode objectNodeFromMap(final Map<String, Object> map) {
