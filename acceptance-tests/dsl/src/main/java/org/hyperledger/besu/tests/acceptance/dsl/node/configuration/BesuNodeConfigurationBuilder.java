@@ -186,6 +186,7 @@ public class BesuNodeConfigurationBuilder {
 
     this.jsonRpcConfiguration.setAuthenticationEnabled(true);
     this.jsonRpcConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
+    this.jsonRpcConfiguration.setAuthenticationAlgorithm("ES256");
 
     return this;
   }

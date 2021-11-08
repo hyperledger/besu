@@ -582,12 +582,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final File rpcHttpAuthenticationPublicKeyFile = null;
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--rpc-http-authentication-jwt-algorithm"},
       description =
           "JWT encryption algorithm used by the public key - must be one of RS256, RS384, RS512, ES256, ES384 and ES512",
       arity = "1")
-  private final String rpcHttpAuthenticationAlgorithm = null;
+  private String rpcHttpAuthenticationAlgorithm = null;
 
   @Option(
       names = {"--rpc-http-tls-enabled"},
