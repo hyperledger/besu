@@ -36,8 +36,6 @@ public class RestrictedDefaultPrivacyController extends AbstractRestrictedPrivac
 
   private static final Logger LOG = LogManager.getLogger();
 
-  final Enclave enclave;
-
   public RestrictedDefaultPrivacyController(
       final Blockchain blockchain,
       final PrivacyParameters privacyParameters,
@@ -74,7 +72,6 @@ public class RestrictedDefaultPrivacyController extends AbstractRestrictedPrivac
         privateNonceProvider,
         privateWorldStateReader,
         privateStateRootResolver);
-    this.enclave = enclave;
   }
 
   @Override
