@@ -140,6 +140,13 @@ jobs:
           command: |
             ./gradlew --no-daemon build
       - capture_test_results
+
+  sonarQube:
+    executor: besu_executor_med
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
       - run:
           name: SonarQube
           no_output_timeout: 30m
@@ -284,6 +291,9 @@ workflows:
     jobs:
       - assemble
       - unitTests:
+          requires:
+            - assemble
+      - sonarQube:
           context: SonarCloud
           requires:
             - assemble
@@ -314,6 +324,7 @@ workflows:
           requires:
             - integrationTests
             - unitTests
+            - sonarQube
             - acceptanceTests
             - acceptanceTestsQuorum
             - referenceTests
@@ -327,6 +338,7 @@ workflows:
           requires:
             - integrationTests
             - unitTests
+            - sonarQube
             - acceptanceTests
             - acceptanceTestsQuorum
             - referenceTests
