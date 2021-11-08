@@ -98,9 +98,6 @@ public class RestrictedDefaultPrivacyControllerTest {
 
   private Enclave mockEnclave() {
     final Enclave mockEnclave = mock(Enclave.class);
-    final ReceiveResponse receiveResponse =
-        new ReceiveResponse(new byte[0], PRIVACY_GROUP_ID, null);
-    when(mockEnclave.receive(any(), any())).thenReturn(receiveResponse);
     return mockEnclave;
   }
 
