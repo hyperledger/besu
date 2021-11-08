@@ -65,7 +65,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class RestrictedDefaultPrivacyControllerTest {
 
-  private static final String TRANSACTION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEY_PAIR =
@@ -186,19 +185,6 @@ public class RestrictedDefaultPrivacyControllerTest {
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
-  }
-
-  @Test
-  public void retrievesTransaction() {
-    when(enclave.receive(anyString(), anyString()))
-        .thenReturn(new ReceiveResponse(PAYLOAD, PRIVACY_GROUP_ID, null));
-
-    final ReceiveResponse receiveResponse =
-        privacyController.retrieveTransaction(TRANSACTION_KEY, ENCLAVE_PUBLIC_KEY);
-
-    assertThat(receiveResponse.getPayload()).isEqualTo(PAYLOAD);
-    assertThat(receiveResponse.getPrivacyGroupId()).isEqualTo(PRIVACY_GROUP_ID);
-    verify(enclave).receive(TRANSACTION_KEY, enclavePublicKey);
   }
 
   @Test

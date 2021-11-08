@@ -18,7 +18,6 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVA
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 
 import java.util.ArrayList;
 import java.util.List;

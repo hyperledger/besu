@@ -16,12 +16,12 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class OnchainPrivacyController extends RestrictedDefaultPrivacyController {
+public class OnchainPrivacyController extends AbstractRestrictedPrivacyController {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -347,6 +348,15 @@ public class OnchainPrivacyController extends RestrictedDefaultPrivacyController
         rlpOutput.encoded().toBase64String(),
         privateTransaction.getPrivateFrom().toBase64String(),
         onchainPrivateFor);
+  }
+
+  CallParameter buildCallParams(final Bytes methodCall) {
+    return new CallParameter(
+        Address.ZERO, ONCHAIN_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
+  }
+
+  ReceiveResponse retrieveTransaction(final String enclaveKey, final String privacyUserId) {
+    return enclave.receive(enclaveKey, privacyUserId);
   }
 
   @VisibleForTesting

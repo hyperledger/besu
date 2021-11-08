@@ -14,20 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
-
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -39,12 +32,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class RestrictedDefaultPrivacyController extends AbstractPrivacyController {
+public class RestrictedDefaultPrivacyController extends AbstractRestrictedPrivacyController {
 
   private static final Logger LOG = LogManager.getLogger();
 
   final Enclave enclave;
-  final PrivateTransactionLocator privateTransactionLocator;
 
   public RestrictedDefaultPrivacyController(
       final Blockchain blockchain,
@@ -76,20 +68,13 @@ public class RestrictedDefaultPrivacyController extends AbstractPrivacyControlle
     super(
         blockchain,
         privateStateStorage,
+        enclave,
         privateTransactionValidator,
         privateTransactionSimulator,
         privateNonceProvider,
         privateWorldStateReader,
         privateStateRootResolver);
     this.enclave = enclave;
-    this.privateTransactionLocator =
-        new PrivateTransactionLocator(blockchain, enclave, privateStateStorage);
-  }
-
-  @Override
-  public Optional<ExecutedPrivateTransaction> findPrivateTransactionByPmtHash(
-      final Hash pmtHash, final String enclaveKey) {
-    return privateTransactionLocator.findByPmtHash(pmtHash, enclaveKey);
   }
 
   @Override
@@ -106,10 +91,6 @@ public class RestrictedDefaultPrivacyController extends AbstractPrivacyControlle
       LOG.error("Failed to store private transaction in enclave", e);
       throw e;
     }
-  }
-
-  ReceiveResponse retrieveTransaction(final String enclaveKey, final String privacyUserId) {
-    return enclave.receive(enclaveKey, privacyUserId);
   }
 
   @Override
@@ -136,11 +117,6 @@ public class RestrictedDefaultPrivacyController extends AbstractPrivacyControlle
   public Optional<PrivacyGroup> findPrivacyGroupByGroupId(
       final String privacyGroupId, final String privacyUserId) {
     return Optional.ofNullable(enclave.retrievePrivacyGroup(privacyGroupId));
-  }
-
-  CallParameter buildCallParams(final Bytes methodCall) {
-    return new CallParameter(
-        Address.ZERO, ONCHAIN_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
   }
 
   private SendResponse sendRequest(
