@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
@@ -59,6 +60,9 @@ public class ValidatorContractTest {
       Address.fromHexString("0xe98d92560fac3069ccff53ef348ded26a51d4b68");
   private static final Bytes32 NODE_2_PRIVATE_KEY =
       Bytes32.fromHexString("0xa3bdf521b0f286a80918c4b67000dfd2a2bdef97e94d268016ef9ec86648eac4");
+
+  final Address NEW_VALIDATOR_CONTRACT_ADDRESS =
+      Address.fromHexString("0x0000000000000000000000000000000000009999");
 
   private TestClock clock;
 
@@ -96,9 +100,11 @@ public class ValidatorContractTest {
         List.of(createContractFork(1, TestContextBuilder.VALIDATOR_CONTRACT_ADDRESS));
     final TestContext context =
         new TestContextBuilder()
-            .indexOfFirstLocallyProposedBlock(0)
+            .indexOfFirstLocallyProposedBlock(1)
             .nodeParams(
-                List.of(new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY))))
+                List.of(
+                    new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY)),
+                    new NodeParams(NODE_2_ADDRESS, NodeKeyUtils.createFrom(NODE_2_PRIVATE_KEY))))
             .clock(TestClock.fixed())
             .genesisFile(
                 Resources.getResource("genesis_migrating_validator_contract.json").getFile())
@@ -112,7 +118,7 @@ public class ValidatorContractTest {
     final List<Address> block1Addresses =
         Stream.of(NODE_ADDRESS, NODE_2_ADDRESS).sorted().collect(Collectors.toList());
 
-    createNewBlockAsProposer(context, 1);
+    remotePeerProposesNewBlock(context, 1L);
 
     final ValidatorProvider validatorProvider = context.getValidatorProvider();
     final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
@@ -120,6 +126,46 @@ public class ValidatorContractTest {
 
     assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
     assertThat(extraDataCodec.decode(genesisBlock).getValidators()).containsExactly(NODE_ADDRESS);
+
+    // contract block extra data cannot contain validators or vote
+    assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
+    assertThat(extraDataCodec.decode(block1).getValidators()).isEmpty();
+    assertThat(extraDataCodec.decode(block1).getVote()).isEmpty();
+  }
+
+  @Test
+  public void transitionsFromValidatorContractModeToValidatorContractMode() {
+    final List<QbftFork> qbftForks = List.of(createContractFork(1, NEW_VALIDATOR_CONTRACT_ADDRESS));
+
+    final TestContext context =
+        new TestContextBuilder()
+            .indexOfFirstLocallyProposedBlock(1)
+            .nodeParams(
+                List.of(
+                    new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY)),
+                    new NodeParams(NODE_2_ADDRESS, NodeKeyUtils.createFrom(NODE_2_PRIVATE_KEY))))
+            .clock(clock)
+            .genesisFile(Resources.getResource("genesis_validator_contract.json").getFile())
+            .useValidatorContract(true)
+            .qbftForks(qbftForks)
+            .buildAndStart();
+
+    // block 0 uses validator contract with 1 validator
+    // block 1 uses validator contract with 2 validators
+    final List<Address> block0Addresses = List.of(NODE_ADDRESS);
+    final List<Address> block1Addresses =
+        Stream.of(NODE_ADDRESS, NODE_2_ADDRESS).sorted().collect(Collectors.toList());
+
+    remotePeerProposesNewBlock(context, 1L);
+
+    final ValidatorProvider validatorProvider = context.getValidatorProvider();
+    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
+    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+
+    // contract block extra data cannot contain validators or vote
+    assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
+    assertThat(extraDataCodec.decode(genesisBlock).getValidators()).isEmpty();
+    assertThat(extraDataCodec.decode(genesisBlock).getVote()).isEmpty();
 
     // contract block extra data cannot contain validators or vote
     assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
@@ -136,15 +182,14 @@ public class ValidatorContractTest {
             .nodeParams(
                 List.of(new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY))))
             .clock(clock)
-            .genesisFile(
-                Resources.getResource("genesis_migrating_validator_blockheader.json").getFile())
+            .genesisFile(Resources.getResource("genesis_validator_contract.json").getFile())
             .useValidatorContract(true)
             .qbftForks(qbftForks)
             .buildAndStart();
 
     // block 0 uses validator contract with 1 validator
-    // block 1 onwards uses block header voting (which reuses previous block's validators upon
-    // switching)
+    // block 1 onwards uses block header voting (this transitioning block reuses the previous
+    // block's validators)
     final List<Address> block0Addresses = Stream.of(NODE_ADDRESS).collect(Collectors.toList());
 
     createNewBlockAsProposer(context, 1);
@@ -191,8 +236,9 @@ public class ValidatorContractTest {
     final List<Address> block1Addresses =
         Stream.of(NODE_ADDRESS, NODE_2_ADDRESS).sorted().collect(Collectors.toList());
 
-    createNewBlockAsProposer(context, 1L);
-    remotePeerProposesNewBlock(context, 2L);
+    remotePeerProposesNewBlock(context, 1L);
+    clock.step(TestContextBuilder.BLOCK_TIMER_SEC, SECONDS);
+    createNewBlockAsProposer(context, 2L);
 
     final ValidatorProvider validatorProvider = context.getValidatorProvider();
     final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
@@ -213,11 +259,119 @@ public class ValidatorContractTest {
         .containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
   }
 
+  @Test
+  public void transitionsFromValidatorContractModeToBlockHeaderModeThenBackToNewContract() {
+    final List<QbftFork> qbftForks =
+        List.of(createBlockHeaderFork(1), createContractFork(2, NEW_VALIDATOR_CONTRACT_ADDRESS));
+
+    final TestContext context =
+        new TestContextBuilder()
+            .indexOfFirstLocallyProposedBlock(1)
+            .nodeParams(
+                List.of(
+                    new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY)),
+                    new NodeParams(NODE_2_ADDRESS, NodeKeyUtils.createFrom(NODE_2_PRIVATE_KEY))))
+            .clock(clock)
+            .genesisFile(Resources.getResource("genesis_validator_contract.json").getFile())
+            .useValidatorContract(true)
+            .qbftForks(qbftForks)
+            .buildAndStart();
+
+    // block 0 uses validator contract with 1 validator
+    // block 1 uses block header voting with block 0's validators
+    // block 2 uses validator contract with 2 validators
+    final List<Address> block0Addresses = List.of(NODE_ADDRESS);
+    final List<Address> block2Addresses =
+        Stream.of(NODE_ADDRESS, NODE_2_ADDRESS).sorted().collect(Collectors.toList());
+
+    createNewBlockAsProposer(context, 1L);
+    clock.step(TestContextBuilder.BLOCK_TIMER_SEC, SECONDS);
+    remotePeerProposesNewBlock(context, 2L);
+
+    final ValidatorProvider validatorProvider = context.getValidatorProvider();
+    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
+    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+    final BlockHeader block2 = context.getBlockchain().getBlockHeader(2).get();
+
+    // contract block extra data cannot contain validators or vote
+    assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
+    assertThat(extraDataCodec.decode(genesisBlock).getValidators()).isEmpty();
+    assertThat(extraDataCodec.decode(genesisBlock).getVote()).isEmpty();
+
+    assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block0Addresses);
+    assertThat(extraDataCodec.decode(block1).getValidators()).containsExactly(NODE_ADDRESS);
+
+    // contract block extra data cannot contain validators or vote
+    assertThat(validatorProvider.getValidatorsForBlock(block2)).isEqualTo(block2Addresses);
+    assertThat(extraDataCodec.decode(block2).getValidators()).isEmpty();
+    assertThat(extraDataCodec.decode(block2).getVote()).isEmpty();
+  }
+
+  @Test
+  public void
+      transitionsFromValidatorContractModeToBlockHeaderModeWithOverriddenValidatorsThenBackToNewContract() {
+    final List<QbftFork> qbftForks =
+        List.of(
+            createBlockHeaderForkWithValidators(1, List.of(NODE_2_ADDRESS)),
+            createContractFork(2, NEW_VALIDATOR_CONTRACT_ADDRESS));
+
+    final TestContext context =
+        new TestContextBuilder()
+            .indexOfFirstLocallyProposedBlock(0)
+            .nodeParams(
+                List.of(
+                    new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY)),
+                    new NodeParams(NODE_2_ADDRESS, NodeKeyUtils.createFrom(NODE_2_PRIVATE_KEY))))
+            .clock(clock)
+            .genesisFile(Resources.getResource("genesis_validator_contract.json").getFile())
+            .useValidatorContract(true)
+            .qbftForks(qbftForks)
+            .buildAndStart();
+
+    // block 0 uses validator contract with 1 validator
+    // block 1 uses block header voting with overridden validator
+    // block 2 uses validator contract with 2 validators
+    final List<Address> block0Addresses = List.of(NODE_ADDRESS);
+    final List<Address> block1Addresses = List.of(NODE_2_ADDRESS);
+    final List<Address> block2Addresses =
+        Stream.of(NODE_ADDRESS, NODE_2_ADDRESS).sorted().collect(Collectors.toList());
+
+    createNewBlockAsProposer(context, 1L);
+    clock.step(TestContextBuilder.BLOCK_TIMER_SEC, SECONDS);
+    remotePeerProposesNewBlock(context, 2L);
+
+    final ValidatorProvider validatorProvider = context.getValidatorProvider();
+    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
+    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+    final BlockHeader block2 = context.getBlockchain().getBlockHeader(2).get();
+
+    // contract block extra data cannot contain validators or vote
+    assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
+    assertThat(extraDataCodec.decode(genesisBlock).getValidators()).isEmpty();
+    assertThat(extraDataCodec.decode(genesisBlock).getVote()).isEmpty();
+
+    assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
+    assertThat(extraDataCodec.decode(block1).getValidators()).containsExactly(NODE_2_ADDRESS);
+
+    // contract block extra data cannot contain validators or vote
+    assertThat(validatorProvider.getValidatorsForBlock(block2)).isEqualTo(block2Addresses);
+    assertThat(extraDataCodec.decode(block2).getValidators()).isEmpty();
+    assertThat(extraDataCodec.decode(block2).getVote()).isEmpty();
+  }
+
   private void createNewBlockAsProposer(final TestContext context, final long blockNumber) {
     ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(blockNumber, 0);
 
+    // trigger proposal
     context.getController().handleBlockTimerExpiry(new BlockTimerExpiry(roundId));
-    assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(blockNumber);
+
+    // peers commit proposed block
+    Block proposedBlock =
+        context.createBlockForProposalFromChainHead(clock.instant().getEpochSecond());
+    RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
+    peers.commitForNonProposing(roundId, proposedBlock);
+
+    assertThat(context.getCurrentChainHeight()).isEqualTo(blockNumber);
     context
         .getController()
         .handleNewBlockEvent(new NewChainHead(context.getBlockchain().getChainHeadHeader()));
@@ -228,15 +382,12 @@ public class ValidatorContractTest {
 
     RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
     ValidatorPeer remoteProposer = peers.getProposer();
-    clock.step(
-        TestContextBuilder.BLOCK_TIMER_SEC,
-        SECONDS); // avoid failing the TimestampMoreRecentThanParent validation rule
     final Block blockToPropose =
         context.createBlockForProposalFromChainHead(
             clock.instant().getEpochSecond(), remoteProposer.getNodeAddress());
     remoteProposer.injectProposal(roundId, blockToPropose);
     remoteProposer.injectCommit(roundId, blockToPropose);
-    assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(blockNumber);
+    assertThat(context.getCurrentChainHeight()).isEqualTo(blockNumber);
 
     context
         .getController()
@@ -263,5 +414,24 @@ public class ValidatorContractTest {
                 block,
                 QbftFork.VALIDATOR_SELECTION_MODE_KEY,
                 VALIDATOR_SELECTION_MODE.BLOCKHEADER)));
+  }
+
+  private QbftFork createBlockHeaderForkWithValidators(
+      final long block, final List<Address> validators) {
+
+    final List<TextNode> jsonValidators =
+        validators.stream()
+            .map(v -> TextNode.valueOf(v.toHexString()))
+            .collect(Collectors.toList());
+
+    return new QbftFork(
+        JsonUtil.objectNodeFromMap(
+            Map.of(
+                BftFork.FORK_BLOCK_KEY,
+                block,
+                QbftFork.VALIDATOR_SELECTION_MODE_KEY,
+                VALIDATOR_SELECTION_MODE.BLOCKHEADER,
+                BftFork.VALIDATORS_KEY,
+                JsonUtil.getObjectMapper().createArrayNode().addAll(jsonValidators))));
   }
 }
