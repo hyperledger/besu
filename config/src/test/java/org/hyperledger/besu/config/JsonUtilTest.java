@@ -94,9 +94,9 @@ public class JsonUtilTest {
                     .add(mapper.createObjectNode().put("camel", "Ziz"))
                     .add(mapper.createObjectNode().put("mixed", "LoL")));
 
-    final ObjectNode normalized = JsonUtil.normalizeKeys(originalObj);
+    final ObjectNode normalizedObj = JsonUtil.normalizeKeys(originalObj);
 
-    assertThat(normalized).isEqualTo(expectedObj);
+    assertThat(normalizedObj).isEqualTo(expectedObj);
   }
 
   @Test
@@ -125,9 +125,22 @@ public class JsonUtilTest {
                             .createArrayNode()
                             .add(mapper.createObjectNode().put("depth", "Foo"))));
 
-    final ObjectNode normalized = JsonUtil.normalizeKeys(originalObj);
+    final ObjectNode normalizedObj = JsonUtil.normalizeKeys(originalObj);
 
-    assertThat(normalized).isEqualTo(expectedObj);
+    assertThat(normalizedObj).isEqualTo(expectedObj);
+  }
+
+  @Test
+  public void normalizeKeys_arrayNode_withString() {
+    final ObjectNode originalObj =
+        mapper.createObjectNode().set("ArrAy", mapper.createArrayNode().add("StrIng"));
+
+    final ObjectNode expectedObj =
+        mapper.createObjectNode().set("array", mapper.createArrayNode().add("StrIng"));
+
+    final ObjectNode normalizedObj = JsonUtil.normalizeKeys(originalObj);
+
+    assertThat(normalizedObj).isEqualTo(expectedObj);
   }
 
   @Test

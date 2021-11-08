@@ -67,6 +67,8 @@ public class JsonUtil {
             normalizedArray.add(normalizeKeys((ObjectNode) value));
           } else if (value instanceof ArrayNode) {
             normalizedArray.add(normalizeKeysInArray((ArrayNode) value));
+          } else {
+            normalizedArray.add(value);
           }
         });
     return normalizedArray;
