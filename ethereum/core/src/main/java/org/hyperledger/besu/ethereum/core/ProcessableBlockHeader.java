@@ -22,6 +22,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.datatypes.Wei;
 
 /** A block header capable of being processed. */
 public class ProcessableBlockHeader implements BlockValues {
@@ -39,7 +40,7 @@ public class ProcessableBlockHeader implements BlockValues {
   // The block creation timestamp (seconds since the unix epoch)
   protected final long timestamp;
   // base fee is included for post EIP-1559 blocks
-  protected final Long baseFee;
+  protected final Wei baseFee;
   // random is included for post-merge blocks
   protected final Bytes32 mixHashOrRandom;
 
@@ -50,7 +51,7 @@ public class ProcessableBlockHeader implements BlockValues {
       final long number,
       final long gasLimit,
       final long timestamp,
-      final Long baseFee,
+      final Wei baseFee,
       final Bytes32 mixHashOrRandom) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
@@ -135,7 +136,7 @@ public class ProcessableBlockHeader implements BlockValues {
    * @return the optional long value for base fee
    */
   @Override
-  public Optional<Long> getBaseFee() {
+  public Optional<Wei> getBaseFee() {
     return Optional.ofNullable(baseFee);
   }
 

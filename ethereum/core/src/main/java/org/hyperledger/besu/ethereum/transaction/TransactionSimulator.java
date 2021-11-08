@@ -47,6 +47,7 @@ import java.util.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /*
  * Used to process transactions for eth_call and eth_estimateGas.
@@ -164,7 +165,7 @@ public class TransactionSimulator {
       if (header.getBaseFee().isPresent()) {
         blockHeaderToProcess =
             BlockHeaderBuilder.fromHeader(header)
-                .baseFee(0L)
+                .baseFee(Wei.ZERO)
                 .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions())
                 .buildBlockHeader();
       }

@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.hyperledger.besu.datatypes.Wei;
 import org.immutables.value.Value;
 
 @Value.Immutable
@@ -29,11 +30,11 @@ public interface FeeHistory {
 
   long getOldestBlock();
 
-  List<Long> getBaseFeePerGas();
+  List<Wei> getBaseFeePerGas();
 
   List<Double> getGasUsedRatio();
 
-  Optional<List<List<Long>>> getReward();
+  Optional<List<List<Wei>>> getReward();
 
   @Value.Immutable
   @Value.Style(allParameters = true)

@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.frame;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.datatypes.Wei;
 
 /**
  * Block Header Values used by various EVM Opcodes. This is not a complete BlocHeader, just the
@@ -38,7 +39,7 @@ public interface BlockValues {
    *
    * @return the raw bytes of the extra data field
    */
-  default Optional<Long> getBaseFee() {
+  default Optional<Wei> getBaseFee() {
     return Optional.empty();
   }
 

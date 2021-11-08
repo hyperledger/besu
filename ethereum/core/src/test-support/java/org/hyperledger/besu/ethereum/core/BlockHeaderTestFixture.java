@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.datatypes.Wei;
 
 public class BlockHeaderTestFixture {
 
@@ -38,7 +39,7 @@ public class BlockHeaderTestFixture {
   private long number = 0;
 
   private long gasLimit = 0;
-  private Optional<Long> baseFee = Optional.empty();
+  private Optional<Wei> baseFee = Optional.empty();
   private long gasUsed = 0;
   private long timestamp = 0;
   private Bytes extraData = Bytes.EMPTY;
@@ -125,7 +126,7 @@ public class BlockHeaderTestFixture {
     return this;
   }
 
-  public BlockHeaderTestFixture baseFeePerGas(final long baseFee) {
+  public BlockHeaderTestFixture baseFeePerGas(final Wei baseFee) {
     this.baseFee = Optional.of(baseFee);
     return this;
   }

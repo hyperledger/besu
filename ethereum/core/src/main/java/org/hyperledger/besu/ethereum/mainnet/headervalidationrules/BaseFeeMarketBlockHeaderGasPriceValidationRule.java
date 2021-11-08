@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.datatypes.Wei;
 
 public class BaseFeeMarketBlockHeaderGasPriceValidationRule
     implements DetachedBlockHeaderValidationRule {
@@ -39,19 +40,20 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRule
 
       // if this is the fork block, baseFee should be the initial baseFee
       if (baseFeeMarket.isForkBlock(header.getNumber())) {
-        return baseFeeMarket.getInitialBasefee()
-            == header.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader());
+        return baseFeeMarket
+            .getInitialBasefee()
+            .equals(header.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader()));
       }
 
-      final Long parentBaseFee =
+      final Wei parentBaseFee =
           parent.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader());
-      final Long currentBaseFee =
+      final Wei currentBaseFee =
           header.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader());
       final long targetGasUsed = baseFeeMarket.targetGasUsed(parent);
-      final long expectedBaseFee =
+      final Wei expectedBaseFee =
           baseFeeMarket.computeBaseFee(
               header.getNumber(), parentBaseFee, parent.getGasUsed(), targetGasUsed);
-      if (expectedBaseFee != currentBaseFee) {
+      if (!expectedBaseFee.equals(currentBaseFee)) {
         LOG.info(
             "Invalid block header: basefee {} does not equal expected basefee {}",
             header.getBaseFee().orElseThrow(),

@@ -21,9 +21,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.datatypes.Wei;
 
 public class BaseFeeOperation extends AbstractFixedCostOperation {
 
@@ -34,17 +32,12 @@ public class BaseFeeOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    Optional<Long> maybeBaseFee = frame.getBlockValues().getBaseFee();
+    Optional<Wei> maybeBaseFee = frame.getBlockValues().getBaseFee();
     if (maybeBaseFee.isEmpty()) {
       return new Operation.OperationResult(
           Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_OPERATION));
     }
-    frame.pushStackItem(
-        maybeBaseFee
-            .map(Bytes::ofUnsignedLong)
-            .map(Bytes32::leftPad)
-            .map(UInt256::fromBytes)
-            .orElseThrow());
+    frame.pushStackItem(maybeBaseFee.orElseThrow());
     return successResponse;
   }
 }

@@ -28,9 +28,9 @@ import org.apache.tuweni.bytes.Bytes32;
 public interface BlockHeader {
 
   /**
-   * The Keccak 256-bit hash of the parent block’s header, in its entirety.
+   * The Keccak 256-bit hash of the parent block's header, in its entirety.
    *
-   * @return The Keccak 256-bit hash of the parent block’s header, in its entirety.
+   * @return The Keccak 256-bit hash of the parent block's header, in its entirety.
    */
   Hash getParentHash();
 
@@ -90,10 +90,10 @@ public interface BlockHeader {
 
   /**
    * A scalar value corresponding to the difficulty level of this block. This can be calculated from
-   * the previous block’s difficulty level and the timestamp.
+   * the previous block's difficulty level and the timestamp.
    *
    * @return A UInt256 value corresponding to the difficulty level of this block. This can be
-   *     calculated from the previous block’s difficulty level and the timestamp.
+   *     calculated from the previous block's difficulty level and the timestamp.
    */
   Quantity getDifficulty();
 
@@ -120,9 +120,9 @@ public interface BlockHeader {
   long getGasUsed();
 
   /**
-   * A scalar value equal to the reasonable output of Unix’s time() at this block’s inception.
+   * A scalar value equal to the reasonable output of Unix's time() at this block's inception.
    *
-   * @return A scalar value equal to the reasonable output of Unix’s time() at this block’s
+   * @return A scalar value equal to the reasonable output of Unix's time() at this block's
    *     inception.
    */
   long getTimestamp();
@@ -166,7 +166,7 @@ public interface BlockHeader {
    * @return The BASEFEE of this header.
    */
   @Unstable
-  default Optional<Long> getBaseFee() {
+  default Optional<? extends Quantity> getBaseFee() {
     return Optional.empty();
   }
 

@@ -45,6 +45,7 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Streams;
+import org.hyperledger.besu.datatypes.Wei;
 
 public class EthFeeHistory implements JsonRpcMethod {
   private final ProtocolSchedule protocolSchedule;
@@ -92,15 +93,15 @@ public class EthFeeHistory implements JsonRpcMethod {
             .collect(toUnmodifiableList());
 
     // we return the base fees for the blocks requested and 1 more because we can always compute it
-    final List<Long> explicitlyRequestedBaseFees =
+    final List<Wei> explicitlyRequestedBaseFees =
         blockHeaders.stream()
-            .map(blockHeader -> blockHeader.getBaseFee().orElse(0L))
+            .map(blockHeader -> blockHeader.getBaseFee().orElse(Wei.ZERO))
             .collect(toUnmodifiableList());
     final long nextBlockNumber = resolvedHighestBlockNumber + 1;
-    final Long nextBaseFee =
+    final Wei nextBaseFee =
         blockchain
             .getBlockHeader(nextBlockNumber)
-            .map(blockHeader -> blockHeader.getBaseFee().orElse(0L))
+            .map(blockHeader -> blockHeader.getBaseFee().orElse(Wei.ZERO))
             .orElseGet(
                 () ->
                     Optional.of(protocolSchedule.getByBlockNumber(nextBlockNumber).getFeeMarket())
@@ -117,14 +118,14 @@ public class EthFeeHistory implements JsonRpcMethod {
                                   lastBlockHeader.getGasUsed(),
                                   feeMarket.targetGasUsed(lastBlockHeader));
                             })
-                        .orElse(0L));
+                        .orElse(Wei.ZERO));
 
     final List<Double> gasUsedRatios =
         blockHeaders.stream()
             .map(blockHeader -> blockHeader.getGasUsed() / (double) blockHeader.getGasLimit())
             .collect(toUnmodifiableList());
 
-    final Optional<List<List<Long>>> maybeRewards =
+    final Optional<List<List<Wei>>> maybeRewards =
         maybeRewardPercentiles.map(
             rewardPercentiles ->
                 LongStream.range(oldestBlock, oldestBlock + blockCount)
@@ -150,17 +151,16 @@ public class EthFeeHistory implements JsonRpcMethod {
                 .build()));
   }
 
-  private List<Long> computeRewards(final List<Double> rewardPercentiles, final Block block) {
+  private List<Wei> computeRewards(final List<Double> rewardPercentiles, final Block block) {
     final List<Transaction> transactions = block.getBody().getTransactions();
     if (transactions.isEmpty()) {
       // all 0's for empty block
-      return LongStream.generate(() -> 0)
+      return Stream.generate(() -> Wei.ZERO)
           .limit(rewardPercentiles.size())
-          .boxed()
           .collect(toUnmodifiableList());
     }
 
-    final Optional<Long> baseFee = block.getHeader().getBaseFee();
+    final Optional<Wei> baseFee = block.getHeader().getBaseFee();
 
     // we need to get the gas used for the individual transactions and can't use the cumulative gas
     // used because we're going to be reordering the transactions
@@ -185,7 +185,7 @@ public class EthFeeHistory implements JsonRpcMethod {
     // We need to weight the percentile of rewards by the gas used in the transaction.
     // That's why we're keeping track of the cumulative gas used and checking to see which
     // percentile markers we've passed
-    final ArrayList<Long> rewards = new ArrayList<>();
+    final ArrayList<Wei> rewards = new ArrayList<>();
     int rewardPercentileIndex = 0;
     long gasUsed = 0;
     for (final Map.Entry<Transaction, Long> transactionAndGasUsed :

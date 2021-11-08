@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.datatypes.Wei;
 
 /** A memory holder for testing. */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -69,7 +69,7 @@ public class ReferenceTestEnv extends BlockHeader {
         0L,
         Long.decode(timestamp),
         Bytes.EMPTY,
-        Optional.ofNullable(baseFee).map(UInt256::fromHexString).map(UInt256::toLong).orElse(null),
+        Optional.ofNullable(baseFee).map(Wei::fromHexString).orElse(null),
         Hash.ZERO,
         0L,
         new MainnetBlockHeaderFunctions());

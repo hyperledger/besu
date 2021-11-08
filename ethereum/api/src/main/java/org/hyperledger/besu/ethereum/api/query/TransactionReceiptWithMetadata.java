@@ -19,13 +19,14 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.Optional;
+import org.hyperledger.besu.datatypes.Wei;
 
 public class TransactionReceiptWithMetadata {
   private final TransactionReceipt receipt;
   private final Hash transactionHash;
   private final int transactionIndex;
   private final long gasUsed;
-  private final Optional<Long> baseFee;
+  private final Optional<Wei> baseFee;
   private final long blockNumber;
   private final Hash blockHash;
   private final Transaction transaction;
@@ -36,7 +37,7 @@ public class TransactionReceiptWithMetadata {
       final Hash transactionHash,
       final int transactionIndex,
       final long gasUsed,
-      final Optional<Long> baseFee,
+      final Optional<Wei> baseFee,
       final Hash blockHash,
       final long blockNumber) {
     this.receipt = receipt;
@@ -55,7 +56,7 @@ public class TransactionReceiptWithMetadata {
       final Hash transactionHash,
       final int transactionIndex,
       final long gasUsed,
-      final Optional<Long> baseFee,
+      final Optional<Wei> baseFee,
       final Hash blockHash,
       final long blockNumber) {
     return new TransactionReceiptWithMetadata(
@@ -99,7 +100,7 @@ public class TransactionReceiptWithMetadata {
     return gasUsed;
   }
 
-  public Optional<Long> getBaseFee() {
+  public Optional<Wei> getBaseFee() {
     return baseFee;
   }
 }

@@ -43,6 +43,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.datatypes.Wei;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BlockchainReferenceTestCaseSpec {
@@ -171,7 +172,7 @@ public class BlockchainReferenceTestCaseSpec {
           Long.decode(gasUsed), // gasUsed
           Long.decode(timestamp), // timestamp
           Bytes.fromHexString(extraData), // extraData
-          baseFee != null ? Long.decode(baseFee) : null, // baseFee
+          baseFee != null ? Wei.fromHexString(baseFee) : null, // baseFee
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexString(nonce).getLong(0),
           new BlockHeaderFunctions() {

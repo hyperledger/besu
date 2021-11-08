@@ -20,12 +20,13 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.Optional;
+import org.hyperledger.besu.datatypes.Wei;
 
 public class TransactionWithMetadata {
 
   private final Transaction transaction;
   private final Optional<Long> blockNumber;
-  private final Optional<Long> baseFee;
+  private final Optional<Wei> baseFee;
   private final Optional<Hash> blockHash;
   private final Optional<Integer> transactionIndex;
 
@@ -40,7 +41,7 @@ public class TransactionWithMetadata {
   public TransactionWithMetadata(
       final Transaction transaction,
       final long blockNumber,
-      final Optional<Long> baseFee,
+      final Optional<Wei> baseFee,
       final Hash blockHash,
       final int transactionIndex) {
     this.transaction = transaction;
@@ -58,7 +59,7 @@ public class TransactionWithMetadata {
     return blockNumber;
   }
 
-  public Optional<Long> getBaseFee() {
+  public Optional<Wei> getBaseFee() {
     return baseFee;
   }
 
