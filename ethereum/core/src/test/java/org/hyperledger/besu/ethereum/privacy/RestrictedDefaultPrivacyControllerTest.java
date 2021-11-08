@@ -76,7 +76,6 @@ public class RestrictedDefaultPrivacyControllerTest {
                   .createPrivateKey(
                       new BigInteger(
                           "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
-  private static final byte[] PAYLOAD = new byte[0];
   private static final List<String> PRIVACY_GROUP_ADDRESSES = newArrayList("8f2a", "fb23");
   private static final String PRIVACY_GROUP_NAME = "pg_name";
   private static final String PRIVACY_GROUP_DESCRIPTION = "pg_desc";
