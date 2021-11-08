@@ -22,8 +22,11 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class PeerReputationManager implements DisconnectCallback {
+  private static final Logger LOG = LogManager.getLogger();
   private static final Set<DisconnectReason> locallyTriggeredDisconnectReasons =
       ImmutableSet.of(
           DisconnectReason.BREACH_OF_PROTOCOL, DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION);
@@ -43,6 +46,7 @@ public class PeerReputationManager implements DisconnectCallback {
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
     if (shouldBlock(reason, initiatedByPeer)) {
+      LOG.trace("blacklisted peer {} for reason {}", connection, reason.name());
       blacklist.add(connection.getPeer());
     }
   }
