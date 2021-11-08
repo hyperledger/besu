@@ -43,7 +43,9 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
           + "1wlc3Rb7ru_0qNgCWTBPJeRK32GppYotwQ";
 
   private static final String ECDSA_TOKEN_ALLOWING_NET_PEER_COUNT =
-      "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MTYyMzkwMjIsImV4cCI6NDcyOTM2MzIwMCwicGVybWlzc2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ.pWXniN6XQ7G8b1nawy8sviPCMxrfbcI6c7UFzeXm26CMGMUEZxiCJjRntB8ueuZcsxnGlEhCHt-KngpFEmx5TA";
+      "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MTYyMzkwMjIsImV4cCI6NDcyOTM2MzIwMCwicGVybWlz"
+          + "c2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ.pWXniN6XQ7G8b1nawy8sviPCMxrfbcI6c7UFzeXm26CMGMUEZxiC"
+          + "JjRntB8ueuZcsxnGlEhCHt-KngpFEmx5TA";
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
