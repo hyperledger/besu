@@ -48,7 +48,7 @@ public class WebsocketServiceLoginAcceptanceTest extends AcceptanceTestBase {
     authenticatedCluster = new Cluster(clusterConfiguration, net);
 
     nodeUsingAuthFile = besu.createNodeWithAuthentication("node1", AUTH_FILE);
-    nodeUsingJwtPublicKey = besu.createNodeWithAuthenticationUsingJwtPublicKey("node2");
+    nodeUsingJwtPublicKey = besu.createNodeWithAuthenticationUsingRSAJwtPublicKey("node2");
     authenticatedCluster.start(nodeUsingAuthFile, nodeUsingJwtPublicKey);
 
     nodeUsingAuthFile.useWebSocketsForJsonRpc();

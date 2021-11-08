@@ -185,13 +185,25 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createNodeWithAuthenticationUsingJwtPublicKey(final String name)
+  public BesuNode createNodeWithAuthenticationUsingRSAJwtPublicKey(final String name)
       throws IOException, URISyntaxException {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
             .jsonRpcEnabled()
-            .jsonRpcAuthenticationUsingPublicKeyEnabled()
+            .jsonRpcAuthenticationUsingRSA()
+            .webSocketEnabled()
+            .webSocketAuthenticationUsingPublicKeyEnabled()
+            .build());
+  }
+
+  public BesuNode createNodeWithAuthenticationUsingECDSAJwtPublicKey(final String name)
+      throws IOException, URISyntaxException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .jsonRpcEnabled()
+            .jsonRpcAuthenticationUsingECDSA()
             .webSocketEnabled()
             .webSocketAuthenticationUsingPublicKeyEnabled()
             .build());

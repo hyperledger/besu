@@ -29,17 +29,21 @@ import org.junit.Test;
 public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
   private Cluster authenticatedCluster;
   private BesuNode nodeUsingAuthFile;
-  private BesuNode nodeUsingJwtPublicKey;
+  private BesuNode nodeUsingRSAJwtPublicKey;
+  private BesuNode nodeUsingECDSAJwtPublicKey;
   private static final String AUTH_FILE = "authentication/auth.toml";
 
   // token with payload{"iat": 1516239022,"exp": 4729363200,"permissions": ["net:peerCount"]}
-  private static final String TOKEN_ALLOWING_NET_PEER_COUNT =
+  private static final String RSA_TOKEN_ALLOWING_NET_PEER_COUNT =
       "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MTYyMzkwMjIsImV4cCI6NDcyOTM2MzIwMCwicGVybWl"
           + "zc2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ.Y6mNV0nvjzOdqAgMgxknFAOUTKoeRAo4aifNgNrWtuXbJJgz6-"
           + "H_0GvLgjlToohPiDZbBJXJJlgb4zzLLB-sRtFnGoPaMgz_d_6z958GjFD7x_Fl0HW-WrTjRNenZNfTyD86OEAf"
           + "XHy-7N3OYY2a5yeDbppTJy6nnHTq9hY-ad22-oWL1RbK3T_hnUJII_uXCZ9bJggSfu5m-NNUrm3TeqdnQzIaIz"
           + "DqHlL0wNZwVPB4cFGN7zKghReBpkRJ8OFlxexQ491Q5eSpuYquhef-yGCIaMfy7GVtpDSD3Y-hjOErr7gUNCUh"
           + "1wlc3Rb7ru_0qNgCWTBPJeRK32GppYotwQ";
+
+  private static final String ECDSA_TOKEN_ALLOWING_NET_PEER_COUNT =
+      "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MTYyMzkwMjIsImV4cCI6NDcyOTM2MzIwMCwicGVybWlzc2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ.pWXniN6XQ7G8b1nawy8sviPCMxrfbcI6c7UFzeXm26CMGMUEZxiCJjRntB8ueuZcsxnGlEhCHt-KngpFEmx5TA";
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
@@ -49,11 +53,14 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
     authenticatedCluster = new Cluster(clusterConfiguration, net);
 
     nodeUsingAuthFile = besu.createNodeWithAuthentication("node1", AUTH_FILE);
-    nodeUsingJwtPublicKey = besu.createNodeWithAuthenticationUsingJwtPublicKey("node2");
-    authenticatedCluster.start(nodeUsingAuthFile, nodeUsingJwtPublicKey);
+    nodeUsingRSAJwtPublicKey = besu.createNodeWithAuthenticationUsingRSAJwtPublicKey("node2");
+    nodeUsingECDSAJwtPublicKey = besu.createNodeWithAuthenticationUsingECDSAJwtPublicKey("node 3");
+    authenticatedCluster.start(
+        nodeUsingAuthFile, nodeUsingRSAJwtPublicKey, nodeUsingECDSAJwtPublicKey);
 
     nodeUsingAuthFile.verify(login.awaitResponse("user", "badpassword"));
-    nodeUsingJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
+    nodeUsingRSAJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
+    nodeUsingECDSAJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
   }
 
   @Test
@@ -86,27 +93,44 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void externalJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
-    nodeUsingJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingJwtPublicKey.verify(net.awaitPeerCount(1));
+  public void externalRSAJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
+    nodeUsingRSAJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
+        RSA_TOKEN_ALLOWING_NET_PEER_COUNT);
+    nodeUsingRSAJwtPublicKey.verify(net.awaitPeerCount(1));
   }
 
   @Test
-  public void externalJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
-    nodeUsingJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingJwtPublicKey.verify(net.netVersionUnauthorized());
-    nodeUsingJwtPublicKey.verify(net.netServicesUnauthorized());
+  public void externalRSAJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
+    nodeUsingRSAJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
+        RSA_TOKEN_ALLOWING_NET_PEER_COUNT);
+    nodeUsingRSAJwtPublicKey.verify(net.netVersionUnauthorized());
+    nodeUsingRSAJwtPublicKey.verify(net.netServicesUnauthorized());
+  }
+
+  @Test
+  public void externalECDSAJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
+    nodeUsingECDSAJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
+        ECDSA_TOKEN_ALLOWING_NET_PEER_COUNT);
+    nodeUsingECDSAJwtPublicKey.verify(net.awaitPeerCount(1));
+  }
+
+  @Test
+  public void externalECDSAJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
+    nodeUsingECDSAJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
+        ECDSA_TOKEN_ALLOWING_NET_PEER_COUNT);
+    nodeUsingECDSAJwtPublicKey.verify(net.netVersionUnauthorized());
+    nodeUsingECDSAJwtPublicKey.verify(net.netServicesUnauthorized());
   }
 
   @Test
   public void jsonRpcMethodShouldFailWhenThereIsNoToken() {
-    nodeUsingJwtPublicKey.verify(net.netVersionUnauthorized());
-    nodeUsingJwtPublicKey.verify(net.netServicesUnauthorized());
+    nodeUsingRSAJwtPublicKey.verify(net.netVersionUnauthorized());
+    nodeUsingRSAJwtPublicKey.verify(net.netServicesUnauthorized());
   }
 
   @Test
   public void loginShouldBeDisabledWhenUsingExternalJwtPublicKey() {
-    nodeUsingJwtPublicKey.verify(login.disabled());
+    nodeUsingRSAJwtPublicKey.verify(login.disabled());
   }
 
   @Override

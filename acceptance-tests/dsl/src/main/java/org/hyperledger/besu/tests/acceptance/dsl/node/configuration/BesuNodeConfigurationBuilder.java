@@ -166,10 +166,21 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder jsonRpcAuthenticationUsingPublicKeyEnabled()
-      throws URISyntaxException {
+  public BesuNodeConfigurationBuilder jsonRpcAuthenticationUsingRSA() throws URISyntaxException {
     final File jwtPublicKey =
         Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
+            .toAbsolutePath()
+            .toFile();
+
+    this.jsonRpcConfiguration.setAuthenticationEnabled(true);
+    this.jsonRpcConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
+
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder jsonRpcAuthenticationUsingECDSA() throws URISyntaxException {
+    final File jwtPublicKey =
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_ecdsa").toURI())
             .toAbsolutePath()
             .toFile();
 
