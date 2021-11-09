@@ -1,5 +1,13 @@
 # Changelog
 
+## 21.10.2
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Early Access Features
+
 ## 21.10.1
 
 ### Additions and Improvements
