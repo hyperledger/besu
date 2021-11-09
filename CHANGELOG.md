@@ -19,6 +19,7 @@
 - Add Sepolia proof-of-work testnet configurations [#2920](https://github.com/hyperledger/besu/pull/2920)
 - Allow block period to be configured for IBFT2 and QBFT using transitions [\#2902](https://github.com/hyperledger/besu/pull/2902)
 - Add support for binary messages (0x02) for websocket. [#2980](https://github.com/hyperledger/besu/pull/2980)
+- Add discovery options to genesis file [#2944](https://github.com/hyperledger/besu/pull/2944)
 
 ### Bug Fixes
 - Do not change the sender balance, but set gas fee to zero, when simulating a transaction without enforcing balance checks. [#2454](https://github.com/hyperledger/besu/pull/2454)
