@@ -32,6 +32,7 @@ public class BlockValidatorProvider implements ValidatorProvider {
   private final VoteTallyCache voteTallyCache;
   private final VoteProvider voteProvider;
   private final BlockInterface blockInterface;
+  private final Optional<BftValidatorOverrides> bftValidatorOverrides;
 
   public static BlockValidatorProvider forkingValidatorProvider(
       final Blockchain blockchain,
@@ -67,6 +68,7 @@ public class BlockValidatorProvider implements ValidatorProvider {
             : new VoteTallyCache(blockchain, voteTallyUpdater, epochManager, blockInterface);
     this.voteProvider = new BlockVoteProvider(voteTallyCache, voteProposer);
     this.blockInterface = blockInterface;
+    this.bftValidatorOverrides = bftValidatorOverrides;
   }
 
   @Override
@@ -87,5 +89,9 @@ public class BlockValidatorProvider implements ValidatorProvider {
   @Override
   public Optional<VoteProvider> getVoteProviderAtHead() {
     return Optional.of(voteProvider);
+  }
+
+  public boolean hasValidatorOverridesForBlockNumber(final long blockNumber) {
+    return bftValidatorOverrides.map(bvo -> bvo.getForBlock(blockNumber).isPresent()).orElse(false);
   }
 }
