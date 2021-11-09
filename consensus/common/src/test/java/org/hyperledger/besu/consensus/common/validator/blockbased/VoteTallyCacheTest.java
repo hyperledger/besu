@@ -17,34 +17,45 @@ package org.hyperledger.besu.consensus.common.validator.blockbased;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.consensus.common.validator.VoteType;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 import com.google.common.util.concurrent.UncheckedExecutionException;
+import org.apache.tuweni.bytes.Bytes;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class VoteTallyCacheTest extends VoteTallyCacheTestBase {
+
+  private final EpochManager epochManager = new EpochManager(30_000);
+  @Mock private VoteTallyUpdater tallyUpdater;
 
   @Test
   public void parentBlockVoteTallysAreCachedWhenChildVoteTallyRequested() {
-    final VoteTallyUpdater tallyUpdater = mock(VoteTallyUpdater.class);
     final VoteTallyCache cache =
-        new VoteTallyCache(blockChain, tallyUpdater, new EpochManager(30_000), blockInterface);
+        new VoteTallyCache(blockChain, tallyUpdater, epochManager, blockInterface);
 
     // The votetallyUpdater should be invoked for the requested block, and all parents including
     // the epoch (genesis) block.
@@ -60,17 +71,16 @@ public class VoteTallyCacheTest extends VoteTallyCacheTestBase {
     // Requesting the vote tally to the parent block should not invoke the voteTallyUpdater as the
     // vote tally was cached from previous operation.
     cache.getVoteTallyAfterBlock(block_1.getHeader());
-    verifyZeroInteractions(tallyUpdater);
+    verifyNoInteractions(tallyUpdater);
 
     cache.getVoteTallyAfterBlock(block_2.getHeader());
-    verifyZeroInteractions(tallyUpdater);
+    verifyNoInteractions(tallyUpdater);
   }
 
   @Test
   public void exceptionThrownIfNoParentBlockExists() {
-    final VoteTallyUpdater tallyUpdater = mock(VoteTallyUpdater.class);
     final VoteTallyCache cache =
-        new VoteTallyCache(blockChain, tallyUpdater, new EpochManager(30_000), blockInterface);
+        new VoteTallyCache(blockChain, tallyUpdater, epochManager, blockInterface);
 
     final Block orphanBlock = createEmptyBlock(4, Hash.ZERO);
 
@@ -82,9 +92,8 @@ public class VoteTallyCacheTest extends VoteTallyCacheTestBase {
 
   @Test
   public void walkBackStopsWhenACachedVoteTallyIsFound() {
-    final VoteTallyUpdater tallyUpdater = mock(VoteTallyUpdater.class);
     final VoteTallyCache cache =
-        new VoteTallyCache(blockChain, tallyUpdater, new EpochManager(30_000), blockInterface);
+        new VoteTallyCache(blockChain, tallyUpdater, epochManager, blockInterface);
 
     // Load the Cache up to block_2
     cache.getVoteTallyAfterBlock(block_2.getHeader());
@@ -108,7 +117,6 @@ public class VoteTallyCacheTest extends VoteTallyCacheTestBase {
   // resolved.
   @Test
   public void integrationTestingVotesBeingApplied() {
-    final EpochManager epochManager = new EpochManager(30_000);
     final VoteTallyUpdater tallyUpdater = new VoteTallyUpdater(epochManager, blockInterface);
 
     when(blockInterface.extractVoteFromHeader(block_1.getHeader()))
@@ -131,5 +139,48 @@ public class VoteTallyCacheTest extends VoteTallyCacheTestBase {
 
     voteTally = cache.getVoteTallyAfterBlock(block_1.getHeader());
     assertThat(voteTally.getValidators()).containsAll(validators);
+  }
+
+  @Test
+  public void putValidatorsForBlock_shouldReplaceValidatorsForBlock() {
+    final VoteTallyCache cache =
+        new VoteTallyCache(blockChain, tallyUpdater, epochManager, blockInterface);
+
+    assertThat(cache.getVoteTallyAfterBlock(block_2.getHeader()).getValidators())
+        .containsExactlyElementsOf(validators);
+
+    final List<Address> newValidators = createNewValidators();
+    cache.putValidatorsForBlock(block_2.getHeader(), newValidators);
+
+    assertThat(cache.getVoteTallyAfterBlock(block_2.getHeader()).getValidators())
+        .containsExactlyElementsOf(newValidators);
+  }
+
+  @Test
+  public void putValidatorsForBlock_shouldNotInvalidatePreviouslyCachedEntries() {
+    final VoteTallyCache cache =
+        new VoteTallyCache(blockChain, tallyUpdater, epochManager, blockInterface);
+
+    assertThat(cache.getVoteTallyAfterBlock(block_2.getHeader()).getValidators())
+        .containsExactlyElementsOf(validators);
+    reset(tallyUpdater);
+
+    final List<Address> newValidators = createNewValidators();
+    cache.putValidatorsForBlock(block_2.getHeader(), newValidators);
+
+    assertThat(cache.getVoteTallyAfterBlock(block_1.getHeader()).getValidators())
+        .containsExactlyElementsOf(validators);
+    verifyNoInteractions(tallyUpdater);
+  }
+
+  @NotNull
+  private List<Address> createNewValidators() {
+    final int maxExistingAddress =
+        validators.stream()
+            .map(Bytes::trimLeadingZeros)
+            .map(Bytes::toInt)
+            .max(Comparator.naturalOrder())
+            .orElse(2);
+    return List.of(AddressHelpers.ofValue(maxExistingAddress + 1));
   }
 }

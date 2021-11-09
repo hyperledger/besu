@@ -95,8 +95,13 @@ public class ForkingValidatorProvider implements ValidatorProvider {
         final long prevBlockNumber = blockNumber - 1L;
         final Optional<BlockHeader> prevBlockHeader = blockchain.getBlockHeader(prevBlockNumber);
         if (prevBlockHeader.isPresent()) {
-          return resolveValidatorProvider(prevBlockNumber)
-              .getValidatorsForBlock(prevBlockHeader.get());
+          final Collection<Address> validatorsForPreviousBlock =
+              resolveValidatorProvider(prevBlockNumber)
+                  .getValidatorsForBlock(prevBlockHeader.get());
+          // Update VoteTallyCache
+          blockValidatorProvider.setValidatorsForBlock(
+              prevBlockHeader.get(), validatorsForPreviousBlock);
+          return validatorsForPreviousBlock;
         }
       }
       return getValidators.apply(validatorProvider);

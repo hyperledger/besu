@@ -21,6 +21,7 @@ import static org.hyperledger.besu.consensus.qbft.validator.ValidatorTestUtils.c
 import static org.hyperledger.besu.consensus.qbft.validator.ValidatorTestUtils.createContractForkSpec;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -140,6 +141,8 @@ public class ForkingValidatorProviderTest {
     assertThat(validatorProvider.getValidatorsForBlock(genesisHeader))
         .isEqualTo(CONTRACT_ADDRESSES_1);
     assertThat(validatorProvider.getValidatorsForBlock(header1)).isEqualTo(CONTRACT_ADDRESSES_1);
+    verify(blockValidatorProvider, times(1))
+        .setValidatorsForBlock(genesisHeader, CONTRACT_ADDRESSES_1);
     assertThat(validatorProvider.getValidatorsForBlock(header2)).isEqualTo(BLOCK_ADDRESSES);
   }
 

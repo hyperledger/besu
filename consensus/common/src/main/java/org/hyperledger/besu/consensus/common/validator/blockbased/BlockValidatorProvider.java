@@ -94,4 +94,9 @@ public class BlockValidatorProvider implements ValidatorProvider {
   public boolean hasValidatorOverridesForBlockNumber(final long blockNumber) {
     return bftValidatorOverrides.map(bvo -> bvo.getForBlock(blockNumber).isPresent()).orElse(false);
   }
+
+  public void setValidatorsForBlock(
+      final BlockHeader header, final Collection<Address> validators) {
+    voteTallyCache.putValidatorsForBlock(header, validators);
+  }
 }

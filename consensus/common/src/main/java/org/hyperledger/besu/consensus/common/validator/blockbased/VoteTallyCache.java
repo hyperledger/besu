@@ -18,11 +18,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
@@ -119,5 +121,9 @@ class VoteTallyCache {
       voteTallyCache.put(h.getHash(), mutableVoteTally.copy());
     }
     return mutableVoteTally;
+  }
+
+  void putValidatorsForBlock(final BlockHeader header, final Collection<Address> validators) {
+    voteTallyCache.put(header.getHash(), new VoteTally(validators));
   }
 }
