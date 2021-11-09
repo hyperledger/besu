@@ -89,7 +89,7 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
           StandardOpenOption.WRITE,
           StandardOpenOption.CREATE);
     } catch (final IOException e) {
-      throw new StorageException(e);
+      throw new StorageException("There was a problem opening FileChannel " + pathForFileNumber(fileNumber),e);
     }
   }
 
@@ -106,7 +106,7 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
         writeFileChannel = openWriteFileChannel(writeFileNumber);
       }
     } catch (final IOException e) {
-      throw new StorageException(e);
+      throw new StorageException("There was a problem adding to FileChannel " + pathForFileNumber(writeFileNumber),e);
     }
   }
 
@@ -123,7 +123,7 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
       size--;
       return task;
     } catch (final IOException e) {
-      throw new StorageException(e);
+      throw new StorageException("There was a problem removing from FileChannel " + pathForFileNumber(readFileNumber),e);
     }
   }
 
@@ -248,6 +248,9 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
   public static class StorageException extends RuntimeException {
     StorageException(final Throwable t) {
       super(t);
+    }
+    StorageException(final String m, final Throwable t) {
+      super(m,t);
     }
   }
 
