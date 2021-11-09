@@ -141,12 +141,9 @@ public class OnchainPrivacyController extends AbstractRestrictedPrivacyControlle
                 "",
                 "",
                 decodeParticipantList(rlpInput.raw())));
-      } else {
-        return Optional.empty();
       }
-    } else {
-      return Optional.empty();
     }
+    return Optional.empty();
   }
 
   @Override

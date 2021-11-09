@@ -62,22 +62,21 @@ public class ExpectValidPrivateTransactionReceipt implements PrivateCondition {
               "logsBloom",
               "transactionIndex",
               "output")
-          // TODO: The fields blockHash, blockNumber, logsBloom and
-          // transactionIndex have to be ignored as the class
-          // org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt does not contain
-          // these
-          // fields. Once web3j has been updated these ignores can be removed.
+          // TODO: The fields blockHash, blockNumber, logsBloom, transactionIndex and output have to
+          // be ignored as
+          // the class org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt does not
+          // contain
+          // these fields. Once web3j has been updated these ignores can be removed.
           .isEqualTo(expectedReceipt);
     } else {
       assertThat(actualReceipt)
           .usingRecursiveComparison()
           .ignoringFields(
               "commitmentHash", "logs", "blockHash", "blockNumber", "logsBloom", "transactionIndex")
-          // TODO: The fields blockHash, blockNumber, logsBloom and
-          // transactionIndex have to be ignored as the class
+          // TODO: The fields blockHash, blockNumber, logsBloom and transactionIndex have to be
+          // ignored as the class
           // org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt does not contain
-          // these
-          // fields. Once web3j has been updated these ignores can be removed.
+          // these fields. Once web3j has been updated these ignores can be removed.
           .isEqualTo(expectedReceipt);
     }
     assertThat(actualReceipt.getLogs().size()).isEqualTo(expectedReceipt.getLogs().size());

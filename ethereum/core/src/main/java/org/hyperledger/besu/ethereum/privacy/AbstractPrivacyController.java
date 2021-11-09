@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -40,7 +40,7 @@ public abstract class AbstractPrivacyController implements PrivacyController {
   final PrivateWorldStateReader privateWorldStateReader;
   final PrivateStateRootResolver privateStateRootResolver;
 
-  public AbstractPrivacyController(
+  protected AbstractPrivacyController(
       final Blockchain blockchain,
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
@@ -57,7 +57,7 @@ public abstract class AbstractPrivacyController implements PrivacyController {
         privacyParameters.getPrivateStateRootResolver());
   }
 
-  public AbstractPrivacyController(
+  protected AbstractPrivacyController(
       final Blockchain blockchain,
       final PrivateStateStorage privateStateStorage,
       final PrivateTransactionValidator privateTransactionValidator,
@@ -97,9 +97,7 @@ public abstract class AbstractPrivacyController implements PrivacyController {
       final String privacyUserId,
       final CallParameter callParams,
       final long blockNumber) {
-    final Optional<TransactionProcessingResult> result =
-        privateTransactionSimulator.process(privacyGroupId, callParams, blockNumber);
-    return result;
+    return privateTransactionSimulator.process(privacyGroupId, callParams, blockNumber);
   }
 
   @Override

@@ -42,7 +42,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurati
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,10 +52,8 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.io.Base64;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -76,8 +76,11 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   private static final String PRIVACY_GROUP_ID = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final String PARTICIPANT_ENCLAVE_KEY0 =
       "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+  private static final Bytes LEAGCY_PRIVATE_FROM = Bytes.fromBase64String(PARTICIPANT_ENCLAVE_KEY0);
   private static final String PARTICIPANT_ENCLAVE_KEY1 =
       "sgFkVOyFndZe/5SAZJO5UYbrl7pezHetveriBBWWnE8=";
+  private static final List<Bytes> LEGACY_PRIVATE_FOR =
+      Arrays.asList(new Bytes[] {Bytes.fromBase64String(PARTICIPANT_ENCLAVE_KEY1)});
   private static final String PARTICIPANT_ENCLAVE_KEY2 =
       "R1kW75NQC9XX3kwNpyPjCBFflM29+XvnKKS9VLrUkzo=";
   private static final String PARTICIPANT_ENCLAVE_KEY3 =
@@ -234,14 +237,12 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt));
   }
 
-  @Ignore // TODO: how has that ever worked?
   @Test
   public void privGetEeaTransactionCountSuccessShouldReturnExpectedTransactionCount()
       throws JsonProcessingException {
     final PrivateTransaction validSignedPrivateTransaction =
-        getValidSignedPrivateTransaction(senderAddress);
+        getValidLegacySignedPrivateTransaction(senderAddress);
     final String accountAddress = validSignedPrivateTransaction.getSender().toHexString();
-    final String senderAddressBase64 = Base64.encode(Bytes.wrap(accountAddress.getBytes(UTF_8)));
     final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
     final List<PrivacyGroup> groupMembership =
         List.of(testPrivacyGroup(emptyList(), PrivacyGroup.Type.LEGACY));
@@ -251,14 +252,18 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     receiveEnclaveStub(validSignedPrivateTransaction);
     findPrivacyGroupEnclaveStub(groupMembership);
 
-    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 0));
+    final String privateFrom = validSignedPrivateTransaction.getPrivateFrom().toBase64String();
+    final String[] privateFor =
+        validSignedPrivateTransaction.getPrivateFor().orElseThrow().stream()
+            .map(pf -> pf.toBase64String())
+            .collect(Collectors.toList())
+            .toArray(String[]::new);
+    node.verify(priv.getEeaTransactionCount(accountAddress, privateFrom, privateFor, 0));
     final Hash transactionHash =
         node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
 
     node.verify(priv.getSuccessfulTransactionReceipt(transactionHash));
 
-    final String privateFrom = PARTICIPANT_ENCLAVE_KEY0;
-    final String[] privateFor = {senderAddressBase64};
     node.verify(priv.getEeaTransactionCount(accountAddress, privateFrom, privateFor, 1));
   }
 
@@ -330,6 +335,24 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
         .sender(senderAddress)
         .chainId(BigInteger.valueOf(1337))
         .privateFrom(Bytes.fromBase64String(PARTICIPANT_ENCLAVE_KEY0))
+        .restriction(Restriction.RESTRICTED)
+        .privacyGroupId(Bytes.fromBase64String(PRIVACY_GROUP_ID))
+        .signAndBuild(TEST_KEY);
+  }
+
+  private static PrivateTransaction getValidLegacySignedPrivateTransaction(
+      final Address senderAddress) {
+    return PrivateTransaction.builder()
+        .nonce(0)
+        .gasPrice(Wei.ZERO)
+        .gasLimit(3000000)
+        .to(null)
+        .value(Wei.ZERO)
+        .payload(Bytes.wrap(new byte[] {}))
+        .sender(senderAddress)
+        .chainId(BigInteger.valueOf(1337))
+        .privateFrom(LEAGCY_PRIVATE_FROM)
+        .privateFor(LEGACY_PRIVATE_FOR)
         .restriction(Restriction.RESTRICTED)
         .privacyGroupId(Bytes.fromBase64String(PRIVACY_GROUP_ID))
         .signAndBuild(TEST_KEY);
