@@ -296,8 +296,9 @@ public class DiscoveryConfiguration {
     return dnsDiscoveryURL;
   }
 
-  public void setDnsDiscoveryURL(final String dnsDiscoveryURL) {
+  public DiscoveryConfiguration setDnsDiscoveryURL(final String dnsDiscoveryURL) {
     this.dnsDiscoveryURL = dnsDiscoveryURL;
+    return this;
   }
 
   @Override

@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -67,7 +68,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
@@ -231,7 +231,7 @@ public final class DefaultP2PNetworkTest {
     when(upnpNatManager.queryExternalIPAddress())
         .thenReturn(CompletableFuture.completedFuture(externalIp));
 
-    final NatService natService = Mockito.spy(new NatService(Optional.of(upnpNatManager)));
+    final NatService natService = spy(new NatService(Optional.of(upnpNatManager)));
     final P2PNetwork network = builder().natService(natService).build();
 
     network.start();
@@ -331,6 +331,36 @@ public final class DefaultP2PNetworkTest {
     assertThat(network.getLocalEnode()).isPresent();
     final Peer peer = PeerTestHelper.createPeer(network.getLocalEnode().get().getNodeId());
     assertThat(network.addMaintainConnectionPeer(peer)).isFalse();
+  }
+
+  @Test
+  public void shouldNotStartDnsDiscoveryWhenDNSURLIsNotConfigured() {
+    // spy on DefaultP2PNetwork
+    DefaultP2PNetwork testClass = spy(network());
+
+    testClass.start();
+    // ensure we called getDnsDaemon during start, and that it is NOT present:
+    verify(testClass, times(1)).getDnsDaemon();
+    assertThat(testClass.getDnsDaemon()).isNotPresent();
+  }
+
+  @Test
+  public void shouldStartDnsDiscoveryWhenDNSURLIsNotConfigured() {
+    // create a discovery config with a dns config
+    DiscoveryConfiguration disco =
+        DiscoveryConfiguration.create().setDnsDiscoveryURL("enrtree://mock@localhost");
+
+    // spy on config to return dns discovery config:
+    NetworkingConfiguration dnsConfig =
+        when(spy(config).getDiscovery()).thenReturn(disco).getMock();
+
+    // spy on DefaultP2PNetwork
+    DefaultP2PNetwork testClass = spy((DefaultP2PNetwork) builder().config(dnsConfig).build());
+
+    testClass.start();
+    // ensure we called getDnsDaemon during start, and that it is present:
+    verify(testClass, times(1)).getDnsDaemon();
+    assertThat(testClass.getDnsDaemon()).isPresent();
   }
 
   private DefaultP2PNetwork network() {

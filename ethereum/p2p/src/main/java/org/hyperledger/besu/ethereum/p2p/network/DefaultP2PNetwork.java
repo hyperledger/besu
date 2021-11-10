@@ -224,8 +224,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
                 }
                 dnsPeers.set(peers);
               });
-      dnsDaemon.start();
     }
+    getDnsDaemon().ifPresent(DNSDaemon::start);
 
     final int listeningPort = rlpxAgent.start().join();
     final int discoveryPort =
@@ -268,9 +268,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return;
     }
 
-    if (dnsDaemon != null) {
-      dnsDaemon.close();
-    }
+    getDnsDaemon().ifPresent(DNSDaemon::close);
 
     peerConnectionScheduler.shutdownNow();
     peerDiscoveryAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());
@@ -320,6 +318,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
     LOG.debug("Disconnect requested for peer {}.", peer);
     rlpxAgent.disconnect(peer.getId(), DisconnectReason.REQUESTED);
     return wasRemoved;
+  }
+
+  @VisibleForTesting
+  Optional<DNSDaemon> getDnsDaemon() {
+    return Optional.ofNullable(dnsDaemon);
   }
 
   @VisibleForTesting
