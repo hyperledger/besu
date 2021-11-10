@@ -64,7 +64,7 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
     method =
         new RestrictedOffchainEeaSendRawTransaction(
             transactionPool,
-            pmtTransactionPool,
+            privateMarkerTransactionPool,
             privacyIdProvider,
             privateMarkerTransactionFactory,
             address -> 0,

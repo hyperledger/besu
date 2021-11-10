@@ -44,7 +44,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
@@ -206,7 +206,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     ProtocolScheduleFixture.MAINNET,
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
-                    mock(PmtTransactionPool.class),
+                    mock(PrivateMarkerTransactionPool.class),
                     mock(PoWMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
@@ -304,7 +304,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     ProtocolScheduleFixture.MAINNET,
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
-                    mock(PmtTransactionPool.class),
+                    mock(PrivateMarkerTransactionPool.class),
                     mock(PoWMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,

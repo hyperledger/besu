@@ -40,7 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -127,7 +127,8 @@ public class JsonRpcTestMethodsFactory {
     final P2PNetwork peerDiscovery = mock(P2PNetwork.class);
     final EthPeers ethPeers = mock(EthPeers.class);
     final TransactionPool transactionPool = mock(TransactionPool.class);
-    final PmtTransactionPool pmtTransactionPool = mock(PmtTransactionPool.class);
+    final PrivateMarkerTransactionPool privateMarkerTransactionPool = mock(
+        PrivateMarkerTransactionPool.class);
     final PoWMiningCoordinator miningCoordinator = mock(PoWMiningCoordinator.class);
     final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
     final Optional<AccountLocalConfigPermissioningController> accountWhitelistController =
@@ -168,7 +169,7 @@ public class JsonRpcTestMethodsFactory {
             importer.getProtocolSchedule(),
             filterManager,
             transactionPool,
-            pmtTransactionPool,
+            privateMarkerTransactionPool,
             miningCoordinator,
             metricsSystem,
             new HashSet<>(),

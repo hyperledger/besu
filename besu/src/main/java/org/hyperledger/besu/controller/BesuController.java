@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
-import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -58,7 +58,7 @@ public class BesuController implements java.io.Closeable {
   private final JsonRpcMethods additionalJsonRpcMethodsFactory;
 
   private final TransactionPool transactionPool;
-  private final PmtTransactionPool pmtTransactionPool;
+  private final PrivateMarkerTransactionPool privateMarkerTransactionPool;
   private final MiningCoordinator miningCoordinator;
   private final PrivacyParameters privacyParameters;
   private final List<Closeable> closeables;
@@ -75,7 +75,7 @@ public class BesuController implements java.io.Closeable {
       final Synchronizer synchronizer,
       final SyncState syncState,
       final TransactionPool transactionPool,
-      final PmtTransactionPool pmtTransactionPool,
+      final PrivateMarkerTransactionPool privateMarkerTransactionPool,
       final MiningCoordinator miningCoordinator,
       final PrivacyParameters privacyParameters,
       final MiningParameters miningParameters,
@@ -93,7 +93,7 @@ public class BesuController implements java.io.Closeable {
     this.additionalJsonRpcMethodsFactory = additionalJsonRpcMethodsFactory;
     this.nodeKey = nodeKey;
     this.transactionPool = transactionPool;
-    this.pmtTransactionPool = pmtTransactionPool;
+    this.privateMarkerTransactionPool = privateMarkerTransactionPool;
     this.miningCoordinator = miningCoordinator;
     this.privacyParameters = privacyParameters;
     this.closeables = closeables;
@@ -133,8 +133,8 @@ public class BesuController implements java.io.Closeable {
     return transactionPool;
   }
 
-  public PmtTransactionPool getPmtTransactionPool() {
-    return pmtTransactionPool;
+  public PrivateMarkerTransactionPool getPmtTransactionPool() {
+    return privateMarkerTransactionPool;
   }
 
   public MiningCoordinator getMiningCoordinator() {

@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
@@ -58,7 +58,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private TransactionPool transactionPool;
-  @Mock private PmtTransactionPool pmtTransactionPool;
+  @Mock private PrivateMarkerTransactionPool privateMarkerTransactionPool;
   @Mock private PrivacyParameters privacyParameters;
 
   private TestPrivacyApiGroupJsonRpcMethods privacyApiGroupJsonRpcMethods;
@@ -72,7 +72,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
             blockchainQueries,
             protocolSchedule,
             transactionPool,
-            pmtTransactionPool,
+            privateMarkerTransactionPool,
             privacyParameters,
             rpcMethod);
   }
@@ -178,14 +178,14 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
         final BlockchainQueries blockchainQueries,
         final ProtocolSchedule protocolSchedule,
         final TransactionPool transactionPool,
-        final PmtTransactionPool pmtTransactionPool,
+        final PrivateMarkerTransactionPool privateMarkerTransactionPool,
         final PrivacyParameters privacyParameters,
         final JsonRpcMethod rpcMethod) {
       super(
           blockchainQueries,
           protocolSchedule,
           transactionPool,
-          pmtTransactionPool,
+          privateMarkerTransactionPool,
           privacyParameters);
       this.rpcMethod = rpcMethod;
     }

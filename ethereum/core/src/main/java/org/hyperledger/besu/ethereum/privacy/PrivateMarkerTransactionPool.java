@@ -26,11 +26,11 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class PmtTransactionPool implements BlockAddedObserver {
+public class PrivateMarkerTransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LogManager.getLogger();
   private final Map<Hash, PmtTransactionTracker> pmtPool;
 
-  public PmtTransactionPool() {
+  public PrivateMarkerTransactionPool() {
     this.pmtPool = new HashMap<>();
   }
 

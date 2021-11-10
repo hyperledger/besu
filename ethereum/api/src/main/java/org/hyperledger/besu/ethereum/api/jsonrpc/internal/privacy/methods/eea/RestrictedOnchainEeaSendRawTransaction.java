@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -42,24 +42,24 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
 
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
-  private final PmtTransactionPool pmtTransactionPool;
+  private final PrivateMarkerTransactionPool privateMarkerTransactionPool;
 
   public RestrictedOnchainEeaSendRawTransaction(
       final TransactionPool transactionPool,
-      final PmtTransactionPool pmtTransactionPool,
+      final PrivateMarkerTransactionPool privateMarkerTransactionPool,
       final PrivacyIdProvider privacyIdProvider,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final NonceProvider publicNonceProvider,
       final PrivacyController privacyController) {
     super(
         transactionPool,
-        pmtTransactionPool,
+        privateMarkerTransactionPool,
         privacyIdProvider,
         privateMarkerTransactionFactory,
         publicNonceProvider);
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
-    this.pmtTransactionPool = pmtTransactionPool;
+    this.privateMarkerTransactionPool = privateMarkerTransactionPool;
   }
 
   @Override
@@ -110,7 +110,7 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
     final Transaction pmt =
         createPrivateMarkerTransaction(
             sender, ONCHAIN_PRIVACY, pmtPayload, privateTransaction, privacyUserId);
-    pmtTransactionPool.addPmtTransactionTracker(
+    privateMarkerTransactionPool.addPmtTransactionTracker(
         pmt.getHash(), privateTransaction, privacyGroupId.toBase64String(), pmt.getNonce());
     return pmt;
   }

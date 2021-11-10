@@ -50,7 +50,7 @@ public class ChainHeadPrivateNonceProviderTest {
   private ChainHeadPrivateNonceProvider privateNonceProvider;
   private WorldStateArchive privateWorldStateArchive;
   private PrivateStateRootResolver privateStateRootResolver;
-  final PmtTransactionPool pmtPool = new PmtTransactionPool();
+  final PrivateMarkerTransactionPool pmtPool = new PrivateMarkerTransactionPool();
 
   @Before
   public void setUp() {

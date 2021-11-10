@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PluginPrivacyController;
-import org.hyperledger.besu.ethereum.privacy.PmtTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
@@ -41,19 +41,19 @@ public class PrivateWebSocketMethodsFactory {
   private final SubscriptionManager subscriptionManager;
   private final ProtocolSchedule protocolSchedule;
   private final BlockchainQueries blockchainQueries;
-  private final PmtTransactionPool pmtTransactionPool;
+  private final PrivateMarkerTransactionPool privateMarkerTransactionPool;
 
   public PrivateWebSocketMethodsFactory(
       final PrivacyParameters privacyParameters,
       final SubscriptionManager subscriptionManager,
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
-      final PmtTransactionPool pmtTransactionPool) {
+      final PrivateMarkerTransactionPool privateMarkerTransactionPool) {
     this.privacyParameters = privacyParameters;
     this.subscriptionManager = subscriptionManager;
     this.protocolSchedule = protocolSchedule;
     this.blockchainQueries = blockchainQueries;
-    this.pmtTransactionPool = pmtTransactionPool;
+    this.privateMarkerTransactionPool = privateMarkerTransactionPool;
   }
 
   public Collection<JsonRpcMethod> methods() {
@@ -110,6 +110,6 @@ public class PrivateWebSocketMethodsFactory {
         blockchainQueries.getBlockchain(),
         privacyParameters.getPrivateStateRootResolver(),
         privacyParameters.getPrivateWorldStateArchive(),
-        pmtTransactionPool);
+        privateMarkerTransactionPool);
   }
 }
