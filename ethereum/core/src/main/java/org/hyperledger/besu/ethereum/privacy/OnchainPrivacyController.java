@@ -201,8 +201,7 @@ public class OnchainPrivacyController extends AbstractRestrictedPrivacyControlle
     maybePrivacyGroup.ifPresent(
         group -> {
           if (!group.getMembers().contains(privacyUserId)) {
-            throw new MultiTenancyValidationException(
-                "Privacy group must contain the enclave public key");
+            throw new RuntimeException("Privacy group must contain the enclave public key");
           }
         });
   }
