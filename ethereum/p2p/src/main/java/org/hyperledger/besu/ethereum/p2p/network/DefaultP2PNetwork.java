@@ -224,6 +224,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
                 }
                 dnsPeers.set(peers);
               });
+      dnsDaemon.start();
     }
 
     final int listeningPort = rlpxAgent.start().join();
