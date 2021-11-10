@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.privacy;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,8 +31,9 @@ public class PrivateMarkerTransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LogManager.getLogger();
   private final Map<Hash, PrivateMarkerTransactionTracker> pmtPool;
 
-  public PrivateMarkerTransactionPool() {
+  public PrivateMarkerTransactionPool(final Blockchain blockchain) {
     this.pmtPool = new HashMap<>();
+    blockchain.observeBlockAdded(this);
   }
 
   @Override

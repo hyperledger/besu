@@ -327,9 +327,7 @@ public abstract class BesuControllerBuilder {
             transactionPoolConfiguration);
 
     final PrivateMarkerTransactionPool privateMarkerTransactionPool =
-        new PrivateMarkerTransactionPool();
-    // TODO pass blockchain to the pmtPool and move this line there:
-    blockchain.observeBlockAdded(privateMarkerTransactionPool);
+        new PrivateMarkerTransactionPool(blockchain);
 
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
