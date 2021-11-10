@@ -56,7 +56,7 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
 
     nodeUsingAuthFile = besu.createNodeWithAuthentication("node1", AUTH_FILE);
     nodeUsingRSAJwtPublicKey = besu.createNodeWithAuthenticationUsingRSAJwtPublicKey("node2");
-    nodeUsingECDSAJwtPublicKey = besu.createNodeWithAuthenticationUsingECDSAJwtPublicKey("node 3");
+    nodeUsingECDSAJwtPublicKey = besu.createNodeWithAuthenticationUsingECDSAJwtPublicKey("node3");
     authenticatedCluster.start(
         nodeUsingAuthFile, nodeUsingRSAJwtPublicKey, nodeUsingECDSAJwtPublicKey);
 
@@ -81,7 +81,7 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
         nodeUsingAuthFile.execute(
             permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
-    nodeUsingAuthFile.verify(net.awaitPeerCount(1));
+    nodeUsingAuthFile.verify(net.awaitPeerCount(2));
   }
 
   @Test
@@ -98,7 +98,7 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
   public void externalRSAJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
     nodeUsingRSAJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
         RSA_TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingRSAJwtPublicKey.verify(net.awaitPeerCount(1));
+    nodeUsingRSAJwtPublicKey.verify(net.awaitPeerCount(2));
   }
 
   @Test
@@ -113,7 +113,7 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
   public void externalECDSAJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
     nodeUsingECDSAJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
         ECDSA_TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingECDSAJwtPublicKey.verify(net.awaitPeerCount(1));
+    nodeUsingECDSAJwtPublicKey.verify(net.awaitPeerCount(2));
   }
 
   @Test
