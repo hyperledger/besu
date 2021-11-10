@@ -89,6 +89,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private KeyPair keyPair;
   private final Properties portsProperties = new Properties();
   private final Boolean p2pEnabled;
+  private final int p2pPort;
   private final Optional<TLSConfiguration> tlsConfiguration;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean revertReasonEnabled;
@@ -134,6 +135,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final NetworkName network,
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
+      final int p2pPort,
       final Optional<TLSConfiguration> tlsConfiguration,
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
@@ -175,6 +177,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.devMode = devMode;
     this.network = network;
     this.p2pEnabled = p2pEnabled;
+    this.p2pPort = p2pPort;
     this.tlsConfiguration = tlsConfiguration;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
@@ -241,10 +244,15 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public URI enodeUrl() {
     final String discport = isDiscoveryEnabled() ? "?discport=" + getDiscoveryPort() : "";
-    return URI.create("enode://" + getNodeId() + "@" + LOCALHOST + ":" + getP2pPort() + discport);
+    return URI.create(
+        "enode://" + getNodeId() + "@" + LOCALHOST + ":" + getRuntimeP2pPort() + discport);
   }
 
-  private String getP2pPort() {
+  public String getP2pPort() {
+    return String.valueOf(p2pPort);
+  }
+
+  private String getRuntimeP2pPort() {
     final String port = portsProperties.getProperty("p2p");
     if (port == null) {
       throw new IllegalStateException("Requested p2p port before ports properties was written");

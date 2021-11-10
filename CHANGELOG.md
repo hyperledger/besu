@@ -1,5 +1,14 @@
 # Changelog
 
+## 21.10.2
+
+### Additions and Improvements
+- Add discovery options to genesis file [#2944](https://github.com/hyperledger/besu/pull/2944)
+
+### Bug Fixes
+
+### Early Access Features
+
 ## 21.10.1
 
 ### Additions and Improvements
