@@ -63,6 +63,7 @@ public class BesuNodeConfigurationBuilder {
   private boolean devMode = true;
   private GenesisConfigurationProvider genesisConfigProvider = ignore -> Optional.empty();
   private Boolean p2pEnabled = true;
+  private int p2pPort = 0;
   private Optional<TLSConfiguration> tlsConfiguration = Optional.empty();
   private final NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private boolean discoveryEnabled = true;
@@ -263,6 +264,11 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder p2pPort(final int p2pPort) {
+    this.p2pPort = p2pPort;
+    return this;
+  }
+
   private static Path toPath(final String path) throws Exception {
     return Path.of(BesuNodeConfigurationBuilder.class.getResource(path).toURI());
   }
@@ -399,6 +405,7 @@ public class BesuNodeConfigurationBuilder {
         network,
         genesisConfigProvider,
         p2pEnabled,
+        p2pPort,
         tlsConfiguration,
         networkingConfiguration,
         discoveryEnabled,
