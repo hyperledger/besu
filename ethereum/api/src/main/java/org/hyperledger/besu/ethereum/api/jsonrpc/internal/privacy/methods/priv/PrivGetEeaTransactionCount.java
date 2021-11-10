@@ -103,10 +103,10 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
       final String privacyUserId) {
 
     final Bytes from = Bytes.fromBase64String(privateFrom);
-    final List<Bytes> tos =
+    final List<Bytes> toAddresses =
         Arrays.stream(privateFor).map(Bytes::fromBase64String).collect(Collectors.toList());
 
-    final Bytes32 privacyGroupId = PrivacyGroupUtil.calculateEeaPrivacyGroupId(from, tos);
+    final Bytes32 privacyGroupId = PrivacyGroupUtil.calculateEeaPrivacyGroupId(from, toAddresses);
     return privacyController.determineNonce(
         address, privacyGroupId.toBase64String(), privacyUserId);
   }
