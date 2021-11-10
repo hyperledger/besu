@@ -169,7 +169,8 @@ public class RestrictedDefaultPrivacyController extends AbstractRestrictedPrivac
       final String privacyGroupId, final String privacyUserId) {
     final PrivacyGroup offchainPrivacyGroup = enclave.retrievePrivacyGroup(privacyGroupId);
     if (!offchainPrivacyGroup.getMembers().contains(privacyUserId)) {
-      throw new MultiTenancyValidationException("Privacy group must contain the enclave public key");
+      throw new MultiTenancyValidationException(
+          "Privacy group must contain the enclave public key");
     }
   }
 
