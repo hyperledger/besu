@@ -138,7 +138,7 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
           commandLine, String.format("Unable to read TOML configuration file %s", configFile));
   }
 
-  private void loadConfigurationFromFile() {
+  public void loadConfigurationFromFile() {
 
     if (result == null) {
       try {

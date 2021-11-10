@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
@@ -46,7 +47,7 @@ public class ForestBlockPropagationManagerTest extends AbstractBlockPropagationM
         new ProtocolContext(
             blockchain,
             tempProtocolContext.getWorldStateArchive(),
-            tempProtocolContext.getConsensusState(Object.class));
+            tempProtocolContext.getConsensusContext(ConsensusContext.class));
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             blockchain,

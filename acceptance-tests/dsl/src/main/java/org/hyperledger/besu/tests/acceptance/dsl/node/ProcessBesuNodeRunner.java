@@ -95,7 +95,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add(node.p2pListenHost());
 
     params.add("--p2p-port");
-    params.add("0");
+    params.add(node.getP2pPort());
 
     if (node.getMiningParameters().isMiningEnabled()) {
       params.add("--miner-enabled");
@@ -130,8 +130,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add(node.getPrivacyParameters().getEnclavePublicKeyFile().getAbsolutePath());
       }
 
-      params.add("--privacy-marker-transaction-signing-key-file");
-      params.add(node.homeDirectory().resolve("key").toString());
+      if (!node.getExtraCLIOptions().contains("--plugin-privacy-service-signing-enabled=true")) {
+        params.add("--privacy-marker-transaction-signing-key-file");
+        params.add(node.homeDirectory().resolve("key").toString());
+      }
 
       if (node.getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
         params.add("--privacy-onchain-groups-enabled");
@@ -142,9 +144,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       }
     }
 
-    params.add("--bootnodes");
-
     if (!node.getBootnodes().isEmpty()) {
+      params.add("--bootnodes");
       params.add(node.getBootnodes().stream().map(URI::toString).collect(Collectors.joining(",")));
     }
 

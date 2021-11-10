@@ -71,6 +71,7 @@ import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.RetestethSubCommand;
+import org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand;
@@ -285,7 +286,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final StorageServiceImpl storageService;
   private final SecurityModuleServiceImpl securityModuleService;
   private final PermissioningServiceImpl permissioningService;
-  private final PrivacyPluginServiceImpl privacyPluginPluginService;
+  private final PrivacyPluginServiceImpl privacyPluginService;
   private final RpcEndpointServiceImpl rpcEndpointServiceImpl;
 
   private final Map<String, String> environment;
@@ -1161,7 +1162,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final StorageServiceImpl storageService,
       final SecurityModuleServiceImpl securityModuleService,
       final PermissioningServiceImpl permissioningService,
-      final PrivacyPluginServiceImpl privacyPluginPluginService,
+      final PrivacyPluginServiceImpl privacyPluginService,
       final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
     this.logger = logger;
@@ -1175,7 +1176,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.storageService = storageService;
     this.securityModuleService = securityModuleService;
     this.permissioningService = permissioningService;
-    this.privacyPluginPluginService = privacyPluginPluginService;
+    this.privacyPluginService = privacyPluginService;
     pluginCommonConfiguration = new BesuCommandConfigurationService();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
     this.pkiBlockCreationConfigProvider = pkiBlockCreationConfigProvider;
@@ -1224,6 +1225,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       configure();
       initController();
       startPlugins();
+      validatePluginOptions();
       preSynchronization();
       startSynchronization();
 
@@ -1255,6 +1257,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         RLPSubCommand.COMMAND_NAME, new RLPSubCommand(resultHandler.out(), in));
     commandLine.addSubcommand(
         OperatorSubCommand.COMMAND_NAME, new OperatorSubCommand(resultHandler.out()));
+    commandLine.addSubcommand(
+        ValidateConfigSubCommand.COMMAND_NAME,
+        new ValidateConfigSubCommand(commandLine, resultHandler.out()));
     final String generateCompletionSubcommandName = "generate-completion";
     commandLine.addSubcommand(
         generateCompletionSubcommandName, AutoComplete.GenerateCompletion.class);
@@ -1317,7 +1322,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
     besuPluginContext.addService(PermissioningService.class, permissioningService);
-    besuPluginContext.addService(PrivacyPluginService.class, privacyPluginPluginService);
+    besuPluginContext.addService(PrivacyPluginService.class, privacyPluginService);
     besuPluginContext.addService(RpcEndpointService.class, rpcEndpointServiceImpl);
 
     // register built-in plugins
@@ -1416,6 +1421,47 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
+  }
+
+  private void validatePluginOptions() {
+    // plugins do not 'wire up' until start has been called
+    // consequently you can only do some configuration checks
+    // after start has been called on plugins
+
+    if (isPrivacyEnabled) {
+
+      if (privateMarkerTransactionSigningKeyPath != null
+          && privacyPluginService != null
+          && privacyPluginService.getPrivateMarkerTransactionFactory() != null) {
+        throw new ParameterException(
+            commandLine,
+            "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies a PrivateMarkerTransactionFactory");
+      }
+
+      if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0) {
+        // if gas is required, cannot use random keys to sign private tx
+        // ie --privacy-marker-transaction-signing-key-file must be set
+        if (privateMarkerTransactionSigningKeyPath == null
+            && (privacyPluginService == null
+                || privacyPluginService.getPrivateMarkerTransactionFactory() == null)) {
+          throw new ParameterException(
+              commandLine,
+              "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
+        }
+      }
+
+      if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
+          && privacyPluginService.getPayloadProvider() == null) {
+        throw new ParameterException(
+            commandLine,
+            "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
+      }
+
+      if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled() && isFlexiblePrivacyGroupsEnabled) {
+        throw new ParameterException(
+            commandLine, "Privacy Plugin can not be used with flexible (onchain) privacy groups");
+      }
+    }
   }
 
   public void configureLogging(final boolean announce) {
@@ -2165,19 +2211,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
       }
 
-      if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
-          && privacyPluginPluginService.getPayloadProvider() == null) {
-        // The plugin may register the payload provider in start or register.
-        // At this point we have only called start.
-        logger.warn(
-            "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
-      }
-
-      if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled() && isFlexiblePrivacyGroupsEnabled) {
-        throw new ParameterException(
-            commandLine, "Privacy Plugin can not be used with flexible (onchain) privacy groups");
-      }
-
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
@@ -2192,7 +2225,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             commandLine, "Privacy multi-tenancy and privacy public key cannot be used together");
       }
 
-      if (!hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {
+      if (!hasPrivacyPublicKey
+          && !isPrivacyMultiTenancyEnabled
+          && !unstablePrivacyPluginOptions.isPrivacyPluginEnabled()) {
         throw new ParameterException(
             commandLine, "Please specify Enclave public key file path to enable privacy");
       }
@@ -2207,26 +2242,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           throw new ParameterException(
               commandLine, "Contents of privacy-public-key-file invalid: " + e.getMessage(), e);
         }
-      }
-
-      if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0) {
-        // if gas is required, cannot use random keys to sign private tx
-        // ie --privacy-marker-transaction-signing-key-file must be set
-        if (privateMarkerTransactionSigningKeyPath == null
-            && (privacyPluginPluginService == null
-                || privacyPluginPluginService.getPrivateMarkerTransactionFactory() == null)) {
-          throw new ParameterException(
-              commandLine,
-              "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
-        }
-      }
-
-      if (privateMarkerTransactionSigningKeyPath != null
-          && privacyPluginPluginService != null
-          && privacyPluginPluginService.getPrivateMarkerTransactionFactory() != null) {
-        throw new ParameterException(
-            commandLine,
-            "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies a PrivateMarkerTransactionFactory");
       }
 
       privacyParametersBuilder.setPrivateKeyPath(privateMarkerTransactionSigningKeyPath);
@@ -2252,7 +2267,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             || rpcWsApis.contains(RpcApis.GOQUORUM.name()))) {
       logger.warn("Cannot use GOQUORUM API methods when not in GoQuorum mode.");
     }
-    privacyParametersBuilder.setPrivacyService(privacyPluginPluginService);
+    privacyParametersBuilder.setPrivacyService(privacyPluginService);
     final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
 
     if (isPrivacyEnabled) {
@@ -2519,27 +2534,36 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (discoveryDnsUrl != null) {
       builder.setDnsDiscoveryUrl(discoveryDnsUrl);
+    } else if (genesisConfigOptions != null) {
+      final Optional<String> discoveryDnsUrlFromGenesis =
+          genesisConfigOptions.getDiscoveryOptions().getDiscoveryDnsUrl();
+      discoveryDnsUrlFromGenesis.ifPresent(builder::setDnsDiscoveryUrl);
     }
 
     if (networkId != null) {
       builder.setNetworkId(networkId);
     }
 
+    List<EnodeURL> listBootNodes = null;
     if (bootNodes != null) {
-      if (!peerDiscoveryEnabled) {
-        logger.warn("Discovery disabled: bootnodes will be ignored.");
-      }
       try {
-        final List<EnodeURL> listBootNodes =
-            bootNodes.stream()
-                .filter(value -> !value.isEmpty())
-                .map(url -> EnodeURLImpl.fromString(url, getEnodeDnsConfiguration()))
-                .collect(Collectors.toList());
-        DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
-        builder.setBootNodes(listBootNodes);
+        listBootNodes = buildEnodes(bootNodes, getEnodeDnsConfiguration());
       } catch (final IllegalArgumentException e) {
         throw new ParameterException(commandLine, e.getMessage());
       }
+    } else if (genesisConfigOptions != null) {
+      final Optional<List<String>> bootNodesFromGenesis =
+          genesisConfigOptions.getDiscoveryOptions().getBootNodes();
+      if (bootNodesFromGenesis.isPresent()) {
+        listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
+      }
+    }
+    if (listBootNodes != null) {
+      if (!peerDiscoveryEnabled) {
+        logger.warn("Discovery disabled: bootnodes will be ignored.");
+      }
+      DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
+      builder.setBootNodes(listBootNodes);
     }
     return builder.build();
   }
@@ -2625,6 +2649,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
     logger.info("Static Nodes file = {}", staticNodesPath);
     return StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
+  }
+
+  private List<EnodeURL> buildEnodes(
+      final List<String> bootNodes, final EnodeDnsConfiguration enodeDnsConfiguration) {
+    return bootNodes.stream()
+        .filter(bootNode -> !bootNode.isEmpty())
+        .map(bootNode -> EnodeURLImpl.fromString(bootNode, enodeDnsConfiguration))
+        .collect(Collectors.toList());
   }
 
   public BesuExceptionHandler exceptionHandler() {

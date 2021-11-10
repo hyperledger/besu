@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -37,10 +38,17 @@ public class BadCLIOptionsPluginTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
+    System.setProperty("TEST_BAD_CLI", "true");
+
     node =
         besu.createPluginsNode(
             "node1", Collections.singletonList("testPlugins"), Collections.emptyList());
     cluster.start(node);
+  }
+
+  @After
+  public void tearDown() {
+    System.setProperty("TEST_BAD_CLI", "false");
   }
 
   @Test

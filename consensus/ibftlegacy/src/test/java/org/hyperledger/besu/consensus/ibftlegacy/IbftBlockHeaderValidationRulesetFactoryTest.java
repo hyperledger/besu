@@ -44,6 +44,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class IbftBlockHeaderValidationRulesetFactoryTest {
 
@@ -55,7 +56,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final ValidatorProvider mockValidatorProvider = mock(ValidatorProvider.class);
     when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
-
+    when(bftContext.as(Mockito.any())).thenReturn(bftContext);
     return new ProtocolContext(null, null, bftContext);
   }
 

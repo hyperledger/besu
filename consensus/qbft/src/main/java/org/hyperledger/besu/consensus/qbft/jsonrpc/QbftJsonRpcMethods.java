@@ -51,7 +51,7 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create() {
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
-    final BftContext bftContext = context.getConsensusState(BftContext.class);
+    final BftContext bftContext = context.getConsensusContext(BftContext.class);
     final BlockInterface blockInterface = bftContext.getBlockInterface();
     final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
 
