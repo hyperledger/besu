@@ -69,6 +69,7 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       return mapOf(
           new PluginEeaSendRawTransaction(
               transactionPool,
+              pmtTransactionPool,
               privacyIdProvider,
               privateMarkerTransactionFactory,
               nonceProvider,
