@@ -148,7 +148,7 @@ public class PluginPrivacyController extends AbstractPrivacyController {
     if (!privacyPluginService
         .getPrivacyGroupAuthProvider()
         .canAccess(privacyGroupId, privacyUserId, blockNumber)) {
-      throw new RuntimeException("Privacy group must contain the enclave public key");
+      throw new MultiTenancyValidationException("Privacy group must contain the enclave public key");
     }
   }
 
