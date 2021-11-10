@@ -4,6 +4,7 @@
 
 ### Additions and Improvements
 - Add discovery options to genesis file [#2944](https://github.com/hyperledger/besu/pull/2944)
+- Add support for additional JWT auth algorithms [#3017](https://github.com/hyperledger/besu/pull/3017) 
 
 ### Bug Fixes
 
