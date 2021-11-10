@@ -4,6 +4,7 @@
 
 ### Additions and Improvements
 - Add discovery options to genesis file [#2944](https://github.com/hyperledger/besu/pull/2944)
+- Add validate-config subcommand to perform basic syntax validation of TOML config [#2994](https://github.com/hyperledger/besu/pull/2994)
 
 ### Bug Fixes
 
@@ -14,7 +15,7 @@
 
 ### Additions and Improvements
 - Add CLI autocomplete scripts. [#2854](https://github.com/hyperledger/besu/pull/2854)
-- Added support for PKCS11 keystore on PKI Block Creation. [#2865](https://github.com/hyperledger/besu/pull/2865)
+- Add support for PKCS11 keystore on PKI Block Creation. [#2865](https://github.com/hyperledger/besu/pull/2865)
 - Optimize EVM Memory for MLOAD Operations [#2917](https://github.com/hyperledger/besu/pull/2917)
 - Upgrade CircleCI OpenJDK docker image to version 11.0.12. [#2928](https://github.com/hyperledger/besu/pull/2928)
 - Update JDK 11 to latest version in Besu Docker images. [#2925](https://github.com/hyperledger/besu/pull/2925)
