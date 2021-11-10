@@ -155,7 +155,7 @@ public class OnchainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
 
   /**
    * This method will check if a privacy group with the specified id and list of members exists.
-   * Each one of the members node will be queried to ensure that they all have the same privacy
+   * Each member node will be queried to ensure that they all have the same privacy
    * group in their private state.
    *
    * @param privacyGroupId the id of the privacy group

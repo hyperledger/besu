@@ -226,7 +226,7 @@ public class TransactionPool implements BlockAddedObserver {
       final Transaction transaction) {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
 
-    // Check whether it's a GoQuorum transaction
+    // Check whether it's a GoQuorum private transaction
     boolean goQuorumCompatibilityMode = getTransactionValidator().getGoQuorumCompatibilityMode();
     if (transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)) {
       final Optional<Wei> weiValue = ofNullable(transaction.getValue());

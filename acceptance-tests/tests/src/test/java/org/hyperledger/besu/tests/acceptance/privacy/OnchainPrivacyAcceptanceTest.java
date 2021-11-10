@@ -479,7 +479,7 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
   }
 
   @Test
-  public void canOnlyCallProxyContractWhenGroupLocked() {
+  public void canOnlyCallProxyContractWhenGroupNotLocked() {
     final String privacyGroupId = createOnchainPrivacyGroup(alice);
     checkOnchainPrivacyGroupExists(privacyGroupId, alice);
 
@@ -514,17 +514,7 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
             privacyTransactions.privxLockPrivacyGroupAndCheck(
                 privacyGroupId, alice, aliceCredentials));
 
-    final String callWhileLockedHash = callContract.get();
-
-    final String unlockHash =
-        alice.execute(
-            privacyTransactions.privxUnlockPrivacyGroupAndCheck(
-                privacyGroupId, alice, aliceCredentials));
-
-    final String callAfterUnlockedHash = callContract.get();
-
-    alice.execute(minerTransactions.minerStart());
-    alice.getBesu().verify(ethConditions.miningStatus(true));
+    final String callFailsWhileLockedHash = callContract.get();
 
     final BiConsumer<String, String> assertThatTransactionReceiptIs =
         (String hash, String expectedResult) -> {
@@ -532,15 +522,26 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
               alice.execute(privacyTransactions.getPrivateTransactionReceipt(hash));
           assertThat(receipt.getStatus()).isEqualTo(expectedResult);
         };
-
+    // wait for the receipt of the one we expect to fail, so that the _next_ nonce will be correct
+    // see https://github.com/hyperledger/besu/issues/1942
     // when locking a group succeeds ...
     assertThatTransactionReceiptIs.accept(lockHash, "0x1");
-    // ... calls to contracts fail ...
-    assertThatTransactionReceiptIs.accept(callWhileLockedHash, "0x0");
-    // ... but unlock the group works ...
+    assertThatTransactionReceiptIs.accept(callFailsWhileLockedHash, "0x0");
+
+    final String unlockHash =
+        alice.execute(
+            privacyTransactions.privxUnlockPrivacyGroupAndCheck(
+                privacyGroupId, alice, aliceCredentials));
+
+    final String callSucceedsAfterUnlockedHash = callContract.get();
+
+    alice.execute(minerTransactions.minerStart());
+    alice.getBesu().verify(ethConditions.miningStatus(true));
+
+    // ... and unlock the group works ...
     assertThatTransactionReceiptIs.accept(unlockHash, "0x1");
     // ... and afterwards we can call contracts again
-    assertThatTransactionReceiptIs.accept(callAfterUnlockedHash, "0x1");
+    assertThatTransactionReceiptIs.accept(callSucceedsAfterUnlockedHash, "0x1");
   }
 
   @Test
