@@ -28,7 +28,7 @@ import org.apache.logging.log4j.Logger;
 
 public class PrivateMarkerTransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LogManager.getLogger();
-  private final Map<Hash, PmtTransactionTracker> pmtPool;
+  private final Map<Hash, PrivateMarkerTransactionTracker> pmtPool;
 
   public PrivateMarkerTransactionPool() {
     this.pmtPool = new HashMap<>();
@@ -51,10 +51,10 @@ public class PrivateMarkerTransactionPool implements BlockAddedObserver {
 
     return pmtPool.values().stream()
         .filter(
-            pmt ->
-                pmt.getSender().equals(sender)
-                    && pmt.getPrivacyGroupIdBase64().equals(privacyGroupId))
-        .map(pmt -> pmt.getPrivateNonce())
+            tracker ->
+                tracker.getSender().equals(sender)
+                    && tracker.getPrivacyGroupIdBase64().equals(privacyGroupId))
+        .map(tracker -> tracker.getPrivateNonce())
         .max(Long::compare);
   }
 
@@ -74,20 +74,20 @@ public class PrivateMarkerTransactionPool implements BlockAddedObserver {
       final long privateNonce,
       final long publicNonce) {
 
-    final PmtTransactionTracker pmtTracker =
-        new PmtTransactionTracker(sender, privacyGroupId, privateNonce, publicNonce);
+    final PrivateMarkerTransactionTracker pmtTracker =
+        new PrivateMarkerTransactionTracker(sender, privacyGroupId, privateNonce, publicNonce);
     pmtPool.put(pmtHash, pmtTracker);
-    LOG.debug("adding pmtPool tracker: pmtTracker {} pmtHash: {} ", pmtTracker, pmtHash);
+    LOG.debug("adding tracker: {} pmtHash: {} ", pmtTracker, pmtHash);
     return pmtHash;
   }
 
-  protected static class PmtTransactionTracker {
+  protected static class PrivateMarkerTransactionTracker {
     private final String sender;
     private final String privacyGroupIdBase64;
     private final long privateNonce;
     private final long publicNonce;
 
-    protected PmtTransactionTracker(
+    protected PrivateMarkerTransactionTracker(
         final String sender,
         final String privacyGroupIdBase64,
         final long privateNonce,
@@ -117,7 +117,7 @@ public class PrivateMarkerTransactionPool implements BlockAddedObserver {
     @Override
     public String toString() {
       final StringBuilder sb = new StringBuilder();
-      sb.append("PmtTransactionTracker ").append("{");
+      sb.append("PrivateMarkerTransactionTracker ").append("{");
       sb.append("private nonce=").append(getPrivateNonce()).append(", ");
       sb.append("public nonce=").append(getPublicNonce()).append(", ");
       sb.append("sender=").append(getSender()).append(", ");
