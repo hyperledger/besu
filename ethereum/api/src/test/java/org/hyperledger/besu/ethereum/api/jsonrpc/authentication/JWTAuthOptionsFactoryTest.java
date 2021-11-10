@@ -42,8 +42,8 @@ public class JWTAuthOptionsFactoryTest {
           + "YwIDAQAB";
 
   private static final String JWT_PUBLIC_KEY_ES256 =
-      "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE6PzW5LsKpsgbq568WqKmQ6bthPkn"
-          + "DBZG7SinCv+Ic44BzdlkCECvzPQGX/oLak2HtWDpNzc595ix0h58FMKUfw==";
+      "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEy8+qE0ZFo4woPUCXfszptuDgaDpW"
+          + "Sv6D5F/pbolJ2wZTVkYXoGhA3wqy1RM1RYmROp9NEPLm3mZP+kzI4TMiGg==";
 
   @Test
   public void createsOptionsWithGeneratedKeyPair() {
