@@ -34,7 +34,10 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class ChainHeadPrivateNonceProviderTest {
   private static final Bytes32 PRIVACY_GROUP_ID =
       Bytes32.wrap(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="));
@@ -50,18 +53,21 @@ public class ChainHeadPrivateNonceProviderTest {
   private ChainHeadPrivateNonceProvider privateNonceProvider;
   private WorldStateArchive privateWorldStateArchive;
   private PrivateStateRootResolver privateStateRootResolver;
-  final PrivateMarkerTransactionPool pmtPool = new PrivateMarkerTransactionPool();
+  private Blockchain blockchain;
+  private PrivateMarkerTransactionPool pmtPool;
 
   @Before
   public void setUp() {
     final BlockDataGenerator gen = new BlockDataGenerator();
 
-    final Blockchain blockchain = mock(Blockchain.class);
+    blockchain = mock(Blockchain.class);
     when(blockchain.getChainHeadHeader()).thenReturn(gen.header());
+    when(blockchain.observeBlockAdded(any())).thenReturn(1L);
 
     account = mock(Account.class);
     worldState = mock(WorldState.class);
 
+    pmtPool = new PrivateMarkerTransactionPool(blockchain);
     privateStateRootResolver = mock(PrivateStateRootResolver.class);
     privateWorldStateArchive = mock(WorldStateArchive.class);
     privateNonceProvider =
@@ -137,7 +143,6 @@ public class ChainHeadPrivateNonceProviderTest {
         .thenReturn(Hash.ZERO);
     when(privateWorldStateArchive.get(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(worldState));
-    when(account.getNonce()).thenReturn(4L);
 
     final long nonce = privateNonceProvider.getNonce(ADDRESS, PRIVACY_GROUP_ID);
 

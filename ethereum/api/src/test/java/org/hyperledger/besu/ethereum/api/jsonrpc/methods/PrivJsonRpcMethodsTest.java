@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -41,6 +42,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class PrivJsonRpcMethodsTest {
 
   @Mock private BlockchainQueries blockchainQueries;
+  @Mock private Blockchain blockchain;
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private TransactionPool transactionPool;
   @Mock private PrivacyParameters privacyParameters;
@@ -55,7 +57,7 @@ public class PrivJsonRpcMethodsTest {
             blockchainQueries,
             protocolSchedule,
             transactionPool,
-            new PrivateMarkerTransactionPool(),
+            new PrivateMarkerTransactionPool(blockchain),
             privacyParameters,
             filterManager);
 

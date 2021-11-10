@@ -410,7 +410,7 @@ public class RestrictedDefaultPrivacyControllerTest {
     final Block block = gen.block();
     BlockAddedEvent event =
         BlockAddedEvent.createForHeadAdvancement(block, emptyList(), emptyList());
-    final PrivateMarkerTransactionPool pmtPool = new PrivateMarkerTransactionPool();
+    final PrivateMarkerTransactionPool pmtPool = new PrivateMarkerTransactionPool(blockchain);
     pmtPool.onBlockAdded(event);
   }
 
