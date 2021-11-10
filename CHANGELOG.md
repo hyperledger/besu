@@ -19,7 +19,7 @@
 - Upgrade CircleCI OpenJDK docker image to version 11.0.12. [#2928](https://github.com/hyperledger/besu/pull/2928)
 - Update JDK 11 to latest version in Besu Docker images. [#2925](https://github.com/hyperledger/besu/pull/2925)
 - Add Sepolia proof-of-work testnet configurations [#2920](https://github.com/hyperledger/besu/pull/2920)
-- Allow block period to be configured for IBFT2 and QBFT using transitions [\#2902](https://github.com/hyperledger/besu/pull/2902)
+- Allow block period to be configured for IBFT2 and QBFT using transitions [#2902](https://github.com/hyperledger/besu/pull/2902)
 - Add support for binary messages (0x02) for websocket. [#2980](https://github.com/hyperledger/besu/pull/2980)
 
 ### Bug Fixes
@@ -29,6 +29,10 @@
 
 ### Early Access Features
 - Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
+
+### Download Link
+https://hyperledger.jfrog.io/ui/native/besu-binaries/besu/21.10.1/besu-21.10.1.zip \
+SHA256: 877148a1a13a1065151cf8fb3fbb56ea1d01e3a942fa7ebd6bd4ea4d15101fee
 
 ## 21.10.0
 
