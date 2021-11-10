@@ -265,7 +265,7 @@ public class MultiTenancyPrivacyControllerTest {
             new CallParameter(Address.ZERO, Address.ZERO, 0, Wei.ZERO, Wei.ZERO, Bytes.EMPTY),
             1);
 
-    assertThat(result.isPresent()).isTrue();
+    assertThat(result).isPresent();
     assertThat(result.get().getValidationResult().isValid()).isTrue();
   }
 

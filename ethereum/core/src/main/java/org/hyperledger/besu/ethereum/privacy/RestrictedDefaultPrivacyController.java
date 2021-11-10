@@ -133,7 +133,7 @@ public class RestrictedDefaultPrivacyController extends AbstractRestrictedPrivac
             privateTransaction.getPrivacyGroupId().get().toBase64String());
       } else {
         // this should not happen
-        throw new RuntimeException(
+        throw new IllegalArgumentException(
             "Wrong privacy group type "
                 + privacyGroup.getType()
                 + " when "
@@ -169,7 +169,7 @@ public class RestrictedDefaultPrivacyController extends AbstractRestrictedPrivac
       final String privacyGroupId, final String privacyUserId) {
     final PrivacyGroup offchainPrivacyGroup = enclave.retrievePrivacyGroup(privacyGroupId);
     if (!offchainPrivacyGroup.getMembers().contains(privacyUserId)) {
-      throw new RuntimeException("Privacy group must contain the enclave public key");
+      throw new IllegalArgumentException("Privacy group must contain the enclave public key");
     }
   }
 

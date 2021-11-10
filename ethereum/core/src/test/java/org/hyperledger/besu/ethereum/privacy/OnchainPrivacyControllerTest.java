@@ -165,8 +165,7 @@ public class OnchainPrivacyControllerTest {
     final String payload =
         privacyController.createPrivateMarkerTransactionPayload(
             privateTransaction, ADDRESS1, Optional.of(EXPECTED_PRIVACY_GROUP));
-    assertThat(payload).isNotNull();
-    assertThat(payload).isEqualTo(KEY);
+    assertThat(payload).isNotNull().isEqualTo(KEY);
   }
 
   @Test
@@ -180,8 +179,8 @@ public class OnchainPrivacyControllerTest {
     final String payload =
         privacyController.createPrivateMarkerTransactionPayload(
             privateTransaction, ADDRESS1, Optional.of(EXPECTED_PRIVACY_GROUP));
-    assertThat(payload).isNotNull();
     assertThat(payload)
+        .isNotNull()
         .isEqualTo(
             Bytes.concatenate(Bytes.fromBase64String(KEY), Bytes.fromBase64String(KEY))
                 .toBase64String());

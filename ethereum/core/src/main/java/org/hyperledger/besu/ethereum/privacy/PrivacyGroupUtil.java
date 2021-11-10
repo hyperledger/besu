@@ -34,12 +34,12 @@ public class PrivacyGroupUtil {
   // https://github.com/ConsenSys/orion/blob/05759341ec1a216e6837df91e421207c8294ad2a/src/main/java/net/consensys/orion/enclave/sodium/SodiumEnclave.java
   public static Bytes32 calculateEeaPrivacyGroupId(
       final Bytes privateFrom, final List<Bytes> privateFor) {
-    final List<Bytes> privacyGroupIds = new ArrayList<>();
-    privacyGroupIds.add(privateFrom);
-    privacyGroupIds.addAll(privateFor);
+    final List<Bytes> privacyGroupMembers = new ArrayList<>();
+    privacyGroupMembers.add(privateFrom);
+    privacyGroupMembers.addAll(privateFor);
 
     final List<byte[]> sortedPublicEnclaveKeys =
-        privacyGroupIds.stream()
+        privacyGroupMembers.stream()
             .distinct()
             .map(Bytes::toArray)
             .sorted(Comparator.comparing(Arrays::hashCode))

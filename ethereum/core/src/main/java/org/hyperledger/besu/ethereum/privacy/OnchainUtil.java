@@ -27,6 +27,9 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class OnchainUtil {
 
+  private OnchainUtil() {}
+  ;
+
   public static boolean isGroupAdditionTransaction(final PrivateTransaction privateTransaction) {
     final Optional<Address> to = privateTransaction.getTo();
     return to.isPresent()
