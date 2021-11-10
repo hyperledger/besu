@@ -326,7 +326,8 @@ public abstract class BesuControllerBuilder {
             miningParameters.getMinTransactionGasPrice(),
             transactionPoolConfiguration);
 
-    final PrivateMarkerTransactionPool privateMarkerTransactionPool = new PrivateMarkerTransactionPool();
+    final PrivateMarkerTransactionPool privateMarkerTransactionPool =
+        new PrivateMarkerTransactionPool();
     // TODO pass blockchain to the pmtPool and move this line there:
     blockchain.observeBlockAdded(privateMarkerTransactionPool);
 

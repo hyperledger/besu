@@ -127,8 +127,8 @@ public class JsonRpcTestMethodsFactory {
     final P2PNetwork peerDiscovery = mock(P2PNetwork.class);
     final EthPeers ethPeers = mock(EthPeers.class);
     final TransactionPool transactionPool = mock(TransactionPool.class);
-    final PrivateMarkerTransactionPool privateMarkerTransactionPool = mock(
-        PrivateMarkerTransactionPool.class);
+    final PrivateMarkerTransactionPool privateMarkerTransactionPool =
+        mock(PrivateMarkerTransactionPool.class);
     final PoWMiningCoordinator miningCoordinator = mock(PoWMiningCoordinator.class);
     final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
     final Optional<AccountLocalConfigPermissioningController> accountWhitelistController =

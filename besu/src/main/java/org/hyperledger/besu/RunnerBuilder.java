@@ -493,7 +493,8 @@ public class RunnerBuilder {
                 new InsufficientPeersPermissioningProvider(network, bootnodes)));
 
     final TransactionPool transactionPool = besuController.getTransactionPool();
-    final PrivateMarkerTransactionPool privateMarkerTransactionPool = besuController.getPmtTransactionPool();
+    final PrivateMarkerTransactionPool privateMarkerTransactionPool =
+        besuController.getPmtTransactionPool();
     final MiningCoordinator miningCoordinator = besuController.getMiningCoordinator();
 
     final BlockchainQueries blockchainQueries =

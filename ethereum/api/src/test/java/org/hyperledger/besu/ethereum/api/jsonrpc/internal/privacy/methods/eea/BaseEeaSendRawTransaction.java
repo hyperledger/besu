@@ -27,8 +27,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -152,8 +152,7 @@ public class BaseEeaSendRawTransaction {
               new String[] {validPrivatePrivacyGroupTransaction(Restriction.UNSUPPORTED)}));
 
   @Mock TransactionPool transactionPool;
-  @Mock
-  PrivateMarkerTransactionPool privateMarkerTransactionPool;
+  @Mock PrivateMarkerTransactionPool privateMarkerTransactionPool;
   @Mock PrivacyController privacyController;
 
   private String validPrivateForTransaction() {

@@ -123,7 +123,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
       final String privacyUserId,
       final Optional<PrivacyGroup> maybePrivacyGroup) {
     try {
-      LOG.info("Storing private transaction in enclave");
+      LOG.trace("Storing private transaction in enclave");
       final SendResponse sendResponse =
           sendRequest(privateTransaction, privacyUserId, maybePrivacyGroup);
       return sendResponse.getKey();
