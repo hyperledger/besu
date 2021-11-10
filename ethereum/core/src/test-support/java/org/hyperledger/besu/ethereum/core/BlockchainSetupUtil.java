@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -141,7 +142,15 @@ public class BlockchainSetupUtil {
 
   private static ProtocolContext mainnetProtocolContextProvider(
       final MutableBlockchain blockchain, final WorldStateArchive worldStateArchive) {
-    return new ProtocolContext(blockchain, worldStateArchive, null);
+    return new ProtocolContext(
+        blockchain,
+        worldStateArchive,
+        new ConsensusContext() {
+          @Override
+          public <C extends ConsensusContext> C as(final Class<C> klass) {
+            return null;
+          }
+        });
   }
 
   private static BlockchainSetupUtil create(

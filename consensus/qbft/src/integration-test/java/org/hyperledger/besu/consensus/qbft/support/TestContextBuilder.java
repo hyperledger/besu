@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
@@ -108,6 +109,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -413,8 +415,7 @@ public class TestContextBuilder {
         QbftProtocolSchedule.create(
             genesisConfigOptions, forksSchedule, BFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
 
-    final BftValidatorOverrides validatorOverrides =
-        new BftValidatorOverrides(Collections.emptyMap());
+    final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule);
 
@@ -423,7 +424,7 @@ public class TestContextBuilder {
             blockChain, epochManager, blockInterface, validatorOverrides);
     final TransactionValidatorProvider transactionValidatorProvider =
         new TransactionValidatorProvider(
-            blockChain, new ValidatorContractController(transactionSimulator, forksSchedule));
+            blockChain, new ValidatorContractController(transactionSimulator), forksSchedule);
     final ValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, transactionValidatorProvider);
@@ -462,7 +463,7 @@ public class TestContextBuilder {
     final BftExecutors bftExecutors = BftExecutors.create(new NoOpMetricsSystem());
     final BftFinalState finalState =
         new BftFinalState(
-            protocolContext.getConsensusState(BftContext.class).getValidatorProvider(),
+            protocolContext.getConsensusContext(BftContext.class).getValidatorProvider(),
             nodeKey,
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
@@ -531,5 +532,22 @@ public class TestContextBuilder {
           Optional.of(VALIDATOR_CONTRACT_ADDRESS.toHexString()));
     }
     return qbftConfigOptions;
+  }
+
+  private static BftValidatorOverrides convertBftForks(final List<QbftFork> bftForks) {
+    final Map<Long, List<Address>> result = new HashMap<>();
+
+    for (final BftFork fork : bftForks) {
+      fork.getValidators()
+          .ifPresent(
+              validators ->
+                  result.put(
+                      fork.getForkBlock(),
+                      validators.stream()
+                          .map(Address::fromHexString)
+                          .collect(Collectors.toList())));
+    }
+
+    return new BftValidatorOverrides(result);
   }
 }

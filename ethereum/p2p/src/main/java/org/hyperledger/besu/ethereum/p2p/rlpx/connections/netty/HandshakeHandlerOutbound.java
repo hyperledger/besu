@@ -20,7 +20,9 @@ import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
+import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
+import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -46,14 +48,18 @@ final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
       final LocalNode localNode,
       final CompletableFuture<PeerConnection> connectionFuture,
       final PeerConnectionEventDispatcher connectionEventDispatcher,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final HandshakerProvider handshakerProvider,
+      final FramerProvider framerProvider) {
     super(
         subProtocols,
         localNode,
         Optional.of(peer),
         connectionFuture,
         connectionEventDispatcher,
-        metricsSystem);
+        metricsSystem,
+        handshakerProvider,
+        framerProvider);
     handshaker.prepareInitiator(
         nodeKey, SignatureAlgorithmFactory.getInstance().createPublicKey(peer.getId()));
     this.first = handshaker.firstMessage();

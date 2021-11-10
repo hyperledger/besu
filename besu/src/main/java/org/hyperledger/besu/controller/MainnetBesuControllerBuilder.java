@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -74,7 +75,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected Void createConsensusContext(
+  protected ConsensusContext createConsensusContext(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {

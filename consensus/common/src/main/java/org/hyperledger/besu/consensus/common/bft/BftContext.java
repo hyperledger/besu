@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.common.bft;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.PoaContext;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 
 /** Holds the BFT specific mutable state. */
 public class BftContext implements PoaContext {
@@ -45,5 +46,10 @@ public class BftContext implements PoaContext {
   @Override
   public BftBlockInterface getBlockInterface() {
     return blockInterface;
+  }
+
+  @Override
+  public <C extends ConsensusContext> C as(final Class<C> klass) {
+    return klass.cast(this);
   }
 }
