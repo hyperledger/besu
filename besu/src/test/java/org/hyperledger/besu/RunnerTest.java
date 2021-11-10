@@ -76,11 +76,11 @@ import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -288,7 +288,7 @@ public final class RunnerTest {
       runnerBehind.start();
 
       final int behindJsonRpcPort = runnerBehind.getJsonRpcPort().get();
-      final Call.Factory client = new OkHttpClient();
+      final OkHttpClient client = new OkHttpClient();
       Awaitility.await()
           .ignoreExceptions()
           .atMost(5L, TimeUnit.MINUTES)
@@ -348,32 +348,35 @@ public final class RunnerTest {
                   syncingResp.close();
                 }
               });
-
-      final Future<Void> future = Future.future();
+      final Promise<String> promise = Promise.promise();
       final HttpClient httpClient = vertx.createHttpClient();
-      httpClient.websocket(
+      httpClient.webSocket(
           runnerBehind.getWebsocketPort().get(),
           WebSocketConfiguration.DEFAULT_WEBSOCKET_HOST,
           "/",
           ws -> {
-            ws.writeTextMessage(
-                "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}");
-            ws.textMessageHandler(
-                payload -> {
-                  final boolean matches =
-                      payload.equals("{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":\"0x0\"}");
-                  if (matches) {
-                    future.complete();
-                  } else {
-                    future.fail("Unexpected result");
-                  }
-                });
+            ws.result()
+                .writeTextMessage(
+                    "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}");
+            ws.result()
+                .textMessageHandler(
+                    payload -> {
+                      final boolean matches =
+                          payload.equals("{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":\"0x0\"}");
+                      if (matches) {
+                        promise.complete(payload);
+                      } else {
+                        promise.fail("Unexpected result: "+ payload);
+                      }
+                    });
           });
+      final Future<String> future = promise.future();
       Awaitility.await()
           .catchUncaughtExceptions()
           .atMost(5L, TimeUnit.MINUTES)
           .until(future::isComplete);
     } finally {
+      System.out.println("OMG STAAAAHP!!");
       if (runnerBehind != null) {
         runnerBehind.close();
         runnerBehind.awaitStop();

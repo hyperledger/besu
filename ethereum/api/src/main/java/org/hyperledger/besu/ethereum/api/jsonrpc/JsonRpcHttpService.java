@@ -649,23 +649,13 @@ public class JsonRpcHttpService {
                   }
 
                   final JsonObject req = (JsonObject) obj;
-                  final Future<JsonRpcResponse> fut = Future.future();
-                  vertx.executeBlocking(
-                      future -> future.complete(process(routingContext, req, user)),
-                      false,
-                      ar -> {
-                        if (ar.failed()) {
-                          fut.fail(ar.cause());
-                        } else {
-                          fut.complete((JsonRpcResponse) ar.result());
-                        }
-                      });
-                  return fut;
+                  return vertx.executeBlocking(
+                      future -> future.complete(process(routingContext, req, user)));
                 })
             .collect(toList());
 
     CompositeFuture.all(responses)
-        .setHandler(
+        .onComplete(
             (res) -> {
               final HttpServerResponse response = routingContext.response();
               if (response.closed() || response.headWritten()) {

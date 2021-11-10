@@ -20,10 +20,9 @@ import java.util.Optional;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.AbstractUser;
 import io.vertx.ext.auth.AuthProvider;
 
-public class TomlUser extends AbstractUser {
+public class TomlUser {
 
   private final String username;
   private final String password;
@@ -47,7 +46,6 @@ public class TomlUser extends AbstractUser {
     this.privacyPublicKey = privacyPublicKey;
   }
 
-  @Override
   public JsonObject principal() {
     final JsonObject principle =
         new JsonObject()
@@ -60,13 +58,11 @@ public class TomlUser extends AbstractUser {
     return principle;
   }
 
-  @Override
   public void setAuthProvider(final AuthProvider authProvider) {
     // we only use Toml for authentication
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  @Override
   protected void doIsPermitted(
       final String permission, final Handler<AsyncResult<Boolean>> resultHandler) {
     // we only use Toml for authentication

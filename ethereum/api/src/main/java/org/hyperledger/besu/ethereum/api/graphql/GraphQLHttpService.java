@@ -60,6 +60,7 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.jackson.JacksonCodec;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -285,19 +286,19 @@ public class GraphQLHttpService {
       final Map<String, Object> variables;
       final HttpServerRequest request = routingContext.request();
 
-      switch (request.method()) {
-        case GET:
+      switch (request.method().name()) {
+        case "GET":
           final String queryString = request.getParam("query");
           query = Objects.requireNonNullElse(queryString, "");
           operationName = request.getParam("operationName");
           final String variableString = request.getParam("variables");
           if (variableString != null) {
-            variables = Json.decodeValue(variableString, MAP_TYPE);
+            variables = JacksonCodec.decodeValue(variableString, MAP_TYPE);
           } else {
             variables = Collections.emptyMap();
           }
           break;
-        case POST:
+        case "POST":
           final String contentType = request.getHeader(HttpHeaders.CONTENT_TYPE);
           if (contentType != null && MediaType.parse(contentType).is(MEDIA_TYPE_JUST_JSON)) {
             final String requestBody = routingContext.getBodyAsString().trim();
