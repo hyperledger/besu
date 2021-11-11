@@ -101,7 +101,8 @@ public class WorldStateProofProviderTest {
 
     assertThat(accountProof).isPresent();
     Assertions.assertThat(accountProof.get().getStateTrieAccountValue())
-        .isEqualToComparingFieldByField(accountValue);
+        .usingRecursiveComparison()
+        .isEqualTo(accountValue);
     assertThat(accountProof.get().getAccountProof().size()).isGreaterThanOrEqualTo(1);
     // Check storage fields
     assertThat(accountProof.get().getStorageKeys()).isEqualTo(storageKeys);

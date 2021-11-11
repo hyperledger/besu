@@ -190,7 +190,8 @@ public class SubscriptionRequestMapperTest {
         mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+        .usingRecursiveComparison()
+        .isEqualToRecursively(expectedSubscribeRequest);
   }
 
   @Test
@@ -226,7 +227,8 @@ public class SubscriptionRequestMapperTest {
         mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+        .usingRecursiveComparison()
+        .isEqualToRecursively(expectedSubscribeRequest);
   }
 
   @Test
@@ -261,7 +263,8 @@ public class SubscriptionRequestMapperTest {
         mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+        .usingRecursiveComparison()
+        .isEqualToRecursively(expectedSubscribeRequest);
   }
 
   @Test
@@ -290,7 +293,8 @@ public class SubscriptionRequestMapperTest {
         mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
     assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+        .usingRecursiveComparison()
+        .isEqualToRecursively(expectedSubscribeRequest);
   }
 
   @Test
@@ -420,7 +424,8 @@ public class SubscriptionRequestMapperTest {
             new JsonRpcRequestContext(jsonRpcRequest), ENCLAVE_PUBLIC_KEY);
 
     assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+        .usingRecursiveComparison()
+        .isEqualToRecursively(expectedSubscribeRequest);
   }
 
   @Test

@@ -96,7 +96,7 @@ public class EthGetFilterLogsTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -108,7 +108,7 @@ public class EthGetFilterLogsTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualToRecursively(expectedResponse);
   }
 
   @Test
@@ -120,7 +120,7 @@ public class EthGetFilterLogsTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualToRecursively(expectedResponse);
   }
 
   private JsonRpcRequestContext requestWithFilterId(final Object... filterId) {

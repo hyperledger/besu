@@ -124,7 +124,7 @@ public class FilterManagerLogFilterTest {
 
     final List<LogWithMetadata> retrievedLogs = filterManager.logsChanges(filterId);
 
-    assertThat(retrievedLogs).isEqualToComparingFieldByFieldRecursively(expectedLogs);
+    assertThat(retrievedLogs).usingRecursiveComparison().isEqualToRecursively(expectedLogs);
   }
 
   @Test

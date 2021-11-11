@@ -57,7 +57,7 @@ public class EthHashrateTest {
     when(miningCoordinator.hashesPerSecond()).thenReturn(Optional.of(12L));
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -68,7 +68,7 @@ public class EthHashrateTest {
     when(miningCoordinator.hashesPerSecond()).thenReturn(Optional.empty());
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext requestWithParams() {

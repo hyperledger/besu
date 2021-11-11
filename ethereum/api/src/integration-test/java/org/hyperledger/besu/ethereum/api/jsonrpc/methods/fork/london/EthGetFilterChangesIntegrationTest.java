@@ -146,7 +146,7 @@ public class EthGetFilterChangesIntegrationTest {
     final JsonRpcResponse expected = new JsonRpcErrorResponse(null, JsonRpcError.FILTER_NOT_FOUND);
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByField(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -159,7 +159,7 @@ public class EthGetFilterChangesIntegrationTest {
     final JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByField(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     filterManager.uninstallFilter(filterId);
 
@@ -177,7 +177,7 @@ public class EthGetFilterChangesIntegrationTest {
     // We haven't added any transactions, so the list of pending transactions should be empty.
     final JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
     final JsonRpcResponse actual = method.response(request);
-    assertThat(actual).isEqualToComparingFieldByField(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     filterManager.uninstallFilter(filterId);
 
@@ -195,19 +195,19 @@ public class EthGetFilterChangesIntegrationTest {
     // We haven't added any blocks, so the list of new blocks should be empty.
     JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
     JsonRpcResponse actual = method.response(request);
-    assertThat(actual).isEqualToComparingFieldByField(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     final Block block = appendBlock(transaction);
 
     // We've added one block, so there should be one new hash.
     expected = new JsonRpcSuccessResponse(null, Lists.newArrayList(block.getHash().toString()));
     actual = method.response(request);
-    assertThat(actual).isEqualToComparingFieldByField(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     // The queue should be flushed and return no results.
     expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
     actual = method.response(request);
-    assertThat(actual).isEqualToComparingFieldByField(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     filterManager.uninstallFilter(filterId);
 
@@ -225,7 +225,7 @@ public class EthGetFilterChangesIntegrationTest {
     // We haven't added any transactions, so the list of pending transactions should be empty.
     JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
     JsonRpcResponse actual = method.response(request);
-    assertThat(actual).isEqualToComparingFieldByField(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     transactions.addRemoteTransaction(transaction);
 
@@ -233,12 +233,12 @@ public class EthGetFilterChangesIntegrationTest {
     expected =
         new JsonRpcSuccessResponse(null, Lists.newArrayList(String.valueOf(transaction.getHash())));
     actual = method.response(request);
-    assertThat(actual).isEqualToComparingFieldByField(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     // The queue should be flushed and return no results.
     expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
     actual = method.response(request);
-    assertThat(actual).isEqualToComparingFieldByField(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     filterManager.uninstallFilter(filterId);
 

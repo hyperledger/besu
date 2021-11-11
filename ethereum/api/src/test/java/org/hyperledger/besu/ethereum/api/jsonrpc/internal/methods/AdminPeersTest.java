@@ -76,7 +76,7 @@ public class AdminPeersTest {
 
     final JsonRpcResponse response = adminPeers.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -104,7 +104,8 @@ public class AdminPeersTest {
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.P2P_DISABLED);
 
     Assertions.assertThat(adminPeers.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   private Collection<EthPeer> peerList() {

@@ -97,7 +97,7 @@ public final class DockerNatManagerTest {
             p2pPort,
             p2pPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 
   @Test
@@ -116,7 +116,7 @@ public final class DockerNatManagerTest {
             rpcHttpPort,
             rpcHttpPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 
   @Test
@@ -135,6 +135,6 @@ public final class DockerNatManagerTest {
             p2pPort,
             p2pPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 }

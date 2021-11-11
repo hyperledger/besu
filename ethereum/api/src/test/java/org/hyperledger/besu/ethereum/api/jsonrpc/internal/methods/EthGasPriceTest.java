@@ -89,7 +89,7 @@ public class EthGasPriceTest {
         .thenAnswer(invocation -> createEmptyBlock(invocation.getArgument(0, Long.class)));
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
     verify(miningCoordinator).getMinTransactionGasPrice();
     verifyNoMoreInteractions(miningCoordinator);
@@ -111,7 +111,7 @@ public class EthGasPriceTest {
         .thenAnswer(invocation -> createFakeBlock(invocation.getArgument(0, Long.class)));
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
     verifyNoMoreInteractions(miningCoordinator);
 
@@ -132,7 +132,7 @@ public class EthGasPriceTest {
         .thenAnswer(invocation -> createFakeBlock(invocation.getArgument(0, Long.class)));
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
     verifyNoMoreInteractions(miningCoordinator);
 

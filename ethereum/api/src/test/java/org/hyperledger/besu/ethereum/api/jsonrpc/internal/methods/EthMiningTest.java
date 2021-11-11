@@ -57,7 +57,7 @@ public class EthMiningTest {
     when(miningCoordinator.isMining()).thenReturn(true);
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(miningCoordinator).isMining();
     verifyNoMoreInteractions(miningCoordinator);
   }
@@ -70,7 +70,7 @@ public class EthMiningTest {
     when(miningCoordinator.isMining()).thenReturn(false);
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(miningCoordinator).isMining();
     verifyNoMoreInteractions(miningCoordinator);
   }

@@ -60,7 +60,8 @@ public class FilterParameterTest {
         request.getRequiredParameter(0, FilterParameter.class);
 
     assertThat(parsedFilterParameter)
-        .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+        .usingRecursiveComparison()
+        .isEqualToRecursively(expectedFilterParameter);
   }
 
   @Test
@@ -75,7 +76,8 @@ public class FilterParameterTest {
         request.getRequiredParameter(0, FilterParameter.class);
 
     assertThat(parsedFilterParameter)
-        .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+        .usingRecursiveComparison()
+        .isEqualToRecursively(expectedFilterParameter);
   }
 
   @Test
@@ -95,7 +97,8 @@ public class FilterParameterTest {
         request.getRequiredParameter(0, FilterParameter.class);
 
     assertThat(parsedFilterParameter)
-        .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+        .usingRecursiveComparison()
+        .isEqualToRecursively(expectedFilterParameter);
   }
 
   @Test
@@ -115,7 +118,8 @@ public class FilterParameterTest {
         request.getRequiredParameter(0, FilterParameter.class);
 
     assertThat(parsedFilterParameter)
-        .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+        .usingRecursiveComparison()
+        .isEqualToRecursively(expectedFilterParameter);
   }
 
   @Test
@@ -138,7 +142,8 @@ public class FilterParameterTest {
         request.getRequiredParameter(0, FilterParameter.class);
 
     assertThat(parsedFilterParameter)
-        .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+        .usingRecursiveComparison()
+        .isEqualToRecursively(expectedFilterParameter);
   }
 
   @Test
@@ -195,7 +200,8 @@ public class FilterParameterTest {
 
     assertThat(parsedFilterParameterUsingAlias.isValid()).isFalse();
     assertThat(parsedFilterParameter)
-        .isEqualToComparingFieldByField(parsedFilterParameterUsingAlias);
+        .usingRecursiveComparison()
+        .isEqualTo(parsedFilterParameterUsingAlias);
   }
 
   @Test
@@ -236,7 +242,8 @@ public class FilterParameterTest {
 
     // blockhash and blockHash should end up the same
     assertThat(parsedFilterParameter)
-        .isEqualToComparingFieldByField(parsedFilterParameterUsingAlias);
+        .usingRecursiveComparison()
+        .isEqualTo(parsedFilterParameterUsingAlias);
   }
 
   @Test
@@ -248,7 +255,8 @@ public class FilterParameterTest {
         "{\"address\":\"0x8CdaF0CD259887258Bc13a92C0a6dA92698644C0\",\"fromBlock\":\"earliest\",\"toBlock\":\"latest\",\"topics\":[\"0x492e34c7da2a87c57444aa0f6143558999bceec63065f04557cfb20932e0d591\"]}";
 
     assertThat(readJsonAsFilterParameter(jsonWithTopicsFirst))
-        .isEqualToComparingFieldByFieldRecursively(readJsonAsFilterParameter(jsonWithTopicsLast));
+        .usingRecursiveComparison()
+        .isEqualToRecursively(readJsonAsFilterParameter(jsonWithTopicsLast));
   }
 
   @Test

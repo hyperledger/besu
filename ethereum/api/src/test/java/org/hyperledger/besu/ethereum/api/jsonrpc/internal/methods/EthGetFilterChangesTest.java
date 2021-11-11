@@ -100,7 +100,7 @@ public class EthGetFilterChangesTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(filterManager).blockChanges(eq("0x1"));
     verify(filterManager).pendingTransactionChanges(eq("0x1"));
     verify(filterManager).logsChanges(eq("0x1"));
@@ -117,7 +117,7 @@ public class EthGetFilterChangesTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -129,7 +129,7 @@ public class EthGetFilterChangesTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -144,7 +144,7 @@ public class EthGetFilterChangesTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -157,7 +157,7 @@ public class EthGetFilterChangesTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -172,7 +172,7 @@ public class EthGetFilterChangesTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualToRecursively(expectedResponse);
   }
 
   @Test
@@ -187,7 +187,7 @@ public class EthGetFilterChangesTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualToRecursively(expectedResponse);
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

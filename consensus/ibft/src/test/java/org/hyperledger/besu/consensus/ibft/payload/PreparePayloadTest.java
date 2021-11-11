@@ -43,7 +43,8 @@ public class PreparePayloadTest {
         actualPreparePayload.getRoundIdentifier();
     final Hash actualDigest = actualPreparePayload.getDigest();
     assertThat(actualConsensusRoundIdentifier)
-        .isEqualToComparingFieldByField(expectedRoundIdentifier);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedRoundIdentifier);
     assertThat(actualDigest).isEqualTo(digest);
     assertThat(actualPreparePayload.getMessageType()).isEqualTo(IbftV2.PREPARE);
   }

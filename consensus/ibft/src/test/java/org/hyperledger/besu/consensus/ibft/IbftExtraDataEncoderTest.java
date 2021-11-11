@@ -199,7 +199,7 @@ public class IbftExtraDataEncoderTest {
     BftExtraData actualExtraData =
         ibftExtraDataEncoder.decodeRaw(ibftExtraDataEncoder.encode(expectedExtraData));
 
-    assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
+    assertThat(actualExtraData).usingRecursiveComparison().isEqualTo(expectedExtraData);
   }
 
   @Test
@@ -255,7 +255,7 @@ public class IbftExtraDataEncoderTest {
     BftExtraData actualExtraData =
         ibftExtraDataEncoder.decodeRaw(ibftExtraDataEncoder.encode(expectedExtraData));
 
-    assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
+    assertThat(actualExtraData).usingRecursiveComparison().isEqualTo(expectedExtraData);
   }
 
   @Test
@@ -322,7 +322,7 @@ public class IbftExtraDataEncoderTest {
     final BftExtraData actualExtraData =
         ibftExtraDataEncoder.decodeRaw(ibftExtraDataEncoder.encode(expectedExtraData));
 
-    assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
+    assertThat(actualExtraData).usingRecursiveComparison().isEqualTo(expectedExtraData);
   }
 
   @Test
@@ -340,7 +340,7 @@ public class IbftExtraDataEncoderTest {
     Bytes rawDecoding = Bytes.fromHexString(RAW_HEX_ENCODING_STRING);
     BftExtraData actualExtraData = bftExtraDataEncoder.decodeRaw(rawDecoding);
 
-    assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
+    assertThat(actualExtraData).usingRecursiveComparison().isEqualTo(expectedExtraData);
   }
 
   @Test

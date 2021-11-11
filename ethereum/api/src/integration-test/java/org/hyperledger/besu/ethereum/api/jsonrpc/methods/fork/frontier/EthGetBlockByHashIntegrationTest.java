@@ -76,7 +76,7 @@ public class EthGetBlockByHashIntegrationTest {
     final JsonRpcMethod method = ethGetBlockByHash();
     final JsonRpcResponse actual = method.response(requestWithParams(ZERO_HASH, true));
 
-    assertThat(actual).isEqualToComparingFieldByField(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -196,7 +196,7 @@ public class EthGetBlockByHashIntegrationTest {
             "0x10aaf14a53caf27552325374429d3558398a36d3682ede6603c2c6511896e9f9", false);
     final JsonRpcResponse actual = ethGetBlockByHash().response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

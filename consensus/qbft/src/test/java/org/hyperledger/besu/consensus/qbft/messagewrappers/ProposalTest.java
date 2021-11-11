@@ -83,10 +83,11 @@ public class ProposalTest {
     assertThat(decodedProposal.getAuthor()).isEqualTo(addr);
     assertThat(decodedProposal.getMessageType()).isEqualTo(QbftV1.PROPOSAL);
     assertThat(decodedProposal.getPrepares()).hasSize(1);
-    assertThat(decodedProposal.getPrepares().get(0)).isEqualToComparingFieldByField(prepare);
+    assertThat(decodedProposal.getPrepares().get(0)).usingRecursiveComparison().isEqualTo(prepare);
     assertThat(decodedProposal.getRoundChanges()).hasSize(1);
     assertThat(decodedProposal.getRoundChanges().get(0))
-        .isEqualToComparingFieldByField(roundChange);
+        .usingRecursiveComparison()
+        .isEqualTo(roundChange);
     assertThat(decodedProposal.getSignedPayload().getPayload().getProposedBlock()).isEqualTo(BLOCK);
     assertThat(decodedProposal.getSignedPayload().getPayload().getRoundIdentifier())
         .isEqualTo(payload.getRoundIdentifier());

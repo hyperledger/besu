@@ -55,6 +55,7 @@ public class CommitTest {
     assertThat(decodedPrepare.getMessageType()).isEqualTo(QbftV1.COMMIT);
     assertThat(decodedPrepare.getAuthor()).isEqualTo(addr);
     assertThat(decodedPrepare.getSignedPayload())
-        .isEqualToComparingFieldByField(signedCommitPayload);
+        .usingRecursiveComparison()
+        .isEqualTo(signedCommitPayload);
   }
 }

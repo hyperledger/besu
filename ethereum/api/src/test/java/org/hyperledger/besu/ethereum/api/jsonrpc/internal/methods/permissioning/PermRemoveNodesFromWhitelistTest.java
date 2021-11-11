@@ -83,7 +83,7 @@ public class PermRemoveNodesFromWhitelistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
   }
 
   @Test
@@ -98,7 +98,7 @@ public class PermRemoveNodesFromWhitelistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
   }
 
   @Test
@@ -111,7 +111,7 @@ public class PermRemoveNodesFromWhitelistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
 
     verify(nodeLocalConfigPermissioningController, times(1)).removeNodes(any());
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
@@ -127,7 +127,7 @@ public class PermRemoveNodesFromWhitelistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
 
     verify(nodeLocalConfigPermissioningController, times(1)).removeNodes(any());
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
@@ -142,7 +142,8 @@ public class PermRemoveNodesFromWhitelistTest {
             request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_NOT_ENABLED);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -157,7 +158,7 @@ public class PermRemoveNodesFromWhitelistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
   }
 
   @Test
@@ -172,7 +173,7 @@ public class PermRemoveNodesFromWhitelistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
   }
 
   @Test
@@ -188,7 +189,7 @@ public class PermRemoveNodesFromWhitelistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
   }
 
   private JsonRpcRequestContext buildRequest(final List<String> enodeList) {
