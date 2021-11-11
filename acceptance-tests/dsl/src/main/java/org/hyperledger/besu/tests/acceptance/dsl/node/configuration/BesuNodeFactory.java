@@ -194,7 +194,7 @@ public class BesuNodeFactory {
             .jsonRpcEnabled()
             .jsonRpcAuthenticationUsingRSA()
             .webSocketEnabled()
-            .webSocketAuthenticationUsingPublicKeyEnabled()
+            .webSocketAuthenticationUsingRsaPublicKeyEnabled()
             .build());
   }
 
@@ -206,7 +206,7 @@ public class BesuNodeFactory {
             .jsonRpcEnabled()
             .jsonRpcAuthenticationUsingECDSA()
             .webSocketEnabled()
-            .webSocketAuthenticationUsingPublicKeyEnabled()
+            .webSocketAuthenticationUsingEcdsaPublicKeyEnabled()
             .build());
   }
 

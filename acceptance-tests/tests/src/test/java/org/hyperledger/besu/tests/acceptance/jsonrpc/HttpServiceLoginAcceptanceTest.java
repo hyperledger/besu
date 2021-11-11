@@ -95,14 +95,14 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void externalRSAJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
+  public void externalRsaJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
     nodeUsingRsaJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
         RSA_TOKEN_ALLOWING_NET_PEER_COUNT);
     nodeUsingRsaJwtPublicKey.verify(net.awaitPeerCount(2));
   }
 
   @Test
-  public void externalRSAJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
+  public void externalRsaJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
     nodeUsingRsaJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
         RSA_TOKEN_ALLOWING_NET_PEER_COUNT);
     nodeUsingRsaJwtPublicKey.verify(net.netVersionUnauthorized());
@@ -110,14 +110,14 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void externalECDSAJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
+  public void externalEcdsaJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
     nodeUsingEcdsaJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
         ECDSA_TOKEN_ALLOWING_NET_PEER_COUNT);
     nodeUsingEcdsaJwtPublicKey.verify(net.awaitPeerCount(2));
   }
 
   @Test
-  public void externalECDSAJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
+  public void externalEcdsaJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
     nodeUsingEcdsaJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
         ECDSA_TOKEN_ALLOWING_NET_PEER_COUNT);
     nodeUsingEcdsaJwtPublicKey.verify(net.netVersionUnauthorized());
