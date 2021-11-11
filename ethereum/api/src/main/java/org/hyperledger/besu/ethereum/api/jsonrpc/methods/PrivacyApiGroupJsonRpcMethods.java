@@ -25,12 +25,13 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.OnchainPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PluginPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
-import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -135,22 +136,29 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
           privateNonceProvider,
           privacyParameters.getPrivateWorldStateReader());
     } else {
-      final RestrictedDefaultPrivacyController restrictedDefaultPrivacyController =
-          new RestrictedDefaultPrivacyController(
-              getBlockchainQueries().getBlockchain(),
-              privacyParameters,
-              chainId,
-              createPrivateTransactionSimulator(),
-              privateNonceProvider,
-              privacyParameters.getPrivateWorldStateReader());
-
+      final PrivacyController privacyController;
+      if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
+        privacyController =
+            new OnchainPrivacyController(
+                getBlockchainQueries().getBlockchain(),
+                privacyParameters,
+                chainId,
+                createPrivateTransactionSimulator(),
+                privateNonceProvider,
+                privacyParameters.getPrivateWorldStateReader());
+      } else {
+        privacyController =
+            new RestrictedDefaultPrivacyController(
+                getBlockchainQueries().getBlockchain(),
+                privacyParameters,
+                chainId,
+                createPrivateTransactionSimulator(),
+                privateNonceProvider,
+                privacyParameters.getPrivateWorldStateReader());
+      }
       return privacyParameters.isMultiTenancyEnabled()
-          ? new RestrictedMultiTenancyPrivacyController(
-              restrictedDefaultPrivacyController,
-              chainId,
-              privacyParameters.getEnclave(),
-              privacyParameters.isOnchainPrivacyGroupsEnabled())
-          : restrictedDefaultPrivacyController;
+          ? new MultiTenancyPrivacyController(privacyController)
+          : privacyController;
     }
   }
 

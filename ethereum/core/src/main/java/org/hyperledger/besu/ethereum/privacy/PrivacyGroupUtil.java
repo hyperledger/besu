@@ -15,14 +15,12 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -36,12 +34,12 @@ public class PrivacyGroupUtil {
   // https://github.com/ConsenSys/orion/blob/05759341ec1a216e6837df91e421207c8294ad2a/src/main/java/net/consensys/orion/enclave/sodium/SodiumEnclave.java
   public static Bytes32 calculateEeaPrivacyGroupId(
       final Bytes privateFrom, final List<Bytes> privateFor) {
-    final List<Bytes> privacyGroupIds = new ArrayList<>();
-    privacyGroupIds.add(privateFrom);
-    privacyGroupIds.addAll(privateFor);
+    final List<Bytes> privacyGroupMembers = new ArrayList<>();
+    privacyGroupMembers.add(privateFrom);
+    privacyGroupMembers.addAll(privateFor);
 
     final List<byte[]> sortedPublicEnclaveKeys =
-        privacyGroupIds.stream()
+        privacyGroupMembers.stream()
             .distinct()
             .map(Bytes::toArray)
             .sorted(Comparator.comparing(Arrays::hashCode))
@@ -53,26 +51,5 @@ public class PrivacyGroupUtil {
         (privacyUserId, rlpOutput) -> rlpOutput.writeBytes(Bytes.of(privacyUserId)));
 
     return Hash.keccak256(bytesValueRLPOutput.encoded());
-  }
-
-  public static Optional<PrivacyGroup> findOnchainPrivacyGroup(
-      final PrivacyController privacyController,
-      final Optional<Bytes> maybePrivacyGroupId,
-      final String privacyUserId,
-      final PrivateTransaction privateTransaction) {
-    return maybePrivacyGroupId.flatMap(
-        privacyGroupId ->
-            privacyController.findOnchainPrivacyGroupAndAddNewMembers(
-                privacyGroupId, privacyUserId, privateTransaction));
-  }
-
-  public static Optional<PrivacyGroup> findOffchainPrivacyGroup(
-      final PrivacyController privacyController,
-      final Optional<Bytes> maybePrivacyGroupId,
-      final String privacyUserId) {
-    return maybePrivacyGroupId.flatMap(
-        privacyGroupId ->
-            privacyController.findOffchainPrivacyGroupByGroupId(
-                privacyGroupId.toBase64String(), privacyUserId));
   }
 }
