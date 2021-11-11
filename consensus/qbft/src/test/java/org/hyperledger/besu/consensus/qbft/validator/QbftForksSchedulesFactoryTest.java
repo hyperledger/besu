@@ -164,7 +164,7 @@ public class QbftForksSchedulesFactoryTest {
     assertThatThrownBy(
             () -> QbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork)))
         .hasMessage(
-            "QBFT transition to blockheader mode requires a list of at least one validator");
+            "QBFT transition to blockheader mode requires a validators list containing at least one validator");
   }
 
   @Test
@@ -186,7 +186,7 @@ public class QbftForksSchedulesFactoryTest {
     assertThatThrownBy(
             () -> QbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork)))
         .hasMessage(
-            "QBFT transition to blockheader mode requires a list of at least one validator");
+            "QBFT transition to blockheader mode requires a validators list containing at least one validator");
   }
 
   private GenesisConfigOptions createGenesisConfig(
