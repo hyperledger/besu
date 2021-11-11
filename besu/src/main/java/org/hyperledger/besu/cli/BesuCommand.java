@@ -587,7 +587,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--rpc-http-authentication-jwt-algorithm"},
       description =
-          "JWT encryption algorithm used by the public key - must be one of RS256, RS384, RS512, ES256, ES384 and ES512",
+          "Encryption algorithm used for the JWT public key. Possible values are RS256, RS384, RS512, ES256, ES384 and ES512",
       arity = "1")
   private String rpcHttpAuthenticationAlgorithm = null;
 

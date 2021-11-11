@@ -107,7 +107,7 @@ public class AuthenticationService {
       jwtAuthOptions =
           authenticationAlgorithm == null
               ? jwtAuthOptionsFactory.createForExternalPublicKey(authenticationPublicKeyFile)
-              : jwtAuthOptionsFactory.createForExtrenalPublicKeyWithAlgorithm(
+              : jwtAuthOptionsFactory.createForExternalPublicKeyWithAlgorithm(
                   authenticationPublicKeyFile, authenticationAlgorithm);
     }
     final Optional<AuthProvider> credentialAuthProvider =

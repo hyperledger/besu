@@ -40,7 +40,7 @@ public class WebSocketConfiguration {
   private String authenticationCredentialsFile;
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private File authenticationPublicKeyFile;
-  private String authenticationAlgorithm = null;
+  private String authenticationAlgorithm = "RS256";
   private long timeoutSec;
   private int maxActiveConnections;
 

@@ -73,7 +73,7 @@ public class JWTAuthOptionsFactoryTest {
   public void createsOptionsUsingPublicKeyFile() throws URISyntaxException {
     final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
     final File enclavePublicKeyFile =
-        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_rsa").toURI())
             .toAbsolutePath()
             .toFile();
 
@@ -96,7 +96,7 @@ public class JWTAuthOptionsFactoryTest {
 
     try {
       final JWTAuthOptions jwtAuthOptions =
-          jwtAuthOptionsFactory.createForExtrenalPublicKeyWithAlgorithm(
+          jwtAuthOptionsFactory.createForExternalPublicKeyWithAlgorithm(
               enclavePublicKeyFile, "ES256");
       assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(1);
       assertThat(jwtAuthOptions.getPubSecKeys().get(0).getAlgorithm()).isEqualTo("ES256");

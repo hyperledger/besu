@@ -29,8 +29,8 @@ import org.junit.Test;
 public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
   private Cluster authenticatedCluster;
   private BesuNode nodeUsingAuthFile;
-  private BesuNode nodeUsingRSAJwtPublicKey;
-  private BesuNode nodeUsingECDSAJwtPublicKey;
+  private BesuNode nodeUsingRsaJwtPublicKey;
+  private BesuNode nodeUsingEcdsaJwtPublicKey;
   private static final String AUTH_FILE = "authentication/auth.toml";
 
   // token with payload{"iat": 1516239022,"exp": 4729363200,"permissions": ["net:peerCount"]}
@@ -55,14 +55,14 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
     authenticatedCluster = new Cluster(clusterConfiguration, net);
 
     nodeUsingAuthFile = besu.createNodeWithAuthentication("node1", AUTH_FILE);
-    nodeUsingRSAJwtPublicKey = besu.createNodeWithAuthenticationUsingRSAJwtPublicKey("node2");
-    nodeUsingECDSAJwtPublicKey = besu.createNodeWithAuthenticationUsingECDSAJwtPublicKey("node3");
+    nodeUsingRsaJwtPublicKey = besu.createNodeWithAuthenticationUsingRsaJwtPublicKey("node2");
+    nodeUsingEcdsaJwtPublicKey = besu.createNodeWithAuthenticationUsingEcdsaJwtPublicKey("node3");
     authenticatedCluster.start(
-        nodeUsingAuthFile, nodeUsingRSAJwtPublicKey, nodeUsingECDSAJwtPublicKey);
+        nodeUsingAuthFile, nodeUsingRsaJwtPublicKey, nodeUsingEcdsaJwtPublicKey);
 
     nodeUsingAuthFile.verify(login.awaitResponse("user", "badpassword"));
-    nodeUsingRSAJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
-    nodeUsingECDSAJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
+    nodeUsingRsaJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
+    nodeUsingEcdsaJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
   }
 
   @Test
@@ -96,43 +96,43 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void externalRSAJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
-    nodeUsingRSAJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
+    nodeUsingRsaJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
         RSA_TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingRSAJwtPublicKey.verify(net.awaitPeerCount(2));
+    nodeUsingRsaJwtPublicKey.verify(net.awaitPeerCount(2));
   }
 
   @Test
   public void externalRSAJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
-    nodeUsingRSAJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
+    nodeUsingRsaJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
         RSA_TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingRSAJwtPublicKey.verify(net.netVersionUnauthorized());
-    nodeUsingRSAJwtPublicKey.verify(net.netServicesUnauthorized());
+    nodeUsingRsaJwtPublicKey.verify(net.netVersionUnauthorized());
+    nodeUsingRsaJwtPublicKey.verify(net.netServicesUnauthorized());
   }
 
   @Test
   public void externalECDSAJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
-    nodeUsingECDSAJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
+    nodeUsingEcdsaJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
         ECDSA_TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingECDSAJwtPublicKey.verify(net.awaitPeerCount(2));
+    nodeUsingEcdsaJwtPublicKey.verify(net.awaitPeerCount(2));
   }
 
   @Test
   public void externalECDSAJwtPublicKeyUsedOnJsonRpcMethodShouldFailOnNonPermittedMethod() {
-    nodeUsingECDSAJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
+    nodeUsingEcdsaJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
         ECDSA_TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingECDSAJwtPublicKey.verify(net.netVersionUnauthorized());
-    nodeUsingECDSAJwtPublicKey.verify(net.netServicesUnauthorized());
+    nodeUsingEcdsaJwtPublicKey.verify(net.netVersionUnauthorized());
+    nodeUsingEcdsaJwtPublicKey.verify(net.netServicesUnauthorized());
   }
 
   @Test
   public void jsonRpcMethodShouldFailWhenThereIsNoToken() {
-    nodeUsingRSAJwtPublicKey.verify(net.netVersionUnauthorized());
-    nodeUsingRSAJwtPublicKey.verify(net.netServicesUnauthorized());
+    nodeUsingRsaJwtPublicKey.verify(net.netVersionUnauthorized());
+    nodeUsingRsaJwtPublicKey.verify(net.netServicesUnauthorized());
   }
 
   @Test
   public void loginShouldBeDisabledWhenUsingExternalJwtPublicKey() {
-    nodeUsingRSAJwtPublicKey.verify(login.disabled());
+    nodeUsingRsaJwtPublicKey.verify(login.disabled());
   }
 
   @Override

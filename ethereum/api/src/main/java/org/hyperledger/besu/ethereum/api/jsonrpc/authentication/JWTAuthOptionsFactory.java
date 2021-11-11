@@ -46,7 +46,7 @@ public class JWTAuthOptionsFactory {
                 .setPublicKey(base64EncodedPublicKey));
   }
 
-  public JWTAuthOptions createForExtrenalPublicKeyWithAlgorithm(
+  public JWTAuthOptions createForExternalPublicKeyWithAlgorithm(
       final File externalPublicKeyFile, final String algorithm) {
     final byte[] externalJwtPublicKey = readPublicKey(externalPublicKeyFile);
     final String base64EncodedPublicKey = Base64.getEncoder().encodeToString(externalJwtPublicKey);

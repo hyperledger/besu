@@ -186,7 +186,7 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createNodeWithAuthenticationUsingRSAJwtPublicKey(final String name)
+  public BesuNode createNodeWithAuthenticationUsingRsaJwtPublicKey(final String name)
       throws IOException, URISyntaxException {
     return create(
         new BesuNodeConfigurationBuilder()
@@ -198,7 +198,7 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createNodeWithAuthenticationUsingECDSAJwtPublicKey(final String name)
+  public BesuNode createNodeWithAuthenticationUsingEcdsaJwtPublicKey(final String name)
       throws IOException, URISyntaxException {
     return create(
         new BesuNodeConfigurationBuilder()
