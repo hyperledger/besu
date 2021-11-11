@@ -44,6 +44,10 @@ public class QbftForksSchedulesFactory {
     if (fork.getValidatorSelectionMode().isPresent()) {
       final VALIDATOR_SELECTION_MODE mode = fork.getValidatorSelectionMode().get();
       if (mode == VALIDATOR_SELECTION_MODE.BLOCKHEADER) {
+        if (fork.getValidators().isEmpty() || fork.getValidators().get().isEmpty()) {
+          throw new IllegalStateException(
+              "QBFT transition to blockheader mode requires a validators list containing at least one validator");
+        }
         bftConfigOptions.setValidatorContractAddress(Optional.empty());
       } else if (mode == VALIDATOR_SELECTION_MODE.CONTRACT
           && fork.getValidatorContractAddress().isPresent()) {
