@@ -35,6 +35,10 @@
 https://hyperledger.jfrog.io/ui/native/besu-binaries/besu/21.10.1/besu-21.10.1.zip \
 SHA256: 877148a1a13a1065151cf8fb3fbb56ea1d01e3a942fa7ebd6bd4ea4d15101fee
 
+### Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.1/besu-21.10.1.zip \
+SHA256: 064df81be49c31ebfc0e1a5f03357e8f6f9a7f5e7bcb82e2b187e2d58e1704eb
+
 ## 21.10.0
 
 ### Additions and Improvements

@@ -168,14 +168,17 @@ final class DeFramer extends ByteToMessageDecoder {
       } else if (message.getCode() == WireMessageCodes.DISCONNECT) {
         DisconnectMessage disconnectMessage = DisconnectMessage.readFrom(message);
         LOG.debug(
-            "Peer disconnected before sending HELLO.  Reason: " + disconnectMessage.getReason());
+            "Peer {} disconnected before sending HELLO.  Reason: {}",
+            expectedPeer.map(Peer::getEnodeURLString).orElse("unknown"),
+            disconnectMessage.getReason());
         ctx.close();
         connectFuture.completeExceptionally(
             new PeerDisconnectedException(disconnectMessage.getReason()));
       } else {
         // Unexpected message - disconnect
         LOG.debug(
-            "Message received before HELLO's exchanged, disconnecting.  Code: {}, Data: {}",
+            "Message received before HELLO's exchanged, disconnecting.  Peer: {}, Code: {}, Data: {}",
+            expectedPeer.map(Peer::getEnodeURLString).orElse("unknown"),
             message.getCode(),
             message.getData().toString());
         ctx.writeAndFlush(
