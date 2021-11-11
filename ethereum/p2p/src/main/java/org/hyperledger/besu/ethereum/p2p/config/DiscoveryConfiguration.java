@@ -102,7 +102,7 @@ public class DiscoveryConfiguration {
   public static final List<EnodeURL> SEPOLIA_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
-                  "enode://7c9740e4d64674801fe62b76798d46778a038c49caebb15843d8c0f2b2f80d7ceba2585b4be366e6161988f81ddcfcd6fca98b5da52ae9a6f22c1b2a84b24a04@18.130.169.73:30303")
+                  "enode://9246d00bc8fd1742e5ad2428b80fc4dc45d786283e05ef6edbd9002cbc335d40998444732fbe921cb88e1d2c73d1b1de53bae6a2237996e9bfe14f871baf7066@18.168.182.86:30303")
               .map(EnodeURLImpl::fromString)
               .collect(toList()));
 
@@ -296,8 +296,9 @@ public class DiscoveryConfiguration {
     return dnsDiscoveryURL;
   }
 
-  public void setDnsDiscoveryURL(final String dnsDiscoveryURL) {
+  public DiscoveryConfiguration setDnsDiscoveryURL(final String dnsDiscoveryURL) {
     this.dnsDiscoveryURL = dnsDiscoveryURL;
+    return this;
   }
 
   @Override

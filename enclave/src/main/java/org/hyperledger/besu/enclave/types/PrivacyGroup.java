@@ -65,6 +65,10 @@ public class PrivacyGroup implements Serializable {
     this.members = members;
   }
 
+  public void addMembers(final List<String> participantsFromParameter) {
+    members.addAll(participantsFromParameter);
+  }
+
   public PrivacyGroup() {}
 
   public PrivacyGroup(

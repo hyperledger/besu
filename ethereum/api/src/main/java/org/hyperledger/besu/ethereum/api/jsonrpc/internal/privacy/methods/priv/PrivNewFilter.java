@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 public class PrivNewFilter implements JsonRpcMethod {
@@ -52,8 +53,11 @@ public class PrivNewFilter implements JsonRpcMethod {
     final FilterParameter filter = request.getRequiredParameter(1, FilterParameter.class);
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
 
-    // no need to pass blockNumber. To create a filter, you need to be a current member of the group
-    checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(privacyUserId, privacyGroupId);
+    if (privacyController instanceof MultiTenancyPrivacyController) {
+      // no need to pass blockNumber. To create a filter, you need to be a current member of the
+      // group
+      checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(privacyUserId, privacyGroupId);
+    }
 
     if (!filter.isValid()) {
       return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);

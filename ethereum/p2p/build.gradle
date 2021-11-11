@@ -43,8 +43,12 @@ dependencies {
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-crypto'
-  implementation 'org.apache.tuweni:tuweni-devp2p'
-  implementation 'org.apache.tuweni:tuweni-dns-discovery'
+  implementation('org.apache.tuweni:tuweni-devp2p') {
+    exclude group:'ch.qos.logback', module:'logback-classic'
+  }
+  implementation('org.apache.tuweni:tuweni-dns-discovery'){
+    exclude group:'ch.qos.logback', module:'logback-classic'
+  }
   implementation 'org.apache.tuweni:tuweni-io'
   implementation 'org.apache.tuweni:tuweni-rlp'
   implementation 'org.apache.tuweni:tuweni-units'
