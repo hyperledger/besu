@@ -6,13 +6,10 @@
 
 | Name             | Github           | LFID             |
 | ---------------- | ---------------- | ---------------- |
-| Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Adrian Sutton    | ajsutton         | ajsutton         |
 | Antoine Toulme   | atoulme          | atoulme          |
 | Antony Denyer    | antonydenyer     | antonydenyer     |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
-| David Mechler    | davemec          | davemec          |
-| Edward Mack      | edwardmack       | mackcom          | 
 | Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jason Frame      | jframe           | jframe           |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
@@ -26,7 +23,6 @@
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Sajida Zouarhi   | sajz             | SajidaZ          |
 | Stefan Pingel    | pinges           | pinges           |
-| Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Danno Ferrin     | shemnon          | shemnon          |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
@@ -36,11 +32,15 @@
 
 | Name             | Github           | LFID             |
 |------------------|------------------|------------------|
+| Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Chris Hare       | CjHare           | cjhare           |
+| David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
+| Edward Mack      | edwardmack       | mackcom          | 
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Rob Dawson       | rojotek          | RobDawson        |
 | Tim Beiko        | timbeiko         | timbeiko         |
+| Trent Mohay      | rain-on          | trent.mohay      |
 
 ## Becoming a Maintainer
 
