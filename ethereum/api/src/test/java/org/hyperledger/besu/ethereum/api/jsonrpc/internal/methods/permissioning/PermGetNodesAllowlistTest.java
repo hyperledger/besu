@@ -76,7 +76,7 @@ public class PermGetNodesAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     verify(nodeLocalConfigPermissioningController, times(1)).getNodesAllowlist();
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
@@ -92,7 +92,7 @@ public class PermGetNodesAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     verify(nodeLocalConfigPermissioningController, times(1)).getNodesAllowlist();
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);

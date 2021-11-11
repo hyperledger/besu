@@ -82,7 +82,7 @@ public class PermRemoveNodesFromAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -97,7 +97,7 @@ public class PermRemoveNodesFromAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -110,7 +110,7 @@ public class PermRemoveNodesFromAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     verify(nodeLocalConfigPermissioningController, times(1)).removeNodes(any());
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
@@ -126,7 +126,7 @@ public class PermRemoveNodesFromAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     verify(nodeLocalConfigPermissioningController, times(1)).removeNodes(any());
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
@@ -157,7 +157,7 @@ public class PermRemoveNodesFromAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -172,7 +172,7 @@ public class PermRemoveNodesFromAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -188,7 +188,7 @@ public class PermRemoveNodesFromAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   private JsonRpcRequestContext buildRequest(final List<String> enodeList) {

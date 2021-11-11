@@ -46,6 +46,6 @@ public class Web3ClientVersionTest {
         new JsonRpcSuccessResponse(request.getRequest().getId(), CLIENT_VERSION);
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 }

@@ -216,8 +216,6 @@ public class RoundSpecificPeers {
         fail("Illegal QBFTV1 message type.");
         break;
     }
-    assertThat(expectedMessage)
-        .usingRecursiveComparison()
-        .isEqualToRecursively(actualSignedPayload);
+    assertThat(expectedMessage).usingRecursiveComparison().isEqualTo(actualSignedPayload);
   }
 }

@@ -63,6 +63,6 @@ public class EthBlockNumberTest {
         new JsonRpcSuccessResponse(request.getRequest().getId(), Quantity.create(headBlockNumber));
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 }

@@ -126,7 +126,7 @@ public class EthGetUncleByBlockHashAndIndexTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).usingRecursiveComparison().isEqualToRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -141,7 +141,7 @@ public class EthGetUncleByBlockHashAndIndexTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).usingRecursiveComparison().isEqualToRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private BlockResult blockResult(final BlockHeader header) {

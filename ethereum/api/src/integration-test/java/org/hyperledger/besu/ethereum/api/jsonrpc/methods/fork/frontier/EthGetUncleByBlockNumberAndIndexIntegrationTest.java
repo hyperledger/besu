@@ -97,7 +97,7 @@ public class EthGetUncleByBlockNumberAndIndexIntegrationTest {
 
     final JsonRpcSuccessResponse actual = (JsonRpcSuccessResponse) method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   private JsonRpcRequestContext getUncleByBlockNumberAndIndex() {

@@ -83,7 +83,7 @@ public class PermAddNodesToAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -99,7 +99,7 @@ public class PermAddNodesToAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -114,7 +114,7 @@ public class PermAddNodesToAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -129,7 +129,7 @@ public class PermAddNodesToAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -144,7 +144,7 @@ public class PermAddNodesToAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -157,7 +157,7 @@ public class PermAddNodesToAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     verify(nodeLocalConfigPermissioningController, times(1)).addNodes(any());
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
@@ -173,7 +173,7 @@ public class PermAddNodesToAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).usingRecursiveComparison().isEqualToRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     verify(nodeLocalConfigPermissioningController, times(1)).addNodes(any());
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);

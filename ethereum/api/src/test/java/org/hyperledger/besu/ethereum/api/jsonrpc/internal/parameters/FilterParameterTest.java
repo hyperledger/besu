@@ -59,9 +59,7 @@ public class FilterParameterTest {
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
 
-    assertThat(parsedFilterParameter)
-        .usingRecursiveComparison()
-        .isEqualToRecursively(expectedFilterParameter);
+    assertThat(parsedFilterParameter).usingRecursiveComparison().isEqualTo(expectedFilterParameter);
   }
 
   @Test
@@ -75,9 +73,7 @@ public class FilterParameterTest {
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
 
-    assertThat(parsedFilterParameter)
-        .usingRecursiveComparison()
-        .isEqualToRecursively(expectedFilterParameter);
+    assertThat(parsedFilterParameter).usingRecursiveComparison().isEqualTo(expectedFilterParameter);
   }
 
   @Test
@@ -96,9 +92,7 @@ public class FilterParameterTest {
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
 
-    assertThat(parsedFilterParameter)
-        .usingRecursiveComparison()
-        .isEqualToRecursively(expectedFilterParameter);
+    assertThat(parsedFilterParameter).usingRecursiveComparison().isEqualTo(expectedFilterParameter);
   }
 
   @Test
@@ -117,9 +111,7 @@ public class FilterParameterTest {
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
 
-    assertThat(parsedFilterParameter)
-        .usingRecursiveComparison()
-        .isEqualToRecursively(expectedFilterParameter);
+    assertThat(parsedFilterParameter).usingRecursiveComparison().isEqualTo(expectedFilterParameter);
   }
 
   @Test
@@ -141,9 +133,7 @@ public class FilterParameterTest {
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
 
-    assertThat(parsedFilterParameter)
-        .usingRecursiveComparison()
-        .isEqualToRecursively(expectedFilterParameter);
+    assertThat(parsedFilterParameter).usingRecursiveComparison().isEqualTo(expectedFilterParameter);
   }
 
   @Test
@@ -256,7 +246,7 @@ public class FilterParameterTest {
 
     assertThat(readJsonAsFilterParameter(jsonWithTopicsFirst))
         .usingRecursiveComparison()
-        .isEqualToRecursively(readJsonAsFilterParameter(jsonWithTopicsLast));
+        .isEqualTo(readJsonAsFilterParameter(jsonWithTopicsLast));
   }
 
   @Test
