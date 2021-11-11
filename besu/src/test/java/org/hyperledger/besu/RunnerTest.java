@@ -376,13 +376,10 @@ public final class RunnerTest {
           .atMost(5L, TimeUnit.MINUTES)
           .until(future::isComplete);
     } finally {
-      System.out.println("OMG STAAAAHP!!");
       if (runnerBehind != null) {
         runnerBehind.close();
         runnerBehind.awaitStop();
       }
-      runnerAhead.close();
-      runnerAhead.awaitStop();
     }
   }
 
