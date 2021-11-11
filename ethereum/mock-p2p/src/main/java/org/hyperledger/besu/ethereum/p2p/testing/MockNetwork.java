@@ -216,6 +216,11 @@ public final class MockNetwork {
     }
 
     @Override
+    public Optional<Map<String, String>> getNodeRecordValues() {
+      return Optional.empty();
+    }
+
+    @Override
     public void updateNodeRecord() {}
   }
 

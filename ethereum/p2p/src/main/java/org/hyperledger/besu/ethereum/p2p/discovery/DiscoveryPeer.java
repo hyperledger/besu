@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -136,6 +138,25 @@ public class DiscoveryPeer extends DefaultPeer {
 
   public void setNodeRecord(final NodeRecord nodeRecord) {
     this.nodeRecord = nodeRecord;
+  }
+
+  public Optional<Map<String, String>> getNodeRecordValues() {
+    if (nodeRecord == null) {
+      return Optional.empty();
+    }
+
+    Map<String, String> values = new HashMap<>();
+    values.put("seq", nodeRecord.getSeq().toString());
+    nodeRecord
+        .getUdpAddress()
+        .ifPresent(udpAddress -> values.put("udpAddress", udpAddress.toString()));
+    nodeRecord
+        .getTcpAddress()
+        .ifPresent(tcpAddress -> values.put("tcpAddress", tcpAddress.toString()));
+    values.put("asBase64", nodeRecord.asBase64());
+    values.put("nodeId", nodeRecord.getNodeId().toHexString());
+
+    return Optional.of(values);
   }
 
   public boolean discoveryEndpointMatches(final DiscoveryPeer peer) {

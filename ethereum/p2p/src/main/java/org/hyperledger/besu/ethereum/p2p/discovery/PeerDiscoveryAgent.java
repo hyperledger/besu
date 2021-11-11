@@ -49,6 +49,7 @@ import java.net.SocketException;
 import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -352,6 +353,14 @@ public abstract class PeerDiscoveryAgent {
 
   public Bytes getId() {
     return id;
+  }
+
+  public Optional<Map<String, String>> getNodeRecordValues() {
+    if (localNode.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return localNode.get().getNodeRecordValues();
   }
 
   /**

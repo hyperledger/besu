@@ -26,6 +26,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -147,6 +148,14 @@ public interface P2PNetwork extends Closeable {
    *     otherwise.
    */
   Optional<EnodeURL> getLocalEnode();
+
+  /**
+   * Returns the ENR (Ethereum Node Record) used to identify this peer in the network.
+   *
+   * @return the node record associated with this node if P2P has been enabled. Returns empty
+   *     otherwise.
+   */
+  Optional<Map<String, String>> getNodeRecordValues();
 
   void updateNodeRecord();
 }

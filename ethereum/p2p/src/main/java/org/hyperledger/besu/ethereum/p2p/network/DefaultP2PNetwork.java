@@ -57,6 +57,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
@@ -409,6 +410,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return Optional.empty();
     }
     return Optional.of(localNode.getPeer().getEnodeURL());
+  }
+
+  @Override
+  public Optional<Map<String, String>> getNodeRecordValues() {
+    return peerDiscoveryAgent.getNodeRecordValues();
   }
 
   private void setLocalNode(

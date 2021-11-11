@@ -26,6 +26,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
@@ -88,6 +89,11 @@ public class NoopP2PNetwork implements P2PNetwork {
 
   @Override
   public Optional<EnodeURL> getLocalEnode() {
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<Map<String, String>> getNodeRecordValues() {
     return Optional.empty();
   }
 

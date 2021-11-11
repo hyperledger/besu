@@ -126,6 +126,10 @@ public class AdminNodeInfo implements JsonRpcMethod {
                 "network",
                 networkId)));
 
+    peerNetwork
+        .getNodeRecordValues()
+        .ifPresent(nodeRecordValues -> response.put("nodeRecord", nodeRecordValues));
+
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }
 
