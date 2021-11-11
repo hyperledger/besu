@@ -175,12 +175,15 @@ public class ValidatorContractTest {
 
   @Test
   public void transitionsFromValidatorContractModeToBlockHeaderMode() {
-    final List<QbftFork> qbftForks = List.of(createBlockHeaderFork(1, List.of(NODE_ADDRESS)));
+    final List<QbftFork> qbftForks =
+        List.of(createBlockHeaderFork(1, List.of(NODE_ADDRESS, NODE_2_ADDRESS)));
     final TestContext context =
         new TestContextBuilder()
             .indexOfFirstLocallyProposedBlock(0)
             .nodeParams(
-                List.of(new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY))))
+                List.of(
+                    new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY)),
+                    new NodeParams(NODE_2_ADDRESS, NodeKeyUtils.createFrom(NODE_2_PRIVATE_KEY))))
             .clock(clock)
             .genesisFile(Resources.getResource("genesis_validator_contract.json").getFile())
             .useValidatorContract(true)
@@ -188,13 +191,15 @@ public class ValidatorContractTest {
             .buildAndStart();
 
     // block 0 uses validator contract with 1 validator
-    // block 1 onwards uses block header voting with the overridden validator
+    // block 1 onwards uses block header voting with 2 overridden validators
     // block 2 uses block header voting with the cached validators
     final List<Address> block0Addresses = Stream.of(NODE_ADDRESS).collect(Collectors.toList());
+    final List<Address> block1Addresses =
+        Stream.of(NODE_ADDRESS, NODE_2_ADDRESS).sorted().collect(Collectors.toList());
 
     createNewBlockAsProposer(context, 1);
     clock.step(TestContextBuilder.BLOCK_TIMER_SEC, SECONDS);
-    createNewBlockAsProposer(context, 2L);
+    remotePeerProposesNewBlock(context, 2L);
 
     final ValidatorProvider validatorProvider = context.getValidatorProvider();
     final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
@@ -207,12 +212,14 @@ public class ValidatorContractTest {
     assertThat(extraDataCodec.decode(genesisBlock).getVote()).isEmpty();
 
     // uses overridden validators
-    assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block0Addresses);
-    assertThat(extraDataCodec.decode(block1).getValidators()).containsExactly(NODE_ADDRESS);
+    assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block1Addresses);
+    assertThat(extraDataCodec.decode(block1).getValidators())
+        .containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
 
     // uses cached validators
-    assertThat(validatorProvider.getValidatorsForBlock(block2)).isEqualTo(block0Addresses);
-    assertThat(extraDataCodec.decode(block2).getValidators()).containsExactly(NODE_ADDRESS);
+    assertThat(validatorProvider.getValidatorsForBlock(block2)).isEqualTo(block1Addresses);
+    assertThat(extraDataCodec.decode(block2).getValidators())
+        .containsExactly(NODE_2_ADDRESS, NODE_ADDRESS);
   }
 
   @Test
@@ -238,7 +245,7 @@ public class ValidatorContractTest {
 
     // block 0 uses block header voting with 1 validator
     // block 1 uses validator contract with 2 validators
-    // block 2 uses block header voting with the overridden validators
+    // block 2 uses block header voting with 2 overridden validators
     // block 3 uses block header voting with cached validators
     final List<Address> block0Addresses = List.of(NODE_ADDRESS);
     final List<Address> block1Addresses =
@@ -279,57 +286,6 @@ public class ValidatorContractTest {
   public void transitionsFromValidatorContractModeToBlockHeaderModeThenBackToNewContract() {
     final List<QbftFork> qbftForks =
         List.of(
-            createBlockHeaderFork(1, List.of(NODE_ADDRESS)),
-            createContractFork(2, NEW_VALIDATOR_CONTRACT_ADDRESS));
-
-    final TestContext context =
-        new TestContextBuilder()
-            .indexOfFirstLocallyProposedBlock(1)
-            .nodeParams(
-                List.of(
-                    new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY)),
-                    new NodeParams(NODE_2_ADDRESS, NodeKeyUtils.createFrom(NODE_2_PRIVATE_KEY))))
-            .clock(clock)
-            .genesisFile(Resources.getResource("genesis_validator_contract.json").getFile())
-            .useValidatorContract(true)
-            .qbftForks(qbftForks)
-            .buildAndStart();
-
-    // block 0 uses validator contract with 1 validator
-    // block 1 uses block header voting with the overridden validator
-    // block 2 uses validator contract with 2 validators
-    final List<Address> block0Addresses = List.of(NODE_ADDRESS);
-    final List<Address> block2Addresses =
-        Stream.of(NODE_ADDRESS, NODE_2_ADDRESS).sorted().collect(Collectors.toList());
-
-    createNewBlockAsProposer(context, 1L);
-    clock.step(TestContextBuilder.BLOCK_TIMER_SEC, SECONDS);
-    remotePeerProposesNewBlock(context, 2L);
-
-    final ValidatorProvider validatorProvider = context.getValidatorProvider();
-    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
-    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
-    final BlockHeader block2 = context.getBlockchain().getBlockHeader(2).get();
-
-    // contract block extra data cannot contain validators or vote
-    assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).isEqualTo(block0Addresses);
-    assertThat(extraDataCodec.decode(genesisBlock).getValidators()).isEmpty();
-    assertThat(extraDataCodec.decode(genesisBlock).getVote()).isEmpty();
-
-    assertThat(validatorProvider.getValidatorsForBlock(block1)).isEqualTo(block0Addresses);
-    assertThat(extraDataCodec.decode(block1).getValidators()).containsExactly(NODE_ADDRESS);
-
-    // contract block extra data cannot contain validators or vote
-    assertThat(validatorProvider.getValidatorsForBlock(block2)).isEqualTo(block2Addresses);
-    assertThat(extraDataCodec.decode(block2).getValidators()).isEmpty();
-    assertThat(extraDataCodec.decode(block2).getVote()).isEmpty();
-  }
-
-  @Test
-  public void
-      transitionsFromValidatorContractModeToBlockHeaderModeWithOverriddenValidatorsThenBackToNewContract() {
-    final List<QbftFork> qbftForks =
-        List.of(
             createBlockHeaderFork(1, List.of(NODE_2_ADDRESS)),
             createContractFork(2, NEW_VALIDATOR_CONTRACT_ADDRESS));
 
@@ -347,7 +303,7 @@ public class ValidatorContractTest {
             .buildAndStart();
 
     // block 0 uses validator contract with 1 validator
-    // block 1 uses block header voting with overridden validator
+    // block 1 uses block header voting with 1 overridden validator
     // block 2 uses validator contract with 2 validators
     final List<Address> block0Addresses = List.of(NODE_ADDRESS);
     final List<Address> block1Addresses = List.of(NODE_2_ADDRESS);
