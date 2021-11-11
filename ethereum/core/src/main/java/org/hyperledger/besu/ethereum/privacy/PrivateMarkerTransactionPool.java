@@ -83,6 +83,10 @@ public class PrivateMarkerTransactionPool implements BlockAddedObserver {
     return pmtHash;
   }
 
+  public long size() {
+    return pmtPool.size();
+  }
+
   protected static class PrivateMarkerTransactionTracker {
     private final String sender;
     private final String privacyGroupIdBase64;

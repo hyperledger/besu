@@ -412,6 +412,8 @@ public class RestrictedDefaultPrivacyControllerTest {
         BlockAddedEvent.createForHeadAdvancement(block, emptyList(), emptyList());
     final PrivateMarkerTransactionPool pmtPool = new PrivateMarkerTransactionPool(blockchain);
     pmtPool.onBlockAdded(event);
+    // TODO what are we testing
+    assertThat(pmtPool.size()).isEqualTo(0L);
   }
 
   private static PrivateTransaction buildLegacyPrivateTransaction() {

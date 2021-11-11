@@ -133,7 +133,7 @@ public class BesuController implements java.io.Closeable {
     return transactionPool;
   }
 
-  public PrivateMarkerTransactionPool getPmtTransactionPool() {
+  public PrivateMarkerTransactionPool getPrivateMarkerTransactionPool() {
     return privateMarkerTransactionPool;
   }
 
