@@ -205,6 +205,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add(
             node.webSocketConfiguration().getAuthenticationPublicKeyFile().getAbsolutePath());
       }
+      if (node.webSocketConfiguration().getAuthenticationAlgorithm() != null) {
+        params.add("--rpc-ws-authentication-jwt-algorithm");
+        params.add(node.webSocketConfiguration().getAuthenticationAlgorithm());
+      }
     }
 
     if (node.isMetricsEnabled()) {

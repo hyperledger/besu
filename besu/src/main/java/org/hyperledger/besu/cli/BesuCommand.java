@@ -585,12 +585,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final File rpcHttpAuthenticationPublicKeyFile = null;
 
   @Option(
-      names = {"--rpc-authentication-jwt-algorithm"},
+      names = {"--rpc-http-authentication-jwt-algorithm"},
       description =
-          "Encryption algorithm used for the JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
+          "Encryption algorithm used for HTTP JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
               + " (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final JwtAlgorithm rpcAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM;
+  private final JwtAlgorithm rpcHttpAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM;
+
+  @Option(
+      names = {"--rpc-ws-authentication-jwt-algorithm"},
+      description =
+          "Encryption algorithm used for Websockets JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
+              + " (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final JwtAlgorithm rpcWebsocketsAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM;
 
   @Option(
       names = {"--rpc-http-tls-enabled"},
@@ -1867,7 +1875,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
-    jsonRpcConfiguration.setAuthenticationAlgorithm(rpcAuthenticationAlgorithm.toString());
+    jsonRpcConfiguration.setAuthenticationAlgorithm(rpcHttpAuthenticationAlgorithm.toString());
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
     jsonRpcConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
     return jsonRpcConfiguration;
@@ -2015,7 +2023,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
     webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
-    webSocketConfiguration.setAuthenticationAlgorithm(rpcAuthenticationAlgorithm.toString());
+    webSocketConfiguration.setAuthenticationAlgorithm(
+        rpcWebsocketsAuthenticationAlgorithm.toString());
     webSocketConfiguration.setTimeoutSec(unstableRPCOptions.getWsTimeoutSec());
     return webSocketConfiguration;
   }
