@@ -40,6 +40,7 @@ import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.config.JwtAlgorithm;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
@@ -583,13 +584,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final File rpcHttpAuthenticationPublicKeyFile = null;
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
-      names = {"--rpc-http-authentication-jwt-algorithm"},
+      names = {"--rpc-authentication-jwt-algorithm"},
       description =
-          "Encryption algorithm used for the JWT public key. Possible values are RS256, RS384, RS512, ES256, ES384 and ES512",
+          "Encryption algorithm used for the JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
+              + " (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private String rpcHttpAuthenticationAlgorithm = null;
+  private final JwtAlgorithm rpcAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM;
 
   @Option(
       names = {"--rpc-http-tls-enabled"},
@@ -1855,13 +1856,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
     }
 
-    final String[] allowedJWTAlgs =
-        new String[] {"RS256", "RS384", "RS512", "ES256", "ES384", "ES512", null};
-
-    if (!Arrays.asList(allowedJWTAlgs).contains(rpcHttpAuthenticationAlgorithm)) {
-      throw new ParameterException(commandLine, "Invalid JWT key algorithm");
-    }
-
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
     jsonRpcConfiguration.setHost(rpcHttpHost);
@@ -1873,7 +1867,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
-    jsonRpcConfiguration.setAuthenticationAlgorithm(rpcHttpAuthenticationAlgorithm);
+    jsonRpcConfiguration.setAuthenticationAlgorithm(rpcAuthenticationAlgorithm.toString());
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
     jsonRpcConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
     return jsonRpcConfiguration;
@@ -2021,6 +2015,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
     webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
+    webSocketConfiguration.setAuthenticationAlgorithm(rpcAuthenticationAlgorithm.toString());
     webSocketConfiguration.setTimeoutSec(unstableRPCOptions.getWsTimeoutSec());
     return webSocketConfiguration;
   }

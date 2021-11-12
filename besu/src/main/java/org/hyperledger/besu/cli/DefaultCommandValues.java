@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli;
 
+import org.hyperledger.besu.cli.config.JwtAlgorithm;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -53,6 +54,7 @@ public interface DefaultCommandValues {
   String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
   String MANDATORY_PORT_FORMAT_HELP = "<PORT>";
   NatMethod DEFAULT_NAT_METHOD = NatMethod.AUTO;
+  JwtAlgorithm DEFAULT_JWT_ALGORITHM = JwtAlgorithm.RS256;
   int FAST_SYNC_MIN_PEER_COUNT = 5;
   int DEFAULT_MAX_PEERS = 25;
   int DEFAULT_HTTP_MAX_CONNECTIONS = 80;
