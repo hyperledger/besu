@@ -55,14 +55,12 @@ public class ForkingValidatorProvider implements ValidatorProvider {
   @Override
   public Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
     final long nextBlock = parentHeader.getNumber() + 1;
-    final ValidatorProvider validatorProvider = resolveValidatorProvider(nextBlock);
-    return validatorProvider.getValidatorsAfterBlock(parentHeader);
+    return resolveValidatorProvider(nextBlock).getValidatorsAfterBlock(parentHeader);
   }
 
   @Override
   public Collection<Address> getValidatorsForBlock(final BlockHeader header) {
-    final ValidatorProvider validatorProvider = resolveValidatorProvider(header.getNumber());
-    return validatorProvider.getValidatorsForBlock(header);
+    return resolveValidatorProvider(header.getNumber()).getValidatorsForBlock(header);
   }
 
   @Override
