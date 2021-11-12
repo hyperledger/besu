@@ -71,6 +71,7 @@ import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.RetestethSubCommand;
+import org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand;
@@ -1256,6 +1257,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         RLPSubCommand.COMMAND_NAME, new RLPSubCommand(resultHandler.out(), in));
     commandLine.addSubcommand(
         OperatorSubCommand.COMMAND_NAME, new OperatorSubCommand(resultHandler.out()));
+    commandLine.addSubcommand(
+        ValidateConfigSubCommand.COMMAND_NAME,
+        new ValidateConfigSubCommand(commandLine, resultHandler.out()));
     final String generateCompletionSubcommandName = "generate-completion";
     commandLine.addSubcommand(
         generateCompletionSubcommandName, AutoComplete.GenerateCompletion.class);
@@ -2530,27 +2534,36 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (discoveryDnsUrl != null) {
       builder.setDnsDiscoveryUrl(discoveryDnsUrl);
+    } else if (genesisConfigOptions != null) {
+      final Optional<String> discoveryDnsUrlFromGenesis =
+          genesisConfigOptions.getDiscoveryOptions().getDiscoveryDnsUrl();
+      discoveryDnsUrlFromGenesis.ifPresent(builder::setDnsDiscoveryUrl);
     }
 
     if (networkId != null) {
       builder.setNetworkId(networkId);
     }
 
+    List<EnodeURL> listBootNodes = null;
     if (bootNodes != null) {
-      if (!peerDiscoveryEnabled) {
-        logger.warn("Discovery disabled: bootnodes will be ignored.");
-      }
       try {
-        final List<EnodeURL> listBootNodes =
-            bootNodes.stream()
-                .filter(value -> !value.isEmpty())
-                .map(url -> EnodeURLImpl.fromString(url, getEnodeDnsConfiguration()))
-                .collect(Collectors.toList());
-        DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
-        builder.setBootNodes(listBootNodes);
+        listBootNodes = buildEnodes(bootNodes, getEnodeDnsConfiguration());
       } catch (final IllegalArgumentException e) {
         throw new ParameterException(commandLine, e.getMessage());
       }
+    } else if (genesisConfigOptions != null) {
+      final Optional<List<String>> bootNodesFromGenesis =
+          genesisConfigOptions.getDiscoveryOptions().getBootNodes();
+      if (bootNodesFromGenesis.isPresent()) {
+        listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
+      }
+    }
+    if (listBootNodes != null) {
+      if (!peerDiscoveryEnabled) {
+        logger.warn("Discovery disabled: bootnodes will be ignored.");
+      }
+      DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
+      builder.setBootNodes(listBootNodes);
     }
     return builder.build();
   }
@@ -2636,6 +2649,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
     logger.info("Static Nodes file = {}", staticNodesPath);
     return StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
+  }
+
+  private List<EnodeURL> buildEnodes(
+      final List<String> bootNodes, final EnodeDnsConfiguration enodeDnsConfiguration) {
+    return bootNodes.stream()
+        .filter(bootNode -> !bootNode.isEmpty())
+        .map(bootNode -> EnodeURLImpl.fromString(bootNode, enodeDnsConfiguration))
+        .collect(Collectors.toList());
   }
 
   public BesuExceptionHandler exceptionHandler() {
