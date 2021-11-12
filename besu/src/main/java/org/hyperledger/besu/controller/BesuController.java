@@ -202,7 +202,7 @@ public class BesuController implements java.io.Closeable {
         } else {
           throw new IllegalStateException("Invalid config");
         }
-        return new SwitchableBesuControllerBuilder(
+        return new ForkingBesuControllerBuilder(
                 Arrays.asList(originalControllerBuilder, new QbftBesuControllerBuilder()))
             .genesisConfigFile(genesisConfig);
       }

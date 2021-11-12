@@ -68,7 +68,7 @@ import org.apache.logging.log4j.Logger;
  This is a placeholder class for the QBFT migration logic. For now, all it does is to delegate any
  BesuControllerBuilder to the first controller in the list.
 */
-public class SwitchableBesuControllerBuilder extends BesuControllerBuilder {
+public class ForkingBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -76,7 +76,7 @@ public class SwitchableBesuControllerBuilder extends BesuControllerBuilder {
 
   private Long qbftStartBlock;
 
-  public SwitchableBesuControllerBuilder(final List<BesuControllerBuilder> besuControllerBuilders) {
+  public ForkingBesuControllerBuilder(final List<BesuControllerBuilder> besuControllerBuilders) {
     Preconditions.checkNotNull(besuControllerBuilders);
     Preconditions.checkArgument(!besuControllerBuilders.isEmpty());
     this.besuControllerBuilders.addAll(besuControllerBuilders);
