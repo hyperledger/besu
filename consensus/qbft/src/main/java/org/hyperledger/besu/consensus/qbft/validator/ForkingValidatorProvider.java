@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Collection;
 import java.util.Optional;
-import java.util.function.Function;
 
 public class ForkingValidatorProvider implements ValidatorProvider {
 
@@ -57,15 +56,13 @@ public class ForkingValidatorProvider implements ValidatorProvider {
   public Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
     final long nextBlock = parentHeader.getNumber() + 1;
     final ValidatorProvider validatorProvider = resolveValidatorProvider(nextBlock);
-    return getValidators(
-        validatorProvider, p -> p.getValidatorsAfterBlock(parentHeader));
+    return validatorProvider.getValidatorsAfterBlock(parentHeader);
   }
 
   @Override
   public Collection<Address> getValidatorsForBlock(final BlockHeader header) {
     final ValidatorProvider validatorProvider = resolveValidatorProvider(header.getNumber());
-    return getValidators(
-        validatorProvider, p -> p.getValidatorsForBlock(header));
+    return validatorProvider.getValidatorsForBlock(header);
   }
 
   @Override
@@ -77,13 +74,6 @@ public class ForkingValidatorProvider implements ValidatorProvider {
   @Override
   public Optional<VoteProvider> getVoteProviderAfterBlock(final BlockHeader header) {
     return resolveValidatorProvider(header.getNumber() + 1).getVoteProviderAtHead();
-  }
-
-  private Collection<Address> getValidators(
-      final ValidatorProvider validatorProvider,
-      final Function<ValidatorProvider, Collection<Address>> getValidators) {
-
-    return getValidators.apply(validatorProvider);
   }
 
   private ValidatorProvider resolveValidatorProvider(final long block) {
