@@ -40,7 +40,7 @@ public class ShrOperation extends AbstractFixedCostOperation {
       final int shiftAmountInt = shiftAmount.toInt();
       final Bytes value = leftPad(frame.popStackItem());
 
-      if (shiftAmountInt >= 256) {
+      if (shiftAmountInt >= 256 || shiftAmountInt < 0) {
         frame.pushStackItem(UInt256.ZERO);
       } else {
         frame.pushStackItem(value.shiftRight(shiftAmountInt));
