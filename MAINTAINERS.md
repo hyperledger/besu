@@ -13,6 +13,7 @@
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | David Mechler    | davemec          | davemec          |
+| Diego López León | diega            | diega            |
 | Edward Mack      | edwardmack       | mackcom          | 
 | Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jason Frame      | jframe           | jframe           |
