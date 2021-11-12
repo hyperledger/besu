@@ -50,7 +50,7 @@ public class QbftGossip implements Gossiper {
   }
 
   /**
-   * Retransmit a given IBFT message to other known validators nodes
+   * Retransmit a given QBFT message to other known validators nodes
    *
    * @param message The raw message to be gossiped
    */

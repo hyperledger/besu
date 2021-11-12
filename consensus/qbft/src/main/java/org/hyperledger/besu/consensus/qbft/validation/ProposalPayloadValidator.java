@@ -63,7 +63,7 @@ public class ProposalPayloadValidator {
         protocolContext,
         bftExtraDataCodec,
         protocolContext
-            .getConsensusState(QbftContext.class)
+            .getConsensusContext(QbftContext.class)
             .getPkiBlockCreationConfiguration()
             .map(config -> new CmsValidator(config.getTrustStore())));
   }
@@ -111,7 +111,7 @@ public class ProposalPayloadValidator {
     if (cmsValidator.isPresent()) {
       return validateCms(
           block,
-          protocolContext.getConsensusState(QbftContext.class).getBlockInterface(),
+          protocolContext.getConsensusContext(QbftContext.class).getBlockInterface(),
           cmsValidator.get());
     }
 

@@ -16,10 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,7 +35,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
-import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.evm.log.LogTopic;
 
@@ -150,24 +147,6 @@ public class PrivNewFilterTest {
             refEq(BlockParameter.EARLIEST),
             refEq(BlockParameter.LATEST),
             eq((expectedQuery)));
-  }
-
-  @Test
-  public void multiTenancyCheckFailure() {
-    final User user = mock(User.class);
-    final FilterParameter filterParameter = mock(FilterParameter.class);
-
-    when(privacyIdProvider.getPrivacyUserId(any())).thenReturn(ENCLAVE_KEY);
-    doThrow(new MultiTenancyValidationException("msg"))
-        .when(privacyController)
-        .verifyPrivacyGroupContainsPrivacyUserId(eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY));
-
-    final JsonRpcRequestContext request =
-        privNewFilterRequestWithUser(PRIVACY_GROUP_ID, filterParameter, user);
-
-    assertThatThrownBy(() -> method.response(request))
-        .isInstanceOf(MultiTenancyValidationException.class)
-        .hasMessageContaining("msg");
   }
 
   private JsonRpcRequestContext privNewFilterRequest(

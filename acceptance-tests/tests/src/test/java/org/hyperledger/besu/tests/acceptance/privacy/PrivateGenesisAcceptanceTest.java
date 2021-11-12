@@ -71,8 +71,7 @@ public class PrivateGenesisAcceptanceTest extends ParameterizedEnclaveTestBase {
                 alice.getEnclaveKey(),
                 privacyGroupId));
 
-    privateTransactionVerifier.existingPrivateTransactionReceipt(
-        eventEmitter.store(BigInteger.valueOf(42)).send().getTransactionHash());
+    eventEmitter.store(BigInteger.valueOf(42)).send();
 
     final EthCall response =
         alice.execute(

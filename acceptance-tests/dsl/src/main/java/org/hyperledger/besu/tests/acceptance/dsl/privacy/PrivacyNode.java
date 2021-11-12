@@ -110,6 +110,7 @@ public class PrivacyNode implements AutoCloseable {
             besuConfig.getNetwork(),
             besuConfig.getGenesisConfigProvider(),
             besuConfig.isP2pEnabled(),
+            besuConfig.getP2pPort(),
             besuConfig.getTLSConfiguration(),
             besuConfig.getNetworkingConfiguration(),
             besuConfig.isDiscoveryEnabled(),
@@ -196,18 +197,23 @@ public class PrivacyNode implements AutoCloseable {
       final Path dataDir = Files.createTempDirectory("acctest-privacy");
       final Path dbDir = dataDir.resolve(DATABASE_PATH);
 
-      privacyParameters =
+      var builder =
           new PrivacyParameters.Builder()
               .setEnabled(true)
               .setEnclaveUrl(enclave.clientUrl())
-              .setPrivacyUserIdUsingFile(enclave.getPublicKeyPaths().get(0).toFile())
               .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
               .setPrivateKeyPath(KeyPairUtil.getDefaultKeyFile(besu.homeDirectory()).toPath())
               .setEnclaveFactory(new EnclaveFactory(vertx))
               .setOnchainPrivacyGroupsEnabled(isOnchainPrivacyEnabled)
               .setMultiTenancyEnabled(isMultitenancyEnabled)
-              .setPrivacyPluginEnabled(isPrivacyPluginEnabled)
-              .build();
+              .setPrivacyPluginEnabled(isPrivacyPluginEnabled);
+
+      if (enclave.getPublicKeyPaths().size() > 0) {
+        builder.setPrivacyUserIdUsingFile(enclave.getPublicKeyPaths().get(0).toFile());
+      }
+
+      privacyParameters = builder.build();
+
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }

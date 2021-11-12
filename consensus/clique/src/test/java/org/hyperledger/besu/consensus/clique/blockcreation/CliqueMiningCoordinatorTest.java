@@ -90,7 +90,7 @@ public class CliqueMiningCoordinatorTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
 
-    when(protocolContext.getConsensusState(CliqueContext.class)).thenReturn(cliqueContext);
+    when(protocolContext.getConsensusContext(CliqueContext.class)).thenReturn(cliqueContext);
     when(protocolContext.getBlockchain()).thenReturn(blockChain);
     when(minerExecutor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(blockMiner));
     when(syncState.isInSync()).thenReturn(true);

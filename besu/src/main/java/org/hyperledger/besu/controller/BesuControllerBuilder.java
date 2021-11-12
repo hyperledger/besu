@@ -20,6 +20,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -86,8 +87,8 @@ public abstract class BesuControllerBuilder {
   private static final Logger LOG = LogManager.getLogger();
 
   protected GenesisConfigFile genesisConfig;
-  private SynchronizerConfiguration syncConfig;
-  private EthProtocolConfiguration ethereumWireProtocolConfiguration;
+  protected SynchronizerConfiguration syncConfig;
+  protected EthProtocolConfiguration ethereumWireProtocolConfiguration;
   protected TransactionPoolConfiguration transactionPoolConfiguration;
   protected BigInteger networkId;
   protected MiningParameters miningParameters;
@@ -100,15 +101,15 @@ public abstract class BesuControllerBuilder {
   protected NodeKey nodeKey;
   protected boolean isRevertReasonEnabled;
   GasLimitCalculator gasLimitCalculator;
-  private StorageProvider storageProvider;
-  private boolean isPruningEnabled;
-  private PrunerConfiguration prunerConfiguration;
-  Map<String, String> genesisConfigOverrides;
-  private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
-  private long reorgLoggingThreshold;
-  private DataStorageConfiguration dataStorageConfiguration =
+  protected StorageProvider storageProvider;
+  protected boolean isPruningEnabled;
+  protected PrunerConfiguration prunerConfiguration;
+  protected Map<String, String> genesisConfigOverrides;
+  protected Map<Long, Hash> requiredBlocks = Collections.emptyMap();
+  protected long reorgLoggingThreshold;
+  protected DataStorageConfiguration dataStorageConfiguration =
       DataStorageConfiguration.DEFAULT_CONFIG;
-  private List<NodeMessagePermissioningProvider> messagePermissioningProviders =
+  protected List<NodeMessagePermissioningProvider> messagePermissioningProviders =
       Collections.emptyList();
   protected EvmConfiguration evmConfiguration;
 
@@ -416,7 +417,7 @@ public abstract class BesuControllerBuilder {
 
   protected void validateContext(final ProtocolContext context) {}
 
-  protected abstract Object createConsensusContext(
+  protected abstract ConsensusContext createConsensusContext(
       Blockchain blockchain,
       WorldStateArchive worldStateArchive,
       ProtocolSchedule protocolSchedule);

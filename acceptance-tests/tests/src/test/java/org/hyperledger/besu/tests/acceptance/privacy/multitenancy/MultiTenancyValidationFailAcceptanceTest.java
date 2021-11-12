@@ -172,7 +172,9 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
     final Transaction<Integer> transaction =
         privacyTransactions.getEeaTransactionCount(
             accountAddress, OTHER_ENCLAVE_PUBLIC_KEY, privateFor);
-    node.verify(priv.multiTenancyValidationFail(transaction, GET_PRIVATE_TRANSACTION_NONCE_ERROR));
+    node.verify(
+        priv.multiTenancyValidationFail(
+            transaction, PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY));
   }
 
   @Test
