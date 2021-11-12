@@ -33,6 +33,8 @@ public class MutableQbftConfigOptions extends MutableBftConfigOptions implements
         qbftConfigOptions.getValidatorContractAddress().map(String::toLowerCase);
   }
 
+  // TODO-lucas do I need to implement getStartBlock here?
+
   @Override
   public Optional<String> getValidatorContractAddress() {
     return validatorContractAddress;

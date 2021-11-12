@@ -19,6 +19,7 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -58,7 +59,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 import com.google.common.base.Preconditions;
 import org.apache.logging.log4j.LogManager;
@@ -74,6 +74,8 @@ public class SwitchableBesuControllerBuilder extends BesuControllerBuilder {
 
   private final List<BesuControllerBuilder> besuControllerBuilders = new ArrayList<>();
 
+  private Long qbftStartBlock;
+
   public SwitchableBesuControllerBuilder(final List<BesuControllerBuilder> besuControllerBuilders) {
     Preconditions.checkNotNull(besuControllerBuilders);
     Preconditions.checkArgument(!besuControllerBuilders.isEmpty());
@@ -82,10 +84,16 @@ public class SwitchableBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected void prepForBuild() {
-    OptionalLong qbftMigrationBlock =
-        genesisConfig.getConfigOptions(genesisConfigOverrides).getQbftMigrationBlock();
+    final QbftConfigOptions qbftConfigOptions =
+        genesisConfig.getConfigOptions(genesisConfigOverrides).getQbftConfigOptions();
 
-    LOG.info(">>> Preparing for build: qbftBLock is {}", qbftMigrationBlock.orElse(-1));
+    // TODO-lucas better validation/error handling
+    qbftStartBlock = qbftConfigOptions.getStartBlock().orElseThrow();
+    if (qbftStartBlock <= 0) {
+      throw new IllegalStateException("Invalid QBFT startBlock");
+    }
+
+    LOG.info(">>> Preparing for build: QBFT startBlock is {}", qbftStartBlock);
 
     besuControllerBuilders.get(0).prepForBuild();
   }

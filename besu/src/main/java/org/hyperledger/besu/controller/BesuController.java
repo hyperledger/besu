@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -190,6 +191,21 @@ public class BesuController implements java.io.Closeable {
       final GenesisConfigOptions configOptions =
           genesisConfig.getConfigOptions(genesisConfigOverrides);
       final BesuControllerBuilder builder;
+
+      // TODO-lucas Too much in-line code?
+      if (configOptions.isQbft() && (configOptions.isIbft2() || configOptions.isIbftLegacy())) {
+        final BesuControllerBuilder originalControllerBuilder;
+        if (configOptions.isIbft2()) {
+          originalControllerBuilder = new IbftBesuControllerBuilder();
+        } else if (configOptions.isIbftLegacy()) {
+          originalControllerBuilder = new IbftLegacyBesuControllerBuilder();
+        } else {
+          throw new IllegalStateException("Invalid config");
+        }
+        return new SwitchableBesuControllerBuilder(
+                Arrays.asList(originalControllerBuilder, new QbftBesuControllerBuilder()))
+            .genesisConfigFile(genesisConfig);
+      }
 
       if (configOptions.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
         builder = new MainnetBesuControllerBuilder();

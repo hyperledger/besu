@@ -15,6 +15,7 @@
 package org.hyperledger.besu.config;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public interface QbftConfigOptions extends BftConfigOptions {
 
@@ -22,5 +23,9 @@ public interface QbftConfigOptions extends BftConfigOptions {
 
   default boolean isValidatorContractMode() {
     return getValidatorContractAddress().isPresent();
+  }
+
+  default OptionalLong getStartBlock() {
+    return OptionalLong.empty();
   }
 }
