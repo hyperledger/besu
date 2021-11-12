@@ -27,6 +27,7 @@
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Sajida Zouarhi   | sajz             | SajidaZ          |
 | Stefan Pingel    | pinges           | pinges           |
+| Taccat Isid      | taccatisid       | taccatisid       |
 | Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Danno Ferrin     | shemnon          | shemnon          |
