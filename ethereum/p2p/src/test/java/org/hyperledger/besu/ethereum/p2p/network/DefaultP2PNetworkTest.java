@@ -52,6 +52,7 @@ import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -61,6 +62,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.crypto.SECP256K1;
+import org.apache.tuweni.devp2p.EthereumNodeRecord;
+import org.apache.tuweni.discovery.DNSDaemonListener;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -72,8 +77,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public final class DefaultP2PNetworkTest {
-
   final MaintainedPeers maintainedPeers = new MaintainedPeers();
+  final SECP256K1.SecretKey mockKey =
+      SECP256K1.SecretKey.fromBytes(
+          Bytes32.fromHexString(
+              "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"));
   @Mock PeerDiscoveryAgent discoveryAgent;
   @Mock RlpxAgent rlpxAgent;
 
@@ -334,7 +342,7 @@ public final class DefaultP2PNetworkTest {
   }
 
   @Test
-  public void shouldNotStartDnsDiscoveryWhenDNSURLIsNotConfigured() {
+  public void shouldNotStartDnsDiscoveryWhenDnsURLIsNotConfigured() {
     // spy on DefaultP2PNetwork
     DefaultP2PNetwork testClass = spy(network());
 
@@ -345,7 +353,7 @@ public final class DefaultP2PNetworkTest {
   }
 
   @Test
-  public void shouldStartDnsDiscoveryWhenDNSURLIsNotConfigured() {
+  public void shouldStartDnsDiscoveryWhenDnsURLIsConfigured() {
     // create a discovery config with a dns config
     DiscoveryConfiguration disco =
         DiscoveryConfiguration.create().setDnsDiscoveryURL("enrtree://mock@localhost");
@@ -361,6 +369,35 @@ public final class DefaultP2PNetworkTest {
     // ensure we called getDnsDaemon during start, and that it is present:
     verify(testClass, times(1)).getDnsDaemon();
     assertThat(testClass.getDnsDaemon()).isPresent();
+  }
+
+  @Test
+  public void shouldNotDropDnsHostsOnEmptyLookup() {
+    DefaultP2PNetwork network = network();
+    DNSDaemonListener listenerUnderTest = network.createDaemonListener();
+
+    // assert no entries prior to lookup
+    assertThat(network.dnsPeers.get()).isNull();
+
+    // simulate successful lookup of 1 peer
+    listenerUnderTest.newRecords(
+        1,
+        List.of(
+            EthereumNodeRecord.create(
+                SECP256K1.KeyPair.fromSecretKey(mockKey),
+                1L,
+                null,
+                null,
+                InetAddress.getLoopbackAddress(),
+                30303,
+                30303)));
+    assertThat(network.dnsPeers.get()).isNotEmpty();
+    assertThat(network.dnsPeers.get().size()).isEqualTo(1);
+
+    // simulate failed lookup empty list
+    listenerUnderTest.newRecords(2, Collections.emptyList());
+    assertThat(network.dnsPeers.get()).isNotEmpty();
+    assertThat(network.dnsPeers.get().size()).isEqualTo(1);
   }
 
   private DefaultP2PNetwork network() {

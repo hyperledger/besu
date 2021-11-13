@@ -77,6 +77,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.devp2p.EthereumNodeRecord;
 import org.apache.tuweni.discovery.DNSDaemon;
+import org.apache.tuweni.discovery.DNSDaemonListener;
 
 /**
  * The peer network service (defunct PeerNetworkingService) is the entrypoint to the peer-to-peer
@@ -143,9 +144,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch shutdownLatch = new CountDownLatch(2);
   private final Duration shutdownTimeout = Duration.ofMinutes(1);
-
-  private final AtomicReference<List<DiscoveryPeer>> dnsPeers = new AtomicReference<>();
   private DNSDaemon dnsDaemon;
+
+  @VisibleForTesting final AtomicReference<List<DiscoveryPeer>> dnsPeers = new AtomicReference<>();
 
   /**
    * Creates a peer networking service for production purposes.
@@ -203,29 +204,16 @@ public class DefaultP2PNetwork implements P2PNetwork {
     final String address = config.getDiscovery().getAdvertisedHost();
     final int configuredDiscoveryPort = config.getDiscovery().getBindPort();
     final int configuredRlpxPort = config.getRlpx().getBindPort();
-    if (config.getDiscovery().getDNSDiscoveryURL() != null) {
-      LOG.info("Starting DNS discovery with URL {}", config.getDiscovery().getDNSDiscoveryURL());
-      dnsDaemon =
-          new DNSDaemon(
-              config.getDiscovery().getDNSDiscoveryURL(),
-              (seq, records) -> {
-                List<DiscoveryPeer> peers = new ArrayList<>();
-                for (EthereumNodeRecord enr : records) {
-                  EnodeURL enodeURL =
-                      EnodeURLImpl.builder()
-                          .ipAddress(enr.ip())
-                          .nodeId(enr.publicKey().bytes())
-                          .discoveryPort(Optional.ofNullable(enr.udp()))
-                          .listeningPort(Optional.ofNullable(enr.tcp()))
-                          .build();
-                  DiscoveryPeer peer = DiscoveryPeer.fromEnode(enodeURL);
-                  peers.add(peer);
-                  rlpxAgent.connect(peer);
-                }
-                dnsPeers.set(peers);
-              });
-    }
-    getDnsDaemon().ifPresent(DNSDaemon::start);
+
+    Optional.ofNullable(config.getDiscovery().getDNSDiscoveryURL())
+        .ifPresent(
+            disco -> {
+              LOG.info("Starting DNS discovery with URL {}", disco);
+              // TODO config dns server me and log
+
+              dnsDaemon = new DNSDaemon(disco, createDaemonListener(), 0L, 60000L, null);
+              dnsDaemon.start();
+            });
 
     final int listeningPort = rlpxAgent.start().join();
     final int discoveryPort =
@@ -323,6 +311,29 @@ public class DefaultP2PNetwork implements P2PNetwork {
   @VisibleForTesting
   Optional<DNSDaemon> getDnsDaemon() {
     return Optional.ofNullable(dnsDaemon);
+  }
+
+  @VisibleForTesting
+  DNSDaemonListener createDaemonListener() {
+    return (seq, records) -> {
+      List<DiscoveryPeer> peers = new ArrayList<>();
+      for (EthereumNodeRecord enr : records) {
+        EnodeURL enodeURL =
+            EnodeURLImpl.builder()
+                .ipAddress(enr.ip())
+                .nodeId(enr.publicKey().bytes())
+                .discoveryPort(Optional.ofNullable(enr.udp()))
+                .listeningPort(Optional.ofNullable(enr.tcp()))
+                .build();
+        DiscoveryPeer peer = DiscoveryPeer.fromEnode(enodeURL);
+        peers.add(peer);
+        rlpxAgent.connect(peer);
+      }
+      // only replace dnsPeers if the lookup was successful:
+      if (!peers.isEmpty()) {
+        dnsPeers.set(peers);
+      }
+    };
   }
 
   @VisibleForTesting
