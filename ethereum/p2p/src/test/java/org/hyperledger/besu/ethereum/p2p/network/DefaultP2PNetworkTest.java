@@ -344,12 +344,9 @@ public final class DefaultP2PNetworkTest {
 
   @Test
   public void shouldNotStartDnsDiscoveryWhenDnsURLIsNotConfigured() {
-    // spy on DefaultP2PNetwork
-    DefaultP2PNetwork testClass = spy(network());
-
+    DefaultP2PNetwork testClass = network();
     testClass.start();
-    // ensure we called getDnsDaemon during start, and that it is NOT present:
-    verify(testClass, times(1)).getDnsDaemon();
+    // ensure DnsDaemon is NOT present:
     assertThat(testClass.getDnsDaemon()).isNotPresent();
   }
 
@@ -364,11 +361,9 @@ public final class DefaultP2PNetworkTest {
         when(spy(config).getDiscovery()).thenReturn(disco).getMock();
 
     // spy on DefaultP2PNetwork
-    DefaultP2PNetwork testClass = spy((DefaultP2PNetwork) builder().config(dnsConfig).build());
+    DefaultP2PNetwork testClass = (DefaultP2PNetwork) builder().config(dnsConfig).build();
 
     testClass.start();
-    // ensure we called getDnsDaemon during start, and that it is present:
-    verify(testClass, times(1)).getDnsDaemon();
     assertThat(testClass.getDnsDaemon()).isPresent();
   }
 
@@ -383,9 +378,11 @@ public final class DefaultP2PNetworkTest {
     doReturn(disco).when(dnsConfig).getDiscovery();
     doReturn(Optional.of("localhost")).when(dnsConfig).getDnsDiscoveryServerOverride();
 
-    builder().config(dnsConfig).build().start();
+    DefaultP2PNetwork testClass = (DefaultP2PNetwork) builder().config(dnsConfig).build();
+    testClass.start();
 
     // ensure we used the dns server override config when building DNSDaemon:
+    assertThat(testClass.getDnsDaemon()).isPresent();
     verify(dnsConfig, times(2)).getDnsDiscoveryServerOverride();
   }
 
