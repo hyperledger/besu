@@ -209,9 +209,20 @@ public class DefaultP2PNetwork implements P2PNetwork {
         .ifPresent(
             disco -> {
               LOG.info("Starting DNS discovery with URL {}", disco);
-              // TODO config dns server me and log
+              config
+                  .getDnsDiscoveryServerOverride()
+                  .ifPresent(
+                      dnsServer ->
+                          LOG.info(
+                              "Starting DNS discovery with DNS Server override {}", dnsServer));
 
-              dnsDaemon = new DNSDaemon(disco, createDaemonListener(), 0L, 60000L, null);
+              dnsDaemon =
+                  new DNSDaemon(
+                      disco,
+                      createDaemonListener(),
+                      0L,
+                      60000L,
+                      config.getDnsDiscoveryServerOverride().orElse(null));
               dnsDaemon.start();
             });
 

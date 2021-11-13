@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -369,6 +370,23 @@ public final class DefaultP2PNetworkTest {
     // ensure we called getDnsDaemon during start, and that it is present:
     verify(testClass, times(1)).getDnsDaemon();
     assertThat(testClass.getDnsDaemon()).isPresent();
+  }
+
+  @Test
+  public void shouldUseDnsServerOverrideIfPresent() {
+    // create a discovery config with a dns config
+    DiscoveryConfiguration disco =
+        DiscoveryConfiguration.create().setDnsDiscoveryURL("enrtree://mock@localhost");
+
+    // spy on config to return dns discovery config:
+    NetworkingConfiguration dnsConfig = spy(config);
+    doReturn(disco).when(dnsConfig).getDiscovery();
+    doReturn(Optional.of("localhost")).when(dnsConfig).getDnsDiscoveryServerOverride();
+
+    builder().config(dnsConfig).build().start();
+
+    // ensure we used the dns server override config when building DNSDaemon:
+    verify(dnsConfig, times(2)).getDnsDiscoveryServerOverride();
   }
 
   @Test

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.config;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public class NetworkingConfiguration {
   public static final int DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC = 30;
@@ -27,6 +28,7 @@ public class NetworkingConfiguration {
   private int initiateConnectionsFrequencySec = DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC;
   private int checkMaintainedConnectionsFrequencySec =
       DEFAULT_CHECK_MAINTAINED_CONNECTSION_FREQUENCY_SEC;
+  private String dnsDiscoveryServerOverride = null;
 
   public static NetworkingConfiguration create() {
     return new NetworkingConfiguration();
@@ -63,6 +65,16 @@ public class NetworkingConfiguration {
 
   public int getCheckMaintainedConnectionsFrequencySec() {
     return checkMaintainedConnectionsFrequencySec;
+  }
+
+  public NetworkingConfiguration setDnsDiscoveryServerOverride(
+      final String dnsDiscoveryServerOverride) {
+    this.dnsDiscoveryServerOverride = dnsDiscoveryServerOverride;
+    return this;
+  }
+
+  public Optional<String> getDnsDiscoveryServerOverride() {
+    return Optional.ofNullable(dnsDiscoveryServerOverride);
   }
 
   public NetworkingConfiguration setCheckMaintainedConnectionsFrequency(
