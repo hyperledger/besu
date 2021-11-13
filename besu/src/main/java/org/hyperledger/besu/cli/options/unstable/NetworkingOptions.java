@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
-import static picocli.CommandLine.Option.NULL_VALUE;
-
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import picocli.CommandLine;
 
@@ -55,7 +54,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   @CommandLine.Option(
       names = DNS_DISCOVERY_SERVER_OVERRIDE_FLAG,
       hidden = true,
-      defaultValue = NULL_VALUE,
+      defaultValue = "",
       description =
           "DNS server host to use for doing DNS Discovery of peers, rather than the machine's configured DNS server")
   private String dnsDiscoveryServerOverride = null;
@@ -73,7 +72,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
     cliOptions.initiateConnectionsFrequencySec =
         networkingConfig.getInitiateConnectionsFrequencySec();
     cliOptions.dnsDiscoveryServerOverride =
-        networkingConfig.getDnsDiscoveryServerOverride().orElse(null);
+        networkingConfig.getDnsDiscoveryServerOverride().orElse("");
     return cliOptions;
   }
 
@@ -82,7 +81,8 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
     NetworkingConfiguration config = NetworkingConfiguration.create();
     config.setCheckMaintainedConnectionsFrequency(checkMaintainedConnectionsFrequencySec);
     config.setInitiateConnectionsFrequency(initiateConnectionsFrequencySec);
-    config.setDnsDiscoveryServerOverride(dnsDiscoveryServerOverride);
+    config.setDnsDiscoveryServerOverride(
+        Optional.of(dnsDiscoveryServerOverride).filter(z -> !z.isBlank()).orElse(null));
     return config;
   }
 
