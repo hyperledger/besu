@@ -173,12 +173,11 @@ public class RlpxAgent {
     if (!localNode.isReady()) {
       return;
     }
-    final int availablePeerSlots = Math.max(0, maxConnections - getConnectionCount());
     peerStream
+        .dropWhile(peer -> Math.max(0, maxConnections - getConnectionCount()) > 0)
         .filter(peer -> !connectionsById.containsKey(peer.getId()))
         .filter(peer -> peer.getEnodeURL().isListening())
         .filter(peerPermissions::allowNewOutboundConnectionTo)
-        .limit(availablePeerSlots)
         .forEach(this::connect);
   }
 
