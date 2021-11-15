@@ -20,13 +20,13 @@ import java.util.Objects;
 
 public class NetworkingConfiguration {
   public static final int DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC = 30;
-  public static final int DEFAULT_CHECK_MAINTAINED_CONNECTSION_FREQUENCY_SEC = 60;
+  public static final int DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC = 60;
 
   private DiscoveryConfiguration discovery = new DiscoveryConfiguration();
   private RlpxConfiguration rlpx = new RlpxConfiguration();
   private int initiateConnectionsFrequencySec = DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC;
   private int checkMaintainedConnectionsFrequencySec =
-      DEFAULT_CHECK_MAINTAINED_CONNECTSION_FREQUENCY_SEC;
+      DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC;
 
   public static NetworkingConfiguration create() {
     return new NetworkingConfiguration();
