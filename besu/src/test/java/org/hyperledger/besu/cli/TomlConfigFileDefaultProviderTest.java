@@ -56,6 +56,7 @@ public class TomlConfigFileDefaultProviderTest {
     when(mockCommandLine.getCommandSpec()).thenReturn(mockCommandSpec);
     Map<String, OptionSpec> validOptionsMap = new HashMap<>();
     validOptionsMap.put("--a-short-option", null);
+    validOptionsMap.put("--an-actual-long-option", null);
     validOptionsMap.put("--a-longer-option", null);
     when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
 
@@ -64,6 +65,8 @@ public class TomlConfigFileDefaultProviderTest {
         Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
 
       fileWriter.write("a-short-option='123'");
+      fileWriter.newLine();
+      fileWriter.write("an-actual-long-option=" + Long.MAX_VALUE);
       fileWriter.newLine();
       fileWriter.write("a-longer-option='1234'");
       fileWriter.flush();
@@ -85,6 +88,15 @@ public class TomlConfigFileDefaultProviderTest {
                       .type(Integer.class)
                       .build()))
           .isEqualTo("123");
+
+      // this option must be found in config as one of its names is present in the file.
+      // also this is a long.
+      assertThat(
+              providerUnderTest.defaultValue(
+                  OptionSpec.builder("an-actual-long-option", "another-name-for-the-option")
+                      .type(Long.class)
+                      .build()))
+          .isEqualTo(String.valueOf(Long.MAX_VALUE));
 
       // this option must be found in config as one of its names is present in the file.
       // also this is the longest one.

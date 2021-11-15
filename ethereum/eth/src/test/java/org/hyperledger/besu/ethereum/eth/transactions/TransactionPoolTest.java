@@ -681,7 +681,8 @@ public class TransactionPoolTest {
     transactionPool.addLocalTransaction(transaction1);
 
     assertThat(txValidationParamCaptor.getValue())
-        .isEqualToComparingFieldByField(expectedValidationParams);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedValidationParams);
   }
 
   @Test
