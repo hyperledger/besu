@@ -315,6 +315,12 @@ public abstract class PeerDiscoveryAgent {
                 if (err instanceof SocketException && err.getMessage().contains("unreachable")) {
                   LOG.debug(
                       "Peer {} is unreachable, packet: {}", peer, wrapBuffer(packet.encode()), err);
+                } else if (err instanceof SocketException
+                    && err.getMessage().contains("permitted")) {
+                  LOG.debug(
+                      "Operation not permitted sending to peer {}, this might be caused by firewall rules",
+                      peer,
+                      err);
                 } else if (err instanceof UnsupportedAddressTypeException) {
                   LOG.warn(
                       "Unsupported address type exception when connecting to peer {}, this is likely due to ipv6 not being enabled at runtime. "
