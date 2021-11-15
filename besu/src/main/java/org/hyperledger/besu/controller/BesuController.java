@@ -18,6 +18,7 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
+import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -34,9 +35,9 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -214,6 +215,8 @@ public class BesuController implements java.io.Closeable {
 
     private BesuControllerBuilder buildForkingBesuControllerBuilder(
         final GenesisConfigFile genesisConfig, final GenesisConfigOptions configOptions) {
+      final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule = new HashMap<>();
+
       final BesuControllerBuilder originalControllerBuilder;
       if (configOptions.isIbft2()) {
         originalControllerBuilder = new IbftBesuControllerBuilder();
@@ -222,9 +225,30 @@ public class BesuController implements java.io.Closeable {
       } else {
         throw new IllegalStateException("Invalid config");
       }
-      return new ForkingBesuControllerBuilder(
-              Arrays.asList(originalControllerBuilder, new QbftBesuControllerBuilder()))
+      besuControllerBuilderSchedule.put(0L, originalControllerBuilder);
+
+      final QbftConfigOptions qbftConfigOptions =
+          genesisConfig.getConfigOptions().getQbftConfigOptions();
+      final Long qbftBlock = readQbftStartBlockConfig(qbftConfigOptions);
+      besuControllerBuilderSchedule.put(qbftBlock, new QbftBesuControllerBuilder());
+
+      return new ConsensusScheduleBesuControllerBuilder(besuControllerBuilderSchedule)
           .genesisConfigFile(genesisConfig);
+    }
+
+    private Long readQbftStartBlockConfig(final QbftConfigOptions qbftConfigOptions) {
+      long startBlock =
+          qbftConfigOptions
+              .getStartBlock()
+              .orElseThrow(
+                  () ->
+                      new IllegalStateException("Missing QBFT startBlock config in genesis file"));
+
+      if (startBlock <= 0) {
+        throw new IllegalStateException("Invalid QBFT startBlock config in genesis file");
+      }
+
+      return startBlock;
     }
   }
 }
