@@ -57,7 +57,7 @@ public class FilterRepositoryTest {
 
     final BlockFilter retrievedFilter = repository.getFilter("id", BlockFilter.class).get();
 
-    assertThat(retrievedFilter).isEqualToComparingFieldByField(filter);
+    assertThat(retrievedFilter).usingRecursiveComparison().isEqualTo(filter);
   }
 
   @Test
@@ -89,7 +89,7 @@ public class FilterRepositoryTest {
     final Optional<BlockFilter> optional = repository.getFilter(filter.getId(), BlockFilter.class);
 
     assertThat(optional.isPresent()).isTrue();
-    assertThat(optional.get()).isEqualToComparingFieldByField(filter);
+    assertThat(optional.get()).usingRecursiveComparison().isEqualTo(filter);
   }
 
   @Test

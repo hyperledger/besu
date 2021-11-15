@@ -58,7 +58,7 @@ public class MinerStartTest {
 
     final JsonRpcResponse actualResponse = method.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -69,7 +69,7 @@ public class MinerStartTest {
 
     final JsonRpcResponse actualResponse = method.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -82,7 +82,7 @@ public class MinerStartTest {
 
     final JsonRpcResponse actualResponse = method.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext minerStart() {

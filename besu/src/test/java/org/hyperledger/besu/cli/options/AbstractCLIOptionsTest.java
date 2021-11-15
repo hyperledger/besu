@@ -61,7 +61,7 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     final TestBesuCommand cmd = parseCommand(cliOptions);
     final T optionsFromCommand = getOptionsFromBesuCommand(cmd);
 
-    assertThat(optionsFromCommand).isEqualToComparingFieldByField(options);
+    assertThat(optionsFromCommand).usingRecursiveComparison().isEqualTo(options);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

@@ -103,7 +103,7 @@ public class PrivCallTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(privacyController).simulatePrivateTransaction(any(), any(), any(), anyLong());
   }
 
@@ -120,7 +120,7 @@ public class PrivCallTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(privacyController)
         .simulatePrivateTransaction(any(), any(), eq(callParameter), anyLong());
   }
@@ -134,7 +134,7 @@ public class PrivCallTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(privacyController)
         .simulatePrivateTransaction(any(), any(), eq(callParameter()), anyLong());
   }
