@@ -1,14 +1,27 @@
 # Changelog
 
+## 21.10.3
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Early Access Features
+
 ## 21.10.2
 
 ### Additions and Improvements
 - Add discovery options to genesis file [#2944](https://github.com/hyperledger/besu/pull/2944)
 - Add validate-config subcommand to perform basic syntax validation of TOML config [#2994](https://github.com/hyperledger/besu/pull/2994)
+- Updated Sepolia Nodes [#3034](https://github.com/hyperledger/besu/pull/3034) [#3035](https://github.com/hyperledger/besu/pull/3035)
 
 ### Bug Fixes
+- Reduce shift calculations to shifts that may have an actual result. [#3039](https://github.com/hyperledger/besu/pull/3039)
+- DNS Discovery daemon wasn't started [#3033](https://github.com/hyperledger/besu/pull/3033)
 
-### Early Access Features
+### Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.2/besu-21.10.2.zip \
+SHA256: 4b96d4d10c0c6128dc67333c8600e927ea135b4db5e5f74688a0753260b7b985
 
 ## 21.10.1
 
@@ -31,7 +44,7 @@
 - Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
 
 ### Download Link
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.1/besu-21.10.1.zip \
+This release is not recommended for production use. \
 SHA256: 064df81be49c31ebfc0e1a5f03357e8f6f9a7f5e7bcb82e2b187e2d58e1704eb
 
 ## 21.10.0
@@ -58,7 +71,7 @@ SHA256: 064df81be49c31ebfc0e1a5f03357e8f6f9a7f5e7bcb82e2b187e2d58e1704eb
 - Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
 
 ### Download Link
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.0/besu-21.10.0.zip \
+This release is not recommended for production use. \
 SHA256: 71374454753c2ee595f4f34dc6913f731818d50150accbc98088aace313c6935
 
 ## 21.10.0-RC4
@@ -71,7 +84,7 @@ SHA256: 71374454753c2ee595f4f34dc6913f731818d50150accbc98088aace313c6935
 
 ### Early Access Features
 ### Download Link
-https://hyperledger.jfrog.io/native/besu-binaries/besu/21.10.0-RC4/besu-21.10.0-RC4.zip \
+This release is not recommended for production use. \
 SHA256: b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793
 
 ## 21.10.0-RC3
@@ -82,7 +95,7 @@ SHA256: b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793
 - Fix Concurrency issues in Ethpeers. [#2896](https://github.com/hyperledger/besu/pull/2896)
 
 ### Download
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.0-RC3/besu-21.10.0-RC3.zip \
+This release is not recommended for production use. \
 SHA256: 3d4857589336717bf5e4e5ef711b9a7f3bc46b49e1cf5b3b6574a00ccc6eda94
 
 ## 21.10.0-RC1/RC2
@@ -100,7 +113,7 @@ SHA256: 3d4857589336717bf5e4e5ef711b9a7f3bc46b49e1cf5b3b6574a00ccc6eda94
 ### Early Access Features
 
 ### Download
-https://hyperledger.jfrog.io/native/besu-binaries/besu/21.10.0-RC1/besu-21.10.0-RC1.zip \
+This release is not recommended for production use. \
 SHA256: 536612e5e4d7a5e7a582f729f01ba591ba68cc389e8379fea3571ed85322ff51
 
 
