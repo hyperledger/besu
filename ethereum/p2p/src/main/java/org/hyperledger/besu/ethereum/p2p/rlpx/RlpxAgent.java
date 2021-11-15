@@ -315,7 +315,7 @@ public class RlpxAgent {
               connection.getPeer(), connection.initiatedRemotely())) {
             LOG.debug(
                 "Disconnecting from peer that is not permitted to maintain ongoing connection: {}",
-                connection);
+                connection.getPeerConnection());
             connection.disconnect(DisconnectReason.REQUESTED);
           }
         });

@@ -161,7 +161,8 @@ public class PrivateTransactionProcessor {
                 .build();
       } else {
         final Address to = transaction.getTo().get();
-        final Optional<Account> maybeContract = Optional.ofNullable(privateWorldState.get(to));
+        final Optional<Account> maybeContract =
+            Optional.ofNullable(mutablePrivateWorldStateUpdater.get(to));
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.MESSAGE_CALL)

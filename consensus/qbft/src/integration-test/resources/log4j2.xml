@@ -12,5 +12,7 @@
     <Root level="${sys:root.log.level}">
       <AppenderRef ref="Console" />
     </Root>
+    <Logger name="org.hyperledger.besu.consensus" level="TRACE">
+    </Logger>
   </Loggers>
 </Configuration>
