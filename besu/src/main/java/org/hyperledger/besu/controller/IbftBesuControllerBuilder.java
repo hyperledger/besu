@@ -151,7 +151,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             bftExtraDataCodec().get());
 
     final ValidatorProvider validatorProvider =
-        protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
+        protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockchain, bftBlockInterface().get(), true, validatorProvider);
@@ -236,7 +236,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext) {
     final ValidatorProvider validatorProvider =
-        protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
+        protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
     return new IbftQueryPluginServiceFactory(
         blockchain, bftBlockInterface().get(), validatorProvider, nodeKey);
   }

@@ -48,7 +48,7 @@ public class MessageValidatorFactory {
 
   private Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
     return protocolContext
-        .getConsensusState(BftContext.class)
+        .getConsensusContext(BftContext.class)
         .getValidatorProvider()
         .getValidatorsAfterBlock(parentHeader);
   }
@@ -69,7 +69,7 @@ public class MessageValidatorFactory {
     final Collection<Address> validators = getValidatorsAfterBlock(parentHeader);
 
     final BftBlockInterface bftBlockInterface =
-        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
+        protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
 
     return new MessageValidator(
         createSignedDataValidator(roundIdentifier, parentHeader),
@@ -89,7 +89,7 @@ public class MessageValidatorFactory {
     final Collection<Address> validators = getValidatorsAfterBlock(parentHeader);
 
     final BftBlockInterface bftBlockInterface =
-        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
+        protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
     return new RoundChangeMessageValidator(
         new RoundChangePayloadValidator(
             (roundIdentifier) -> createSignedDataValidator(roundIdentifier, parentHeader),

@@ -19,8 +19,9 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.Framer;
+import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
-import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker;
+import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.HelloMessage;
@@ -44,7 +45,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
   private static final Logger LOG = LogManager.getLogger();
 
-  protected final Handshaker handshaker = new ECIESHandshaker();
+  protected final Handshaker handshaker;
 
   // The peer we are expecting to connect to, if such a peer is known
   private final Optional<Peer> expectedPeer;
@@ -57,19 +58,25 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
   private final MetricsSystem metricsSystem;
 
+  private final FramerProvider framerProvider;
+
   AbstractHandshakeHandler(
       final List<SubProtocol> subProtocols,
       final LocalNode localNode,
       final Optional<Peer> expectedPeer,
       final CompletableFuture<PeerConnection> connectionFuture,
       final PeerConnectionEventDispatcher connectionEventDispatcher,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final HandshakerProvider handshakerProvider,
+      final FramerProvider framerProvider) {
     this.subProtocols = subProtocols;
     this.localNode = localNode;
     this.expectedPeer = expectedPeer;
     this.connectionFuture = connectionFuture;
     this.connectionEventDispatcher = connectionEventDispatcher;
     this.metricsSystem = metricsSystem;
+    this.handshaker = handshakerProvider.buildInstance();
+    this.framerProvider = framerProvider;
   }
 
   /**
@@ -100,7 +107,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
       LOG.trace("Sending framed hello");
 
       // Exchange keys done
-      final Framer framer = new Framer(handshaker.secrets());
+      final Framer framer = this.framerProvider.buildFramer(handshaker.secrets());
 
       final ByteToMessageDecoder deFramer =
           new DeFramer(

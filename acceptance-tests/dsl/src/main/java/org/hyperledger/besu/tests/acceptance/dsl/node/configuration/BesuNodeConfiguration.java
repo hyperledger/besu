@@ -44,6 +44,7 @@ public class BesuNodeConfiguration {
   private final boolean devMode;
   private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean p2pEnabled;
+  private final int p2pPort;
   private final Optional<TLSConfiguration> tlsConfiguration;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean discoveryEnabled;
@@ -74,6 +75,7 @@ public class BesuNodeConfiguration {
       final NetworkName network,
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
+      final int p2pPort,
       final Optional<TLSConfiguration> tlsConfiguration,
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
@@ -101,6 +103,7 @@ public class BesuNodeConfiguration {
     this.network = network;
     this.genesisConfigProvider = genesisConfigProvider;
     this.p2pEnabled = p2pEnabled;
+    this.p2pPort = p2pPort;
     this.tlsConfiguration = tlsConfiguration;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
@@ -164,6 +167,10 @@ public class BesuNodeConfiguration {
 
   public boolean isP2pEnabled() {
     return p2pEnabled;
+  }
+
+  public int getP2pPort() {
+    return p2pPort;
   }
 
   public Optional<TLSConfiguration> getTLSConfiguration() {

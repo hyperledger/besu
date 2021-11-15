@@ -54,7 +54,7 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, worldStateArchive);
     final ValidatorProvider validatorProvider =
-        context.getConsensusState(CliqueContext.class).getValidatorProvider();
+        context.getConsensusContext(CliqueContext.class).getValidatorProvider();
 
     // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
     final ValidatorProvider readOnlyValidatorProvider =
@@ -73,7 +73,7 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private ValidatorProvider createValidatorProvider(
       final ProtocolContext context, final MutableBlockchain blockchain) {
     final EpochManager epochManager =
-        context.getConsensusState(CliqueContext.class).getEpochManager();
+        context.getConsensusContext(CliqueContext.class).getEpochManager();
     final CliqueBlockInterface cliqueBlockInterface = new CliqueBlockInterface();
     return BlockValidatorProvider.nonForkingValidatorProvider(
         blockchain, epochManager, cliqueBlockInterface);

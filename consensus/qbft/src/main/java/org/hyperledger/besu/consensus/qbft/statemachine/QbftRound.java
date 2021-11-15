@@ -146,7 +146,10 @@ public class QbftRound {
   }
 
   public void handleProposalMessage(final Proposal msg) {
-    LOG.debug("Received a proposal message. round={}", roundState.getRoundIdentifier());
+    LOG.debug(
+        "Received a proposal message. round={}. author={}",
+        roundState.getRoundIdentifier(),
+        msg.getAuthor());
     final Block block = msg.getSignedPayload().getPayload().getProposedBlock();
     if (updateStateWithProposedBlock(msg)) {
       sendPrepare(block);
@@ -167,12 +170,18 @@ public class QbftRound {
   }
 
   public void handlePrepareMessage(final Prepare msg) {
-    LOG.debug("Received a prepare message. round={}", roundState.getRoundIdentifier());
+    LOG.debug(
+        "Received a prepare message. round={}. author={}",
+        roundState.getRoundIdentifier(),
+        msg.getAuthor());
     peerIsPrepared(msg);
   }
 
   public void handleCommitMessage(final Commit msg) {
-    LOG.debug("Received a commit message. round={}", roundState.getRoundIdentifier());
+    LOG.debug(
+        "Received a commit message. round={}. author={}",
+        roundState.getRoundIdentifier(),
+        msg.getAuthor());
     peerIsCommitted(msg);
   }
 
@@ -260,15 +269,15 @@ public class QbftRound {
     final BftExtraData extraData = bftExtraDataCodec.decode(blockToImport.getHeader());
     LOG.log(
         getRoundIdentifier().getRoundNumber() > 0 ? Level.INFO : Level.DEBUG,
-        "Importing block to chain. round={}, hash={}",
+        "Importing proposed block to chain. round={}, hash={}",
         getRoundIdentifier(),
         blockToImport.getHash());
-    LOG.trace("Importing block with extraData={}", extraData);
+    LOG.trace("Importing proposed block with extraData={}", extraData);
     final boolean result =
         blockImporter.importBlock(protocolContext, blockToImport, HeaderValidationMode.FULL);
     if (!result) {
       LOG.error(
-          "Failed to import block to chain. block={} extraData={} blockHeader={}",
+          "Failed to import proposed block to chain. block={} extraData={} blockHeader={}",
           blockNumber,
           extraData,
           blockToImport.getHeader());
@@ -289,7 +298,7 @@ public class QbftRound {
 
   private Block createCommitBlock(final Block block) {
     final BftBlockInterface bftBlockInterface =
-        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
+        protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
     return bftBlockInterface.replaceRoundInBlock(
         block,
         getRoundIdentifier().getRoundNumber(),

@@ -46,6 +46,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   @Option(
       names = {BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD},
       hidden = true,
+      paramLabel = "<LONG>",
       description =
           "Limit of back layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}).",
       arity = "1")

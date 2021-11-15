@@ -42,6 +42,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -75,6 +76,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
@@ -145,11 +147,23 @@ public class BesuCommandTest extends CommandTestAbstract {
   private static final String ENCLAVE_PUBLIC_KEY_PATH =
       BesuCommand.class.getResource("/orion_publickey.pub").getPath();
 
-  private final String[] validENodeStrings = {
+  private static final String[] VALID_ENODE_STRINGS = {
     "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
     "enode://" + VALID_NODE_ID + "@192.168.0.2:4567",
     "enode://" + VALID_NODE_ID + "@192.168.0.3:4567"
   };
+  private static final String DNS_DISCOVERY_URL =
+      "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org";
+  private static final JsonObject VALID_GENESIS_WITH_DISCOVERY_OPTIONS =
+      new JsonObject()
+          .put(
+              "config",
+              new JsonObject()
+                  .put(
+                      "discovery",
+                      new JsonObject()
+                          .put("bootnodes", List.of(VALID_ENODE_STRINGS))
+                          .put("dns", DNS_DISCOVERY_URL)));
 
   static {
     DEFAULT_JSON_RPC_CONFIGURATION = JsonRpcConfiguration.createDefault();
@@ -1144,7 +1158,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--p2p-enabled",
         "false",
         "--bootnodes",
-        String.join(",", validENodeStrings),
+        String.join(",", VALID_ENODE_STRINGS),
         "--discovery-enabled",
         "false",
         "--max-peers",
@@ -1185,6 +1199,64 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder.discovery(eq(false))).build();
 
     assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void loadDiscoveryOptionsFromGenesisFile() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(VALID_GENESIS_WITH_DISCOVERY_OPTIONS);
+    parseCommand("--genesis-file", genesisFile.toString());
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    final EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getDnsDiscoveryUrl()).isEqualTo(DNS_DISCOVERY_URL);
+
+    assertThat(config.getBootNodes())
+        .extracting(bootnode -> bootnode.toURI().toString())
+        .containsExactly(VALID_ENODE_STRINGS);
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void discoveryDnsUrlCliArgTakesPrecedenceOverGenesisFile() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(VALID_GENESIS_WITH_DISCOVERY_OPTIONS);
+    final String discoveryDnsUrlCliArg =
+        "enrtree://XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX@nodes.example.org";
+    parseCommand(
+        "--genesis-file", genesisFile.toString(), "--discovery-dns-url", discoveryDnsUrlCliArg);
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    final EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getDnsDiscoveryUrl()).isEqualTo(discoveryDnsUrlCliArg);
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void bootnodesUrlCliArgTakesPrecedenceOverGenesisFile() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(VALID_GENESIS_WITH_DISCOVERY_OPTIONS);
+    final URI bootnode =
+        URI.create(
+            "enode://d2567893371ea5a6fa6371d483891ed0d129e79a8fc74d6df95a00a6545444cd4a6960bbffe0b4e2edcf35135271de57ee559c0909236bbc2074346ef2b5b47c@127.0.0.1:30304");
+
+    parseCommand("--genesis-file", genesisFile.toString(), "--bootnodes", bootnode.toString());
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    final EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getBootNodes()).extracting(EnodeURL::toURI).containsExactly(bootnode);
+
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
@@ -1260,14 +1332,14 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void bootnodesOptionMustBeUsed() {
-    parseCommand("--bootnodes", String.join(",", validENodeStrings));
+    parseCommand("--bootnodes", String.join(",", VALID_ENODE_STRINGS));
 
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(ethNetworkConfigArgumentCaptor.getValue().getBootNodes())
         .isEqualTo(
-            Stream.of(validENodeStrings)
+            Stream.of(VALID_ENODE_STRINGS)
                 .map(EnodeURLImpl::fromString)
                 .collect(Collectors.toList()));
 
@@ -3290,7 +3362,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--network-id",
         "1234567",
         "--bootnodes",
-        String.join(",", validENodeStrings));
+        String.join(",", VALID_ENODE_STRINGS));
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
@@ -3300,7 +3372,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(networkArg.getValue().getBootNodes())
         .isEqualTo(
-            Stream.of(validENodeStrings)
+            Stream.of(VALID_ENODE_STRINGS)
                 .map(EnodeURLImpl::fromString)
                 .collect(Collectors.toList()));
     assertThat(networkArg.getValue().getNetworkId()).isEqualTo(1234567);
@@ -3504,11 +3576,81 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void privateMarkerTransactionSigningKeyFileRequiredIfMinGasPriceNonZero() {
-    parseCommand("--privacy-enabled", "--privacy-public-key-file", ENCLAVE_PUBLIC_KEY_PATH);
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH,
+        "--min-gas-price",
+        "1");
 
     assertThat(commandErrorOutput.toString())
         .startsWith(
             "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified");
+  }
+
+  @Test
+  public void
+      privateMarkerTransactionSigningKeyFileNotRequiredIfMinGasPriceNonZeroAndUsingPluginPrivateMarkerTransactionFactory() {
+
+    when(privacyPluginService.getPrivateMarkerTransactionFactory())
+        .thenReturn(mock(PrivateMarkerTransactionFactory.class));
+
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH,
+        "--min-gas-price",
+        "1");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void
+      privateMarkerTransactionSigningKeyFileNotCanNotBeUsedWithPluginPrivateMarkerTransactionFactory()
+          throws IOException {
+    privacyPluginService.setPrivateMarkerTransactionFactory(
+        mock(PrivateMarkerTransactionFactory.class));
+    final Path toml =
+        createTempFile(
+            "key",
+            "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63".getBytes(UTF_8));
+
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH,
+        "--privacy-marker-transaction-signing-key-file",
+        toml.toString());
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void mustProvidePayloadWhenPrivacyPluginEnabled() {
+    parseCommand("--privacy-enabled", "--Xprivacy-plugin-enabled", "--min-gas-price", "0");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
+  }
+
+  @Test
+  public void canNotUseFlexiblePrivacyWhenPrivacyPluginEnabled() {
+    parseCommand(
+        "--privacy-enabled",
+        "--Xprivacy-plugin-enabled",
+        "--min-gas-price",
+        "0",
+        "--privacy-flexible-groups-enabled");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
   }
 
   private Path createFakeGenesisFile(final JsonObject jsonGenesis) throws IOException {

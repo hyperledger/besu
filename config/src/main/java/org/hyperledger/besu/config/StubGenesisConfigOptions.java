@@ -61,6 +61,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private QbftConfigOptions qbftConfigOptions = JsonQbftConfigOptions.DEFAULT;
   private BftConfigOptions bftConfigOptions = JsonBftConfigOptions.DEFAULT;
   private TransitionsConfigOptions transitions = TransitionsConfigOptions.DEFAULT;
+  private final DiscoveryOptions discoveryOptions = DiscoveryOptions.DEFAULT;
 
   @Override
   public String getConsensusEngine() {
@@ -115,6 +116,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public QbftConfigOptions getQbftConfigOptions() {
     return qbftConfigOptions;
+  }
+
+  @Override
+  public DiscoveryOptions getDiscoveryOptions() {
+    return discoveryOptions;
   }
 
   @Override

@@ -95,7 +95,7 @@ allprojects {
   version = rootProject.version
 
   jacoco {
-    toolVersion = '0.8.6'
+    toolVersion = '0.8.7'
     if (project.tasks.findByName('referenceTests')) {
       applyTo referenceTests
     }
@@ -613,6 +613,7 @@ artifactoryPublish {
 
 def dockerVariants = [
   "openjdk-11",
+  "openjdk-11-debug",
   "graalvm",
   "openjdk-latest"
 ]

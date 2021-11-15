@@ -191,7 +191,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             qbftForksSchedule);
 
     final ValidatorProvider validatorProvider =
-        protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
+        protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockchain, bftBlockInterface().get(), true, validatorProvider);
@@ -278,7 +278,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext) {
     final ValidatorProvider validatorProvider =
-        protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
+        protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
     return new BftQueryPluginServiceFactory(
         blockchain, bftExtraDataCodec().get(), validatorProvider, nodeKey, "qbft");
   }
@@ -343,7 +343,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
     transactionValidatorProvider =
         new TransactionValidatorProvider(
-            blockchain, new ValidatorContractController(transactionSimulator, qbftForksSchedule));
+            blockchain, new ValidatorContractController(transactionSimulator), qbftForksSchedule);
 
     final ValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
