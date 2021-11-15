@@ -22,6 +22,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -187,7 +188,7 @@ public class BesuNodeConfigurationBuilder {
 
     this.jsonRpcConfiguration.setAuthenticationEnabled(true);
     this.jsonRpcConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
-    this.jsonRpcConfiguration.setAuthenticationAlgorithm("ES256");
+    this.jsonRpcConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.ES256);
 
     return this;
   }
@@ -258,7 +259,7 @@ public class BesuNodeConfigurationBuilder {
 
     this.webSocketConfiguration.setAuthenticationEnabled(true);
     this.webSocketConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
-    this.webSocketConfiguration.setAuthenticationAlgorithm("ES256");
+    this.webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.ES256);
 
     return this;
   }

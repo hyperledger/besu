@@ -181,7 +181,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       }
       if (node.jsonRpcConfiguration().getAuthenticationAlgorithm() != null) {
         params.add("--rpc-http-authentication-jwt-algorithm");
-        params.add(node.jsonRpcConfiguration().getAuthenticationAlgorithm());
+        params.add(node.jsonRpcConfiguration().getAuthenticationAlgorithm().toString());
       }
     }
 
@@ -207,7 +207,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       }
       if (node.webSocketConfiguration().getAuthenticationAlgorithm() != null) {
         params.add("--rpc-ws-authentication-jwt-algorithm");
-        params.add(node.webSocketConfiguration().getAuthenticationAlgorithm());
+        params.add(node.webSocketConfiguration().getAuthenticationAlgorithm().toString());
       }
     }
 

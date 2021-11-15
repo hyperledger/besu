@@ -95,7 +95,7 @@ public class AuthenticationService {
       final boolean authenticationEnabled,
       final String authenticationCredentialsFile,
       final File authenticationPublicKeyFile,
-      final String authenticationAlgorithm) {
+      final JwtAlgorithm authenticationAlgorithm) {
     if (!authenticationEnabled) {
       return Optional.empty();
     }
@@ -108,7 +108,7 @@ public class AuthenticationService {
           authenticationAlgorithm == null
               ? jwtAuthOptionsFactory.createForExternalPublicKey(authenticationPublicKeyFile)
               : jwtAuthOptionsFactory.createForExternalPublicKeyWithAlgorithm(
-                  authenticationPublicKeyFile, authenticationAlgorithm);
+                  authenticationPublicKeyFile, authenticationAlgorithm.toString());
     }
     final Optional<AuthProvider> credentialAuthProvider =
         makeCredentialAuthProvider(vertx, authenticationEnabled, authenticationCredentialsFile);
