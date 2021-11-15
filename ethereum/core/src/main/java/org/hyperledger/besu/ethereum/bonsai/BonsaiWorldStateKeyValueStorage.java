@@ -293,32 +293,26 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
     @Override
     public Updater putCode(final Hash accountHash, final Bytes32 codeHash, final Bytes code) {
-      synchronized (LOCK) {
-        if (code.size() == 0) {
-          // Don't save empty values
-          return this;
-        }
-        codeStorageTransaction.put(accountHash.toArrayUnsafe(), codeHash.toArrayUnsafe());
-        codeStorageTransaction.put(codeHash.toArrayUnsafe(), code.toArrayUnsafe());
-        incCodeCounter(codeHash);
+      if (code.size() == 0) {
+        // Don't save empty values
         return this;
       }
+      codeStorageTransaction.put(accountHash.toArrayUnsafe(), codeHash.toArrayUnsafe());
+      codeStorageTransaction.put(codeHash.toArrayUnsafe(), code.toArrayUnsafe());
+      incCodeCounter(codeHash);
+      return this;
     }
 
     public Updater incCodeCounter(final Bytes32 codeHash) {
-      synchronized (LOCK) {
-        final BigInteger counter =
-            worldStateKeyValueStorage.getCodeCounter(codeHash).orElse(BigInteger.ZERO);
-        return updateCodeCounter(codeHash, counter.add(BigInteger.ONE));
-      }
+      final BigInteger counter =
+          worldStateKeyValueStorage.getCodeCounter(codeHash).orElse(BigInteger.ZERO);
+      return updateCodeCounter(codeHash, counter.add(BigInteger.ONE));
     }
 
     public Updater decCodeCounter(final Bytes32 codeHash) {
-      synchronized (LOCK) {
-        final BigInteger counter =
-            worldStateKeyValueStorage.getCodeCounter(codeHash).orElse(BigInteger.ZERO);
-        return updateCodeCounter(codeHash, counter.subtract(BigInteger.ONE));
-      }
+      final BigInteger counter =
+          worldStateKeyValueStorage.getCodeCounter(codeHash).orElse(BigInteger.ZERO);
+      return updateCodeCounter(codeHash, counter.subtract(BigInteger.ONE));
     }
 
     private Updater updateCodeCounter(final Bytes32 codeHash, final BigInteger newCodeCounter) {
