@@ -192,19 +192,8 @@ public class BesuController implements java.io.Closeable {
           genesisConfig.getConfigOptions(genesisConfigOverrides);
       final BesuControllerBuilder builder;
 
-      // TODO-lucas Too much in-line code?
-      if (configOptions.isQbft() && (configOptions.isIbft2() || configOptions.isIbftLegacy())) {
-        final BesuControllerBuilder originalControllerBuilder;
-        if (configOptions.isIbft2()) {
-          originalControllerBuilder = new IbftBesuControllerBuilder();
-        } else if (configOptions.isIbftLegacy()) {
-          originalControllerBuilder = new IbftLegacyBesuControllerBuilder();
-        } else {
-          throw new IllegalStateException("Invalid config");
-        }
-        return new ForkingBesuControllerBuilder(
-                Arrays.asList(originalControllerBuilder, new QbftBesuControllerBuilder()))
-            .genesisConfigFile(genesisConfig);
+      if (configOptions.isConsensusMigration()) {
+        return buildForkingBesuControllerBuilder(genesisConfig, configOptions);
       }
 
       if (configOptions.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
@@ -221,6 +210,21 @@ public class BesuController implements java.io.Closeable {
         throw new IllegalArgumentException("Unknown consensus mechanism defined");
       }
       return builder.genesisConfigFile(genesisConfig);
+    }
+
+    private BesuControllerBuilder buildForkingBesuControllerBuilder(
+        final GenesisConfigFile genesisConfig, final GenesisConfigOptions configOptions) {
+      final BesuControllerBuilder originalControllerBuilder;
+      if (configOptions.isIbft2()) {
+        originalControllerBuilder = new IbftBesuControllerBuilder();
+      } else if (configOptions.isIbftLegacy()) {
+        originalControllerBuilder = new IbftLegacyBesuControllerBuilder();
+      } else {
+        throw new IllegalStateException("Invalid config");
+      }
+      return new ForkingBesuControllerBuilder(
+              Arrays.asList(originalControllerBuilder, new QbftBesuControllerBuilder()))
+          .genesisConfigFile(genesisConfig);
     }
   }
 }

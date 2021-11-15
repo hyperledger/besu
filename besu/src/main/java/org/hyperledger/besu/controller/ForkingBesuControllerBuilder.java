@@ -86,16 +86,25 @@ public class ForkingBesuControllerBuilder extends BesuControllerBuilder {
   protected void prepForBuild() {
     final QbftConfigOptions qbftConfigOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getQbftConfigOptions();
+    qbftStartBlock = readQbftStartBlockConfig(qbftConfigOptions);
 
-    // TODO-lucas better validation/error handling
-    qbftStartBlock = qbftConfigOptions.getStartBlock().orElseThrow();
-    if (qbftStartBlock <= 0) {
-      throw new IllegalStateException("Invalid QBFT startBlock");
-    }
-
-    LOG.info(">>> Preparing for build: QBFT startBlock is {}", qbftStartBlock);
+    LOG.info("Preparing for build. QBFT startBlock is {}.", qbftStartBlock);
 
     besuControllerBuilders.get(0).prepForBuild();
+  }
+
+  private Long readQbftStartBlockConfig(final QbftConfigOptions qbftConfigOptions) {
+    long startBlock =
+        qbftConfigOptions
+            .getStartBlock()
+            .orElseThrow(
+                () -> new IllegalStateException("Missing QBFT startBlock config in genesis file"));
+
+    if (startBlock <= 0) {
+      throw new IllegalStateException("Invalid QBFT startBlock config in genesis file");
+    }
+
+    return startBlock;
   }
 
   @Override
@@ -195,7 +204,6 @@ public class ForkingBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
-    besuControllerBuilders.get(0).genesisConfigFile(genesisConfig);
     besuControllerBuilders.get(0).genesisConfigFile(genesisConfig);
     return super.genesisConfigFile(genesisConfig);
   }
