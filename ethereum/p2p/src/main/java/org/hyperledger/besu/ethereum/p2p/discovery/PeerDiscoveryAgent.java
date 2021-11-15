@@ -316,9 +316,9 @@ public abstract class PeerDiscoveryAgent {
                   LOG.debug(
                       "Peer {} is unreachable, packet: {}", peer, wrapBuffer(packet.encode()), err);
                 } else if (err instanceof SocketException
-                    && err.getMessage().contains("permitted")) {
+                    && err.getMessage().contentEquals("Operation not permitted")) {
                   LOG.debug(
-                      "Operation not permitted sending to peer {}, this might be caused by firewall rules",
+                      "Operation not permitted sending to peer {}, this might be caused by firewall rules blocking traffic to a specific route.",
                       peer,
                       err);
                 } else if (err instanceof UnsupportedAddressTypeException) {
