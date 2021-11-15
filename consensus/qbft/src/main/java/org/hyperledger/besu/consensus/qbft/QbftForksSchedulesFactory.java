@@ -21,6 +21,7 @@ import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 
+import java.util.List;
 import java.util.Optional;
 
 public class QbftForksSchedulesFactory {
@@ -44,6 +45,11 @@ public class QbftForksSchedulesFactory {
     if (fork.getValidatorSelectionMode().isPresent()) {
       final VALIDATOR_SELECTION_MODE mode = fork.getValidatorSelectionMode().get();
       if (mode == VALIDATOR_SELECTION_MODE.BLOCKHEADER) {
+        final Optional<List<String>> optionalValidators = fork.getValidators();
+        if (optionalValidators.isEmpty() || optionalValidators.get().isEmpty()) {
+          throw new IllegalStateException(
+              "QBFT transition to blockheader mode requires a validators list containing at least one validator");
+        }
         bftConfigOptions.setValidatorContractAddress(Optional.empty());
       } else if (mode == VALIDATOR_SELECTION_MODE.CONTRACT
           && fork.getValidatorContractAddress().isPresent()) {

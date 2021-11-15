@@ -23,8 +23,4 @@ public interface QbftConfigOptions extends BftConfigOptions {
   default boolean isValidatorContractMode() {
     return getValidatorContractAddress().isPresent();
   }
-
-  default boolean isValidatorBlockHeaderMode() {
-    return !isValidatorContractMode();
-  }
 }
