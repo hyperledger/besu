@@ -35,6 +35,7 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.datatypes.Wei;
 import org.junit.Test;
 
 public class BaseFeeOperationTest {
@@ -42,7 +43,7 @@ public class BaseFeeOperationTest {
 
   @Test
   public void shouldReturnGasCost() {
-    final MessageFrame frame = createMessageFrame(100, Optional.of(5L));
+    final MessageFrame frame = createMessageFrame(100, Optional.of(Wei.of(5L)));
     final Operation operation = new BaseFeeOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
     assertThat(result.getGasCost()).contains(gasCalculator.getBaseTierGasCost());
@@ -51,7 +52,7 @@ public class BaseFeeOperationTest {
 
   @Test
   public void shouldWriteBaseFeeToStack() {
-    final MessageFrame frame = createMessageFrame(100, Optional.of(5L));
+    final MessageFrame frame = createMessageFrame(100, Optional.of(Wei.of(5L)));
     final Operation operation = new BaseFeeOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
     verify(frame).pushStackItem(eq(UInt256.fromBytes(Bytes32.leftPad(Bytes.ofUnsignedLong(5L)))));
@@ -77,11 +78,11 @@ public class BaseFeeOperationTest {
     assertThat(result.getHaltReason()).contains(reason);
   }
 
-  private MessageFrame createMessageFrame(final long initialGas, final Optional<Long> baseFee) {
+  private MessageFrame createMessageFrame(final long initialGas, final Optional<Wei> baseFee) {
     return createMessageFrame(Gas.of(initialGas), baseFee);
   }
 
-  private MessageFrame createMessageFrame(final Gas initialGas, final Optional<Long> baseFee) {
+  private MessageFrame createMessageFrame(final Gas initialGas, final Optional<Wei> baseFee) {
     final MessageFrame frame = mock(MessageFrame.class);
     when(frame.getRemainingGas()).thenReturn(initialGas);
     final BlockHeader blockHeader = mock(BlockHeader.class);

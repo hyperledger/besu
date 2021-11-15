@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.hyperledger.besu.datatypes.Wei;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -109,7 +110,7 @@ public class EthGetUncleByBlockNumberAndIndexTest {
   public void shouldReturnExpectedBlockResult() {
     final JsonRpcRequestContext request =
         getUncleByBlockNumberAndIndex(new Object[] {"0x1", "0x0"});
-    final BlockHeader header = blockHeaderTestFixture.baseFeePerGas(7L).buildHeader();
+    final BlockHeader header = blockHeaderTestFixture.baseFeePerGas(Wei.of(7L)).buildHeader();
     final BlockResult expectedBlockResult = blockResult(header);
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, expectedBlockResult);
 

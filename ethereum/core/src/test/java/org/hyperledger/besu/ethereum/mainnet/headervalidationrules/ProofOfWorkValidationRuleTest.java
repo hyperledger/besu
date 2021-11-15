@@ -37,6 +37,7 @@ import java.util.Collection;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.datatypes.Wei;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -177,7 +178,7 @@ public class ProofOfWorkValidationRuleTest {
     final BlockHeaderBuilder headerBuilder =
         BlockHeaderBuilder.fromHeader(blockHeader)
             .difficulty(Difficulty.ONE)
-            .baseFee(10L)
+            .baseFee(Wei.of(10L))
             .blockHeaderFunctions(mainnetBlockHashFunction())
             .timestamp(1);
     final BlockHeader preHeader = headerBuilder.buildBlockHeader();

@@ -84,14 +84,14 @@ public class TransactionReplacementRulesTest {
 
   private final TransactionInfo oldTx;
   private final TransactionInfo newTx;
-  private final Optional<Long> baseFee;
+  private final Optional<Wei> baseFee;
   private final int priceBump;
   private final boolean expected;
 
   public TransactionReplacementRulesTest(
       final TransactionInfo oldTx,
       final TransactionInfo newTx,
-      final Optional<Long> baseFee,
+      final Optional<Wei> baseFee,
       final int priceBump,
       final boolean expected) {
     this.oldTx = oldTx;

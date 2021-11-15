@@ -28,6 +28,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import org.hyperledger.besu.datatypes.Wei;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -65,13 +66,13 @@ public class BaseFeeMarketBaseFeeTest {
     }
   }
 
-  private final long parentBaseFee;
+  private final Wei parentBaseFee;
   private final long parentGasUsed;
   private final long parentTargetGasUsed;
   private final long expectedBaseFee;
 
   public BaseFeeMarketBaseFeeTest(
-      final long parentBaseFee,
+      final Wei parentBaseFee,
       final long parentGasUsed,
       final long parentTargetGasUsed,
       final long expectedBaseFee) {

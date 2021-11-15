@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 
 import java.util.Optional;
+import org.hyperledger.besu.datatypes.Wei;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +43,7 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRuleTest {
   public void shouldTReturnFalseIfParentMissingBaseFeePostFork() {
     assertThat(
             validationRule.validate(
-                blockHeader(FORK_BLOCK - 1, 0, Optional.of(10_000L)),
+                blockHeader(FORK_BLOCK - 1, 0, Optional.of(Wei.of(10_000L))),
                 blockHeader(FORK_BLOCK - 2, 0, Optional.empty())))
         .isFalse();
   }
@@ -52,7 +53,7 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRuleTest {
     assertThat(
             validationRule.validate(
                 blockHeader(FORK_BLOCK - 2, 0, Optional.empty()),
-                blockHeader(FORK_BLOCK - 1, 0, Optional.of(10_000L))))
+                blockHeader(FORK_BLOCK - 1, 0, Optional.of(Wei.of(10_000L)))))
         .isFalse();
   }
 
@@ -68,7 +69,8 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRuleTest {
   public void shouldReturnFalseIfNotInitialBaseFeeAtForkBlock() {
     assertThat(
             validationRule.validate(
-                blockHeader(FORK_BLOCK, 0, Optional.of(feeMarket.getInitialBasefee() - 1)), null))
+                blockHeader(FORK_BLOCK, 0, Optional.of(feeMarket.getInitialBasefee().subtract(1L))),
+                null))
         .isFalse();
   }
 

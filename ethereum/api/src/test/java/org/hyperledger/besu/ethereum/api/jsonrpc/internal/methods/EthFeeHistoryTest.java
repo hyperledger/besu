@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.List;
+import org.hyperledger.besu.datatypes.Wei;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -90,9 +91,9 @@ public class EthFeeHistoryTest {
             FeeHistory.FeeHistoryResult.from(
                 ImmutableFeeHistory.builder()
                     .oldestBlock(10)
-                    .baseFeePerGas(List.of(25496L, 28683L))
+                    .baseFeePerGas(List.of(Wei.of(25496L), Wei.of(28683L)))
                     .gasUsedRatio(List.of(0.9999999992132459))
-                    .reward(List.of(List.of(1524763764L)))
+                    .reward(List.of(List.of(Wei.of(1524763764L))))
                     .build()));
   }
 

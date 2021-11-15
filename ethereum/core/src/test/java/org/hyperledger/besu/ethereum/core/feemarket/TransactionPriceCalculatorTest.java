@@ -46,7 +46,7 @@ public class TransactionPriceCalculatorTest {
   private final Wei gasPrice;
   private final Wei maxPriorityFeePerGas;
   private final Wei maxFeePerGas;
-  private final Optional<Long> baseFee;
+  private final Optional<Wei> baseFee;
   private final Wei expectedPrice;
 
   public TransactionPriceCalculatorTest(
@@ -55,7 +55,7 @@ public class TransactionPriceCalculatorTest {
       final Wei gasPrice,
       final Wei maxPriorityFeePerGas,
       final Wei maxFeePerGas,
-      final Optional<Long> baseFee,
+      final Optional<Wei> baseFee,
       final Wei expectedPrice) {
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.transactionType = transactionType;

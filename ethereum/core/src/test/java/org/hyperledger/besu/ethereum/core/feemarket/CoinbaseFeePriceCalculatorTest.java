@@ -38,14 +38,14 @@ public class CoinbaseFeePriceCalculatorTest {
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
   private final Gas coinbaseFee;
   private final Wei transactionGasPrice;
-  private final Optional<Long> baseFee;
+  private final Optional<Wei> baseFee;
   private final Wei expectedPrice;
 
   public CoinbaseFeePriceCalculatorTest(
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
       final Gas coinbaseFee,
       final Wei transactionGasPrice,
-      final Optional<Long> baseFee,
+      final Optional<Wei> baseFee,
       final Wei expectedPrice) {
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
     this.coinbaseFee = coinbaseFee;

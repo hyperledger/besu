@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
+import org.hyperledger.besu.datatypes.Wei;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,7 +45,7 @@ public class GasLimitRangeAndDeltaValidationRuleTest {
   public boolean expectedResult;
 
   @Parameter(4)
-  public Optional<Long> optionalBaseFee;
+  public Optional<Wei> optionalBaseFee;
 
   @Parameters
   public static Collection<Object[]> data() {
@@ -68,7 +69,13 @@ public class GasLimitRangeAndDeltaValidationRuleTest {
             4100, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), false, Optional.empty()
           },
           // In Range, == 1/1024 change = invalid,
-          {4099, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), false, Optional.of(10L)}
+          {
+            4099,
+            4096,
+            new GasLimitRangeAndDeltaValidationRule(4000, 4200),
+            false,
+            Optional.of(Wei.of(10L))
+          }
           // In Range, <1/1024 change, has basefee = invalid,
         });
   }

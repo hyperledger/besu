@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.datatypes.Wei;
 import org.junit.Test;
 
 public class KeccakHasherTest {
@@ -44,7 +45,7 @@ public class KeccakHasherTest {
         final long gasUsed,
         final long timestamp,
         final Bytes extraData,
-        final Long baseFee,
+        final Wei baseFee,
         final Bytes32 random) {
       super(
           parentHash,

@@ -28,6 +28,7 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.datatypes.Wei;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -104,7 +105,7 @@ public class TestSetChainParamsTest {
     final BlockHeader blockHeader = context.getBlockHeader(0);
     assertThat(blockHeader.getDifficulty()).isEqualTo(UInt256.fromHexString("0x20000"));
     assertThat(blockHeader.getGasLimit()).isEqualTo(1234L);
-    assertThat(blockHeader.getBaseFee()).hasValue(12345L);
+    assertThat(blockHeader.getBaseFee()).hasValue(Wei.of(12345L));
     assertThat(blockHeader.getExtraData().toHexString()).isEqualTo("0x00");
     assertThat(blockHeader.getTimestamp()).isEqualTo(0l);
     assertThat(blockHeader.getNonce()).isEqualTo(0L);
