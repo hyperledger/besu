@@ -204,7 +204,7 @@ public class OnchainPrivacyControllerTest {
     final List<PrivacyGroup> privacyGroups =
         List.of(privacyController.findPrivacyGroupByMembers(PRIVACY_GROUP_ADDRESSES, ADDRESS1));
     assertThat(privacyGroups).hasSize(1);
-    assertThat(privacyGroups.get(0)).isEqualToComparingFieldByField(EXPECTED_PRIVACY_GROUP);
+    assertThat(privacyGroups.get(0)).usingRecursiveComparison().isEqualTo(EXPECTED_PRIVACY_GROUP);
     verify(privateStateStorage).getPrivacyGroupHeadBlockMap(any());
     verify(privateTransactionSimulator).process(any(), any());
   }
@@ -294,7 +294,7 @@ public class OnchainPrivacyControllerTest {
     final Optional<PrivacyGroup> privacyGroupFound =
         privacyController.findPrivacyGroupByGroupId(PRIVACY_GROUP_ID, ADDRESS1);
     assertThat(privacyGroupFound).isPresent();
-    assertThat(privacyGroupFound.get()).isEqualToComparingFieldByField(privacyGroup);
+    assertThat(privacyGroupFound.get()).usingRecursiveComparison().isEqualTo(privacyGroup);
   }
 
   @Test

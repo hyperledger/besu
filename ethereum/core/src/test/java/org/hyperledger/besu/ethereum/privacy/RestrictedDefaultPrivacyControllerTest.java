@@ -204,7 +204,7 @@ public class RestrictedDefaultPrivacyControllerTest {
             PRIVACY_GROUP_DESCRIPTION,
             ENCLAVE_PUBLIC_KEY);
 
-    assertThat(privacyGroup).isEqualToComparingFieldByField(enclavePrivacyGroupResponse);
+    assertThat(privacyGroup).usingRecursiveComparison().isEqualTo(enclavePrivacyGroupResponse);
     verify(enclave)
         .createPrivacyGroup(
             PRIVACY_GROUP_ADDRESSES,
@@ -238,7 +238,7 @@ public class RestrictedDefaultPrivacyControllerTest {
     final PrivacyGroup[] privacyGroups =
         privacyController.findPrivacyGroupByMembers(PRIVACY_GROUP_ADDRESSES, ENCLAVE_PUBLIC_KEY);
     assertThat(privacyGroups).hasSize(1);
-    assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);
+    assertThat(privacyGroups[0]).usingRecursiveComparison().isEqualTo(privacyGroup);
     verify(enclave).findPrivacyGroup(PRIVACY_GROUP_ADDRESSES);
   }
 

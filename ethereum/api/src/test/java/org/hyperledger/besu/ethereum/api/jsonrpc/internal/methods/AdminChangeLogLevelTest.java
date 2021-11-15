@@ -60,7 +60,7 @@ public class AdminChangeLogLevelTest {
         (JsonRpcSuccessResponse) adminChangeLogLevel.response(request);
     final Level levelAfterJsonRpcRequest = LogManager.getLogger().getLevel();
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(levelBeforeJsonRpcRequest).isEqualByComparingTo(Level.INFO);
     assertThat(levelAfterJsonRpcRequest).isEqualByComparingTo(Level.DEBUG);
   }
@@ -83,7 +83,7 @@ public class AdminChangeLogLevelTest {
     final Level levelWithSpecificPackageAfterJsonRpcRequest =
         LogManager.getLogger("com").getLevel();
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(levelOfAllProjectBeforeJsonRpcRequest).isEqualByComparingTo(Level.INFO);
     assertThat(levelOfAllProjectAfterJsonRpcRequest).isEqualByComparingTo(Level.INFO);
     assertThat(levelWithSpecificPackageBeforeJsonRpcRequest).isEqualByComparingTo(Level.INFO);
@@ -103,7 +103,7 @@ public class AdminChangeLogLevelTest {
         (JsonRpcSuccessResponse) adminChangeLogLevel.response(request);
     final Level levelAfterJsonRpcRequest = LogManager.getLogger().getLevel();
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(levelBeforeJsonRpcRequest).isEqualByComparingTo(Level.INFO);
     assertThat(levelAfterJsonRpcRequest).isEqualByComparingTo(Level.DEBUG);
   }
@@ -117,7 +117,7 @@ public class AdminChangeLogLevelTest {
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = adminChangeLogLevel.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -129,7 +129,7 @@ public class AdminChangeLogLevelTest {
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = adminChangeLogLevel.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -141,6 +141,6 @@ public class AdminChangeLogLevelTest {
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = adminChangeLogLevel.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 }

@@ -68,7 +68,7 @@ public class AdminLogsRepairCacheTest {
 
     final JsonRpcResponse actualResponse = adminLogsRepairCache.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -88,7 +88,7 @@ public class AdminLogsRepairCacheTest {
 
     final JsonRpcResponse actualResponse = adminLogsRepairCache.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test(expected = IllegalStateException.class)

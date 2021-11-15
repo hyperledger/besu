@@ -194,7 +194,7 @@ public class EnclaveTest {
     final PrivacyGroup retrievePrivacyGroup =
         enclave.retrievePrivacyGroup(privacyGroupResponse.getPrivacyGroupId());
 
-    assertThat(retrievePrivacyGroup).isEqualToComparingFieldByField(privacyGroupResponse);
+    assertThat(retrievePrivacyGroup).usingRecursiveComparison().isEqualTo(privacyGroupResponse);
 
     final String response =
         enclave.deletePrivacyGroup(privacyGroupResponse.getPrivacyGroupId(), publicKeys.get(0));
