@@ -223,7 +223,8 @@ public class BesuController implements java.io.Closeable {
       } else if (configOptions.isIbftLegacy()) {
         originalControllerBuilder = new IbftLegacyBesuControllerBuilder();
       } else {
-        throw new IllegalStateException("Invalid config");
+        throw new IllegalStateException(
+            "Invalid genesis migration config. Migration is supported from IBFT (legacy) ot IBFT2 to QBFT)");
       }
       besuControllerBuilderSchedule.put(0L, originalControllerBuilder);
 
