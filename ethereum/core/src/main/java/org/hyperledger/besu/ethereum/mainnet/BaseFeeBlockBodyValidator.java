@@ -28,7 +28,6 @@ import java.util.Optional;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class BaseFeeBlockBodyValidator extends MainnetBlockBodyValidator {
   private static final Logger LOG = LogManager.getLogger();

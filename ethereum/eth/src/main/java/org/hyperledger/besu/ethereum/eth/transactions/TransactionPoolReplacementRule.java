@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo;
 
 import java.util.Optional;
-import org.hyperledger.besu.datatypes.Wei;
 
 @FunctionalInterface
 public interface TransactionPoolReplacementRule {

@@ -23,7 +23,6 @@ import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.Optional;
 
-
 public class TransactionReplacementByFeeMarketRule implements TransactionPoolReplacementRule {
 
   private static final TransactionPriceCalculator FRONTIER_CALCULATOR =

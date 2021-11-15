@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -37,7 +38,6 @@ import java.util.Collection;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.datatypes.Wei;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

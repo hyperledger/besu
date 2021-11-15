@@ -17,10 +17,10 @@
 package org.hyperledger.besu.ethereum.api.query;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.Optional;
-import org.hyperledger.besu.datatypes.Wei;
 
 public class TransactionWithMetadata {
 

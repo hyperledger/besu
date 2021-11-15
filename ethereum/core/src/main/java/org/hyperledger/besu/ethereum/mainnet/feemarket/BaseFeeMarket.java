@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public interface BaseFeeMarket extends FeeMarket {
 

@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.evm.frame;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.datatypes.Wei;
 
 /**
  * Block Header Values used by various EVM Opcodes. This is not a complete BlocHeader, just the

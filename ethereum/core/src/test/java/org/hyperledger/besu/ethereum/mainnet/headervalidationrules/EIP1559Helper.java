@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
-import org.hyperledger.besu.datatypes.Wei;
 
 import org.mockito.Mockito;
 

@@ -398,15 +398,18 @@ public class Transaction
         .map(
             baseFee -> {
               if (getType().supports1559FeeMarket()) {
+                if (baseFee.greaterOrEqualThan(getMaxFeePerGas().get())) {
+                  return Wei.ZERO;
+                }
                 return UInt256s.min(
                     getMaxPriorityFeePerGas().get(), getMaxFeePerGas().get().subtract(baseFee));
               } else {
+                if (baseFee.greaterOrEqualThan(getGasPrice().get())) {
+                  return Wei.ZERO;
+                }
                 return getGasPrice().get().subtract(baseFee);
               }
             })
-        .map(
-            maybeNegativeEffectivePriorityFeePerGas ->
-                UInt256s.max(Wei.ZERO, maybeNegativeEffectivePriorityFeePerGas))
         .orElseGet(() -> getGasPrice().orElse(Wei.ZERO));
   }
   /**

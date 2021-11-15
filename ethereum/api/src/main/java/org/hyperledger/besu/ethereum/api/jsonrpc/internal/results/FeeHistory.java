@@ -16,13 +16,14 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import static java.util.stream.Collectors.toUnmodifiableList;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.hyperledger.besu.datatypes.Wei;
 import org.immutables.value.Value;
 
 @Value.Immutable

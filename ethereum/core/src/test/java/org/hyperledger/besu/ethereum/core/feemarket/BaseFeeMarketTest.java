@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.core.feemarket;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import org.hyperledger.besu.datatypes.Wei;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 

@@ -15,13 +15,13 @@
  */
 package org.hyperledger.besu.evm.toy;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.BlockValues;
 
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.datatypes.Wei;
 
 public class ToyBlockValues implements BlockValues {
 

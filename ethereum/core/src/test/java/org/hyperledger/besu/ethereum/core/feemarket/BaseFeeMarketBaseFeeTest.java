@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core.feemarket;
 import static com.google.common.base.Preconditions.checkState;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
@@ -28,7 +29,6 @@ import java.util.List;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import org.hyperledger.besu.datatypes.Wei;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
