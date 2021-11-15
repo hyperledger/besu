@@ -47,7 +47,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
       description =
           "The frequency (in seconds) at which to check maintained connections (default: ${DEFAULT-VALUE})")
   private int checkMaintainedConnectionsFrequencySec =
-      NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTSION_FREQUENCY_SEC;
+      NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC;
 
   private NetworkingOptions() {}
 
