@@ -81,12 +81,12 @@ public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawT
     when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any()))
         .thenReturn(MOCK_ORION_KEY);
 
-    Optional<PrivacyGroup> pantheonPrivacyGroup =
+    final Optional<PrivacyGroup> pantheonPrivacyGroup =
         Optional.of(
             new PrivacyGroup(
                 "", PrivacyGroup.Type.PANTHEON, "", "", singletonList(ENCLAVE_PUBLIC_KEY)));
 
-    when(privacyController.findOffchainPrivacyGroupByGroupId(any(), any()))
+    when(privacyController.findPrivacyGroupByGroupId(any(), any()))
         .thenReturn(pantheonPrivacyGroup);
     when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
 

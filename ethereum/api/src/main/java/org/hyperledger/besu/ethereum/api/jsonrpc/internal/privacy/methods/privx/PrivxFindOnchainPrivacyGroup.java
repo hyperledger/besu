@@ -29,8 +29,8 @@ import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Arrays;
-import java.util.List;
 
+import graphql.com.google.common.collect.Lists;
 import org.apache.logging.log4j.Logger;
 
 public class PrivxFindOnchainPrivacyGroup implements JsonRpcMethod {
@@ -58,10 +58,10 @@ public class PrivxFindOnchainPrivacyGroup implements JsonRpcMethod {
 
     LOG.trace("Finding a privacy group with members {}", Arrays.toString(addresses));
 
-    final List<PrivacyGroup> response;
+    final PrivacyGroup[] response;
     try {
       response =
-          privacyController.findOnchainPrivacyGroupByMembers(
+          privacyController.findPrivacyGroupByMembers(
               Arrays.asList(addresses),
               privacyIdProvider.getPrivacyUserId(requestContext.getUser()));
     } catch (final MultiTenancyValidationException e) {
@@ -74,6 +74,7 @@ public class PrivxFindOnchainPrivacyGroup implements JsonRpcMethod {
           requestContext.getRequest().getId(), FIND_ONCHAIN_PRIVACY_GROUP_ERROR);
     }
 
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), Lists.newArrayList(response));
   }
 }

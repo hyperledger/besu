@@ -60,9 +60,6 @@ public class PrivCall extends AbstractBlockParameterMethod {
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
 
-    PrivUtil.checkMembershipForAuthenticatedUser(
-        privacyController, privacyIdProvider, request, privacyGroupId, blockNumber);
-
     return privacyController
         .simulatePrivateTransaction(privacyGroupId, privacyUserId, callParams, blockNumber)
         .map(

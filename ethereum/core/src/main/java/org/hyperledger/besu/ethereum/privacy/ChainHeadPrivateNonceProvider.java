@@ -59,7 +59,7 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
     final BlockHeader chainHeadHeader = blockchain.getChainHeadHeader();
     final Hash chainHeadHash = chainHeadHeader.getHash();
 
-    LOG.info(
+    LOG.trace(
         "checking for PMT matches for sender "
             + sender
             + " and privacyGroupID (base 64) "
