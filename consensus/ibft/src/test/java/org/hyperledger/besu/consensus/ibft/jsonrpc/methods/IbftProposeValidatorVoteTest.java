@@ -104,7 +104,7 @@ public class IbftProposeValidatorVoteTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
 
     verify(voteProvider).authVote(parameterAddress);
   }
@@ -118,7 +118,7 @@ public class IbftProposeValidatorVoteTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
 
     verify(voteProvider).dropVote(parameterAddress);
   }

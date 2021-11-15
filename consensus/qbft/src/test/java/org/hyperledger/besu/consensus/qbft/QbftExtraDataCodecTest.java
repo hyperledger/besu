@@ -199,7 +199,7 @@ public class QbftExtraDataCodecTest {
     BftExtraData actualExtraData =
         bftExtraDataCodec.decodeRaw(bftExtraDataCodec.encode(expectedExtraData));
 
-    assertThat(actualExtraData).usingRecursiveComparison().isEqualTo(expectedExtraData);
+    assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
 
   @Test
@@ -255,7 +255,7 @@ public class QbftExtraDataCodecTest {
     BftExtraData actualExtraData =
         bftExtraDataCodec.decodeRaw(bftExtraDataCodec.encode(expectedExtraData));
 
-    assertThat(actualExtraData).usingRecursiveComparison().isEqualTo(expectedExtraData);
+    assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
 
   @Test
@@ -321,7 +321,7 @@ public class QbftExtraDataCodecTest {
     BftExtraData actualExtraData =
         bftExtraDataCodec.decodeRaw(bftExtraDataCodec.encode(expectedExtraData));
 
-    assertThat(actualExtraData).usingRecursiveComparison().isEqualTo(expectedExtraData);
+    assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
 
   @Test
@@ -338,7 +338,7 @@ public class QbftExtraDataCodecTest {
     Bytes rawDecoding = Bytes.fromHexString(RAW_HEX_ENCODING_STRING);
     BftExtraData actualExtraData = bftExtraDataCodec.decodeRaw(rawDecoding);
 
-    assertThat(actualExtraData).usingRecursiveComparison().isEqualTo(expectedExtraData);
+    assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
 
   @Test

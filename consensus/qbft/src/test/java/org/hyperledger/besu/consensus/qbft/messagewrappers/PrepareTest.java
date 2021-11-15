@@ -48,7 +48,6 @@ public class PrepareTest {
     assertThat(decodedPrepare.getMessageType()).isEqualTo(QbftV1.PREPARE);
     assertThat(decodedPrepare.getAuthor()).isEqualTo(addr);
     assertThat(decodedPrepare.getSignedPayload())
-        .usingRecursiveComparison()
-        .isEqualTo(signedPreparePayload);
+        .isEqualToComparingFieldByField(signedPreparePayload);
   }
 }

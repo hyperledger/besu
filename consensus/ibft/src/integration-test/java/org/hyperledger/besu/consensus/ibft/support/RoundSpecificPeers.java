@@ -210,6 +210,6 @@ public class RoundSpecificPeers {
         fail("Illegal IBFTV2 message type.");
         break;
     }
-    assertThat(expectedMessage).usingRecursiveComparison().isEqualTo(actualSignedPayload);
+    assertThat(expectedMessage).isEqualToComparingFieldByFieldRecursively(actualSignedPayload);
   }
 }

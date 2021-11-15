@@ -85,7 +85,7 @@ public class IbftDiscardValidatorVoteTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
 
     verify(voteProvider).discardVote(parameterAddress);
   }

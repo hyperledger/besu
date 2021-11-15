@@ -81,16 +81,12 @@ public class RoundChangeTest {
     assertThat(decodedRoundChange.getMessageType()).isEqualTo(QbftV1.ROUND_CHANGE);
     assertThat(decodedRoundChange.getAuthor()).isEqualTo(addr);
     assertThat(decodedRoundChange.getSignedPayload())
-        .usingRecursiveComparison()
-        .isEqualTo(signedRoundChangePayload);
+        .isEqualToComparingFieldByField(signedRoundChangePayload);
     assertThat(decodedRoundChange.getProposedBlock()).isNotEmpty();
-    assertThat(decodedRoundChange.getProposedBlock().get())
-        .usingRecursiveComparison()
-        .isEqualTo(BLOCK);
+    assertThat(decodedRoundChange.getProposedBlock().get()).isEqualToComparingFieldByField(BLOCK);
     assertThat(decodedRoundChange.getPrepares()).hasSize(1);
     assertThat(decodedRoundChange.getPrepares().get(0))
-        .usingRecursiveComparison()
-        .isEqualTo(signedPreparePayload);
+        .isEqualToComparingFieldByField(signedPreparePayload);
   }
 
   @Test
@@ -113,8 +109,7 @@ public class RoundChangeTest {
     assertThat(decodedRoundChange.getMessageType()).isEqualTo(QbftV1.ROUND_CHANGE);
     assertThat(decodedRoundChange.getAuthor()).isEqualTo(addr);
     assertThat(decodedRoundChange.getSignedPayload())
-        .usingRecursiveComparison()
-        .isEqualTo(signedRoundChangePayload);
+        .isEqualToComparingFieldByField(signedRoundChangePayload);
     assertThat(decodedRoundChange.getProposedBlock()).isEmpty();
     assertThat(decodedRoundChange.getPrepares()).isEmpty();
   }
