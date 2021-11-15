@@ -7,6 +7,7 @@
 ### Bug Fixes
 
 ### Early Access Features
+- Add "PMT pool" to track pending private transactions, thereby reducing private nonce collisions [#2969](https://github.com/hyperledger/besu/pull/2969)
 
 ## 21.10.2
 
@@ -20,7 +21,6 @@
 - DNS Discovery daemon wasn't started [#3033](https://github.com/hyperledger/besu/pull/3033)
 
 ### Early Access Features
-- Add "PMT pool" to track pending private transactions, thereby reducing private nonce collisions [#2969](https://github.com/hyperledger/besu/pull/2969)
 
 ### Download Link
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.2/besu-21.10.2.zip \
