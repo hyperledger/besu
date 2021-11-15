@@ -200,7 +200,7 @@ public class EthGetTransactionReceiptTest {
         (TransactionReceiptStatusResult) response.getResult();
 
     assertThat(result.getStatus()).isEqualTo("0x1");
-    assertThat(Long.decode(result.getEffectiveGasPrice()))
+    assertThat(Wei.fromHexString(result.getEffectiveGasPrice()))
         .isEqualTo(
             UInt256s.min(
                 baseFee.add(transaction1559.getMaxPriorityFeePerGas().get()),

@@ -143,7 +143,7 @@ public class EthFeeHistoryTest {
     final FeeHistory.FeeHistoryResult result =
         (FeeHistory.FeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest")).getResult();
-    assertThat(Long.decode(result.getBaseFeePerGas().get(1)))
+    assertThat(Wei.fromHexString(result.getBaseFeePerGas().get(1)))
         .isEqualTo(FeeMarket.london(11).getInitialBasefee());
   }
 
