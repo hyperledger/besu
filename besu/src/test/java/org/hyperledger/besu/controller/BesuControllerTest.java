@@ -118,9 +118,6 @@ public class BesuControllerTest {
       final String consensus, final OptionalLong startBlock) {
     when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
     when(genesisConfigOptions.isConsensusMigration()).thenReturn(true);
-    //    when(genesisConfigOptions.isIbft2()).thenReturn(true);
-    //    when(genesisConfigOptions.getQbftConfigOptions()).thenReturn(qbftConfigOptions);
-    //    when(qbftConfigOptions.getStartBlock()).thenReturn(OptionalLong.of(startBlock));
 
     switch (consensus.toLowerCase(Locale.ROOT)) {
       case "ibft2":
