@@ -47,6 +47,7 @@ public class JsonQbftConfigOptions extends JsonBftConfigOptions implements QbftC
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     builder.putAll(map);
     builder.put(VALIDATOR_CONTRACT_ADDRESS, getValidatorContractAddress());
+    builder.put(START_BLOCK, getStartBlock());
     return builder.build();
   }
 }

@@ -25,7 +25,5 @@ public interface QbftConfigOptions extends BftConfigOptions {
     return getValidatorContractAddress().isPresent();
   }
 
-  default OptionalLong getStartBlock() {
-    return OptionalLong.empty();
-  }
+  OptionalLong getStartBlock();
 }

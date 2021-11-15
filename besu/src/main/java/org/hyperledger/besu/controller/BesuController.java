@@ -194,7 +194,7 @@ public class BesuController implements java.io.Closeable {
       final BesuControllerBuilder builder;
 
       if (configOptions.isConsensusMigration()) {
-        return buildForkingBesuControllerBuilder(genesisConfig, configOptions);
+        return createConsensusScheduleBesuControllerBuilder(genesisConfig, configOptions);
       }
 
       if (configOptions.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
@@ -213,7 +213,7 @@ public class BesuController implements java.io.Closeable {
       return builder.genesisConfigFile(genesisConfig);
     }
 
-    private BesuControllerBuilder buildForkingBesuControllerBuilder(
+    private BesuControllerBuilder createConsensusScheduleBesuControllerBuilder(
         final GenesisConfigFile genesisConfig, final GenesisConfigOptions configOptions) {
       final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule = new HashMap<>();
 
