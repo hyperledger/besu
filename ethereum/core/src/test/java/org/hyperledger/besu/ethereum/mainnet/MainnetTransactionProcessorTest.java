@@ -88,7 +88,8 @@ public class MainnetTransactionProcessorTest {
         ImmutableTransactionValidationParams.builder().build());
 
     assertThat(txValidationParamCaptor.getValue())
-        .isEqualToComparingFieldByField(expectedValidationParams);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedValidationParams);
   }
 
   private ArgumentCaptor<TransactionValidationParams> transactionValidationParamCaptor() {
