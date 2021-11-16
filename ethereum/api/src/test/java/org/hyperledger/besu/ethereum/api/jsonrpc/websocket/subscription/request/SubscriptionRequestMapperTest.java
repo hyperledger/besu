@@ -189,8 +189,7 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest subscribeRequest =
         mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
-    assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+    assertThat(subscribeRequest).usingRecursiveComparison().isEqualTo(expectedSubscribeRequest);
   }
 
   @Test
@@ -225,8 +224,7 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest subscribeRequest =
         mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
-    assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+    assertThat(subscribeRequest).usingRecursiveComparison().isEqualTo(expectedSubscribeRequest);
   }
 
   @Test
@@ -260,8 +258,7 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest subscribeRequest =
         mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
-    assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+    assertThat(subscribeRequest).usingRecursiveComparison().isEqualTo(expectedSubscribeRequest);
   }
 
   @Test
@@ -289,8 +286,7 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest subscribeRequest =
         mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
-    assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+    assertThat(subscribeRequest).usingRecursiveComparison().isEqualTo(expectedSubscribeRequest);
   }
 
   @Test
@@ -419,8 +415,7 @@ public class SubscriptionRequestMapperTest {
         mapper.mapPrivateSubscribeRequest(
             new JsonRpcRequestContext(jsonRpcRequest), ENCLAVE_PUBLIC_KEY);
 
-    assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+    assertThat(subscribeRequest).usingRecursiveComparison().isEqualTo(expectedSubscribeRequest);
   }
 
   @Test

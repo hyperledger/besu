@@ -63,7 +63,7 @@ public class EthSyncingTest {
     when(synchronizer.getSyncStatus()).thenReturn(optionalSyncStatus);
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(synchronizer).getSyncStatus();
     verifyNoMoreInteractions(synchronizer);
   }
@@ -80,7 +80,7 @@ public class EthSyncingTest {
     when(synchronizer.getSyncStatus()).thenReturn(optionalSyncStatus);
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(synchronizer).getSyncStatus();
     verifyNoMoreInteractions(synchronizer);
   }
@@ -97,7 +97,7 @@ public class EthSyncingTest {
     when(synchronizer.getSyncStatus()).thenReturn(optionalSyncStatus);
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(synchronizer).getSyncStatus();
     verifyNoMoreInteractions(synchronizer);
   }
