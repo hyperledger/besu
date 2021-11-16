@@ -140,6 +140,7 @@ public class PrivacyReorgTest {
 
   @Before
   public void setUp() throws IOException {
+
     mockEnclave = mock(Enclave.class);
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     PRIVATE_TRANSACTION.writeTo(rlpOutput);

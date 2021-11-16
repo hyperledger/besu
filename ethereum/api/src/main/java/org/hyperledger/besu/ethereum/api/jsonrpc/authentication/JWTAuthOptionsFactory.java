@@ -22,10 +22,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 import io.vertx.ext.auth.PubSecKeyOptions;
+import io.vertx.ext.auth.impl.Codec;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
@@ -60,13 +62,16 @@ public class JWTAuthOptionsFactory {
   public JWTAuthOptions createWithGeneratedKeyPair() {
     final KeyPair keypair = generateJwtKeyPair();
     return new JWTAuthOptions()
-        .setPermissionsClaimKey(PERMISSIONS)
+        //.setPermissionsClaimKey(PERMISSIONS)
         .addPubSecKey(
             new PubSecKeyOptions()
-                .setAlgorithm(DEFAULT_ALGORITHM)
-                .setPublicKey(Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded()))
-                .setSecretKey(
-                    Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded())));
+                .setAlgorithm(ALGORITHM)
+                .setBuffer(keyPairToPublicPemString(keypair))
+                )
+        .addPubSecKey(
+            new PubSecKeyOptions()
+                .setAlgorithm(ALGORITHM)
+                .setBuffer(keyPairToPrivatePemString(keypair)));
   }
 
   private byte[] readPublicKey(final File publicKeyFile) {
@@ -93,4 +98,28 @@ public class JWTAuthOptionsFactory {
 
     return keyGenerator.generateKeyPair();
   }
+
+
+
+  private String keyPairToPublicPemString(final KeyPair kp) {
+    StringBuilder pemBuffer = new StringBuilder();
+    pemBuffer.append("-----BEGIN PUBLIC KEY-----\r\n");
+    pemBuffer.append(Codec.base64MimeEncode(kp.getPublic().getEncoded()));
+    //pemBuffer.append(Base64.getEncoder().encodeToString(kp.getPublic().getEncoded()));
+    pemBuffer.append("\r\n");
+    pemBuffer.append("-----END PUBLIC KEY-----\r\n");
+    return pemBuffer.toString();
+  }
+
+
+  private String keyPairToPrivatePemString(final KeyPair kp) {
+    StringBuilder pemBuffer = new StringBuilder();
+    pemBuffer.append("-----BEGIN PRIVATE KEY-----\r\n");
+    //pemBuffer.append(Base64.getEncoder().encodeToString(kp.getPrivate().getEncoded()));
+    pemBuffer.append(Codec.base64MimeEncode(kp.getPrivate().getEncoded()));
+    pemBuffer.append("\r\n");
+    pemBuffer.append("-----END PRIVATE KEY-----\r\n");
+    return pemBuffer.toString();
+  }
+
 }

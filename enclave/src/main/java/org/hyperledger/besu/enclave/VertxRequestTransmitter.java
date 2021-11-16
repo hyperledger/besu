@@ -90,15 +90,20 @@ public class VertxRequestTransmitter implements RequestTransmitter {
       final Future<HttpClientRequest> request = client.request(options);
       request
           .onComplete(
-              response ->
-                  handleResponse(response.result().response().result(), responseHandler, result))
+              newRequest -> {
+                if (content.isPresent()) {
+                  request.result().end(content.get());
+                } else {
+                  request.result().end();
+                }
+                request
+                    .result()
+                    .send(
+                        h ->
+                            handleResponse(
+                                newRequest.result().response().result(), responseHandler, result));
+              })
           .onFailure(result::completeExceptionally);
-
-      if (content.isPresent()) {
-        request.result().end(content.get());
-      } else {
-        request.result().end();
-      }
 
       return result.get();
     } catch (final ExecutionException | InterruptedException e) {

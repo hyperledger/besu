@@ -366,7 +366,7 @@ public final class RunnerTest {
                       if (matches) {
                         promise.complete(payload);
                       } else {
-                        promise.fail("Unexpected result: "+ payload);
+                        promise.fail("Unexpected result: " + payload);
                       }
                     });
           });

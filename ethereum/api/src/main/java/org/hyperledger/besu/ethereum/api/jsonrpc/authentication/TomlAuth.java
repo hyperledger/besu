@@ -93,7 +93,7 @@ public class TomlAuth implements AuthProvider {
         false,
         res -> {
           if (res.succeeded()) {
-            resultHandler.handle(Future.succeededFuture());
+            resultHandler.handle(Future.succeededFuture((User)res.result()));
           } else {
             resultHandler.handle(Future.failedFuture(res.cause()));
           }
