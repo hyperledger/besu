@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 /*
@@ -67,18 +68,20 @@ import com.google.common.base.Preconditions;
 */
 public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilder {
 
-  private final Map<Long, BesuControllerBuilder> besuControllerBuilders = new HashMap<>();
+  private final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule = new HashMap<>();
 
   public ConsensusScheduleBesuControllerBuilder(
       final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule) {
-    Preconditions.checkNotNull(besuControllerBuilderSchedule);
-    Preconditions.checkArgument(!besuControllerBuilderSchedule.isEmpty());
-    this.besuControllerBuilders.putAll(besuControllerBuilderSchedule);
+    Preconditions.checkNotNull(
+        besuControllerBuilderSchedule, "BesuControllerBuilder schedule can't be null");
+    Preconditions.checkArgument(
+        !besuControllerBuilderSchedule.isEmpty(), "BesuControllerBuilder schedule can't be empty");
+    this.besuControllerBuilderSchedule.putAll(besuControllerBuilderSchedule);
   }
 
   @Override
   protected void prepForBuild() {
-    besuControllerBuilders.get(0L).prepForBuild();
+    besuControllerBuilderSchedule.get(0L).prepForBuild();
   }
 
   @Override
@@ -89,7 +92,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
-    return besuControllerBuilders
+    return besuControllerBuilderSchedule
         .get(0L)
         .createMiningCoordinator(
             protocolSchedule,
@@ -102,7 +105,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
-    return besuControllerBuilders.get(0L).createProtocolSchedule();
+    return besuControllerBuilderSchedule.get(0L).createProtocolSchedule();
   }
 
   @Override
@@ -110,7 +113,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    return besuControllerBuilders
+    return besuControllerBuilderSchedule
         .get(0L)
         .createConsensusContext(blockchain, worldStateArchive, protocolSchedule);
   }
@@ -118,7 +121,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext) {
-    return besuControllerBuilders
+    return besuControllerBuilderSchedule
         .get(0L)
         .createAdditionalPluginServices(blockchain, protocolContext);
   }
@@ -126,23 +129,25 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
       final ProtocolContext protocolContext) {
-    return besuControllerBuilders.get(0L).createAdditionalJsonRpcMethodFactory(protocolContext);
+    return besuControllerBuilderSchedule
+        .get(0L)
+        .createAdditionalJsonRpcMethodFactory(protocolContext);
   }
 
   @Override
   protected SubProtocolConfiguration createSubProtocolConfiguration(
       final EthProtocolManager ethProtocolManager) {
-    return besuControllerBuilders.get(0L).createSubProtocolConfiguration(ethProtocolManager);
+    return besuControllerBuilderSchedule.get(0L).createSubProtocolConfiguration(ethProtocolManager);
   }
 
   @Override
   protected void validateContext(final ProtocolContext context) {
-    besuControllerBuilders.get(0L).validateContext(context);
+    besuControllerBuilderSchedule.get(0L).validateContext(context);
   }
 
   @Override
   protected String getSupportedProtocol() {
-    return besuControllerBuilders.get(0L).getSupportedProtocol();
+    return besuControllerBuilderSchedule.get(0L).getSupportedProtocol();
   }
 
   @Override
@@ -156,7 +161,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final EthMessages ethMessages,
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators) {
-    return besuControllerBuilders
+    return besuControllerBuilderSchedule
         .get(0L)
         .createEthProtocolManager(
             protocolContext,
@@ -172,146 +177,157 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
-    besuControllerBuilders.get(0L).storageProvider(storageProvider);
+    besuControllerBuilderSchedule.get(0L).storageProvider(storageProvider);
     return super.storageProvider(storageProvider);
   }
 
   @Override
   public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
-    besuControllerBuilders.get(0L).genesisConfigFile(genesisConfig);
+    besuControllerBuilderSchedule.get(0L).genesisConfigFile(genesisConfig);
     return super.genesisConfigFile(genesisConfig);
   }
 
   @Override
   public BesuControllerBuilder synchronizerConfiguration(
       final SynchronizerConfiguration synchronizerConfig) {
-    besuControllerBuilders.get(0L).synchronizerConfiguration(synchronizerConfig);
+    besuControllerBuilderSchedule.get(0L).synchronizerConfiguration(synchronizerConfig);
     return super.synchronizerConfiguration(synchronizerConfig);
   }
 
   @Override
   public BesuControllerBuilder ethProtocolConfiguration(
       final EthProtocolConfiguration ethProtocolConfiguration) {
-    besuControllerBuilders.get(0L).ethProtocolConfiguration(ethProtocolConfiguration);
+    besuControllerBuilderSchedule.get(0L).ethProtocolConfiguration(ethProtocolConfiguration);
     return super.ethProtocolConfiguration(ethProtocolConfiguration);
   }
 
   @Override
   public BesuControllerBuilder networkId(final BigInteger networkId) {
-    besuControllerBuilders.get(0L).networkId(networkId);
+    besuControllerBuilderSchedule.get(0L).networkId(networkId);
     return super.networkId(networkId);
   }
 
   @Override
   public BesuControllerBuilder miningParameters(final MiningParameters miningParameters) {
-    besuControllerBuilders.get(0L).miningParameters(miningParameters);
+    besuControllerBuilderSchedule.get(0L).miningParameters(miningParameters);
     return super.miningParameters(miningParameters);
   }
 
   @Override
   public BesuControllerBuilder messagePermissioningProviders(
       final List<NodeMessagePermissioningProvider> messagePermissioningProviders) {
-    besuControllerBuilders.get(0L).messagePermissioningProviders(messagePermissioningProviders);
+    besuControllerBuilderSchedule
+        .get(0L)
+        .messagePermissioningProviders(messagePermissioningProviders);
     return super.messagePermissioningProviders(messagePermissioningProviders);
   }
 
   @Override
   public BesuControllerBuilder nodeKey(final NodeKey nodeKey) {
-    besuControllerBuilders.get(0L).nodeKey(nodeKey);
+    besuControllerBuilderSchedule.get(0L).nodeKey(nodeKey);
     return super.nodeKey(nodeKey);
   }
 
   @Override
   public BesuControllerBuilder metricsSystem(final ObservableMetricsSystem metricsSystem) {
-    besuControllerBuilders.get(0L).metricsSystem(metricsSystem);
+    besuControllerBuilderSchedule.get(0L).metricsSystem(metricsSystem);
     return super.metricsSystem(metricsSystem);
   }
 
   @Override
   public BesuControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
-    besuControllerBuilders.get(0L).privacyParameters(privacyParameters);
+    besuControllerBuilderSchedule.get(0L).privacyParameters(privacyParameters);
     return super.privacyParameters(privacyParameters);
   }
 
   @Override
   public BesuControllerBuilder pkiBlockCreationConfiguration(
       final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration) {
-    besuControllerBuilders.get(0L).pkiBlockCreationConfiguration(pkiBlockCreationConfiguration);
+    besuControllerBuilderSchedule
+        .get(0L)
+        .pkiBlockCreationConfiguration(pkiBlockCreationConfiguration);
     return super.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration);
   }
 
   @Override
   public BesuControllerBuilder dataDirectory(final Path dataDirectory) {
-    besuControllerBuilders.get(0L).dataDirectory(dataDirectory);
+    besuControllerBuilderSchedule.get(0L).dataDirectory(dataDirectory);
     return super.dataDirectory(dataDirectory);
   }
 
   @Override
   public BesuControllerBuilder clock(final Clock clock) {
-    besuControllerBuilders.get(0L).clock(clock);
+    besuControllerBuilderSchedule.get(0L).clock(clock);
     return super.clock(clock);
   }
 
   @Override
   public BesuControllerBuilder transactionPoolConfiguration(
       final TransactionPoolConfiguration transactionPoolConfiguration) {
-    besuControllerBuilders.get(0L).transactionPoolConfiguration(transactionPoolConfiguration);
+    besuControllerBuilderSchedule
+        .get(0L)
+        .transactionPoolConfiguration(transactionPoolConfiguration);
     return super.transactionPoolConfiguration(transactionPoolConfiguration);
   }
 
   @Override
   public BesuControllerBuilder isRevertReasonEnabled(final boolean isRevertReasonEnabled) {
-    besuControllerBuilders.get(0L).isRevertReasonEnabled(isRevertReasonEnabled);
+    besuControllerBuilderSchedule.get(0L).isRevertReasonEnabled(isRevertReasonEnabled);
     return super.isRevertReasonEnabled(isRevertReasonEnabled);
   }
 
   @Override
   public BesuControllerBuilder isPruningEnabled(final boolean isPruningEnabled) {
-    besuControllerBuilders.get(0L).isPruningEnabled(isPruningEnabled);
+    besuControllerBuilderSchedule.get(0L).isPruningEnabled(isPruningEnabled);
     return super.isPruningEnabled(isPruningEnabled);
   }
 
   @Override
   public BesuControllerBuilder pruningConfiguration(final PrunerConfiguration prunerConfiguration) {
-    besuControllerBuilders.get(0L).pruningConfiguration(prunerConfiguration);
+    besuControllerBuilderSchedule.get(0L).pruningConfiguration(prunerConfiguration);
     return super.pruningConfiguration(prunerConfiguration);
   }
 
   @Override
   public BesuControllerBuilder genesisConfigOverrides(
       final Map<String, String> genesisConfigOverrides) {
-    besuControllerBuilders.get(0L).genesisConfigOverrides(genesisConfigOverrides);
+    besuControllerBuilderSchedule.get(0L).genesisConfigOverrides(genesisConfigOverrides);
     return super.genesisConfigOverrides(genesisConfigOverrides);
   }
 
   @Override
   public BesuControllerBuilder gasLimitCalculator(final GasLimitCalculator gasLimitCalculator) {
-    besuControllerBuilders.get(0L).gasLimitCalculator(gasLimitCalculator);
+    besuControllerBuilderSchedule.get(0L).gasLimitCalculator(gasLimitCalculator);
     return super.gasLimitCalculator(gasLimitCalculator);
   }
 
   @Override
   public BesuControllerBuilder requiredBlocks(final Map<Long, Hash> requiredBlocks) {
-    besuControllerBuilders.get(0L).requiredBlocks(requiredBlocks);
+    besuControllerBuilderSchedule.get(0L).requiredBlocks(requiredBlocks);
     return super.requiredBlocks(requiredBlocks);
   }
 
   @Override
   public BesuControllerBuilder reorgLoggingThreshold(final long reorgLoggingThreshold) {
-    besuControllerBuilders.get(0L).reorgLoggingThreshold(reorgLoggingThreshold);
+    besuControllerBuilderSchedule.get(0L).reorgLoggingThreshold(reorgLoggingThreshold);
     return super.reorgLoggingThreshold(reorgLoggingThreshold);
   }
 
   @Override
   public BesuControllerBuilder dataStorageConfiguration(
       final DataStorageConfiguration dataStorageConfiguration) {
-    besuControllerBuilders.get(0L).dataStorageConfiguration(dataStorageConfiguration);
+    besuControllerBuilderSchedule.get(0L).dataStorageConfiguration(dataStorageConfiguration);
     return super.dataStorageConfiguration(dataStorageConfiguration);
   }
 
   @Override
   public BesuControllerBuilder evmConfiguration(final EvmConfiguration evmConfiguration) {
-    besuControllerBuilders.get(0L).evmConfiguration(evmConfiguration);
+    besuControllerBuilderSchedule.get(0L).evmConfiguration(evmConfiguration);
     return super.evmConfiguration(evmConfiguration);
+  }
+
+  @VisibleForTesting
+  Map<Long, BesuControllerBuilder> getBesuControllerBuilderSchedule() {
+    return besuControllerBuilderSchedule;
   }
 }
