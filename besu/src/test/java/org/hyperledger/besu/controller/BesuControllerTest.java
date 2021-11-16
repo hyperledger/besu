@@ -70,7 +70,7 @@ public class BesuControllerTest {
     assertThatThrownBy(() -> new BesuController.Builder().fromGenesisConfig(genesisConfigFile))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage(
-            "Invalid genesis migration config. Migration is supported from IBFT (legacy) ot IBFT2 to QBFT)");
+            "Invalid genesis migration config. Migration is supported from IBFT (legacy) or IBFT2 to QBFT)");
   }
 
   @Test

@@ -244,6 +244,16 @@ public class JsonGenesisConfigOptionsTest {
     assertThat(configOptions.isConsensusMigration()).isTrue();
   }
 
+  @Test
+  public void configWithoutMigration() {
+    final ObjectNode configNode = loadCompleteDataSet();
+
+    final JsonGenesisConfigOptions configOptions =
+        JsonGenesisConfigOptions.fromJsonObject(configNode);
+
+    assertThat(configOptions.isIbftLegacy()).isFalse();
+  }
+
   private ObjectNode loadConfigWithMigrationFromIbft2ToQbft() {
     try {
       final String configText =
