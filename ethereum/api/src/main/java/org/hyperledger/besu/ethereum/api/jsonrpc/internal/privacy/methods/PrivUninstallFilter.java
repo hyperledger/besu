@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 public class PrivUninstallFilter implements JsonRpcMethod {
@@ -47,7 +48,9 @@ public class PrivUninstallFilter implements JsonRpcMethod {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
     final String filterId = request.getRequiredParameter(1, String.class);
 
-    checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(request, privacyGroupId);
+    if (privacyController instanceof MultiTenancyPrivacyController) {
+      checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(request, privacyGroupId);
+    }
 
     return new JsonRpcSuccessResponse(
         request.getRequest().getId(), filterManager.uninstallFilter(filterId));

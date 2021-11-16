@@ -15,10 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -33,11 +31,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscrip
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.InvalidSubscriptionRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.PrivateUnsubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionRequestMapper;
-import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import io.vertx.core.json.Json;
-import io.vertx.ext.auth.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,7 +43,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PrivUnsubscribeTest {
 
-  private final String ENCLAVE_KEY = "enclave_key";
   private final String PRIVACY_GROUP_ID = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private final String CONNECTION_ID = "test-connection-id";
 
@@ -110,25 +105,6 @@ public class PrivUnsubscribeTest {
     assertThat(privUnsubscribe.response(request)).isEqualTo(expectedResponse);
   }
 
-  @Test
-  public void multiTenancyCheckFailure() {
-    final User user = mock(User.class);
-    final JsonRpcRequestContext jsonRpcrequestContext = createPrivUnsubscribeRequestWithUser(user);
-
-    final PrivateUnsubscribeRequest unsubscribeRequest =
-        new PrivateUnsubscribeRequest(0L, CONNECTION_ID, PRIVACY_GROUP_ID);
-
-    when(mapperMock.mapPrivateUnsubscribeRequest(any())).thenReturn(unsubscribeRequest);
-    when(privacyIdProvider.getPrivacyUserId(any())).thenReturn(ENCLAVE_KEY);
-    doThrow(new MultiTenancyValidationException("msg"))
-        .when(privacyController)
-        .verifyPrivacyGroupContainsPrivacyUserId(eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY));
-
-    assertThatThrownBy(() -> privUnsubscribe.response(jsonRpcrequestContext))
-        .isInstanceOf(MultiTenancyValidationException.class)
-        .hasMessageContaining("msg");
-  }
-
   private JsonRpcRequestContext createPrivUnsubscribeRequest() {
     return new JsonRpcRequestContext(
         Json.decodeValue(
@@ -136,15 +112,5 @@ public class PrivUnsubscribeTest {
                 + PRIVACY_GROUP_ID
                 + "\", \"0x0\"]}",
             JsonRpcRequest.class));
-  }
-
-  private JsonRpcRequestContext createPrivUnsubscribeRequestWithUser(final User user) {
-    return new JsonRpcRequestContext(
-        Json.decodeValue(
-            "{\"id\": 1, \"method\": \"priv_unsubscribe\", \"params\": [\""
-                + PRIVACY_GROUP_ID
-                + "\", \"0x0\"]}",
-            JsonRpcRequest.class),
-        user);
   }
 }

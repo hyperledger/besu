@@ -1,15 +1,38 @@
 # Changelog
 
+## 21.10.3
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Early Access Features
+
+## 21.10.2
+
+### Additions and Improvements
+- Add discovery options to genesis file [#2944](https://github.com/hyperledger/besu/pull/2944)
+- Add validate-config subcommand to perform basic syntax validation of TOML config [#2994](https://github.com/hyperledger/besu/pull/2994)
+- Updated Sepolia Nodes [#3034](https://github.com/hyperledger/besu/pull/3034) [#3035](https://github.com/hyperledger/besu/pull/3035)
+
+### Bug Fixes
+- Reduce shift calculations to shifts that may have an actual result. [#3039](https://github.com/hyperledger/besu/pull/3039)
+- DNS Discovery daemon wasn't started [#3033](https://github.com/hyperledger/besu/pull/3033)
+
+### Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.2/besu-21.10.2.zip \
+SHA256: 4b96d4d10c0c6128dc67333c8600e927ea135b4db5e5f74688a0753260b7b985
+
 ## 21.10.1
 
 ### Additions and Improvements
 - Add CLI autocomplete scripts. [#2854](https://github.com/hyperledger/besu/pull/2854)
-- Added support for PKCS11 keystore on PKI Block Creation. [#2865](https://github.com/hyperledger/besu/pull/2865)
+- Add support for PKCS11 keystore on PKI Block Creation. [#2865](https://github.com/hyperledger/besu/pull/2865)
 - Optimize EVM Memory for MLOAD Operations [#2917](https://github.com/hyperledger/besu/pull/2917)
 - Upgrade CircleCI OpenJDK docker image to version 11.0.12. [#2928](https://github.com/hyperledger/besu/pull/2928)
 - Update JDK 11 to latest version in Besu Docker images. [#2925](https://github.com/hyperledger/besu/pull/2925)
 - Add Sepolia proof-of-work testnet configurations [#2920](https://github.com/hyperledger/besu/pull/2920)
-- Allow block period to be configured for IBFT2 and QBFT using transitions [\#2902](https://github.com/hyperledger/besu/pull/2902)
+- Allow block period to be configured for IBFT2 and QBFT using transitions [#2902](https://github.com/hyperledger/besu/pull/2902)
 - Add support for binary messages (0x02) for websocket. [#2980](https://github.com/hyperledger/besu/pull/2980)
 
 ### Bug Fixes
@@ -19,6 +42,10 @@
 
 ### Early Access Features
 - Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
+
+### Download Link
+This release is not recommended for production use. \
+SHA256: 064df81be49c31ebfc0e1a5f03357e8f6f9a7f5e7bcb82e2b187e2d58e1704eb
 
 ## 21.10.0
 
@@ -44,7 +71,7 @@
 - Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
 
 ### Download Link
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.0/besu-21.10.0.zip \
+This release is not recommended for production use. \
 SHA256: 71374454753c2ee595f4f34dc6913f731818d50150accbc98088aace313c6935
 
 ## 21.10.0-RC4
@@ -57,7 +84,7 @@ SHA256: 71374454753c2ee595f4f34dc6913f731818d50150accbc98088aace313c6935
 
 ### Early Access Features
 ### Download Link
-https://hyperledger.jfrog.io/native/besu-binaries/besu/21.10.0-RC4/besu-21.10.0-RC4.zip \
+This release is not recommended for production use. \
 SHA256: b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793
 
 ## 21.10.0-RC3
@@ -68,7 +95,7 @@ SHA256: b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793
 - Fix Concurrency issues in Ethpeers. [#2896](https://github.com/hyperledger/besu/pull/2896)
 
 ### Download
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.0-RC3/besu-21.10.0-RC3.zip \
+This release is not recommended for production use. \
 SHA256: 3d4857589336717bf5e4e5ef711b9a7f3bc46b49e1cf5b3b6574a00ccc6eda94
 
 ## 21.10.0-RC1/RC2
@@ -86,7 +113,7 @@ SHA256: 3d4857589336717bf5e4e5ef711b9a7f3bc46b49e1cf5b3b6574a00ccc6eda94
 ### Early Access Features
 
 ### Download
-https://hyperledger.jfrog.io/native/besu-binaries/besu/21.10.0-RC1/besu-21.10.0-RC1.zip \
+This release is not recommended for production use. \
 SHA256: 536612e5e4d7a5e7a582f729f01ba591ba68cc389e8379fea3571ed85322ff51
 
 

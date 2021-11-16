@@ -11,6 +11,7 @@
 | Antoine Toulme   | atoulme          | atoulme          |
 | Antony Denyer    | antonydenyer     | antonydenyer     |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
+| Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | David Mechler    | davemec          | davemec          |
 | Edward Mack      | edwardmack       | mackcom          | 
 | Gary Schulte     | garyschulte      | GarySchulte      | 
@@ -26,6 +27,7 @@
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Sajida Zouarhi   | sajz             | SajidaZ          |
 | Stefan Pingel    | pinges           | pinges           |
+| Taccat Isid      | taccatisid       | taccatisid       |
 | Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Danno Ferrin     | shemnon          | shemnon          |

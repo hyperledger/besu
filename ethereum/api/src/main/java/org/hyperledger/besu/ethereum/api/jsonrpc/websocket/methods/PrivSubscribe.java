@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscrip
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.InvalidSubscriptionRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.PrivateSubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionRequestMapper;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 public class PrivSubscribe extends AbstractPrivateSubscriptionMethod {
@@ -49,9 +50,10 @@ public class PrivSubscribe extends AbstractPrivateSubscriptionMethod {
       final String privacyUserId = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
       final PrivateSubscribeRequest subscribeRequest =
           getMapper().mapPrivateSubscribeRequest(requestContext, privacyUserId);
-
-      checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(
-          requestContext, subscribeRequest.getPrivacyGroupId());
+      if (privacyController instanceof MultiTenancyPrivacyController) {
+        checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(
+            requestContext, subscribeRequest.getPrivacyGroupId());
+      }
 
       final Long subscriptionId = subscriptionManager().subscribe(subscribeRequest);
 

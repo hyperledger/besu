@@ -64,7 +64,7 @@ public class PermReloadPermissionsFromFileTest {
 
     JsonRpcResponse response = method.response(reloadRequest());
 
-    assertThat(response).isEqualToComparingFieldByField(expectedErrorResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedErrorResponse);
   }
 
   @Test
@@ -74,7 +74,7 @@ public class PermReloadPermissionsFromFileTest {
     verify(accountLocalConfigPermissioningController).reload();
     verify(nodeLocalConfigPermissioningController).reload();
 
-    assertThat(response).isEqualToComparingFieldByField(successResponse());
+    assertThat(response).usingRecursiveComparison().isEqualTo(successResponse());
   }
 
   @Test
@@ -85,7 +85,7 @@ public class PermReloadPermissionsFromFileTest {
 
     JsonRpcResponse response = method.response(reloadRequest());
 
-    assertThat(response).isEqualToComparingFieldByField(expectedErrorResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedErrorResponse);
   }
 
   private JsonRpcSuccessResponse successResponse() {
