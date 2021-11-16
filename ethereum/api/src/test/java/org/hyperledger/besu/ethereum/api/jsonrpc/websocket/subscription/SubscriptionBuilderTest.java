@@ -53,7 +53,7 @@ public class SubscriptionBuilderTest {
     final Subscription builtSubscription =
         subscriptionBuilder.build(1L, CONNECTION_ID, subscribeRequest);
 
-    assertThat(builtSubscription).isEqualToComparingFieldByField(expectedSubscription);
+    assertThat(builtSubscription).usingRecursiveComparison().isEqualTo(expectedSubscription);
   }
 
   @Test
@@ -76,7 +76,7 @@ public class SubscriptionBuilderTest {
     final Subscription builtSubscription =
         subscriptionBuilder.build(1L, CONNECTION_ID, subscribeRequest);
 
-    assertThat(builtSubscription).isEqualToComparingFieldByField(expectedSubscription);
+    assertThat(builtSubscription).usingRecursiveComparison().isEqualTo(expectedSubscription);
   }
 
   @Test
@@ -89,7 +89,7 @@ public class SubscriptionBuilderTest {
     final Subscription builtSubscription =
         subscriptionBuilder.build(1L, CONNECTION_ID, subscribeRequest);
 
-    assertThat(builtSubscription).isEqualToComparingFieldByField(expectedSubscription);
+    assertThat(builtSubscription).usingRecursiveComparison().isEqualTo(expectedSubscription);
   }
 
   @Test
@@ -102,7 +102,7 @@ public class SubscriptionBuilderTest {
     final Subscription builtSubscription =
         subscriptionBuilder.build(1L, CONNECTION_ID, subscribeRequest);
 
-    assertThat(builtSubscription).isEqualToComparingFieldByField(expectedSubscription);
+    assertThat(builtSubscription).usingRecursiveComparison().isEqualTo(expectedSubscription);
   }
 
   @Test
@@ -115,7 +115,7 @@ public class SubscriptionBuilderTest {
     final Subscription builtSubscription =
         subscriptionBuilder.build(1L, CONNECTION_ID, subscribeRequest);
 
-    assertThat(builtSubscription).isEqualToComparingFieldByField(expectedSubscription);
+    assertThat(builtSubscription).usingRecursiveComparison().isEqualTo(expectedSubscription);
   }
 
   @Test

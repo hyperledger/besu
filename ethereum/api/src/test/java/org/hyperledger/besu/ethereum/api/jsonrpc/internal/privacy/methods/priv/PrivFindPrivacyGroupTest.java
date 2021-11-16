@@ -87,7 +87,7 @@ public class PrivFindPrivacyGroupTest {
         (JsonRpcSuccessResponse) privFindPrivacyGroup.response(request);
     final List<PrivacyGroup> result = (List<PrivacyGroup>) response.getResult();
     assertThat(result).hasSize(1);
-    assertThat(result.get(0)).isEqualToComparingFieldByField(privacyGroup);
+    assertThat(result.get(0)).usingRecursiveComparison().isEqualTo(privacyGroup);
     verify(privacyController).findPrivacyGroupByMembers(ADDRESSES, ENCLAVE_PUBLIC_KEY);
   }
 

@@ -76,7 +76,7 @@ public class PermGetNodesAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     verify(nodeLocalConfigPermissioningController, times(1)).getNodesAllowlist();
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
@@ -92,7 +92,7 @@ public class PermGetNodesAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     verify(nodeLocalConfigPermissioningController, times(1)).getNodesAllowlist();
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
@@ -108,7 +108,8 @@ public class PermGetNodesAllowlistTest {
             request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_NOT_ENABLED);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext buildRequest() {

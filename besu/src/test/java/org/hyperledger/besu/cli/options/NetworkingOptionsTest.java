@@ -72,6 +72,31 @@ public class NetworkingOptionsTest
     assertThat(commandOutput.toString()).isEmpty();
   }
 
+  @Test
+  public void checkDnsServerOverrideFlag_isSet() {
+    final TestBesuCommand cmd = parseCommand("--Xp2p-dns-discovery-server", "localhost");
+
+    final NetworkingOptions options = cmd.getNetworkingOptions();
+    final NetworkingConfiguration networkingConfig = options.toDomainObject();
+    assertThat(networkingConfig.getDnsDiscoveryServerOverride()).isPresent();
+    assertThat(networkingConfig.getDnsDiscoveryServerOverride().get()).isEqualTo("localhost");
+
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void checkDnsServerOverrideFlag_isNotSet() {
+    final TestBesuCommand cmd = parseCommand();
+
+    final NetworkingOptions options = cmd.getNetworkingOptions();
+    final NetworkingConfiguration networkingConfig = options.toDomainObject();
+    assertThat(networkingConfig.getDnsDiscoveryServerOverride()).isEmpty();
+
+    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
   @Override
   NetworkingConfiguration createDefaultDomainObject() {
     return NetworkingConfiguration.create();
@@ -83,7 +108,7 @@ public class NetworkingOptionsTest
     config.setInitiateConnectionsFrequency(
         NetworkingConfiguration.DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC + 10);
     config.setCheckMaintainedConnectionsFrequency(
-        NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTSION_FREQUENCY_SEC + 10);
+        NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC + 10);
     return config;
   }
 

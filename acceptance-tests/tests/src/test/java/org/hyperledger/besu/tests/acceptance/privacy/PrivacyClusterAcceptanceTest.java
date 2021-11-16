@@ -195,7 +195,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
         bobEnclave.receive(
             Bytes.fromHexString(transactionKey).toBase64String(), bob.getEnclaveKey());
 
-    assertThat(bobRR).isEqualToComparingFieldByField(aliceRR);
+    assertThat(bobRR).usingRecursiveComparison().isEqualTo(aliceRR);
 
     final RawTransaction pmt =
         RawTransaction.createTransaction(

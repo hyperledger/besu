@@ -82,7 +82,7 @@ public class MinerSetCoinbaseTest {
     final JsonRpcResponse response = method.response(request);
 
     verify(miningCoordinator).setCoinbase(eq(Address.fromHexString("0x0")));
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -99,7 +99,7 @@ public class MinerSetCoinbaseTest {
         .setCoinbase(any());
 
     final JsonRpcResponse response = method.response(request);
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext minerSetCoinbaseRequest(final String hexString) {
