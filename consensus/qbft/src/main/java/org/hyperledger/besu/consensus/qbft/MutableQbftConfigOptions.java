@@ -19,6 +19,7 @@ import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 /**
  * A mutable {@link QbftConfigOptions} that is used for building config for transitions in the
@@ -40,5 +41,10 @@ public class MutableQbftConfigOptions extends MutableBftConfigOptions implements
 
   public void setValidatorContractAddress(final Optional<String> validatorContractAddress) {
     this.validatorContractAddress = validatorContractAddress;
+  }
+
+  @Override
+  public OptionalLong getStartBlock() {
+    return OptionalLong.empty();
   }
 }
