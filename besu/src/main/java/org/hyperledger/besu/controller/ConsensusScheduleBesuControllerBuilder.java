@@ -41,7 +41,9 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -57,6 +59,7 @@ import java.time.Clock;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 
 import com.google.common.base.Preconditions;
@@ -102,7 +105,21 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
-    return besuControllerBuilders.get(0L).createProtocolSchedule();
+    final MutableProtocolSchedule combinedProtocolSchedule =
+        new MutableProtocolSchedule(genesisConfig.getConfigOptions().getChainId());
+
+    for (Entry<Long, BesuControllerBuilder> builderSchedule : besuControllerBuilders.entrySet()) {
+      final BesuControllerBuilder builder = builderSchedule.getValue();
+      final long block = builderSchedule.getKey();
+      final MutableProtocolSchedule protocolSchedule =
+          (MutableProtocolSchedule) builder.createProtocolSchedule();
+      for (ScheduledProtocolSpec scheduledProtocolSpec :
+          protocolSchedule.getScheduledProtocolSpecs()) {
+        final long milestoneBlock = block + scheduledProtocolSpec.getBlock();
+        combinedProtocolSchedule.putMilestone(milestoneBlock, scheduledProtocolSpec.getSpec());
+      }
+    }
+    return combinedProtocolSchedule;
   }
 
   @Override
