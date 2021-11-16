@@ -1,0 +1,18 @@
+{
+  "chainId": 61,
+  "homesteadBlock": 1,
+  "eip150Block": 2,
+  "eip158Block": 3,
+  "byzantiumBlock": 1035301,
+  "ibft2": {
+    "blockperiodseconds": 2,
+    "epochlength": 30000,
+    "requesttimeoutseconds": 10
+  },
+  "qbft": {
+    "blockperiodseconds": 2,
+    "epochlength": 30000,
+    "requesttimeoutseconds": 10,
+    "startBlock": 123
+  }
+}
