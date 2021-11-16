@@ -20,5 +20,14 @@ public enum JwtAlgorithm {
   RS512,
   ES256,
   ES384,
-  ES512
+  ES512;
+
+  public static JwtAlgorithm fromString(final String str) {
+    for (final JwtAlgorithm alg : JwtAlgorithm.values()) {
+      if (alg.name().equalsIgnoreCase(str)) {
+        return alg;
+      }
+    }
+    return null;
+  }
 }
