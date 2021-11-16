@@ -1,10 +1,18 @@
 # Changelog
 
+## 21.10.3
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Early Access Features
+- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
+
 ## 21.10.2
 
 ### Additions and Improvements
 - Add discovery options to genesis file [#2944](https://github.com/hyperledger/besu/pull/2944)
-- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017) 
 - Add validate-config subcommand to perform basic syntax validation of TOML config [#2994](https://github.com/hyperledger/besu/pull/2994)
 
 ### Bug Fixes
