@@ -107,6 +107,7 @@ public class WebSocketServiceLoginTest {
         new HttpClientOptions()
             .setDefaultHost(websocketConfiguration.getHost())
             .setDefaultPort(websocketConfiguration.getPort());
+    ;
 
     httpClient = vertx.createHttpClient(httpClientOptions);
   }
@@ -247,6 +248,7 @@ public class WebSocketServiceLoginTest {
     final Async async = context.async();
 
     final JWTOptions jwtOptions = new JWTOptions().setExpiresInMinutes(5).setAlgorithm("RS256");
+
     final JsonObject jwtContents =
         new JsonObject().put("permissions", Lists.newArrayList("eth:*")).put("username", "user");
     final String goodToken = jwtAuth.generateToken(jwtContents, jwtOptions);

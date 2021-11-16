@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
@@ -61,7 +62,7 @@ public class JWTAuthOptionsFactory {
   public JWTAuthOptions createWithGeneratedKeyPair() {
     final KeyPair keypair = generateJwtKeyPair();
     return new JWTAuthOptions()
-        .setPermissionsClaimKey(PERMISSIONS)
+        //.setPermissionsClaimKey(PERMISSIONS)
         .addPubSecKey(
             new PubSecKeyOptions()
                 .setAlgorithm(DEFAULT_ALGORITHM)
