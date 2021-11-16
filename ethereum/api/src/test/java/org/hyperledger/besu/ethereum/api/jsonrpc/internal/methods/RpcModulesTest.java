@@ -54,6 +54,6 @@ public class RpcModulesTest {
         new JsonRpcSuccessResponse(request.getRequest().getId(), ImmutableMap.of("debug", "1.0"));
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 }

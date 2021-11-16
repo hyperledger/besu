@@ -85,7 +85,7 @@ public class PrivGetPrivateTransactionTest {
     final JsonRpcRequestContext request = createRequestContext();
     final PrivateTransactionResult result = makeRequest(request);
 
-    assertThat(result).isEqualToComparingFieldByField(expectedResult);
+    assertThat(result).usingRecursiveComparison().isEqualTo(expectedResult);
   }
 
   @Test
@@ -104,7 +104,7 @@ public class PrivGetPrivateTransactionTest {
     final JsonRpcRequestContext request = createRequestContext();
     final PrivateTransactionResult result = makeRequest(request);
 
-    assertThat(result).isEqualToComparingFieldByField(expectedResult);
+    assertThat(result).usingRecursiveComparison().isEqualTo(expectedResult);
   }
 
   @Test

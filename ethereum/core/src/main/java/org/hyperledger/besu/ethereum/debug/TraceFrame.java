@@ -93,7 +93,7 @@ public class TraceFrame {
     this.exceptionalHaltReason = exceptionalHaltReason;
     this.recipient = recipient;
     this.value = value;
-    this.inputData = inputData.copy();
+    this.inputData = inputData;
     this.outputData = outputData;
     this.stack = stack;
     this.memory = memory;

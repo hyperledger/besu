@@ -59,6 +59,6 @@ public class MinerSetEtherbaseTest {
     method.response(request);
 
     final JsonRpcRequestContext delegatedRequest = requestCaptor.getValue();
-    assertThat(delegatedRequest).isEqualToComparingFieldByField(request);
+    assertThat(delegatedRequest).usingRecursiveComparison().isEqualTo(request);
   }
 }
