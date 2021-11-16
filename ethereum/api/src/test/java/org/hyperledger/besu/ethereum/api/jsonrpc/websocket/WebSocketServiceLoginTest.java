@@ -278,7 +278,7 @@ public class WebSocketServiceLoginTest {
                   });
         });
 
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS*10);
+    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
 
   @Test

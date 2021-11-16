@@ -75,7 +75,8 @@ public class TomlUser implements User {
   }
 
   @Override
-  public User isAuthorized(final Authorization authority, final Handler<AsyncResult<Boolean>> resultHandler) {
+  public User isAuthorized(
+      final Authorization authority, final Handler<AsyncResult<Boolean>> resultHandler) {
     throw new UnsupportedOperationException("Not implemented");
   }
 

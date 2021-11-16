@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
@@ -62,12 +61,11 @@ public class JWTAuthOptionsFactory {
   public JWTAuthOptions createWithGeneratedKeyPair() {
     final KeyPair keypair = generateJwtKeyPair();
     return new JWTAuthOptions()
-        //.setPermissionsClaimKey(PERMISSIONS)
+        // .setPermissionsClaimKey(PERMISSIONS)
         .addPubSecKey(
             new PubSecKeyOptions()
                 .setAlgorithm(ALGORITHM)
-                .setBuffer(keyPairToPublicPemString(keypair))
-                )
+                .setBuffer(keyPairToPublicPemString(keypair)))
         .addPubSecKey(
             new PubSecKeyOptions()
                 .setAlgorithm(ALGORITHM)
@@ -99,27 +97,23 @@ public class JWTAuthOptionsFactory {
     return keyGenerator.generateKeyPair();
   }
 
-
-
   private String keyPairToPublicPemString(final KeyPair kp) {
     StringBuilder pemBuffer = new StringBuilder();
     pemBuffer.append("-----BEGIN PUBLIC KEY-----\r\n");
     pemBuffer.append(Codec.base64MimeEncode(kp.getPublic().getEncoded()));
-    //pemBuffer.append(Base64.getEncoder().encodeToString(kp.getPublic().getEncoded()));
+    // pemBuffer.append(Base64.getEncoder().encodeToString(kp.getPublic().getEncoded()));
     pemBuffer.append("\r\n");
     pemBuffer.append("-----END PUBLIC KEY-----\r\n");
     return pemBuffer.toString();
   }
 
-
   private String keyPairToPrivatePemString(final KeyPair kp) {
     StringBuilder pemBuffer = new StringBuilder();
     pemBuffer.append("-----BEGIN PRIVATE KEY-----\r\n");
-    //pemBuffer.append(Base64.getEncoder().encodeToString(kp.getPrivate().getEncoded()));
+    // pemBuffer.append(Base64.getEncoder().encodeToString(kp.getPrivate().getEncoded()));
     pemBuffer.append(Codec.base64MimeEncode(kp.getPrivate().getEncoded()));
     pemBuffer.append("\r\n");
     pemBuffer.append("-----END PRIVATE KEY-----\r\n");
     return pemBuffer.toString();
   }
-
 }

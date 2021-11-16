@@ -51,10 +51,11 @@ public class JWTAuthOptionsFactoryTest {
     final JWTAuthOptions jwtAuthOptions = jwtAuthOptionsFactory.createWithGeneratedKeyPair();
 
     assertThat(jwtAuthOptions.getPubSecKeys()).isNotNull();
-    assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(1);
+    assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(2);
     assertThat(jwtAuthOptions.getPubSecKeys().get(0).getAlgorithm()).isEqualTo("RS256");
-    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getPublicKey()).isNotEmpty();
-    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getSecretKey()).isNotEmpty();
+    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getBuffer()).isNotNull();
+    assertThat(jwtAuthOptions.getPubSecKeys().get(1).getAlgorithm()).isEqualTo("RS256");
+    assertThat(jwtAuthOptions.getPubSecKeys().get(1).getBuffer()).isNotNull();
   }
 
   @Test
@@ -65,8 +66,7 @@ public class JWTAuthOptionsFactoryTest {
 
     final PubSecKeyOptions pubSecKeyOptions1 = jwtAuthOptions1.getPubSecKeys().get(0);
     final PubSecKeyOptions pubSecKeyOptions2 = jwtAuthOptions2.getPubSecKeys().get(0);
-    assertThat(pubSecKeyOptions1.getPublicKey()).isNotEqualTo(pubSecKeyOptions2.getPublicKey());
-    assertThat(pubSecKeyOptions1.getSecretKey()).isNotEqualTo(pubSecKeyOptions2.getSecretKey());
+    assertThat(pubSecKeyOptions1.getBuffer()).isNotEqualTo(pubSecKeyOptions2.getBuffer());
   }
 
   @Test

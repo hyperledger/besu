@@ -14,12 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
-import io.vertx.ext.auth.impl.jose.JWK;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 
 import java.io.File;
-import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
