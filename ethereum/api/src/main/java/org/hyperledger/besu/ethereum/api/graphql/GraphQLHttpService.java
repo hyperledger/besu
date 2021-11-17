@@ -153,7 +153,8 @@ public class GraphQLHttpService {
         .handler(
             BodyHandler.create()
                 .setUploadsDirectory(dataDir.resolve("uploads").toString())
-                .setDeleteUploadedFilesOnEnd(true));
+                .setDeleteUploadedFilesOnEnd(true)
+                .setPreallocateBodyBuffer(true));
     router.route("/").method(GET).method(POST).handler(this::handleEmptyRequestAndRedirect);
     router
         .route(GRAPH_QL_ROUTE)
