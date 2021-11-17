@@ -18,6 +18,7 @@
 package org.hyperledger.besu.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,15 +68,14 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.homesteadBlock(5L);
     genesisConfigOptions.constantinopleBlock(10L);
+    genesisConfigOptions.chainId(BigInteger.TEN);
     final ProtocolSchedule protocolSchedule = createProtocolSchedule(genesisConfigOptions);
 
     final Map<Long, BesuControllerBuilder> schedule = new HashMap<>();
     schedule.put(0L, delegateBesuControllerBuilder1);
     when(delegateBesuControllerBuilder1.createProtocolSchedule()).thenReturn(protocolSchedule);
 
-    final StubGenesisConfigOptions genesisConfigOptionsForChainId = new StubGenesisConfigOptions();
-    genesisConfigOptionsForChainId.chainId(BigInteger.TEN);
-    when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptionsForChainId);
+    when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
 
     final ConsensusScheduleBesuControllerBuilder controllerBuilder =
         new ConsensusScheduleBesuControllerBuilder(schedule);
@@ -95,26 +96,23 @@ public class ConsensusScheduleBesuControllerBuilderTest {
 
   @Test
   public void createsCombinedProtocolScheduleWithMilestonesFromMultipleSchedules() {
-    final StubGenesisConfigOptions genesisConfigOptions1 = new StubGenesisConfigOptions();
-    genesisConfigOptions1.homesteadBlock(5L);
-    genesisConfigOptions1.constantinopleBlock(10L);
-    genesisConfigOptions1.chainId(BigInteger.TEN);
-    final ProtocolSchedule protocolSchedule1 = createProtocolSchedule(genesisConfigOptions1);
+    final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
+    genesisConfigOptions.homesteadBlock(5L);
+    genesisConfigOptions.constantinopleBlock(10L);
+    genesisConfigOptions.byzantiumBlock(105L);
+    genesisConfigOptions.berlinBlock(110L);
+    genesisConfigOptions.chainId(BigInteger.TEN);
 
-    final StubGenesisConfigOptions genesisConfigOptions2 = new StubGenesisConfigOptions();
-    genesisConfigOptions2.byzantiumBlock(0L);
-    genesisConfigOptions2.berlinBlock(5L);
-    final ProtocolSchedule protocolSchedule2 = createProtocolSchedule(genesisConfigOptions2);
+    final ProtocolSchedule protocolSchedule1 = createProtocolSchedule(genesisConfigOptions);
+    final ProtocolSchedule protocolSchedule2 = createProtocolSchedule(genesisConfigOptions);
 
     final Map<Long, BesuControllerBuilder> schedule = new HashMap<>();
     schedule.put(0L, delegateBesuControllerBuilder1);
     schedule.put(100L, delegateBesuControllerBuilder2);
-    when(delegateBesuControllerBuilder2.createProtocolSchedule()).thenReturn(protocolSchedule2);
     when(delegateBesuControllerBuilder1.createProtocolSchedule()).thenReturn(protocolSchedule1);
+    when(delegateBesuControllerBuilder2.createProtocolSchedule()).thenReturn(protocolSchedule2);
 
-    final StubGenesisConfigOptions genesisConfigOptionsForChainId = new StubGenesisConfigOptions();
-    genesisConfigOptionsForChainId.chainId(BigInteger.TEN);
-    when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptionsForChainId);
+    when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
 
     final ConsensusScheduleBesuControllerBuilder controllerBuilder =
         new ConsensusScheduleBesuControllerBuilder(schedule);
@@ -124,30 +122,31 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     // schedule 1
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L).getName()).isEqualTo("Frontier");
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L))
-        .usingRecursiveComparison()
-        .isEqualTo(protocolSchedule1.getByBlockNumber(0L));
+        .isSameAs(protocolSchedule1.getByBlockNumber(0L));
+
     assertThat(combinedProtocolSchedule.getByBlockNumber(5L).getName()).isEqualTo("Homestead");
     assertThat(combinedProtocolSchedule.getByBlockNumber(5L))
-        .usingRecursiveComparison()
-        .isEqualTo(protocolSchedule1.getByBlockNumber(5L));
+        .isSameAs(protocolSchedule1.getByBlockNumber(5L));
     assertThat(combinedProtocolSchedule.getByBlockNumber(10L).getName())
         .isEqualTo("Constantinople");
     assertThat(combinedProtocolSchedule.getByBlockNumber(10L))
-        .usingRecursiveComparison()
-        .isEqualTo(protocolSchedule1.getByBlockNumber(10L));
+        .isSameAs(protocolSchedule1.getByBlockNumber(10L));
 
     // schedule 2
-    assertThat(combinedProtocolSchedule.getByBlockNumber(100L).getName()).isEqualTo("Byzantium");
+    assertThat(combinedProtocolSchedule.getByBlockNumber(100L).getName())
+        .isEqualTo("Constantinople");
     assertThat(combinedProtocolSchedule.getByBlockNumber(100L))
-        .usingRecursiveComparison()
-        .isEqualTo(protocolSchedule2.getByBlockNumber(0L));
-    assertThat(combinedProtocolSchedule.getByBlockNumber(105L).getName()).isEqualTo("Berlin");
+        .isSameAs(protocolSchedule2.getByBlockNumber(10L));
+
+    assertThat(combinedProtocolSchedule.getByBlockNumber(105L).getName()).isEqualTo("Byzantium");
     assertThat(combinedProtocolSchedule.getByBlockNumber(105L))
-        .usingRecursiveComparison()
-        .isEqualTo(protocolSchedule2.getByBlockNumber(5L));
+        .isSameAs(protocolSchedule2.getByBlockNumber(105L));
+    assertThat(combinedProtocolSchedule.getByBlockNumber(110L).getName()).isEqualTo("Berlin");
+    assertThat(combinedProtocolSchedule.getByBlockNumber(110L))
+        .isSameAs(protocolSchedule2.getByBlockNumber(110L));
 
     assertThat(combinedProtocolSchedule.streamMilestoneBlocks().collect(Collectors.toList()))
-        .isEqualTo(List.of(0L, 5L, 10L, 100L, 105L));
+        .isEqualTo(List.of(0L, 5L, 10L, 100L, 105L, 110L));
   }
 
   private ProtocolSchedule createProtocolSchedule(final GenesisConfigOptions genesisConfigOptions) {
