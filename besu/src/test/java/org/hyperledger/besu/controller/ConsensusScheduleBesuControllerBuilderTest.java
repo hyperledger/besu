@@ -81,15 +81,19 @@ public class ConsensusScheduleBesuControllerBuilderTest {
         new ConsensusScheduleBesuControllerBuilder(consensusSchedule);
     controllerBuilder.genesisConfigFile(genesisConfigFile);
     final ProtocolSchedule combinedProtocolSchedule = controllerBuilder.createProtocolSchedule();
+
+    assertThat(combinedProtocolSchedule.getByBlockNumber(0L).getName()).isEqualTo("Frontier");
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L))
-        .usingRecursiveComparison()
-        .isEqualTo(protocolSchedule.getByBlockNumber(0L));
+        .isSameAs(protocolSchedule.getByBlockNumber(0L));
+
+    assertThat(combinedProtocolSchedule.getByBlockNumber(5L).getName()).isEqualTo("Homestead");
     assertThat(combinedProtocolSchedule.getByBlockNumber(5L))
-        .usingRecursiveComparison()
-        .isEqualTo(protocolSchedule.getByBlockNumber(5L));
+        .isSameAs(protocolSchedule.getByBlockNumber(5L));
+
+    assertThat(combinedProtocolSchedule.getByBlockNumber(10L).getName()).isEqualTo("Constantinople");
     assertThat(combinedProtocolSchedule.getByBlockNumber(10L))
-        .usingRecursiveComparison()
-        .isEqualTo(protocolSchedule.getByBlockNumber(10L));
+        .isSameAs(protocolSchedule.getByBlockNumber(10L));
+
     assertThat(combinedProtocolSchedule.streamMilestoneBlocks().collect(Collectors.toList()))
         .isEqualTo(List.of(0L, 5L, 10L));
   }
@@ -119,7 +123,7 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     controllerBuilder.genesisConfigFile(genesisConfigFile);
     final ProtocolSchedule combinedProtocolSchedule = controllerBuilder.createProtocolSchedule();
 
-    // schedule 1
+    // consensus schedule 1
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L).getName()).isEqualTo("Frontier");
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L))
         .isSameAs(protocolSchedule1.getByBlockNumber(0L));
@@ -132,12 +136,13 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     assertThat(combinedProtocolSchedule.getByBlockNumber(10L))
         .isSameAs(protocolSchedule1.getByBlockNumber(10L));
 
-    // schedule 2
+    // consensus migration block
     assertThat(combinedProtocolSchedule.getByBlockNumber(100L).getName())
         .isEqualTo("Constantinople");
     assertThat(combinedProtocolSchedule.getByBlockNumber(100L))
         .isSameAs(protocolSchedule2.getByBlockNumber(10L));
 
+    // consensus schedule 2
     assertThat(combinedProtocolSchedule.getByBlockNumber(105L).getName()).isEqualTo("Byzantium");
     assertThat(combinedProtocolSchedule.getByBlockNumber(105L))
         .isSameAs(protocolSchedule2.getByBlockNumber(105L));

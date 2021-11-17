@@ -18,6 +18,8 @@
 
 package org.hyperledger.besu.controller;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
@@ -44,6 +46,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -63,6 +66,7 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -111,31 +115,32 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
-    final NavigableSet<BftForkSpec<MutableProtocolSchedule>> forkSpecs =
+    final NavigableSet<BftForkSpec<ProtocolSchedule>> forkSpecs =
         besuControllerBuilderSchedule.entrySet().stream()
             .map(
                 entry ->
-                    new BftForkSpec<>(
-                        entry.getKey(),
-                        (MutableProtocolSchedule) entry.getValue().createProtocolSchedule()))
+                    new BftForkSpec<>(entry.getKey(), entry.getValue().createProtocolSchedule()))
             .collect(
                 Collectors.toCollection(
                     () -> new TreeSet<>(Comparator.comparing(BftForkSpec::getBlock))));
 
     final MutableProtocolSchedule combinedProtocolSchedule =
         new MutableProtocolSchedule(genesisConfig.getConfigOptions().getChainId());
-    for (BftForkSpec<MutableProtocolSchedule> spec : forkSpecs) {
-      final Optional<BftForkSpec<MutableProtocolSchedule>> nextSpec =
+    for (BftForkSpec<ProtocolSchedule> spec : forkSpecs) {
+      checkState(
+          spec.getConfigOptions() instanceof MutableProtocolSchedule,
+          "Consensus migration requires a MutableProtocolSchedule");
+      final MutableProtocolSchedule protocolSchedule =
+          (MutableProtocolSchedule) spec.getConfigOptions();
+
+      final Optional<BftForkSpec<ProtocolSchedule>> nextSpec =
           Optional.ofNullable(forkSpecs.higher(spec));
-      final MutableProtocolSchedule protocolSchedule = spec.getConfigOptions();
       protocolSchedule.getScheduledProtocolSpecs().stream()
-          .filter(
-              scheduledProtocolSpec ->
-                  scheduledProtocolSpec.getBlock() >= spec.getBlock()
-                      && nextSpec
-                          .map(s -> scheduledProtocolSpec.getBlock() < s.getBlock())
-                          .orElse(true))
+          .filter(protocolSpecMatchesConsensusBlockRange(spec, nextSpec))
           .forEach(s -> combinedProtocolSchedule.putMilestone(s.getBlock(), s.getSpec()));
+
+      // When moving to a new consensus mechanism we want to use the last milestone but created by
+      // our consensus mechanism's BesuControllerBuilder so any additional rules are applied
       if (spec.getBlock() > 0) {
         combinedProtocolSchedule.putMilestone(
             spec.getBlock(), protocolSchedule.getByBlockNumber(spec.getBlock()));
@@ -143,6 +148,14 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
     }
 
     return combinedProtocolSchedule;
+  }
+
+  private Predicate<ScheduledProtocolSpec> protocolSpecMatchesConsensusBlockRange(
+      final BftForkSpec<ProtocolSchedule> spec,
+      final Optional<BftForkSpec<ProtocolSchedule>> nextSpec) {
+    return scheduledProtocolSpec ->
+        scheduledProtocolSpec.getBlock() >= spec.getBlock()
+            && nextSpec.map(s -> scheduledProtocolSpec.getBlock() < s.getBlock()).orElse(true);
   }
 
   @Override
