@@ -81,7 +81,8 @@ public class NetEnodeTest {
         new JsonRpcSuccessResponse(request.getRequest().getId(), enodeURL.get().toString());
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -93,7 +94,8 @@ public class NetEnodeTest {
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.P2P_DISABLED);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -107,7 +109,8 @@ public class NetEnodeTest {
             request.getRequest().getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext netEnodeRequest() {
