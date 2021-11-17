@@ -74,19 +74,19 @@ public abstract class AbstractGetHeadersFromPeerTask
     final List<BlockHeader> headers = headersMessage.getHeaders(protocolSchedule);
     if (headers.isEmpty()) {
       // Message contains no data - nothing to do
-      LOG.info("AbstractGetHeadersFromPeerTask: headers.isEmpty. Peer: {}", peer);
+      LOG.info("headers.isEmpty. Peer: {}", peer);
       return Optional.empty();
     }
     if (headers.size() > count) {
       // Too many headers - this isn't our response
-      LOG.info("AbstractGetHeadersFromPeerTask: headers.size()>count. Peer: {}", peer);
+      LOG.info("headers.size()>count. Peer: {}", peer);
       return Optional.empty();
     }
 
     final BlockHeader firstHeader = headers.get(0);
     if (!matchesFirstHeader(firstHeader)) {
       // This isn't our message - nothing to do
-      LOG.info("AbstractGetHeadersFromPeerTask: !matchesFirstHeader. Peer: {}", peer);
+      LOG.info("!matchesFirstHeader. Peer: {}", peer);
       return Optional.empty();
     }
 
@@ -98,9 +98,7 @@ public abstract class AbstractGetHeadersFromPeerTask
       final BlockHeader header = headers.get(i);
       if (header.getNumber() != prevBlockHeader.getNumber() + expectedDelta) {
         // Skip doesn't match, this isn't our data
-        LOG.info(
-            "AbstractGetHeadersFromPeerTask: header not matching the expected number. Peer: {}",
-            peer);
+        LOG.info("header not matching the expected number. Peer: {}", peer);
         return Optional.empty();
       }
       // if headers are supposed to be sequential check if a chain is formed
@@ -109,8 +107,7 @@ public abstract class AbstractGetHeadersFromPeerTask
         final BlockHeader child = reverse ? prevBlockHeader : header;
         if (!parent.getHash().equals(child.getParentHash())) {
           LOG.info(
-              "Sequential headers must form a chain through hashes, disconnecting peer: {}",
-              peer);
+              "Sequential headers must form a chain through hashes, disconnecting peer: {}", peer);
           peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
           return Optional.empty();
         }
