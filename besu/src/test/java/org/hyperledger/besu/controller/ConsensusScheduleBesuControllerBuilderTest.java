@@ -90,7 +90,8 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     assertThat(combinedProtocolSchedule.getByBlockNumber(5L))
         .isSameAs(protocolSchedule.getByBlockNumber(5L));
 
-    assertThat(combinedProtocolSchedule.getByBlockNumber(10L).getName()).isEqualTo("Constantinople");
+    assertThat(combinedProtocolSchedule.getByBlockNumber(10L).getName())
+        .isEqualTo("Constantinople");
     assertThat(combinedProtocolSchedule.getByBlockNumber(10L))
         .isSameAs(protocolSchedule.getByBlockNumber(10L));
 
