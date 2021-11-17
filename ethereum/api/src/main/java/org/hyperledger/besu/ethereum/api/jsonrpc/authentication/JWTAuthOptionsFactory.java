@@ -101,7 +101,6 @@ public class JWTAuthOptionsFactory {
     StringBuilder pemBuffer = new StringBuilder();
     pemBuffer.append("-----BEGIN PUBLIC KEY-----\r\n");
     pemBuffer.append(Codec.base64MimeEncode(kp.getPublic().getEncoded()));
-    // pemBuffer.append(Base64.getEncoder().encodeToString(kp.getPublic().getEncoded()));
     pemBuffer.append("\r\n");
     pemBuffer.append("-----END PUBLIC KEY-----\r\n");
     return pemBuffer.toString();
@@ -110,7 +109,6 @@ public class JWTAuthOptionsFactory {
   private String keyPairToPrivatePemString(final KeyPair kp) {
     StringBuilder pemBuffer = new StringBuilder();
     pemBuffer.append("-----BEGIN PRIVATE KEY-----\r\n");
-    // pemBuffer.append(Base64.getEncoder().encodeToString(kp.getPrivate().getEncoded()));
     pemBuffer.append(Codec.base64MimeEncode(kp.getPrivate().getEncoded()));
     pemBuffer.append("\r\n");
     pemBuffer.append("-----END PRIVATE KEY-----\r\n");
