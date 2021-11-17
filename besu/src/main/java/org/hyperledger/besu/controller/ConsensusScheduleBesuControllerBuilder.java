@@ -133,10 +133,10 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final MutableProtocolSchedule protocolSchedule =
           (MutableProtocolSchedule) spec.getConfigOptions();
 
-      final Optional<BftForkSpec<ProtocolSchedule>> nextSpec =
-          Optional.ofNullable(forkSpecs.higher(spec));
+      final Optional<Long> endBlock =
+          Optional.ofNullable(forkSpecs.higher(spec)).map(BftForkSpec::getBlock);
       protocolSchedule.getScheduledProtocolSpecs().stream()
-          .filter(protocolSpecMatchesConsensusBlockRange(spec, nextSpec))
+          .filter(protocolSpecMatchesConsensusBlockRange(spec.getBlock(), endBlock))
           .forEach(s -> combinedProtocolSchedule.putMilestone(s.getBlock(), s.getSpec()));
 
       // When moving to a new consensus mechanism we want to use the last milestone but created by
@@ -151,11 +151,10 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   }
 
   private Predicate<ScheduledProtocolSpec> protocolSpecMatchesConsensusBlockRange(
-      final BftForkSpec<ProtocolSchedule> spec,
-      final Optional<BftForkSpec<ProtocolSchedule>> nextSpec) {
+      final long startBlock, final Optional<Long> endBlock) {
     return scheduledProtocolSpec ->
-        scheduledProtocolSpec.getBlock() >= spec.getBlock()
-            && nextSpec.map(s -> scheduledProtocolSpec.getBlock() < s.getBlock()).orElse(true);
+        scheduledProtocolSpec.getBlock() >= startBlock
+            && endBlock.map(b -> scheduledProtocolSpec.getBlock() < b).orElse(true);
   }
 
   @Override
