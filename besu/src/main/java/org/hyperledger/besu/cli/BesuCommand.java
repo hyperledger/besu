@@ -585,8 +585,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final File rpcHttpAuthenticationPublicKeyFile = null;
 
   @Option(
-      hidden = true,
-      names = {"--Xrpc-http-authentication-jwt-algorithm"},
+      names = {"--rpc-http-authentication-jwt-algorithm"},
       description =
           "Encryption algorithm used for HTTP JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
               + " (default: ${DEFAULT-VALUE})",
@@ -594,8 +593,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final JwtAlgorithm rpcHttpAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM;
 
   @Option(
-      hidden = true,
-      names = {"--Xrpc-ws-authentication-jwt-algorithm"},
+      names = {"--rpc-ws-authentication-jwt-algorithm"},
       description =
           "Encryption algorithm used for Websockets JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
               + " (default: ${DEFAULT-VALUE})",
@@ -1864,7 +1862,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           commandLine,
           "--rpc-http-authentication-public-key-file",
           rpcHttpAuthenticationPublicKeyFile == null,
-          asList("--Xrpc-http-authentication-jwt-algorithm"));
+          asList("--rpc-http-authentication-jwt-algorithm"));
     }
 
     if (isRpcHttpAuthenticationEnabled
@@ -1914,7 +1912,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-tls-client-auth-enabled",
             "--rpc-http-tls-known-clients-file",
             "--rpc-http-tls-ca-clients-enabled",
-            "--Xrpc-http-authentication-jwt-algorithm"));
+            "--rpc-http-authentication-jwt-algorithm"));
   }
 
   private void checkRpcTlsOptionsDependencies() {
@@ -2016,7 +2014,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-ws-authentication-enabled",
             "--rpc-ws-authentication-credentials-file",
             "--rpc-ws-authentication-public-key-file",
-            "--Xrpc-ws-authentication-jwt-algorithm"));
+            "--rpc-ws-authentication-jwt-algorithm"));
 
     if (isRpcWsAuthenticationEnabled) {
       CommandLineUtils.checkOptionDependencies(
@@ -2024,7 +2022,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           commandLine,
           "--rpc-ws-authentication-public-key-file",
           rpcWsAuthenticationPublicKeyFile == null,
-          asList("--Xrpc-ws-authentication-jwt-algorithm"));
+          asList("--rpc-ws-authentication-jwt-algorithm"));
     }
 
     if (isRpcWsAuthenticationEnabled
