@@ -445,13 +445,14 @@ public class JsonRpcHttpService {
   }
 
   private Throwable getFailureException(final Throwable listenFailure) {
-    if (listenFailure instanceof SocketException) {
-      return new JsonRpcServiceException(
+
+      JsonRpcServiceException servFail = new JsonRpcServiceException(
           String.format(
               "Failed to bind Ethereum JSON-RPC listener to %s:%s: %s",
               config.getHost(), config.getPort(), listenFailure.getMessage()));
-    }
-    return listenFailure;
+      servFail.initCause(listenFailure);
+
+    return servFail;
   }
 
   private Handler<RoutingContext> checkAllowlistHostHeader() {

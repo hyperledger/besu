@@ -14,11 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -36,6 +31,11 @@ import java.util.Set;
 
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
@@ -152,8 +152,8 @@ public class GraphQLHttpServiceHostWhitelistTest {
             .url(baseUrl + "/graphql")
             .addHeader("Host", hostname)
             .build();
-     Response resp = client.newCall(build).execute();
-     return resp.code();
+    Response resp = client.newCall(build).execute();
+    return resp.code();
   }
 
   @Test
