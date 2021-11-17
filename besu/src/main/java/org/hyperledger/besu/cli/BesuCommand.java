@@ -585,6 +585,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final File rpcHttpAuthenticationPublicKeyFile = null;
 
   @Option(
+      hidden = true,
       names = {"--Xrpc-http-authentication-jwt-algorithm"},
       description =
           "Encryption algorithm used for HTTP JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
@@ -593,6 +594,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final JwtAlgorithm rpcHttpAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM;
 
   @Option(
+      hidden = true,
       names = {"--Xrpc-ws-authentication-jwt-algorithm"},
       description =
           "Encryption algorithm used for Websockets JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
