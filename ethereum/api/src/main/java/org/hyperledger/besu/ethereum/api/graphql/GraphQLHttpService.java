@@ -213,8 +213,11 @@ public class GraphQLHttpService {
   }
 
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
-    final Iterable<String> splitHostHeader =
-        Splitter.on(':').split(event.request().getHeader(HttpHeaders.HOST));
+    String hostname =
+        event.request().getHeader(HttpHeaders.HOST) != null
+            ? event.request().getHeader(HttpHeaders.HOST)
+            : event.request().host();
+    final Iterable<String> splitHostHeader = Splitter.on(':').split(hostname);
     final long hostPieces = stream(splitHostHeader).count();
     if (hostPieces > 1) {
       // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
