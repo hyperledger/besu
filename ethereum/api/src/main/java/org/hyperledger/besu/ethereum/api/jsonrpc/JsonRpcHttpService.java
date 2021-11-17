@@ -53,7 +53,6 @@ import org.hyperledger.besu.util.ExceptionUtils;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -446,11 +445,12 @@ public class JsonRpcHttpService {
 
   private Throwable getFailureException(final Throwable listenFailure) {
 
-      JsonRpcServiceException servFail = new JsonRpcServiceException(
-          String.format(
-              "Failed to bind Ethereum JSON-RPC listener to %s:%s: %s",
-              config.getHost(), config.getPort(), listenFailure.getMessage()));
-      servFail.initCause(listenFailure);
+    JsonRpcServiceException servFail =
+        new JsonRpcServiceException(
+            String.format(
+                "Failed to bind Ethereum JSON-RPC listener to %s:%s: %s",
+                config.getHost(), config.getPort(), listenFailure.getMessage()));
+    servFail.initCause(listenFailure);
 
     return servFail;
   }
