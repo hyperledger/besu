@@ -7,6 +7,7 @@
 ### Bug Fixes
 
 ### Early Access Features
+- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
 
 ## 21.10.2
 
