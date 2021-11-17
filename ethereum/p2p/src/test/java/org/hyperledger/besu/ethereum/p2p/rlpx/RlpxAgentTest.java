@@ -712,6 +712,22 @@ public class RlpxAgentTest {
   }
 
   @Test
+  public void connect_largeStreamOfPeersFirstFewImpostors() {
+    final int maxPeers = 5;
+    final int impostorsCount = 5;
+    connectionInitializer.setAutoDisconnectCounter(impostorsCount);
+    final Stream<Peer> peerStream = Stream.generate(PeerTestHelper::createPeer).limit(20);
+
+    startAgentWithMaxPeers(maxPeers);
+    agent = spy(agent);
+    agent.connect(peerStream);
+
+    assertThat(agent.getConnectionCount()).isEqualTo(maxPeers);
+    // Check that stream was not fully iterated
+    verify(agent, times(maxPeers + impostorsCount)).connect(any(Peer.class));
+  }
+
+  @Test
   public void disconnect() throws ExecutionException, InterruptedException {
     startAgent();
     final Peer peer = spy(createPeer());
