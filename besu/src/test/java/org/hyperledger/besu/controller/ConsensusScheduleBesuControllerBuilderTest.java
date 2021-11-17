@@ -71,14 +71,14 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     genesisConfigOptions.chainId(BigInteger.TEN);
     final ProtocolSchedule protocolSchedule = createProtocolSchedule(genesisConfigOptions);
 
-    final Map<Long, BesuControllerBuilder> schedule = new HashMap<>();
-    schedule.put(0L, delegateBesuControllerBuilder1);
+    final Map<Long, BesuControllerBuilder> consensusSchedule = new HashMap<>();
+    consensusSchedule.put(0L, delegateBesuControllerBuilder1);
     when(delegateBesuControllerBuilder1.createProtocolSchedule()).thenReturn(protocolSchedule);
 
     when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
 
     final ConsensusScheduleBesuControllerBuilder controllerBuilder =
-        new ConsensusScheduleBesuControllerBuilder(schedule);
+        new ConsensusScheduleBesuControllerBuilder(consensusSchedule);
     controllerBuilder.genesisConfigFile(genesisConfigFile);
     final ProtocolSchedule combinedProtocolSchedule = controllerBuilder.createProtocolSchedule();
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L))
@@ -106,16 +106,16 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     final ProtocolSchedule protocolSchedule1 = createProtocolSchedule(genesisConfigOptions);
     final ProtocolSchedule protocolSchedule2 = createProtocolSchedule(genesisConfigOptions);
 
-    final Map<Long, BesuControllerBuilder> schedule = new HashMap<>();
-    schedule.put(0L, delegateBesuControllerBuilder1);
-    schedule.put(100L, delegateBesuControllerBuilder2);
+    final Map<Long, BesuControllerBuilder> consensusSchedule = new HashMap<>();
+    consensusSchedule.put(0L, delegateBesuControllerBuilder1);
+    consensusSchedule.put(100L, delegateBesuControllerBuilder2);
     when(delegateBesuControllerBuilder1.createProtocolSchedule()).thenReturn(protocolSchedule1);
     when(delegateBesuControllerBuilder2.createProtocolSchedule()).thenReturn(protocolSchedule2);
 
     when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
 
     final ConsensusScheduleBesuControllerBuilder controllerBuilder =
-        new ConsensusScheduleBesuControllerBuilder(schedule);
+        new ConsensusScheduleBesuControllerBuilder(consensusSchedule);
     controllerBuilder.genesisConfigFile(genesisConfigFile);
     final ProtocolSchedule combinedProtocolSchedule = controllerBuilder.createProtocolSchedule();
 
