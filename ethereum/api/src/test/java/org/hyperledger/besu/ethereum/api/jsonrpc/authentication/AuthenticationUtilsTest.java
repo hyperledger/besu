@@ -35,8 +35,6 @@ public class AuthenticationUtilsTest {
   private static final String VALID_TOKEN =
       "ewogICJhbGciOiAibm9uZSIsCiAgInR5cCI6ICJKV1QiCn0.eyJpYXQiOjE1"
           + "MTYyMzkwMjIsImV4cCI6NDcyOTM2MzIwMCwicGVybWlzc2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ";
-  // private static final String VALID_TOKEN_DECODED_PAYLOAD =
-  //  "{\"iat\": 1516239022,\"exp\": 4729363200," + "\"permissions\": [\"net:peerCount\"]}";
 
   @Test
   public void getJwtTokenFromNullStringShouldReturnNull() {
@@ -101,8 +99,6 @@ public class AuthenticationUtilsTest {
     assertThat(successKid.attributes().getLong("iat")).isEqualTo(1516239022L);
     assertThat(successKid.principal().getJsonArray("permissions").getString(0))
         .isEqualTo("net:peerCount");
-    // assertThat(handler.getEvent().get().principal())
-    //  .isEqualTo(new JsonObject(VALID_TOKEN_DECODED_PAYLOAD));
   }
 
   private static class StubUserHandler implements Handler<Optional<User>> {
