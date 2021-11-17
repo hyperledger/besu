@@ -52,6 +52,8 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.util.ExceptionUtils;
 import org.hyperledger.besu.util.NetworkUtility;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.file.Path;
@@ -60,9 +62,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -114,6 +120,10 @@ public class JsonRpcHttpService {
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
   private static final String APPLICATION_JSON = "application/json";
   private static final JsonRpcResponse NO_RESPONSE = new JsonRpcNoResponse();
+  private static final ObjectWriter JSON_OBJECT_WRITER =
+      new ObjectMapper()
+          .writerWithDefaultPrettyPrinter()
+          .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
   private static final String EMPTY_RESPONSE = "";
 
   private static final TextMapPropagator traceFormats =
@@ -597,8 +607,17 @@ public class JsonRpcHttpService {
 
             response
                 .setStatusCode(status(jsonRpcResponse).code())
-                .putHeader("Content-Type", APPLICATION_JSON)
-                .end(serialize(jsonRpcResponse));
+                .putHeader("Content-Type", APPLICATION_JSON);
+
+            if (jsonRpcResponse.getType() == JsonRpcResponseType.NONE) {
+              response.end(EMPTY_RESPONSE);
+            } else {
+              try {
+                JSON_OBJECT_WRITER.writeValue(new JsonResponseStreamer(response), jsonRpcResponse);
+              } catch (IOException ex) {
+                throw new RuntimeException("Error while streaming the JSON response", ex);
+              }
+            }
           }
         });
   }
@@ -625,15 +644,6 @@ public class JsonRpcHttpService {
       default:
         return HttpResponseStatus.OK;
     }
-  }
-
-  private String serialize(final JsonRpcResponse response) {
-
-    if (response.getType() == JsonRpcResponseType.NONE) {
-      return EMPTY_RESPONSE;
-    }
-
-    return Json.encodePrettily(response);
   }
 
   @SuppressWarnings("rawtypes")
@@ -681,7 +691,11 @@ public class JsonRpcHttpService {
                       .filter(this::isNonEmptyResponses)
                       .toArray(JsonRpcResponse[]::new);
 
-              response.end(Json.encode(completed));
+              try {
+                JSON_OBJECT_WRITER.writeValue(new JsonResponseStreamer(response), completed);
+              } catch (IOException ex) {
+                throw new RuntimeException("Error while streaming the JSON response", ex);
+              }
             });
   }
 
@@ -807,6 +821,80 @@ public class JsonRpcHttpService {
       final StringJoiner stringJoiner = new StringJoiner("|");
       config.getCorsAllowedDomains().stream().filter(s -> !s.isEmpty()).forEach(stringJoiner::add);
       return stringJoiner.toString();
+    }
+  }
+
+  static class JsonResponseStreamer extends Writer {
+    static final int CHUNK_SIZE = 4000 * 3;
+
+    private final HttpServerResponse response;
+    private final Semaphore paused = new Semaphore(1);
+    private final StringBuilder currBuff = new StringBuilder(CHUNK_SIZE);
+
+    private boolean chunked = false;
+
+    public JsonResponseStreamer(final HttpServerResponse response) {
+      this.response = response;
+    }
+
+    @Override
+    public void write(final char[] cbuf, final int off, final int len) throws IOException {
+
+      int freeSpace = CHUNK_SIZE - currBuff.length();
+
+      int currOff;
+      int currLen;
+
+      if (freeSpace >= len) {
+        currOff = off;
+        currLen = len;
+      } else {
+        // does not fit in the current chunk, fill and write it
+        currBuff.append(cbuf, off, freeSpace);
+        sendChunk();
+        // and append the rest
+        currOff = off + freeSpace;
+        currLen = len - freeSpace;
+      }
+
+      currBuff.append(cbuf, currOff, currLen);
+    }
+
+    @Override
+    public void close() throws IOException {
+      response.end(currBuff.toString());
+    }
+
+    @Override
+    public void flush() throws IOException {
+      throw new UnsupportedOperationException("Flush not supported");
+    }
+
+    private void sendChunk() throws IOException {
+      if (!chunked) {
+        response.setChunked(true);
+        chunked = true;
+      }
+
+      if (response.writeQueueFull()) {
+        LOG.debug("HttpResponse write queue is full pausing streaming");
+        response.drainHandler(e -> paused.release());
+        try {
+          paused.acquire();
+          LOG.debug("HttpResponse write queue is not accepting more data, resuming streaming");
+        } catch (InterruptedException ex) {
+          Thread.currentThread().interrupt();
+          throw new IOException(
+              "Interrupted while waiting for HttpServerResponse to drain the write queue", ex);
+        }
+      }
+
+      response.write(currBuff.toString());
+      clearBuffer();
+    }
+
+    private void clearBuffer() {
+      currBuff.delete(0, currBuff.length());
     }
   }
 }
