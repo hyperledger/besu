@@ -61,14 +61,14 @@ public class JWTAuthOptionsFactory {
   public JWTAuthOptions createWithGeneratedKeyPair() {
     final KeyPair keypair = generateJwtKeyPair();
     return new JWTAuthOptions()
-        // .setPermissionsClaimKey(PERMISSIONS)
+        .setPermissionsClaimKey(PERMISSIONS)
         .addPubSecKey(
             new PubSecKeyOptions()
-                .setAlgorithm(ALGORITHM)
+                .setAlgorithm(DEFAULT_ALGORITHM)
                 .setBuffer(keyPairToPublicPemString(keypair)))
         .addPubSecKey(
             new PubSecKeyOptions()
-                .setAlgorithm(ALGORITHM)
+                .setAlgorithm(DEFAULT_ALGORITHM)
                 .setBuffer(keyPairToPrivatePemString(keypair)));
   }
 
