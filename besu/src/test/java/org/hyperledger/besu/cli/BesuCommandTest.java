@@ -3464,7 +3464,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-enabled",
         "--privacy-public-key-file",
         ENCLAVE_PUBLIC_KEY_PATH,
-        "--privacy-onchain-groups-enabled",
+        "--privacy-flexible-groups-enabled",
         "--min-gas-price",
         "0");
 
