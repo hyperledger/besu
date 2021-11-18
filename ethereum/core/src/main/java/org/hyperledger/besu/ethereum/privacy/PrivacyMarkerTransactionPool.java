@@ -31,7 +31,7 @@ import org.apache.logging.log4j.Logger;
 
 public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LogManager.getLogger();
-  private final Map<Hash, PrivateMarkerTransactionTracker> pmtPool;
+  private final Map<Hash, PrivacyMarkerTransactionTracker> pmtPool;
 
   public PrivacyMarkerTransactionPool(final Blockchain blockchain) {
     this.pmtPool = new HashMap<>();
@@ -50,7 +50,7 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
             tx -> {
               LOG.debug("block has added tx " + tx.getHash());
               LOG.debug("setting isActive=false " + pmtPool.containsKey(tx.getHash()));
-              PrivateMarkerTransactionTracker tracker = pmtPool.get(tx.getHash());
+              PrivacyMarkerTransactionTracker tracker = pmtPool.get(tx.getHash());
               if (tracker != null) {
                 tracker.setActive(false);
               }
@@ -58,10 +58,10 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
   }
 
   @VisibleForTesting
-  public Optional<PrivateMarkerTransactionTracker> getTransactionByHash(
+  public Optional<PrivacyMarkerTransactionTracker> getTransactionByHash(
       final Hash transactionHash, final boolean onlyActive) {
     if (pmtPool.containsKey(transactionHash)) {
-      PrivateMarkerTransactionTracker tracker = pmtPool.get(transactionHash);
+      PrivacyMarkerTransactionTracker tracker = pmtPool.get(transactionHash);
       if (!onlyActive || tracker.isActive) {
         return Optional.of(tracker);
       }
@@ -104,8 +104,8 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
       final long publicNonce,
       final Optional<Wei> gasPrice) {
 
-    final PrivateMarkerTransactionTracker pmtTracker =
-        new PrivateMarkerTransactionTracker(
+    final PrivacyMarkerTransactionTracker pmtTracker =
+        new PrivacyMarkerTransactionTracker(
             sender, privacyGroupId, privateNonce, publicNonce, gasPrice);
     pmtPool.put(pmtHash, pmtTracker);
     LOG.debug("adding: {} pmtHash: {} ", pmtTracker, pmtHash);
@@ -114,7 +114,7 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
 
   @VisibleForTesting
   protected Hash addPmtTransactionTracker(
-      final Hash pmtHash, final PrivateMarkerTransactionTracker pmtTracker) {
+      final Hash pmtHash, final PrivacyMarkerTransactionTracker pmtTracker) {
 
     pmtPool.put(pmtHash, pmtTracker);
     LOG.debug("adding: {} pmtHash: {} ", pmtTracker, pmtHash);
@@ -125,7 +125,7 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
     return pmtPool.values().stream().filter(tx -> tx.isActive).count();
   }
 
-  protected static class PrivateMarkerTransactionTracker {
+  protected static class PrivacyMarkerTransactionTracker {
     private final String sender;
     private final String privacyGroupIdBase64;
     private final long privateNonce;
@@ -135,7 +135,7 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
     // added to a block.
     private boolean isActive = true;
 
-    protected PrivateMarkerTransactionTracker(
+    protected PrivacyMarkerTransactionTracker(
         final String sender,
         final String privacyGroupIdBase64,
         final long privateNonce,

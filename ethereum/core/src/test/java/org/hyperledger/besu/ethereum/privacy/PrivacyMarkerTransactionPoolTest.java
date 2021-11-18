@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.privacy.PrivacyMarkerTransactionPool.PrivateMarkerTransactionTracker;
+import org.hyperledger.besu.ethereum.privacy.PrivacyMarkerTransactionPool.PrivacyMarkerTransactionTracker;
 
 import java.util.List;
 import java.util.Optional;
@@ -67,8 +67,8 @@ public class PrivacyMarkerTransactionPoolTest {
   private PrivacyMarkerTransactionPool pmtPool;
 
   private final Transaction tx1 = createTransaction(1);
-  private final PrivateMarkerTransactionTracker tx1Tracker =
-      new PrivateMarkerTransactionTracker(
+  private final PrivacyMarkerTransactionTracker tx1Tracker =
+      new PrivacyMarkerTransactionTracker(
           ADDRESS.toHexString(),
           PRIVACY_GROUP_ID.toBase64String(),
           66L,
@@ -144,12 +144,12 @@ public class PrivacyMarkerTransactionPoolTest {
     assertThat(pmtPool.getActiveCount()).isEqualTo(0L);
   }
 
-  private void assertTransactionPending(final Hash hash, final PrivateMarkerTransactionTracker t) {
+  private void assertTransactionPending(final Hash hash, final PrivacyMarkerTransactionTracker t) {
     assertThat(pmtPool.getTransactionByHash(hash, true)).contains(t);
   }
 
   private void assertTransactionNotPending(final Transaction transaction) {
-    Optional<PrivateMarkerTransactionTracker> tracker =
+    Optional<PrivacyMarkerTransactionTracker> tracker =
         pmtPool.getTransactionByHash(transaction.getHash(), true);
     assertThat(tracker).isEmpty();
   }
