@@ -146,6 +146,7 @@ privacy-multi-tenancy-enabled=true
 privacy-marker-transaction-signing-key-file="./signerKey"
 privacy-enable-database-migration=false
 privacy-onchain-groups-enabled=false
+privacy-flexible-groups-enabled=false
 
 # Transaction Pool
 tx-pool-retention-hours=999
