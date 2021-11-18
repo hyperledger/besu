@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForBLS12;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForByzantium;
@@ -76,9 +76,9 @@ public abstract class MainnetPrecompiledContractRegistries {
               precompiledContractConfiguration.getPrivacyParameters()));
     } else if (precompiledContractConfiguration
         .getPrivacyParameters()
-        .isOnchainPrivacyGroupsEnabled()) {
+        .isFlexiblePrivacyGroupsEnabled()) {
       registry.put(
-          ONCHAIN_PRIVACY,
+          FLEXIBLE_PRIVACY,
           new OnchainPrivacyPrecompiledContract(
               precompiledContractConfiguration.getGasCalculator(),
               precompiledContractConfiguration.getPrivacyParameters()));

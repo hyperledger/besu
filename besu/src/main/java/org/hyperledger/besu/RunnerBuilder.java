@@ -19,7 +19,7 @@ import static java.util.Objects.isNull;
 import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 import static org.hyperledger.besu.controller.BesuController.CACHE_PATH;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
@@ -926,7 +926,7 @@ public class RunnerBuilder {
       final PrivateTransactionObserver privateTransactionObserver,
       final PrivacyParameters privacyParameters) {
     // register privateTransactionObserver as observer of events fired by the onchain precompile.
-    if (privacyParameters.isOnchainPrivacyGroupsEnabled()
+    if (privacyParameters.isFlexiblePrivacyGroupsEnabled()
         && privacyParameters.isMultiTenancyEnabled()) {
       final OnchainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
           (OnchainPrivacyPrecompiledContract)
@@ -934,7 +934,7 @@ public class RunnerBuilder {
                   .getProtocolSchedule()
                   .getByBlockNumber(1)
                   .getPrecompileContractRegistry()
-                  .get(ONCHAIN_PRIVACY);
+                  .get(FLEXIBLE_PRIVACY);
       onchainPrivacyPrecompiledContract.addPrivateTransactionObserver(privateTransactionObserver);
     }
   }

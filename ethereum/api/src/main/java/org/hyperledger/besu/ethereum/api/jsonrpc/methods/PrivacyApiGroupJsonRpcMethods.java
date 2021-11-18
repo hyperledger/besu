@@ -149,7 +149,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
               restrictedDefaultPrivacyController,
               chainId,
               privacyParameters.getEnclave(),
-              privacyParameters.isOnchainPrivacyGroupsEnabled())
+              privacyParameters.isFlexiblePrivacyGroupsEnabled())
           : restrictedDefaultPrivacyController;
     }
   }

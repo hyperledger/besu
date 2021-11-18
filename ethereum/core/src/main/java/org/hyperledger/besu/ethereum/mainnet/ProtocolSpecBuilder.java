@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
 
 import org.hyperledger.besu.datatypes.Wei;
@@ -326,9 +326,9 @@ public class ProtocolSpecBuilder {
             (PrivacyPluginPrecompiledContract) precompileContractRegistry.get(PLUGIN_PRIVACY);
         privacyPluginPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
-      } else if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
+      } else if (privacyParameters.isFlexiblePrivacyGroupsEnabled()) {
         final OnchainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
-            (OnchainPrivacyPrecompiledContract) precompileContractRegistry.get(ONCHAIN_PRIVACY);
+            (OnchainPrivacyPrecompiledContract) precompileContractRegistry.get(FLEXIBLE_PRIVACY);
         onchainPrivacyPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else {

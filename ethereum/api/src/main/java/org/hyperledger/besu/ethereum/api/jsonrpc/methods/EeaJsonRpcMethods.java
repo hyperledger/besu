@@ -66,7 +66,7 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
               privacyController,
               getGasCalculator()),
           new PrivGetEeaTransactionCount(privacyController, privacyIdProvider));
-    } else if (getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
+    } else if (getPrivacyParameters().isFlexiblePrivacyGroupsEnabled()) {
       return mapOf(
           new RestrictedOnchainEeaSendRawTransaction(
               transactionPool,

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOnchainPrivacyGroup;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -99,7 +99,7 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
         buildCompoundLookupId(privateTransactionLookupId, addPayloadPrivateTransactionLookupId);
 
     return createPrivateMarkerTransaction(
-        sender, ONCHAIN_PRIVACY, pmtPayload, privateTransaction, privacyUserId);
+        sender, FLEXIBLE_PRIVACY, pmtPayload, privateTransaction, privacyUserId);
   }
 
   @Override

@@ -3455,7 +3455,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
 
     final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
-    assertThat(privacyParameters.isOnchainPrivacyGroupsEnabled()).isEqualTo(false);
+    assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(false);
   }
 
   @Test
@@ -3478,7 +3478,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
 
     final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
-    assertThat(privacyParameters.isOnchainPrivacyGroupsEnabled()).isEqualTo(true);
+    assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(true);
   }
 
   @Test
@@ -3501,7 +3501,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
 
     final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
-    assertThat(privacyParameters.isOnchainPrivacyGroupsEnabled()).isEqualTo(true);
+    assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(true);
   }
 
   @Test

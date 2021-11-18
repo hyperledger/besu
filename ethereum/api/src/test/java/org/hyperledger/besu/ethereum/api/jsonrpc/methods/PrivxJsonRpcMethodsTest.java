@@ -55,7 +55,7 @@ public class PrivxJsonRpcMethodsTest {
 
   @Test
   public void privxFindPrivacyGroupMethodIsDisabledWhenOnchainPrivacyGroupIsDisabled() {
-    when(privacyParameters.isOnchainPrivacyGroupsEnabled()).thenReturn(false);
+    when(privacyParameters.isFlexiblePrivacyGroupsEnabled()).thenReturn(false);
     final Map<String, JsonRpcMethod> rpcMethods = privxJsonRpcMethods.create();
     final JsonRpcMethod method = rpcMethods.get(PRIVX_FIND_PRIVACY_GROUP.getMethodName());
 
@@ -64,7 +64,7 @@ public class PrivxJsonRpcMethodsTest {
 
   @Test
   public void privxFindPrivacyGroupMethodIsEnabledWhenOnchainPrivacyGroupIsEnabled() {
-    when(privacyParameters.isOnchainPrivacyGroupsEnabled()).thenReturn(true);
+    when(privacyParameters.isFlexiblePrivacyGroupsEnabled()).thenReturn(true);
     final Map<String, JsonRpcMethod> rpcMethods = privxJsonRpcMethods.create();
     final JsonRpcMethod method = rpcMethods.get(PRIVX_FIND_PRIVACY_GROUP.getMethodName());
 

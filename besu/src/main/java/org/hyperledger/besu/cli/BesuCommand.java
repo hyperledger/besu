@@ -977,6 +977,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isFlexiblePrivacyGroupsEnabled = false;
 
   @Option(
+      hidden = true,
       names = {"--privacy-onchain-groups-enabled"},
       description = "Enable flexible (onchain) privacy groups (default: ${DEFAULT-VALUE})")
   private final Boolean isOnchainPrivacyGroupsEnabled = false;

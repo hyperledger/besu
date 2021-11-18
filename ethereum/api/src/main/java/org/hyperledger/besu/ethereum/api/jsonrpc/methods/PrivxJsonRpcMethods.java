@@ -47,7 +47,7 @@ public class PrivxJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final PrivacyController privacyController,
       final PrivacyIdProvider privacyIdProvider,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
-    if (getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
+    if (getPrivacyParameters().isFlexiblePrivacyGroupsEnabled()) {
       return mapOf(new PrivxFindOnchainPrivacyGroup(privacyController, privacyIdProvider));
     } else {
       return Map.of();

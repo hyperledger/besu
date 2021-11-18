@@ -88,7 +88,7 @@ public class PrivateWebSocketMethodsFactory {
               restrictedDefaultPrivacyController,
               chainId,
               privacyParameters.getEnclave(),
-              privacyParameters.isOnchainPrivacyGroupsEnabled())
+              privacyParameters.isFlexiblePrivacyGroupsEnabled())
           : restrictedDefaultPrivacyController;
     }
   }
