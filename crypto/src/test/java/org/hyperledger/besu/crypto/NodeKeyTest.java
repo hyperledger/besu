@@ -17,9 +17,15 @@ package org.hyperledger.besu.crypto;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
+import org.junit.Before;
 import org.junit.Test;
 
 public class NodeKeyTest {
+
+  @Before
+  public void resetInstance() {
+    SignatureAlgorithmFactory.resetInstance();
+  }
 
   @Test
   public void publicKeyShouldMatch() {

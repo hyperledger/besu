@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
-import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOffchainPrivacyGroup;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
@@ -79,8 +78,12 @@ public class RestrictedOffchainEeaSendRawTransaction extends AbstractEeaSendRawT
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(user);
 
     final Optional<PrivacyGroup> maybePrivacyGroup =
-        findOffchainPrivacyGroup(
-            privacyController, privateTransaction.getPrivacyGroupId(), privacyUserId);
+        privateTransaction
+            .getPrivacyGroupId()
+            .flatMap(
+                privacyGroupId ->
+                    privacyController.findPrivacyGroupByGroupId(
+                        privacyGroupId.toBase64String(), privacyUserId));
 
     final String privateTransactionLookupId =
         privacyController.createPrivateMarkerTransactionPayload(

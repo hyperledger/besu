@@ -61,7 +61,7 @@ public class PermGetAccountsWhitelistTest {
 
     JsonRpcResponse actualResponse = method.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -72,6 +72,6 @@ public class PermGetAccountsWhitelistTest {
 
     JsonRpcResponse actualResponse = method.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 }

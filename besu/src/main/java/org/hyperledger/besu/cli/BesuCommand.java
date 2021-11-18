@@ -72,6 +72,7 @@ import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand;
 import org.hyperledger.besu.cli.subcommands.RetestethSubCommand;
+import org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand;
@@ -103,6 +104,7 @@ import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
@@ -582,6 +584,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "JWT public key file for JSON-RPC HTTP authentication",
       arity = "1")
   private final File rpcHttpAuthenticationPublicKeyFile = null;
+
+  @Option(
+      names = {"--rpc-http-authentication-jwt-algorithm"},
+      description =
+          "Encryption algorithm used for HTTP JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
+              + " (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final JwtAlgorithm rpcHttpAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM;
+
+  @Option(
+      names = {"--rpc-ws-authentication-jwt-algorithm"},
+      description =
+          "Encryption algorithm used for Websockets JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
+              + " (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final JwtAlgorithm rpcWebsocketsAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM;
 
   @Option(
       names = {"--rpc-http-tls-enabled"},
@@ -1263,6 +1281,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         RLPSubCommand.COMMAND_NAME, new RLPSubCommand(resultHandler.out(), in));
     commandLine.addSubcommand(
         OperatorSubCommand.COMMAND_NAME, new OperatorSubCommand(resultHandler.out()));
+    commandLine.addSubcommand(
+        ValidateConfigSubCommand.COMMAND_NAME,
+        new ValidateConfigSubCommand(commandLine, resultHandler.out()));
     final String generateCompletionSubcommandName = "generate-completion";
     commandLine.addSubcommand(
         generateCompletionSubcommandName, AutoComplete.GenerateCompletion.class);
@@ -1850,6 +1871,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     checkRpcTlsOptionsDependencies();
     checkRpcHttpOptionsDependencies();
 
+    if (isRpcHttpAuthenticationEnabled) {
+      CommandLineUtils.checkOptionDependencies(
+          logger,
+          commandLine,
+          "--rpc-http-authentication-public-key-file",
+          rpcHttpAuthenticationPublicKeyFile == null,
+          asList("--rpc-http-authentication-jwt-algorithm"));
+    }
+
     if (isRpcHttpAuthenticationEnabled
         && rpcHttpAuthenticationCredentialsFile() == null
         && rpcHttpAuthenticationPublicKeyFile == null) {
@@ -1869,6 +1899,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
+    jsonRpcConfiguration.setAuthenticationAlgorithm(rpcHttpAuthenticationAlgorithm);
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
     jsonRpcConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
     return jsonRpcConfiguration;
@@ -1895,7 +1926,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-tls-keystore-password-file",
             "--rpc-http-tls-client-auth-enabled",
             "--rpc-http-tls-known-clients-file",
-            "--rpc-http-tls-ca-clients-enabled"));
+            "--rpc-http-tls-ca-clients-enabled",
+            "--rpc-http-authentication-jwt-algorithm"));
   }
 
   private void checkRpcTlsOptionsDependencies() {
@@ -1996,7 +2028,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-ws-max-active-connections",
             "--rpc-ws-authentication-enabled",
             "--rpc-ws-authentication-credentials-file",
-            "--rpc-ws-authentication-public-key-file"));
+            "--rpc-ws-authentication-public-key-file",
+            "--rpc-ws-authentication-jwt-algorithm"));
+
+    if (isRpcWsAuthenticationEnabled) {
+      CommandLineUtils.checkOptionDependencies(
+          logger,
+          commandLine,
+          "--rpc-ws-authentication-public-key-file",
+          rpcWsAuthenticationPublicKeyFile == null,
+          asList("--rpc-ws-authentication-jwt-algorithm"));
+    }
 
     if (isRpcWsAuthenticationEnabled
         && rpcWsAuthenticationCredentialsFile() == null
@@ -2016,6 +2058,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
     webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
+    webSocketConfiguration.setAuthenticationAlgorithm(rpcWebsocketsAuthenticationAlgorithm);
     webSocketConfiguration.setTimeoutSec(unstableRPCOptions.getWsTimeoutSec());
     return webSocketConfiguration;
   }
@@ -2546,27 +2589,36 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (discoveryDnsUrl != null) {
       builder.setDnsDiscoveryUrl(discoveryDnsUrl);
+    } else if (genesisConfigOptions != null) {
+      final Optional<String> discoveryDnsUrlFromGenesis =
+          genesisConfigOptions.getDiscoveryOptions().getDiscoveryDnsUrl();
+      discoveryDnsUrlFromGenesis.ifPresent(builder::setDnsDiscoveryUrl);
     }
 
     if (networkId != null) {
       builder.setNetworkId(networkId);
     }
 
+    List<EnodeURL> listBootNodes = null;
     if (bootNodes != null) {
-      if (!peerDiscoveryEnabled) {
-        logger.warn("Discovery disabled: bootnodes will be ignored.");
-      }
       try {
-        final List<EnodeURL> listBootNodes =
-            bootNodes.stream()
-                .filter(value -> !value.isEmpty())
-                .map(url -> EnodeURLImpl.fromString(url, getEnodeDnsConfiguration()))
-                .collect(Collectors.toList());
-        DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
-        builder.setBootNodes(listBootNodes);
+        listBootNodes = buildEnodes(bootNodes, getEnodeDnsConfiguration());
       } catch (final IllegalArgumentException e) {
         throw new ParameterException(commandLine, e.getMessage());
       }
+    } else if (genesisConfigOptions != null) {
+      final Optional<List<String>> bootNodesFromGenesis =
+          genesisConfigOptions.getDiscoveryOptions().getBootNodes();
+      if (bootNodesFromGenesis.isPresent()) {
+        listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
+      }
+    }
+    if (listBootNodes != null) {
+      if (!peerDiscoveryEnabled) {
+        logger.warn("Discovery disabled: bootnodes will be ignored.");
+      }
+      DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
+      builder.setBootNodes(listBootNodes);
     }
     return builder.build();
   }
@@ -2652,6 +2704,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
     logger.info("Static Nodes file = {}", staticNodesPath);
     return StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
+  }
+
+  private List<EnodeURL> buildEnodes(
+      final List<String> bootNodes, final EnodeDnsConfiguration enodeDnsConfiguration) {
+    return bootNodes.stream()
+        .filter(bootNode -> !bootNode.isEmpty())
+        .map(bootNode -> EnodeURLImpl.fromString(bootNode, enodeDnsConfiguration))
+        .collect(Collectors.toList());
   }
 
   public BesuExceptionHandler exceptionHandler() {
