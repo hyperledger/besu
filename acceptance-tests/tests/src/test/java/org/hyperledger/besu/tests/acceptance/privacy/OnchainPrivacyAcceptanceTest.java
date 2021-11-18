@@ -16,7 +16,7 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
 import static org.junit.runners.Parameterized.Parameters;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
@@ -412,7 +412,7 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
         new PrivateTransactionReceipt(
             null,
             alice.getAddress().toHexString(),
-            ONCHAIN_PRIVACY_PROXY.toHexString(),
+            FLEXIBLE_PRIVACY_PROXY.toHexString(),
             "0x",
             Collections.emptyList(),
             null,

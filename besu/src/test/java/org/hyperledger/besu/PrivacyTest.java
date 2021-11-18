@@ -100,7 +100,7 @@ public class PrivacyTest {
             .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
             .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
             .setEnclaveFactory(new EnclaveFactory(vertx))
-            .setOnchainPrivacyGroupsEnabled(onchainEnabled)
+            .setFlexiblePrivacyGroupsEnabled(onchainEnabled)
             .build();
     return new BesuController.Builder()
         .fromGenesisConfig(GenesisConfigFile.mainnet())

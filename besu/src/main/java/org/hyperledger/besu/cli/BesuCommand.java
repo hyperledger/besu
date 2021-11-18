@@ -21,6 +21,7 @@ import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
@@ -971,9 +972,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean migratePrivateDatabase = false;
 
   @Option(
-      names = {"--privacy-flexible-groups-enabled", "--privacy-onchain-groups-enabled"},
+      names = {"--privacy-flexible-groups-enabled"},
       description = "Enable flexible (onchain) privacy groups (default: ${DEFAULT-VALUE})")
   private final Boolean isFlexiblePrivacyGroupsEnabled = false;
+
+  @Option(
+      names = {"--privacy-onchain-groups-enabled"},
+      description = "Enable flexible (onchain) privacy groups (default: ${DEFAULT-VALUE})")
+  private final Boolean isOnchainPrivacyGroupsEnabled = false;
 
   @Option(
       names = {"--target-gas-limit"},
@@ -1453,9 +1459,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
       }
 
-      if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled() && isFlexiblePrivacyGroupsEnabled) {
+      if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
+          && (isFlexiblePrivacyGroupsEnabled || isOnchainPrivacyGroupsEnabled)) {
         throw new ParameterException(
-            commandLine, "Privacy Plugin can not be used with flexible (onchain) privacy groups");
+            commandLine, "Privacy Plugin can not be used with flexible privacy groups");
       }
     }
   }
@@ -1644,6 +1651,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           DEPENDENCY_WARNING_MSG,
           "--node-private-key-file",
           "--security-module=" + DEFAULT_SECURITY_MODULE);
+    }
+
+    if (isOnchainPrivacyGroupsEnabled) {
+      logger.warn(
+          DEPRECATION_WARNING_MSG,
+          "--privacy-onchain-groups-enabled",
+          "--privacy-flexible-groups-enabled");
     }
   }
 
@@ -2210,7 +2224,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
-      privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isFlexiblePrivacyGroupsEnabled);
+      privacyParametersBuilder.setFlexiblePrivacyGroupsEnabled(
+          isFlexiblePrivacyGroupsEnabled || isOnchainPrivacyGroupsEnabled);
       privacyParametersBuilder.setPrivacyPluginEnabled(
           unstablePrivacyPluginOptions.isPrivacyPluginEnabled());
 

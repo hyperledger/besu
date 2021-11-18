@@ -15,7 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
@@ -95,7 +95,7 @@ public class OnchainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
       final String privacyGroupId, final PrivacyNode groupCreator, final String privateFrom) {
     return groupCreator.execute(
         privateContractTransactions.callOnchainPermissioningSmartContract(
-            ONCHAIN_PRIVACY_PROXY.toHexString(),
+            FLEXIBLE_PRIVACY_PROXY.toHexString(),
             GET_PARTICIPANTS_METHOD_SIGNATURE.toString(),
             groupCreator.getTransactionSigningKey(),
             privateFrom,
@@ -128,7 +128,7 @@ public class OnchainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
     return new PrivateTransactionReceipt(
         null,
         groupCreator.getAddress().toHexString(),
-        ONCHAIN_PRIVACY_PROXY.toHexString(),
+        FLEXIBLE_PRIVACY_PROXY.toHexString(),
         output.toString(),
         Collections.emptyList(),
         null,

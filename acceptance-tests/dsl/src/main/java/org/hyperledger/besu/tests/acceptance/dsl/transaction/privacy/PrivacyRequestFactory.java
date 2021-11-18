@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
 
 import org.hyperledger.besu.crypto.SecureRandomProvider;
 import org.hyperledger.besu.datatypes.Address;
@@ -185,7 +185,7 @@ public class PrivacyRequestFactory {
             nonce,
             BigInteger.valueOf(1000),
             BigInteger.valueOf(3000000),
-            ONCHAIN_PRIVACY_PROXY.toHexString(),
+            FLEXIBLE_PRIVACY_PROXY.toHexString(),
             payload.toHexString(),
             Base64String.wrap(adder.getEnclaveKey()),
             privacyGroupId,
@@ -218,7 +218,7 @@ public class PrivacyRequestFactory {
             nonce,
             BigInteger.valueOf(1000),
             BigInteger.valueOf(3000000),
-            ONCHAIN_PRIVACY_PROXY.toHexString(),
+            FLEXIBLE_PRIVACY_PROXY.toHexString(),
             payload.toHexString(),
             Base64String.wrap(removerTenant),
             privacyGroupId,
@@ -272,7 +272,7 @@ public class PrivacyRequestFactory {
             nonce,
             BigInteger.valueOf(1000),
             BigInteger.valueOf(3000000),
-            ONCHAIN_PRIVACY_PROXY.toHexString(),
+            FLEXIBLE_PRIVACY_PROXY.toHexString(),
             callData,
             Base64String.wrap(locker.getEnclaveKey()),
             privacyGroupId,
@@ -312,7 +312,7 @@ public class PrivacyRequestFactory {
             BigInteger.ZERO,
             BigInteger.valueOf(1000),
             BigInteger.valueOf(3000000),
-            ONCHAIN_PRIVACY_PROXY.toHexString(),
+            FLEXIBLE_PRIVACY_PROXY.toHexString(),
             payload.toHexString(),
             Base64String.wrap(privateFrom),
             Base64String.wrap(privacyGroupId.toArrayUnsafe()),

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
 import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
@@ -314,7 +314,7 @@ public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
   private boolean isTargettingOnchainPrivacyProxy(final PrivateTransaction privateTransaction) {
     return privateTransaction.getTo().isPresent()
-        && privateTransaction.getTo().get().equals(ONCHAIN_PRIVACY_PROXY);
+        && privateTransaction.getTo().get().equals(FLEXIBLE_PRIVACY_PROXY);
   }
 
   private boolean isAddingParticipant(final PrivateTransaction privateTransaction) {

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
@@ -363,7 +363,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
 
   private CallParameter buildCallParams(final Bytes methodCall) {
     return new CallParameter(
-        Address.ZERO, ONCHAIN_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
+        Address.ZERO, FLEXIBLE_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
   }
 
   private List<PrivateTransactionMetadata> buildTransactionMetadataList(
@@ -431,7 +431,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
   @Override
   public boolean isGroupAdditionTransaction(final PrivateTransaction privateTransaction) {
     return privateTransaction.getTo().isPresent()
-        && privateTransaction.getTo().get().equals(ONCHAIN_PRIVACY_PROXY)
+        && privateTransaction.getTo().get().equals(FLEXIBLE_PRIVACY_PROXY)
         && privateTransaction
             .getPayload()
             .toHexString()
