@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,21 +41,22 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
-    // remove from the map any transactions that went into this block
-    // TODO take into account re-orgs
-    LOG.info("onBlockAdded {}", event.getAddedTransactions());
-    LOG.info("tx0.hash {}", event.getAddedTransactions().get(0).getHash());
-    event
-        .getAddedTransactions()
-        .forEach(
-            tx -> {
-              LOG.debug("block has added tx " + tx.getHash());
-              LOG.debug("setting isActive=false " + pmtPool.containsKey(tx.getHash()));
-              PrivacyMarkerTransactionTracker tracker = pmtPool.get(tx.getHash());
-              if (tracker != null) {
-                tracker.setActive(false);
-              }
-            });
+    event.getAddedTransactions().forEach(this::transactionAddedToBlock);
+    event.getRemovedTransactions().forEach(this::transactionRemovedFromBlockByReorg);
+  }
+
+  private void transactionAddedToBlock(final Transaction tx) {
+    final PrivacyMarkerTransactionTracker tracker = pmtPool.get(tx.getHash());
+    if (tracker != null) {
+      tracker.setActive(false);
+    }
+  }
+
+  private void transactionRemovedFromBlockByReorg(final Transaction tx) {
+    final PrivacyMarkerTransactionTracker tracker = pmtPool.get(tx.getHash());
+    if (tracker != null) {
+      tracker.setActive(true);
+    }
   }
 
   @VisibleForTesting
