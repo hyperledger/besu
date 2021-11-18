@@ -611,7 +611,7 @@ public class JsonRpcHttpService {
               try {
                 JSON_OBJECT_WRITER.writeValue(new JsonResponseStreamer(response), jsonRpcResponse);
               } catch (IOException ex) {
-                throw new RuntimeException("Error while streaming the JSON response", ex);
+                LOG.error("Error streaming JSON-RPC response", ex);
               }
             }
           }
@@ -690,7 +690,7 @@ public class JsonRpcHttpService {
               try {
                 JSON_OBJECT_WRITER.writeValue(new JsonResponseStreamer(response), completed);
               } catch (IOException ex) {
-                throw new RuntimeException("Error while streaming the JSON response", ex);
+                LOG.error("Error streaming JSON-RPC response", ex);
               }
             });
   }
@@ -863,6 +863,7 @@ public class JsonRpcHttpService {
 
     @Override
     public void flush() throws IOException {
+      // no need to support flush since we send everything every chunk
       throw new UnsupportedOperationException("Flush not supported");
     }
 
