@@ -101,7 +101,6 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.auth.User;
@@ -122,6 +121,7 @@ public class JsonRpcHttpService {
   private static final JsonRpcResponse NO_RESPONSE = new JsonRpcNoResponse();
   private static final ObjectWriter JSON_OBJECT_WRITER =
       new ObjectMapper()
+          .registerModule(new Jdk8Module()) // Handle JDK8 Optionals (de)serialization
           .writerWithDefaultPrettyPrinter()
           .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
   private static final String EMPTY_RESPONSE = "";
@@ -239,10 +239,6 @@ public class JsonRpcHttpService {
     LOG.info("Starting JSON-RPC service on {}:{}", config.getHost(), config.getPort());
     LOG.debug("max number of active connections {}", maxActiveConnections);
     this.tracer = GlobalOpenTelemetry.getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
-
-    // Handle JDK8 Optionals (de)serialization
-    DatabindCodec.mapper().registerModule(new Jdk8Module());
-    DatabindCodec.prettyMapper().registerModule(new Jdk8Module());
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     try {
