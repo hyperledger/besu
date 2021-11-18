@@ -42,7 +42,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTran
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
-import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivacyMarkerTransactionPool;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -173,7 +173,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             blockchainSetupUtil.getProtocolSchedule(),
             filterManager,
             transactionPoolMock,
-            mock(PrivateMarkerTransactionPool.class),
+            mock(PrivacyMarkerTransactionPool.class),
             miningCoordinatorMock,
             new NoOpMetricsSystem(),
             supportedCapabilities,

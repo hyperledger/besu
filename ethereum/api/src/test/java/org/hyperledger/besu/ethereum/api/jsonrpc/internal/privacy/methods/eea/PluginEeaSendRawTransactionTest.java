@@ -38,7 +38,7 @@ public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
     method =
         new PluginEeaSendRawTransaction(
             transactionPool,
-            privateMarkerTransactionPool,
+            privacyMarkerTransactionPool,
             user -> "",
             privateMarkerTransactionFactory,
             address -> 0,

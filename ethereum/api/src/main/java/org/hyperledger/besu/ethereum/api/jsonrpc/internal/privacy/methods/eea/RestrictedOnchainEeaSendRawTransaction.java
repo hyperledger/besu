@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.OnchainUtil;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivacyMarkerTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.util.NonceProvider;
@@ -42,24 +42,24 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
 
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
-  private final PrivateMarkerTransactionPool privateMarkerTransactionPool;
+  private final PrivacyMarkerTransactionPool privacyMarkerTransactionPool;
 
   public RestrictedOnchainEeaSendRawTransaction(
       final TransactionPool transactionPool,
-      final PrivateMarkerTransactionPool privateMarkerTransactionPool,
+      final PrivacyMarkerTransactionPool privacyMarkerTransactionPool,
       final PrivacyIdProvider privacyIdProvider,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final NonceProvider publicNonceProvider,
       final PrivacyController privacyController) {
     super(
         transactionPool,
-        privateMarkerTransactionPool,
+        privacyMarkerTransactionPool,
         privacyIdProvider,
         privateMarkerTransactionFactory,
         publicNonceProvider);
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
-    this.privateMarkerTransactionPool = privateMarkerTransactionPool;
+    this.privacyMarkerTransactionPool = privacyMarkerTransactionPool;
   }
 
   @Override
@@ -123,8 +123,12 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
     final Transaction pmt =
         createPrivateMarkerTransaction(
             sender, ONCHAIN_PRIVACY, pmtPayload, privateTransaction, privacyUserId);
-    privateMarkerTransactionPool.addPmtTransactionTracker(
-        pmt.getHash(), privateTransaction, privacyGroupId.toBase64String(), pmt.getNonce());
+    privacyMarkerTransactionPool.addPmtTransactionTracker(
+        pmt.getHash(),
+        privateTransaction,
+        privacyGroupId.toBase64String(),
+        pmt.getNonce(),
+        pmt.getGasPrice());
     return pmt;
   }
 

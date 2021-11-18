@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivacyMarkerTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.util.NonceProvider;
@@ -41,7 +41,7 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
   public PluginEeaSendRawTransaction(
       final TransactionPool transactionPool,
-      final PrivateMarkerTransactionPool privateMarkerTransactionPool,
+      final PrivacyMarkerTransactionPool privacyMarkerTransactionPool,
       final PrivacyIdProvider privacyIdProvider,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final NonceProvider publicNonceProvider,
@@ -49,7 +49,7 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
       final GasCalculator gasCalculator) {
     super(
         transactionPool,
-        privateMarkerTransactionPool,
+        privacyMarkerTransactionPool,
         privacyIdProvider,
         privateMarkerTransactionFactory,
         publicNonceProvider);

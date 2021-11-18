@@ -86,7 +86,7 @@ import org.hyperledger.besu.ethereum.permissioning.account.AccountPermissioningC
 import org.hyperledger.besu.ethereum.permissioning.node.InsufficientPeersPermissioningProvider;
 import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.node.PeerPermissionsAdapter;
-import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivacyMarkerTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
@@ -493,7 +493,7 @@ public class RunnerBuilder {
                 new InsufficientPeersPermissioningProvider(network, bootnodes)));
 
     final TransactionPool transactionPool = besuController.getTransactionPool();
-    final PrivateMarkerTransactionPool privateMarkerTransactionPool =
+    final PrivacyMarkerTransactionPool privacyMarkerTransactionPool =
         besuController.getPrivateMarkerTransactionPool();
     final MiningCoordinator miningCoordinator = besuController.getMiningCoordinator();
 
@@ -563,7 +563,7 @@ public class RunnerBuilder {
               blockchainQueries,
               synchronizer,
               transactionPool,
-              privateMarkerTransactionPool,
+              privacyMarkerTransactionPool,
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
@@ -632,7 +632,7 @@ public class RunnerBuilder {
               blockchainQueries,
               synchronizer,
               transactionPool,
-              privateMarkerTransactionPool,
+              privacyMarkerTransactionPool,
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
@@ -826,7 +826,7 @@ public class RunnerBuilder {
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
       final TransactionPool transactionPool,
-      final PrivateMarkerTransactionPool privateMarkerTransactionPool,
+      final PrivacyMarkerTransactionPool privacyMarkerTransactionPool,
       final MiningCoordinator miningCoordinator,
       final ObservableMetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
@@ -854,7 +854,7 @@ public class RunnerBuilder {
                 protocolSchedule,
                 filterManager,
                 transactionPool,
-                privateMarkerTransactionPool,
+                privacyMarkerTransactionPool,
                 miningCoordinator,
                 metricsSystem,
                 supportedCapabilities,

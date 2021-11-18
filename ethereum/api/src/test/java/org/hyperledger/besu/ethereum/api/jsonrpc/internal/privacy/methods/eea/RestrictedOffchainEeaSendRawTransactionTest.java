@@ -48,7 +48,7 @@ public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawT
     method =
         new RestrictedOffchainEeaSendRawTransaction(
             transactionPool,
-            privateMarkerTransactionPool,
+            privacyMarkerTransactionPool,
             privacyIdProvider,
             privateMarkerTransactionFactory,
             address -> 0,

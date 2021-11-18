@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivacyMarkerTransactionPool;
 
 import java.util.Map;
 
@@ -54,7 +54,7 @@ public class PrivxJsonRpcMethodsTest {
             blockchainQueries,
             protocolSchedule,
             transactionPool,
-            new PrivateMarkerTransactionPool(blockchain),
+            new PrivacyMarkerTransactionPool(blockchain),
             privacyParameters);
 
     lenient().when(privacyParameters.isEnabled()).thenReturn(true);

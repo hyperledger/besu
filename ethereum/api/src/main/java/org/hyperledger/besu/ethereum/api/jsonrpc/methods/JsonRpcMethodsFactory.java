@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivacyMarkerTransactionPool;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
@@ -58,7 +58,7 @@ public class JsonRpcMethodsFactory {
       final ProtocolSchedule protocolSchedule,
       final FilterManager filterManager,
       final TransactionPool transactionPool,
-      final PrivateMarkerTransactionPool privateMarkerTransactionPool,
+      final PrivacyMarkerTransactionPool privacyMarkerTransactionPool,
       final MiningCoordinator miningCoordinator,
       final ObservableMetricsSystem metricsSystem,
       final Set<Capability> supportedCapabilities,
@@ -96,13 +96,13 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries,
                   protocolSchedule,
                   transactionPool,
-                  privateMarkerTransactionPool,
+                  privacyMarkerTransactionPool,
                   privacyParameters),
               new GoQuorumJsonRpcPrivacyMethods(
                   blockchainQueries,
                   protocolSchedule,
                   transactionPool,
-                  privateMarkerTransactionPool,
+                  privacyMarkerTransactionPool,
                   privacyParameters),
               new EthJsonRpcMethods(
                   blockchainQueries,
@@ -125,14 +125,14 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries,
                   protocolSchedule,
                   transactionPool,
-                  privateMarkerTransactionPool,
+                  privacyMarkerTransactionPool,
                   privacyParameters,
                   filterManager),
               new PrivxJsonRpcMethods(
                   blockchainQueries,
                   protocolSchedule,
                   transactionPool,
-                  privateMarkerTransactionPool,
+                  privacyMarkerTransactionPool,
                   privacyParameters),
               new Web3JsonRpcMethods(clientVersion),
               // TRACE Methods (Disabled while under development)

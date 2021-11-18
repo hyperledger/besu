@@ -32,17 +32,17 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
   private final Blockchain blockchain;
   private final PrivateStateRootResolver privateStateRootResolver;
   private final WorldStateArchive privateWorldStateArchive;
-  private final PrivateMarkerTransactionPool privateMarkerTransactionPool;
+  private final PrivacyMarkerTransactionPool privacyMarkerTransactionPool;
 
   public ChainHeadPrivateNonceProvider(
       final Blockchain blockchain,
       final PrivateStateRootResolver privateStateRootResolver,
       final WorldStateArchive privateWorldStateArchive,
-      final PrivateMarkerTransactionPool privateMarkerTransactionPool) {
+      final PrivacyMarkerTransactionPool privacyMarkerTransactionPool) {
     this.blockchain = blockchain;
     this.privateStateRootResolver = privateStateRootResolver;
     this.privateWorldStateArchive = privateWorldStateArchive;
-    this.privateMarkerTransactionPool = privateMarkerTransactionPool;
+    this.privacyMarkerTransactionPool = privacyMarkerTransactionPool;
   }
 
   /**
@@ -65,7 +65,7 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
             + " and privacyGroupID (base 64) "
             + privacyGroupId.toBase64String());
     final Optional<Long> maybePendingPrivateNonceFromPmtPool =
-        privateMarkerTransactionPool.getMaxMatchingNonce(
+        privacyMarkerTransactionPool.getMaxMatchingNonce(
             sender.toHexString(), privacyGroupId.toBase64String());
 
     final Hash stateRoot =

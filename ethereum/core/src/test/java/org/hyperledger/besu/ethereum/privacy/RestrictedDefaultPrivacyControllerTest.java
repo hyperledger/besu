@@ -37,10 +37,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -271,19 +268,6 @@ public class RestrictedDefaultPrivacyControllerTest {
                 PRIVACY_GROUP_ID, contractAddress, blockHash, ENCLAVE_PUBLIC_KEY))
         .isPresent()
         .hasValue(contractCode);
-  }
-
-  @Test
-  public void blockAddedRemovesRelatedTransactionsFromPmtPool() {
-    // Setup mocks to return a block
-    final BlockDataGenerator gen = new BlockDataGenerator();
-    final Block block = gen.block();
-    BlockAddedEvent event =
-        BlockAddedEvent.createForHeadAdvancement(block, emptyList(), emptyList());
-    final PrivateMarkerTransactionPool pmtPool = new PrivateMarkerTransactionPool(blockchain);
-    pmtPool.onBlockAdded(event);
-    // TODO what are we testing
-    assertThat(pmtPool.size()).isEqualTo(0L);
   }
 
   private static PrivateTransaction buildLegacyPrivateTransaction() {

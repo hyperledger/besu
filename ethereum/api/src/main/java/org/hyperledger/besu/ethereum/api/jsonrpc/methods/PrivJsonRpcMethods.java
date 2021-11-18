@@ -39,7 +39,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivacyMarkerTransactionPool;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Map;
@@ -52,14 +52,14 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
-      final PrivateMarkerTransactionPool privateMarkerTransactionPool,
+      final PrivacyMarkerTransactionPool privacyMarkerTransactionPool,
       final PrivacyParameters privacyParameters,
       final FilterManager filterManager) {
     super(
         blockchainQueries,
         protocolSchedule,
         transactionPool,
-        privateMarkerTransactionPool,
+        privacyMarkerTransactionPool,
         privacyParameters);
     this.filterManager = filterManager;
   }

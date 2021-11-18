@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.OnchainPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PluginPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivacyMarkerTransactionPool;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
@@ -42,19 +42,19 @@ public class PrivateWebSocketMethodsFactory {
   private final SubscriptionManager subscriptionManager;
   private final ProtocolSchedule protocolSchedule;
   private final BlockchainQueries blockchainQueries;
-  private final PrivateMarkerTransactionPool privateMarkerTransactionPool;
+  private final PrivacyMarkerTransactionPool privacyMarkerTransactionPool;
 
   public PrivateWebSocketMethodsFactory(
       final PrivacyParameters privacyParameters,
       final SubscriptionManager subscriptionManager,
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
-      final PrivateMarkerTransactionPool privateMarkerTransactionPool) {
+      final PrivacyMarkerTransactionPool privacyMarkerTransactionPool) {
     this.privacyParameters = privacyParameters;
     this.subscriptionManager = subscriptionManager;
     this.protocolSchedule = protocolSchedule;
     this.blockchainQueries = blockchainQueries;
-    this.privateMarkerTransactionPool = privateMarkerTransactionPool;
+    this.privacyMarkerTransactionPool = privacyMarkerTransactionPool;
   }
 
   public Collection<JsonRpcMethod> methods() {
@@ -119,6 +119,6 @@ public class PrivateWebSocketMethodsFactory {
         blockchainQueries.getBlockchain(),
         privacyParameters.getPrivateStateRootResolver(),
         privacyParameters.getPrivateWorldStateArchive(),
-        privateMarkerTransactionPool);
+        privacyMarkerTransactionPool);
   }
 }

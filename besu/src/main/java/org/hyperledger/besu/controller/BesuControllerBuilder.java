@@ -54,7 +54,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
-import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivacyMarkerTransactionPool;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -326,8 +326,8 @@ public abstract class BesuControllerBuilder {
             miningParameters.getMinTransactionGasPrice(),
             transactionPoolConfiguration);
 
-    final PrivateMarkerTransactionPool privateMarkerTransactionPool =
-        new PrivateMarkerTransactionPool(blockchain);
+    final PrivacyMarkerTransactionPool privacyMarkerTransactionPool =
+        new PrivacyMarkerTransactionPool(blockchain);
 
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
@@ -388,7 +388,7 @@ public abstract class BesuControllerBuilder {
         synchronizer,
         syncState,
         transactionPool,
-        privateMarkerTransactionPool,
+        privacyMarkerTransactionPool,
         miningCoordinator,
         privacyParameters,
         miningParameters,

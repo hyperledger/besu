@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-import org.hyperledger.besu.ethereum.privacy.PrivateMarkerTransactionPool;
+import org.hyperledger.besu.ethereum.privacy.PrivacyMarkerTransactionPool;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Map;
@@ -58,7 +58,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private TransactionPool transactionPool;
-  @Mock private PrivateMarkerTransactionPool privateMarkerTransactionPool;
+  @Mock private PrivacyMarkerTransactionPool privacyMarkerTransactionPool;
   @Mock private PrivacyParameters privacyParameters;
 
   private TestPrivacyApiGroupJsonRpcMethods privacyApiGroupJsonRpcMethods;
@@ -72,7 +72,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
             blockchainQueries,
             protocolSchedule,
             transactionPool,
-            privateMarkerTransactionPool,
+            privacyMarkerTransactionPool,
             privacyParameters,
             rpcMethod);
   }
@@ -178,14 +178,14 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
         final BlockchainQueries blockchainQueries,
         final ProtocolSchedule protocolSchedule,
         final TransactionPool transactionPool,
-        final PrivateMarkerTransactionPool privateMarkerTransactionPool,
+        final PrivacyMarkerTransactionPool privacyMarkerTransactionPool,
         final PrivacyParameters privacyParameters,
         final JsonRpcMethod rpcMethod) {
       super(
           blockchainQueries,
           protocolSchedule,
           transactionPool,
-          privateMarkerTransactionPool,
+          privacyMarkerTransactionPool,
           privacyParameters);
       this.rpcMethod = rpcMethod;
     }
