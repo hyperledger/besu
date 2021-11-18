@@ -22,6 +22,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -167,15 +168,27 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder jsonRpcAuthenticationUsingPublicKeyEnabled()
-      throws URISyntaxException {
+  public BesuNodeConfigurationBuilder jsonRpcAuthenticationUsingRSA() throws URISyntaxException {
     final File jwtPublicKey =
-        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_rsa").toURI())
             .toAbsolutePath()
             .toFile();
 
     this.jsonRpcConfiguration.setAuthenticationEnabled(true);
     this.jsonRpcConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
+
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder jsonRpcAuthenticationUsingECDSA() throws URISyntaxException {
+    final File jwtPublicKey =
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_ecdsa").toURI())
+            .toAbsolutePath()
+            .toFile();
+
+    this.jsonRpcConfiguration.setAuthenticationEnabled(true);
+    this.jsonRpcConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
+    this.jsonRpcConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.ES256);
 
     return this;
   }
@@ -224,15 +237,29 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder webSocketAuthenticationUsingPublicKeyEnabled()
+  public BesuNodeConfigurationBuilder webSocketAuthenticationUsingRsaPublicKeyEnabled()
       throws URISyntaxException {
     final File jwtPublicKey =
-        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_rsa").toURI())
             .toAbsolutePath()
             .toFile();
 
     this.webSocketConfiguration.setAuthenticationEnabled(true);
     this.webSocketConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
+
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder webSocketAuthenticationUsingEcdsaPublicKeyEnabled()
+      throws URISyntaxException {
+    final File jwtPublicKey =
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_ecdsa").toURI())
+            .toAbsolutePath()
+            .toFile();
+
+    this.webSocketConfiguration.setAuthenticationEnabled(true);
+    this.webSocketConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
+    this.webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.ES256);
 
     return this;
   }
