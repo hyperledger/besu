@@ -40,7 +40,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CombinedProtocolScheduleFactoryTest {
 
-  private CombinedProtocolScheduleFactory combinedProtocolScheduleFactory =
+  private final CombinedProtocolScheduleFactory combinedProtocolScheduleFactory =
       new CombinedProtocolScheduleFactory();
 
   @Test
