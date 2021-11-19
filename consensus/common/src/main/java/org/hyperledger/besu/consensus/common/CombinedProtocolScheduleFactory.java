@@ -28,7 +28,7 @@ import java.util.function.Predicate;
 
 public class CombinedProtocolScheduleFactory {
 
-  public static ProtocolSchedule create(
+  public ProtocolSchedule create(
       final NavigableSet<BftForkSpec<ProtocolSchedule>> forkSpecs,
       final Optional<BigInteger> chainId) {
     final MutableProtocolSchedule combinedProtocolSchedule = new MutableProtocolSchedule(chainId);
@@ -55,7 +55,7 @@ public class CombinedProtocolScheduleFactory {
     return combinedProtocolSchedule;
   }
 
-  private static Predicate<ScheduledProtocolSpec> protocolSpecMatchesConsensusBlockRange(
+  private Predicate<ScheduledProtocolSpec> protocolSpecMatchesConsensusBlockRange(
       final long startBlock, final Optional<Long> endBlock) {
     return scheduledProtocolSpec ->
         scheduledProtocolSpec.getBlock() >= startBlock

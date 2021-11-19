@@ -62,6 +62,7 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -74,14 +75,30 @@ import com.google.common.base.Preconditions;
 public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilder {
 
   private final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule = new HashMap<>();
+  private final BiFunction<
+          NavigableSet<BftForkSpec<ProtocolSchedule>>, Optional<BigInteger>, ProtocolSchedule>
+      combinedProtocolScheduleFactory;
 
   public ConsensusScheduleBesuControllerBuilder(
       final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule) {
+    this(
+        besuControllerBuilderSchedule,
+        (protocolScheduleSpecs, chainId) ->
+            new CombinedProtocolScheduleFactory().create(protocolScheduleSpecs, chainId));
+  }
+
+  @VisibleForTesting
+  protected ConsensusScheduleBesuControllerBuilder(
+      final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule,
+      final BiFunction<
+              NavigableSet<BftForkSpec<ProtocolSchedule>>, Optional<BigInteger>, ProtocolSchedule>
+          combinedProtocolScheduleFactory) {
     Preconditions.checkNotNull(
         besuControllerBuilderSchedule, "BesuControllerBuilder schedule can't be null");
     Preconditions.checkArgument(
         !besuControllerBuilderSchedule.isEmpty(), "BesuControllerBuilder schedule can't be empty");
     this.besuControllerBuilderSchedule.putAll(besuControllerBuilderSchedule);
+    this.combinedProtocolScheduleFactory = combinedProtocolScheduleFactory;
   }
 
   @Override
@@ -115,7 +132,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
             .map(e -> new BftForkSpec<>(e.getKey(), e.getValue().createProtocolSchedule()))
             .collect(Collectors.toCollection(() -> new TreeSet<>(BftForkSpec.COMPARATOR)));
     final Optional<BigInteger> chainId = genesisConfig.getConfigOptions().getChainId();
-    return CombinedProtocolScheduleFactory.create(protocolScheduleSpecs, chainId);
+    return combinedProtocolScheduleFactory.apply(protocolScheduleSpecs, chainId);
   }
 
   @Override

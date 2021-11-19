@@ -18,12 +18,40 @@
 package org.hyperledger.besu.controller;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+
+import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.Optional;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.function.BiFunction;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class ConsensusScheduleBesuControllerBuilderTest {
+  private @Mock BiFunction<
+          NavigableSet<BftForkSpec<ProtocolSchedule>>, Optional<BigInteger>, ProtocolSchedule>
+      combinedProtocolScheduleFactory;
+  private @Mock GenesisConfigFile genesisConfigFile;
+  private @Mock BesuControllerBuilder besuControllerBuilder1;
+  private @Mock BesuControllerBuilder besuControllerBuilder2;
+  private @Mock BesuControllerBuilder besuControllerBuilder3;
+  private @Mock ProtocolSchedule protocolSchedule1;
+  private @Mock ProtocolSchedule protocolSchedule2;
+  private @Mock ProtocolSchedule protocolSchedule3;
 
   @Test
   public void mustProvideNonNullConsensusScheduleWhenInstantiatingNew() {
@@ -37,5 +65,37 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     assertThatThrownBy(() -> new ConsensusScheduleBesuControllerBuilder(Collections.emptyMap()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("BesuControllerBuilder schedule can't be empty");
+  }
+
+  @Test
+  public void mustCreateCombinedProtocolScheduleUsingProtocolSchedulesOrderedByBlock() {
+    // Use an ordered map with keys in the incorrect order so that we can show that set is created
+    // with the correct order
+    final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule = new TreeMap<>();
+    besuControllerBuilderSchedule.put(30L, besuControllerBuilder3);
+    besuControllerBuilderSchedule.put(10L, besuControllerBuilder2);
+    besuControllerBuilderSchedule.put(0L, besuControllerBuilder1);
+
+    when(besuControllerBuilder1.createProtocolSchedule()).thenReturn(protocolSchedule1);
+    when(besuControllerBuilder2.createProtocolSchedule()).thenReturn(protocolSchedule2);
+    when(besuControllerBuilder3.createProtocolSchedule()).thenReturn(protocolSchedule3);
+
+    final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
+    genesisConfigOptions.chainId(BigInteger.TEN);
+    when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
+
+    final ConsensusScheduleBesuControllerBuilder consensusScheduleBesuControllerBuilder =
+        new ConsensusScheduleBesuControllerBuilder(
+            besuControllerBuilderSchedule, combinedProtocolScheduleFactory);
+    consensusScheduleBesuControllerBuilder.genesisConfigFile(genesisConfigFile);
+    consensusScheduleBesuControllerBuilder.createProtocolSchedule();
+
+    final NavigableSet<BftForkSpec<ProtocolSchedule>> expectedProtocolSchedulesSpecs =
+        new TreeSet<>(BftForkSpec.COMPARATOR);
+    expectedProtocolSchedulesSpecs.add(new BftForkSpec<>(0L, protocolSchedule1));
+    expectedProtocolSchedulesSpecs.add(new BftForkSpec<>(10L, protocolSchedule2));
+    expectedProtocolSchedulesSpecs.add(new BftForkSpec<>(30L, protocolSchedule3));
+    Mockito.verify(combinedProtocolScheduleFactory)
+        .apply(expectedProtocolSchedulesSpecs, Optional.of(BigInteger.TEN));
   }
 }

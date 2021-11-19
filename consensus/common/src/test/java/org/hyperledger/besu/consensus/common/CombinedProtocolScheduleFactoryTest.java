@@ -40,6 +40,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CombinedProtocolScheduleFactoryTest {
 
+  private CombinedProtocolScheduleFactory combinedProtocolScheduleFactory =
+      new CombinedProtocolScheduleFactory();
+
   @Test
   public void createsCombinedProtocolScheduleWithMilestonesFromSingleProtocolSchedule() {
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
@@ -53,7 +56,7 @@ public class CombinedProtocolScheduleFactoryTest {
     consensusSchedule.add(new BftForkSpec<>(0, protocolSchedule));
 
     final ProtocolSchedule combinedProtocolSchedule =
-        CombinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN));
+        combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN));
 
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L).getName()).isEqualTo("Frontier");
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L))
@@ -93,7 +96,7 @@ public class CombinedProtocolScheduleFactoryTest {
     consensusSchedule.add(new BftForkSpec<>(200L, protocolSchedule3));
 
     final ProtocolSchedule combinedProtocolSchedule =
-        CombinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN));
+        combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN));
 
     // consensus schedule 1
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L).getName()).isEqualTo("Frontier");
