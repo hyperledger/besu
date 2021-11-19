@@ -16,7 +16,7 @@
 package org.hyperledger.besu.consensus.qbft.validator;
 
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -47,13 +47,13 @@ public class ValidatorModeTransitionLogger {
   }
 
   public void logTransitionChange(final BlockHeader parentHeader) {
-    final BftForkSpec<QbftConfigOptions> currentForkSpec =
+    final ForkSpec<QbftConfigOptions> currentForkSpec =
         bftForksSchedule.getFork(parentHeader.getNumber());
-    final BftForkSpec<QbftConfigOptions> nextForkSpec =
+    final ForkSpec<QbftConfigOptions> nextForkSpec =
         bftForksSchedule.getFork(parentHeader.getNumber() + 1L);
 
-    final QbftConfigOptions currentConfigOptions = currentForkSpec.getConfigOptions();
-    final QbftConfigOptions nextConfigOptions = nextForkSpec.getConfigOptions();
+    final QbftConfigOptions currentConfigOptions = currentForkSpec.getValue();
+    final QbftConfigOptions nextConfigOptions = nextForkSpec.getValue();
 
     if (hasChangedConfig(currentConfigOptions, nextConfigOptions)) {
       msgConsumer.accept(
