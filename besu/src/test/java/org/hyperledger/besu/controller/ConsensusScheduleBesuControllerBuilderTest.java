@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.math.BigInteger;
@@ -43,7 +43,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ConsensusScheduleBesuControllerBuilderTest {
   private @Mock BiFunction<
-          NavigableSet<BftForkSpec<ProtocolSchedule>>, Optional<BigInteger>, ProtocolSchedule>
+          NavigableSet<ForkSpec<ProtocolSchedule>>, Optional<BigInteger>, ProtocolSchedule>
       combinedProtocolScheduleFactory;
   private @Mock GenesisConfigFile genesisConfigFile;
   private @Mock BesuControllerBuilder besuControllerBuilder1;
@@ -90,11 +90,11 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     consensusScheduleBesuControllerBuilder.genesisConfigFile(genesisConfigFile);
     consensusScheduleBesuControllerBuilder.createProtocolSchedule();
 
-    final NavigableSet<BftForkSpec<ProtocolSchedule>> expectedProtocolSchedulesSpecs =
-        new TreeSet<>(BftForkSpec.COMPARATOR);
-    expectedProtocolSchedulesSpecs.add(new BftForkSpec<>(0L, protocolSchedule1));
-    expectedProtocolSchedulesSpecs.add(new BftForkSpec<>(10L, protocolSchedule2));
-    expectedProtocolSchedulesSpecs.add(new BftForkSpec<>(30L, protocolSchedule3));
+    final NavigableSet<ForkSpec<ProtocolSchedule>> expectedProtocolSchedulesSpecs =
+        new TreeSet<>(ForkSpec.COMPARATOR);
+    expectedProtocolSchedulesSpecs.add(new ForkSpec<>(0L, protocolSchedule1));
+    expectedProtocolSchedulesSpecs.add(new ForkSpec<>(10L, protocolSchedule2));
+    expectedProtocolSchedulesSpecs.add(new ForkSpec<>(30L, protocolSchedule3));
     Mockito.verify(combinedProtocolScheduleFactory)
         .apply(expectedProtocolSchedulesSpecs, Optional.of(BigInteger.TEN));
   }

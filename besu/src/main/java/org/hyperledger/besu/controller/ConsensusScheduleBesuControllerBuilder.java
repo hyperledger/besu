@@ -20,7 +20,7 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.CombinedProtocolScheduleFactory;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -76,7 +76,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   private final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule = new HashMap<>();
   private final BiFunction<
-          NavigableSet<BftForkSpec<ProtocolSchedule>>, Optional<BigInteger>, ProtocolSchedule>
+          NavigableSet<ForkSpec<ProtocolSchedule>>, Optional<BigInteger>, ProtocolSchedule>
       combinedProtocolScheduleFactory;
 
   public ConsensusScheduleBesuControllerBuilder(
@@ -91,7 +91,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   protected ConsensusScheduleBesuControllerBuilder(
       final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule,
       final BiFunction<
-              NavigableSet<BftForkSpec<ProtocolSchedule>>, Optional<BigInteger>, ProtocolSchedule>
+              NavigableSet<ForkSpec<ProtocolSchedule>>, Optional<BigInteger>, ProtocolSchedule>
           combinedProtocolScheduleFactory) {
     Preconditions.checkNotNull(
         besuControllerBuilderSchedule, "BesuControllerBuilder schedule can't be null");
@@ -127,10 +127,10 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
-    final NavigableSet<BftForkSpec<ProtocolSchedule>> protocolScheduleSpecs =
+    final NavigableSet<ForkSpec<ProtocolSchedule>> protocolScheduleSpecs =
         besuControllerBuilderSchedule.entrySet().stream()
-            .map(e -> new BftForkSpec<>(e.getKey(), e.getValue().createProtocolSchedule()))
-            .collect(Collectors.toCollection(() -> new TreeSet<>(BftForkSpec.COMPARATOR)));
+            .map(e -> new ForkSpec<>(e.getKey(), e.getValue().createProtocolSchedule()))
+            .collect(Collectors.toCollection(() -> new TreeSet<>(ForkSpec.COMPARATOR)));
     final Optional<BigInteger> chainId = genesisConfig.getConfigOptions().getChainId();
     return combinedProtocolScheduleFactory.apply(protocolScheduleSpecs, chainId);
   }

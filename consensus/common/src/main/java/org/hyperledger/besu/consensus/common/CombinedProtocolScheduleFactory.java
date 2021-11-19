@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.common;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
@@ -29,18 +28,17 @@ import java.util.function.Predicate;
 public class CombinedProtocolScheduleFactory {
 
   public ProtocolSchedule create(
-      final NavigableSet<BftForkSpec<ProtocolSchedule>> forkSpecs,
+      final NavigableSet<ForkSpec<ProtocolSchedule>> forkSpecs,
       final Optional<BigInteger> chainId) {
     final MutableProtocolSchedule combinedProtocolSchedule = new MutableProtocolSchedule(chainId);
-    for (BftForkSpec<ProtocolSchedule> spec : forkSpecs) {
+    for (ForkSpec<ProtocolSchedule> spec : forkSpecs) {
       checkState(
-          spec.getConfigOptions() instanceof MutableProtocolSchedule,
+          spec.getValue() instanceof MutableProtocolSchedule,
           "Consensus migration requires a MutableProtocolSchedule");
-      final MutableProtocolSchedule protocolSchedule =
-          (MutableProtocolSchedule) spec.getConfigOptions();
+      final MutableProtocolSchedule protocolSchedule = (MutableProtocolSchedule) spec.getValue();
 
       final Optional<Long> endBlock =
-          Optional.ofNullable(forkSpecs.higher(spec)).map(BftForkSpec::getBlock);
+          Optional.ofNullable(forkSpecs.higher(spec)).map(ForkSpec::getBlock);
       protocolSchedule.getScheduledProtocolSpecs().stream()
           .filter(protocolSpecMatchesConsensusBlockRange(spec.getBlock(), endBlock))
           .forEach(s -> combinedProtocolSchedule.putMilestone(s.getBlock(), s.getSpec()));

@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -51,9 +50,9 @@ public class CombinedProtocolScheduleFactoryTest {
     genesisConfigOptions.chainId(BigInteger.TEN);
     final ProtocolSchedule protocolSchedule = createProtocolSchedule(genesisConfigOptions);
 
-    final NavigableSet<BftForkSpec<ProtocolSchedule>> consensusSchedule =
-        new TreeSet<>(BftForkSpec.COMPARATOR);
-    consensusSchedule.add(new BftForkSpec<>(0, protocolSchedule));
+    final NavigableSet<ForkSpec<ProtocolSchedule>> consensusSchedule =
+        new TreeSet<>(ForkSpec.COMPARATOR);
+    consensusSchedule.add(new ForkSpec<>(0, protocolSchedule));
 
     final ProtocolSchedule combinedProtocolSchedule =
         combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN));
@@ -89,11 +88,11 @@ public class CombinedProtocolScheduleFactoryTest {
     final ProtocolSchedule protocolSchedule2 = createProtocolSchedule(genesisConfigOptions);
     final ProtocolSchedule protocolSchedule3 = createProtocolSchedule(genesisConfigOptions);
 
-    final NavigableSet<BftForkSpec<ProtocolSchedule>> consensusSchedule =
-        new TreeSet<>(BftForkSpec.COMPARATOR);
-    consensusSchedule.add(new BftForkSpec<>(0, protocolSchedule1));
-    consensusSchedule.add(new BftForkSpec<>(100L, protocolSchedule2));
-    consensusSchedule.add(new BftForkSpec<>(200L, protocolSchedule3));
+    final NavigableSet<ForkSpec<ProtocolSchedule>> consensusSchedule =
+        new TreeSet<>(ForkSpec.COMPARATOR);
+    consensusSchedule.add(new ForkSpec<>(0, protocolSchedule1));
+    consensusSchedule.add(new ForkSpec<>(100L, protocolSchedule2));
+    consensusSchedule.add(new ForkSpec<>(200L, protocolSchedule3));
 
     final ProtocolSchedule combinedProtocolSchedule =
         combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN));
