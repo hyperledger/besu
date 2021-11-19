@@ -174,7 +174,7 @@ public class OnchainPrivacyControllerTest {
     final PrivateTransaction privateTransaction =
         buildPrivateTransaction(1)
             .payload(OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE)
-            .to(PrivacyParameters.ONCHAIN_PRIVACY_PROXY)
+            .to(PrivacyParameters.FLEXIBLE_PRIVACY_PROXY)
             .signAndBuild(KEY_PAIR);
     final String payload =
         privacyController.createPrivateMarkerTransactionPayload(
