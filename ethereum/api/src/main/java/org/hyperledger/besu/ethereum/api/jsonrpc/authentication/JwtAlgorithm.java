@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,18 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.config;
+package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
-import java.util.Optional;
-import java.util.OptionalLong;
+public enum JwtAlgorithm {
+  RS256,
+  RS384,
+  RS512,
+  ES256,
+  ES384,
+  ES512;
 
-public interface QbftConfigOptions extends BftConfigOptions {
-
-  Optional<String> getValidatorContractAddress();
-
-  default boolean isValidatorContractMode() {
-    return getValidatorContractAddress().isPresent();
+  public static JwtAlgorithm fromString(final String str) {
+    for (final JwtAlgorithm alg : JwtAlgorithm.values()) {
+      if (alg.name().equalsIgnoreCase(str)) {
+        return alg;
+      }
+    }
+    return null;
   }
-
-  OptionalLong getStartBlock();
 }
