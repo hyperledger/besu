@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
-import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.GET_VERSION_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -52,13 +52,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class OnchainPrivacyController extends AbstractRestrictedPrivacyController {
+public class FlexiblePrivacyController extends AbstractRestrictedPrivacyController {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private OnchainPrivacyGroupContract onchainPrivacyGroupContract;
+  private FlexiblePrivacyGroupContract flexiblePrivacyGroupContract;
 
-  public OnchainPrivacyController(
+  public FlexiblePrivacyController(
       final Blockchain blockchain,
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
@@ -76,7 +76,7 @@ public class OnchainPrivacyController extends AbstractRestrictedPrivacyControlle
         privacyParameters.getPrivateStateRootResolver());
   }
 
-  public OnchainPrivacyController(
+  public FlexiblePrivacyController(
       final Blockchain blockchain,
       final PrivateStateStorage privateStateStorage,
       final Enclave enclave,
@@ -95,7 +95,7 @@ public class OnchainPrivacyController extends AbstractRestrictedPrivacyControlle
         privateWorldStateReader,
         privateStateRootResolver);
 
-    onchainPrivacyGroupContract = new OnchainPrivacyGroupContract(privateTransactionSimulator);
+    flexiblePrivacyGroupContract = new FlexiblePrivacyGroupContract(privateTransactionSimulator);
   }
 
   @Override
@@ -137,7 +137,7 @@ public class OnchainPrivacyController extends AbstractRestrictedPrivacyControlle
         return Optional.of(
             new PrivacyGroup(
                 privacyGroupId,
-                PrivacyGroup.Type.ONCHAIN,
+                PrivacyGroup.Type.FLEXIBLE,
                 "",
                 "",
                 decodeParticipantList(rlpInput.raw())));
@@ -175,13 +175,13 @@ public class OnchainPrivacyController extends AbstractRestrictedPrivacyControlle
       final String description,
       final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
-        "Method not supported when using onchain privacy");
+        "Method not supported when using flexible privacy");
   }
 
   @Override
   public String deletePrivacyGroup(final String privacyGroupId, final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
-        "Method not supported when using onchain privacy");
+        "Method not supported when using flexible privacy");
   }
 
   @Override
@@ -194,9 +194,9 @@ public class OnchainPrivacyController extends AbstractRestrictedPrivacyControlle
   public void verifyPrivacyGroupContainsPrivacyUserId(
       final String privacyGroupId, final String privacyUserId, final Optional<Long> blockNumber) {
     final Optional<PrivacyGroup> maybePrivacyGroup =
-        onchainPrivacyGroupContract.getPrivacyGroupByIdAndBlockNumber(privacyGroupId, blockNumber);
+        flexiblePrivacyGroupContract.getPrivacyGroupByIdAndBlockNumber(privacyGroupId, blockNumber);
     // IF the group exists, check member
-    // ELSE member is valid if the group doesn't exist yet - this is normal for onchain privacy
+    // ELSE member is valid if the group doesn't exist yet - this is normal for flexible privacy
     // groups
     maybePrivacyGroup.ifPresent(
         group -> {
@@ -290,7 +290,7 @@ public class OnchainPrivacyController extends AbstractRestrictedPrivacyControlle
       final PrivateTransaction privateTransaction,
       final Bytes32 privacyGroupId,
       final String privacyUserId) {
-    if (OnchainUtil.isGroupAdditionTransaction(privateTransaction)) {
+    if (FlexibleUtil.isGroupAdditionTransaction(privateTransaction)) {
       final List<PrivateTransactionMetadata> privateTransactionMetadataList =
           buildTransactionMetadataList(privacyGroupId);
       if (!privateTransactionMetadataList.isEmpty()) {
@@ -299,7 +299,7 @@ public class OnchainPrivacyController extends AbstractRestrictedPrivacyControlle
                 privacyGroupId, privateTransactionMetadataList, privacyUserId);
         final Bytes bytes = serializeAddToGroupPayload(privateTransactionWithMetadataList);
         final List<String> privateFor =
-            OnchainUtil.getParticipantsFromParameter(privateTransaction.getPayload());
+            FlexibleUtil.getParticipantsFromParameter(privateTransaction.getPayload());
         return Optional.of(
             enclave.send(bytes.toBase64String(), privacyUserId, privateFor).getKey());
       }
@@ -340,11 +340,11 @@ public class OnchainPrivacyController extends AbstractRestrictedPrivacyControlle
             privateTransaction.getPrivacyGroupId().orElseThrow().toBase64String(),
             buildCallParams(GET_VERSION_METHOD_SIGNATURE));
     new VersionedPrivateTransaction(privateTransaction, version).writeTo(rlpOutput);
-    final List<String> onchainPrivateFor = privacyGroup.getMembers();
+    final List<String> flexiblePrivateFor = privacyGroup.getMembers();
     return enclave.send(
         rlpOutput.encoded().toBase64String(),
         privateTransaction.getPrivateFrom().toBase64String(),
-        onchainPrivateFor);
+        flexiblePrivateFor);
   }
 
   CallParameter buildCallParams(final Bytes methodCall) {
@@ -357,8 +357,8 @@ public class OnchainPrivacyController extends AbstractRestrictedPrivacyControlle
   }
 
   @VisibleForTesting
-  public void setOnchainPrivacyGroupContract(
-      final OnchainPrivacyGroupContract onchainPrivacyGroupContract) {
-    this.onchainPrivacyGroupContract = onchainPrivacyGroupContract;
+  public void setFlexiblePrivacyGroupContract(
+      final FlexiblePrivacyGroupContract flexiblePrivacyGroupContract) {
+    this.flexiblePrivacyGroupContract = flexiblePrivacyGroupContract;
   }
 }

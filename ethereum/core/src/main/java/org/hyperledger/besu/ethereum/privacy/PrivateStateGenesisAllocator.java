@@ -20,7 +20,7 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIV
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement;
+import org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
@@ -93,14 +93,14 @@ public class PrivateStateGenesisAllocator {
           privateWorldStateUpdater.createAccount(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT).getMutable();
 
       // this is the code for the simple management contract
-      managementContract.setCode(OnchainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
+      managementContract.setCode(FlexibleGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
 
       // inject proxy
       final MutableAccount procyContract =
           privateWorldStateUpdater.createAccount(FLEXIBLE_PRIVACY_PROXY).getMutable();
 
       // this is the code for the proxy contract
-      procyContract.setCode(OnchainGroupManagement.PROXY_RUNTIME_BYTECODE);
+      procyContract.setCode(FlexibleGroupManagement.PROXY_RUNTIME_BYTECODE);
       // manually set the management contract address so the proxy can trust it
       procyContract.setStorageValue(
           UInt256.ZERO, UInt256.fromBytes(Bytes32.leftPad(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT)));

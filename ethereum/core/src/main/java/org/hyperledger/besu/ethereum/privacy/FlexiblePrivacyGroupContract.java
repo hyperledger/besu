@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.CAN_EXECUTE_METHOD_SIGNATURE;
-import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
-import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.CAN_EXECUTE_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.GET_VERSION_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -55,7 +55,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  It is possible to use it in two different ways that carry different
  lifetime expectations and call semantics:
 
- 1. When constructed using `OnchainPrivacyGroupContract(PrivateTransactionSimulator)`
+ 1. When constructed using `FlexiblePrivacyGroupContract(PrivateTransactionSimulator)`
     the object is expected to be long-lived. Methods can be supplied
     with block height or block hash parameters to select which block's
     state is queried.
@@ -67,7 +67,7 @@ import org.apache.tuweni.units.bigints.UInt256;
     that is not on a block boundary. Used this way, the object's life
     time is intended to be short.
 */
-public class OnchainPrivacyGroupContract {
+public class FlexiblePrivacyGroupContract {
   @FunctionalInterface
   public interface TransactionSimulator {
     Optional<TransactionProcessingResult> simulate(
@@ -79,7 +79,7 @@ public class OnchainPrivacyGroupContract {
 
   final TransactionSimulator transactionSimulator;
 
-  public OnchainPrivacyGroupContract(
+  public FlexiblePrivacyGroupContract(
       final PrivateTransactionSimulator privateTransactionSimulator) {
     transactionSimulator =
         (privacyGroupId, callData, blockHash, blockNumber) -> {
@@ -96,7 +96,7 @@ public class OnchainPrivacyGroupContract {
         };
   }
 
-  public OnchainPrivacyGroupContract(
+  public FlexiblePrivacyGroupContract(
       final MessageFrame messageFrame,
       final ProcessableBlockHeader currentBlockHeader,
       final MutableWorldState disposablePrivateState,
@@ -168,7 +168,7 @@ public class OnchainPrivacyGroupContract {
     if (rlpInput.nextSize() > 0) {
       final PrivacyGroup privacyGroup =
           new PrivacyGroup(
-              privacyGroupId, PrivacyGroup.Type.ONCHAIN, "", "", decodeList(rlpInput.raw()));
+              privacyGroupId, PrivacyGroup.Type.FLEXIBLE, "", "", decodeList(rlpInput.raw()));
       return Optional.of(privacyGroup);
     } else {
       return Optional.empty();

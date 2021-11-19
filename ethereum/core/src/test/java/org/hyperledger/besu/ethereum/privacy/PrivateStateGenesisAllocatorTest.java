@@ -18,8 +18,8 @@ package org.hyperledger.besu.ethereum.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE;
-import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.PROXY_RUNTIME_BYTECODE;
+import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE;
+import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.PROXY_RUNTIME_BYTECODE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;

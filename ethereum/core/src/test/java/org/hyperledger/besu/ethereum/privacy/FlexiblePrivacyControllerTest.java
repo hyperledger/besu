@@ -44,7 +44,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement;
+import org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
@@ -75,7 +75,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class OnchainPrivacyControllerTest {
+public class FlexiblePrivacyControllerTest {
 
   private static final String ADDRESS1 = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final String ADDRESS2 = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
@@ -84,7 +84,7 @@ public class OnchainPrivacyControllerTest {
   private static final String HEX_STRING_32BYTES_VALUE1 =
       "0x0000000000000000000000000000000000000000000000000000000000000001";
 
-  private OnchainPrivacyController privacyController;
+  private FlexiblePrivacyController privacyController;
   private PrivateTransactionValidator privateTransactionValidator;
   private PrivateNonceProvider privateNonceProvider;
   private PrivateStateRootResolver privateStateRootResolver;
@@ -94,7 +94,7 @@ public class OnchainPrivacyControllerTest {
   private PrivateStateStorage privateStateStorage;
   private Enclave enclave;
   private String enclavePublicKey;
-  private OnchainPrivacyController brokenPrivacyController;
+  private FlexiblePrivacyController brokenPrivacyController;
   private static final byte[] PAYLOAD = new byte[0];
   private static final String TRANSACTION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
 
@@ -106,7 +106,7 @@ public class OnchainPrivacyControllerTest {
       Bytes.concatenate(SIMULATOR_RESULT_PREFIX, Base64.decode(ADDRESS1), Base64.decode(ADDRESS2));
   private static final PrivacyGroup EXPECTED_PRIVACY_GROUP =
       new PrivacyGroup(
-          PRIVACY_GROUP_ID, PrivacyGroup.Type.ONCHAIN, "", "", PRIVACY_GROUP_ADDRESSES);
+          PRIVACY_GROUP_ID, PrivacyGroup.Type.FLEXIBLE, "", "", PRIVACY_GROUP_ADDRESSES);
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -136,7 +136,7 @@ public class OnchainPrivacyControllerTest {
     enclavePublicKey = EnclaveKeyUtils.loadKey("enclave_key_0.pub");
 
     privacyController =
-        new OnchainPrivacyController(
+        new FlexiblePrivacyController(
             blockchain,
             privateStateStorage,
             enclave,
@@ -146,7 +146,7 @@ public class OnchainPrivacyControllerTest {
             privateWorldStateReader,
             privateStateRootResolver);
     brokenPrivacyController =
-        new OnchainPrivacyController(
+        new FlexiblePrivacyController(
             blockchain,
             privateStateStorage,
             brokenMockEnclave(),
@@ -173,7 +173,7 @@ public class OnchainPrivacyControllerTest {
     mockingForCreatesPayloadForAdding();
     final PrivateTransaction privateTransaction =
         buildPrivateTransaction(1)
-            .payload(OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE)
+            .payload(FlexibleGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE)
             .to(PrivacyParameters.FLEXIBLE_PRIVACY_PROXY)
             .signAndBuild(KEY_PAIR);
     final String payload =
@@ -188,16 +188,16 @@ public class OnchainPrivacyControllerTest {
 
   @Test
   public void verifiesGroupContainsUserId() {
-    final OnchainPrivacyGroupContract onchainPrivacyGroupContract =
-        mock(OnchainPrivacyGroupContract.class);
-    when(onchainPrivacyGroupContract.getPrivacyGroupByIdAndBlockNumber(any(), any()))
+    final FlexiblePrivacyGroupContract flexiblePrivacyGroupContract =
+        mock(FlexiblePrivacyGroupContract.class);
+    when(flexiblePrivacyGroupContract.getPrivacyGroupByIdAndBlockNumber(any(), any()))
         .thenReturn(Optional.of(EXPECTED_PRIVACY_GROUP));
-    privacyController.setOnchainPrivacyGroupContract(onchainPrivacyGroupContract);
+    privacyController.setFlexiblePrivacyGroupContract(flexiblePrivacyGroupContract);
     privacyController.verifyPrivacyGroupContainsPrivacyUserId(PRIVACY_GROUP_ID, ADDRESS1);
   }
 
   @Test
-  public void findOnchainPrivacyGroups() {
+  public void findFleixblePrivacyGroups() {
     mockingForFindPrivacyGroupByMembers();
     mockingForFindPrivacyGroupById();
 
@@ -214,7 +214,7 @@ public class OnchainPrivacyControllerTest {
     Assertions.assertThatThrownBy(
             () -> privacyController.createPrivacyGroup(Lists.emptyList(), "", "", ADDRESS1))
         .isInstanceOf(PrivacyConfigurationNotSupportedException.class)
-        .hasMessageContaining("Method not supported when using onchain privacy");
+        .hasMessageContaining("Method not supported when using flexible privacy");
   }
 
   @Test
@@ -222,7 +222,7 @@ public class OnchainPrivacyControllerTest {
     Assertions.assertThatThrownBy(
             () -> privacyController.deletePrivacyGroup(PRIVACY_GROUP_ID, ADDRESS1))
         .isInstanceOf(PrivacyConfigurationNotSupportedException.class)
-        .hasMessageContaining("Method not supported when using onchain privacy");
+        .hasMessageContaining("Method not supported when using flexible privacy");
   }
 
   @Test
@@ -288,7 +288,7 @@ public class OnchainPrivacyControllerTest {
   public void findsPrivacyGroupById() {
     final PrivacyGroup privacyGroup =
         new PrivacyGroup(
-            PRIVACY_GROUP_ID, PrivacyGroup.Type.ONCHAIN, "", "", PRIVACY_GROUP_ADDRESSES);
+            PRIVACY_GROUP_ID, PrivacyGroup.Type.FLEXIBLE, "", "", PRIVACY_GROUP_ADDRESSES);
     mockingForFindPrivacyGroupById();
 
     final Optional<PrivacyGroup> privacyGroupFound =

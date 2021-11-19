@@ -27,7 +27,7 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.privacy.OnchainPrivacyGroupContract;
+import org.hyperledger.besu.ethereum.privacy.FlexiblePrivacyGroupContract;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement;
+import org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -222,8 +222,8 @@ public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater,
       final Bytes privateFrom) {
-    final OnchainPrivacyGroupContract onchainPrivacyGroupContract =
-        new OnchainPrivacyGroupContract(
+    final FlexiblePrivacyGroupContract flexiblePrivacyGroupContract =
+        new FlexiblePrivacyGroupContract(
             messageFrame,
             currentBlockHeader,
             disposablePrivateState,
@@ -232,7 +232,7 @@ public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
             privateTransactionProcessor);
 
     final boolean isAddingParticipant = isAddingParticipant(privateTransaction);
-    final boolean isContractLocked = isContractLocked(onchainPrivacyGroupContract, privacyGroupId);
+    final boolean isContractLocked = isContractLocked(flexiblePrivacyGroupContract, privacyGroupId);
 
     if (isAddingParticipant && !isContractLocked) {
       LOG.debug(
@@ -250,7 +250,7 @@ public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       return false;
     }
 
-    if (!onchainPrivacyGroupVersionMatches(onchainPrivacyGroupContract, privacyGroupId, version)) {
+    if (!onchainPrivacyGroupVersionMatches(flexiblePrivacyGroupContract, privacyGroupId, version)) {
       LOG.debug(
           "Privacy group version mismatch while trying to execute transaction with commitment {}",
           (Hash) messageFrame.getContextVariable(KEY_TRANSACTION_HASH));
@@ -261,7 +261,7 @@ public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         isAddingParticipant,
         privateTransaction,
         privateFrom,
-        onchainPrivacyGroupContract,
+        flexiblePrivacyGroupContract,
         privacyGroupId)) {
       LOG.debug(
           "PrivateTransaction with hash {} cannot execute in privacy group {} because privateFrom"
@@ -279,10 +279,10 @@ public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final boolean isAddingParticipant,
       final PrivateTransaction privateTransaction,
       final Bytes privateFrom,
-      final OnchainPrivacyGroupContract onchainPrivacyGroupContract,
+      final FlexiblePrivacyGroupContract flexiblePrivacyGroupContract,
       final Bytes32 privacyGroupId) {
     final List<String> members =
-        onchainPrivacyGroupContract
+        flexiblePrivacyGroupContract
             .getPrivacyGroupByIdAndBlockHash(privacyGroupId.toBase64String(), Optional.empty())
             .map(PrivacyGroup::getMembers)
             .orElse(Collections.emptyList());
@@ -322,7 +322,7 @@ public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         && privateTransaction
             .getPayload()
             .toHexString()
-            .startsWith(OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE.toHexString());
+            .startsWith(FlexibleGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE.toHexString());
   }
 
   private boolean isRemovingParticipant(final PrivateTransaction privateTransaction) {
@@ -330,23 +330,24 @@ public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         && privateTransaction
             .getPayload()
             .toHexString()
-            .startsWith(OnchainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE.toHexString());
+            .startsWith(FlexibleGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE.toHexString());
   }
 
   protected boolean isContractLocked(
-      final OnchainPrivacyGroupContract onchainPrivacyGroupContract, final Bytes32 privacyGroupId) {
+      final FlexiblePrivacyGroupContract flexiblePrivacyGroupContract,
+      final Bytes32 privacyGroupId) {
     final Optional<Bytes32> canExecuteResult =
-        onchainPrivacyGroupContract.getCanExecute(
+        flexiblePrivacyGroupContract.getCanExecute(
             privacyGroupId.toBase64String(), Optional.empty());
     return canExecuteResult.map(Bytes::isZero).orElse(true);
   }
 
   protected boolean onchainPrivacyGroupVersionMatches(
-      final OnchainPrivacyGroupContract onchainPrivacyGroupContract,
+      final FlexiblePrivacyGroupContract flexiblePrivacyGroupContract,
       final Bytes32 privacyGroupId,
       final Bytes32 version) {
     final Optional<Bytes32> contractVersionResult =
-        onchainPrivacyGroupContract.getVersion(privacyGroupId.toBase64String(), Optional.empty());
+        flexiblePrivacyGroupContract.getVersion(privacyGroupId.toBase64String(), Optional.empty());
     final boolean versionEqual = contractVersionResult.map(version::equals).orElse(false);
 
     if (!versionEqual) {

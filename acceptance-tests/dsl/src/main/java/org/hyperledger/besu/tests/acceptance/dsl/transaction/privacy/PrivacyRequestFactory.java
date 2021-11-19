@@ -24,7 +24,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
-import org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement;
+import org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivateTransactionGroupResponse;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
@@ -232,7 +232,7 @@ public class PrivacyRequestFactory {
   }
 
   private Bytes encodeRemoveFromGroupFunctionCall(final Bytes toRemove) {
-    return Bytes.concatenate(OnchainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE, toRemove);
+    return Bytes.concatenate(FlexibleGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE, toRemove);
   }
 
   public String privxLockPrivacyGroup(
@@ -242,7 +242,7 @@ public class PrivacyRequestFactory {
         locker,
         privacyGroupId,
         signer,
-        OnchainGroupManagement.LOCK_GROUP_METHOD_SIGNATURE.toHexString());
+        FlexibleGroupManagement.LOCK_GROUP_METHOD_SIGNATURE.toHexString());
   }
 
   public String privxUnlockPrivacyGroup(
@@ -252,7 +252,7 @@ public class PrivacyRequestFactory {
         locker,
         privacyGroupId,
         signer,
-        OnchainGroupManagement.UNLOCK_GROUP_METHOD_SIGNATURE.toHexString());
+        FlexibleGroupManagement.UNLOCK_GROUP_METHOD_SIGNATURE.toHexString());
   }
 
   private String privxLockOrUnlockPrivacyGroup(
@@ -589,7 +589,7 @@ public class PrivacyRequestFactory {
 
   private Bytes encodeAddToGroupFunctionCall(final List<Bytes> participants) {
     return Bytes.concatenate(
-        OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE, encodeList(participants));
+        FlexibleGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE, encodeList(participants));
   }
 
   private Bytes encodeList(final List<Bytes> participants) {

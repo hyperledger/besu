@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.privacy.OnchainUtil;
+import org.hyperledger.besu.ethereum.privacy.FlexibleUtil;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -81,20 +81,20 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
         privacyController.findPrivacyGroupByGroupId(privacyGroupId.toBase64String(), privacyUserId);
 
     final boolean isGroupAdditionTransaction =
-        OnchainUtil.isGroupAdditionTransaction(privateTransaction);
+        FlexibleUtil.isGroupAdditionTransaction(privateTransaction);
     if (maybePrivacyGroup.isEmpty() && !isGroupAdditionTransaction) {
       throw new JsonRpcErrorResponseException(JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
     }
 
     if (isGroupAdditionTransaction) {
       final List<String> participantsFromParameter =
-          OnchainUtil.getParticipantsFromParameter(privateTransaction.getPayload());
+          FlexibleUtil.getParticipantsFromParameter(privateTransaction.getPayload());
       if (maybePrivacyGroup.isEmpty()) {
         maybePrivacyGroup =
             Optional.of(
                 new PrivacyGroup(
                     privacyGroupId.toBase64String(),
-                    PrivacyGroup.Type.ONCHAIN,
+                    PrivacyGroup.Type.FLEXIBLE,
                     null,
                     null,
                     participantsFromParameter));

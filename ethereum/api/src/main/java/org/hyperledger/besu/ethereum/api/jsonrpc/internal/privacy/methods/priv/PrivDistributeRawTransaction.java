@@ -31,8 +31,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.FlexibleUtil;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
-import org.hyperledger.besu.ethereum.privacy.OnchainUtil;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -94,15 +94,15 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
                   privacyController.findPrivacyGroupByGroupId(gId.toBase64String(), privacyUserId));
 
       if (onchainPrivacyGroupsEnabled) {
-        if (OnchainUtil.isGroupAdditionTransaction(privateTransaction)) {
+        if (FlexibleUtil.isGroupAdditionTransaction(privateTransaction)) {
           final List<String> participantsFromParameter =
-              OnchainUtil.getParticipantsFromParameter(privateTransaction.getPayload());
+              FlexibleUtil.getParticipantsFromParameter(privateTransaction.getPayload());
           if (maybePrivacyGroup.isEmpty()) {
             maybePrivacyGroup =
                 Optional.of(
                     new PrivacyGroup(
                         maybePrivacyGroupId.get().toBase64String(),
-                        PrivacyGroup.Type.ONCHAIN,
+                        PrivacyGroup.Type.FLEXIBLE,
                         "",
                         "",
                         participantsFromParameter));

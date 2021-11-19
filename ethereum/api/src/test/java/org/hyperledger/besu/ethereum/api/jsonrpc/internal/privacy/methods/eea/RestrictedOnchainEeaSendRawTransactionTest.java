@@ -68,7 +68,7 @@ public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTr
     final Optional<PrivacyGroup> onchainPrivacyGroup =
         Optional.of(
             new PrivacyGroup(
-                "", PrivacyGroup.Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY)));
+                "", PrivacyGroup.Type.FLEXIBLE, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY)));
 
     when(privacyController.findPrivacyGroupByGroupId(any(), any())).thenReturn(onchainPrivacyGroup);
 

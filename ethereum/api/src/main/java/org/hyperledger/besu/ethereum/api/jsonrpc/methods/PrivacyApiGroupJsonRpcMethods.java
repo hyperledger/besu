@@ -25,8 +25,8 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
+import org.hyperledger.besu.ethereum.privacy.FlexiblePrivacyController;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
-import org.hyperledger.besu.ethereum.privacy.OnchainPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PluginPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
@@ -139,7 +139,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
       final PrivacyController privacyController;
       if (privacyParameters.isFlexiblePrivacyGroupsEnabled()) {
         privacyController =
-            new OnchainPrivacyController(
+            new FlexiblePrivacyController(
                 getBlockchainQueries().getBlockchain(),
                 privacyParameters,
                 chainId,
