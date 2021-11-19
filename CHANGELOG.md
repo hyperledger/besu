@@ -8,6 +8,7 @@
 
 ### Early Access Features
 - Add "PMT pool" to track pending private transactions, thereby reducing private nonce collisions [#2969](https://github.com/hyperledger/besu/pull/2969)
+- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
 
 ## 21.10.2
 
