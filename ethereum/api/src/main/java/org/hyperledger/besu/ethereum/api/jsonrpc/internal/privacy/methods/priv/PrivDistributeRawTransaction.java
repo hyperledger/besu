@@ -85,7 +85,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
       final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
 
       if (onchainPrivacyGroupsEnabled && maybePrivacyGroupId.isEmpty()) {
-        return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
+        return new JsonRpcErrorResponse(id, JsonRpcError.FLEXIBLE_PRIVACY_GROUP_ID_NOT_AVAILABLE);
       }
 
       Optional<PrivacyGroup> maybePrivacyGroup =
