@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -28,9 +29,14 @@ import org.apache.logging.log4j.Logger;
 
 public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
+  private final MergeMiningCoordinator mergeCoordinator;
 
-  public EngineForkchoiceUpdated(final Vertx vertx, final ProtocolContext protocolContext) {
+  public EngineForkchoiceUpdated(
+      final Vertx vertx,
+      final ProtocolContext protocolContext,
+      final MergeMiningCoordinator mergeCoordinator) {
     super(vertx, protocolContext);
+    this.mergeCoordinator = mergeCoordinator;
   }
 
   @Override
@@ -47,7 +53,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
         forkChoice.getHeadBlockHash(),
         forkChoice.getFinalizedBlockHash());
 
-    mergeContext.updateForkChoice(
+    mergeCoordinator.updateForkChoice(
         forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId());

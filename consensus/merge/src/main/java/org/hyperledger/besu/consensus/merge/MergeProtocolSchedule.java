@@ -59,7 +59,6 @@ public class MergeProtocolSchedule {
     return specBuilder
         .blockImporterBuilder(MergeBlockImporter::new)
         .blockProcessorBuilder(MergeBlockProcessor::new)
-        .blockValidatorBuilder(MergeBlockValidator::new)
         .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
         .blockReward(Wei.ZERO)
         .difficultyCalculator((a, b, c) -> BigInteger.ZERO)

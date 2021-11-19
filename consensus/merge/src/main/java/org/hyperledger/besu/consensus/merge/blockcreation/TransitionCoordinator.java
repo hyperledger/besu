@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
-import org.hyperledger.besu.consensus.merge.MergeBlockProcessor.CandidateBlock;
 import org.hyperledger.besu.consensus.merge.TransitionUtils;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -126,7 +126,7 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public CandidateBlock setExistingAsCandidate(final Block block) {
-    return mergeCoordinator.setExistingAsCandidate(block);
+  public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
+    mergeCoordinator.updateForkChoice(headBlockHash, finalizedBlockHash);
   }
 }

@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
-import org.hyperledger.besu.consensus.merge.MergeBlockProcessor.CandidateBlock;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -32,5 +32,5 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
   boolean validateProcessAndSetAsCandidate(final Block block);
 
-  CandidateBlock setExistingAsCandidate(final Block block);
+  void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash);
 }

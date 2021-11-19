@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.consensus.merge.MergeBlockProcessor.CandidateBlock;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -46,9 +44,6 @@ public class PostMergeContext implements MergeContext {
       Subscribers.create();
 
   private final Map<PayloadIdentifier, Block> blocksInProgressById = new ConcurrentHashMap<>();
-
-  // current candidate block from consensus engine
-  AtomicReference<CandidateBlock> candidateBlock = new AtomicReference<>();
 
   // latest finalized block
   // TODO: persist this to storage https://github.com/hyperledger/besu/issues/2913
@@ -130,32 +125,8 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
-    // only empty if we haven't ever finalized yet
-    Optional<BlockHeader> maybeNewFinalized =
-        Optional.ofNullable(candidateBlock.get())
-            .flatMap(cb -> cb.updateForkChoice(headBlockHash, finalizedBlockHash));
-    Optional.ofNullable(lastFinalized.get())
-        .ifPresentOrElse(
-            last -> {
-              final BlockHeader newFinalized =
-                  maybeNewFinalized.orElseThrow(
-                      () ->
-                          new IllegalStateException(
-                              "we have a last finalized so we should always have a valid new finalized"));
-              if (last.getNumber() <= newFinalized.getNumber()) {
-                lastFinalized.set(newFinalized);
-              } else {
-                LOG.error(
-                    "Attempted to set finalized head {}:{} earlier tha existing finalized head {}:{}",
-                    newFinalized.getHash(),
-                    newFinalized.getNumber(),
-                    last.getHash(),
-                    last.getNumber());
-              }
-            },
-            // waiting for first finalized block, set it if we got it:
-            () -> maybeNewFinalized.ifPresent(lastFinalized::set));
+  public void setFinalized(final BlockHeader blockHeader) {
+    lastFinalized.set(blockHeader);
   }
 
   @Override
@@ -168,23 +139,6 @@ public class PostMergeContext implements MergeContext {
     return Optional.ofNullable(lastFinalized.get())
         .map(finalized -> candidateHeader.getNumber() >= finalized.getNumber())
         .orElse(Boolean.TRUE);
-  }
-
-  @Override
-  public void setCandidateBlock(final CandidateBlock candidate) {
-    this.candidateBlock.set(candidate);
-  }
-
-  @Override
-  public boolean setConsensusValidated(final Hash candidateHash) {
-    return Optional.ofNullable(candidateBlock.get())
-        .filter(candidate -> candidate.getBlockHash().equals(candidateHash))
-        .map(
-            candidate -> {
-              candidate.setConsensusValidated();
-              return true;
-            })
-        .orElse(false);
   }
 
   @Override

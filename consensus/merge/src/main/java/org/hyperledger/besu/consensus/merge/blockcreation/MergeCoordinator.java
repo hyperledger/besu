@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
-import org.hyperledger.besu.consensus.merge.MergeBlockProcessor.CandidateBlock;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -191,10 +192,24 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @Override
-  public CandidateBlock setExistingAsCandidate(final Block block) {
-    CandidateBlock noOpBlock = new CandidateBlock(block, null, protocolContext.getBlockchain());
-    mergeContext.setCandidateBlock(noOpBlock);
-    return noOpBlock;
+  public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
+    MutableBlockchain blockchain = protocolContext.getBlockchain();
+    final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
+    if (newFinalized.isEmpty() && !finalizedBlockHash.equals(Hash.ZERO)) {
+      // we should only fail to find when it's the special value 0x000..000
+      throw new IllegalStateException(
+          String.format(
+              "should've been able to find block hash %s but couldn't", finalizedBlockHash));
+    }
+
+    // ensure we have headBlock:
+    Block newHead = blockchain.getBlockByHash(headBlockHash).orElseThrow();
+
+    // TODO: ensure head is a descendant of finalized!
+    // https://github.com/hyperledger/besu/issues/2946
+    // set the new head
+    blockchain.rewindToBlock(newHead.getHash());
+    newFinalized.ifPresent(mergeContext::setFinalized);
   }
 
   @FunctionalInterface

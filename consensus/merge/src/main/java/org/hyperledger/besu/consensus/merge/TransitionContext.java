@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -78,8 +77,8 @@ public class TransitionContext implements MergeContext {
   }
 
   @Override
-  public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
-    postMergeContext.updateForkChoice(headBlockHash, finalizedBlockHash);
+  public void setFinalized(final BlockHeader blockHeader) {
+    postMergeContext.setFinalized(blockHeader);
   }
 
   @Override
@@ -90,16 +89,6 @@ public class TransitionContext implements MergeContext {
   @Override
   public boolean validateCandidateHead(final BlockHeader candidateHeader) {
     return postMergeContext.validateCandidateHead(candidateHeader);
-  }
-
-  @Override
-  public void setCandidateBlock(final MergeBlockProcessor.CandidateBlock candidate) {
-    postMergeContext.setCandidateBlock(candidate);
-  }
-
-  @Override
-  public boolean setConsensusValidated(final Hash candidateHash) {
-    return postMergeContext.setConsensusValidated(candidateHash);
   }
 
   @Override
