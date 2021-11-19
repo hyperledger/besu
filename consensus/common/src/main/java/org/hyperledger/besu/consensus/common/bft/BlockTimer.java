@@ -81,7 +81,7 @@ public class BlockTimer {
 
     // absolute time when the timer is supposed to expire
     final int blockPeriodSeconds =
-        bftForksSchedule.getFork(round.getSequenceNumber()).getSpec().getBlockPeriodSeconds();
+        bftForksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();
     final long minimumTimeBetweenBlocksMillis = blockPeriodSeconds * 1000L;
     final long expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
 
