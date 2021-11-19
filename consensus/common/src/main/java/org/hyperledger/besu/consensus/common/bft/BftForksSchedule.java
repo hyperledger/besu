@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -26,21 +27,22 @@ import java.util.List;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 
 public class BftForksSchedule<C extends BftConfigOptions> {
 
-  private final NavigableSet<BftForkSpec<C>> forks =
-      new TreeSet<>(BftForkSpec.COMPARATOR.reversed());
+  private final NavigableSet<ForkSpec<C>> forks =
+      new TreeSet<>(
+          Comparator.comparing((Function<ForkSpec<C>, Long>) ForkSpec::getBlock).reversed());
 
   public interface BftSpecCreator<T extends BftConfigOptions, U extends BftFork> {
-    T create(BftForkSpec<T> lastSpec, U fork);
+    T create(ForkSpec<T> lastSpec, U fork);
   }
 
   @VisibleForTesting
-  public BftForksSchedule(
-      final BftForkSpec<C> genesisFork, final Collection<BftForkSpec<C>> forks) {
+  public BftForksSchedule(final ForkSpec<C> genesisFork, final Collection<ForkSpec<C>> forks) {
     this.forks.add(genesisFork);
     this.forks.addAll(forks);
   }
@@ -54,9 +56,8 @@ public class BftForksSchedule<C extends BftConfigOptions> {
         forks.stream().map(BftFork::getForkBlock).distinct().count() == forks.size(),
         "Duplicate transitions cannot be created for the same block");
 
-    final NavigableSet<BftForkSpec<T>> specs =
-        new TreeSet<>(Comparator.comparing(BftForkSpec::getBlock));
-    final BftForkSpec<T> initialForkSpec = new BftForkSpec<>(0, initial);
+    final NavigableSet<ForkSpec<T>> specs = new TreeSet<>(Comparator.comparing(ForkSpec::getBlock));
+    final ForkSpec<T> initialForkSpec = new ForkSpec<>(0, initial);
     specs.add(initialForkSpec);
 
     forks.stream()
@@ -64,14 +65,14 @@ public class BftForksSchedule<C extends BftConfigOptions> {
         .forEachOrdered(
             f -> {
               final T spec = specCreator.create(specs.last(), f);
-              specs.add(new BftForkSpec<>(f.getForkBlock(), spec));
+              specs.add(new ForkSpec<>(f.getForkBlock(), spec));
             });
 
     return new BftForksSchedule<>(initialForkSpec, specs.tailSet(initialForkSpec, false));
   }
 
-  public BftForkSpec<C> getFork(final long blockNumber) {
-    for (final BftForkSpec<C> f : forks) {
+  public ForkSpec<C> getFork(final long blockNumber) {
+    for (final ForkSpec<C> f : forks) {
       if (blockNumber >= f.getBlock()) {
         return f;
       }
@@ -80,7 +81,7 @@ public class BftForksSchedule<C extends BftConfigOptions> {
     return forks.first();
   }
 
-  public Set<BftForkSpec<C>> getForks() {
+  public Set<ForkSpec<C>> getForks() {
     return Collections.unmodifiableSet(forks);
   }
 }

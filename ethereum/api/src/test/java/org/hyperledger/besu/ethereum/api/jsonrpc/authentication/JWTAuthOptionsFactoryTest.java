@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +24,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
@@ -30,7 +32,7 @@ import org.junit.Test;
 
 public class JWTAuthOptionsFactoryTest {
 
-  private static final String JWT_PUBLIC_KEY =
+  private static final String JWT_PUBLIC_KEY_RS256 =
       "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw6tMhjogMulRbYby7bCL"
           + "rFhukDnxvm4XR3KSXLKdLLQHHyouMOQaLac9M+/Z1KkIpqfZPjLfW2/yUg2IKx4T"
           + "dvFVzbVq17X6dq49ZS8jJtb8l2+Vius4d3LnpvxCOematRG9Acn+2qLwC+sK7RPY"
@@ -38,6 +40,10 @@ public class JWTAuthOptionsFactoryTest {
           + "NYf4cAzu/1d5MgspyZwnRo468gqaak3wQzkmk69Z25L1N7TXZvk2b7rT7/ssFnt+"
           + "//fKVpD6qkQ3OopD+7gOziAYUxChw6RUWekV+uRgNADQhaqV6wDdogBz77wTJedV"
           + "YwIDAQAB";
+
+  private static final String JWT_PUBLIC_KEY_ES256 =
+      "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEy8+qE0ZFo4woPUCXfszptuDgaDpW"
+          + "Sv6D5F/pbolJ2wZTVkYXoGhA3wqy1RM1RYmROp9NEPLm3mZP+kzI4TMiGg==";
 
   @Test
   public void createsOptionsWithGeneratedKeyPair() {
@@ -67,7 +73,7 @@ public class JWTAuthOptionsFactoryTest {
   public void createsOptionsUsingPublicKeyFile() throws URISyntaxException {
     final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
     final File enclavePublicKeyFile =
-        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_rsa").toURI())
             .toAbsolutePath()
             .toFile();
 
@@ -76,7 +82,30 @@ public class JWTAuthOptionsFactoryTest {
     assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(1);
     assertThat(jwtAuthOptions.getPubSecKeys().get(0).getAlgorithm()).isEqualTo("RS256");
     assertThat(jwtAuthOptions.getPubSecKeys().get(0).getSecretKey()).isNull();
-    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getPublicKey()).isEqualTo(JWT_PUBLIC_KEY);
+    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getPublicKey())
+        .isEqualTo(JWT_PUBLIC_KEY_RS256);
+  }
+
+  @Test
+  public void createOptionsUsingECDASPublicKeyFile() throws URISyntaxException {
+    final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
+    final File enclavePublicKeyFile =
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_ecdsa").toURI())
+            .toAbsolutePath()
+            .toFile();
+
+    try {
+      final JWTAuthOptions jwtAuthOptions =
+          jwtAuthOptionsFactory.createForExternalPublicKeyWithAlgorithm(
+              enclavePublicKeyFile, "ES256");
+      assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(1);
+      assertThat(jwtAuthOptions.getPubSecKeys().get(0).getAlgorithm()).isEqualTo("ES256");
+      assertThat(jwtAuthOptions.getPubSecKeys().get(0).getSecretKey()).isNull();
+      assertThat(jwtAuthOptions.getPubSecKeys().get(0).getPublicKey())
+          .isEqualTo(JWT_PUBLIC_KEY_ES256);
+    } catch (Exception e) {
+      fail("Should not have exceptions thrown" + Arrays.toString(e.getStackTrace()));
+    }
   }
 
   @Test

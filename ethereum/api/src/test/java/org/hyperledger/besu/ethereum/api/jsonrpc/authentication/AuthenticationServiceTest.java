@@ -106,4 +106,26 @@ public class AuthenticationServiceTest {
         AuthenticationService.create(vertx, webSocketConfiguration);
     assertThat(authenticationService).isEmpty();
   }
+
+  @Test
+  public void authServiceNotCreatedWhenRpcAuthnDisabledAndHasAlgorithmSpecified() {
+    final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
+    jsonRpcConfiguration.setAuthenticationEnabled(false);
+    jsonRpcConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.RS256);
+
+    final Optional<AuthenticationService> authenticationService =
+        AuthenticationService.create(vertx, jsonRpcConfiguration);
+    assertThat(authenticationService).isEmpty();
+  }
+
+  @Test
+  public void authServiceNotCreatedWhenWsAuthDisabledAndHasAlgorithmSpecified() {
+    final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
+    webSocketConfiguration.setAuthenticationEnabled(false);
+    webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.RS256);
+
+    final Optional<AuthenticationService> authenticationService =
+        AuthenticationService.create(vertx, webSocketConfiguration);
+    assertThat(authenticationService).isEmpty();
+  }
 }
