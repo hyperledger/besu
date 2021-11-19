@@ -53,17 +53,17 @@ public abstract class BaseBftProtocolSchedule {
     bftForksSchedule
         .getForks()
         .forEach(
-            bftForkSpec ->
+            forkSpec ->
                 specMap.put(
-                    bftForkSpec.getBlock(),
+                    forkSpec.getBlock(),
                     builder ->
                         applyBftChanges(
-                            bftForkSpec.getValue(),
+                            forkSpec.getValue(),
                             builder,
                             config.isQuorum(),
-                            createBlockHeaderRuleset(bftForkSpec.getValue()),
+                            createBlockHeaderRuleset(forkSpec.getValue()),
                             bftExtraDataCodec,
-                            Optional.of(bftForkSpec.getValue().getBlockRewardWei()))));
+                            Optional.of(forkSpec.getValue().getBlockRewardWei()))));
 
     final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
 
