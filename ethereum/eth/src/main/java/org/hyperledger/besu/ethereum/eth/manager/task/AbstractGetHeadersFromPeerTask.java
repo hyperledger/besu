@@ -116,19 +116,8 @@ public abstract class AbstractGetHeadersFromPeerTask
       headersList.add(header);
     }
 
-    LOG.debug(
-        "Received {} of {} headers requested from peer {}. Headers for blocks {}",
-        headersList.size(),
-        count,
-        peer,
-        printHeaders(headersList));
+    LOG.debug("Received {} of {} headers requested from peer {}", headersList.size(), count, peer);
     return Optional.of(headersList);
-  }
-
-  protected String printHeaders(final List<BlockHeader> headersList) {
-    final StringBuilder stringBuilder = new StringBuilder();
-    headersList.stream().forEach(header -> stringBuilder.append(header.getBlockHash() + " "));
-    return stringBuilder.toString();
   }
 
   protected abstract boolean matchesFirstHeader(BlockHeader firstHeader);
