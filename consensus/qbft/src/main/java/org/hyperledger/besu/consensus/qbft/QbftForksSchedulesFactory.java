@@ -18,7 +18,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 
 import java.util.List;
@@ -35,9 +35,9 @@ public class QbftForksSchedulesFactory {
   }
 
   private static QbftConfigOptions createQbftConfigOptions(
-      final BftForkSpec<QbftConfigOptions> lastSpec, final QbftFork fork) {
+      final ForkSpec<QbftConfigOptions> lastSpec, final QbftFork fork) {
     final MutableQbftConfigOptions bftConfigOptions =
-        new MutableQbftConfigOptions(lastSpec.getConfigOptions());
+        new MutableQbftConfigOptions(lastSpec.getValue());
 
     fork.getBlockPeriodSeconds().ifPresent(bftConfigOptions::setBlockPeriodSeconds);
     fork.getBlockRewardWei().ifPresent(bftConfigOptions::setBlockRewardWei);

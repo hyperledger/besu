@@ -23,6 +23,7 @@ import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonBftConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -58,7 +59,7 @@ public class BaseBftProtocolScheduleTest {
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
     final ProtocolSchedule schedule =
-        createProtocolSchedule(new BftForkSpec<>(0, configOptions), Collections.emptyList());
+        createProtocolSchedule(new ForkSpec<>(0, configOptions), Collections.emptyList());
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
     assertThat(spec.getBlockReward()).isEqualTo(Wei.of(arbitraryBlockReward));
@@ -76,9 +77,7 @@ public class BaseBftProtocolScheduleTest {
     when(configOptions.getBlockRewardWei()).thenReturn(BigInteger.ZERO);
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
     assertThatThrownBy(
-            () ->
-                createProtocolSchedule(
-                    new BftForkSpec<>(0, configOptions), Collections.emptyList()))
+            () -> createProtocolSchedule(new ForkSpec<>(0, configOptions), Collections.emptyList()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Mining beneficiary in config is not a valid ethereum address");
   }
@@ -94,7 +93,7 @@ public class BaseBftProtocolScheduleTest {
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
     final ProtocolSchedule schedule =
-        createProtocolSchedule(new BftForkSpec<>(0, configOptions), Collections.emptyList());
+        createProtocolSchedule(new ForkSpec<>(0, configOptions), Collections.emptyList());
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
     final Address headerCoinbase = Address.fromHexString("0x123");
@@ -117,9 +116,7 @@ public class BaseBftProtocolScheduleTest {
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
     assertThatThrownBy(
-            () ->
-                createProtocolSchedule(
-                    new BftForkSpec<>(0, configOptions), Collections.emptyList()))
+            () -> createProtocolSchedule(new ForkSpec<>(0, configOptions), Collections.emptyList()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Bft Block reward in config cannot be negative");
   }
@@ -135,9 +132,7 @@ public class BaseBftProtocolScheduleTest {
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
     assertThatThrownBy(
-            () ->
-                createProtocolSchedule(
-                    new BftForkSpec<>(0, configOptions), Collections.emptyList()))
+            () -> createProtocolSchedule(new ForkSpec<>(0, configOptions), Collections.emptyList()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -153,9 +148,7 @@ public class BaseBftProtocolScheduleTest {
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
     assertThatThrownBy(
-            () ->
-                createProtocolSchedule(
-                    new BftForkSpec<>(0, configOptions), Collections.emptyList()))
+            () -> createProtocolSchedule(new ForkSpec<>(0, configOptions), Collections.emptyList()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -179,8 +172,8 @@ public class BaseBftProtocolScheduleTest {
 
     final ProtocolSchedule schedule =
         createProtocolSchedule(
-            new BftForkSpec<>(0, configOptions),
-            List.of(new BftForkSpec<>(transitionBlock, blockRewardTransition)));
+            new ForkSpec<>(0, configOptions),
+            List.of(new ForkSpec<>(transitionBlock, blockRewardTransition)));
 
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(2);
     assertThat(schedule.getByBlockNumber(0).getBlockReward())
@@ -190,8 +183,7 @@ public class BaseBftProtocolScheduleTest {
   }
 
   private ProtocolSchedule createProtocolSchedule(
-      final BftForkSpec<BftConfigOptions> genesisFork,
-      final List<BftForkSpec<BftConfigOptions>> forks) {
+      final ForkSpec<BftConfigOptions> genesisFork, final List<ForkSpec<BftConfigOptions>> forks) {
     final BaseBftProtocolSchedule bftProtocolSchedule =
         new BaseBftProtocolSchedule() {
           @Override
