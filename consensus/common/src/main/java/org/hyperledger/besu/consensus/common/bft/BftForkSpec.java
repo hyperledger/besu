@@ -14,12 +14,16 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 public class BftForkSpec<C> {
 
   private final long block;
   private final C configOptions;
+
+  public static final Comparator<BftForkSpec<?>> COMPARATOR =
+      Comparator.comparing(BftForkSpec::getBlock);
 
   public BftForkSpec(final long block, final C configOptions) {
     this.block = block;

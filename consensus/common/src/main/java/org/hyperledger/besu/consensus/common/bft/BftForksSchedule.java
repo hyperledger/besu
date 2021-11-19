@@ -26,15 +26,13 @@ import java.util.List;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 
 public class BftForksSchedule<C extends BftConfigOptions> {
 
   private final NavigableSet<BftForkSpec<C>> forks =
-      new TreeSet<>(
-          Comparator.comparing((Function<BftForkSpec<C>, Long>) BftForkSpec::getBlock).reversed());
+      new TreeSet<>(BftForkSpec.COMPARATOR.reversed());
 
   public interface BftSpecCreator<T extends BftConfigOptions, U extends BftFork> {
     T create(BftForkSpec<T> lastSpec, U fork);

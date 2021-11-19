@@ -18,9 +18,8 @@
 
 package org.hyperledger.besu.controller;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.consensus.common.CombinedProtocolScheduleFactory;
 import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -44,9 +43,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -59,14 +56,12 @@ import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioni
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.time.Clock;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -115,46 +110,12 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
-    final NavigableSet<BftForkSpec<ProtocolSchedule>> forkSpecs =
+    final NavigableSet<BftForkSpec<ProtocolSchedule>> protocolScheduleSpecs =
         besuControllerBuilderSchedule.entrySet().stream()
-            .map(
-                entry ->
-                    new BftForkSpec<>(entry.getKey(), entry.getValue().createProtocolSchedule()))
-            .collect(
-                Collectors.toCollection(
-                    () -> new TreeSet<>(Comparator.comparing(BftForkSpec::getBlock))));
-
-    final MutableProtocolSchedule combinedProtocolSchedule =
-        new MutableProtocolSchedule(genesisConfig.getConfigOptions().getChainId());
-    for (BftForkSpec<ProtocolSchedule> spec : forkSpecs) {
-      checkState(
-          spec.getConfigOptions() instanceof MutableProtocolSchedule,
-          "Consensus migration requires a MutableProtocolSchedule");
-      final MutableProtocolSchedule protocolSchedule =
-          (MutableProtocolSchedule) spec.getConfigOptions();
-
-      final Optional<Long> endBlock =
-          Optional.ofNullable(forkSpecs.higher(spec)).map(BftForkSpec::getBlock);
-      protocolSchedule.getScheduledProtocolSpecs().stream()
-          .filter(protocolSpecMatchesConsensusBlockRange(spec.getBlock(), endBlock))
-          .forEach(s -> combinedProtocolSchedule.putMilestone(s.getBlock(), s.getSpec()));
-
-      // When moving to a new consensus mechanism we want to use the last milestone but created by
-      // our consensus mechanism's BesuControllerBuilder so any additional rules are applied
-      if (spec.getBlock() > 0) {
-        combinedProtocolSchedule.putMilestone(
-            spec.getBlock(), protocolSchedule.getByBlockNumber(spec.getBlock()));
-      }
-    }
-
-    return combinedProtocolSchedule;
-  }
-
-  private Predicate<ScheduledProtocolSpec> protocolSpecMatchesConsensusBlockRange(
-      final long startBlock, final Optional<Long> endBlock) {
-    return scheduledProtocolSpec ->
-        scheduledProtocolSpec.getBlock() >= startBlock
-            && endBlock.map(b -> scheduledProtocolSpec.getBlock() < b).orElse(true);
+            .map(e -> new BftForkSpec<>(e.getKey(), e.getValue().createProtocolSchedule()))
+            .collect(Collectors.toCollection(() -> new TreeSet<>(BftForkSpec.COMPARATOR)));
+    final Optional<BigInteger> chainId = genesisConfig.getConfigOptions().getChainId();
+    return CombinedProtocolScheduleFactory.create(protocolScheduleSpecs, chainId);
   }
 
   @Override
