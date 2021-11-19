@@ -37,12 +37,12 @@ import java.util.Optional;
 import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes;
 
-public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
+public class RestrictedFlexibleEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
-  public RestrictedOnchainEeaSendRawTransaction(
+  public RestrictedFlexibleEeaSendRawTransaction(
       final TransactionPool transactionPool,
       final PrivacyIdProvider privacyIdProvider,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
@@ -71,7 +71,7 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
       final Optional<User> user) {
     final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
     if (maybePrivacyGroupId.isEmpty()) {
-      throw new JsonRpcErrorResponseException(JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
+      throw new JsonRpcErrorResponseException(JsonRpcError.FLEXIBLE_PRIVACY_GROUP_ID_NOT_AVAILABLE);
     }
     final Bytes privacyGroupId = maybePrivacyGroupId.get();
 
@@ -83,7 +83,7 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
     final boolean isGroupAdditionTransaction =
         FlexibleUtil.isGroupAdditionTransaction(privateTransaction);
     if (maybePrivacyGroup.isEmpty() && !isGroupAdditionTransaction) {
-      throw new JsonRpcErrorResponseException(JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
+      throw new JsonRpcErrorResponseException(JsonRpcError.FLEXIBLE_PRIVACY_GROUP_DOES_NOT_EXIST);
     }
 
     if (isGroupAdditionTransaction) {
@@ -104,7 +104,7 @@ public class RestrictedOnchainEeaSendRawTransaction extends AbstractEeaSendRawTr
     }
 
     if (!maybePrivacyGroup.get().getMembers().contains(privacyUserId)) {
-      throw new JsonRpcErrorResponseException(JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
+      throw new JsonRpcErrorResponseException(JsonRpcError.FLEXIBLE_PRIVACY_GROUP_DOES_NOT_EXIST);
     }
 
     final String pmtPayload =

@@ -21,8 +21,8 @@ import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagemen
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.ExpectValidOnchainPrivacyGroupCreated;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreateOnchainPrivacyGroupTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.ExpectValidFlexiblePrivacyGroupCreated;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreateFlexiblePrivacyGroupTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 
 import java.util.Arrays;
@@ -37,16 +37,16 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 import org.web3j.utils.Base64String;
 
-public class OnchainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase {
+public class FlexiblePrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase {
 
-  protected String createOnchainPrivacyGroup(final PrivacyNode... members) {
+  protected String createFlexiblePrivacyGroup(final PrivacyNode... members) {
     final List<String> addresses =
         Arrays.stream(members).map(PrivacyNode::getEnclaveKey).collect(Collectors.toList());
-    return createOnchainPrivacyGroup(members[0].getEnclaveKey(), addresses, members);
+    return createFlexiblePrivacyGroup(members[0].getEnclaveKey(), addresses, members);
   }
 
   /**
-   * Create an onchain privacy group. The privacy group id will be randomly generated.
+   * Create an flexible privacy group. The privacy group id will be randomly generated.
    *
    * <p>This method also checks that each node member has successfully processed the transaction and
    * has the expected list of member for the group.
@@ -55,13 +55,13 @@ public class OnchainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
    *     the creator of the group.
    * @return the id of the privacy group
    */
-  protected String createOnchainPrivacyGroup(
+  protected String createFlexiblePrivacyGroup(
       final String privateFrom, final List<String> addresses, final PrivacyNode... members) {
 
     final PrivacyNode groupCreator = members[0];
 
-    final CreateOnchainPrivacyGroupTransaction createTx =
-        privacyTransactions.createOnchainPrivacyGroup(groupCreator, privateFrom, addresses);
+    final CreateFlexiblePrivacyGroupTransaction createTx =
+        privacyTransactions.createFlexiblePrivacyGroup(groupCreator, privateFrom, addresses);
 
     final PrivacyRequestFactory.PrivxCreatePrivacyGroupResponse createResponse =
         groupCreator.execute(createTx);
@@ -73,7 +73,7 @@ public class OnchainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
             .collect(Collectors.toList());
 
     for (final PrivacyNode member : members) {
-      member.verify(onchainPrivacyGroupExists(privacyGroupId, membersEnclaveKeys));
+      member.verify(flexiblePrivacyGroupExists(privacyGroupId, membersEnclaveKeys));
     }
 
     final String commitmentHash =
@@ -94,7 +94,7 @@ public class OnchainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
   protected String callGetParticipantsMethodAndReturnCommitmentHash(
       final String privacyGroupId, final PrivacyNode groupCreator, final String privateFrom) {
     return groupCreator.execute(
-        privateContractTransactions.callOnchainPermissioningSmartContract(
+        privateContractTransactions.callFlexiblePermissioningSmartContract(
             FLEXIBLE_PRIVACY_PROXY.toHexString(),
             GET_PARTICIPANTS_METHOD_SIGNATURE.toString(),
             groupCreator.getTransactionSigningKey(),
@@ -140,9 +140,9 @@ public class OnchainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
         null);
   }
 
-  protected ExpectValidOnchainPrivacyGroupCreated onchainPrivacyGroupExists(
+  protected ExpectValidFlexiblePrivacyGroupCreated flexiblePrivacyGroupExists(
       final String privacyGroupId, final List<Base64String> members) {
-    return privateTransactionVerifier.onchainPrivacyGroupExists(privacyGroupId, members);
+    return privateTransactionVerifier.flexiblePrivacyGroupExists(privacyGroupId, members);
   }
 
   protected String getContractDeploymentCommitmentHash(final Contract contract) {
@@ -161,7 +161,7 @@ public class OnchainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
    * @param privacyGroupId the id of the privacy group
    * @param members the list of member in the privacy group
    */
-  protected void checkOnchainPrivacyGroupExists(
+  protected void checkFlexiblePrivacyGroupExists(
       final String privacyGroupId, final PrivacyNode... members) {
     final List<Base64String> membersEnclaveKeys =
         Arrays.stream(members)
@@ -170,7 +170,7 @@ public class OnchainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
             .collect(Collectors.toList());
 
     for (final PrivacyNode member : members) {
-      member.verify(onchainPrivacyGroupExists(privacyGroupId, membersEnclaveKeys));
+      member.verify(flexiblePrivacyGroupExists(privacyGroupId, membersEnclaveKeys));
     }
   }
 }

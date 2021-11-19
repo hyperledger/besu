@@ -60,7 +60,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnchainPrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -928,14 +928,14 @@ public class RunnerBuilder {
     // register privateTransactionObserver as observer of events fired by the onchain precompile.
     if (privacyParameters.isFlexiblePrivacyGroupsEnabled()
         && privacyParameters.isMultiTenancyEnabled()) {
-      final OnchainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
-          (OnchainPrivacyPrecompiledContract)
+      final FlexiblePrivacyPrecompiledContract flexiblePrivacyPrecompiledContract =
+          (FlexiblePrivacyPrecompiledContract)
               besuController
                   .getProtocolSchedule()
                   .getByBlockNumber(1)
                   .getPrecompileContractRegistry()
                   .get(FLEXIBLE_PRIVACY);
-      onchainPrivacyPrecompiledContract.addPrivateTransactionObserver(privateTransactionObserver);
+      flexiblePrivacyPrecompiledContract.addPrivateTransactionObserver(privateTransactionObserver);
     }
   }
 

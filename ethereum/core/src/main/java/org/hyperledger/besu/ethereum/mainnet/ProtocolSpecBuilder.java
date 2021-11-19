@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnchainPrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -327,9 +327,9 @@ public class ProtocolSpecBuilder {
         privacyPluginPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else if (privacyParameters.isFlexiblePrivacyGroupsEnabled()) {
-        final OnchainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
-            (OnchainPrivacyPrecompiledContract) precompileContractRegistry.get(FLEXIBLE_PRIVACY);
-        onchainPrivacyPrecompiledContract.setPrivateTransactionProcessor(
+        final FlexiblePrivacyPrecompiledContract flexiblePrivacyPrecompiledContract =
+            (FlexiblePrivacyPrecompiledContract) precompileContractRegistry.get(FLEXIBLE_PRIVACY);
+        flexiblePrivacyPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else {
         final PrivacyPrecompiledContract privacyPrecompiledContract =

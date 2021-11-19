@@ -26,7 +26,7 @@ import org.web3j.tx.gas.BesuPrivacyGasProvider;
 import org.web3j.utils.Base64String;
 import org.web3j.utils.Restriction;
 
-public class CallOnchainPermissioningPrivateSmartContractFunction implements Transaction<String> {
+public class CallFlexiblePermissioningPrivateSmartContractFunction implements Transaction<String> {
 
   private static final BesuPrivacyGasProvider GAS_PROVIDER =
       new BesuPrivacyGasProvider(BigInteger.valueOf(1000));
@@ -36,7 +36,7 @@ public class CallOnchainPermissioningPrivateSmartContractFunction implements Tra
   private final Base64String privateFrom;
   private final Base64String privacyGroupId;
 
-  public CallOnchainPermissioningPrivateSmartContractFunction(
+  public CallFlexiblePermissioningPrivateSmartContractFunction(
       final String contractAddress,
       final String encodedFunction,
       final String transactionSigningKey,

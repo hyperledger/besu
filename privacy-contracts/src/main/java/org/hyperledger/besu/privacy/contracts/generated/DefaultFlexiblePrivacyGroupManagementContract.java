@@ -56,7 +56,7 @@ import org.web3j.tx.gas.ContractGasProvider;
  * <p>Generated with web3j version 4.5.16.
  */
 @SuppressWarnings("rawtypes")
-public class DefaultOnchainPrivacyGroupManagementContract extends Contract {
+public class DefaultFlexiblePrivacyGroupManagementContract extends Contract {
   public static final String BINARY =
       "608060405234801561001057600080fd5b50610c6e806100206000396000f3fe608060405234801561001057600080fd5b50600436106100885760003560e01c8063a69df4b51161005b578063a69df4b51461014a578063b4926e2514610154578063f83d08ba14610222578063fd0177971461022c57610088565b80630d8e6e2c1461008d5780635aa68ac0146100ab57806378b903371461010a5780639738968c1461012a575b600080fd5b610095610270565b6040518082815260200191505060405180910390f35b6100b361027a565b6040518080602001828103825283818151815260200191508051906020019060200280838360005b838110156100f65780820151818401526020810190506100db565b505050509050019250505060405180910390f35b6101126102d2565b60405180821515815260200191505060405180910390f35b6101326102e8565b60405180821515815260200191505060405180910390f35b61015261033f565b005b61020a6004803603602081101561016a57600080fd5b810190808035906020019064010000000081111561018757600080fd5b82018360208201111561019957600080fd5b803590602001918460208302840111640100000000831117156101bb57600080fd5b919080806020026020016040519081016040528093929190818152602001838360200280828437600081840152601f19601f820116905080830192505050505050509192919290505050610437565b60405180821515815260200191505060405180910390f35b61022a6105e3565b005b6102586004803603602081101561024257600080fd5b81019080803590602001909291905050506106d9565b60405180821515815260200191505060405180910390f35b6000600154905090565b606060028054806020026020016040519081016040528092919081815260200182805480156102c857602002820191906000526020600020905b8154815260200190600101908083116102b4575b5050505050905090565b60008060149054906101000a900460ff16905090565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163273ffffffffffffffffffffffffffffffffffffffff1614905090565b600060149054906101000a900460ff161561035957600080fd5b60008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163273ffffffffffffffffffffffffffffffffffffffff161461041a576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260158152602001807f4f726967696e206e6f7420746865206f776e65722e000000000000000000000081525060200191505060405180910390fd5b6001600060146101000a81548160ff021916908315150217905550565b60008060149054906101000a900460ff161561045257600080fd5b600073ffffffffffffffffffffffffffffffffffffffff1660008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1614156104e857326000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055505b60008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163273ffffffffffffffffffffffffffffffffffffffff16146105a9576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260158152602001807f4f726967696e206e6f7420746865206f776e65722e000000000000000000000081525060200191505060405180910390fd5b60006105b4836107d3565b90506001600060146101000a81548160ff0219169083151502179055506105d9610a0c565b5080915050919050565b600060149054906101000a900460ff166105fc57600080fd5b60008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163273ffffffffffffffffffffffffffffffffffffffff16146106bd576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260158152602001807f4f726967696e206e6f7420746865206f776e65722e000000000000000000000081525060200191505060405180910390fd5b60008060146101000a81548160ff021916908315150217905550565b60008060149054906101000a900460ff166106f357600080fd5b60008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163273ffffffffffffffffffffffffffffffffffffffff16146107b4576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260158152602001807f4f726967696e206e6f7420746865206f776e65722e000000000000000000000081525060200191505060405180910390fd5b60006107bf83610a96565b90506107c9610a0c565b5080915050919050565b6000806001905060005b8351811015610a02576108028482815181106107f557fe5b6020026020010151610b81565b156108a7577fcc7365305ae5f16c463d1383713d699f43c5548bbda5537ee61373ceb9aaf213600085838151811061083657fe5b6020026020010151604051808315158152602001828152602001806020018281038252601b8152602001807f4163636f756e7420697320616c72656164792061204d656d6265720000000000815250602001935050505060405180910390a18180156108a0575060005b91506109f5565b60006108c58583815181106108b857fe5b6020026020010151610ba1565b9050606081610909576040518060400160405280601b81526020017f4163636f756e7420697320616c72656164792061204d656d6265720000000000815250610923565b604051806060016040528060218152602001610c18602191395b90507fcc7365305ae5f16c463d1383713d699f43c5548bbda5537ee61373ceb9aaf2138287858151811061095357fe5b60200260200101518360405180841515815260200183815260200180602001828103825283818151815260200191508051906020019080838360005b838110156109aa57808201518184015260208101905061098f565b50505050905090810190601f1680156109d75780820380516001836020036101000a031916815260200191505b5094505050505060405180910390a18380156109f05750815b935050505b80806001019150506107dd565b5080915050919050565b60006001430340416002604051602001808481526020018373ffffffffffffffffffffffffffffffffffffffff1660601b81526014018280548015610a7057602002820191906000526020600020905b815481526020019060010190808311610a5c575b505093505050506040516020818303038152906040528051906020012060018190555090565b60008060036000848152602001908152602001600020549050600081118015610ac457506002805490508111155b15610b76576002805490508114610b32576000600260016002805490500381548110610aec57fe5b906000526020600020015490508060026001840381548110610b0a57fe5b9060005260206000200181905550816003600083815260200190815260200160002081905550505b6002805480610b3d57fe5b60019003818190600052602060002001600090559055600060036000858152602001908152602001600020819055506001915050610b7c565b60009150505b919050565b600080600360008481526020019081526020016000205414159050919050565b60008060036000848152602001908152602001600020541415610c0d576002829080600181540180825580915050600190039060005260206000200160009091909190915055600280549050600360008481526020019081526020016000208190555060019050610c12565b600090505b91905056fe4d656d626572206163636f756e74206164646564207375636365737366756c6c79a2646970667358221220aaa2dd79ed65e1a55d25832a79d0bd9f47b1b0bae7b719d96723f776987a93b264736f6c634300060c0033";
 
@@ -85,7 +85,7 @@ public class DefaultOnchainPrivacyGroupManagementContract extends Contract {
               new TypeReference<Utf8String>() {}));
 
   @Deprecated
-  protected DefaultOnchainPrivacyGroupManagementContract(
+  protected DefaultFlexiblePrivacyGroupManagementContract(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
@@ -94,7 +94,7 @@ public class DefaultOnchainPrivacyGroupManagementContract extends Contract {
     super(BINARY, contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
-  protected DefaultOnchainPrivacyGroupManagementContract(
+  protected DefaultFlexiblePrivacyGroupManagementContract(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
@@ -103,7 +103,7 @@ public class DefaultOnchainPrivacyGroupManagementContract extends Contract {
   }
 
   @Deprecated
-  protected DefaultOnchainPrivacyGroupManagementContract(
+  protected DefaultFlexiblePrivacyGroupManagementContract(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
@@ -112,7 +112,7 @@ public class DefaultOnchainPrivacyGroupManagementContract extends Contract {
     super(BINARY, contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
-  protected DefaultOnchainPrivacyGroupManagementContract(
+  protected DefaultFlexiblePrivacyGroupManagementContract(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
@@ -246,49 +246,49 @@ public class DefaultOnchainPrivacyGroupManagementContract extends Contract {
   }
 
   @Deprecated
-  public static DefaultOnchainPrivacyGroupManagementContract load(
+  public static DefaultFlexiblePrivacyGroupManagementContract load(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
       BigInteger gasPrice,
       BigInteger gasLimit) {
-    return new DefaultOnchainPrivacyGroupManagementContract(
+    return new DefaultFlexiblePrivacyGroupManagementContract(
         contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
   @Deprecated
-  public static DefaultOnchainPrivacyGroupManagementContract load(
+  public static DefaultFlexiblePrivacyGroupManagementContract load(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
       BigInteger gasPrice,
       BigInteger gasLimit) {
-    return new DefaultOnchainPrivacyGroupManagementContract(
+    return new DefaultFlexiblePrivacyGroupManagementContract(
         contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
-  public static DefaultOnchainPrivacyGroupManagementContract load(
+  public static DefaultFlexiblePrivacyGroupManagementContract load(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
       ContractGasProvider contractGasProvider) {
-    return new DefaultOnchainPrivacyGroupManagementContract(
+    return new DefaultFlexiblePrivacyGroupManagementContract(
         contractAddress, web3j, credentials, contractGasProvider);
   }
 
-  public static DefaultOnchainPrivacyGroupManagementContract load(
+  public static DefaultFlexiblePrivacyGroupManagementContract load(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
       ContractGasProvider contractGasProvider) {
-    return new DefaultOnchainPrivacyGroupManagementContract(
+    return new DefaultFlexiblePrivacyGroupManagementContract(
         contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
-  public static RemoteCall<DefaultOnchainPrivacyGroupManagementContract> deploy(
+  public static RemoteCall<DefaultFlexiblePrivacyGroupManagementContract> deploy(
       Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
-        DefaultOnchainPrivacyGroupManagementContract.class,
+        DefaultFlexiblePrivacyGroupManagementContract.class,
         web3j,
         credentials,
         contractGasProvider,
@@ -297,10 +297,10 @@ public class DefaultOnchainPrivacyGroupManagementContract extends Contract {
   }
 
   @Deprecated
-  public static RemoteCall<DefaultOnchainPrivacyGroupManagementContract> deploy(
+  public static RemoteCall<DefaultFlexiblePrivacyGroupManagementContract> deploy(
       Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
     return deployRemoteCall(
-        DefaultOnchainPrivacyGroupManagementContract.class,
+        DefaultFlexiblePrivacyGroupManagementContract.class,
         web3j,
         credentials,
         gasPrice,
@@ -309,10 +309,10 @@ public class DefaultOnchainPrivacyGroupManagementContract extends Contract {
         "");
   }
 
-  public static RemoteCall<DefaultOnchainPrivacyGroupManagementContract> deploy(
+  public static RemoteCall<DefaultFlexiblePrivacyGroupManagementContract> deploy(
       Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
-        DefaultOnchainPrivacyGroupManagementContract.class,
+        DefaultFlexiblePrivacyGroupManagementContract.class,
         web3j,
         transactionManager,
         contractGasProvider,
@@ -321,13 +321,13 @@ public class DefaultOnchainPrivacyGroupManagementContract extends Contract {
   }
 
   @Deprecated
-  public static RemoteCall<DefaultOnchainPrivacyGroupManagementContract> deploy(
+  public static RemoteCall<DefaultFlexiblePrivacyGroupManagementContract> deploy(
       Web3j web3j,
       TransactionManager transactionManager,
       BigInteger gasPrice,
       BigInteger gasLimit) {
     return deployRemoteCall(
-        DefaultOnchainPrivacyGroupManagementContract.class,
+        DefaultFlexiblePrivacyGroupManagementContract.class,
         web3j,
         transactionManager,
         gasPrice,

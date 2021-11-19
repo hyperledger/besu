@@ -22,7 +22,7 @@ import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.po
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForFrontier;
 import static org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts.populateForIstanbul;
 
-import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnchainPrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -79,7 +79,7 @@ public abstract class MainnetPrecompiledContractRegistries {
         .isFlexiblePrivacyGroupsEnabled()) {
       registry.put(
           FLEXIBLE_PRIVACY,
-          new OnchainPrivacyPrecompiledContract(
+          new FlexiblePrivacyPrecompiledContract(
               precompiledContractConfiguration.getGasCalculator(),
               precompiledContractConfiguration.getPrivacyParameters()));
     } else {

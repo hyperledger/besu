@@ -22,11 +22,11 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.contract.CallPrivateSmartContractFunction;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreateOnchainPrivacyGroupTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreateFlexiblePrivacyGroupTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
-import org.hyperledger.besu.tests.acceptance.privacy.OnchainPrivacyAcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.privacy.FlexiblePrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
@@ -50,11 +50,11 @@ import org.web3j.utils.Base64String;
 import org.web3j.utils.Restriction;
 
 @RunWith(Parameterized.class)
-public class OnchainMultiTenancyAcceptanceTest extends OnchainPrivacyAcceptanceTestBase {
+public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanceTestBase {
 
   private final EnclaveType enclaveType;
 
-  public OnchainMultiTenancyAcceptanceTest(final EnclaveType enclaveType) {
+  public FlexibleMultiTenancyAcceptanceTest(final EnclaveType enclaveType) {
     this.enclaveType = enclaveType;
   }
 
@@ -75,7 +75,7 @@ public class OnchainMultiTenancyAcceptanceTest extends OnchainPrivacyAcceptanceT
   @Before
   public void setUp() throws Exception {
     alice =
-        privacyBesu.createOnchainPrivacyGroupEnabledMinerNode(
+        privacyBesu.createFlexiblePrivacyGroupEnabledMinerNode(
             "node1", PrivacyAccountResolver.MULTI_TENANCY, true, enclaveType, Optional.empty());
     final BesuNode aliceBesu = alice.getBesu();
     privacyCluster.startNodes(alice);
@@ -106,7 +106,7 @@ public class OnchainMultiTenancyAcceptanceTest extends OnchainPrivacyAcceptanceT
 
   @Test
   public void createPrivacyGroup() {
-    createOnchainPrivacyGroup(alice);
+    createFlexiblePrivacyGroup(alice);
   }
 
   @Test
@@ -253,9 +253,10 @@ public class OnchainMultiTenancyAcceptanceTest extends OnchainPrivacyAcceptanceT
         .getBesu()
         .useAuthenticationTokenInHeaderForJsonRpc(
             multiTenancyPrivacyNode.getTokenForTenant(tenant));
-    final List<PrivacyRequestFactory.OnchainPrivacyGroup> group =
+    final List<PrivacyRequestFactory.FlexiblePrivacyGroup> group =
         privacyNode.execute(
-            privacyTransactions.findOnchainPrivacyGroup(Base64String.unwrapList(base64StringList)));
+            privacyTransactions.findFlexiblePrivacyGroup(
+                Base64String.unwrapList(base64StringList)));
     assertThat(group.size()).isEqualTo(1);
     assertThat(group.get(0).getMembers()).containsAll(base64StringList).hasSize(2);
 
@@ -267,7 +268,7 @@ public class OnchainMultiTenancyAcceptanceTest extends OnchainPrivacyAcceptanceT
     assertThatThrownBy(
             () ->
                 privacyNode.execute(
-                    privacyTransactions.findOnchainPrivacyGroup(
+                    privacyTransactions.findFlexiblePrivacyGroup(
                         Base64String.unwrapList(base64StringList))))
         .hasMessageContaining("Error finding onchain privacy group");
 
@@ -418,8 +419,8 @@ public class OnchainMultiTenancyAcceptanceTest extends OnchainPrivacyAcceptanceT
     final String groupCreatorTenant = group.getGroupCreatingTenant();
     final List<String> members = group.getTenants();
     final String token = groupCreatorMultiTenancyPrivacyNode.getTokenForTenant(groupCreatorTenant);
-    final CreateOnchainPrivacyGroupTransaction createTx =
-        privacyTransactions.createOnchainPrivacyGroup(
+    final CreateFlexiblePrivacyGroupTransaction createTx =
+        privacyTransactions.createFlexiblePrivacyGroup(
             groupCreatorNode, groupCreatorTenant, members, token);
 
     final PrivacyRequestFactory.PrivxCreatePrivacyGroupResponse createResponse =
@@ -435,7 +436,7 @@ public class OnchainMultiTenancyAcceptanceTest extends OnchainPrivacyAcceptanceT
           privacyNode
               .getBesu()
               .useAuthenticationTokenInHeaderForJsonRpc(mtpn.getTokenForTenant(tenant));
-          privacyNode.verify(onchainPrivacyGroupExists(privacyGroupId, base64StringList));
+          privacyNode.verify(flexiblePrivacyGroupExists(privacyGroupId, base64StringList));
         }
       }
     }

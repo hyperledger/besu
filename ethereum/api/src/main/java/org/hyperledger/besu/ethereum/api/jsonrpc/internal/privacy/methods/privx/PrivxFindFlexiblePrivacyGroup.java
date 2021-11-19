@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.privx;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_ONCHAIN_PRIVACY_GROUP_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_FLEXIBLE_PRIVACY_GROUP_ERROR;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -33,13 +33,13 @@ import java.util.Arrays;
 import graphql.com.google.common.collect.Lists;
 import org.apache.logging.log4j.Logger;
 
-public class PrivxFindOnchainPrivacyGroup implements JsonRpcMethod {
+public class PrivxFindFlexiblePrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
-  public PrivxFindOnchainPrivacyGroup(
+  public PrivxFindFlexiblePrivacyGroup(
       final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
@@ -67,11 +67,11 @@ public class PrivxFindOnchainPrivacyGroup implements JsonRpcMethod {
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), FIND_ONCHAIN_PRIVACY_GROUP_ERROR);
+          requestContext.getRequest().getId(), FIND_FLEXIBLE_PRIVACY_GROUP_ERROR);
     } catch (final Exception e) {
-      LOG.error("Failed to fetch on chain privacy group", e);
+      LOG.error("Failed to fetch flexible privacy group", e);
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), FIND_ONCHAIN_PRIVACY_GROUP_ERROR);
+          requestContext.getRequest().getId(), FIND_FLEXIBLE_PRIVACY_GROUP_ERROR);
     }
 
     return new JsonRpcSuccessResponse(

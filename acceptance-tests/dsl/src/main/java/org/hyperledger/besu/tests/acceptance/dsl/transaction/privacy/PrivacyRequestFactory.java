@@ -327,10 +327,10 @@ public class PrivacyRequestFactory {
     return new PrivxCreatePrivacyGroupResponse(privacyGroupId.toBase64String(), transactionHash);
   }
 
-  public Request<?, PrivxFindPrivacyGroupResponse> privxFindOnchainPrivacyGroup(
+  public Request<?, PrivxFindPrivacyGroupResponse> privxFindFlexiblePrivacyGroup(
       final List<Base64String> nodes) {
     return new Request<>(
-        "privx_findOnChainPrivacyGroup",
+        "privx_findFlexiblePrivacyGroup",
         singletonList(nodes),
         web3jService,
         PrivxFindPrivacyGroupResponse.class);
@@ -487,14 +487,14 @@ public class PrivacyRequestFactory {
         DebugGetStateRoot.class);
   }
 
-  public static class PrivxFindPrivacyGroupResponse extends Response<List<OnchainPrivacyGroup>> {
+  public static class PrivxFindPrivacyGroupResponse extends Response<List<FlexiblePrivacyGroup>> {
 
-    public List<OnchainPrivacyGroup> getGroups() {
+    public List<FlexiblePrivacyGroup> getGroups() {
       return getResult();
     }
   }
 
-  public static class OnchainPrivacyGroup {
+  public static class FlexiblePrivacyGroup {
 
     private final Base64String privacyGroupId;
     private final List<Base64String> members;
@@ -502,11 +502,11 @@ public class PrivacyRequestFactory {
     private final String description;
 
     public enum Type {
-      ONCHAIN
+      FLEXIBLE
     }
 
     @JsonCreator
-    public OnchainPrivacyGroup(
+    public FlexiblePrivacyGroup(
         @JsonProperty(value = "privacyGroupId") final String privacyGroupId,
         @JsonProperty(value = "type") final Type type,
         @JsonProperty(value = "name") final String name,
@@ -515,7 +515,7 @@ public class PrivacyRequestFactory {
       this(privacyGroupId, members);
     }
 
-    public OnchainPrivacyGroup(final String privacyGroupId, final List<Base64String> members) {
+    public FlexiblePrivacyGroup(final String privacyGroupId, final List<Base64String> members) {
       this.privacyGroupId = Base64String.wrap(privacyGroupId);
       this.name = "";
       this.description = "";
@@ -535,7 +535,7 @@ public class PrivacyRequestFactory {
     }
 
     public Type getType() {
-      return Type.ONCHAIN;
+      return Type.FLEXIBLE;
     }
 
     public List<Base64String> getMembers() {
@@ -550,7 +550,7 @@ public class PrivacyRequestFactory {
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      final OnchainPrivacyGroup that = (OnchainPrivacyGroup) o;
+      final FlexiblePrivacyGroup that = (FlexiblePrivacyGroup) o;
       return getPrivacyGroupId().equals(that.getPrivacyGroupId())
           && getName().equals(that.getName())
           && getDescription().equals(that.getDescription())

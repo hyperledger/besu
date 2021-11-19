@@ -110,7 +110,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
           maybePrivacyGroup.get().addMembers(participantsFromParameter);
         }
         if (maybePrivacyGroup.isEmpty()) {
-          return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
+          return new JsonRpcErrorResponse(id, JsonRpcError.FLEXIBLE_PRIVACY_GROUP_DOES_NOT_EXIST);
         }
       }
 

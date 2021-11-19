@@ -57,14 +57,14 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContract {
+public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContract {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final Subscribers<PrivateTransactionObserver> privateTransactionEventObservers =
       Subscribers.create();
 
-  public OnchainPrivacyPrecompiledContract(
+  public FlexiblePrivacyPrecompiledContract(
       final GasCalculator gasCalculator,
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
@@ -76,10 +76,10 @@ public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         worldStateArchive,
         privateStateRootResolver,
         privateStateGenesisAllocator,
-        "OnchainPrivacy");
+        "FlexiblePrivacy");
   }
 
-  public OnchainPrivacyPrecompiledContract(
+  public FlexiblePrivacyPrecompiledContract(
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
     this(
         gasCalculator,
@@ -242,7 +242,7 @@ public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       return false;
     }
 
-    if (isContractLocked && !isTargettingOnchainPrivacyProxy(privateTransaction)) {
+    if (isContractLocked && !isTargettingFlexiblePrivacyProxy(privateTransaction)) {
       LOG.debug(
           "Privacy Group {} is locked while trying to execute transaction with commitment {}",
           privacyGroupId.toHexString(),
@@ -250,7 +250,8 @@ public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       return false;
     }
 
-    if (!onchainPrivacyGroupVersionMatches(flexiblePrivacyGroupContract, privacyGroupId, version)) {
+    if (!flexiblePrivacyGroupVersionMatches(
+        flexiblePrivacyGroupContract, privacyGroupId, version)) {
       LOG.debug(
           "Privacy group version mismatch while trying to execute transaction with commitment {}",
           (Hash) messageFrame.getContextVariable(KEY_TRANSACTION_HASH));
@@ -312,13 +313,13 @@ public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     return input.slice(4).toBase64String();
   }
 
-  private boolean isTargettingOnchainPrivacyProxy(final PrivateTransaction privateTransaction) {
+  private boolean isTargettingFlexiblePrivacyProxy(final PrivateTransaction privateTransaction) {
     return privateTransaction.getTo().isPresent()
         && privateTransaction.getTo().get().equals(FLEXIBLE_PRIVACY_PROXY);
   }
 
   private boolean isAddingParticipant(final PrivateTransaction privateTransaction) {
-    return isTargettingOnchainPrivacyProxy(privateTransaction)
+    return isTargettingFlexiblePrivacyProxy(privateTransaction)
         && privateTransaction
             .getPayload()
             .toHexString()
@@ -326,7 +327,7 @@ public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
   }
 
   private boolean isRemovingParticipant(final PrivateTransaction privateTransaction) {
-    return isTargettingOnchainPrivacyProxy(privateTransaction)
+    return isTargettingFlexiblePrivacyProxy(privateTransaction)
         && privateTransaction
             .getPayload()
             .toHexString()
@@ -342,7 +343,7 @@ public class OnchainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     return canExecuteResult.map(Bytes::isZero).orElse(true);
   }
 
-  protected boolean onchainPrivacyGroupVersionMatches(
+  protected boolean flexiblePrivacyGroupVersionMatches(
       final FlexiblePrivacyGroupContract flexiblePrivacyGroupContract,
       final Bytes32 privacyGroupId,
       final Bytes32 version) {

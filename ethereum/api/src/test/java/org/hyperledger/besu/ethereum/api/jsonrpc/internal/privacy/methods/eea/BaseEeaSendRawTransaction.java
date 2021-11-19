@@ -67,7 +67,7 @@ public class BaseEeaSendRawTransaction {
 
   final GasCalculator gasCalculator = new BerlinGasCalculator();
 
-  final Transaction PUBLIC_ONCHAIN_TRANSACTION =
+  final Transaction PUBLIC_FLEXIBLE_TRANSACTION =
       new Transaction(
           0L,
           Wei.of(1),
