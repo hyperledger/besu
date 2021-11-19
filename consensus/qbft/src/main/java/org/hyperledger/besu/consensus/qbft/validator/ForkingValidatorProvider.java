@@ -16,7 +16,7 @@
 package org.hyperledger.besu.consensus.qbft.validator;
 
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
@@ -75,8 +75,8 @@ public class ForkingValidatorProvider implements ValidatorProvider {
   }
 
   private ValidatorProvider resolveValidatorProvider(final long block) {
-    final BftForkSpec<QbftConfigOptions> fork = forksSchedule.getFork(block);
-    return fork.getConfigOptions().isValidatorContractMode()
+    final ForkSpec<QbftConfigOptions> fork = forksSchedule.getFork(block);
+    return fork.getValue().isValidatorContractMode()
         ? transactionValidatorProvider
         : blockValidatorProvider;
   }

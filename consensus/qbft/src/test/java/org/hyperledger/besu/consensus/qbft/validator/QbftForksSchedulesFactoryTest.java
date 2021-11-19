@@ -26,7 +26,7 @@ import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
@@ -49,7 +49,7 @@ public class QbftForksSchedulesFactoryTest {
   public void createsScheduleForJustGenesisConfig() {
     final MutableQbftConfigOptions qbftConfigOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
-    final BftForkSpec<QbftConfigOptions> expectedForkSpec = new BftForkSpec<>(0, qbftConfigOptions);
+    final ForkSpec<QbftConfigOptions> expectedForkSpec = new ForkSpec<>(0, qbftConfigOptions);
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.qbftConfigOptions(qbftConfigOptions);
 
@@ -85,7 +85,7 @@ public class QbftForksSchedulesFactoryTest {
         QbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
     assertThat(forksSchedule.getFork(0))
         .usingRecursiveComparison()
-        .isEqualTo(new BftForkSpec<>(0, configOptions));
+        .isEqualTo(new ForkSpec<>(0, configOptions));
 
     final Map<String, Object> forkOptions = new HashMap<>(configOptions.asMap());
     forkOptions.put(BftFork.BLOCK_PERIOD_SECONDS_KEY, 10);
@@ -96,7 +96,7 @@ public class QbftForksSchedulesFactoryTest {
         new MutableQbftConfigOptions(
             new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(forkOptions)));
 
-    final BftForkSpec<QbftConfigOptions> expectedFork = new BftForkSpec<>(1, expectedForkConfig);
+    final ForkSpec<QbftConfigOptions> expectedFork = new ForkSpec<>(1, expectedForkConfig);
     assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedFork);
     assertThat(forksSchedule.getFork(2)).usingRecursiveComparison().isEqualTo(expectedFork);
   }
@@ -144,7 +144,7 @@ public class QbftForksSchedulesFactoryTest {
     final BftForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
 
-    assertThat(forksSchedule.getFork(1).getConfigOptions().getValidatorContractAddress()).isEmpty();
+    assertThat(forksSchedule.getFork(1).getValue().getValidatorContractAddress()).isEmpty();
   }
 
   @Test

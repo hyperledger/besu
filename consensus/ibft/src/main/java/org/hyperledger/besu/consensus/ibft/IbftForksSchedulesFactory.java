@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.ibft;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
@@ -32,9 +32,9 @@ public class IbftForksSchedulesFactory {
   }
 
   private static BftConfigOptions createBftConfigOptions(
-      final BftForkSpec<BftConfigOptions> lastSpec, final BftFork fork) {
+      final ForkSpec<BftConfigOptions> lastSpec, final BftFork fork) {
     final MutableBftConfigOptions bftConfigOptions =
-        new MutableBftConfigOptions(lastSpec.getConfigOptions());
+        new MutableBftConfigOptions(lastSpec.getValue());
 
     fork.getBlockPeriodSeconds().ifPresent(bftConfigOptions::setBlockPeriodSeconds);
     fork.getBlockRewardWei().ifPresent(bftConfigOptions::setBlockRewardWei);

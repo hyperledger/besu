@@ -72,10 +72,7 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
 
   @Override
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
-    if (forksSchedule
-        .getFork(parentHeader.getNumber() + 1L)
-        .getConfigOptions()
-        .isValidatorContractMode()) {
+    if (forksSchedule.getFork(parentHeader.getNumber() + 1L).getSpec().isValidatorContractMode()) {
       // vote and validators will come from contract instead of block
       final BftExtraData extraData =
           new BftExtraData(

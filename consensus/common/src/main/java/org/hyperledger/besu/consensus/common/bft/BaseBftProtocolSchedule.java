@@ -58,12 +58,12 @@ public abstract class BaseBftProtocolSchedule {
                     bftForkSpec.getBlock(),
                     builder ->
                         applyBftChanges(
-                            bftForkSpec.getConfigOptions(),
+                            bftForkSpec.getValue(),
                             builder,
                             config.isQuorum(),
-                            createBlockHeaderRuleset(bftForkSpec.getConfigOptions()),
+                            createBlockHeaderRuleset(bftForkSpec.getValue()),
                             bftExtraDataCodec,
-                            Optional.of(bftForkSpec.getConfigOptions().getBlockRewardWei()))));
+                            Optional.of(bftForkSpec.getValue().getBlockRewardWei()))));
 
     final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
 
