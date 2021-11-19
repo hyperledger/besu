@@ -74,7 +74,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
         .whenComplete(
             (r, t) -> {
               if (t != null) {
-                LOG.info(
+                LOG.debug(
                     "Failed to download block {} from peer {} with message '{}' and cause '{}'",
                     blockIdentifier,
                     assignedPeer.map(EthPeer::toString).orElse("<any>"),
@@ -82,7 +82,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
                     t.getCause());
                 result.completeExceptionally(t);
               } else if (r.getResult().isEmpty()) {
-                LOG.info(
+                LOG.debug(
                     "Failed to download block {} from peer {} with empty result.",
                     blockIdentifier,
                     r.getPeer());
@@ -116,7 +116,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private CompletableFuture<PeerTaskResult<List<Block>>> completeBlock(
       final PeerTaskResult<List<BlockHeader>> headerResult) {
     if (headerResult.getResult().isEmpty()) {
-      LOG.info("GetBlockFromPeerTask: header result is empty.");
+      LOG.debug("GetBlockFromPeerTask: header result is empty.");
       return CompletableFuture.failedFuture(new IncompleteResultsException());
     }
 

@@ -106,11 +106,11 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
     final List<BlockBody> bodies = bodiesMessage.bodies(protocolSchedule);
     if (bodies.size() == 0) {
       // Message contains no data - nothing to do
-      LOG.info("Message contains no data. Peer: {}", peer);
+      LOG.debug("Message contains no data. Peer: {}", peer);
       return Optional.empty();
     } else if (bodies.size() > headers.size()) {
       // Message doesn't match our request - nothing to do
-      LOG.info("Message doesn't match our request. Peer: {}", peer);
+      LOG.debug("Message doesn't match our request. Peer: {}", peer);
       return Optional.empty();
     }
 
@@ -119,7 +119,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
       final List<BlockHeader> headers = bodyToHeaders.get(new BodyIdentifier(body));
       if (headers == null) {
         // This message contains unrelated bodies - exit
-        LOG.info("This message contains unrelated bodies. Peer: {}", peer);
+        LOG.debug("This message contains unrelated bodies. Peer: {}", peer);
         return Optional.empty();
       }
       headers.forEach(h -> blocks.add(new Block(h, body)));
