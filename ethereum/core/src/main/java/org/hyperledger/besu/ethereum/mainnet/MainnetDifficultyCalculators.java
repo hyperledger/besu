@@ -40,6 +40,7 @@ public abstract class MainnetDifficultyCalculators {
   private static final long CONSTANTINOPLE_FAKE_BLOCK_OFFSET = 4_999_999L;
   private static final long MUIR_GLACIER_FAKE_BLOCK_OFFSET = 8_999_999L;
   private static final long LONDON_FAKE_BLOCK_OFFSET = 9_699_999L;
+  private static final long ARROW_GLACIER_FAKE_BLOCK_OFFSET = 10_699_999L;
 
   private MainnetDifficultyCalculators() {}
 
@@ -87,6 +88,11 @@ public abstract class MainnetDifficultyCalculators {
   static DifficultyCalculator LONDON =
       (time, parent, protocolContext) ->
           calculateThawedDifficulty(time, parent, LONDON_FAKE_BLOCK_OFFSET);
+
+  // As per https://eips.ethereum.org/EIPS/eip-4345
+  static DifficultyCalculator ARROW_GLACIER =
+      (time, parent, protocolContext) ->
+          calculateThawedDifficulty(time, parent, ARROW_GLACIER_FAKE_BLOCK_OFFSET);
 
   private static BigInteger calculateThawedDifficulty(
       final long time, final BlockHeader parent, final long fakeBlockOffset) {

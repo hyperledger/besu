@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class GenesisConfigOptionsTest {
@@ -185,6 +186,12 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetArrowGlacierBlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("arrowGlacierBlock", 1000));
+    assertThat(config.getArrowGlacierBlockNumber()).hasValue(1000);
+  }
+
+  @Test
   // TODO ECIP-1049 change for the actual fork name when known
   public void shouldGetECIP1049BlockNumber() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ecip1049block", 1000));
@@ -205,6 +212,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getMuirGlacierBlockNumber()).isEmpty();
     assertThat(config.getBerlinBlockNumber()).isEmpty();
     assertThat(config.getLondonBlockNumber()).isEmpty();
+    assertThat(config.getArrowGlacierBlockNumber()).isEmpty();
     assertThat(config.getEcip1049BlockNumber()).isEmpty();
   }
 
@@ -222,6 +230,28 @@ public class GenesisConfigOptionsTest {
     assertThat(config.isIbftLegacy()).isFalse();
     assertThat(config.isClique()).isFalse();
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
+  }
+
+  @Test
+  public void shouldGetTerminalTotalDifficultyWhenSpecified() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(singletonMap("terminalTotalDifficulty", BigInteger.valueOf(1000)));
+    assertThat(config.getTerminalTotalDifficulty()).isPresent();
+    assertThat(config.getTerminalTotalDifficulty().get()).isEqualTo(UInt256.valueOf(1000));
+
+    // stubJsonGenesis
+    final GenesisConfigOptions stub =
+        new StubGenesisConfigOptions().terminalTotalDifficulty(UInt256.valueOf(500));
+    assertThat(stub.getTerminalTotalDifficulty()).isPresent();
+    assertThat(stub.getTerminalTotalDifficulty().get()).isEqualTo(UInt256.valueOf(500));
+  }
+
+  @Test
+  public void shouldNotReturnTerminalTotalDifficultyWhenNotSpecified() {
+    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getTerminalTotalDifficulty()).isNotPresent();
+    // stubJsonGenesis
+    assertThat(new StubGenesisConfigOptions().getTerminalTotalDifficulty()).isNotPresent();
   }
 
   @Test

@@ -123,7 +123,7 @@ public final class KubernetesLoadManagerNatManagerTest {
             p2pPort,
             p2pPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 
   @Test
@@ -142,7 +142,7 @@ public final class KubernetesLoadManagerNatManagerTest {
             rpcHttpPort,
             rpcHttpPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 
   @Test
@@ -161,6 +161,6 @@ public final class KubernetesLoadManagerNatManagerTest {
             p2pPort,
             p2pPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 }

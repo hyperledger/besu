@@ -63,6 +63,6 @@ public class ProtocolContext {
   }
 
   public <C extends ConsensusContext> C getConsensusContext(final Class<C> klass) {
-    return consensusContext.get(klass);
+    return consensusContext.as(klass);
   }
 }

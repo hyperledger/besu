@@ -23,14 +23,19 @@ import org.hyperledger.besu.evm.Gas;
 
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonCallParameter extends CallParameter {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private final Optional<Boolean> strict;
 
@@ -60,5 +65,14 @@ public class JsonCallParameter extends CallParameter {
 
   public Optional<Boolean> isMaybeStrict() {
     return strict;
+  }
+
+  @JsonAnySetter
+  public void logUnknownProperties(final String key, final Object value) {
+    LOG.debug(
+        "unknown property - {} with value - {} and type - {} caught during serialization",
+        key,
+        value,
+        value.getClass());
   }
 }

@@ -70,8 +70,7 @@ public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTr
             new PrivacyGroup(
                 "", PrivacyGroup.Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY)));
 
-    when(privacyController.findOnchainPrivacyGroupAndAddNewMembers(any(), any(), any()))
-        .thenReturn(onchainPrivacyGroup);
+    when(privacyController.findPrivacyGroupByGroupId(any(), any())).thenReturn(onchainPrivacyGroup);
 
     final JsonRpcSuccessResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -104,8 +103,7 @@ public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTr
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
 
-    when(privacyController.findOnchainPrivacyGroupAndAddNewMembers(any(), any(), any()))
-        .thenReturn(Optional.empty());
+    when(privacyController.findPrivacyGroupByGroupId(any(), any())).thenReturn(Optional.empty());
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(

@@ -106,6 +106,6 @@ public class EthGetUncleByBlockHashAndIndexIntegrationTest {
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).isInstanceOf(JsonRpcSuccessResponse.class);
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 }

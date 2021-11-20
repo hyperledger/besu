@@ -150,6 +150,18 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
+  public ProtocolSpecBuilder arrowGlacierDefinition(
+      final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.arrowGlacierDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode,
+        evmConfiguration);
+  }
+
   ////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Classic Protocol Specs

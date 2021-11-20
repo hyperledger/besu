@@ -43,6 +43,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String CLIQUE_CONFIG_KEY = "clique";
   private static final String EC_CURVE_CONFIG_KEY = "eccurve";
   private static final String TRANSITIONS_CONFIG_KEY = "transitions";
+  private static final String DISCOVERY_CONFIG_KEY = "discovery";
 
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -163,6 +164,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public DiscoveryOptions getDiscoveryOptions() {
+    return JsonUtil.getObjectNode(configRoot, DISCOVERY_CONFIG_KEY)
+        .map(DiscoveryOptions::new)
+        .orElse(DiscoveryOptions.DEFAULT);
+  }
+
+  @Override
   public CliqueConfigOptions getCliqueConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, CLIQUE_CONFIG_KEY)
         .map(CliqueConfigOptions::new)
@@ -254,6 +262,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getLondonBlockNumber() {
     return getOptionalLong("londonblock");
+  }
+
+  @Override
+  public OptionalLong getArrowGlacierBlockNumber() {
+    return getOptionalLong("arrowglacierblock");
   }
 
   @Override
@@ -395,6 +408,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
+    getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
 
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
@@ -499,6 +513,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getMuirGlacierBlockNumber(),
             getBerlinBlockNumber(),
             getLondonBlockNumber(),
+            getArrowGlacierBlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
             getGothamBlockNumber(),

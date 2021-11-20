@@ -34,7 +34,6 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
   PrivacyPluginService pluginService;
   BesuContext context;
 
-  TestPrivacyPluginPayloadProvider payloadProvider = new TestPrivacyPluginPayloadProvider();
   TestPrivacyGroupGenesisProvider privacyGroupGenesisProvider =
       new TestPrivacyGroupGenesisProvider();
   TestSigningPrivateMarkerTransactionFactory privateMarkerTransactionFactory =
@@ -46,8 +45,6 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
 
     context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("privacy-service", this);
     pluginService = context.getService(PrivacyPluginService.class).get();
-
-    pluginService.setPayloadProvider(payloadProvider);
     pluginService.setPrivacyGroupGenesisProvider(privacyGroupGenesisProvider);
 
     LOG.info("Registering Plugins with options " + this);
@@ -57,6 +54,9 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
   public void start() {
     LOG.info("Start Plugins with options " + this);
 
+    TestPrivacyPluginPayloadProvider payloadProvider = new TestPrivacyPluginPayloadProvider();
+
+    pluginService.setPayloadProvider(payloadProvider);
     payloadProvider.setPluginPayloadPrefix(prefix);
 
     if (genesisEnabled) {
