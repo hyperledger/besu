@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineExecutePayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdated;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayload;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EnginePreparePayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -55,7 +54,6 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create() {
     Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
     return mapOf(
-        new EnginePreparePayload(syncVertx, protocolContext, mergeCoordinator),
         new EngineGetPayload(syncVertx, protocolContext, blockResultFactory),
         new EngineExecutePayload(syncVertx, protocolContext, mergeCoordinator),
         new EngineForkchoiceUpdated(syncVertx, protocolContext, mergeCoordinator));

@@ -30,7 +30,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       final Bytes32 random,
       final Address feeRecipient);
 
-  boolean validateProcessAndSetAsCandidate(final Block block);
+  boolean executeBlock(final Block block);
 
   void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash);
 }

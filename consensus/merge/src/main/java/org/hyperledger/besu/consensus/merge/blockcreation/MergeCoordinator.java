@@ -161,7 +161,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     // put the empty block in first
     final Block emptyBlock =
         mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp);
-    validateProcessAndSetAsCandidate(emptyBlock);
+    executeBlock(emptyBlock);
     mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
 
     // start working on a full block and update the payload value and candidate when it's ready
@@ -173,7 +173,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
               if (throwable != null) {
                 LOG.warn("something went wrong creating block", throwable);
               } else {
-                validateProcessAndSetAsCandidate(bestBlock);
+                executeBlock(bestBlock);
                 mergeContext.replacePayloadById(payloadIdentifier, bestBlock);
               }
             });
@@ -182,18 +182,27 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @Override
-  public boolean validateProcessAndSetAsCandidate(final Block block) {
+  public boolean executeBlock(final Block block) {
     // TODO: if we are missing the parentHash, attempt backwards sync
     // https://github.com/hyperledger/besu/issues/2912
-    return blockValidator
+
+    var optResult = blockValidator
         .validateAndProcessBlock(
-            protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE)
-        .isPresent();
+            protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE);
+
+    optResult.ifPresent(result -> {
+      result.worldState.persist(block.getHeader());
+      protocolContext.getBlockchain().appendBlock(block, result.receipts);
+    });
+
+    return optResult.isPresent();
   }
 
   @Override
   public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
     MutableBlockchain blockchain = protocolContext.getBlockchain();
+    Optional<BlockHeader> currentFinalized = mergeContext.getFinalized();
+
     final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
     if (newFinalized.isEmpty() && !finalizedBlockHash.equals(Hash.ZERO)) {
       // we should only fail to find when it's the special value 0x000..000
@@ -202,15 +211,50 @@ public class MergeCoordinator implements MergeMiningCoordinator {
               "should've been able to find block hash %s but couldn't", finalizedBlockHash));
     }
 
-    // ensure we have headBlock:
-    Block newHead = blockchain.getBlockByHash(headBlockHash).orElseThrow();
+    if (currentFinalized.isPresent()
+        && newFinalized.isPresent()
+        && !isDescendantOf(currentFinalized.get(), newFinalized.get())) {
+      throw new IllegalStateException(
+          String.format(
+              "new finalized block %s is not a descendant of current finalized block %s",
+              finalizedBlockHash, currentFinalized.get().getBlockHash()));
+    }
 
-    // TODO: ensure head is a descendant of finalized!
-    // https://github.com/hyperledger/besu/issues/2946
+    // ensure we have headBlock:
+    BlockHeader newHead = blockchain.getBlockHeader(headBlockHash).orElseThrow(() -> new IllegalStateException(
+        String.format(
+            "not able to find new head block %s", headBlockHash)));
+
+   // ensure new head is descendant of finalized
+   newFinalized.map(Optional::of).orElse(currentFinalized)
+       .ifPresent(finalized -> {
+         if (!isDescendantOf(finalized, newHead)) {
+           throw new IllegalStateException(
+               String.format(
+                   "new head block %s is not a descendant of current finalized block %s",
+                   newHead.getBlockHash(), finalized.getBlockHash()));
+         };
+       });
+
     // set the new head
     blockchain.rewindToBlock(newHead.getHash());
+
+    // set the new finalized block if it present
     newFinalized.ifPresent(mergeContext::setFinalized);
   }
+
+  private boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock) {
+    if (ancestorBlock.getBlockHash().equals(newBlock.getHash())) {
+      return true;
+    } else if (ancestorBlock.getNumber() < newBlock.getNumber()) {
+      return protocolContext.getBlockchain().getBlockHeader(newBlock.getParentHash())
+          .map(parent -> isDescendantOf(ancestorBlock, parent))
+          .orElse(Boolean.FALSE);
+    }
+    // neither matching nor is the ancestor block height lower than newBlock
+    return false;
+  }
+
 
   @FunctionalInterface
   interface MergeBlockCreatorFactory {

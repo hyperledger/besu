@@ -45,10 +45,9 @@ public enum RpcMethod {
   DEBUG_GET_BAD_BLOCKS("debug_getBadBlocks"),
 
   ENGINE_PREPARE_PAYLOAD("engine_preparePayload"),
-  ENGINE_GET_PAYLOAD("engine_getPayload"),
-  ENGINE_EXECUTE_PAYLOAD("engine_executePayload"),
-  ENGINE_CONSENSUS_VALIDATED("engine_consensusValidated"),
-  ENGINE_FORKCHOICE_UPDATED("engine_forkchoiceUpdated"),
+  ENGINE_GET_PAYLOAD("engine_getPayloadV1"),
+  ENGINE_EXECUTE_PAYLOAD("engine_executePayloadV1"),
+  ENGINE_FORKCHOICE_UPDATED("engine_forkchoiceUpdatedV1"),
   ENGINE_TERMINAL_TOTAL_DIFFICULTY_UPDATED("engine_terminalTotalDifficultyUpdated"),
   ENGINE_SYNC_CHECKPOINT_SET("engine_syncCheckpointSet"),
 

@@ -121,8 +121,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public boolean validateProcessAndSetAsCandidate(final Block block) {
-    return mergeCoordinator.validateProcessAndSetAsCandidate(block);
+  public boolean executeBlock(final Block block) {
+    return mergeCoordinator.executeBlock(block);
   }
 
   @Override

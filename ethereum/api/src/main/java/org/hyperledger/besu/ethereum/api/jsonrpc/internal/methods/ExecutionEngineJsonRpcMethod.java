@@ -35,9 +35,9 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
     SYNCING;
   }
 
-  public enum ConsensusStatus {
-    VALID,
-    INVALID;
+  public enum ForkChoiceStatus {
+    SUCCESS,
+    SYNCING;
 
     public boolean equalsIgnoreCase(final String status) {
       return name().equalsIgnoreCase(status);

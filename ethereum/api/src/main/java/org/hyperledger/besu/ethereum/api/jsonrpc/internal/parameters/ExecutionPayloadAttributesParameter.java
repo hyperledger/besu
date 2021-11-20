@@ -14,29 +14,37 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ConsensusStatus;
+import org.hyperledger.besu.datatypes.Address;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes32;
 
-public class ExecutionConsensusValidatedParameter {
-  private final Hash blockHash;
-  private final ConsensusStatus status;
+public class ExecutionPayloadAttributesParameter {
+
+  final Long timestamp;
+  final Bytes32 random;
+  final Address feeRecipient;
 
   @JsonCreator
-  public ExecutionConsensusValidatedParameter(
-      @JsonProperty("blockHash") final Hash blockHash,
-      @JsonProperty("status") final ConsensusStatus status) {
-    this.blockHash = blockHash;
-    this.status = status;
+  public ExecutionPayloadAttributesParameter(
+      @JsonProperty("timestamp") final String timestamp,
+      @JsonProperty("random") final String random,
+      @JsonProperty("feeRecpient") final String feeRecipient) {
+    this.timestamp = Long.decode(timestamp);
+    this.random = Bytes32.fromHexString(random);
+    this.feeRecipient = Address.fromHexString(feeRecipient);
   }
 
-  public Hash getBlockHash() {
-    return blockHash;
+  public Long getTimestamp() {
+    return timestamp;
   }
 
-  public ConsensusStatus getStatus() {
-    return status;
+  public Bytes32 getRandom() {
+    return random;
+  }
+
+  public Address getFeeRecipient() {
+    return feeRecipient;
   }
 }
