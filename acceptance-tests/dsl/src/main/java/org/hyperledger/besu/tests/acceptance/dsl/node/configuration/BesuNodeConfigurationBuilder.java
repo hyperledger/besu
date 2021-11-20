@@ -170,7 +170,7 @@ public class BesuNodeConfigurationBuilder {
 
   public BesuNodeConfigurationBuilder jsonRpcAuthenticationUsingRSA() throws URISyntaxException {
     final File jwtPublicKey =
-        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_rsa").toURI())
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
             .toAbsolutePath()
             .toFile();
 
@@ -240,7 +240,7 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder webSocketAuthenticationUsingRsaPublicKeyEnabled()
       throws URISyntaxException {
     final File jwtPublicKey =
-        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_rsa").toURI())
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
             .toAbsolutePath()
             .toFile();
 
