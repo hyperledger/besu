@@ -94,7 +94,7 @@ public class TransactionValidatorProvider implements ValidatorProvider {
   private Address resolveContractAddress(final long blockNumber) {
     return forksSchedule
         .getFork(blockNumber)
-        .getConfigOptions()
+        .getValue()
         .getValidatorContractAddress()
         .map(Address::fromHexString)
         .orElseThrow(

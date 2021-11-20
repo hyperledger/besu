@@ -24,8 +24,8 @@ import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -84,10 +84,8 @@ public class QbftProtocolScheduleTest {
     final ProtocolSchedule schedule =
         createProtocolSchedule(
             JsonGenesisConfigOptions.fromJsonObject(JsonUtil.createEmptyObjectNode()),
-            new BftForkSpec<>(0, qbftConfigOptions),
-            List.of(
-                new BftForkSpec<>(1, arbitraryTransition),
-                new BftForkSpec<>(2, contractTransition)));
+            new ForkSpec<>(0, qbftConfigOptions),
+            List.of(new ForkSpec<>(1, arbitraryTransition), new ForkSpec<>(2, contractTransition)));
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(3);
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 0)).isTrue();
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 1)).isTrue();
@@ -110,10 +108,10 @@ public class QbftProtocolScheduleTest {
     final ProtocolSchedule schedule =
         createProtocolSchedule(
             JsonGenesisConfigOptions.fromJsonObject(JsonUtil.createEmptyObjectNode()),
-            new BftForkSpec<>(0, JsonQbftConfigOptions.DEFAULT),
+            new ForkSpec<>(0, JsonQbftConfigOptions.DEFAULT),
             List.of(
-                new BftForkSpec<>(1, arbitraryTransition),
-                new BftForkSpec<>(2, JsonQbftConfigOptions.DEFAULT)));
+                new ForkSpec<>(1, arbitraryTransition),
+                new ForkSpec<>(2, JsonQbftConfigOptions.DEFAULT)));
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(3);
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 0)).isTrue();
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 1)).isTrue();
@@ -122,8 +120,8 @@ public class QbftProtocolScheduleTest {
 
   private ProtocolSchedule createProtocolSchedule(
       final GenesisConfigOptions genesisConfig,
-      final BftForkSpec<QbftConfigOptions> genesisFork,
-      final List<BftForkSpec<QbftConfigOptions>> forks) {
+      final ForkSpec<QbftConfigOptions> genesisFork,
+      final List<ForkSpec<QbftConfigOptions>> forks) {
     return QbftProtocolSchedule.create(
         genesisConfig,
         new BftForksSchedule<>(genesisFork, forks),
