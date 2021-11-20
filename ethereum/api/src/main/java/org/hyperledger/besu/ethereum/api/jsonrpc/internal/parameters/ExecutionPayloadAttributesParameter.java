@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class ExecutionPayloadAttributesParameter {
@@ -46,5 +47,13 @@ public class ExecutionPayloadAttributesParameter {
 
   public Address getFeeRecipient() {
     return feeRecipient;
+  }
+
+  public String serialize() {
+    return new JsonObject()
+        .put("timestamp", timestamp)
+        .put("random", random.toShortHexString())
+        .put("feeRecipient", feeRecipient.toShortHexString())
+        .encode();
   }
 }

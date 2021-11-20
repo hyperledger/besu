@@ -220,15 +220,18 @@ public class BlockHeader extends SealableBlockHeader
     out.writeLongScalar(gasUsed);
     out.writeLongScalar(timestamp);
     out.writeBytes(extraData);
-    out.writeBytes(mixHash);
+
+    // if random is present, output random; otherwise mixhash
+    if (random != null) {
+      out.writeBytes(random);
+    } else {
+      out.writeBytes(mixHash);
+    }
+
     out.writeLong(nonce);
     if (baseFee != null) {
       out.writeLongScalar(baseFee);
     }
-    // TODO: merge-interop specifies we ignore random for now
-    //    if (random != null) {
-    //      out.writeBytes(random);
-    //    }
     out.endList();
   }
 

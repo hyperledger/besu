@@ -81,18 +81,23 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
           forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
 
       // begin preparing a block if we have a non-empty payload attributes param
-      PayloadIdentifier payloadId = optionalPayloadAttributes.map(payloadAttributes ->
+      Optional<PayloadIdentifier> payloadId = optionalPayloadAttributes.map(payloadAttributes ->
           mergeCoordinator.preparePayload(
               parentHeader.get(),
               payloadAttributes.getTimestamp(),
               payloadAttributes.getRandom(),
-              payloadAttributes.getFeeRecipient()))
-          .orElse(null);
+              payloadAttributes.getFeeRecipient()));
+
+      payloadId.ifPresent(pid ->
+          LOG.debug("returning identifier {} for requested payload {}",
+              pid.serialize(),
+              optionalPayloadAttributes.map(ExecutionPayloadAttributesParameter::serialize)
+              ));
 
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
           new ExecutionUpdateForkChoiceResult(
-              ForkChoiceStatus.SUCCESS, payloadId));
+              ForkChoiceStatus.SUCCESS, payloadId.orElse(null)));
     }
 
     // else fail with parent not found
