@@ -186,14 +186,15 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     // TODO: if we are missing the parentHash, attempt backwards sync
     // https://github.com/hyperledger/besu/issues/2912
 
-    var optResult = blockValidator
-        .validateAndProcessBlock(
+    var optResult =
+        blockValidator.validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE);
 
-    optResult.ifPresent(result -> {
-      result.worldState.persist(block.getHeader());
-      protocolContext.getBlockchain().appendBlock(block, result.receipts);
-    });
+    optResult.ifPresent(
+        result -> {
+          result.worldState.persist(block.getHeader());
+          protocolContext.getBlockchain().appendBlock(block, result.receipts);
+        });
 
     return optResult.isPresent();
   }
@@ -221,20 +222,28 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     }
 
     // ensure we have headBlock:
-    BlockHeader newHead = blockchain.getBlockHeader(headBlockHash).orElseThrow(() -> new IllegalStateException(
-        String.format(
-            "not able to find new head block %s", headBlockHash)));
+    BlockHeader newHead =
+        blockchain
+            .getBlockHeader(headBlockHash)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        String.format("not able to find new head block %s", headBlockHash)));
 
-   // ensure new head is descendant of finalized
-   newFinalized.map(Optional::of).orElse(currentFinalized)
-       .ifPresent(finalized -> {
-         if (!isDescendantOf(finalized, newHead)) {
-           throw new IllegalStateException(
-               String.format(
-                   "new head block %s is not a descendant of current finalized block %s",
-                   newHead.getBlockHash(), finalized.getBlockHash()));
-         };
-       });
+    // ensure new head is descendant of finalized
+    newFinalized
+        .map(Optional::of)
+        .orElse(currentFinalized)
+        .ifPresent(
+            finalized -> {
+              if (!isDescendantOf(finalized, newHead)) {
+                throw new IllegalStateException(
+                    String.format(
+                        "new head block %s is not a descendant of current finalized block %s",
+                        newHead.getBlockHash(), finalized.getBlockHash()));
+              }
+              ;
+            });
 
     // set the new head
     blockchain.rewindToBlock(newHead.getHash());
@@ -247,14 +256,15 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     if (ancestorBlock.getBlockHash().equals(newBlock.getHash())) {
       return true;
     } else if (ancestorBlock.getNumber() < newBlock.getNumber()) {
-      return protocolContext.getBlockchain().getBlockHeader(newBlock.getParentHash())
+      return protocolContext
+          .getBlockchain()
+          .getBlockHeader(newBlock.getParentHash())
           .map(parent -> isDescendantOf(ancestorBlock, parent))
           .orElse(Boolean.FALSE);
     }
     // neither matching nor is the ancestor block height lower than newBlock
     return false;
   }
-
 
   @FunctionalInterface
   interface MergeBlockCreatorFactory {

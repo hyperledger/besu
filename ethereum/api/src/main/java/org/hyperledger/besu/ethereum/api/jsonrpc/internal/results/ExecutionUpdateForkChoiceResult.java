@@ -11,14 +11,13 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({
-    "status",
-    "payloadId"})
+@JsonPropertyOrder({"status", "payloadId"})
 public class ExecutionUpdateForkChoiceResult {
   private final ForkChoiceStatus status;
   private final PayloadIdentifier payloadId;
 
-  public ExecutionUpdateForkChoiceResult(final ForkChoiceStatus status, final PayloadIdentifier payloadId) {
+  public ExecutionUpdateForkChoiceResult(
+      final ForkChoiceStatus status, final PayloadIdentifier payloadId) {
     this.status = status;
     this.payloadId = payloadId;
   }
@@ -31,8 +30,6 @@ public class ExecutionUpdateForkChoiceResult {
   @JsonGetter(value = "payloadId")
   @JsonInclude(NON_NULL)
   public String getPayloadId() {
-    return Optional.ofNullable(payloadId)
-        .map(PayloadIdentifier::toShortHexString)
-        .orElse(null);
+    return Optional.ofNullable(payloadId).map(PayloadIdentifier::toShortHexString).orElse(null);
   }
 }

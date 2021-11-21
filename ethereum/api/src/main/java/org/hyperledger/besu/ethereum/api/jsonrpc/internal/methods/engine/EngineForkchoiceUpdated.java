@@ -58,11 +58,12 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     final ExecutionForkChoiceUpdatedParameter forkChoice =
         requestContext.getRequiredParameter(0, ExecutionForkChoiceUpdatedParameter.class);
     final Optional<ExecutionPayloadAttributesParameter> optionalPayloadAttributes =
-            requestContext.getOptionalParameter(1, ExecutionPayloadAttributesParameter.class);
+        requestContext.getOptionalParameter(1, ExecutionPayloadAttributesParameter.class);
 
     if (mergeContext.isSyncing()) {
       // if we are syncing, return SYNCINC
-      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(),
+      return new JsonRpcSuccessResponse(
+          requestContext.getRequest().getId(),
           new ExecutionUpdateForkChoiceResult(ForkChoiceStatus.SYNCING, null));
     }
 
@@ -71,9 +72,8 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
         forkChoice.getHeadBlockHash(),
         forkChoice.getFinalizedBlockHash());
 
-    Optional<BlockHeader> parentHeader = protocolContext
-        .getBlockchain()
-        .getBlockHeader(forkChoice.getHeadBlockHash());
+    Optional<BlockHeader> parentHeader =
+        protocolContext.getBlockchain().getBlockHeader(forkChoice.getHeadBlockHash());
 
     if (parentHeader.isPresent()) {
       // update fork choice
@@ -81,26 +81,29 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
           forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
 
       // begin preparing a block if we have a non-empty payload attributes param
-      Optional<PayloadIdentifier> payloadId = optionalPayloadAttributes.map(payloadAttributes ->
-          mergeCoordinator.preparePayload(
-              parentHeader.get(),
-              payloadAttributes.getTimestamp(),
-              payloadAttributes.getRandom(),
-              payloadAttributes.getFeeRecipient()));
+      Optional<PayloadIdentifier> payloadId =
+          optionalPayloadAttributes.map(
+              payloadAttributes ->
+                  mergeCoordinator.preparePayload(
+                      parentHeader.get(),
+                      payloadAttributes.getTimestamp(),
+                      payloadAttributes.getRandom(),
+                      payloadAttributes.getFeeRecipient()));
 
-      payloadId.ifPresent(pid ->
-          LOG.debug("returning identifier {} for requested payload {}",
-              pid.serialize(),
-              optionalPayloadAttributes.map(ExecutionPayloadAttributesParameter::serialize)
-              ));
+      payloadId.ifPresent(
+          pid ->
+              LOG.debug(
+                  "returning identifier {} for requested payload {}",
+                  pid.serialize(),
+                  optionalPayloadAttributes.map(ExecutionPayloadAttributesParameter::serialize)));
 
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
-          new ExecutionUpdateForkChoiceResult(
-              ForkChoiceStatus.SUCCESS, payloadId.orElse(null)));
+          new ExecutionUpdateForkChoiceResult(ForkChoiceStatus.SUCCESS, payloadId.orElse(null)));
     }
 
     // else fail with parent not found
-    return new JsonRpcErrorResponse(requestContext.getRequest().getId(), JsonRpcError.PARENT_BLOCK_NOT_FOUND);
+    return new JsonRpcErrorResponse(
+        requestContext.getRequest().getId(), JsonRpcError.PARENT_BLOCK_NOT_FOUND);
   }
 }
