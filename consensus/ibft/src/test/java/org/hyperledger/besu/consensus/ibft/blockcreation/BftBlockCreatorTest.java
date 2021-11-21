@@ -24,10 +24,10 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
@@ -98,8 +98,7 @@ public class BftBlockCreatorTest {
         GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
             .getConfigOptions();
     final BftForksSchedule<BftConfigOptions> bftForksSchedule =
-        new BftForksSchedule<>(
-            new BftForkSpec<>(0, configOptions.getBftConfigOptions()), List.of());
+        new BftForksSchedule<>(new ForkSpec<>(0, configOptions.getBftConfigOptions()), List.of());
     final ProtocolSchedule protocolSchedule =
         bftProtocolSchedule.createProtocolSchedule(
             configOptions,
