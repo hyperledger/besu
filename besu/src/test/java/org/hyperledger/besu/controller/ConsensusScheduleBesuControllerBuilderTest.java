@@ -17,12 +17,24 @@
  */
 package org.hyperledger.besu.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.SchedulableBftMiningCoordinator;
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.math.BigInteger;
@@ -34,6 +46,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -52,6 +65,8 @@ public class ConsensusScheduleBesuControllerBuilderTest {
   private @Mock ProtocolSchedule protocolSchedule1;
   private @Mock ProtocolSchedule protocolSchedule2;
   private @Mock ProtocolSchedule protocolSchedule3;
+  private @Mock BftMiningCoordinator bftMiningCoordinator1;
+  private @Mock BftMiningCoordinator bftMiningCoordinator2;
 
   @Test
   public void mustProvideNonNullConsensusScheduleWhenInstantiatingNew() {
@@ -97,5 +112,65 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     expectedProtocolSchedulesSpecs.add(new ForkSpec<>(30L, protocolSchedule3));
     Mockito.verify(combinedProtocolScheduleFactory)
         .apply(expectedProtocolSchedulesSpecs, Optional.of(BigInteger.TEN));
+  }
+
+  @Test
+  public void createsScheduableMiningCoordinator() {
+    final Map<Long, BesuControllerBuilder> consensusSchedule =
+        Map.of(0L, besuControllerBuilder1, 5L, besuControllerBuilder2);
+
+    when(besuControllerBuilder1.createMiningCoordinator(any(), any(), any(), any(), any(), any()))
+        .thenReturn(bftMiningCoordinator1);
+    when(besuControllerBuilder2.createMiningCoordinator(any(), any(), any(), any(), any(), any()))
+        .thenReturn(bftMiningCoordinator2);
+    final ProtocolContext mockProtocolContext = mock(ProtocolContext.class);
+    when(mockProtocolContext.getBlockchain()).thenReturn(mock(MutableBlockchain.class));
+
+    final ConsensusScheduleBesuControllerBuilder builder =
+        new ConsensusScheduleBesuControllerBuilder(consensusSchedule);
+    final MiningCoordinator miningCoordinator =
+        builder.createMiningCoordinator(
+            protocolSchedule1,
+            mockProtocolContext,
+            mock(TransactionPool.class),
+            mock(MiningParameters.class),
+            mock(SyncState.class),
+            mock(EthProtocolManager.class));
+
+    assertThat(miningCoordinator).isInstanceOf(SchedulableBftMiningCoordinator.class);
+    final SchedulableBftMiningCoordinator schedulableBftMiningCoordinator =
+        (SchedulableBftMiningCoordinator) miningCoordinator;
+
+    SoftAssertions.assertSoftly(
+        (softly) -> {
+          softly
+              .assertThat(
+                  schedulableBftMiningCoordinator
+                      .getMiningCoordinatorSchedule()
+                      .getFork(0L)
+                      .getValue())
+              .isSameAs(bftMiningCoordinator1);
+          softly
+              .assertThat(
+                  schedulableBftMiningCoordinator
+                      .getMiningCoordinatorSchedule()
+                      .getFork(4L)
+                      .getValue())
+              .isSameAs(bftMiningCoordinator1);
+          softly
+              .assertThat(
+                  schedulableBftMiningCoordinator
+                      .getMiningCoordinatorSchedule()
+                      .getFork(5L)
+                      .getValue())
+              .isSameAs(bftMiningCoordinator2);
+          softly
+              .assertThat(
+                  schedulableBftMiningCoordinator
+                      .getMiningCoordinatorSchedule()
+                      .getFork(6L)
+                      .getValue())
+              .isSameAs(bftMiningCoordinator2);
+        });
   }
 }

@@ -31,7 +31,8 @@ import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 
-public class BftForksSchedule<C extends BftConfigOptions> {
+// TODO SLD if using this with <MiningCoordinator>, should I rename this to ForksSchedule?
+public class BftForksSchedule<C> {
 
   private final NavigableSet<ForkSpec<C>> forks =
       new TreeSet<>(

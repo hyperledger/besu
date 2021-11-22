@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.logging.log4j.Logger;
@@ -78,7 +79,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
   public void start() {
     if (state.compareAndSet(State.IDLE, State.RUNNING)) {
       bftExecutors.start();
-      blockAddedObserverId = blockchain.observeBlockAdded(this);
+      blockAddedObserverId = blockchain.observeBlockAdded(this); // TODO SLD duplicate block event
       eventHandler.start();
       bftExecutors.executeBftProcessor(bftProcessor);
     }
@@ -90,13 +91,19 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
       blockchain.removeObserver(blockAddedObserverId);
       bftProcessor.stop();
       // Make sure the processor has stopped before shutting down the executors
-      try {
-        bftProcessor.awaitStop();
-      } catch (final InterruptedException e) {
-        LOG.debug("Interrupted while waiting for IbftProcessor to stop.", e);
-        Thread.currentThread().interrupt();
-      }
-      bftExecutors.stop();
+      // TODO this may not complete before the next miningCoordinator is started
+      // workaround until this is complete: https://github.com/hyperledger/besu/issues/3003
+      Executors.newSingleThreadExecutor()
+          .submit(
+              () -> {
+                try {
+                  bftProcessor.awaitStop();
+                } catch (final InterruptedException e) {
+                  LOG.debug("Interrupted while waiting for IbftProcessor to stop.", e);
+                  Thread.currentThread().interrupt();
+                }
+                bftExecutors.stop();
+              });
     }
   }
 

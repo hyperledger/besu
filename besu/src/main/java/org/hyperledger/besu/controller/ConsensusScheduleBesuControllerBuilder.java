@@ -21,6 +21,9 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.CombinedProtocolScheduleFactory;
 import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.SchedulableBftMiningCoordinator;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -104,6 +107,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   @Override
   protected void prepForBuild() {
     besuControllerBuilderSchedule.values().forEach(BesuControllerBuilder::prepForBuild);
+    super.prepForBuild();
   }
 
   @Override
@@ -114,15 +118,33 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
-    return besuControllerBuilderSchedule
-        .get(0L)
-        .createMiningCoordinator(
-            protocolSchedule,
-            protocolContext,
-            transactionPool,
-            miningParameters,
-            syncState,
-            ethProtocolManager);
+
+    final List<ForkSpec<BftMiningCoordinator>> miningCoordinatorForkSpecs =
+        besuControllerBuilderSchedule.entrySet().stream()
+            // TODO SLD need to make this work for NoopMiningCoordinator (for IBFT1 -> QBFT
+            // migration)
+            // onBlockAdded is the problematic method
+            .map(
+                e ->
+                    new ForkSpec<>(
+                        e.getKey(),
+                        (BftMiningCoordinator)
+                            e.getValue()
+                                .createMiningCoordinator(
+                                    protocolSchedule,
+                                    protocolContext,
+                                    transactionPool,
+                                    miningParameters,
+                                    syncState,
+                                    ethProtocolManager)))
+            .collect(Collectors.toList());
+    final BftForksSchedule<BftMiningCoordinator> miningCoordinatorSchedule =
+        new BftForksSchedule<>(
+            miningCoordinatorForkSpecs.get(0),
+            miningCoordinatorForkSpecs.subList(1, miningCoordinatorForkSpecs.size()));
+
+    return new SchedulableBftMiningCoordinator(
+        miningCoordinatorSchedule, protocolContext.getBlockchain());
   }
 
   @Override
@@ -169,7 +191,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   protected void validateContext(final ProtocolContext context) {
-    besuControllerBuilderSchedule.get(0L).validateContext(context);
+    besuControllerBuilderSchedule.values().forEach(builder -> builder.validateContext(context));
   }
 
   @Override
