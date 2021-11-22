@@ -62,9 +62,6 @@ public class PrivacyMarkerTransactionPoolTest {
   private PrivacyMarkerTransactionPool pmtPool;
 
   private final Transaction tx1 = createTransaction(1);
-  private final PrivacyMarkerTransactionTracker tx1Tracker =
-      new PrivacyMarkerTransactionTracker(
-          Hash.EMPTY, ADDRESS_ONE, PRIVACY_GROUP_ID, 66L, 99L, Optional.of(Wei.ZERO));
 
   @Before
   public void setUp() {
@@ -99,7 +96,11 @@ public class PrivacyMarkerTransactionPoolTest {
   @Test
   public void shouldRemoveTransactionsFromPendingListWhenIncludedInBlockOnchain()
       throws InterruptedException {
-    pmtPool.addPmtTransactionTracker(tx1.getHash(), tx1Tracker);
+    final PrivacyMarkerTransactionTracker tx1Tracker =
+        new PrivacyMarkerTransactionTracker(
+            tx1.getHash(), ADDRESS_ONE, PRIVACY_GROUP_ID, 66L, 99L, Optional.of(Wei.ZERO));
+    pmtPool.addPmtTransactionTracker(tx1Tracker);
+    System.out.println(tx1Tracker);
     assertTransactionPending(tx1.getHash(), tx1Tracker);
     assertThat(pmtPool.getActiveCount()).isEqualTo(1L);
     appendBlock(tx1);

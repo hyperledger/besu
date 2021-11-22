@@ -123,18 +123,17 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
     final PrivacyMarkerTransactionTracker pmtTracker =
         new PrivacyMarkerTransactionTracker(
             pmtHash, sender, privacyGroupId, privateNonce, publicNonce, gasPrice);
-    return addPmtTransactionTracker(pmtHash, pmtTracker);
+    return addPmtTransactionTracker(pmtTracker);
   }
 
   @VisibleForTesting
-  protected Hash addPmtTransactionTracker(
-      final Hash pmtHash, final PrivacyMarkerTransactionTracker pmtTracker) {
+  protected Hash addPmtTransactionTracker(final PrivacyMarkerTransactionTracker pmtTracker) {
 
-    pmtPool.put(pmtHash, pmtTracker);
+    pmtPool.put(pmtTracker.getHash(), pmtTracker);
     pmtTrackersBySenderAndGroup.putIfAbsent(pmtTracker.getKey(), new HashSet<>());
     pmtTrackersBySenderAndGroup.get(pmtTracker.getKey()).add(pmtTracker);
-    LOG.debug("adding: {} pmtHash: {} ", pmtTracker, pmtHash);
-    return pmtHash;
+    LOG.debug("adding: {} pmtHash: {} ", pmtTracker, pmtTracker.getHash());
+    return pmtTracker.getHash();
   }
 
   public long getActiveCount() {
