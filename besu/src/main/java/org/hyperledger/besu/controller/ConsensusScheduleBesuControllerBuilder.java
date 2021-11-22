@@ -177,39 +177,43 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
-    besuControllerBuilderSchedule.get(0L).storageProvider(storageProvider);
+    besuControllerBuilderSchedule.values().forEach(b -> b.storageProvider(storageProvider));
     return super.storageProvider(storageProvider);
   }
 
   @Override
   public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
-    besuControllerBuilderSchedule.get(0L).genesisConfigFile(genesisConfig);
+    besuControllerBuilderSchedule.values().forEach(b -> b.genesisConfigFile(genesisConfig));
     return super.genesisConfigFile(genesisConfig);
   }
 
   @Override
   public BesuControllerBuilder synchronizerConfiguration(
       final SynchronizerConfiguration synchronizerConfig) {
-    besuControllerBuilderSchedule.get(0L).synchronizerConfiguration(synchronizerConfig);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(b -> b.synchronizerConfiguration(synchronizerConfig));
     return super.synchronizerConfiguration(synchronizerConfig);
   }
 
   @Override
   public BesuControllerBuilder ethProtocolConfiguration(
       final EthProtocolConfiguration ethProtocolConfiguration) {
-    besuControllerBuilderSchedule.get(0L).ethProtocolConfiguration(ethProtocolConfiguration);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(b -> b.ethProtocolConfiguration(ethProtocolConfiguration));
     return super.ethProtocolConfiguration(ethProtocolConfiguration);
   }
 
   @Override
   public BesuControllerBuilder networkId(final BigInteger networkId) {
-    besuControllerBuilderSchedule.get(0L).networkId(networkId);
+    besuControllerBuilderSchedule.values().forEach(b -> b.networkId(networkId));
     return super.networkId(networkId);
   }
 
   @Override
   public BesuControllerBuilder miningParameters(final MiningParameters miningParameters) {
-    besuControllerBuilderSchedule.get(0L).miningParameters(miningParameters);
+    besuControllerBuilderSchedule.values().forEach(b -> b.miningParameters(miningParameters));
     return super.miningParameters(miningParameters);
   }
 
@@ -217,26 +221,26 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   public BesuControllerBuilder messagePermissioningProviders(
       final List<NodeMessagePermissioningProvider> messagePermissioningProviders) {
     besuControllerBuilderSchedule
-        .get(0L)
-        .messagePermissioningProviders(messagePermissioningProviders);
+        .values()
+        .forEach(b -> b.messagePermissioningProviders(messagePermissioningProviders));
     return super.messagePermissioningProviders(messagePermissioningProviders);
   }
 
   @Override
   public BesuControllerBuilder nodeKey(final NodeKey nodeKey) {
-    besuControllerBuilderSchedule.get(0L).nodeKey(nodeKey);
+    besuControllerBuilderSchedule.values().forEach(b -> b.nodeKey(nodeKey));
     return super.nodeKey(nodeKey);
   }
 
   @Override
   public BesuControllerBuilder metricsSystem(final ObservableMetricsSystem metricsSystem) {
-    besuControllerBuilderSchedule.get(0L).metricsSystem(metricsSystem);
+    besuControllerBuilderSchedule.values().forEach(b -> b.metricsSystem(metricsSystem));
     return super.metricsSystem(metricsSystem);
   }
 
   @Override
   public BesuControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
-    besuControllerBuilderSchedule.get(0L).privacyParameters(privacyParameters);
+    besuControllerBuilderSchedule.values().forEach(b -> b.privacyParameters(privacyParameters));
     return super.privacyParameters(privacyParameters);
   }
 
@@ -244,20 +248,20 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   public BesuControllerBuilder pkiBlockCreationConfiguration(
       final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration) {
     besuControllerBuilderSchedule
-        .get(0L)
-        .pkiBlockCreationConfiguration(pkiBlockCreationConfiguration);
+        .values()
+        .forEach(b -> b.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration));
     return super.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration);
   }
 
   @Override
   public BesuControllerBuilder dataDirectory(final Path dataDirectory) {
-    besuControllerBuilderSchedule.get(0L).dataDirectory(dataDirectory);
+    besuControllerBuilderSchedule.values().forEach(b -> b.dataDirectory(dataDirectory));
     return super.dataDirectory(dataDirectory);
   }
 
   @Override
   public BesuControllerBuilder clock(final Clock clock) {
-    besuControllerBuilderSchedule.get(0L).clock(clock);
+    besuControllerBuilderSchedule.values().forEach(b -> b.clock(clock));
     return super.clock(clock);
   }
 
@@ -265,64 +269,74 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   public BesuControllerBuilder transactionPoolConfiguration(
       final TransactionPoolConfiguration transactionPoolConfiguration) {
     besuControllerBuilderSchedule
-        .get(0L)
-        .transactionPoolConfiguration(transactionPoolConfiguration);
+        .values()
+        .forEach(b -> b.transactionPoolConfiguration(transactionPoolConfiguration));
     return super.transactionPoolConfiguration(transactionPoolConfiguration);
   }
 
   @Override
   public BesuControllerBuilder isRevertReasonEnabled(final boolean isRevertReasonEnabled) {
-    besuControllerBuilderSchedule.get(0L).isRevertReasonEnabled(isRevertReasonEnabled);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(b -> b.isRevertReasonEnabled(isRevertReasonEnabled));
     return super.isRevertReasonEnabled(isRevertReasonEnabled);
   }
 
   @Override
   public BesuControllerBuilder isPruningEnabled(final boolean isPruningEnabled) {
-    besuControllerBuilderSchedule.get(0L).isPruningEnabled(isPruningEnabled);
+    besuControllerBuilderSchedule.values().forEach(b -> b.isPruningEnabled(isPruningEnabled));
     return super.isPruningEnabled(isPruningEnabled);
   }
 
   @Override
   public BesuControllerBuilder pruningConfiguration(final PrunerConfiguration prunerConfiguration) {
-    besuControllerBuilderSchedule.get(0L).pruningConfiguration(prunerConfiguration);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(b -> b.pruningConfiguration(prunerConfiguration));
     return super.pruningConfiguration(prunerConfiguration);
   }
 
   @Override
   public BesuControllerBuilder genesisConfigOverrides(
       final Map<String, String> genesisConfigOverrides) {
-    besuControllerBuilderSchedule.get(0L).genesisConfigOverrides(genesisConfigOverrides);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(b -> b.genesisConfigOverrides(genesisConfigOverrides));
     return super.genesisConfigOverrides(genesisConfigOverrides);
   }
 
   @Override
   public BesuControllerBuilder gasLimitCalculator(final GasLimitCalculator gasLimitCalculator) {
-    besuControllerBuilderSchedule.get(0L).gasLimitCalculator(gasLimitCalculator);
+    besuControllerBuilderSchedule.values().forEach(b -> b.gasLimitCalculator(gasLimitCalculator));
     return super.gasLimitCalculator(gasLimitCalculator);
   }
 
   @Override
   public BesuControllerBuilder requiredBlocks(final Map<Long, Hash> requiredBlocks) {
-    besuControllerBuilderSchedule.get(0L).requiredBlocks(requiredBlocks);
+    besuControllerBuilderSchedule.values().forEach(b -> b.requiredBlocks(requiredBlocks));
     return super.requiredBlocks(requiredBlocks);
   }
 
   @Override
   public BesuControllerBuilder reorgLoggingThreshold(final long reorgLoggingThreshold) {
-    besuControllerBuilderSchedule.get(0L).reorgLoggingThreshold(reorgLoggingThreshold);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(b -> b.reorgLoggingThreshold(reorgLoggingThreshold));
     return super.reorgLoggingThreshold(reorgLoggingThreshold);
   }
 
   @Override
   public BesuControllerBuilder dataStorageConfiguration(
       final DataStorageConfiguration dataStorageConfiguration) {
-    besuControllerBuilderSchedule.get(0L).dataStorageConfiguration(dataStorageConfiguration);
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(b -> b.dataStorageConfiguration(dataStorageConfiguration));
     return super.dataStorageConfiguration(dataStorageConfiguration);
   }
 
   @Override
   public BesuControllerBuilder evmConfiguration(final EvmConfiguration evmConfiguration) {
-    besuControllerBuilderSchedule.get(0L).evmConfiguration(evmConfiguration);
+    besuControllerBuilderSchedule.values().forEach(b -> b.evmConfiguration(evmConfiguration));
     return super.evmConfiguration(evmConfiguration);
   }
 
