@@ -1661,6 +1661,16 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privacyOnchainGroupsEnabledCannotBeUsedWithPrivacyFlexibleGroupsEnabled() {
+    parseCommand("--privacy-onchain-groups-enabled", "--privacy-flexible-groups-enabled");
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "The `--privacy-onchain-groups-enabled` option is deprecated and you should only use `--privacy-flexible-groups-enabled`");
+  }
+
+  @Test
   public void parsesValidBonsaiTrieLimitBackLayersOption() {
     parseCommand("--Xdata-storage-format", "BONSAI", "--Xbonsai-maximum-back-layers-to-load", "11");
     verify(mockControllerBuilder)
