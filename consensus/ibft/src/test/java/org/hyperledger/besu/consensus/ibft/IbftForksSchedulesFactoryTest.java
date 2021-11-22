@@ -23,7 +23,7 @@ import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
@@ -40,7 +40,7 @@ public class IbftForksSchedulesFactoryTest {
   public void createsScheduleForJustGenesisConfig() {
     final MutableBftConfigOptions bftConfigOptions =
         new MutableBftConfigOptions(JsonQbftConfigOptions.DEFAULT);
-    final BftForkSpec<BftConfigOptions> expectedForkSpec = new BftForkSpec<>(0, bftConfigOptions);
+    final ForkSpec<BftConfigOptions> expectedForkSpec = new ForkSpec<>(0, bftConfigOptions);
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.bftConfigOptions(bftConfigOptions);
 
@@ -70,7 +70,7 @@ public class IbftForksSchedulesFactoryTest {
         IbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
     assertThat(forksSchedule.getFork(0))
         .usingRecursiveComparison()
-        .isEqualTo(new BftForkSpec<>(0, configOptions));
+        .isEqualTo(new ForkSpec<>(0, configOptions));
 
     final Map<String, Object> forkOptions = new HashMap<>(configOptions.asMap());
     forkOptions.put(BftFork.BLOCK_PERIOD_SECONDS_KEY, 10);
@@ -80,7 +80,7 @@ public class IbftForksSchedulesFactoryTest {
         new MutableBftConfigOptions(
             new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(forkOptions)));
 
-    final BftForkSpec<BftConfigOptions> expectedFork = new BftForkSpec<>(1, expectedForkConfig);
+    final ForkSpec<BftConfigOptions> expectedFork = new ForkSpec<>(1, expectedForkConfig);
     assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedFork);
     assertThat(forksSchedule.getFork(2)).usingRecursiveComparison().isEqualTo(expectedFork);
   }
