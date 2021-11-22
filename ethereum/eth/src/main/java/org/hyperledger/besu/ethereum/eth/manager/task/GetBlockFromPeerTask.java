@@ -116,7 +116,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private CompletableFuture<PeerTaskResult<List<Block>>> completeBlock(
       final PeerTaskResult<List<BlockHeader>> headerResult) {
     if (headerResult.getResult().isEmpty()) {
-      LOG.debug("GetBlockFromPeerTask: header result is empty.");
+      LOG.debug("header result is empty.");
       return CompletableFuture.failedFuture(new IncompleteResultsException());
     }
 
