@@ -31,8 +31,6 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.logging.log4j.Logger;
-
 /**
  * Validates a transaction based on Frontier protocol runtime requirements.
  *
