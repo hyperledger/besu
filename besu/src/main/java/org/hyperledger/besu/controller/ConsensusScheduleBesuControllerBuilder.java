@@ -103,7 +103,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   protected void prepForBuild() {
-    besuControllerBuilderSchedule.get(0L).prepForBuild();
+    besuControllerBuilderSchedule.values().forEach(BesuControllerBuilder::prepForBuild);
   }
 
   @Override
