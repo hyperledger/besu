@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -59,9 +58,7 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
 
   @Parameters(name = "{0}")
   public static Collection<EnclaveType> enclaveTypes() {
-    return Arrays.stream(EnclaveType.values())
-        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
-        .collect(Collectors.toList());
+    return EnclaveType.valuesForTests();
   }
 
   private PrivacyNode alice;
