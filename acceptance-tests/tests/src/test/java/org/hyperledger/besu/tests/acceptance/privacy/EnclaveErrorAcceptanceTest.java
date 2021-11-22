@@ -25,11 +25,9 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.crypto.sodium.Box;
 import org.assertj.core.api.Condition;
@@ -51,9 +49,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   @Parameters(name = "{0}")
   public static Collection<EnclaveType> enclaveTypes() {
-    return Arrays.stream(EnclaveType.values())
-        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
-        .collect(Collectors.toList());
+    return EnclaveType.valuesForTests();
   }
 
   public EnclaveErrorAcceptanceTest(final EnclaveType enclaveType) throws IOException {
