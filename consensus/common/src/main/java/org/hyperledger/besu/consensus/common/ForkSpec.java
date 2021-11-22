@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.consensus.common;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 public class ForkSpec<C> {
+
+  public static final Comparator<ForkSpec<?>> COMPARATOR = Comparator.comparing(ForkSpec::getBlock);
 
   private final long block;
   private final C value;
