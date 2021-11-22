@@ -255,7 +255,7 @@ public class NodePermissioningControllerFactoryTest {
   }
 
   @Test
-  public void createOnchainShouldFailIfValidationFails() {
+  public void createFlexibleShouldFailIfValidationFails() {
     smartContractPermissioningConfiguration = new SmartContractPermissioningConfiguration();
     smartContractPermissioningConfiguration.setNodeSmartContractAddress(
         Address.fromHexString("0x0000000000000000000000000000000000001234"));

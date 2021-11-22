@@ -92,14 +92,14 @@ public class AccountPermissioningControllerFactoryTest {
   }
 
   @Test
-  public void createOnchainConfigWithAccountPermissioningDisabledShouldReturnEmpty() {
-    SmartContractPermissioningConfiguration onchainConfig =
+  public void createFlexibleConfigWithAccountPermissioningDisabledShouldReturnEmpty() {
+    SmartContractPermissioningConfiguration flexibleConfig =
         SmartContractPermissioningConfiguration.createDefault();
-    assertThat(onchainConfig.isSmartContractAccountAllowlistEnabled()).isFalse();
+    assertThat(flexibleConfig.isSmartContractAccountAllowlistEnabled()).isFalse();
 
     PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(
-            Optional.empty(), Optional.of(onchainConfig), Optional.empty());
+            Optional.empty(), Optional.of(flexibleConfig), Optional.empty());
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
@@ -109,13 +109,13 @@ public class AccountPermissioningControllerFactoryTest {
   }
 
   @Test
-  public void createOnchainConfigOnlyControllerShouldReturnExpectedController() {
-    SmartContractPermissioningConfiguration onchainConfig = onchainConfig();
-    assertThat(onchainConfig.isSmartContractAccountAllowlistEnabled()).isTrue();
+  public void createFlexibleConfigOnlyControllerShouldReturnExpectedController() {
+    SmartContractPermissioningConfiguration flexibleConfig = flexibleConfig();
+    assertThat(flexibleConfig.isSmartContractAccountAllowlistEnabled()).isTrue();
 
     PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(
-            Optional.empty(), Optional.of(onchainConfig), Optional.empty());
+            Optional.empty(), Optional.of(flexibleConfig), Optional.empty());
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
@@ -127,13 +127,13 @@ public class AccountPermissioningControllerFactoryTest {
   }
 
   @Test
-  public void createOnchainShouldFailIfValidationFails() {
-    SmartContractPermissioningConfiguration onchainConfig = onchainConfig();
-    assertThat(onchainConfig.isSmartContractAccountAllowlistEnabled()).isTrue();
+  public void createFlexibleShouldFailIfValidationFails() {
+    SmartContractPermissioningConfiguration flexibleConfig = flexibleConfig();
+    assertThat(flexibleConfig.isSmartContractAccountAllowlistEnabled()).isTrue();
 
     PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(
-            Optional.empty(), Optional.of(onchainConfig), Optional.empty());
+            Optional.empty(), Optional.of(flexibleConfig), Optional.empty());
 
     when(transactionSimulator.processAtHead(any())).thenThrow(new RuntimeException());
 
@@ -145,20 +145,20 @@ public class AccountPermissioningControllerFactoryTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalStateException.class)
-        .hasMessage("Error validating onchain account permissioning smart contract configuration");
+        .hasMessage("Error validating flexible account permissioning smart contract configuration");
   }
 
   @Test
-  public void createLocalAndOnchainControllerShouldReturnExpectedControllers() {
+  public void createLocalAndFlexibleControllerShouldReturnExpectedControllers() {
     LocalPermissioningConfiguration localConfig = localConfig();
     assertThat(localConfig.isAccountAllowlistEnabled()).isTrue();
 
-    SmartContractPermissioningConfiguration onchainConfig = onchainConfig();
-    assertThat(onchainConfig.isSmartContractAccountAllowlistEnabled()).isTrue();
+    SmartContractPermissioningConfiguration flexibleConfig = flexibleConfig();
+    assertThat(flexibleConfig.isSmartContractAccountAllowlistEnabled()).isTrue();
 
     PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(
-            Optional.of(localConfig), Optional.of(onchainConfig), Optional.empty());
+            Optional.of(localConfig), Optional.of(flexibleConfig), Optional.empty());
 
     Optional<AccountPermissioningController> controller =
         AccountPermissioningControllerFactory.create(
@@ -179,13 +179,13 @@ public class AccountPermissioningControllerFactoryTest {
     return localPermissioningConfiguration;
   }
 
-  private SmartContractPermissioningConfiguration onchainConfig() {
-    SmartContractPermissioningConfiguration onchainPermissioningConfiguration =
+  private SmartContractPermissioningConfiguration flexibleConfig() {
+    SmartContractPermissioningConfiguration flexiblePermissioningConfiguration =
         SmartContractPermissioningConfiguration.createDefault();
-    onchainPermissioningConfiguration.setAccountSmartContractAddress(
+    flexiblePermissioningConfiguration.setAccountSmartContractAddress(
         Address.fromHexString("0x0000000000000000000000000000000000008888"));
-    onchainPermissioningConfiguration.setSmartContractAccountAllowlistEnabled(true);
-    return onchainPermissioningConfiguration;
+    flexiblePermissioningConfiguration.setSmartContractAccountAllowlistEnabled(true);
+    return flexiblePermissioningConfiguration;
   }
 
   private File createTempFile() {

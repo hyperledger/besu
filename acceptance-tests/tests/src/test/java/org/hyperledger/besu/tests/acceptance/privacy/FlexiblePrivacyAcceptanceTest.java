@@ -145,7 +145,7 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
 
     assertThatThrownBy(() -> deployPrivateContract(EventEmitter.class, privacyGroupId, bob))
         .isInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Onchain Privacy group does not exist.");
+        .hasMessageContaining("Flexible Privacy group does not exist.");
   }
 
   @Test

@@ -925,7 +925,7 @@ public class RunnerBuilder {
   private void createPrivateTransactionObserver(
       final PrivateTransactionObserver privateTransactionObserver,
       final PrivacyParameters privacyParameters) {
-    // register privateTransactionObserver as observer of events fired by the onchain precompile.
+    // register privateTransactionObserver as observer of events fired by the flexible precompile.
     if (privacyParameters.isFlexiblePrivacyGroupsEnabled()
         && privacyParameters.isMultiTenancyEnabled()) {
       final FlexiblePrivacyPrecompiledContract flexiblePrivacyPrecompiledContract =
