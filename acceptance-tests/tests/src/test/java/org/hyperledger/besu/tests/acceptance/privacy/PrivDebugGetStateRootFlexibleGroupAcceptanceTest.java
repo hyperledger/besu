@@ -26,10 +26,8 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
@@ -51,9 +49,7 @@ public class PrivDebugGetStateRootFlexibleGroupAcceptanceTest
 
   @Parameters(name = "{0}")
   public static Collection<EnclaveType> enclaveTypes() {
-    return Arrays.stream(EnclaveType.values())
-        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
-        .collect(Collectors.toList());
+    return EnclaveType.valuesForTests();
   }
 
   private PrivacyNode aliceNode;

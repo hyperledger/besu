@@ -31,7 +31,6 @@ import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -60,9 +59,7 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
 
   @Parameterized.Parameters(name = "{0}")
   public static Collection<EnclaveType> enclaveTypes() {
-    return Arrays.stream(EnclaveType.values())
-        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
-        .collect(Collectors.toList());
+    return EnclaveType.valuesForTests();
   }
 
   private static final PermissioningTransactions permissioningTransactions =
