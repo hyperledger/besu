@@ -494,7 +494,7 @@ public class RunnerBuilder {
 
     final TransactionPool transactionPool = besuController.getTransactionPool();
     final PrivacyMarkerTransactionPool privacyMarkerTransactionPool =
-        besuController.getPrivateMarkerTransactionPool();
+        besuController.getPrivacyMarkerTransactionPool();
     final MiningCoordinator miningCoordinator = besuController.getMiningCoordinator();
 
     final BlockchainQueries blockchainQueries =
@@ -980,7 +980,7 @@ public class RunnerBuilder {
               subscriptionManager,
               protocolSchedule,
               blockchainQueries,
-              besuController.getPrivateMarkerTransactionPool());
+              besuController.getPrivacyMarkerTransactionPool());
 
       privateWebSocketMethodsFactory.methods().forEach(websocketMethodsFactory::addMethods);
     }

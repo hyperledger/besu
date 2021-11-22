@@ -149,7 +149,7 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
     private final long publicNonce;
     private final Optional<Wei> gasPrice;
     // whether the tracker should be considered when calculating nonce. Set to false when tx is
-    // added to a block.
+    // added to a block, and set to true if it's removed by a reorg.
     private boolean isActive = true;
 
     protected PrivacyMarkerTransactionTracker(

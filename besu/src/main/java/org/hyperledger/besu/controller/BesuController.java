@@ -135,7 +135,7 @@ public class BesuController implements java.io.Closeable {
     return transactionPool;
   }
 
-  public PrivacyMarkerTransactionPool getPrivateMarkerTransactionPool() {
+  public PrivacyMarkerTransactionPool getPrivacyMarkerTransactionPool() {
     return privacyMarkerTransactionPool;
   }
 
