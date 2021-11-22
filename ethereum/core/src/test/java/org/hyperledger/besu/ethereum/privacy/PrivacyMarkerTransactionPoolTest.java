@@ -69,6 +69,7 @@ public class PrivacyMarkerTransactionPoolTest {
   private final Transaction tx1 = createTransaction(1);
   private final PrivacyMarkerTransactionTracker tx1Tracker =
       new PrivacyMarkerTransactionTracker(
+          Hash.EMPTY,
           ADDRESS.toHexString(),
           PRIVACY_GROUP_ID.toBase64String(),
           66L,

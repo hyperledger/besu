@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
@@ -42,8 +40,6 @@ import org.apache.logging.log4j.Logger;
  * {@link Transaction}.
  */
 public class MainnetTransactionValidator {
-  private static final Logger LOG = getLogger();
-
   private final GasCalculator gasCalculator;
   private final FeeMarket feeMarket;
 
@@ -187,10 +183,6 @@ public class MainnetTransactionValidator {
     }
 
     if (transaction.getUpfrontCost().compareTo(senderBalance) > 0) {
-      LOG.info(
-          String.format(
-              "transaction up-front cost %s exceeds transaction sender %s account balance %s",
-              transaction.getUpfrontCost(), sender.getAddress(), senderBalance));
       return ValidationResult.invalid(
           TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
           String.format(

@@ -22,7 +22,9 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.plugin.data.Transaction;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 
@@ -33,9 +35,12 @@ import org.apache.logging.log4j.Logger;
 public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LogManager.getLogger();
   private final Map<Hash, PrivacyMarkerTransactionTracker> pmtPool;
+  private final Map<String, Collection<PrivacyMarkerTransactionTracker>>
+      pmtTrackersBySenderAndGroup;
 
   public PrivacyMarkerTransactionPool(final Blockchain blockchain) {
     this.pmtPool = new HashMap<>();
+    this.pmtTrackersBySenderAndGroup = new HashMap<>();
     blockchain.observeBlockAdded(this);
   }
 
@@ -49,6 +54,9 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
     final PrivacyMarkerTransactionTracker tracker = pmtPool.get(tx.getHash());
     if (tracker != null) {
       tracker.setActive(false);
+      pmtTrackersBySenderAndGroup.get(tracker.getKey()).stream()
+          .filter(t -> t.getHash().equals(tx.getHash()))
+          .forEach(t -> t.setActive(false));
     }
   }
 
@@ -56,6 +64,10 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
     final PrivacyMarkerTransactionTracker tracker = pmtPool.get(tx.getHash());
     if (tracker != null) {
       tracker.setActive(true);
+      // TODO there should be only one that matches the hash - is there a better option than forEach
+      pmtTrackersBySenderAndGroup.get(tracker.getKey()).stream()
+          .filter(t -> t.getHash().equals(tx.getHash()))
+          .forEach(t -> t.setActive(true));
     }
   }
 
@@ -73,12 +85,14 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
 
   public Optional<Long> getMaxMatchingNonce(final String sender, final String privacyGroupId) {
 
-    return pmtPool.values().stream()
-        .filter(
-            tracker ->
-                tracker.getSender().equals(sender)
-                    && tracker.getPrivacyGroupIdBase64().equals(privacyGroupId)
-                    && tracker.isActive)
+    final Collection<PrivacyMarkerTransactionTracker> trackers =
+        pmtTrackersBySenderAndGroup.get(sender + privacyGroupId);
+
+    if (trackers == null) {
+      return Optional.empty();
+    }
+    return trackers.stream()
+        .filter(tracker -> tracker.isActive)
         .map(tracker -> tracker.getPrivateNonce())
         .max(Long::compare);
   }
@@ -108,10 +122,8 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
 
     final PrivacyMarkerTransactionTracker pmtTracker =
         new PrivacyMarkerTransactionTracker(
-            sender, privacyGroupId, privateNonce, publicNonce, gasPrice);
-    pmtPool.put(pmtHash, pmtTracker);
-    LOG.debug("adding: {} pmtHash: {} ", pmtTracker, pmtHash);
-    return pmtHash;
+            pmtHash, sender, privacyGroupId, privateNonce, publicNonce, gasPrice);
+    return addPmtTransactionTracker(pmtHash, pmtTracker);
   }
 
   @VisibleForTesting
@@ -119,6 +131,8 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
       final Hash pmtHash, final PrivacyMarkerTransactionTracker pmtTracker) {
 
     pmtPool.put(pmtHash, pmtTracker);
+    pmtTrackersBySenderAndGroup.putIfAbsent(pmtTracker.getKey(), new HashSet<>());
+    pmtTrackersBySenderAndGroup.get(pmtTracker.getKey()).add(pmtTracker);
     LOG.debug("adding: {} pmtHash: {} ", pmtTracker, pmtHash);
     return pmtHash;
   }
@@ -128,6 +142,7 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
   }
 
   protected static class PrivacyMarkerTransactionTracker {
+    private final Hash hash;
     private final String sender;
     private final String privacyGroupIdBase64;
     private final long privateNonce;
@@ -138,16 +153,22 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
     private boolean isActive = true;
 
     protected PrivacyMarkerTransactionTracker(
+        final Hash hash,
         final String sender,
         final String privacyGroupIdBase64,
         final long privateNonce,
         final long publicNonce,
         final Optional<Wei> gasPrice) {
+      this.hash = hash;
       this.sender = sender;
       this.privacyGroupIdBase64 = privacyGroupIdBase64;
       this.privateNonce = privateNonce;
       this.publicNonce = publicNonce;
       this.gasPrice = gasPrice;
+    }
+
+    public Hash getHash() {
+      return hash;
     }
 
     public String getSender() {
@@ -178,12 +199,17 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
       this.isActive = isActive;
     }
 
+    private String getKey() {
+      return getSender() + getPrivacyGroupIdBase64();
+    }
+
     @Override
     public String toString() {
       final StringBuilder sb = new StringBuilder();
       sb.append("PrivateMarkerTransactionTracker ").append("{");
       sb.append("private nonce=").append(getPrivateNonce()).append(", ");
       sb.append("public nonce=").append(getPublicNonce()).append(", ");
+      sb.append("hash=").append(getHash()).append(", ");
       sb.append("sender=").append(getSender()).append(", ");
       sb.append("privacyGroupId=").append(getPrivacyGroupIdBase64()).append(", ");
       sb.append("gasPrice=").append(getGasPrice()).append(", "); // TODO optional
