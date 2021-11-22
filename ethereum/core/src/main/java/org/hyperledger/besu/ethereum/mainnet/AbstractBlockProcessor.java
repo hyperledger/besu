@@ -156,6 +156,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
+
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
               blockchain,
@@ -198,6 +199,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return AbstractBlockProcessor.Result.failed();
     }
 
+    worldState.persist(blockHeader);
     return AbstractBlockProcessor.Result.successful(receipts);
   }
 
