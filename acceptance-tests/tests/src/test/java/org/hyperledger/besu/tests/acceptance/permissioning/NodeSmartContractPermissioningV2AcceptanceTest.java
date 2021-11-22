@@ -97,7 +97,7 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
   }
 
   @Test
-  public void onchainPermissioningAllowlistShouldPersistAcrossRestarts() {
+  public void flexiblePermissioningAllowlistShouldPersistAcrossRestarts() {
     permissionedCluster.stop();
     permissionedCluster.start(bootnode, forbiddenNode, allowedNode, permissionedNode);
 

@@ -26,6 +26,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
@@ -3521,7 +3522,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void onchainPrivacyGroupEnabledFlagDefaultValueIsFalse() {
+  public void flexiblePrivacyGroupEnabledFlagDefaultValueIsFalse() {
     parseCommand(
         "--privacy-enabled",
         "--privacy-public-key-file",
@@ -3548,7 +3549,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-enabled",
         "--privacy-public-key-file",
         ENCLAVE_PUBLIC_KEY_PATH,
-        "--privacy-flexible-groups-enabled",
+        "--privacy-onchain-groups-enabled",
         "--min-gas-price",
         "0");
 
@@ -3563,6 +3564,23 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
     assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(true);
+  }
+
+  @Test
+  public void onchainPrivacyGroupEnabledOptionIsDeprecated() {
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH,
+        "--privacy-onchain-groups-enabled",
+        "--min-gas-price",
+        "0");
+
+    verify(mockLogger)
+        .warn(
+            DEPRECATION_WARNING_MSG,
+            "--privacy-onchain-groups-enabled",
+            "--privacy-flexible-groups-enabled");
   }
 
   @Test

@@ -51,15 +51,15 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
   private static final Logger LOG = getLogger();
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
-  private final boolean onchainPrivacyGroupsEnabled;
+  private final boolean flexiblePrivacyGroupsEnabled;
 
   public PrivDistributeRawTransaction(
       final PrivacyController privacyController,
       final PrivacyIdProvider privacyIdProvider,
-      final boolean onchainPrivacyGroupsEnabled) {
+      final boolean flexiblePrivacyGroupsEnabled) {
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
-    this.onchainPrivacyGroupsEnabled = onchainPrivacyGroupsEnabled;
+    this.flexiblePrivacyGroupsEnabled = flexiblePrivacyGroupsEnabled;
   }
 
   @Override
@@ -84,7 +84,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
 
       final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
 
-      if (onchainPrivacyGroupsEnabled && maybePrivacyGroupId.isEmpty()) {
+      if (flexiblePrivacyGroupsEnabled && maybePrivacyGroupId.isEmpty()) {
         return new JsonRpcErrorResponse(id, JsonRpcError.FLEXIBLE_PRIVACY_GROUP_ID_NOT_AVAILABLE);
       }
 
@@ -93,7 +93,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
               gId ->
                   privacyController.findPrivacyGroupByGroupId(gId.toBase64String(), privacyUserId));
 
-      if (onchainPrivacyGroupsEnabled) {
+      if (flexiblePrivacyGroupsEnabled) {
         if (FlexibleUtil.isGroupAdditionTransaction(privateTransaction)) {
           final List<String> participantsFromParameter =
               FlexibleUtil.getParticipantsFromParameter(privateTransaction.getPayload());

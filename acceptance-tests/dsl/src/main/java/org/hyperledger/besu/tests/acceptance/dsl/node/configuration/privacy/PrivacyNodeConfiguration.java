@@ -19,7 +19,7 @@ import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 
 public class PrivacyNodeConfiguration {
 
-  private final boolean isOnchainPrivacyGroupEnabled;
+  private final boolean isFlexiblePrivacyGroupEnabled;
   private final boolean isMultitenancyEnabled;
   private final boolean isPrivacyPluginEnabled;
   private final BesuNodeConfiguration besuConfig;
@@ -31,20 +31,20 @@ public class PrivacyNodeConfiguration {
   }
 
   public PrivacyNodeConfiguration(
-      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isFlexiblePrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
       final boolean isPrivacyPluginEnabled,
       final BesuNodeConfiguration besuConfig,
       final EnclaveKeyConfiguration keyConfig) {
-    this.isOnchainPrivacyGroupEnabled = isOnchainPrivacyGroupEnabled;
+    this.isFlexiblePrivacyGroupEnabled = isFlexiblePrivacyGroupEnabled;
     this.besuConfig = besuConfig;
     this.keyConfig = keyConfig;
     this.isMultitenancyEnabled = isMultitenancyEnabled;
     this.isPrivacyPluginEnabled = isPrivacyPluginEnabled;
   }
 
-  public boolean isOnchainPrivacyGroupEnabled() {
-    return isOnchainPrivacyGroupEnabled;
+  public boolean isFlexiblePrivacyGroupEnabled() {
+    return isFlexiblePrivacyGroupEnabled;
   }
 
   public boolean isMultitenancyEnabled() {
