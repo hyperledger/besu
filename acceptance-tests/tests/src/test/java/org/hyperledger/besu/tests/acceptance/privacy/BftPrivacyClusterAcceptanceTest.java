@@ -67,11 +67,9 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   @Parameterized.Parameters(name = "{0}")
   public static Collection<BftPrivacyType> bftPrivacyTypes() {
     final List<BftPrivacyType> bftPrivacyTypes = new ArrayList<>();
-    for (EnclaveType x : EnclaveType.values()) {
-      if (!x.equals(EnclaveType.NOOP)) {
-        for (ConsensusType consensusType : ConsensusType.values()) {
-          bftPrivacyTypes.add(new BftPrivacyType(x, consensusType, Restriction.RESTRICTED));
-        }
+    for (EnclaveType x : EnclaveType.valuesForTests()) {
+      for (ConsensusType consensusType : ConsensusType.values()) {
+        bftPrivacyTypes.add(new BftPrivacyType(x, consensusType, Restriction.RESTRICTED));
       }
     }
 
