@@ -19,6 +19,8 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.consensus.common.CombinedProtocolScheduleFactory;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -57,7 +59,11 @@ import java.time.Clock;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Optional;
+import java.util.TreeSet;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -69,19 +75,35 @@ import com.google.common.base.Preconditions;
 public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilder {
 
   private final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule = new HashMap<>();
+  private final BiFunction<
+          NavigableSet<ForkSpec<ProtocolSchedule>>, Optional<BigInteger>, ProtocolSchedule>
+      combinedProtocolScheduleFactory;
 
   public ConsensusScheduleBesuControllerBuilder(
       final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule) {
+    this(
+        besuControllerBuilderSchedule,
+        (protocolScheduleSpecs, chainId) ->
+            new CombinedProtocolScheduleFactory().create(protocolScheduleSpecs, chainId));
+  }
+
+  @VisibleForTesting
+  protected ConsensusScheduleBesuControllerBuilder(
+      final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule,
+      final BiFunction<
+              NavigableSet<ForkSpec<ProtocolSchedule>>, Optional<BigInteger>, ProtocolSchedule>
+          combinedProtocolScheduleFactory) {
     Preconditions.checkNotNull(
         besuControllerBuilderSchedule, "BesuControllerBuilder schedule can't be null");
     Preconditions.checkArgument(
         !besuControllerBuilderSchedule.isEmpty(), "BesuControllerBuilder schedule can't be empty");
     this.besuControllerBuilderSchedule.putAll(besuControllerBuilderSchedule);
+    this.combinedProtocolScheduleFactory = combinedProtocolScheduleFactory;
   }
 
   @Override
   protected void prepForBuild() {
-    besuControllerBuilderSchedule.get(0L).prepForBuild();
+    besuControllerBuilderSchedule.values().forEach(BesuControllerBuilder::prepForBuild);
   }
 
   @Override
@@ -105,7 +127,12 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
-    return besuControllerBuilderSchedule.get(0L).createProtocolSchedule();
+    final NavigableSet<ForkSpec<ProtocolSchedule>> protocolScheduleSpecs =
+        besuControllerBuilderSchedule.entrySet().stream()
+            .map(e -> new ForkSpec<>(e.getKey(), e.getValue().createProtocolSchedule()))
+            .collect(Collectors.toCollection(() -> new TreeSet<>(ForkSpec.COMPARATOR)));
+    final Optional<BigInteger> chainId = genesisConfig.getConfigOptions().getChainId();
+    return combinedProtocolScheduleFactory.apply(protocolScheduleSpecs, chainId);
   }
 
   @Override
