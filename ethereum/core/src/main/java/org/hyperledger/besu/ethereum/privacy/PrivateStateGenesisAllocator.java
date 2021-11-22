@@ -37,13 +37,13 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class PrivateStateGenesisAllocator {
   private static final Logger LOG = LogManager.getLogger();
 
-  private final Boolean isOnchainPrivacyEnabled;
+  private final Boolean isFlexiblePrivacyEnabled;
   private final PrivacyGroupGenesisProvider privacyGroupGenesisProvider;
 
   public PrivateStateGenesisAllocator(
-      final Boolean isOnchainPrivacyEnabled,
+      final Boolean isFlexiblePrivacyEnabled,
       final PrivacyGroupGenesisProvider privacyGroupGenesisProvider) {
-    this.isOnchainPrivacyEnabled = isOnchainPrivacyEnabled;
+    this.isFlexiblePrivacyEnabled = isFlexiblePrivacyEnabled;
     this.privacyGroupGenesisProvider = privacyGroupGenesisProvider;
   }
 
@@ -87,7 +87,7 @@ public class PrivateStateGenesisAllocator {
               });
     }
 
-    if (isOnchainPrivacyEnabled) {
+    if (isFlexiblePrivacyEnabled) {
       // inject management
       final MutableAccount managementContract =
           privateWorldStateUpdater.createAccount(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT).getMutable();

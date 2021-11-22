@@ -53,13 +53,13 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
 
   private BesuNode minerNode;
   private DefaultFlexiblePrivacyGroupManagementContract
-      defaultOnchainPrivacyGroupManagementContract;
+      defaultFlexiblePrivacyGroupManagementContract;
 
   @Before
   public void setUp() throws Exception {
     minerNode = besu.createMinerNode("node");
     cluster.start(minerNode);
-    defaultOnchainPrivacyGroupManagementContract =
+    defaultFlexiblePrivacyGroupManagementContract =
         minerNode.execute(
             contractTransactions.createSmartContract(
                 DefaultFlexiblePrivacyGroupManagementContract.class));
@@ -67,7 +67,7 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
         minerNode.execute(
             contractTransactions.createSmartContract(
                 FlexiblePrivacyGroupManagementProxy.class,
-                defaultOnchainPrivacyGroupManagementContract.getContractAddress()));
+                defaultFlexiblePrivacyGroupManagementContract.getContractAddress()));
   }
 
   @Test

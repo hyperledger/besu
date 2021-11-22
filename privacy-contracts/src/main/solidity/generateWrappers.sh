@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 targets="
-OnChainPrivacyGroupManagementInterface
-DefaultOnChainPrivacyGroupManagementContract
-OnChainPrivacyGroupManagementProxy
+FlexiblePrivacyGroupManagementInterface
+DefaultFlexiblePrivacyGroupManagementContract
+FlexiblePrivacyGroupManagementProxy
 "
 
 for target in ${targets}; do

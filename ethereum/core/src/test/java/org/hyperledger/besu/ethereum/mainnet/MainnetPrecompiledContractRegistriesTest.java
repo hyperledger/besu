@@ -41,7 +41,7 @@ public class MainnetPrecompiledContractRegistriesTest {
       new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
 
   @Test
-  public void whenOnchainPrivacyGroupsNotEnabled_defaultPrivacyPrecompileIsInRegistry() {
+  public void whenFlexiblePrivacyGroupsNotEnabled_defaultPrivacyPrecompileIsInRegistry() {
     when(privacyParameters.isFlexiblePrivacyGroupsEnabled()).thenReturn(false);
     when(privacyParameters.isEnabled()).thenReturn(true);
 
@@ -54,7 +54,7 @@ public class MainnetPrecompiledContractRegistriesTest {
   }
 
   @Test
-  public void whenOnchainPrivacyGroupsEnabled_onchainPrivacyPrecompileIsInRegistry() {
+  public void whenFlexiblePrivacyGroupsEnabled_flexiblePrivacyPrecompileIsInRegistry() {
     when(privacyParameters.isFlexiblePrivacyGroupsEnabled()).thenReturn(true);
     when(privacyParameters.isEnabled()).thenReturn(true);
 

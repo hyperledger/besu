@@ -111,7 +111,7 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
     final MultiTenancyPrivacyGroup privacyGroup = new MultiTenancyPrivacyGroup();
     privacyGroup.addNodeWithTenants(
         aliceMultiTenancyPrivacyNode, aliceMultiTenancyPrivacyNode.getTenants());
-    createOnchainPrivacyGroup(privacyGroup);
+    createFlexiblePrivacyGroup(privacyGroup);
   }
 
   @Test
@@ -120,7 +120,7 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
     final List<String> tenants = aliceMultiTenancyPrivacyNode.getTenants();
     final String removedTenant = tenants.remove(tenants.size() - 1);
     twoTenantsFromAlice.addNodeWithTenants(aliceMultiTenancyPrivacyNode, tenants);
-    final String privacyGroupId = createOnchainPrivacyGroup(twoTenantsFromAlice);
+    final String privacyGroupId = createFlexiblePrivacyGroup(twoTenantsFromAlice);
 
     final MultiTenancyPrivacyNode multiTenancyPrivacyNode =
         twoTenantsFromAlice.getPrivacyNodes().get(0);
@@ -267,7 +267,7 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
                 privacyNode.execute(
                     privacyTransactions.findFlexiblePrivacyGroup(
                         Base64String.unwrapList(base64StringList))))
-        .hasMessageContaining("Error finding onchain privacy group");
+        .hasMessageContaining("Error finding flexible privacy group");
 
     // check that a member can do a priv_call
     privacyNode
@@ -319,7 +319,7 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
     final MultiTenancyPrivacyGroup allTenantsFromAlice = new MultiTenancyPrivacyGroup();
     final List<String> tenants = aliceMultiTenancyPrivacyNode.getTenants();
     allTenantsFromAlice.addNodeWithTenants(aliceMultiTenancyPrivacyNode, tenants);
-    final String privacyGroupId = createOnchainPrivacyGroup(allTenantsFromAlice);
+    final String privacyGroupId = createFlexiblePrivacyGroup(allTenantsFromAlice);
     final MultiTenancyPrivacyNode multiTenancyPrivacyNode =
         allTenantsFromAlice.getPrivacyNodes().get(0);
     final String groupCreatingTenant = allTenantsFromAlice.getGroupCreatingTenant();
@@ -408,7 +408,7 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
         .hasMessageContaining("Unauthorized");
   }
 
-  private String createOnchainPrivacyGroup(final MultiTenancyPrivacyGroup group) {
+  private String createFlexiblePrivacyGroup(final MultiTenancyPrivacyGroup group) {
     final List<MultiTenancyPrivacyNode> multiTenancyPrivacyNodes = group.getPrivacyNodes();
     final MultiTenancyPrivacyNode groupCreatorMultiTenancyPrivacyNode =
         multiTenancyPrivacyNodes.get(0);

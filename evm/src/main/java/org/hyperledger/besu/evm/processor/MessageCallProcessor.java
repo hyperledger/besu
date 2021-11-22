@@ -153,7 +153,7 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
       final Bytes output = contract.compute(frame.getInputData(), frame);
       operationTracer.tracePrecompileCall(frame, gasRequirement, output);
       if (output != null) {
-        if (contract.getName().equals("Privacy") || contract.getName().equals("OnchainPrivacy")) {
+        if (contract.getName().equals("Privacy") || contract.getName().equals("FlexiblePrivacy")) {
           // do not decrement the gas requirement for a privacy pre-compile contract call -> leads
           // to discrepancies in receipts root between public and private nodes in a network.
           frame.incrementRemainingGas(gasRequirement);
