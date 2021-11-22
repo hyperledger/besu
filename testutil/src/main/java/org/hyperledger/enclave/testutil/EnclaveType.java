@@ -14,8 +14,19 @@
  */
 package org.hyperledger.enclave.testutil;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public enum EnclaveType {
   ORION,
   TESSERA,
-  NOOP
+  NOOP;
+
+  public static List<EnclaveType> valuesForTests() {
+    return Arrays.stream(values())
+        .filter(enclaveType -> enclaveType != NOOP)
+        .filter(enclaveType -> enclaveType != ORION)
+        .collect(Collectors.toList());
+  }
 }

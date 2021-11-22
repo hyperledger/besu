@@ -15,7 +15,6 @@
 package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 
 import static org.hyperledger.enclave.testutil.EnclaveType.NOOP;
-import static org.hyperledger.enclave.testutil.EnclaveType.ORION;
 import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
 import static org.web3j.utils.Restriction.RESTRICTED;
 import static org.web3j.utils.Restriction.UNRESTRICTED;
@@ -49,7 +48,6 @@ public abstract class ParameterizedEnclaveTestBase extends PrivacyAcceptanceTest
     return Arrays.asList(
         new Object[][] {
           {RESTRICTED, TESSERA},
-          {RESTRICTED, ORION},
           {UNRESTRICTED, NOOP}
         });
   }
