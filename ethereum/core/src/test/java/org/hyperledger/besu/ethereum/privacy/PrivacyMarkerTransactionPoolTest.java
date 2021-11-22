@@ -94,8 +94,7 @@ public class PrivacyMarkerTransactionPoolTest {
   }
 
   @Test
-  public void shouldRemoveTransactionsFromPendingListWhenIncludedInBlockOnchain()
-      throws InterruptedException {
+  public void shouldRemoveTransactionsFromPendingListWhenIncludedInBlockOnchain() {
     final PrivacyMarkerTransactionTracker tx1Tracker =
         new PrivacyMarkerTransactionTracker(
             tx1.getHash(), ADDRESS_ONE, PRIVACY_GROUP_ID, 66L, 99L, Optional.of(Wei.ZERO));
@@ -105,9 +104,26 @@ public class PrivacyMarkerTransactionPoolTest {
     assertThat(pmtPool.getActiveCount()).isEqualTo(1L);
     appendBlock(tx1);
 
-    Thread.sleep(20);
     assertTransactionNotPending(tx1);
     assertThat(pmtPool.getActiveCount()).isEqualTo(0L);
+  }
+
+  @Test
+  public void testCleanupPool() {
+    final PrivacyMarkerTransactionTracker tx1Tracker =
+        new PrivacyMarkerTransactionTracker(
+            tx1.getHash(), ADDRESS_ONE, PRIVACY_GROUP_ID, 66L, 99L, Optional.empty());
+    pmtPool.addPmtTransactionTracker(tx1Tracker);
+    System.out.println(tx1Tracker);
+    assertTransactionPending(tx1.getHash(), tx1Tracker);
+    assertThat(pmtPool.getActiveCount()).isEqualTo(1L);
+    appendBlock(tx1);
+
+    assertTransactionNotPending(tx1);
+    assertThat(pmtPool.getTotalCount()).isEqualTo(1L);
+    assertThat(pmtPool.getActiveCount()).isEqualTo(0L);
+    pmtPool.cleanupPmtPool(1, 0);
+    assertThat(pmtPool.getTotalCount()).isEqualTo(0L);
   }
 
   private void assertTransactionPending(final Hash hash, final PrivacyMarkerTransactionTracker t) {

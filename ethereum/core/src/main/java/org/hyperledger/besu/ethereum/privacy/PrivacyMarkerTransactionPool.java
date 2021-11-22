@@ -22,9 +22,11 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.plugin.data.Transaction;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -34,34 +36,44 @@ import org.apache.logging.log4j.Logger;
 
 public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LogManager.getLogger();
-  private final Map<Hash, PrivacyMarkerTransactionTracker> pmtPool;
+  private final Map<Hash, PrivacyMarkerTransactionTracker> pmtTrackersByHash;
   private final Map<String, Collection<PrivacyMarkerTransactionTracker>>
       pmtTrackersBySenderAndGroup;
 
   public PrivacyMarkerTransactionPool(final Blockchain blockchain) {
-    this.pmtPool = new HashMap<>();
+    this.pmtTrackersByHash = new HashMap<>();
     this.pmtTrackersBySenderAndGroup = new HashMap<>();
     blockchain.observeBlockAdded(this);
   }
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
-    event.getAddedTransactions().forEach(this::transactionAddedToBlock);
+    final long blockNumber = event.getBlock().getHeader().getNumber();
+    event.getAddedTransactions().forEach(tx -> transactionAddedToBlock(tx, blockNumber));
     event.getRemovedTransactions().forEach(this::transactionRemovedFromBlockByReorg);
+    // cleanup periodically
+    if (blockNumber % 10 == 0) {
+      cleanupPmtPool(blockNumber, 6);
+    }
   }
 
-  private void transactionAddedToBlock(final Transaction tx) {
-    final PrivacyMarkerTransactionTracker tracker = pmtPool.get(tx.getHash());
+  private void transactionAddedToBlock(final Transaction tx, final long blockNumber) {
+    final PrivacyMarkerTransactionTracker tracker = pmtTrackersByHash.get(tx.getHash());
     if (tracker != null) {
       tracker.setActive(false);
+      tracker.setBlockNumber(blockNumber);
       pmtTrackersBySenderAndGroup.get(tracker.getKey()).stream()
           .filter(t -> t.getHash().equals(tx.getHash()))
-          .forEach(t -> t.setActive(false));
+          .forEach(
+              t -> {
+                t.setActive(false);
+                t.setBlockNumber(blockNumber);
+              });
     }
   }
 
   private void transactionRemovedFromBlockByReorg(final Transaction tx) {
-    final PrivacyMarkerTransactionTracker tracker = pmtPool.get(tx.getHash());
+    final PrivacyMarkerTransactionTracker tracker = pmtTrackersByHash.get(tx.getHash());
     if (tracker != null) {
       tracker.setActive(true);
       // TODO there should be only one that matches the hash - is there a better option than forEach
@@ -74,8 +86,8 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
   @VisibleForTesting
   public Optional<PrivacyMarkerTransactionTracker> getTransactionByHash(
       final Hash transactionHash, final boolean onlyActive) {
-    if (pmtPool.containsKey(transactionHash)) {
-      PrivacyMarkerTransactionTracker tracker = pmtPool.get(transactionHash);
+    if (pmtTrackersByHash.containsKey(transactionHash)) {
+      PrivacyMarkerTransactionTracker tracker = pmtTrackersByHash.get(transactionHash);
       if (!onlyActive || tracker.isActive) {
         return Optional.of(tracker);
       }
@@ -95,6 +107,28 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
         .filter(tracker -> tracker.isActive)
         .map(tracker -> tracker.getPrivateNonce())
         .max(Long::compare);
+  }
+
+  @VisibleForTesting
+  protected void cleanupPmtPool(final long blockNumber, final int numberOfBlocksClearance) {
+    // tx that were added more than numberOfBlocksClearance blocks ago can be totally removed
+    final List<Hash> hashesToRemove = new ArrayList<>();
+    pmtTrackersByHash.values().stream()
+        .filter(
+            tracker ->
+                tracker.getBlockNumber().isPresent()
+                    && tracker.getBlockNumber().get() + numberOfBlocksClearance <= blockNumber)
+        .forEach(
+            tx -> {
+              hashesToRemove.add(tx.getHash());
+              final Collection<PrivacyMarkerTransactionTracker> trackers =
+                  pmtTrackersBySenderAndGroup.get(tx.getKey());
+              if (trackers == null) {
+                return;
+              }
+              trackers.remove(tx);
+            });
+    hashesToRemove.forEach(hash -> pmtTrackersByHash.remove(hash));
   }
 
   public Hash addPmtTransactionTracker(
@@ -129,15 +163,19 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
   @VisibleForTesting
   protected Hash addPmtTransactionTracker(final PrivacyMarkerTransactionTracker pmtTracker) {
 
-    pmtPool.put(pmtTracker.getHash(), pmtTracker);
+    pmtTrackersByHash.put(pmtTracker.getHash(), pmtTracker);
     pmtTrackersBySenderAndGroup.putIfAbsent(pmtTracker.getKey(), new HashSet<>());
     pmtTrackersBySenderAndGroup.get(pmtTracker.getKey()).add(pmtTracker);
     LOG.debug("adding: {} pmtHash: {} ", pmtTracker, pmtTracker.getHash());
     return pmtTracker.getHash();
   }
 
+  public long getTotalCount() {
+    return pmtTrackersByHash.values().stream().count();
+  }
+
   public long getActiveCount() {
-    return pmtPool.values().stream().filter(tx -> tx.isActive).count();
+    return pmtTrackersByHash.values().stream().filter(tx -> tx.isActive).count();
   }
 
   protected static class PrivacyMarkerTransactionTracker {
@@ -150,6 +188,7 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
     // whether the tracker should be considered when calculating nonce. Set to false when tx is
     // added to a block, and set to true if it's removed by a reorg.
     private boolean isActive = true;
+    private Optional<Long> blockNumber;
 
     protected PrivacyMarkerTransactionTracker(
         final Hash hash,
@@ -198,6 +237,14 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
       this.isActive = isActive;
     }
 
+    private void setBlockNumber(final long blockNumber) {
+      this.blockNumber = Optional.of(blockNumber);
+    }
+
+    private Optional<Long> getBlockNumber() {
+      return blockNumber;
+    }
+
     private String getKey() {
       return getSender() + getPrivacyGroupIdBase64();
     }
@@ -211,7 +258,7 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
       sb.append("hash=").append(getHash()).append(", ");
       sb.append("sender=").append(getSender()).append(", ");
       sb.append("privacyGroupId=").append(getPrivacyGroupIdBase64()).append(", ");
-      sb.append("gasPrice=").append(getGasPrice()).append(", "); // TODO optional
+      sb.append("gasPrice=").append(getGasPrice());
       return sb.append("}").toString();
     }
   }
