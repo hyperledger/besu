@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.datatypes.PayloadIdentifier;
+import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
