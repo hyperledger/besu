@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
@@ -64,6 +65,7 @@ public interface DefaultCommandValues {
   String DEFAULT_KEY_VALUE_STORAGE_NAME = "rocksdb";
   String DEFAULT_SECURITY_MODULE = "localfile";
   String DEFAULT_KEYSTORE_TYPE = "JKS";
+  List<String> DEFAULT_TLS_PROTOCOLS = List.of("TLSv1.2");
 
   static Path getDefaultBesuDataPath(final Object command) {
     // this property is retrieved from Gradle tasks or Besu running shell script.

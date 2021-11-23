@@ -18,48 +18,19 @@ package org.hyperledger.besu.ethereum.api.tls;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
 
 public class TlsConfiguration {
-
-  public static final List<String> DEFAULT_TLS_PROTOCOLS = Arrays.asList("TLSv1.2");
-  public static final List<String> JDK_ENABLED_CIPHERSUITES;
-  public static final List<String> JDK_ENABLED_PROTOCOLS;
 
   private final Path keyStorePath;
   private final Supplier<String> keyStorePasswordSupplier;
   private final Optional<TlsClientAuthConfiguration> clientAuthConfiguration;
   private final Optional<Set<String>> secureTransportProtocols;
   private final Optional<Set<String>> cipherSuites;
-
-  /* “Adapted from: eclipse-vertx/vert.x DefaultJDKCipherSuite.java” */
-  static {
-    ArrayList<String> protocols = new ArrayList<>();
-    ArrayList<String> ciphersuites = new ArrayList<>();
-    try {
-      SSLContext context = SSLContext.getInstance("TLS");
-      context.init(null, null, null);
-      SSLEngine engine = context.createSSLEngine();
-      Collections.addAll(ciphersuites, engine.getEnabledCipherSuites());
-      Collections.addAll(protocols, engine.getEnabledProtocols());
-    } catch (Throwable e) {
-      ciphersuites = null;
-      protocols = null;
-    }
-
-    JDK_ENABLED_CIPHERSUITES =
-        ciphersuites != null ? Collections.unmodifiableList(ciphersuites) : null;
-    JDK_ENABLED_PROTOCOLS = protocols != null ? Collections.unmodifiableList(protocols) : null;
-  }
 
   private TlsConfiguration(
       final Path keyStorePath,
@@ -124,12 +95,12 @@ public class TlsConfiguration {
     }
 
     public Builder withSecureTransportProtocols(final List<String> secureTransportProtocols) {
-      this.secureTransportProtocols = new HashSet<String>(secureTransportProtocols);
+      this.secureTransportProtocols = new HashSet<>(secureTransportProtocols);
       return this;
     }
 
     public Builder withCipherSuites(final List<String> cipherSuites) {
-      this.cipherSuites = new HashSet<String>(cipherSuites);
+      this.cipherSuites = new HashSet<>(cipherSuites);
       return this;
     }
 

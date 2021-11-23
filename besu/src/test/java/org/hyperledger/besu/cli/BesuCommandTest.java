@@ -2150,8 +2150,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     final int port = 1234;
     final String keystoreFile = "/tmp/test.p12";
     final String keystorePasswordFile = "/tmp/test.txt";
-    // final String protocols = "TLSv1.2,TLSv1.1"
-    // final String ciphersuites = "Test1,Test2"
 
     parseCommand(
         "--rpc-http-enabled",
@@ -2336,7 +2334,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpTlsCheckDefaultProtocolsAndCiphersuites() {
+  public void rpcHttpTlsCheckDefaultProtocolsAndCipherSuites() {
     final String host = "1.2.3.4";
     final int port = 1234;
     final String keystoreFile = "/tmp/test.p12";
@@ -2361,10 +2359,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
     final Optional<TlsConfiguration> tlsConfiguration =
         jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
-    assertThat(tlsConfiguration.isPresent()).isTrue();
+    assertThat(tlsConfiguration).isPresent();
     assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
-    assertThat(tlsConfiguration.get().getClientAuthConfiguration().isEmpty()).isTrue();
-    assertThat(tlsConfiguration.get().getCipherSuites().get().isEmpty()).isTrue();
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration()).isEmpty();
+    assertThat(tlsConfiguration.get().getCipherSuites().get()).isEmpty();
     assertThat(tlsConfiguration.get().getSecureTransportProtocols().get())
         .containsExactly("TLSv1.2");
 
@@ -2399,12 +2397,12 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpTlsCheckInvalidCiphersuites() {
+  public void rpcHttpTlsCheckInvalidCipherSuites() {
     final String host = "1.2.3.4";
     final int port = 1234;
     final String keystoreFile = "/tmp/test.p12";
     final String keystorePasswordFile = "/tmp/test.txt";
-    final String ciphersuites = "Invalid";
+    final String cipherSuites = "Invalid";
 
     parseCommand(
         "--rpc-http-enabled",
@@ -2417,11 +2415,12 @@ public class BesuCommandTest extends CommandTestAbstract {
         keystoreFile,
         "--rpc-http-tls-keystore-password-file",
         keystorePasswordFile,
-        "--rpc-http-tls-ciphersuites",
-        ciphersuites);
+        "--rpc-http-tls-cipher-suites",
+        cipherSuites);
 
     assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).contains("Invalid TLS ciphersuite specified " + ciphersuites);
+    assertThat(commandErrorOutput.toString())
+        .contains("Invalid TLS cipher suite specified " + cipherSuites);
   }
 
   @Test
@@ -2430,8 +2429,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final int port = 1234;
     final String keystoreFile = "/tmp/test.p12";
     final String keystorePasswordFile = "/tmp/test.txt";
-    final String protocols = "TLSv1.2,TLSv1.1";
-    final String ciphersuites =
+    final String protocols = "TLSv1.3,TLSv1.2";
+    final String cipherSuites =
         "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256";
 
     parseCommand(
@@ -2447,8 +2446,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         keystorePasswordFile,
         "--rpc-http-tls-protocols",
         protocols,
-        "--rpc-http-tls-ciphersuites",
-        ciphersuites);
+        "--rpc-http-tls-cipher-suites",
+        cipherSuites);
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
@@ -2457,14 +2456,14 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
     final Optional<TlsConfiguration> tlsConfiguration =
         jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
-    assertThat(tlsConfiguration.isPresent()).isTrue();
+    assertThat(tlsConfiguration).isPresent();
     assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
-    assertThat(tlsConfiguration.get().getClientAuthConfiguration().isEmpty()).isTrue();
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration()).isEmpty();
     assertThat(tlsConfiguration.get().getCipherSuites().get())
-        .containsExactly(
+        .containsExactlyInAnyOrder(
             "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256");
     assertThat(tlsConfiguration.get().getSecureTransportProtocols().get())
-        .containsExactly("TLSv1.2", "TLSv1.1");
+        .containsExactlyInAnyOrder("TLSv1.2", "TLSv1.3");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

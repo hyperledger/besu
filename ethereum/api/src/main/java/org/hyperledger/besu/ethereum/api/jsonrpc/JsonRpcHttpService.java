@@ -416,10 +416,7 @@ public class JsonRpcHttpService {
 
       tlsConfiguration
           .getSecureTransportProtocols()
-          .ifPresent(
-              secureTransportProtocols -> {
-                httpServerOptions.setEnabledSecureTransportProtocols(secureTransportProtocols);
-              });
+          .ifPresent(httpServerOptions::setEnabledSecureTransportProtocols);
 
       tlsConfiguration
           .getCipherSuites()
