@@ -117,8 +117,7 @@ public class SchedulableMiningCoordinator implements MiningCoordinator, BlockAdd
     final long currentBlock = event.getBlock().getHeader().getNumber();
     final MiningCoordinator nextMiningCoordinator =
         miningCoordinatorSchedule.getFork(currentBlock + 1).getValue();
-    if (!activeMiningCoordinator.equals(
-        nextMiningCoordinator)) { // TODO SLD equals() or object ref equality?
+    if (activeMiningCoordinator != nextMiningCoordinator) {
       LOG.debug(
           "Switching mining coordinator after block {} from {} to {}",
           currentBlock,
