@@ -4,6 +4,7 @@
 
 ### Additions and Improvements
 - Adding support of the NO_COLOR environment variable as described in the [NO_COLOR](https://no-color.org/) standard [#3085](https://github.com/hyperledger/besu/pull/3085)
+- Adding two new options to be able to specify desired TLS protocol version and Java cipher suites [#3099](https://github.com/hyperledger/besu/pull/3099)
 ### Bug Fixes
 
 ### Early Access Features
