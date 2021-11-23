@@ -139,7 +139,7 @@ public class AccountPermissioningControllerFactory {
       final TransactionSmartContractPermissioningController
           transactionSmartContractPermissioningController) {
     try {
-      LOG.debug("Validating onchain account permissioning smart contract configuration");
+      LOG.debug("Validating flexible account permissioning smart contract configuration");
 
       final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
@@ -165,7 +165,7 @@ public class AccountPermissioningControllerFactory {
       transactionSmartContractPermissioningController.isPermitted(transaction);
     } catch (Exception e) {
       final String msg =
-          "Error validating onchain account permissioning smart contract configuration";
+          "Error validating flexible account permissioning smart contract configuration";
       LOG.error(msg + ":", e);
       throw new IllegalStateException(msg, e);
     }
