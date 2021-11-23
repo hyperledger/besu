@@ -16,6 +16,7 @@
 | Edward Mack      | edwardmack       | mackcom          | 
 | Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jason Frame      | jframe           | jframe           |
+| Jiri Peinlich    | gezero           | jiri.peinlich    |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
