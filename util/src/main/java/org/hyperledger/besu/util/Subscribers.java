@@ -37,8 +37,8 @@ import org.apache.logging.log4j.Logger;
  * subscribers.unsubscribe(this::onSomeEvent);</code>
  * </pre>
  *
- * <p>Since the two separate <code>this::onSomeEvent</code> are not equal, the subscriber wouldn't be
- * removed. This bug is avoided by assigning each subscriber a unique ID and using that to
+ * <p>Since the two separate <code>this::onSomeEvent</code> are not equal, the subscriber wouldn't
+ * be removed. This bug is avoided by assigning each subscriber a unique ID and using that to
  * unsubscribe.
  *
  * @param <T> the type of subscribers
