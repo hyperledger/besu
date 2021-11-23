@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineF
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Map;
 
@@ -38,9 +37,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ProtocolContext protocolContext;
 
   ExecutionEngineJsonRpcMethods(
-      final MiningCoordinator miningCoordinator,
-      final ProtocolContext protocolContext,
-      final ProtocolSchedule protocolSchedule) {
+      final MiningCoordinator miningCoordinator, final ProtocolContext protocolContext) {
     this.mergeCoordinator = (MergeMiningCoordinator) miningCoordinator;
     this.protocolContext = protocolContext;
   }

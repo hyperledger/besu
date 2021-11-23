@@ -125,7 +125,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
             blockParam.getBaseFeePerGas(),
             Hash.ZERO,
             0,
-            null, // blockParam.getRandom(),
+            blockParam.getRandom(),
             headerFunctions);
 
     boolean execSuccess = false;
