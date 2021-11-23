@@ -279,7 +279,7 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
     final PrivacyNode firstNode = nodes.get(0);
     final String txHash =
         firstNode.execute(
-            privateContractTransactions.callFlexiblePermissioningSmartContract(
+            privateContractTransactions.callOnchainPermissioningSmartContract(
                 eventEmitter.getContractAddress(),
                 eventEmitter.store(BigInteger.valueOf(value)).encodeFunctionCall(),
                 firstNode.getTransactionSigningKey(),
@@ -349,7 +349,7 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
 
     final String callHash =
         alice.execute(
-            privateContractTransactions.callFlexiblePermissioningSmartContract(
+            privateContractTransactions.callOnchainPermissioningSmartContract(
                 eventEmitter.getContractAddress(),
                 eventEmitter.value().encodeFunctionCall(),
                 alice.getTransactionSigningKey(),
@@ -425,7 +425,7 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
 
     final String aliceStoreHash =
         charlie.execute(
-            privateContractTransactions.callFlexiblePermissioningSmartContract(
+            privateContractTransactions.callOnchainPermissioningSmartContract(
                 eventEmitter.getContractAddress(),
                 eventEmitter.store(BigInteger.valueOf(1337)).encodeFunctionCall(),
                 charlie.getTransactionSigningKey(),
@@ -498,7 +498,7 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
     final Supplier<String> callContract =
         () -> {
           return alice.execute(
-              privateContractTransactions.callFlexiblePermissioningSmartContract(
+              privateContractTransactions.callOnchainPermissioningSmartContract(
                   eventEmitter.getContractAddress(),
                   eventEmitter.value().encodeFunctionCall(),
                   alice.getTransactionSigningKey(),

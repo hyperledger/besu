@@ -94,7 +94,7 @@ public class FlexiblePrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase
   protected String callGetParticipantsMethodAndReturnCommitmentHash(
       final String privacyGroupId, final PrivacyNode groupCreator, final String privateFrom) {
     return groupCreator.execute(
-        privateContractTransactions.callFlexiblePermissioningSmartContract(
+        privateContractTransactions.callOnchainPermissioningSmartContract(
             FLEXIBLE_PRIVACY_PROXY.toHexString(),
             GET_PARTICIPANTS_METHOD_SIGNATURE.toString(),
             groupCreator.getTransactionSigningKey(),
