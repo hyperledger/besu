@@ -50,7 +50,7 @@ public class EthChainIdTest {
 
     final JsonRpcResponse response = method.response(request());
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -60,7 +60,7 @@ public class EthChainIdTest {
 
     final JsonRpcResponse response = method.response(request());
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext request() {

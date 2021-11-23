@@ -66,7 +66,7 @@ public class PermRemoveAccountsFromWhitelistTest {
 
     JsonRpcResponse actualResponse = method.response(request(accounts));
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -78,7 +78,7 @@ public class PermRemoveAccountsFromWhitelistTest {
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -90,7 +90,7 @@ public class PermRemoveAccountsFromWhitelistTest {
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -102,7 +102,7 @@ public class PermRemoveAccountsFromWhitelistTest {
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -115,7 +115,7 @@ public class PermRemoveAccountsFromWhitelistTest {
 
     JsonRpcResponse actualResponse = method.response(request(new ArrayList<>()));
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test

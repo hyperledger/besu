@@ -460,7 +460,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final PermissioningConfiguration config =
         permissioningConfigurationArgumentCaptor.getValue().get();
     assertThat(config.getSmartContractConfig().get())
-        .isEqualToComparingFieldByField(smartContractPermissioningConfiguration);
+        .usingRecursiveComparison()
+        .isEqualTo(smartContractPermissioningConfiguration);
 
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(commandOutput.toString()).isEmpty();
@@ -487,7 +488,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final PermissioningConfiguration config =
         permissioningConfigurationArgumentCaptor.getValue().get();
     assertThat(config.getSmartContractConfig().get())
-        .isEqualToComparingFieldByField(expectedConfig);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedConfig);
 
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(commandOutput.toString()).isEmpty();
@@ -516,7 +518,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final PermissioningConfiguration config =
         permissioningConfigurationArgumentCaptor.getValue().get();
     assertThat(config.getSmartContractConfig().get())
-        .isEqualToComparingFieldByField(expectedConfig);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedConfig);
 
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(commandOutput.toString()).isEmpty();
@@ -718,7 +721,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final PermissioningConfiguration config =
         permissioningConfigurationArgumentCaptor.getValue().get();
     assertThat(config.getLocalConfig().get())
-        .isEqualToComparingFieldByField(localPermissioningConfiguration);
+        .usingRecursiveComparison()
+        .isEqualTo(localPermissioningConfiguration);
 
     assertThat(commandErrorOutput.toString()).isEmpty();
     assertThat(commandOutput.toString()).isEmpty();

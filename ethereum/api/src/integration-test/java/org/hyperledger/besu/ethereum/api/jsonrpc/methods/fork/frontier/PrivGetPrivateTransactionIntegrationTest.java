@@ -182,6 +182,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
         (PrivateTransactionLegacyResult) response.getResult();
 
     assertThat(new PrivateTransactionLegacyResult(this.privateTransaction))
-        .isEqualToComparingFieldByField(result);
+        .usingRecursiveComparison()
+        .isEqualTo(result);
   }
 }

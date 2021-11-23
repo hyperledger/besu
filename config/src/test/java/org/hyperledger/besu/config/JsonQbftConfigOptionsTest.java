@@ -38,4 +38,12 @@ public class JsonQbftConfigOptionsTest {
 
     assertThat(configOptions.getValidatorContractAddress()).hasValue("0xabc");
   }
+
+  @Test
+  public void asMapDoesNotIncludeEmptyOptionalFields() {
+    final ObjectNode objectNode = objectMapper.createObjectNode();
+    final JsonQbftConfigOptions configOptions = new JsonQbftConfigOptions(objectNode);
+
+    assertThat(configOptions.asMap()).isEmpty();
+  }
 }

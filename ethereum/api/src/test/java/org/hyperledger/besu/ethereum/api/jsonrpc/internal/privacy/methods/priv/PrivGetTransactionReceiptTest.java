@@ -100,7 +100,7 @@ public class PrivGetTransactionReceiptTest {
     final PrivateTransactionReceiptResult result =
         (PrivateTransactionReceiptResult) response.getResult();
 
-    assertThat(result).isEqualToComparingFieldByField(expectedResult);
+    assertThat(result).usingRecursiveComparison().isEqualTo(expectedResult);
   }
 
   @Test
@@ -121,7 +121,7 @@ public class PrivGetTransactionReceiptTest {
     final PrivateTransactionReceiptResult result =
         (PrivateTransactionReceiptResult) response.getResult();
 
-    assertThat(result).isEqualToComparingFieldByField(expectedResult);
+    assertThat(result).usingRecursiveComparison().isEqualTo(expectedResult);
   }
 
   @Test
