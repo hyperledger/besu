@@ -66,8 +66,7 @@ public class BftBlockInterface implements BlockInterface {
 
   @Override
   public Collection<Address> validatorsInBlock(final BlockHeader header) {
-    final BftExtraData bftExtraData =
-        bftExtraDataCodec.decode(header); // TODO SLD fails when starting with ibft 1
+    final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
     return bftExtraData.getValidators();
   }
 

@@ -119,10 +119,10 @@ public class SchedulableMiningCoordinator implements MiningCoordinator, BlockAdd
         miningCoordinatorSchedule.getFork(currentBlock + 1).getValue();
     if (activeMiningCoordinator != nextMiningCoordinator) {
       LOG.debug(
-          "Switching mining coordinator after block {} from {} to {}",
+          "Switching mining coordinator at block {} from {} to {}",
           currentBlock,
-          activeMiningCoordinator.getClass().getName(),
-          nextMiningCoordinator.getClass().getTypeName());
+          activeMiningCoordinator.getClass().getSimpleName(),
+          nextMiningCoordinator.getClass().getSimpleName());
       activeMiningCoordinator.stop();
       nextMiningCoordinator.start();
       activeMiningCoordinator = nextMiningCoordinator;

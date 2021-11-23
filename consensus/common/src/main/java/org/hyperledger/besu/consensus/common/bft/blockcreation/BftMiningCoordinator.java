@@ -79,7 +79,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
   public void start() {
     if (state.compareAndSet(State.IDLE, State.RUNNING)) {
       bftExecutors.start();
-      blockAddedObserverId = blockchain.observeBlockAdded(this); // TODO SLD duplicate block event
+      blockAddedObserverId = blockchain.observeBlockAdded(this);
       eventHandler.start();
       bftExecutors.executeBftProcessor(bftProcessor);
     }
