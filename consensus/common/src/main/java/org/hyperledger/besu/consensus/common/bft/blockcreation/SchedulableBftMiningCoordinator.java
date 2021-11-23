@@ -38,13 +38,13 @@ public class SchedulableBftMiningCoordinator implements MiningCoordinator, Block
 
   private static final Logger LOG = getLogger();
 
-  private final BftForksSchedule<BftMiningCoordinator> miningCoordinatorSchedule;
+  private final BftForksSchedule<MiningCoordinator> miningCoordinatorSchedule;
   private final Blockchain blockchain;
-  private BftMiningCoordinator activeMiningCoordinator;
+  private MiningCoordinator activeMiningCoordinator;
   private long blockAddedObserverId;
 
   public SchedulableBftMiningCoordinator(
-      final BftForksSchedule<BftMiningCoordinator> miningCoordinatorSchedule,
+      final BftForksSchedule<MiningCoordinator> miningCoordinatorSchedule,
       final Blockchain blockchain) {
     this.miningCoordinatorSchedule = miningCoordinatorSchedule;
     this.blockchain = blockchain;
@@ -115,7 +115,7 @@ public class SchedulableBftMiningCoordinator implements MiningCoordinator, Block
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     final long currentBlock = event.getBlock().getHeader().getNumber();
-    final BftMiningCoordinator nextMiningCoordinator =
+    final MiningCoordinator nextMiningCoordinator =
         miningCoordinatorSchedule.getFork(currentBlock + 1).getValue();
     if (!activeMiningCoordinator.equals(
         nextMiningCoordinator)) { // TODO SLD equals() or object ref equality?
@@ -128,11 +128,13 @@ public class SchedulableBftMiningCoordinator implements MiningCoordinator, Block
       nextMiningCoordinator.start();
       activeMiningCoordinator = nextMiningCoordinator;
     }
-    activeMiningCoordinator.onBlockAdded(event);
+    if (activeMiningCoordinator instanceof BftMiningCoordinator) {
+      ((BftMiningCoordinator) activeMiningCoordinator).onBlockAdded(event);
+    }
   }
 
   @VisibleForTesting
-  public BftForksSchedule<BftMiningCoordinator> getMiningCoordinatorSchedule() {
+  public BftForksSchedule<MiningCoordinator> getMiningCoordinatorSchedule() {
     return this.miningCoordinatorSchedule;
   }
 }

@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -42,24 +43,23 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class SchedulableBftMiningCoordinatorTest {
 
-  // TODO SLD make this work for NoopMiningCoordinator
   @Mock private BftMiningCoordinator coordinator1;
   @Mock private BftMiningCoordinator coordinator2;
+  @Mock private NoopMiningCoordinator noopCoordinator;
   @Mock private Blockchain blockchain;
   @Mock private BlockHeader blockHeader;
   @Mock private BlockBody blockBody;
   private Block block;
   private BlockAddedEvent blockEvent;
-  private BftForksSchedule<BftMiningCoordinator> miningCoordinatorSchedule;
+  private BftForksSchedule<MiningCoordinator> miningCoordinatorSchedule;
   private static final long GENESIS_BLOCK = 0L;
   private static final long MIGRATION_BLOCK = 5L;
 
   @Before
   public void setup() {
-    final ForkSpec<BftMiningCoordinator> genesisFork = new ForkSpec<>(GENESIS_BLOCK, coordinator1);
-    final ForkSpec<BftMiningCoordinator> migrationFork1 =
-        new ForkSpec<>(MIGRATION_BLOCK, coordinator2);
-    miningCoordinatorSchedule = new BftForksSchedule<>(genesisFork, List.of(migrationFork1));
+    final ForkSpec<MiningCoordinator> genesisFork = new ForkSpec<>(GENESIS_BLOCK, coordinator1);
+    final ForkSpec<MiningCoordinator> migrationFork = new ForkSpec<>(MIGRATION_BLOCK, coordinator2);
+    miningCoordinatorSchedule = new BftForksSchedule<>(genesisFork, List.of(migrationFork));
     this.block = new Block(blockHeader, blockBody);
     blockEvent = BlockAddedEvent.createForHeadAdvancement(this.block, emptyList(), emptyList());
   }
@@ -68,7 +68,9 @@ public class SchedulableBftMiningCoordinatorTest {
   public void startShouldRegisterThisCoordinatorAsObserver() {
     final SchedulableBftMiningCoordinator coordinator =
         new SchedulableBftMiningCoordinator(miningCoordinatorSchedule, blockchain);
+
     coordinator.start();
+
     verify(blockchain).observeBlockAdded(coordinator);
   }
 
@@ -77,34 +79,35 @@ public class SchedulableBftMiningCoordinatorTest {
     final SchedulableBftMiningCoordinator coordinator =
         new SchedulableBftMiningCoordinator(miningCoordinatorSchedule, blockchain);
     when(blockchain.observeBlockAdded(coordinator)).thenReturn(1L);
+
     coordinator.start();
     coordinator.stop();
+
     verify(blockchain).removeObserver(1L);
   }
 
   @Test
-  public void onBlockAddedShouldDelegate() {
-    when(blockHeader.getNumber()).thenReturn(3L);
-    BlockAddedEvent event =
-        BlockAddedEvent.createForHeadAdvancement(block, emptyList(), emptyList());
-
-    new SchedulableBftMiningCoordinator(miningCoordinatorSchedule, blockchain).onBlockAdded(event);
-
-    verify(coordinator1).onBlockAdded(event);
-    verifyNoInteractions(coordinator2);
-  }
-
-  @Test
-  public void onBlockAddedShouldMigrateToNextMiningCoordinator() {
+  public void onBlockAddedShouldMigrateToNextMiningCoordinatorAndDelegate() {
     when(blockHeader.getNumber()).thenReturn(MIGRATION_BLOCK - 1);
-    BlockAddedEvent event =
-        BlockAddedEvent.createForHeadAdvancement(block, emptyList(), emptyList());
 
-    new SchedulableBftMiningCoordinator(miningCoordinatorSchedule, blockchain).onBlockAdded(event);
+    new SchedulableBftMiningCoordinator(miningCoordinatorSchedule, blockchain)
+        .onBlockAdded(blockEvent);
 
     verify(coordinator1).stop();
     verify(coordinator2).start();
-    verify(coordinator2).onBlockAdded(event);
+    verify(coordinator2).onBlockAdded(blockEvent);
+  }
+
+  @Test
+  public void onBlockAddedShouldNotDelegateWhenDelegateIsNoop() {
+    BftForksSchedule<MiningCoordinator> noopCoordinatorSchedule =
+        new BftForksSchedule<>(new ForkSpec<>(GENESIS_BLOCK, noopCoordinator), emptyList());
+    when(blockHeader.getNumber()).thenReturn(GENESIS_BLOCK);
+
+    new SchedulableBftMiningCoordinator(noopCoordinatorSchedule, blockchain)
+        .onBlockAdded(blockEvent);
+
+    verifyNoInteractions(noopCoordinator);
   }
 
   @Test

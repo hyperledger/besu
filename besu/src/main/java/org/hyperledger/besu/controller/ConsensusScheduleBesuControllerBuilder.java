@@ -22,7 +22,6 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.CombinedProtocolScheduleFactory;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.SchedulableBftMiningCoordinator;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -119,26 +118,22 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
 
-    final List<ForkSpec<BftMiningCoordinator>> miningCoordinatorForkSpecs =
+    final List<ForkSpec<MiningCoordinator>> miningCoordinatorForkSpecs =
         besuControllerBuilderSchedule.entrySet().stream()
-            // TODO SLD need to make this work for NoopMiningCoordinator (for IBFT1 -> QBFT
-            // migration)
-            // onBlockAdded is the problematic method
             .map(
                 e ->
                     new ForkSpec<>(
                         e.getKey(),
-                        (BftMiningCoordinator)
-                            e.getValue()
-                                .createMiningCoordinator(
-                                    protocolSchedule,
-                                    protocolContext,
-                                    transactionPool,
-                                    miningParameters,
-                                    syncState,
-                                    ethProtocolManager)))
+                        e.getValue()
+                            .createMiningCoordinator(
+                                protocolSchedule,
+                                protocolContext,
+                                transactionPool,
+                                miningParameters,
+                                syncState,
+                                ethProtocolManager)))
             .collect(Collectors.toList());
-    final BftForksSchedule<BftMiningCoordinator> miningCoordinatorSchedule =
+    final BftForksSchedule<MiningCoordinator> miningCoordinatorSchedule =
         new BftForksSchedule<>(
             miningCoordinatorForkSpecs.get(0),
             miningCoordinatorForkSpecs.subList(1, miningCoordinatorForkSpecs.size()));
