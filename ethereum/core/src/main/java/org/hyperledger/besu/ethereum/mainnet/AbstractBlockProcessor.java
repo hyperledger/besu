@@ -145,26 +145,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
       final PrivateMetadataUpdater privateMetadataUpdater) {
-
-    Result res =
-        executeBlock(
-            blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater);
-
-    // persist accumulated changes from executeBlock
-    if (res.successful) {
-      worldState.persist(blockHeader);
-    }
-
-    return res;
-  }
-
-  protected AbstractBlockProcessor.Result executeBlock(
-      final Blockchain blockchain,
-      final MutableWorldState worldState,
-      final BlockHeader blockHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
     for (final Transaction transaction : transactions) {
@@ -176,6 +156,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
+
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
               blockchain,
@@ -218,6 +199,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return AbstractBlockProcessor.Result.failed();
     }
 
+    worldState.persist(blockHeader);
     return AbstractBlockProcessor.Result.successful(receipts);
   }
 

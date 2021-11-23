@@ -73,7 +73,7 @@ public class JWTAuthOptionsFactoryTest {
   public void createsOptionsUsingPublicKeyFile() throws URISyntaxException {
     final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
     final File enclavePublicKeyFile =
-        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_rsa").toURI())
             .toAbsolutePath()
             .toFile();
 

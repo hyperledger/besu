@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.consensus.merge.MergeBlockProcessor.CandidateBlock;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -41,15 +39,11 @@ public interface MergeContext extends ConsensusContext {
 
   Difficulty getTerminalTotalDifficulty();
 
-  void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash);
+  void setFinalized(final BlockHeader blockHeader);
 
   Optional<BlockHeader> getFinalized();
 
   boolean validateCandidateHead(final BlockHeader candidateHeader);
-
-  void setCandidateBlock(final CandidateBlock candidate);
-
-  boolean setConsensusValidated(final Hash candidateHash);
 
   void putPayloadById(final PayloadIdentifier payloadId, final Block block);
 

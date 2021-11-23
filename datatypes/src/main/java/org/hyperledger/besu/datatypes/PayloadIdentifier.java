@@ -66,7 +66,7 @@ public class PayloadIdentifier implements Quantity {
 
   @JsonValue
   public String serialize() {
-    return val.toShortHexString();
+    return val.toHexString();
   }
 
   @Override

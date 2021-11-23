@@ -84,12 +84,8 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
     }
 
     // create a no-op candidate block here, since we already have this payload
-    if (protocolContext
-        .getBlockchain()
-        .getBlockByHash(blockParam.getBlockHash())
-        .map(mergeCoordinator::setExistingAsCandidate)
-        .isPresent()) {
-      LOG.debug("creating no-op candidate block since executePayload is present");
+    if (protocolContext.getBlockchain().getBlockByHash(blockParam.getBlockHash()).isPresent()) {
+      LOG.debug("block already present");
       return respondWith(reqId, blockParam.getBlockHash(), VALID);
     }
 
@@ -138,7 +134,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
 
       // execute block
       execSuccess =
-          mergeCoordinator.validateProcessAndSetAsCandidate(
+          mergeCoordinator.executeBlock(
               new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList())));
     }
 

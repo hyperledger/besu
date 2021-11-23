@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ExecutionForkChoiceUpdatedParameter {
   private final Hash headBlockHash;
 
+  private final Hash safeBlockHash;
+
   public Hash getHeadBlockHash() {
     return headBlockHash;
   }
@@ -30,13 +32,19 @@ public class ExecutionForkChoiceUpdatedParameter {
     return finalizedBlockHash;
   }
 
+  public Hash getSafeBlockHash() {
+    return safeBlockHash;
+  }
+
   private final Hash finalizedBlockHash;
 
   @JsonCreator
   public ExecutionForkChoiceUpdatedParameter(
       @JsonProperty("headBlockHash") final Hash headBlockHash,
-      @JsonProperty("finalizedBlockHash") final Hash finalizedBlockHash) {
+      @JsonProperty("finalizedBlockHash") final Hash finalizedBlockHash,
+      @JsonProperty("safeBlockHash") final Hash safeBlockHash) {
     this.finalizedBlockHash = finalizedBlockHash;
     this.headBlockHash = headBlockHash;
+    this.safeBlockHash = safeBlockHash;
   }
 }

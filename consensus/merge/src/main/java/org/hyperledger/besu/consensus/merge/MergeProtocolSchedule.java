@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -59,7 +59,6 @@ public class MergeProtocolSchedule {
     return specBuilder
         .blockImporterBuilder(MergeBlockImporter::new)
         .blockProcessorBuilder(MergeBlockProcessor::new)
-        .blockValidatorBuilder(MergeBlockValidator::new)
         .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
         .blockReward(Wei.ZERO)
         .difficultyCalculator((a, b, c) -> BigInteger.ZERO)

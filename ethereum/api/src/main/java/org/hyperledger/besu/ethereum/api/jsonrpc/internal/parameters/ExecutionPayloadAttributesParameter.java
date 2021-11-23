@@ -15,39 +15,26 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes32;
 
-/**
- * parentHash: DATA, 32 Bytes - hash of the parent block timestamp: QUANTITY, 64 Bits - value for
- * the timestamp field of the new payload random: DATA, 32 Bytes - value for the random field of the
- * new payload feeRecipient: DATA, 20 Bytes - suggested value for the coinbase field of the new
- * payload
- */
-public class ExecutionPreparePayloadParameter {
+public class ExecutionPayloadAttributesParameter {
+
+  final Long timestamp;
+  final Bytes32 random;
+  final Address feeRecipient;
 
   @JsonCreator
-  public ExecutionPreparePayloadParameter(
-      @JsonProperty("parentHash") final Hash parentHash,
-      @JsonProperty("timestamp") final UnsignedLongParameter timestamp,
+  public ExecutionPayloadAttributesParameter(
+      @JsonProperty("timestamp") final String timestamp,
       @JsonProperty("random") final String random,
-      @JsonProperty("feeRecipient") final Address feeRecipient) {
-    this.parentHash = parentHash;
-    this.timestamp = timestamp.getValue();
+      @JsonProperty("feeRecpient") final String feeRecipient) {
+    this.timestamp = Long.decode(timestamp);
     this.random = Bytes32.fromHexString(random);
-    this.feeRecipient = feeRecipient;
-  }
-
-  private final Hash parentHash;
-  private final Long timestamp;
-  private final Bytes32 random;
-  private final Address feeRecipient;
-
-  public Hash getParentHash() {
-    return parentHash;
+    this.feeRecipient = Address.fromHexString(feeRecipient);
   }
 
   public Long getTimestamp() {
@@ -60,5 +47,13 @@ public class ExecutionPreparePayloadParameter {
 
   public Address getFeeRecipient() {
     return feeRecipient;
+  }
+
+  public String serialize() {
+    return new JsonObject()
+        .put("timestamp", timestamp)
+        .put("random", random.toShortHexString())
+        .put("feeRecipient", feeRecipient.toShortHexString())
+        .encode();
   }
 }

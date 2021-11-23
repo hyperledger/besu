@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -33,14 +33,11 @@ public class MergeBlockImporter extends MainnetBlockImporter {
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
 
-    var res = super.importBlock(context, block, headerValidationMode, ommerValidationMode);
-
-    // TODO: for now optimistically import blocks post-TTD, this should only come from initial sync
-    // this can/should be removed as part of https://github.com/hyperledger/besu/issues/2912
-    if (res && context.getConsensusContext(MergeContext.class).isPostMerge()) {
-      context.getConsensusContext(MergeContext.class).setConsensusValidated(block.getHash());
+    // only import blocks from sync pre-TTD:
+    if (!context.getConsensusContext(MergeContext.class).isPostMerge()) {
+      return super.importBlock(context, block, headerValidationMode, ommerValidationMode);
     }
 
-    return res;
+    return true;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
-import org.hyperledger.besu.consensus.merge.MergeBlockProcessor.CandidateBlock;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -160,7 +161,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     // put the empty block in first
     final Block emptyBlock =
         mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp);
-    validateProcessAndSetAsCandidate(emptyBlock);
+    executeBlock(emptyBlock);
     mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
 
     // start working on a full block and update the payload value and candidate when it's ready
@@ -172,7 +173,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
               if (throwable != null) {
                 LOG.warn("something went wrong creating block", throwable);
               } else {
-                validateProcessAndSetAsCandidate(bestBlock);
+                executeBlock(bestBlock);
                 mergeContext.replacePayloadById(payloadIdentifier, bestBlock);
               }
             });
@@ -181,20 +182,88 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @Override
-  public boolean validateProcessAndSetAsCandidate(final Block block) {
+  public boolean executeBlock(final Block block) {
     // TODO: if we are missing the parentHash, attempt backwards sync
     // https://github.com/hyperledger/besu/issues/2912
-    return blockValidator
-        .validateAndProcessBlock(
-            protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE)
-        .isPresent();
+
+    var optResult =
+        blockValidator.validateAndProcessBlock(
+            protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE);
+
+    optResult.ifPresent(
+        result -> {
+          result.worldState.persist(block.getHeader());
+          protocolContext.getBlockchain().appendBlock(block, result.receipts);
+        });
+
+    return optResult.isPresent();
   }
 
   @Override
-  public CandidateBlock setExistingAsCandidate(final Block block) {
-    CandidateBlock noOpBlock = new CandidateBlock(block, null, protocolContext.getBlockchain());
-    mergeContext.setCandidateBlock(noOpBlock);
-    return noOpBlock;
+  public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
+    MutableBlockchain blockchain = protocolContext.getBlockchain();
+    Optional<BlockHeader> currentFinalized = mergeContext.getFinalized();
+
+    final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
+    if (newFinalized.isEmpty() && !finalizedBlockHash.equals(Hash.ZERO)) {
+      // we should only fail to find when it's the special value 0x000..000
+      throw new IllegalStateException(
+          String.format(
+              "should've been able to find block hash %s but couldn't", finalizedBlockHash));
+    }
+
+    if (currentFinalized.isPresent()
+        && newFinalized.isPresent()
+        && !isDescendantOf(currentFinalized.get(), newFinalized.get())) {
+      throw new IllegalStateException(
+          String.format(
+              "new finalized block %s is not a descendant of current finalized block %s",
+              finalizedBlockHash, currentFinalized.get().getBlockHash()));
+    }
+
+    // ensure we have headBlock:
+    BlockHeader newHead =
+        blockchain
+            .getBlockHeader(headBlockHash)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        String.format("not able to find new head block %s", headBlockHash)));
+
+    // ensure new head is descendant of finalized
+    newFinalized
+        .map(Optional::of)
+        .orElse(currentFinalized)
+        .ifPresent(
+            finalized -> {
+              if (!isDescendantOf(finalized, newHead)) {
+                throw new IllegalStateException(
+                    String.format(
+                        "new head block %s is not a descendant of current finalized block %s",
+                        newHead.getBlockHash(), finalized.getBlockHash()));
+              }
+              ;
+            });
+
+    // set the new head
+    blockchain.rewindToBlock(newHead.getHash());
+
+    // set the new finalized block if it present
+    newFinalized.ifPresent(mergeContext::setFinalized);
+  }
+
+  private boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock) {
+    if (ancestorBlock.getBlockHash().equals(newBlock.getHash())) {
+      return true;
+    } else if (ancestorBlock.getNumber() < newBlock.getNumber()) {
+      return protocolContext
+          .getBlockchain()
+          .getBlockHeader(newBlock.getParentHash())
+          .map(parent -> isDescendantOf(ancestorBlock, parent))
+          .orElse(Boolean.FALSE);
+    }
+    // neither matching nor is the ancestor block height lower than newBlock
+    return false;
   }
 
   @FunctionalInterface
