@@ -55,6 +55,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -376,6 +377,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
     List<DiscoveryPeer> peers = dnsPeers.get();
     if (peers != null) {
+      Collections.shuffle(peers);
       return Stream.concat(peerDiscoveryAgent.streamDiscoveredPeers(), peers.stream());
     }
     return peerDiscoveryAgent.streamDiscoveredPeers();
