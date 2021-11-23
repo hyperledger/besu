@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import picocli.CommandLine;
 
@@ -28,6 +29,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
       "--Xp2p-initiate-connections-frequency";
   private final String CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG =
       "--Xp2p-check-maintained-connections-frequency";
+  private final String DNS_DISCOVERY_SERVER_OVERRIDE_FLAG = "--Xp2p-dns-discovery-server";
 
   @CommandLine.Option(
       names = INITIATE_CONNECTIONS_FREQUENCY_FLAG,
@@ -47,7 +49,15 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
       description =
           "The frequency (in seconds) at which to check maintained connections (default: ${DEFAULT-VALUE})")
   private int checkMaintainedConnectionsFrequencySec =
-      NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTSION_FREQUENCY_SEC;
+      NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC;
+
+  @CommandLine.Option(
+      names = DNS_DISCOVERY_SERVER_OVERRIDE_FLAG,
+      hidden = true,
+      defaultValue = "",
+      description =
+          "DNS server host to use for doing DNS Discovery of peers, rather than the machine's configured DNS server")
+  private String dnsDiscoveryServerOverride = null;
 
   private NetworkingOptions() {}
 
@@ -61,6 +71,8 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
         networkingConfig.getCheckMaintainedConnectionsFrequencySec();
     cliOptions.initiateConnectionsFrequencySec =
         networkingConfig.getInitiateConnectionsFrequencySec();
+    cliOptions.dnsDiscoveryServerOverride =
+        networkingConfig.getDnsDiscoveryServerOverride().orElse("");
     return cliOptions;
   }
 
@@ -69,6 +81,8 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
     NetworkingConfiguration config = NetworkingConfiguration.create();
     config.setCheckMaintainedConnectionsFrequency(checkMaintainedConnectionsFrequencySec);
     config.setInitiateConnectionsFrequency(initiateConnectionsFrequencySec);
+    config.setDnsDiscoveryServerOverride(
+        Optional.of(dnsDiscoveryServerOverride).filter(z -> !z.isBlank()).orElse(null));
     return config;
   }
 
@@ -78,6 +92,8 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
         CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG,
         OptionParser.format(checkMaintainedConnectionsFrequencySec),
         INITIATE_CONNECTIONS_FREQUENCY_FLAG,
-        OptionParser.format(initiateConnectionsFrequencySec));
+        OptionParser.format(initiateConnectionsFrequencySec),
+        DNS_DISCOVERY_SERVER_OVERRIDE_FLAG,
+        dnsDiscoveryServerOverride);
   }
 }

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
+import org.hyperledger.besu.ethereum.api.util.TestJsonRpcMethodsUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -58,6 +59,7 @@ public class WebSocketServiceTest {
   private Vertx vertx;
   private WebSocketConfiguration websocketConfiguration;
   private WebSocketRequestHandler webSocketRequestHandlerSpy;
+  private Map<String, JsonRpcMethod> websocketMethods;
   private WebSocketService websocketService;
   private HttpClient httpClient;
   private final int maxConnections = 3;
@@ -71,7 +73,7 @@ public class WebSocketServiceTest {
     websocketConfiguration.setHostsAllowlist(Collections.singletonList("*"));
     websocketConfiguration.setMaxActiveConnections(maxConnections);
 
-    final Map<String, JsonRpcMethod> websocketMethods =
+    websocketMethods =
         new WebSocketMethodsFactory(
                 new SubscriptionManager(new NoOpMetricsSystem()), new HashMap<>())
             .methods();
@@ -299,5 +301,67 @@ public class WebSocketServiceTest {
         });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+  }
+
+  @Test
+  public void handleResponseWithOptionalEmptyValue(final TestContext context) {
+    final Async async = context.async();
+    final JsonRpcMethod method = TestJsonRpcMethodsUtil.optionalEmptyResponse();
+    websocketMethods.put(method.getName(), method);
+
+    final String request =
+        "{\"id\": 1, \"method\": \"" + method.getName() + "\", \"params\": [\"syncing\"]}";
+    final String expectedResponse = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":null}";
+
+    httpClient.webSocket(
+        "/",
+        future -> {
+          if (future.succeeded()) {
+            WebSocket ws = future.result();
+            ws.handler(
+                buffer -> {
+                  context.assertEquals(expectedResponse, buffer.toString());
+                  async.complete();
+                });
+
+            ws.writeTextMessage(request);
+          } else {
+            context.fail("websocket connection failed");
+          }
+        });
+
+    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    async.handler((result) -> websocketMethods.remove(method.getName()));
+  }
+
+  @Test
+  public void handleResponseWithOptionalExistingValue(final TestContext context) {
+    final Async async = context.async();
+    final JsonRpcMethod method = TestJsonRpcMethodsUtil.optionalResponseWithValue("foo");
+    websocketMethods.put(method.getName(), method);
+
+    final String request =
+        "{\"id\": 1, \"method\": \"" + method.getName() + "\", \"params\": [\"syncing\"]}";
+    final String expectedResponse = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"foo\"}";
+
+    httpClient.webSocket(
+        "/",
+        future -> {
+          if (future.succeeded()) {
+            WebSocket ws = future.result();
+            ws.handler(
+                buffer -> {
+                  context.assertEquals(expectedResponse, buffer.toString());
+                  async.complete();
+                });
+
+            ws.writeTextMessage(request);
+          } else {
+            context.fail("websocket connection failed");
+          }
+        });
+
+    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    async.handler((result) -> websocketMethods.remove(method.getName()));
   }
 }

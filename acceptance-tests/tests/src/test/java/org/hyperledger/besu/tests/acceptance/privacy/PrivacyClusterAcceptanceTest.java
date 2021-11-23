@@ -29,11 +29,9 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
@@ -63,9 +61,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   @Parameters(name = "{0}")
   public static Collection<EnclaveType> enclaveTypes() {
-    return Arrays.stream(EnclaveType.values())
-        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
-        .collect(Collectors.toList());
+    return EnclaveType.valuesForTests();
   }
 
   public PrivacyClusterAcceptanceTest(final EnclaveType enclaveType) throws IOException {
@@ -195,7 +191,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
         bobEnclave.receive(
             Bytes.fromHexString(transactionKey).toBase64String(), bob.getEnclaveKey());
 
-    assertThat(bobRR).isEqualToComparingFieldByField(aliceRR);
+    assertThat(bobRR).usingRecursiveComparison().isEqualTo(aliceRR);
 
     final RawTransaction pmt =
         RawTransaction.createTransaction(

@@ -24,10 +24,8 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -52,9 +50,7 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   @Parameters(name = "{0}")
   public static Collection<EnclaveType> enclaveTypes() {
-    return Arrays.stream(EnclaveType.values())
-        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
-        .collect(Collectors.toList());
+    return EnclaveType.valuesForTests();
   }
 
   public PrivacyGroupAcceptanceTest(final EnclaveType enclaveType) throws IOException {

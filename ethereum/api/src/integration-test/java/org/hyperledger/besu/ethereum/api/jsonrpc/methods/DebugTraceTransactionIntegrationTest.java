@@ -91,6 +91,6 @@ public class DebugTraceTransactionIntegrationTest {
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, null);
 
     final JsonRpcResponse response = method.response(request);
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 }

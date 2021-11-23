@@ -64,7 +64,7 @@ public class EthCoinbaseTest {
     when(miningCoordinator.getCoinbase()).thenReturn(Optional.of(expectedAddress));
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(miningCoordinator).getCoinbase();
     verifyNoMoreInteractions(miningCoordinator);
   }
@@ -77,7 +77,7 @@ public class EthCoinbaseTest {
     when(miningCoordinator.getCoinbase()).thenReturn(Optional.empty());
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

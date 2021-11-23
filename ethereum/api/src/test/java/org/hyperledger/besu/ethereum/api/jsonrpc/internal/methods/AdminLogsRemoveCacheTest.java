@@ -131,7 +131,7 @@ public class AdminLogsRemoveCacheTest {
 
     final JsonRpcResponse actualResponse = adminLogsRemoveCache.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(fromBlock.getValue()).isEqualTo(expectedFromBlock);
     assertThat(toBlock.getValue()).isEqualTo(expectedToBlock);
   }
@@ -152,7 +152,7 @@ public class AdminLogsRemoveCacheTest {
 
     final JsonRpcResponse actualResponse = adminLogsRemoveCache.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test(expected = IllegalStateException.class)
@@ -180,6 +180,6 @@ public class AdminLogsRemoveCacheTest {
 
     final JsonRpcResponse actualResponse = adminLogsRemoveCache.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 }
