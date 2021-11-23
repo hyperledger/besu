@@ -22,7 +22,7 @@ import java.text.SimpleDateFormat
 plugins {
   id 'com.diffplug.spotless' version '5.14.2'
   id 'com.github.ben-manes.versions' version '0.39.0'
-  id 'com.github.hierynomus.license' version '0.16.1'
+  id 'com.github.hierynomus.license' version '0.16.1-fix'
   id 'com.jfrog.artifactory' version '4.24.14'
   id 'io.spring.dependency-management' version '1.0.11.RELEASE'
   id 'me.champeau.jmh' version '0.6.6' apply false
