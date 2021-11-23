@@ -2139,8 +2139,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     final int port = 1234;
     final String keystoreFile = "/tmp/test.p12";
     final String keystorePasswordFile = "/tmp/test.txt";
-    // final String protocols = "TLSv1.2,TLSv1.1"
-    // final String ciphersuites = "Test1,Test2"
 
     parseCommand(
         "--rpc-http-enabled",
@@ -2410,7 +2408,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         ciphersuites);
 
     assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).contains("Invalid TLS ciphersuite specified " + ciphersuites);
+    assertThat(commandErrorOutput.toString())
+        .contains("Invalid TLS ciphersuite specified " + ciphersuites);
   }
 
   @Test
@@ -2419,7 +2418,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final int port = 1234;
     final String keystoreFile = "/tmp/test.p12";
     final String keystorePasswordFile = "/tmp/test.txt";
-    final String protocols = "TLSv1.2,TLSv1.1";
+    final String protocols = "TLSv1.3,TLSv1.2";
     final String ciphersuites =
         "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256";
 
@@ -2450,10 +2449,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
     assertThat(tlsConfiguration.get().getClientAuthConfiguration().isEmpty()).isTrue();
     assertThat(tlsConfiguration.get().getCipherSuites().get())
-        .containsExactly(
+        .containsExactlyInAnyOrder(
             "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256");
     assertThat(tlsConfiguration.get().getSecureTransportProtocols().get())
-        .containsExactly("TLSv1.2", "TLSv1.1");
+        .containsExactlyInAnyOrder("TLSv1.2", "TLSv1.3");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

@@ -2021,7 +2021,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     for (String ciphersuite : rpcHttpTlsCiphersuites) {
       if (!TlsConfiguration.JDK_ENABLED_CIPHERSUITES.contains(ciphersuite)) {
-        throw new ParameterException(commandLine, "Invalid TLS ciphersuite specified " + ciphersuite);
+        throw new ParameterException(
+            commandLine, "Invalid TLS ciphersuite specified " + ciphersuite);
       }
     }
 
