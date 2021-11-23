@@ -22,7 +22,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.CombinedProtocolScheduleFactory;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.SchedulableBftMiningCoordinator;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.SchedulableMiningCoordinator;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -138,7 +138,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
             miningCoordinatorForkSpecs.get(0),
             miningCoordinatorForkSpecs.subList(1, miningCoordinatorForkSpecs.size()));
 
-    return new SchedulableBftMiningCoordinator(
+    return new SchedulableMiningCoordinator(
         miningCoordinatorSchedule, protocolContext.getBlockchain());
   }
 

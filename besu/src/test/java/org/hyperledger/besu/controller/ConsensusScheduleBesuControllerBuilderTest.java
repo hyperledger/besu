@@ -27,7 +27,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.SchedulableBftMiningCoordinator;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.SchedulableMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
@@ -138,36 +138,36 @@ public class ConsensusScheduleBesuControllerBuilderTest {
             mock(SyncState.class),
             mock(EthProtocolManager.class));
 
-    assertThat(miningCoordinator).isInstanceOf(SchedulableBftMiningCoordinator.class);
-    final SchedulableBftMiningCoordinator schedulableBftMiningCoordinator =
-        (SchedulableBftMiningCoordinator) miningCoordinator;
+    assertThat(miningCoordinator).isInstanceOf(SchedulableMiningCoordinator.class);
+    final SchedulableMiningCoordinator schedulableMiningCoordinator =
+        (SchedulableMiningCoordinator) miningCoordinator;
 
     SoftAssertions.assertSoftly(
         (softly) -> {
           softly
               .assertThat(
-                  schedulableBftMiningCoordinator
+                  schedulableMiningCoordinator
                       .getMiningCoordinatorSchedule()
                       .getFork(0L)
                       .getValue())
               .isSameAs(miningCoordinator1);
           softly
               .assertThat(
-                  schedulableBftMiningCoordinator
+                  schedulableMiningCoordinator
                       .getMiningCoordinatorSchedule()
                       .getFork(4L)
                       .getValue())
               .isSameAs(miningCoordinator1);
           softly
               .assertThat(
-                  schedulableBftMiningCoordinator
+                  schedulableMiningCoordinator
                       .getMiningCoordinatorSchedule()
                       .getFork(5L)
                       .getValue())
               .isSameAs(miningCoordinator2);
           softly
               .assertThat(
-                  schedulableBftMiningCoordinator
+                  schedulableMiningCoordinator
                       .getMiningCoordinatorSchedule()
                       .getFork(6L)
                       .getValue())
