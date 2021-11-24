@@ -13,6 +13,7 @@
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | David Mechler    | davemec          | davemec          |
+| Diego López León | diega            | diega            |
 | Edward Mack      | edwardmack       | mackcom          | 
 | Fabio Di Fabio   | fab-10           | fab-10           |
 | Gary Schulte     | garyschulte      | GarySchulte      | 
