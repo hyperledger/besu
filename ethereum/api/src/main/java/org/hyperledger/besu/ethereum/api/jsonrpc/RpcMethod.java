@@ -64,6 +64,7 @@ public enum RpcMethod {
   PRIV_GET_FILTER_LOGS("priv_getFilterLogs"),
   PRIV_SUBSCRIBE("priv_subscribe"),
   PRIV_UNSUBSCRIBE("priv_unsubscribe"),
+  PRIVX_FIND_PRIVACY_GROUP_OLD("privx_findOnchainPrivacyGroup"),
   PRIVX_FIND_PRIVACY_GROUP("privx_findFlexiblePrivacyGroup"),
   EEA_SEND_RAW_TRANSACTION("eea_sendRawTransaction"),
   ETH_ACCOUNTS("eth_accounts"),
