@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
-import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -39,20 +38,14 @@ public class EngineGetPayloadTest {
   private static final Vertx vertx = Vertx.vertx();
   private static final BlockResultFactory factory = new BlockResultFactory();
   private static final PayloadIdentifier mockPid = PayloadIdentifier.random();
-  private static final BlockHeader mockHeader = new BlockHeaderTestFixture()
-      .random(Bytes32.random())
-      .buildHeader();
-  private static final Block mockBlock = new Block(
-      mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+  private static final BlockHeader mockHeader =
+      new BlockHeaderTestFixture().random(Bytes32.random()).buildHeader();
+  private static final Block mockBlock =
+      new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
 
-  @Mock
-  private MergeCoordinator mergeCoordinator;
+  @Mock private ProtocolContext protocolContext;
 
-  @Mock
-  private ProtocolContext protocolContext;
-
-  @Mock
-  private MergeContext mergeContext;
+  @Mock private MergeContext mergeContext;
 
   @Before
   public void before() {
@@ -71,14 +64,16 @@ public class EngineGetPayloadTest {
   public void shouldReturnBlockForKnownPayloadId() {
     var resp = resp(mockPid);
     assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
-    Optional.of(resp).map(JsonRpcSuccessResponse.class::cast)
-        .ifPresent(r -> {
-          assertThat(r.getResult()).isInstanceOf(ExecutionBlockResult.class);
-          ExecutionBlockResult res = (ExecutionBlockResult) r.getResult();
-          assertThat(res.getHash()).isEqualTo(mockHeader.getHash().toString());
-          assertThat(res.getRandom()).isEqualTo(mockHeader.getRandom()
-              .map(Bytes32::toString).orElse(""));
-        });
+    Optional.of(resp)
+        .map(JsonRpcSuccessResponse.class::cast)
+        .ifPresent(
+            r -> {
+              assertThat(r.getResult()).isInstanceOf(ExecutionBlockResult.class);
+              ExecutionBlockResult res = (ExecutionBlockResult) r.getResult();
+              assertThat(res.getHash()).isEqualTo(mockHeader.getHash().toString());
+              assertThat(res.getRandom())
+                  .isEqualTo(mockHeader.getRandom().map(Bytes32::toString).orElse(""));
+            });
   }
 
   @Test
@@ -87,11 +82,12 @@ public class EngineGetPayloadTest {
     assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
   }
 
-  private JsonRpcResponse resp(PayloadIdentifier pid) {
-    return method.response(new JsonRpcRequestContext(
-        new JsonRpcRequest(
-            "2.0",
-            RpcMethod.ENGINE_GET_PAYLOAD.getMethodName(),
-            new Object[] {pid.serialize()})));
+  private JsonRpcResponse resp(final PayloadIdentifier pid) {
+    return method.response(
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0",
+                RpcMethod.ENGINE_GET_PAYLOAD.getMethodName(),
+                new Object[] {pid.serialize()})));
   }
 }

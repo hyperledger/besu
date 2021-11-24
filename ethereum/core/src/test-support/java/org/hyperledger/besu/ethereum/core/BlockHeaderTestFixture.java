@@ -137,6 +137,7 @@ public class BlockHeaderTestFixture {
     this.random = Optional.of(random);
     return this;
   }
+
   public BlockHeaderTestFixture timestamp(final long timestamp) {
     this.timestamp = timestamp;
     return this;
