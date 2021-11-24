@@ -27,6 +27,7 @@
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Sajida Zouarhi   | sajz             | SajidaZ          |
+| Simon Dudley     | siladu           | siladu           |
 | Stefan Pingel    | pinges           | pinges           |
 | Taccat Isid      | taccatisid       | taccatisid       |
 | Trent Mohay      | rain-on          | trent.mohay      |
