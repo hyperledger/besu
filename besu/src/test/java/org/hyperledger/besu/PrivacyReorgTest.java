@@ -32,6 +32,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
+import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -140,9 +141,12 @@ public class PrivacyReorgTest {
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivacyParameters privacyParameters;
   private RestrictedDefaultPrivacyController privacyController;
+  private Enclave mockEnclave;
 
   @Before
   public void setUp() throws IOException {
+    mockEnclave = mock(Enclave.class);
+
     enclave =
         OrionTestHarnessFactory.create(
             "orion",
@@ -154,12 +158,15 @@ public class PrivacyReorgTest {
     final Path dataDir = folder.newFolder().toPath();
 
     // Configure Privacy
+    EnclaveFactory enclaveFactory = mock(EnclaveFactory.class);
+    when(enclaveFactory.createVertxEnclave(any())).thenReturn(mockEnclave);
+
     privacyParameters =
         new PrivacyParameters.Builder()
             .setEnabled(true)
             .setStorageProvider(createKeyValueStorageProvider())
-            .setEnclaveUrl(enclave.clientUrl())
-            .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
+            .setEnclaveUrl(URI.create("http//1.1.1.1:1234"))
+            .setEnclaveFactory(enclaveFactory)
             .build();
     privacyParameters.setPrivacyUserId(ENCLAVE_PUBLIC_KEY.toBase64String());
     privacyController = mock(RestrictedDefaultPrivacyController.class);
@@ -204,8 +211,15 @@ public class PrivacyReorgTest {
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
     final PrivateStateStorage privateStateStorage = privacyParameters.getPrivateStateStorage();
 
+    when(mockEnclave.receive("AA=="))
+        .thenReturn(
+            new ReceiveResponse(
+                PRIVATE_TRANSACTION.getPayload().toArrayUnsafe(),
+                PRIVACY_GROUP_BYTES32.toBase64String(),
+                ENCLAVE_PUBLIC_KEY.toBase64String()));
+
     final Transaction privateMarkerTransaction =
-        buildMarkerTransaction(getEnclaveKey(enclave.clientUrl()));
+        buildMarkerTransaction(Bytes.fromHexString("0x00"));
     final Block firstBlock =
         gen.block(
             getBlockOptionsWithTransaction(
