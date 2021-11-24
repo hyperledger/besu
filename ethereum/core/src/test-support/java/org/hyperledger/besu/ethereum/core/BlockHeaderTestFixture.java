@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class BlockHeaderTestFixture {
 
@@ -39,6 +40,7 @@ public class BlockHeaderTestFixture {
 
   private long gasLimit = 0;
   private Optional<Long> baseFee = Optional.empty();
+  private Optional<Bytes32> random = Optional.empty();
   private long gasUsed = 0;
   private long timestamp = 0;
   private Bytes extraData = Bytes.EMPTY;
@@ -61,6 +63,7 @@ public class BlockHeaderTestFixture {
     builder.gasLimit(gasLimit);
     builder.gasUsed(gasUsed);
     baseFee.ifPresent(builder::baseFee);
+    random.ifPresent((builder::random));
     builder.timestamp(timestamp);
     builder.extraData(extraData);
     builder.mixHash(mixHash);
@@ -130,6 +133,10 @@ public class BlockHeaderTestFixture {
     return this;
   }
 
+  public BlockHeaderTestFixture random(final Bytes32 random) {
+    this.random = Optional.of(random);
+    return this;
+  }
   public BlockHeaderTestFixture timestamp(final long timestamp) {
     this.timestamp = timestamp;
     return this;
