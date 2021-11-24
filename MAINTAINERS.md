@@ -12,6 +12,7 @@
 | Antony Denyer    | antonydenyer     | antonydenyer     |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
+| Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
 | Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jason Frame      | jframe           | jframe           |
