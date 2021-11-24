@@ -12,9 +12,7 @@
 | Antony Denyer    | antonydenyer     | antonydenyer     |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
-| David Mechler    | davemec          | davemec          |
 | Diego López León | diega            | diega            |
-| Edward Mack      | edwardmack       | mackcom          | 
 | Fabio Di Fabio   | fab-10           | fab-10           |
 | Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jason Frame      | jframe           | jframe           |
@@ -31,7 +29,6 @@
 | Simon Dudley     | siladu           | siladu           |
 | Stefan Pingel    | pinges           | pinges           |
 | Taccat Isid      | taccatisid       | taccatisid       |
-| Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Danno Ferrin     | shemnon          | shemnon          |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
@@ -42,10 +39,13 @@
 | Name             | Github           | LFID             |
 |------------------|------------------|------------------|
 | Chris Hare       | CjHare           | cjhare           |
+| David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
+| Edward Mack      | edwardmack       | mackcom          | 
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Rob Dawson       | rojotek          | RobDawson        |
 | Tim Beiko        | timbeiko         | timbeiko         |
+| Trent Mohay      | rain-on          | trent.mohay      |
 
 ## Becoming a Maintainer
 
