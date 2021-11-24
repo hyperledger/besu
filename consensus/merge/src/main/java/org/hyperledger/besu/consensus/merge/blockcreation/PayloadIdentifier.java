@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.datatypes;
+package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import org.hyperledger.besu.plugin.data.Quantity;
 
@@ -61,12 +61,16 @@ public class PayloadIdentifier implements Quantity {
 
   @Override
   public String toShortHexString() {
-    return val.toShortHexString();
+    var shortHex = val.toShortHexString();
+    if (shortHex.length() % 2 != 0) {
+      shortHex = "0x0" + shortHex.substring(2);
+    }
+    return shortHex;
   }
 
   @JsonValue
   public String serialize() {
-    return val.toHexString();
+    return toShortHexString();
   }
 
   @Override
