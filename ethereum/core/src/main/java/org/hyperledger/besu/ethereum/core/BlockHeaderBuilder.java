@@ -59,9 +59,7 @@ public class BlockHeaderBuilder {
 
   private Long baseFee = null;
 
-  private Bytes32 random = null;
-
-  private Hash mixHash;
+  private Bytes32 mixHashOrRandom = null;
 
   private BlockHeaderFunctions blockHeaderFunctions;
 
@@ -110,9 +108,8 @@ public class BlockHeaderBuilder {
             .gasUsed(fromBuilder.gasUsed)
             .timestamp(fromBuilder.timestamp)
             .extraData(fromBuilder.extraData)
-            .mixHash(fromBuilder.mixHash)
             .baseFee(fromBuilder.baseFee)
-            .random(fromBuilder.random)
+            .random(fromBuilder.mixHashOrRandom)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -136,7 +133,7 @@ public class BlockHeaderBuilder {
         timestamp < 0 ? Instant.now().getEpochSecond() : timestamp,
         extraData,
         baseFee,
-        random,
+        mixHashOrRandom,
         nonce.getAsLong(),
         blockHeaderFunctions);
   }
@@ -145,7 +142,7 @@ public class BlockHeaderBuilder {
     validateProcessableBlockHeader();
 
     return new ProcessableBlockHeader(
-        parentHash, coinbase, difficulty, number, gasLimit, timestamp, baseFee, random);
+        parentHash, coinbase, difficulty, number, gasLimit, timestamp, baseFee, mixHashOrRandom);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -166,12 +163,12 @@ public class BlockHeaderBuilder {
         timestamp,
         extraData,
         baseFee,
-        random);
+        mixHashOrRandom);
   }
 
   private void validateBlockHeader() {
     validateSealableBlockHeader();
-    checkState(this.mixHash != null, "Missing mixHash");
+    checkState(this.mixHashOrRandom != null, "Missing mixHash or random");
     checkState(this.nonce.isPresent(), "Missing nonce");
     checkState(this.blockHeaderFunctions != null, "Missing blockHeaderFunctions");
   }
@@ -205,7 +202,7 @@ public class BlockHeaderBuilder {
     gasLimit(processableBlockHeader.getGasLimit());
     timestamp(processableBlockHeader.getTimestamp());
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
-    random(processableBlockHeader.getRandom().orElse(null));
+    processableBlockHeader.getRandom().ifPresent(this::random);
     return this;
   }
 
@@ -225,7 +222,7 @@ public class BlockHeaderBuilder {
     timestamp(sealableBlockHeader.getTimestamp());
     extraData(sealableBlockHeader.getExtraData());
     baseFee(sealableBlockHeader.getBaseFee().orElse(null));
-    random(sealableBlockHeader.getRandom().orElse(null));
+    sealableBlockHeader.getRandom().ifPresent(this::random);
     return this;
   }
 
@@ -310,7 +307,7 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder mixHash(final Hash mixHash) {
     checkNotNull(mixHash);
-    this.mixHash = mixHash;
+    this.mixHashOrRandom = mixHash;
     return this;
   }
 
@@ -330,7 +327,9 @@ public class BlockHeaderBuilder {
   }
 
   public BlockHeaderBuilder random(final Bytes32 random) {
-    this.random = random;
+    if (random != null) {
+      this.mixHashOrRandom = random;
+    }
     return this;
   }
 }
