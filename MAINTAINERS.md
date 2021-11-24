@@ -12,6 +12,7 @@
 | Antony Denyer    | antonydenyer     | antonydenyer     |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
+| Fabio Di Fabio   | fab-10           | fab-10           |
 | Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jason Frame      | jframe           | jframe           |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
@@ -24,6 +25,7 @@
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Sajida Zouarhi   | sajz             | SajidaZ          |
+| Simon Dudley     | siladu           | siladu           |
 | Stefan Pingel    | pinges           | pinges           |
 | Taccat Isid      | taccatisid       | taccatisid       |
 | Rai Sur          | RatanRSur        | ratanraisur      |

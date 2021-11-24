@@ -159,7 +159,7 @@ public class MultiTenancyPrivacyControllerTest {
     final PrivacyGroup privacyGroup =
         multiTenancyPrivacyController.createPrivacyGroup(
             addresses, "name", "description", ENCLAVE_PUBLIC_KEY1);
-    assertThat(privacyGroup).isEqualToComparingFieldByField(delegatePrivacyGroup);
+    assertThat(privacyGroup).usingRecursiveComparison().isEqualTo(delegatePrivacyGroup);
     verify(privacyController)
         .createPrivacyGroup(addresses, "name", "description", ENCLAVE_PUBLIC_KEY1);
   }
@@ -208,7 +208,7 @@ public class MultiTenancyPrivacyControllerTest {
     final PrivacyGroup[] privacyGroups =
         multiTenancyPrivacyController.findPrivacyGroupByMembers(addresses, ENCLAVE_PUBLIC_KEY1);
     assertThat(privacyGroups).hasSize(1);
-    assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);
+    assertThat(privacyGroups[0]).usingRecursiveComparison().isEqualTo(privacyGroup);
     verify(privacyController).findPrivacyGroupByMembers(addresses, ENCLAVE_PUBLIC_KEY1);
   }
 

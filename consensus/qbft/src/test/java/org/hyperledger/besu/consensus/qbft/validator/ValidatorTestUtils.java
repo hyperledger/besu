@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.qbft.validator;
 
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 
@@ -24,17 +24,17 @@ import java.util.Optional;
 
 class ValidatorTestUtils {
 
-  static BftForkSpec<QbftConfigOptions> createContractForkSpec(
+  static ForkSpec<QbftConfigOptions> createContractForkSpec(
       final long block, final Address contractAddress) {
     final MutableQbftConfigOptions qbftConfigOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
     qbftConfigOptions.setValidatorContractAddress(Optional.of(contractAddress.toHexString()));
-    return new BftForkSpec<>(block, qbftConfigOptions);
+    return new ForkSpec<>(block, qbftConfigOptions);
   }
 
-  static BftForkSpec<QbftConfigOptions> createBlockForkSpec(final long block) {
+  static ForkSpec<QbftConfigOptions> createBlockForkSpec(final long block) {
     final MutableQbftConfigOptions qbftConfigOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
-    return new BftForkSpec<>(block, qbftConfigOptions);
+    return new ForkSpec<>(block, qbftConfigOptions);
   }
 }

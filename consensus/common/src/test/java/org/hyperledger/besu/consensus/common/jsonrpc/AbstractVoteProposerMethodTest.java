@@ -75,7 +75,7 @@ public abstract class AbstractVoteProposerMethodTest {
 
     final JsonRpcResponse response = getMethod().response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test

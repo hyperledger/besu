@@ -83,7 +83,7 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
     final PatternLayout patternLayout =
         PatternLayout.newBuilder()
             .withConfiguration(this)
-            .withDisableAnsi(!BesuCommand.getColorEnabled().orElse(true))
+            .withDisableAnsi(!BesuCommand.getColorEnabled().orElse(!noColorSet()))
             .withNoConsoleNoAnsi(!BesuCommand.getColorEnabled().orElse(false))
             .withPattern(
                 String.join(
@@ -98,6 +98,10 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
         ConsoleAppender.newBuilder().setName("Console").setLayout(patternLayout).build();
     consoleAppender.start();
     this.getRootLogger().addAppender(consoleAppender, null, null);
+  }
+
+  private static boolean noColorSet() {
+    return System.getenv("NO_COLOR") != null;
   }
 
   private boolean customLog4jConfigFilePresent() {

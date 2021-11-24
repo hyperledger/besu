@@ -37,6 +37,10 @@ public interface GenesisConfigOptions {
 
   boolean isClique();
 
+  default boolean isConsensusMigration() {
+    return (isIbft2() || isIbftLegacy()) && isQbft();
+  }
+
   String getConsensusEngine();
 
   IbftLegacyConfigOptions getIbftLegacyConfigOptions();

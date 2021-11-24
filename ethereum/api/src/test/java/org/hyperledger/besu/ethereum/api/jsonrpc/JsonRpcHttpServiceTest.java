@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
+import org.hyperledger.besu.ethereum.api.util.TestJsonRpcMethodsUtil;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -2061,6 +2062,41 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
   public void assertThatReadinessProbeWorks() throws Exception {
     try (final Response resp = client.newCall(buildGetRequest("/readiness")).execute()) {
       assertThat(resp.code()).isEqualTo(200);
+    }
+  }
+
+  @Test
+  public void handleResponseWithOptionalEmptyValue() throws Exception {
+    final JsonRpcMethod method = TestJsonRpcMethodsUtil.optionalEmptyResponse();
+    rpcMethods.put(method.getName(), method);
+
+    final String jsonString =
+        "{ \"id\": 1, \"jsonrpc\": \"2.0\", \"method\": \"" + method.getName() + "\" }";
+    final RequestBody body = RequestBody.create(jsonString, JSON);
+
+    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+      final JsonObject json = new JsonObject(resp.body().string());
+      assertThat(json.getString("result")).isNull();
+    } finally {
+      rpcMethods.remove(method.getName());
+    }
+  }
+
+  @Test
+  public void handleResponseWithOptionalExistingValue() throws Exception {
+    final String expectedValue = "foo";
+    final JsonRpcMethod method = TestJsonRpcMethodsUtil.optionalResponseWithValue(expectedValue);
+    rpcMethods.put(method.getName(), method);
+
+    final String jsonString =
+        "{ \"id\": 1, \"jsonrpc\": \"2.0\", \"method\": \"" + method.getName() + "\" }";
+    final RequestBody body = RequestBody.create(jsonString, JSON);
+
+    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+      final JsonObject json = new JsonObject(resp.body().string());
+      assertThat(json.getString("result")).isEqualTo(expectedValue);
+    } finally {
+      rpcMethods.remove(method.getName());
     }
   }
 }

@@ -16,6 +16,7 @@ package org.hyperledger.besu.config;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
@@ -24,6 +25,7 @@ public class JsonQbftConfigOptions extends JsonBftConfigOptions implements QbftC
   public static final JsonQbftConfigOptions DEFAULT =
       new JsonQbftConfigOptions(JsonUtil.createEmptyObjectNode());
   public static final String VALIDATOR_CONTRACT_ADDRESS = "validatorcontractaddress";
+  public static final String START_BLOCK = "startblock";
 
   public JsonQbftConfigOptions(final ObjectNode bftConfigRoot) {
     super(bftConfigRoot);
@@ -35,11 +37,20 @@ public class JsonQbftConfigOptions extends JsonBftConfigOptions implements QbftC
   }
 
   @Override
+  public OptionalLong getStartBlock() {
+    return JsonUtil.getLong(bftConfigRoot, START_BLOCK);
+  }
+
+  @Override
   public Map<String, Object> asMap() {
     final Map<String, Object> map = super.asMap();
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     builder.putAll(map);
-    builder.put(VALIDATOR_CONTRACT_ADDRESS, getValidatorContractAddress());
+
+    getValidatorContractAddress()
+        .ifPresent((address) -> builder.put(VALIDATOR_CONTRACT_ADDRESS, address));
+    getStartBlock().ifPresent((startBlock) -> builder.put(START_BLOCK, getStartBlock()));
+
     return builder.build();
   }
 }
