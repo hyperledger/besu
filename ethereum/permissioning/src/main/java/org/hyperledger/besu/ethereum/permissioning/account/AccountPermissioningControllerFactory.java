@@ -139,7 +139,7 @@ public class AccountPermissioningControllerFactory {
       final TransactionSmartContractPermissioningController
           transactionSmartContractPermissioningController) {
     try {
-      LOG.debug("Validating flexible account permissioning smart contract configuration");
+      LOG.debug("Validating onchain account permissioning smart contract configuration");
 
       final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 

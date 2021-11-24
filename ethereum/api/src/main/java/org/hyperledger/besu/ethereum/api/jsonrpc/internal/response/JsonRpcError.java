@@ -145,10 +145,10 @@ public enum JsonRpcError {
   OFFCHAIN_PRIVACY_GROUP_NOT_ENABLED(
       -50100, "Offchain privacy group can't be used with Flexible privacy groups enabled."),
   FLEXIBLE_PRIVACY_GROUP_ID_NOT_AVAILABLE(
-      -50100, "Private Marker Transactions to flexible privacy groups must use privacyGroupId"),
+      -50100, "Private transactions to flexible privacy groups must use privacyGroupId"),
   PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT(
       -50100,
-      "Private Marker Transaction failed due to intrinsic gas exceeding the limit. Gas limit used from the Private Transaction."),
+      "Privacy Marker Transaction failed due to intrinsic gas exceeding the limit. Gas limit used from the Private Transaction."),
   PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY(
       -50100, "Private from does not match enclave public key"),
   VALUE_NOT_ZERO(-50100, "We cannot transfer ether in a private transaction yet."),
