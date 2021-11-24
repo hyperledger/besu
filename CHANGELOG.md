@@ -1,5 +1,14 @@
 # Changelog
 
+## 21.10.3
+
+### Additions and Improvements
+- Adding support of the NO_COLOR environment variable as described in the [NO_COLOR](https://no-color.org/) standard [#3085](https://github.com/hyperledger/besu/pull/3085)
+### Bug Fixes
+
+### Early Access Features
+- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
+
 ## 21.10.2
 
 ### Additions and Improvements
@@ -12,8 +21,8 @@
 - DNS Discovery daemon wasn't started [#3033](https://github.com/hyperledger/besu/pull/3033)
 
 ### Download Link
-https://hyperledger.jfrog.io/native/besu-binaries/besu/21.10.2/besu-21.10.2.zip \
-SHA256: // TBD
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.2/besu-21.10.2.zip \
+SHA256: 4b96d4d10c0c6128dc67333c8600e927ea135b4db5e5f74688a0753260b7b985
 
 ## 21.10.1
 

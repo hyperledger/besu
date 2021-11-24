@@ -22,6 +22,7 @@ import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.JsonBftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule.BftSpecCreator;
 
 import java.util.List;
@@ -34,8 +35,8 @@ public class BftForksScheduleTest {
 
   @Test
   public void retrievesGenesisFork() {
-    final BftForkSpec<BftConfigOptions> genesisForkSpec =
-        new BftForkSpec<>(0, JsonBftConfigOptions.DEFAULT);
+    final ForkSpec<BftConfigOptions> genesisForkSpec =
+        new ForkSpec<>(0, JsonBftConfigOptions.DEFAULT);
 
     final BftForksSchedule<BftConfigOptions> schedule =
         new BftForksSchedule<>(genesisForkSpec, List.of());
@@ -45,10 +46,10 @@ public class BftForksScheduleTest {
 
   @Test
   public void retrievesLatestFork() {
-    final BftForkSpec<BftConfigOptions> genesisForkSpec =
-        new BftForkSpec<>(0, JsonBftConfigOptions.DEFAULT);
-    final BftForkSpec<BftConfigOptions> forkSpec1 = createForkSpec(1, 10);
-    final BftForkSpec<BftConfigOptions> forkSpec2 = createForkSpec(2, 20);
+    final ForkSpec<BftConfigOptions> genesisForkSpec =
+        new ForkSpec<>(0, JsonBftConfigOptions.DEFAULT);
+    final ForkSpec<BftConfigOptions> forkSpec1 = createForkSpec(1, 10);
+    final ForkSpec<BftConfigOptions> forkSpec2 = createForkSpec(2, 20);
 
     final BftForksSchedule<BftConfigOptions> schedule =
         new BftForksSchedule<>(genesisForkSpec, List.of(forkSpec1, forkSpec2));
@@ -93,8 +94,7 @@ public class BftForksScheduleTest {
   @Test
   public void createsScheduleUsingSpecCreator() {
     final BftConfigOptions genesisConfigOptions = JsonBftConfigOptions.DEFAULT;
-    final BftForkSpec<BftConfigOptions> genesisForkSpec =
-        new BftForkSpec<>(0, genesisConfigOptions);
+    final ForkSpec<BftConfigOptions> genesisForkSpec = new ForkSpec<>(0, genesisConfigOptions);
     final BftFork fork1 = createFork(1, 10);
     final BftFork fork2 = createFork(2, 20);
     final BftSpecCreator<BftConfigOptions, BftFork> specCreator =
@@ -103,20 +103,19 @@ public class BftForksScheduleTest {
     final BftConfigOptions configOptions1 = createBftConfigOptions(10);
     final BftConfigOptions configOptions2 = createBftConfigOptions(20);
     when(specCreator.create(genesisForkSpec, fork1)).thenReturn(configOptions1);
-    when(specCreator.create(new BftForkSpec<>(1, configOptions1), fork2))
-        .thenReturn(configOptions2);
+    when(specCreator.create(new ForkSpec<>(1, configOptions1), fork2)).thenReturn(configOptions2);
 
     final BftForksSchedule<BftConfigOptions> schedule =
         BftForksSchedule.create(genesisConfigOptions, List.of(fork1, fork2), specCreator);
     assertThat(schedule.getFork(0)).isEqualTo(genesisForkSpec);
-    assertThat(schedule.getFork(1)).isEqualTo(new BftForkSpec<>(1, configOptions1));
-    assertThat(schedule.getFork(2)).isEqualTo(new BftForkSpec<>(2, configOptions2));
+    assertThat(schedule.getFork(1)).isEqualTo(new ForkSpec<>(1, configOptions1));
+    assertThat(schedule.getFork(2)).isEqualTo(new ForkSpec<>(2, configOptions2));
   }
 
-  private BftForkSpec<BftConfigOptions> createForkSpec(
+  private ForkSpec<BftConfigOptions> createForkSpec(
       final long block, final int blockPeriodSeconds) {
     final MutableBftConfigOptions bftConfigOptions = createBftConfigOptions(blockPeriodSeconds);
-    return new BftForkSpec<>(block, bftConfigOptions);
+    return new ForkSpec<>(block, bftConfigOptions);
   }
 
   private MutableBftConfigOptions createBftConfigOptions(final int blockPeriodSeconds) {

@@ -12,28 +12,29 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft;
+package org.hyperledger.besu.consensus.common;
 
-import org.hyperledger.besu.config.BftConfigOptions;
-
+import java.util.Comparator;
 import java.util.Objects;
 
-public class BftForkSpec<C extends BftConfigOptions> {
+public class ForkSpec<C> {
+
+  public static final Comparator<ForkSpec<?>> COMPARATOR = Comparator.comparing(ForkSpec::getBlock);
 
   private final long block;
-  private final C configOptions;
+  private final C value;
 
-  public BftForkSpec(final long block, final C configOptions) {
+  public ForkSpec(final long block, final C value) {
     this.block = block;
-    this.configOptions = configOptions;
+    this.value = value;
   }
 
   public long getBlock() {
     return block;
   }
 
-  public C getConfigOptions() {
-    return configOptions;
+  public C getValue() {
+    return value;
   }
 
   @Override
@@ -44,12 +45,12 @@ public class BftForkSpec<C extends BftConfigOptions> {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final BftForkSpec<?> that = (BftForkSpec<?>) o;
-    return block == that.block && Objects.equals(configOptions, that.configOptions);
+    final ForkSpec<?> that = (ForkSpec<?>) o;
+    return block == that.block && Objects.equals(value, that.value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(block, configOptions);
+    return Objects.hash(block, value);
   }
 }

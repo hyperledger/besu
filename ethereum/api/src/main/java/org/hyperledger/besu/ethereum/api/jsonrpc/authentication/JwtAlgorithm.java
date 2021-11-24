@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,21 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.enclave.testutil;
+package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+public enum JwtAlgorithm {
+  RS256,
+  RS384,
+  RS512,
+  ES256,
+  ES384,
+  ES512;
 
-public enum EnclaveType {
-  ORION,
-  TESSERA,
-  NOOP;
-
-  public static List<EnclaveType> valuesForTests() {
-    return Arrays.stream(values())
-        .filter(enclaveType -> enclaveType != NOOP)
-        .filter(enclaveType -> enclaveType != ORION)
-        .collect(Collectors.toList());
+  public static JwtAlgorithm fromString(final String str) {
+    for (final JwtAlgorithm alg : JwtAlgorithm.values()) {
+      if (alg.name().equalsIgnoreCase(str)) {
+        return alg;
+      }
+    }
+    return null;
   }
 }

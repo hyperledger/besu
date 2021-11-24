@@ -14,6 +14,7 @@
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | David Mechler    | davemec          | davemec          |
 | Edward Mack      | edwardmack       | mackcom          | 
+| Fabio Di Fabio   | fab-10           | fab-10           |
 | Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jason Frame      | jframe           | jframe           |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |

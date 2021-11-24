@@ -70,6 +70,8 @@ rpc-http-tls-keystore-password-file="none.passwd"
 rpc-http-tls-client-auth-enabled=false
 rpc-http-tls-known-clients-file="rpc_tls_clients.txt"
 rpc-http-tls-ca-clients-enabled=false
+rpc-http-authentication-jwt-algorithm="RS256"
+rpc-ws-authentication-jwt-algorithm="RS256"
 
 # PRIVACY TLS
 privacy-tls-enabled=false
