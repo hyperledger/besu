@@ -23,9 +23,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,12 +35,9 @@ import org.apache.logging.log4j.Logger;
 public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LogManager.getLogger();
   private final Map<Hash, PrivacyMarkerTransactionTracker> pmtTrackersByHash;
-  private final Map<String, Collection<PrivacyMarkerTransactionTracker>>
-      pmtTrackersBySenderAndGroup;
 
   public PrivacyMarkerTransactionPool(final Blockchain blockchain) {
     this.pmtTrackersByHash = new HashMap<>();
-    this.pmtTrackersBySenderAndGroup = new HashMap<>();
     blockchain.observeBlockAdded(this);
   }
 
@@ -62,13 +57,6 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
     if (tracker != null) {
       tracker.setActive(false);
       tracker.setBlockNumber(blockNumber);
-      pmtTrackersBySenderAndGroup.get(tracker.getKey()).stream()
-          .filter(t -> t.getHash().equals(tx.getHash()))
-          .forEach(
-              t -> {
-                t.setActive(false);
-                t.setBlockNumber(blockNumber);
-              });
     }
   }
 
@@ -76,10 +64,6 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
     final PrivacyMarkerTransactionTracker tracker = pmtTrackersByHash.get(tx.getHash());
     if (tracker != null) {
       tracker.setActive(true);
-      // TODO there should be only one that matches the hash - is there a better option than forEach
-      pmtTrackersBySenderAndGroup.get(tracker.getKey()).stream()
-          .filter(t -> t.getHash().equals(tx.getHash()))
-          .forEach(t -> t.setActive(true));
     }
   }
 
@@ -96,15 +80,12 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
   }
 
   public Optional<Long> getMaxMatchingNonce(final String sender, final String privacyGroupId) {
-
-    final Collection<PrivacyMarkerTransactionTracker> trackers =
-        pmtTrackersBySenderAndGroup.get(sender + privacyGroupId);
-
-    if (trackers == null) {
-      return Optional.empty();
-    }
-    return trackers.stream()
-        .filter(tracker -> tracker.isActive)
+    return pmtTrackersByHash.values().stream()
+        .filter(
+            tracker ->
+                tracker.isActive
+                    && tracker.getSender().equals(sender)
+                    && tracker.getPrivacyGroupIdBase64().equals(privacyGroupId))
         .map(tracker -> tracker.getPrivateNonce())
         .max(Long::compare);
   }
@@ -121,12 +102,6 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
         .forEach(
             tx -> {
               hashesToRemove.add(tx.getHash());
-              final Collection<PrivacyMarkerTransactionTracker> trackers =
-                  pmtTrackersBySenderAndGroup.get(tx.getKey());
-              if (trackers == null) {
-                return;
-              }
-              trackers.remove(tx);
             });
     hashesToRemove.forEach(hash -> pmtTrackersByHash.remove(hash));
   }
@@ -164,8 +139,6 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
   protected Hash addPmtTransactionTracker(final PrivacyMarkerTransactionTracker pmtTracker) {
 
     pmtTrackersByHash.put(pmtTracker.getHash(), pmtTracker);
-    pmtTrackersBySenderAndGroup.putIfAbsent(pmtTracker.getKey(), new HashSet<>());
-    pmtTrackersBySenderAndGroup.get(pmtTracker.getKey()).add(pmtTracker);
     LOG.debug("adding: {} pmtHash: {} ", pmtTracker, pmtTracker.getHash());
     return pmtTracker.getHash();
   }
@@ -243,10 +216,6 @@ public class PrivacyMarkerTransactionPool implements BlockAddedObserver {
 
     private Optional<Long> getBlockNumber() {
       return blockNumber;
-    }
-
-    private String getKey() {
-      return getSender() + getPrivacyGroupIdBase64();
     }
 
     @Override
