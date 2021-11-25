@@ -41,7 +41,7 @@ public class ProcessableBlockHeader implements BlockValues {
   // base fee is included for post EIP-1559 blocks
   protected final Long baseFee;
   // random is included for post-merge blocks
-  protected final Bytes32 random;
+  protected final Bytes32 mixHashOrRandom;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -51,7 +51,7 @@ public class ProcessableBlockHeader implements BlockValues {
       final long gasLimit,
       final long timestamp,
       final Long baseFee,
-      final Bytes32 random) {
+      final Bytes32 mixHashOrRandom) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
@@ -59,7 +59,7 @@ public class ProcessableBlockHeader implements BlockValues {
     this.gasLimit = gasLimit;
     this.timestamp = timestamp;
     this.baseFee = baseFee;
-    this.random = random;
+    this.mixHashOrRandom = mixHashOrRandom;
   }
 
   /**
@@ -145,6 +145,6 @@ public class ProcessableBlockHeader implements BlockValues {
    * @return the raw bytes of the random field
    */
   public Optional<Bytes32> getRandom() {
-    return Optional.ofNullable(random);
+    return Optional.ofNullable(mixHashOrRandom);
   }
 }

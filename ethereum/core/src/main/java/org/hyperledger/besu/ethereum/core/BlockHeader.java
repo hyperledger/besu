@@ -36,8 +36,6 @@ public class BlockHeader extends SealableBlockHeader
 
   public static final long GENESIS_BLOCK_NUMBER = 0L;
 
-  private final Hash mixHash;
-
   private final long nonce;
 
   private final Supplier<Hash> hash;
@@ -61,9 +59,8 @@ public class BlockHeader extends SealableBlockHeader
       final long timestamp,
       final Bytes extraData,
       final Long baseFee,
-      final Hash mixHash,
+      final Bytes32 mixHashOrRandom,
       final long nonce,
-      final Bytes32 random,
       final BlockHeaderFunctions blockHeaderFunctions,
       final Optional<LogsBloomFilter> privateLogsBloom) {
     super(
@@ -81,8 +78,7 @@ public class BlockHeader extends SealableBlockHeader
         timestamp,
         extraData,
         baseFee,
-        random);
-    this.mixHash = mixHash;
+        mixHashOrRandom);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -104,9 +100,8 @@ public class BlockHeader extends SealableBlockHeader
       final long timestamp,
       final Bytes extraData,
       final Long baseFee,
-      final Hash mixHash,
+      final Bytes32 mixHashOrRandom,
       final long nonce,
-      final Bytes32 random,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
@@ -123,8 +118,7 @@ public class BlockHeader extends SealableBlockHeader
         timestamp,
         extraData,
         baseFee,
-        random);
-    this.mixHash = mixHash;
+        mixHashOrRandom);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -138,7 +132,7 @@ public class BlockHeader extends SealableBlockHeader
    */
   @Override
   public Hash getMixHash() {
-    return mixHash;
+    return Hash.wrap(mixHashOrRandom);
   }
 
   /**
@@ -220,14 +214,7 @@ public class BlockHeader extends SealableBlockHeader
     out.writeLongScalar(gasUsed);
     out.writeLongScalar(timestamp);
     out.writeBytes(extraData);
-
-    // if random is present, output random; otherwise mixhash
-    if (random != null) {
-      out.writeBytes(random);
-    } else {
-      out.writeBytes(mixHash);
-    }
-
+    out.writeBytes(mixHashOrRandom);
     out.writeLong(nonce);
     if (baseFee != null) {
       out.writeLongScalar(baseFee);
@@ -251,10 +238,9 @@ public class BlockHeader extends SealableBlockHeader
     final long gasUsed = input.readLongScalar();
     final long timestamp = input.readLongScalar();
     final Bytes extraData = input.readBytes();
-    final Hash mixHash = Hash.wrap(input.readBytes32());
+    final Bytes32 mixHashOrRandom = input.readBytes32();
     final long nonce = input.readLong();
     final Long baseFee = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
-    final Bytes32 random = !input.isEndOfCurrentList() ? input.readBytes32() : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -271,9 +257,8 @@ public class BlockHeader extends SealableBlockHeader
         timestamp,
         extraData,
         baseFee,
-        mixHash,
+        mixHashOrRandom,
         nonce,
-        random,
         blockHeaderFunctions);
   }
 
@@ -313,8 +298,7 @@ public class BlockHeader extends SealableBlockHeader
     sb.append("timestamp=").append(timestamp).append(", ");
     sb.append("extraData=").append(extraData).append(", ");
     sb.append("baseFee=").append(baseFee).append(", ");
-    sb.append("random=").append(random).append(", ");
-    sb.append("mixHash=").append(mixHash).append(", ");
+    sb.append("mixHashOrRandom=").append(mixHashOrRandom).append(", ");
     sb.append("nonce=").append(nonce);
     return sb.append("}").toString();
   }
@@ -337,9 +321,8 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getTimestamp(),
         pluginBlockHeader.getExtraData(),
         pluginBlockHeader.getBaseFee().orElse(null),
-        Hash.fromHexString(pluginBlockHeader.getMixHash().toHexString()),
-        pluginBlockHeader.getNonce(),
         pluginBlockHeader.getRandom().orElse(null),
+        pluginBlockHeader.getNonce(),
         blockHeaderFunctions);
   }
 }
