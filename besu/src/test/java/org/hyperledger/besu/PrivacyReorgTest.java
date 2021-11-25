@@ -69,6 +69,7 @@ import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -168,6 +169,13 @@ public class PrivacyReorgTest {
             .setEnclaveUrl(URI.create("http//1.1.1.1:1234"))
             .setEnclaveFactory(enclaveFactory)
             .build();
+    //    privacyParameters =
+    //        new PrivacyParameters.Builder()
+    //            .setEnabled(true)
+    //            .setStorageProvider(createKeyValueStorageProvider())
+    //            .setEnclaveUrl(enclave.clientUrl())
+    //            .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
+    //            .build();
     privacyParameters.setPrivacyUserId(ENCLAVE_PUBLIC_KEY.toBase64String());
     privacyController = mock(RestrictedDefaultPrivacyController.class);
     when(privacyController.findPrivacyGroupByGroupId(any(), any()))
@@ -210,16 +218,17 @@ public class PrivacyReorgTest {
     final ProtocolContext protocolContext = besuController.getProtocolContext();
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
     final PrivateStateStorage privateStateStorage = privacyParameters.getPrivateStateStorage();
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    PRIVATE_TRANSACTION.writeTo(rlpOutput);
 
-    when(mockEnclave.receive("AA=="))
+    when(mockEnclave.receive(any()))
         .thenReturn(
             new ReceiveResponse(
-                PRIVATE_TRANSACTION.getPayload().toArrayUnsafe(),
+                rlpOutput.encoded().toBase64String().getBytes(StandardCharsets.UTF_8),
                 PRIVACY_GROUP_BYTES32.toBase64String(),
                 ENCLAVE_PUBLIC_KEY.toBase64String()));
 
-    final Transaction privateMarkerTransaction =
-        buildMarkerTransaction(Bytes.fromHexString("0x00"));
+    final Transaction privateMarkerTransaction = buildMarkerTransaction();
     final Block firstBlock =
         gen.block(
             getBlockOptionsWithTransaction(
@@ -263,7 +272,7 @@ public class PrivacyReorgTest {
         gen.block(
             getBlockOptionsWithTransaction(
                 blockchain.getGenesisBlock(),
-                buildMarkerTransaction(getEnclaveKey(enclave.clientUrl())),
+                buildMarkerTransaction(),
                 FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
@@ -302,9 +311,7 @@ public class PrivacyReorgTest {
     final Block secondBlock =
         gen.block(
             getBlockOptionsWithTransaction(
-                firstBlock,
-                buildMarkerTransaction(getEnclaveKey(enclave.clientUrl())),
-                secondBlockStateRoot));
+                firstBlock, buildMarkerTransaction(), secondBlockStateRoot));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
     appendBlock(besuController, blockchain, protocolContext, secondBlock);
@@ -351,7 +358,7 @@ public class PrivacyReorgTest {
         gen.block(
             getBlockOptionsWithTransaction(
                 blockchain.getGenesisBlock(),
-                buildMarkerTransaction(getEnclaveKey(enclave.clientUrl())),
+                buildMarkerTransaction(),
                 FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
@@ -398,7 +405,7 @@ public class PrivacyReorgTest {
         gen.block(
             getBlockOptionsWithTransactionAndDifficulty(
                 secondForkBlock,
-                buildMarkerTransaction(getEnclaveKey(enclave.clientUrl())),
+                buildMarkerTransaction(),
                 secondForkBlock.getHeader().getDifficulty().plus(10L),
                 thirdForkBlockStateRoot));
 
@@ -469,14 +476,14 @@ public class PrivacyReorgTest {
     }
   }
 
-  private Transaction buildMarkerTransaction(final Bytes payload) {
+  private Transaction buildMarkerTransaction() {
     return Transaction.builder()
         .type(TransactionType.FRONTIER)
         .chainId(BigInteger.valueOf(1337))
         .gasLimit(60000)
         .gasPrice(Wei.of(1000))
         .nonce(0)
-        .payload(payload)
+        .payload(Bytes32.random())
         .to(DEFAULT_PRIVACY)
         .value(Wei.ZERO)
         .signAndBuild(KEY_PAIR);
