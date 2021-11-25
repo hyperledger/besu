@@ -169,12 +169,5 @@ dependencyManagement {
     dependency 'org.yaml:snakeyaml:1.26'
 
     dependency 'tech.pegasys.discovery:discovery:21.10.0'
-
-    dependency 'tech.pegasys.ethsigner.internal:ethsigner-core:21.3.2'
-    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.17') {
-      entry 'signing-secp256k1-api'
-      entry 'signing-secp256k1-impl'
-    }
-
   }
 }
