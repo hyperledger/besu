@@ -17,30 +17,29 @@ package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory.PrivxCreatePrivacyGroupResponse;
 
 import java.io.IOException;
+import java.util.List;
 
-import org.web3j.crypto.Credentials;
-import org.web3j.protocol.exceptions.TransactionException;
-import org.web3j.utils.Base64String;
+public class CreateFlexiblePrivacyGroupTransaction
+    implements Transaction<PrivxCreatePrivacyGroupResponse> {
+  private final PrivacyNode creator;
+  private final List<String> addresses;
+  private final String privateFrom;
 
-public class UnlockOnchainPrivacyGroupTransaction implements Transaction<String> {
-  private final Base64String privacyGroupId;
-  private final PrivacyNode locker;
-  private final Credentials signer;
-
-  public UnlockOnchainPrivacyGroupTransaction(
-      final String privacyGroupId, final PrivacyNode locker, final Credentials signer) {
-    this.privacyGroupId = Base64String.wrap(privacyGroupId);
-    this.locker = locker;
-    this.signer = signer;
+  CreateFlexiblePrivacyGroupTransaction(
+      final PrivacyNode creator, final String privateFrom, final List<String> addresses) {
+    this.creator = creator;
+    this.addresses = addresses;
+    this.privateFrom = privateFrom;
   }
 
   @Override
-  public String execute(final NodeRequests node) {
+  public PrivxCreatePrivacyGroupResponse execute(final NodeRequests node) {
     try {
-      return node.privacy().privxUnlockPrivacyGroup(locker, privacyGroupId, signer);
-    } catch (final IOException | TransactionException e) {
+      return node.privacy().privxCreatePrivacyGroup(creator, privateFrom, addresses);
+    } catch (final IOException e) {
       throw new RuntimeException(e);
     }
   }

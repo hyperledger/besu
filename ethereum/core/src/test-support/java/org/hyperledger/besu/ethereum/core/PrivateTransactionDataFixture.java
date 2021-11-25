@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -90,12 +90,12 @@ public class PrivateTransactionDataFixture {
   }
 
   public static Transaction privateMarkerTransactionOnchain() {
-    return privateMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, ONCHAIN_PRIVACY);
+    return privateMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, FLEXIBLE_PRIVACY);
   }
 
   public static Transaction privateMarkerTransactionOnchainAdd() {
     return privateMarkerTransaction(
-        Bytes.concatenate(VALID_BASE64_ENCLAVE_KEY, VALID_BASE64_ENCLAVE_KEY), ONCHAIN_PRIVACY);
+        Bytes.concatenate(VALID_BASE64_ENCLAVE_KEY, VALID_BASE64_ENCLAVE_KEY), FLEXIBLE_PRIVACY);
   }
 
   private static Transaction privateMarkerTransaction(

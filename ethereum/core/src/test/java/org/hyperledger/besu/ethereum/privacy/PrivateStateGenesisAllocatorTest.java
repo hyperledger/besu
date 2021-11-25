@@ -16,10 +16,10 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE;
-import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.PROXY_RUNTIME_BYTECODE;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
+import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE;
+import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.PROXY_RUNTIME_BYTECODE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -131,7 +131,7 @@ public class PrivateStateGenesisAllocatorTest {
 
     assertThat(worldState.frontierRootHash()).isNotEqualTo(EMPTY_ROOT_HASH);
 
-    assertThat(worldState.get(ONCHAIN_PRIVACY_PROXY)).isEqualTo(null);
+    assertThat(worldState.get(FLEXIBLE_PRIVACY_PROXY)).isEqualTo(null);
 
     assertGenesisAccountApplied();
   }
@@ -144,12 +144,12 @@ public class PrivateStateGenesisAllocatorTest {
   }
 
   private void assertManagementContractApplied() {
-    Account managementProxy = worldState.get(ONCHAIN_PRIVACY_PROXY);
+    Account managementProxy = worldState.get(FLEXIBLE_PRIVACY_PROXY);
     assertThat(managementProxy.getCode()).isEqualTo(PROXY_RUNTIME_BYTECODE);
     assertThat(managementProxy.getStorageValue(UInt256.ZERO))
-        .isEqualTo(UInt256.fromBytes(DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT));
+        .isEqualTo(UInt256.fromBytes(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT));
 
-    Account managementContract = worldState.get(DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT);
+    Account managementContract = worldState.get(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT);
     assertThat(managementContract.getCode()).isEqualTo(DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
   }
 }
