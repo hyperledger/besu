@@ -26,14 +26,14 @@ import java.util.concurrent.TimeUnit;
 import org.awaitility.Awaitility;
 import org.web3j.utils.Base64String;
 
-public class ExpectValidOnchainPrivacyGroupCreated implements PrivateCondition {
+public class ExpectValidFlexiblePrivacyGroupCreated implements PrivateCondition {
 
   private final PrivacyTransactions transactions;
-  private final PrivacyRequestFactory.OnchainPrivacyGroup expected;
+  private final PrivacyRequestFactory.FlexiblePrivacyGroup expected;
 
-  public ExpectValidOnchainPrivacyGroupCreated(
+  public ExpectValidFlexiblePrivacyGroupCreated(
       final PrivacyTransactions transactions,
-      final PrivacyRequestFactory.OnchainPrivacyGroup expected) {
+      final PrivacyRequestFactory.FlexiblePrivacyGroup expected) {
     this.transactions = transactions;
     this.expected = expected;
   }
@@ -43,9 +43,9 @@ public class ExpectValidOnchainPrivacyGroupCreated implements PrivateCondition {
     Awaitility.waitAtMost(20, TimeUnit.SECONDS)
         .untilAsserted(
             () -> {
-              final List<PrivacyRequestFactory.OnchainPrivacyGroup> groups =
+              final List<PrivacyRequestFactory.FlexiblePrivacyGroup> groups =
                   node.execute(
-                      transactions.findOnchainPrivacyGroup(
+                      transactions.findFlexiblePrivacyGroup(
                           Base64String.unwrapList(expected.getMembers())));
               assertThat(groups).contains(expected);
             });

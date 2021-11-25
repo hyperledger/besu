@@ -13,7 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 pragma solidity ^0.6.0;
-interface OnChainPrivacyGroupManagementInterface {
+interface FlexiblePrivacyGroupManagementInterface {
 
     function addParticipants(bytes32[] calldata publicEnclaveKeys) external returns (bool);
 

@@ -27,19 +27,19 @@ import java.util.stream.Collectors;
 
 import org.web3j.utils.Base64String;
 
-public class FindOnchainPrivacyGroupTransaction
-    implements Transaction<List<PrivacyRequestFactory.OnchainPrivacyGroup>> {
+public class FindFlexiblePrivacyGroupTransaction
+    implements Transaction<List<PrivacyRequestFactory.FlexiblePrivacyGroup>> {
   private final List<Base64String> nodes;
 
-  public FindOnchainPrivacyGroupTransaction(final List<String> nodeEnclaveKeys) {
+  public FindFlexiblePrivacyGroupTransaction(final List<String> nodeEnclaveKeys) {
     this.nodes = nodeEnclaveKeys.stream().map(Base64String::wrap).collect(Collectors.toList());
   }
 
   @Override
-  public List<PrivacyRequestFactory.OnchainPrivacyGroup> execute(final NodeRequests node) {
+  public List<PrivacyRequestFactory.FlexiblePrivacyGroup> execute(final NodeRequests node) {
     try {
       PrivxFindPrivacyGroupResponse result =
-          node.privacy().privxFindOnchainPrivacyGroup(nodes).send();
+          node.privacy().privxFindFlexiblePrivacyGroup(nodes).send();
       assertThat(result).isNotNull();
       if (result.hasError()) {
         throw new RuntimeException(result.getError().getMessage());

@@ -82,7 +82,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
             new PrivDistributeRawTransaction(
                 privacyController,
                 privacyIdProvider,
-                getPrivacyParameters().isOnchainPrivacyGroupsEnabled()),
+                getPrivacyParameters().isFlexiblePrivacyGroupsEnabled()),
             new PrivGetCode(getBlockchainQueries(), privacyController, privacyIdProvider),
             new PrivGetLogs(
                 getBlockchainQueries(), getPrivacyQueries(), privacyController, privacyIdProvider),
@@ -98,7 +98,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
             new PrivNewFilter(filterManager, privacyController, privacyIdProvider),
             new PrivUninstallFilter(filterManager, privacyController, privacyIdProvider));
 
-    if (!getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
+    if (!getPrivacyParameters().isFlexiblePrivacyGroupsEnabled()) {
       final Map<String, JsonRpcMethod> OFFCHAIN_METHODS =
           mapOf(
               new PrivCreatePrivacyGroup(privacyController, privacyIdProvider),

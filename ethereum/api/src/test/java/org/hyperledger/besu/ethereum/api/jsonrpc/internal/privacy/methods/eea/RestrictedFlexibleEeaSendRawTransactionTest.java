@@ -37,17 +37,17 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
+public class RestrictedFlexibleEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
 
   final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
-  RestrictedOnchainEeaSendRawTransaction method;
+  RestrictedFlexibleEeaSendRawTransaction method;
 
   @Before
   public void before() {
     method =
-        new RestrictedOnchainEeaSendRawTransaction(
+        new RestrictedFlexibleEeaSendRawTransaction(
             transactionPool,
             privacyMarkerTransactionPool,
             privacyIdProvider,
@@ -57,7 +57,7 @@ public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTr
   }
 
   @Test
-  public void validOnchainTransactionPrivacyGroupIsSentToTransactionPool() {
+  public void validFlexibleTransactionPrivacyGroupIsSentToTransactionPool() {
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
@@ -66,12 +66,13 @@ public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTr
     when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any()))
         .thenReturn(MOCK_ORION_KEY);
 
-    final Optional<PrivacyGroup> onchainPrivacyGroup =
+    final Optional<PrivacyGroup> flexiblePrivacyGroup =
         Optional.of(
             new PrivacyGroup(
-                "", PrivacyGroup.Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY)));
+                "", PrivacyGroup.Type.FLEXIBLE, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY)));
 
-    when(privacyController.findPrivacyGroupByGroupId(any(), any())).thenReturn(onchainPrivacyGroup);
+    when(privacyController.findPrivacyGroupByGroupId(any(), any()))
+        .thenReturn(flexiblePrivacyGroup);
 
     final JsonRpcSuccessResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -81,7 +82,7 @@ public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTr
     final JsonRpcResponse actualResponse = method.response(validPrivacyGroupTransactionRequest);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(PUBLIC_ONCHAIN_TRANSACTION);
+    verify(transactionPool).addLocalTransaction(PUBLIC_FLEXIBLE_TRANSACTION);
   }
 
   @Test
@@ -92,7 +93,7 @@ public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTr
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
             validPrivateForTransactionRequest.getRequest().getId(),
-            JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
+            JsonRpcError.FLEXIBLE_PRIVACY_GROUP_ID_NOT_AVAILABLE);
 
     final JsonRpcResponse actualResponse = method.response(validPrivateForTransactionRequest);
 
@@ -100,7 +101,7 @@ public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTr
   }
 
   @Test
-  public void offchainPrivacyGroupTransactionFailsWhenOnchainPrivacyGroupFeatureIsEnabled() {
+  public void offchainPrivacyGroupTransactionFailsWhenFlexiblePrivacyGroupFeatureIsEnabled() {
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
 
@@ -109,7 +110,7 @@ public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTr
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
             validPrivacyGroupTransactionRequest.getRequest().getId(),
-            JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
+            JsonRpcError.FLEXIBLE_PRIVACY_GROUP_DOES_NOT_EXIST);
 
     final JsonRpcResponse actualResponse = method.response(validPrivacyGroupTransactionRequest);
 
@@ -117,14 +118,14 @@ public class RestrictedOnchainEeaSendRawTransactionTest extends BaseEeaSendRawTr
   }
 
   @Test
-  public void onchainPrivacyGroupTransactionFailsWhenGroupDoesNotExist() {
+  public void flexiblePrivacyGroupTransactionFailsWhenGroupDoesNotExist() {
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
             validPrivacyGroupTransactionRequest.getRequest().getId(),
-            JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
+            JsonRpcError.FLEXIBLE_PRIVACY_GROUP_DOES_NOT_EXIST);
 
     final JsonRpcResponse actualResponse = method.response(validPrivacyGroupTransactionRequest);
 

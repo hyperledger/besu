@@ -47,7 +47,7 @@ import org.web3j.tx.gas.ContractGasProvider;
  * <p>Generated with web3j version 4.5.16.
  */
 @SuppressWarnings("rawtypes")
-public class OnchainPrivacyGroupManagementInterface extends Contract {
+public class FlexiblePrivacyGroupManagementInterface extends Contract {
   public static final String BINARY = "";
 
   public static final String FUNC_ADDPARTICIPANTS = "addParticipants";
@@ -67,7 +67,7 @@ public class OnchainPrivacyGroupManagementInterface extends Contract {
   public static final String FUNC_UNLOCK = "unlock";
 
   @Deprecated
-  protected OnchainPrivacyGroupManagementInterface(
+  protected FlexiblePrivacyGroupManagementInterface(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
@@ -76,7 +76,7 @@ public class OnchainPrivacyGroupManagementInterface extends Contract {
     super(BINARY, contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
-  protected OnchainPrivacyGroupManagementInterface(
+  protected FlexiblePrivacyGroupManagementInterface(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
@@ -85,7 +85,7 @@ public class OnchainPrivacyGroupManagementInterface extends Contract {
   }
 
   @Deprecated
-  protected OnchainPrivacyGroupManagementInterface(
+  protected FlexiblePrivacyGroupManagementInterface(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
@@ -94,7 +94,7 @@ public class OnchainPrivacyGroupManagementInterface extends Contract {
     super(BINARY, contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
-  protected OnchainPrivacyGroupManagementInterface(
+  protected FlexiblePrivacyGroupManagementInterface(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
@@ -180,49 +180,49 @@ public class OnchainPrivacyGroupManagementInterface extends Contract {
   }
 
   @Deprecated
-  public static OnchainPrivacyGroupManagementInterface load(
+  public static FlexiblePrivacyGroupManagementInterface load(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
       BigInteger gasPrice,
       BigInteger gasLimit) {
-    return new OnchainPrivacyGroupManagementInterface(
+    return new FlexiblePrivacyGroupManagementInterface(
         contractAddress, web3j, credentials, gasPrice, gasLimit);
   }
 
   @Deprecated
-  public static OnchainPrivacyGroupManagementInterface load(
+  public static FlexiblePrivacyGroupManagementInterface load(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
       BigInteger gasPrice,
       BigInteger gasLimit) {
-    return new OnchainPrivacyGroupManagementInterface(
+    return new FlexiblePrivacyGroupManagementInterface(
         contractAddress, web3j, transactionManager, gasPrice, gasLimit);
   }
 
-  public static OnchainPrivacyGroupManagementInterface load(
+  public static FlexiblePrivacyGroupManagementInterface load(
       String contractAddress,
       Web3j web3j,
       Credentials credentials,
       ContractGasProvider contractGasProvider) {
-    return new OnchainPrivacyGroupManagementInterface(
+    return new FlexiblePrivacyGroupManagementInterface(
         contractAddress, web3j, credentials, contractGasProvider);
   }
 
-  public static OnchainPrivacyGroupManagementInterface load(
+  public static FlexiblePrivacyGroupManagementInterface load(
       String contractAddress,
       Web3j web3j,
       TransactionManager transactionManager,
       ContractGasProvider contractGasProvider) {
-    return new OnchainPrivacyGroupManagementInterface(
+    return new FlexiblePrivacyGroupManagementInterface(
         contractAddress, web3j, transactionManager, contractGasProvider);
   }
 
-  public static RemoteCall<OnchainPrivacyGroupManagementInterface> deploy(
+  public static RemoteCall<FlexiblePrivacyGroupManagementInterface> deploy(
       Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
-        OnchainPrivacyGroupManagementInterface.class,
+        FlexiblePrivacyGroupManagementInterface.class,
         web3j,
         credentials,
         contractGasProvider,
@@ -231,10 +231,10 @@ public class OnchainPrivacyGroupManagementInterface extends Contract {
   }
 
   @Deprecated
-  public static RemoteCall<OnchainPrivacyGroupManagementInterface> deploy(
+  public static RemoteCall<FlexiblePrivacyGroupManagementInterface> deploy(
       Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
     return deployRemoteCall(
-        OnchainPrivacyGroupManagementInterface.class,
+        FlexiblePrivacyGroupManagementInterface.class,
         web3j,
         credentials,
         gasPrice,
@@ -243,10 +243,10 @@ public class OnchainPrivacyGroupManagementInterface extends Contract {
         "");
   }
 
-  public static RemoteCall<OnchainPrivacyGroupManagementInterface> deploy(
+  public static RemoteCall<FlexiblePrivacyGroupManagementInterface> deploy(
       Web3j web3j, TransactionManager transactionManager, ContractGasProvider contractGasProvider) {
     return deployRemoteCall(
-        OnchainPrivacyGroupManagementInterface.class,
+        FlexiblePrivacyGroupManagementInterface.class,
         web3j,
         transactionManager,
         contractGasProvider,
@@ -255,13 +255,13 @@ public class OnchainPrivacyGroupManagementInterface extends Contract {
   }
 
   @Deprecated
-  public static RemoteCall<OnchainPrivacyGroupManagementInterface> deploy(
+  public static RemoteCall<FlexiblePrivacyGroupManagementInterface> deploy(
       Web3j web3j,
       TransactionManager transactionManager,
       BigInteger gasPrice,
       BigInteger gasLimit) {
     return deployRemoteCall(
-        OnchainPrivacyGroupManagementInterface.class,
+        FlexiblePrivacyGroupManagementInterface.class,
         web3j,
         transactionManager,
         gasPrice,

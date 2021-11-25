@@ -125,7 +125,7 @@ public class PrivateTransactionLocatorTest {
   }
 
   @Test
-  public void locateBesuPrivateTransactionSentToOnchainPrivacyGroup() {
+  public void locateBesuPrivateTransactionSentToFlexiblePrivacyGroup() {
     final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnchain();
     final PrivateTransaction privateTransaction = privateTransactionBesu();
 
@@ -159,7 +159,7 @@ public class PrivateTransactionLocatorTest {
   }
 
   @Test
-  public void locateBesuPrivateTransactionFromAddBlobSentToOnchainPrivacyGroup() {
+  public void locateBesuPrivateTransactionFromAddBlobSentToFlexiblePrivacyGroup() {
     final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnchain();
     final PrivateTransaction privateTransaction = privateTransactionBesu();
 

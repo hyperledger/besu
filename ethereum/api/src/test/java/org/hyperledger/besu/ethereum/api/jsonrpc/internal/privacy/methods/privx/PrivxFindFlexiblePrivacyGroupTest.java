@@ -42,7 +42,7 @@ import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
-public class PrivxFindOnchainPrivacyGroupTest {
+public class PrivxFindFlexiblePrivacyGroupTest {
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final List<String> ADDRESSES =
       List.of(
@@ -59,7 +59,7 @@ public class PrivxFindOnchainPrivacyGroupTest {
 
   private JsonRpcRequestContext request;
   private PrivacyGroup privacyGroup;
-  private PrivxFindOnchainPrivacyGroup privxFindOnchainPrivacyGroup;
+  private PrivxFindFlexiblePrivacyGroup privxFindFlexiblePrivacyGroup;
 
   @Before
   public void setUp() {
@@ -67,7 +67,7 @@ public class PrivxFindOnchainPrivacyGroupTest {
     when(privacyParameters.isEnabled()).thenReturn(true);
     request =
         new JsonRpcRequestContext(
-            new JsonRpcRequest("1", "privx_findOnChainPrivacyGroup", new Object[] {ADDRESSES}),
+            new JsonRpcRequest("1", "privx_findFlexiblePrivacyGroup", new Object[] {ADDRESSES}),
             user);
     privacyGroup = new PrivacyGroup();
     privacyGroup.setName("");
@@ -75,8 +75,8 @@ public class PrivxFindOnchainPrivacyGroupTest {
     privacyGroup.setPrivacyGroupId("privacy group id");
     privacyGroup.setMembers(Lists.list("member1"));
 
-    privxFindOnchainPrivacyGroup =
-        new PrivxFindOnchainPrivacyGroup(privacyController, privacyIdProvider);
+    privxFindFlexiblePrivacyGroup =
+        new PrivxFindFlexiblePrivacyGroup(privacyController, privacyIdProvider);
   }
 
   @SuppressWarnings("unchecked")
@@ -86,7 +86,7 @@ public class PrivxFindOnchainPrivacyGroupTest {
         .thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final JsonRpcSuccessResponse response =
-        (JsonRpcSuccessResponse) privxFindOnchainPrivacyGroup.response(request);
+        (JsonRpcSuccessResponse) privxFindFlexiblePrivacyGroup.response(request);
     final List<PrivacyGroup> result = (List<PrivacyGroup>) response.getResult();
     assertThat(result).hasSize(1);
     assertThat(result.get(0)).usingRecursiveComparison().isEqualTo(privacyGroup);
@@ -99,8 +99,8 @@ public class PrivxFindOnchainPrivacyGroupTest {
         .thenThrow(new EnclaveClientException(500, "some failure"));
 
     final JsonRpcErrorResponse response =
-        (JsonRpcErrorResponse) privxFindOnchainPrivacyGroup.response(request);
-    assertThat(response.getError()).isEqualTo(JsonRpcError.FIND_ONCHAIN_PRIVACY_GROUP_ERROR);
+        (JsonRpcErrorResponse) privxFindFlexiblePrivacyGroup.response(request);
+    assertThat(response.getError()).isEqualTo(JsonRpcError.FIND_FLEXIBLE_PRIVACY_GROUP_ERROR);
     verify(privacyController).findPrivacyGroupByMembers(ADDRESSES, ENCLAVE_PUBLIC_KEY);
   }
 
@@ -111,8 +111,8 @@ public class PrivxFindOnchainPrivacyGroupTest {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.FIND_ONCHAIN_PRIVACY_GROUP_ERROR);
-    final JsonRpcResponse response = privxFindOnchainPrivacyGroup.response(request);
+            request.getRequest().getId(), JsonRpcError.FIND_FLEXIBLE_PRIVACY_GROUP_ERROR);
+    final JsonRpcResponse response = privxFindFlexiblePrivacyGroup.response(request);
     assertThat(response).isEqualTo(expectedResponse);
     verify(privacyController).findPrivacyGroupByMembers(ADDRESSES, ENCLAVE_PUBLIC_KEY);
   }

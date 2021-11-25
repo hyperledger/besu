@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -68,12 +68,12 @@ public class BaseEeaSendRawTransaction {
 
   final GasCalculator gasCalculator = new BerlinGasCalculator();
 
-  final Transaction PUBLIC_ONCHAIN_TRANSACTION =
+  final Transaction PUBLIC_FLEXIBLE_TRANSACTION =
       new Transaction(
           0L,
           Wei.of(1),
           21000L,
-          Optional.of(ONCHAIN_PRIVACY),
+          Optional.of(FLEXIBLE_PRIVACY),
           Wei.ZERO,
           SIGNATURE_ALGORITHM_SUPPLIER
               .get()

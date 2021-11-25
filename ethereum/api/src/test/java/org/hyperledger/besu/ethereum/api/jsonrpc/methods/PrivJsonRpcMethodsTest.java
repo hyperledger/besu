@@ -65,8 +65,8 @@ public class PrivJsonRpcMethodsTest {
   }
 
   @Test
-  public void offchainPrivacyGroupMethodsAreDisabledWhenOnchainPrivacyGroupIsEnabled() {
-    when(privacyParameters.isOnchainPrivacyGroupsEnabled()).thenReturn(true);
+  public void offchainPrivacyGroupMethodsAreDisabledWhenFlexiblePrivacyGroupIsEnabled() {
+    when(privacyParameters.isFlexiblePrivacyGroupsEnabled()).thenReturn(true);
     final Map<String, JsonRpcMethod> rpcMethods = privJsonRpcMethods.create();
 
     assertThat(rpcMethods.get(PRIV_CREATE_PRIVACY_GROUP.getMethodName())).isNull();
@@ -75,8 +75,8 @@ public class PrivJsonRpcMethodsTest {
   }
 
   @Test
-  public void offchainPrivacyGroupMethodsAreEnabledWhenOnchainPrivacyGroupIsDisabled() {
-    when(privacyParameters.isOnchainPrivacyGroupsEnabled()).thenReturn(false);
+  public void offchainPrivacyGroupMethodsAreEnabledWhenFlexiblePrivacyGroupIsDisabled() {
+    when(privacyParameters.isFlexiblePrivacyGroupsEnabled()).thenReturn(false);
     final Map<String, JsonRpcMethod> rpcMethods = privJsonRpcMethods.create();
 
     assertThat(rpcMethods.get(PRIV_CREATE_PRIVACY_GROUP.getMethodName())).isNotNull();

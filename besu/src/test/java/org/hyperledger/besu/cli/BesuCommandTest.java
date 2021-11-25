@@ -26,6 +26,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
@@ -1658,6 +1659,16 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .contains(
             "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove --ethstats-contact or provide a URL (via --ethstats=nodename:secret@host:port)");
+  }
+
+  @Test
+  public void privacyOnchainGroupsEnabledCannotBeUsedWithPrivacyFlexibleGroupsEnabled() {
+    parseCommand("--privacy-onchain-groups-enabled", "--privacy-flexible-groups-enabled");
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "The `--privacy-onchain-groups-enabled` option is deprecated and you should only use `--privacy-flexible-groups-enabled`");
   }
 
   @Test
@@ -3511,7 +3522,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void onchainPrivacyGroupEnabledFlagDefaultValueIsFalse() {
+  public void flexiblePrivacyGroupEnabledFlagDefaultValueIsFalse() {
     parseCommand(
         "--privacy-enabled",
         "--privacy-public-key-file",
@@ -3529,7 +3540,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
 
     final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
-    assertThat(privacyParameters.isOnchainPrivacyGroupsEnabled()).isEqualTo(false);
+    assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(false);
   }
 
   @Test
@@ -3552,7 +3563,24 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
 
     final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
-    assertThat(privacyParameters.isOnchainPrivacyGroupsEnabled()).isEqualTo(true);
+    assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(true);
+  }
+
+  @Test
+  public void onchainPrivacyGroupEnabledOptionIsDeprecated() {
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH,
+        "--privacy-onchain-groups-enabled",
+        "--min-gas-price",
+        "0");
+
+    verify(mockLogger)
+        .warn(
+            DEPRECATION_WARNING_MSG,
+            "--privacy-onchain-groups-enabled",
+            "--privacy-flexible-groups-enabled");
   }
 
   @Test
@@ -3575,7 +3603,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString()).isEmpty();
 
     final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
-    assertThat(privacyParameters.isOnchainPrivacyGroupsEnabled()).isEqualTo(true);
+    assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(true);
   }
 
   @Test

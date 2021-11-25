@@ -22,13 +22,13 @@ import java.io.IOException;
 import org.web3j.crypto.Credentials;
 import org.web3j.utils.Base64String;
 
-public class RemoveFromOnchainPrivacyGroupTransaction implements Transaction<String> {
+public class RemoveFromFlexiblePrivacyGroupTransaction implements Transaction<String> {
   private final Base64String privacyGroupId;
   private final String remover;
   private final String toRemove;
   private final Credentials signer;
 
-  public RemoveFromOnchainPrivacyGroupTransaction(
+  public RemoveFromFlexiblePrivacyGroupTransaction(
       final String privacyGroupId,
       final String remover,
       final Credentials signer,

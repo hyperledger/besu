@@ -13,9 +13,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 pragma solidity ^0.6.0;
-import "./OnChainPrivacyGroupManagementInterface.sol";
+import "./FlexiblePrivacyGroupManagementInterface.sol";
 
-contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInterface {
+contract FlexiblePrivacyGroupManagementProxy is FlexiblePrivacyGroupManagementInterface {
 
     address public implementation;
 
@@ -28,17 +28,17 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
     }
 
     function addParticipants(bytes32[] memory _publicEnclaveKeys) public override returns (bool) {
-        OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
+        FlexiblePrivacyGroupManagementInterface privacyInterface = FlexiblePrivacyGroupManagementInterface(implementation);
         return privacyInterface.addParticipants(_publicEnclaveKeys);
     }
 
     function getParticipants() view public override returns (bytes32[] memory) {
-        OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
+        FlexiblePrivacyGroupManagementInterface privacyInterface = FlexiblePrivacyGroupManagementInterface(implementation);
         return privacyInterface.getParticipants();
     }
 
     function removeParticipant(bytes32 _participant) public override returns (bool) {
-        OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
+        FlexiblePrivacyGroupManagementInterface privacyInterface = FlexiblePrivacyGroupManagementInterface(implementation);
         bool result = privacyInterface.removeParticipant(_participant);
         if (result) {
             emit ParticipantRemoved(_participant);
@@ -47,27 +47,27 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
     }
 
     function lock() public override {
-        OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
+        FlexiblePrivacyGroupManagementInterface privacyInterface = FlexiblePrivacyGroupManagementInterface(implementation);
         return privacyInterface.lock();
     }
 
     function unlock() public override {
-        OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
+        FlexiblePrivacyGroupManagementInterface privacyInterface = FlexiblePrivacyGroupManagementInterface(implementation);
         return privacyInterface.unlock();
     }
 
     function canExecute() public view override returns (bool) {
-        OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
+        FlexiblePrivacyGroupManagementInterface privacyInterface = FlexiblePrivacyGroupManagementInterface(implementation);
         return privacyInterface.canExecute();
     }
 
     function getVersion() public view override returns (bytes32) {
-        OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
+        FlexiblePrivacyGroupManagementInterface privacyInterface = FlexiblePrivacyGroupManagementInterface(implementation);
         return privacyInterface.getVersion();
     }
 
     function canUpgrade() external override returns (bool) {
-        OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
+        FlexiblePrivacyGroupManagementInterface privacyInterface = FlexiblePrivacyGroupManagementInterface(implementation);
         return privacyInterface.canUpgrade();
     }
 
@@ -77,7 +77,7 @@ contract OnChainPrivacyGroupManagementProxy is OnChainPrivacyGroupManagementInte
         require(this.canUpgrade(), "Not allowed to upgrade the management contract.");
         bytes32[] memory participants = this.getParticipants();
         _setImplementation(_newImplementation);
-        OnChainPrivacyGroupManagementInterface privacyInterface = OnChainPrivacyGroupManagementInterface(implementation);
+        FlexiblePrivacyGroupManagementInterface privacyInterface = FlexiblePrivacyGroupManagementInterface(implementation);
         privacyInterface.addParticipants(participants);
     }
 

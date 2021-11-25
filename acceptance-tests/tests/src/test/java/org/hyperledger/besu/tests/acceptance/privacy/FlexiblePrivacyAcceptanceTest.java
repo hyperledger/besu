@@ -16,7 +16,7 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
 import static org.junit.runners.Parameterized.Parameters;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
@@ -48,11 +48,11 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 
 @RunWith(Parameterized.class)
-public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBase {
+public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTestBase {
 
   private final EnclaveType enclaveType;
 
-  public OnchainPrivacyAcceptanceTest(final EnclaveType enclaveType) {
+  public FlexiblePrivacyAcceptanceTest(final EnclaveType enclaveType) {
     this.enclaveType = enclaveType;
   }
 
@@ -78,21 +78,21 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
     final Network containerNetwork = Network.newNetwork();
 
     alice =
-        privacyBesu.createOnchainPrivacyGroupEnabledMinerNode(
+        privacyBesu.createFlexiblePrivacyGroupEnabledMinerNode(
             "node1",
             privacyAccountResolver.resolve(0),
             false,
             enclaveType,
             Optional.of(containerNetwork));
     bob =
-        privacyBesu.createOnchainPrivacyGroupEnabledNode(
+        privacyBesu.createFlexiblePrivacyGroupEnabledNode(
             "node2",
             privacyAccountResolver.resolve(1),
             false,
             enclaveType,
             Optional.of(containerNetwork));
     charlie =
-        privacyBesu.createOnchainPrivacyGroupEnabledNode(
+        privacyBesu.createFlexiblePrivacyGroupEnabledNode(
             "node3",
             privacyAccountResolver.resolve(2),
             false,
@@ -103,13 +103,13 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
 
   @Test
   public void nodeCanCreatePrivacyGroup() {
-    final String privacyGroupId = createOnchainPrivacyGroup(alice);
-    checkOnchainPrivacyGroupExists(privacyGroupId, alice);
+    final String privacyGroupId = createFlexiblePrivacyGroup(alice);
+    checkFlexiblePrivacyGroupExists(privacyGroupId, alice);
   }
 
   @Test
   public void deployingMustGiveValidReceipt() {
-    final String privacyGroupId = createOnchainPrivacyGroup(alice, bob);
+    final String privacyGroupId = createFlexiblePrivacyGroup(alice, bob);
     final Contract eventEmitter = deployPrivateContract(EventEmitter.class, privacyGroupId, alice);
     final String commitmentHash = getContractDeploymentCommitmentHash(eventEmitter);
 
@@ -119,7 +119,7 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
 
   @Test
   public void canAddParticipantToGroup() {
-    final String privacyGroupId = createOnchainPrivacyGroup(alice, bob);
+    final String privacyGroupId = createFlexiblePrivacyGroup(alice, bob);
     final Contract eventEmitter = deployPrivateContract(EventEmitter.class, privacyGroupId, alice);
     final String commitmentHash = getContractDeploymentCommitmentHash(eventEmitter);
 
@@ -128,14 +128,14 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
     final Credentials aliceCredentials = Credentials.create(alice.getTransactionSigningKey());
     lockPrivacyGroup(privacyGroupId, alice, aliceCredentials);
     addMembersToPrivacyGroup(privacyGroupId, alice, aliceCredentials, charlie);
-    checkOnchainPrivacyGroupExists(privacyGroupId, alice, bob, charlie);
+    checkFlexiblePrivacyGroupExists(privacyGroupId, alice, bob, charlie);
 
     charlie.verify(privateTransactionVerifier.existingPrivateTransactionReceipt(commitmentHash));
   }
 
   @Test
   public void removedMemberCannotSendTransactionToGroup() {
-    final String privacyGroupId = createOnchainPrivacyGroup(alice, bob);
+    final String privacyGroupId = createFlexiblePrivacyGroup(alice, bob);
 
     final String removeHash =
         removeFromPrivacyGroup(
@@ -145,12 +145,12 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
 
     assertThatThrownBy(() -> deployPrivateContract(EventEmitter.class, privacyGroupId, bob))
         .isInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Onchain Privacy group does not exist.");
+        .hasMessageContaining("Flexible Privacy group does not exist.");
   }
 
   @Test
   public void canInteractWithPrivateGenesisPreCompile() throws Exception {
-    final String privacyGroupId = createOnchainPrivacyGroup(alice, bob);
+    final String privacyGroupId = createFlexiblePrivacyGroup(alice, bob);
 
     final EventEmitter eventEmitter =
         alice.execute(
@@ -195,15 +195,15 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
 
   @Test
   public void memberCanBeAddedAfterBeingRemoved() {
-    final String privacyGroupId = createOnchainPrivacyGroup(alice);
+    final String privacyGroupId = createFlexiblePrivacyGroup(alice);
 
-    checkOnchainPrivacyGroupExists(privacyGroupId, alice);
+    checkFlexiblePrivacyGroupExists(privacyGroupId, alice);
 
     lockPrivacyGroup(privacyGroupId, alice, Credentials.create(alice.getTransactionSigningKey()));
     addMembersToPrivacyGroup(
         privacyGroupId, alice, Credentials.create(alice.getTransactionSigningKey()), bob);
 
-    checkOnchainPrivacyGroupExists(privacyGroupId, alice, bob);
+    checkFlexiblePrivacyGroupExists(privacyGroupId, alice, bob);
 
     final EventEmitter eventEmitter =
         deployPrivateContract(EventEmitter.class, privacyGroupId, alice);
@@ -219,7 +219,7 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
     removeFromPrivacyGroup(
         privacyGroupId, alice, Credentials.create(alice.getTransactionSigningKey()), bob);
 
-    checkOnchainPrivacyGroupExists(privacyGroupId, alice);
+    checkFlexiblePrivacyGroupExists(privacyGroupId, alice);
 
     final int valueSetWhileBobWas_NOT_aMember = 1337;
     final PrivateTransactionReceipt receiptWhileBobRemoved =
@@ -238,7 +238,7 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
     addMembersToPrivacyGroup(
         privacyGroupId, alice, Credentials.create(alice.getTransactionSigningKey()), bob);
 
-    checkOnchainPrivacyGroupExists(privacyGroupId, alice, bob);
+    checkFlexiblePrivacyGroupExists(privacyGroupId, alice, bob);
 
     checkEmitterValue(
         Lists.newArrayList(alice, bob),
@@ -311,8 +311,8 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
 
   @Test
   public void bobCanAddCharlieAfterBeingAddedByAlice() {
-    final String privacyGroupId = createOnchainPrivacyGroup(alice);
-    checkOnchainPrivacyGroupExists(privacyGroupId, alice);
+    final String privacyGroupId = createFlexiblePrivacyGroup(alice);
+    checkFlexiblePrivacyGroupExists(privacyGroupId, alice);
     final EventEmitter eventEmitter =
         alice.execute(
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
@@ -335,7 +335,7 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
     alice.execute(
         privacyTransactions.addToPrivacyGroup(privacyGroupId, alice, aliceCredentials, bob));
 
-    checkOnchainPrivacyGroupExists(privacyGroupId, alice, bob);
+    checkFlexiblePrivacyGroupExists(privacyGroupId, alice, bob);
 
     bob.execute(
         privacyTransactions.privxLockPrivacyGroupAndCheck(privacyGroupId, bob, aliceCredentials));
@@ -369,7 +369,7 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
 
     alice.getBesu().verify(ethConditions.miningStatus(true));
 
-    checkOnchainPrivacyGroupExists(privacyGroupId, alice, bob, charlie);
+    checkFlexiblePrivacyGroupExists(privacyGroupId, alice, bob, charlie);
 
     final Optional<TransactionReceipt> aliceAddReceipt =
         alice.execute(ethTransactions.getTransactionReceipt(bobAddHash));
@@ -409,7 +409,7 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
         new PrivateTransactionReceipt(
             null,
             alice.getAddress().toHexString(),
-            ONCHAIN_PRIVACY_PROXY.toHexString(),
+            FLEXIBLE_PRIVACY_PROXY.toHexString(),
             "0x",
             Collections.emptyList(),
             null,
@@ -472,13 +472,13 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
 
     removeFromPrivacyGroup(privacyGroupId, bob, aliceCredentials, charlie);
 
-    checkOnchainPrivacyGroupExists(privacyGroupId, alice, bob);
+    checkFlexiblePrivacyGroupExists(privacyGroupId, alice, bob);
   }
 
   @Test
   public void canOnlyCallProxyContractWhenGroupNotLocked() {
-    final String privacyGroupId = createOnchainPrivacyGroup(alice);
-    checkOnchainPrivacyGroupExists(privacyGroupId, alice);
+    final String privacyGroupId = createFlexiblePrivacyGroup(alice);
+    checkFlexiblePrivacyGroupExists(privacyGroupId, alice);
 
     final EventEmitter eventEmitter =
         alice.execute(
@@ -543,10 +543,10 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
 
   @Test
   public void addMembersToTwoGroupsInTheSameBlock() {
-    final String privacyGroupId1 = createOnchainPrivacyGroup(alice);
-    final String privacyGroupId2 = createOnchainPrivacyGroup(bob);
-    checkOnchainPrivacyGroupExists(privacyGroupId1, alice);
-    checkOnchainPrivacyGroupExists(privacyGroupId2, bob);
+    final String privacyGroupId1 = createFlexiblePrivacyGroup(alice);
+    final String privacyGroupId2 = createFlexiblePrivacyGroup(bob);
+    checkFlexiblePrivacyGroupExists(privacyGroupId1, alice);
+    checkFlexiblePrivacyGroupExists(privacyGroupId2, bob);
 
     lockPrivacyGroup(privacyGroupId1, alice, Credentials.create(alice.getTransactionSigningKey()));
     lockPrivacyGroup(privacyGroupId2, bob, Credentials.create(bob.getTransactionSigningKey()));
@@ -572,8 +572,8 @@ public class OnchainPrivacyAcceptanceTest extends OnchainPrivacyAcceptanceTestBa
 
     alice.execute(minerTransactions.minerStart());
 
-    checkOnchainPrivacyGroupExists(privacyGroupId1, alice, charlie);
-    checkOnchainPrivacyGroupExists(privacyGroupId2, bob, alice);
+    checkFlexiblePrivacyGroupExists(privacyGroupId1, alice, charlie);
+    checkFlexiblePrivacyGroupExists(privacyGroupId2, bob, alice);
   }
 
   private <T extends Contract> T deployPrivateContract(

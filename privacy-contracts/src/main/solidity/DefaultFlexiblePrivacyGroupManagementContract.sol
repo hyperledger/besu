@@ -13,9 +13,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 pragma solidity ^0.6.0;
-import "./OnChainPrivacyGroupManagementInterface.sol";
+import "./FlexiblePrivacyGroupManagementInterface.sol";
 
-contract DefaultOnChainPrivacyGroupManagementContract is OnChainPrivacyGroupManagementInterface {
+contract DefaultFlexiblePrivacyGroupManagementContract is FlexiblePrivacyGroupManagementInterface {
 
     address private _owner;
     bool private _canExecute;
