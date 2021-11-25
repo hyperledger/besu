@@ -72,7 +72,6 @@ public class ReferenceTestEnv extends BlockHeader {
         Optional.ofNullable(baseFee).map(UInt256::fromHexString).map(UInt256::toLong).orElse(null),
         Hash.ZERO,
         0L,
-        null,
         new MainnetBlockHeaderFunctions());
   }
 

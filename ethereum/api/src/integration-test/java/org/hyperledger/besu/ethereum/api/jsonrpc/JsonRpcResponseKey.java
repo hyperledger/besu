@@ -36,6 +36,5 @@ public enum JsonRpcResponseKey {
   TIMESTAMP,
   TOTAL_DIFFICULTY,
   TRANSACTION_ROOT,
-  BASEFEE,
-  RANDOM
+  BASEFEE
 }

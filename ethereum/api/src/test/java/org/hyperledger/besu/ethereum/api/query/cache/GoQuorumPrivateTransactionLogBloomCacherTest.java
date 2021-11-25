@@ -168,7 +168,6 @@ public class GoQuorumPrivateTransactionLogBloomCacherTest {
             null,
             Hash.EMPTY,
             0,
-            null,
             new MainnetBlockHeaderFunctions(),
             Optional.of(testLogsBloomFilter));
     return fakeHeader;

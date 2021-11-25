@@ -123,9 +123,8 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
             blockParam.getTimestamp(),
             Bytes.fromHexString(blockParam.getExtraData()),
             blockParam.getBaseFeePerGas(),
-            Hash.ZERO,
-            0,
             blockParam.getRandom(),
+            0,
             headerFunctions);
 
     boolean execSuccess = false;

@@ -51,7 +51,6 @@ public class BlockUtils {
         null,
         mixHash,
         block.getNonce().longValue(),
-        null,
         blockHeaderFunctions);
   }
 }
