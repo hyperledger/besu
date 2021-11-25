@@ -53,7 +53,7 @@ import org.hyperledger.besu.util.ExceptionUtils;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.io.IOException;
-import java.io.Writer;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.file.Path;
@@ -90,6 +90,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpMethod;
@@ -820,12 +821,12 @@ public class JsonRpcHttpService {
     }
   }
 
-  static class JsonResponseStreamer extends Writer {
-    static final int CHUNK_SIZE = 4000 * 3;
-
+  static class JsonResponseStreamer extends OutputStream {
+    private static final int SINGLE_WRITES_BUFFER_SIZE = 10000;
     private final HttpServerResponse response;
     private final Semaphore paused = new Semaphore(1);
-    private final StringBuilder currBuff = new StringBuilder(CHUNK_SIZE);
+    private final byte[] singleWritesBuf = new byte[SINGLE_WRITES_BUFFER_SIZE];
+    private int singleWritesLen = 0;
 
     private boolean chunked = false;
 
@@ -834,40 +835,16 @@ public class JsonRpcHttpService {
     }
 
     @Override
-    public void write(final char[] cbuf, final int off, final int len) throws IOException {
-
-      int freeSpace = CHUNK_SIZE - currBuff.length();
-
-      int currOff;
-      int currLen;
-
-      if (freeSpace >= len) {
-        currOff = off;
-        currLen = len;
-      } else {
-        // does not fit in the current chunk, fill and write it
-        currBuff.append(cbuf, off, freeSpace);
-        sendChunk();
-        // and append the rest
-        currOff = off + freeSpace;
-        currLen = len - freeSpace;
+    public void write(final int b) throws IOException {
+      singleWritesBuf[singleWritesLen++] = (byte) b;
+      if (singleWritesLen >= SINGLE_WRITES_BUFFER_SIZE) {
+        write(singleWritesBuf, 0, singleWritesLen);
+        singleWritesLen = 0;
       }
-
-      currBuff.append(cbuf, currOff, currLen);
     }
 
     @Override
-    public void close() throws IOException {
-      response.end(currBuff.toString());
-    }
-
-    @Override
-    public void flush() throws IOException {
-      // no need to support flush since we send everything every chunk
-      throw new UnsupportedOperationException("Flush not supported");
-    }
-
-    private void sendChunk() throws IOException {
+    public void write(final byte[] bbuf, final int off, final int len) throws IOException {
       if (!chunked) {
         response.setChunked(true);
         chunked = true;
@@ -886,12 +863,20 @@ public class JsonRpcHttpService {
         }
       }
 
-      response.write(currBuff.toString());
-      clearBuffer();
+      Buffer buf = Buffer.buffer(len);
+      buf.appendBytes(bbuf, off, len);
+      response.write(buf);
     }
 
-    private void clearBuffer() {
-      currBuff.delete(0, currBuff.length());
+    @Override
+    public void close() throws IOException {
+      if (singleWritesLen > 0) {
+        write(singleWritesBuf, 0, singleWritesLen);
+      }
+      response.end();
     }
+
+    @Override
+    public void flush() throws IOException {}
   }
 }
