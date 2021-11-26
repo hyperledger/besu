@@ -71,7 +71,7 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
             cf.complete(
                 resp.otherwise(
                         t -> {
-                          LOG.debug("failed to exec consensus method " + this.getName(), t);
+                          LOG.debug("failed to exec consensus method {}", t, this.getName());
                           return new JsonRpcErrorResponse(
                               request.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
                         })
@@ -83,7 +83,6 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
       return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.TIMEOUT_ERROR);
     } catch (ExecutionException e) {
       return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
-      // e.printStackTrace();
     }
   }
 
