@@ -118,7 +118,7 @@ public class SchedulableMiningCoordinator implements MiningCoordinator, BlockAdd
     final MiningCoordinator nextMiningCoordinator =
         miningCoordinatorSchedule.getFork(currentBlock + 1).getValue();
     if (activeMiningCoordinator != nextMiningCoordinator) {
-      LOG.debug(
+      LOG.trace(
           "Switching mining coordinator at block {} from {} to {}",
           currentBlock,
           activeMiningCoordinator.getClass().getSimpleName(),
@@ -127,8 +127,8 @@ public class SchedulableMiningCoordinator implements MiningCoordinator, BlockAdd
       nextMiningCoordinator.start();
       activeMiningCoordinator = nextMiningCoordinator;
     }
-    if (activeMiningCoordinator instanceof BftMiningCoordinator) {
-      ((BftMiningCoordinator) activeMiningCoordinator).onBlockAdded(event);
+    if (activeMiningCoordinator instanceof BlockAddedObserver) {
+      ((BlockAddedObserver) activeMiningCoordinator).onBlockAdded(event);
     }
   }
 

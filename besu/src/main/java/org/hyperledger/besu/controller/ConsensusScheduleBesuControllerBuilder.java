@@ -18,6 +18,8 @@
 
 package org.hyperledger.besu.controller;
 
+import static org.hyperledger.besu.ethereum.core.BlockHeader.GENESIS_BLOCK_NUMBER;
+
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.CombinedProtocolScheduleFactory;
 import org.hyperledger.besu.consensus.common.ForkSpec;
@@ -186,7 +188,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   protected void validateContext(final ProtocolContext context) {
-    besuControllerBuilderSchedule.values().forEach(builder -> builder.validateContext(context));
+    besuControllerBuilderSchedule.get(GENESIS_BLOCK_NUMBER).validateContext(context);
   }
 
   @Override

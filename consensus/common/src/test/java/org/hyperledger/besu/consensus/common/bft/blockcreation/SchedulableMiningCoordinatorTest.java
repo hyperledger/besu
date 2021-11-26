@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
 import static java.util.Collections.emptyList;
+import static org.hyperledger.besu.ethereum.core.BlockHeader.GENESIS_BLOCK_NUMBER;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -52,13 +53,14 @@ public class SchedulableMiningCoordinatorTest {
   private Block block;
   private BlockAddedEvent blockEvent;
   private BftForksSchedule<MiningCoordinator> miningCoordinatorSchedule;
-  private static final long GENESIS_BLOCK = 0L;
-  private static final long MIGRATION_BLOCK = 5L;
+  private static final long MIGRATION_BLOCK_NUMBER = 5L;
 
   @Before
   public void setup() {
-    final ForkSpec<MiningCoordinator> genesisFork = new ForkSpec<>(GENESIS_BLOCK, coordinator1);
-    final ForkSpec<MiningCoordinator> migrationFork = new ForkSpec<>(MIGRATION_BLOCK, coordinator2);
+    final ForkSpec<MiningCoordinator> genesisFork =
+        new ForkSpec<>(GENESIS_BLOCK_NUMBER, coordinator1);
+    final ForkSpec<MiningCoordinator> migrationFork =
+        new ForkSpec<>(MIGRATION_BLOCK_NUMBER, coordinator2);
     miningCoordinatorSchedule = new BftForksSchedule<>(genesisFork, List.of(migrationFork));
     this.block = new Block(blockHeader, blockBody);
     blockEvent = BlockAddedEvent.createForHeadAdvancement(this.block, emptyList(), emptyList());
@@ -88,7 +90,7 @@ public class SchedulableMiningCoordinatorTest {
 
   @Test
   public void onBlockAddedShouldMigrateToNextMiningCoordinatorAndDelegate() {
-    when(blockHeader.getNumber()).thenReturn(MIGRATION_BLOCK - 1);
+    when(blockHeader.getNumber()).thenReturn(MIGRATION_BLOCK_NUMBER - 1);
 
     new SchedulableMiningCoordinator(miningCoordinatorSchedule, blockchain)
         .onBlockAdded(blockEvent);
@@ -101,8 +103,8 @@ public class SchedulableMiningCoordinatorTest {
   @Test
   public void onBlockAddedShouldNotDelegateWhenDelegateIsNoop() {
     BftForksSchedule<MiningCoordinator> noopCoordinatorSchedule =
-        new BftForksSchedule<>(new ForkSpec<>(GENESIS_BLOCK, noopCoordinator), emptyList());
-    when(blockHeader.getNumber()).thenReturn(GENESIS_BLOCK);
+        new BftForksSchedule<>(new ForkSpec<>(GENESIS_BLOCK_NUMBER, noopCoordinator), emptyList());
+    when(blockHeader.getNumber()).thenReturn(GENESIS_BLOCK_NUMBER);
 
     new SchedulableMiningCoordinator(noopCoordinatorSchedule, blockchain).onBlockAdded(blockEvent);
 
@@ -111,48 +113,64 @@ public class SchedulableMiningCoordinatorTest {
 
   @Test
   public void delegatesToActiveMiningCoordinator() {
-    verifyDelegation(MiningCoordinator::start, GENESIS_BLOCK, coordinator1, coordinator2);
-    verifyDelegation(MiningCoordinator::start, MIGRATION_BLOCK, coordinator2, coordinator1);
+    verifyDelegation(MiningCoordinator::start, GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);
+    verifyDelegation(MiningCoordinator::start, MIGRATION_BLOCK_NUMBER, coordinator2, coordinator1);
 
-    verifyDelegation(MiningCoordinator::stop, GENESIS_BLOCK, coordinator1, coordinator2);
-    verifyDelegation(MiningCoordinator::stop, MIGRATION_BLOCK, coordinator2, coordinator1);
+    verifyDelegation(MiningCoordinator::stop, GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);
+    verifyDelegation(MiningCoordinator::stop, MIGRATION_BLOCK_NUMBER, coordinator2, coordinator1);
 
-    verifyDelegation(MiningCoordinator::enable, GENESIS_BLOCK, coordinator1, coordinator2);
-    verifyDelegation(MiningCoordinator::enable, MIGRATION_BLOCK, coordinator2, coordinator1);
+    verifyDelegation(MiningCoordinator::enable, GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);
+    verifyDelegation(MiningCoordinator::enable, MIGRATION_BLOCK_NUMBER, coordinator2, coordinator1);
 
-    verifyDelegation(MiningCoordinator::disable, GENESIS_BLOCK, coordinator1, coordinator2);
-    verifyDelegation(MiningCoordinator::disable, MIGRATION_BLOCK, coordinator2, coordinator1);
+    verifyDelegation(MiningCoordinator::disable, GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);
+    verifyDelegation(
+        MiningCoordinator::disable, MIGRATION_BLOCK_NUMBER, coordinator2, coordinator1);
 
-    verifyDelegation(MiningCoordinator::isMining, GENESIS_BLOCK, coordinator1, coordinator2);
-    verifyDelegation(MiningCoordinator::isMining, MIGRATION_BLOCK, coordinator2, coordinator1);
+    verifyDelegation(MiningCoordinator::isMining, GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);
+    verifyDelegation(
+        MiningCoordinator::isMining, MIGRATION_BLOCK_NUMBER, coordinator2, coordinator1);
 
     verifyDelegation(
-        MiningCoordinator::getMinTransactionGasPrice, GENESIS_BLOCK, coordinator1, coordinator2);
+        MiningCoordinator::getMinTransactionGasPrice,
+        GENESIS_BLOCK_NUMBER,
+        coordinator1,
+        coordinator2);
     verifyDelegation(
-        MiningCoordinator::getMinTransactionGasPrice, MIGRATION_BLOCK, coordinator2, coordinator1);
+        MiningCoordinator::getMinTransactionGasPrice,
+        MIGRATION_BLOCK_NUMBER,
+        coordinator2,
+        coordinator1);
 
-    verifyDelegation(c -> c.setExtraData(Bytes.EMPTY), GENESIS_BLOCK, coordinator1, coordinator2);
-    verifyDelegation(c -> c.setExtraData(Bytes.EMPTY), MIGRATION_BLOCK, coordinator2, coordinator1);
+    verifyDelegation(
+        c -> c.setExtraData(Bytes.EMPTY), GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);
+    verifyDelegation(
+        c -> c.setExtraData(Bytes.EMPTY), MIGRATION_BLOCK_NUMBER, coordinator2, coordinator1);
 
-    verifyDelegation(MiningCoordinator::getCoinbase, GENESIS_BLOCK, coordinator1, coordinator2);
-    verifyDelegation(MiningCoordinator::getCoinbase, MIGRATION_BLOCK, coordinator2, coordinator1);
+    verifyDelegation(
+        MiningCoordinator::getCoinbase, GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);
+    verifyDelegation(
+        MiningCoordinator::getCoinbase, MIGRATION_BLOCK_NUMBER, coordinator2, coordinator1);
 
     verifyDelegation(
         c -> c.createBlock(blockHeader, emptyList(), emptyList()),
-        GENESIS_BLOCK,
+        GENESIS_BLOCK_NUMBER,
         coordinator1,
         coordinator2);
     verifyDelegation(
         c -> c.createBlock(blockHeader, emptyList(), emptyList()),
-        MIGRATION_BLOCK,
+        MIGRATION_BLOCK_NUMBER,
         coordinator2,
         coordinator1);
 
-    verifyDelegation(c -> c.changeTargetGasLimit(1L), GENESIS_BLOCK, coordinator1, coordinator2);
-    verifyDelegation(c -> c.changeTargetGasLimit(1L), MIGRATION_BLOCK, coordinator2, coordinator1);
+    verifyDelegation(
+        c -> c.changeTargetGasLimit(1L), GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);
+    verifyDelegation(
+        c -> c.changeTargetGasLimit(1L), MIGRATION_BLOCK_NUMBER, coordinator2, coordinator1);
 
-    verifyDelegation(c -> c.changeTargetGasLimit(1L), GENESIS_BLOCK, coordinator1, coordinator2);
-    verifyDelegation(c -> c.changeTargetGasLimit(1L), MIGRATION_BLOCK, coordinator2, coordinator1);
+    verifyDelegation(
+        c -> c.changeTargetGasLimit(1L), GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);
+    verifyDelegation(
+        c -> c.changeTargetGasLimit(1L), MIGRATION_BLOCK_NUMBER, coordinator2, coordinator1);
   }
 
   private void verifyDelegation(
@@ -171,8 +189,8 @@ public class SchedulableMiningCoordinatorTest {
 
   @Test
   public void verifyDelegationForAwaitStop() throws InterruptedException {
-    verifyDelegationForAwaitStop(GENESIS_BLOCK, coordinator1, coordinator2);
-    verifyDelegationForAwaitStop(MIGRATION_BLOCK, coordinator2, coordinator1);
+    verifyDelegationForAwaitStop(GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);
+    verifyDelegationForAwaitStop(MIGRATION_BLOCK_NUMBER, coordinator2, coordinator1);
   }
 
   private void verifyDelegationForAwaitStop(
@@ -191,8 +209,8 @@ public class SchedulableMiningCoordinatorTest {
 
   @Test
   public void verifyDelegationForOnBlockAdded() {
-    verifyDelegationForOnBlockAdded(GENESIS_BLOCK, coordinator1, coordinator2);
-    verifyDelegationForOnBlockAdded(MIGRATION_BLOCK, coordinator2, coordinator1);
+    verifyDelegationForOnBlockAdded(GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);
+    verifyDelegationForOnBlockAdded(MIGRATION_BLOCK_NUMBER, coordinator2, coordinator1);
   }
 
   private void verifyDelegationForOnBlockAdded(
