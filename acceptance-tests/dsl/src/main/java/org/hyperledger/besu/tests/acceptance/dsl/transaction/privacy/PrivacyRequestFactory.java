@@ -17,14 +17,14 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
 
 import org.hyperledger.besu.crypto.SecureRandomProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
-import org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement;
+import org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivateTransactionGroupResponse;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
@@ -185,7 +185,7 @@ public class PrivacyRequestFactory {
             nonce,
             BigInteger.valueOf(1000),
             BigInteger.valueOf(3000000),
-            ONCHAIN_PRIVACY_PROXY.toHexString(),
+            FLEXIBLE_PRIVACY_PROXY.toHexString(),
             payload.toHexString(),
             Base64String.wrap(adder.getEnclaveKey()),
             privacyGroupId,
@@ -218,7 +218,7 @@ public class PrivacyRequestFactory {
             nonce,
             BigInteger.valueOf(1000),
             BigInteger.valueOf(3000000),
-            ONCHAIN_PRIVACY_PROXY.toHexString(),
+            FLEXIBLE_PRIVACY_PROXY.toHexString(),
             payload.toHexString(),
             Base64String.wrap(removerTenant),
             privacyGroupId,
@@ -232,7 +232,7 @@ public class PrivacyRequestFactory {
   }
 
   private Bytes encodeRemoveFromGroupFunctionCall(final Bytes toRemove) {
-    return Bytes.concatenate(OnchainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE, toRemove);
+    return Bytes.concatenate(FlexibleGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE, toRemove);
   }
 
   public String privxLockPrivacyGroup(
@@ -242,7 +242,7 @@ public class PrivacyRequestFactory {
         locker,
         privacyGroupId,
         signer,
-        OnchainGroupManagement.LOCK_GROUP_METHOD_SIGNATURE.toHexString());
+        FlexibleGroupManagement.LOCK_GROUP_METHOD_SIGNATURE.toHexString());
   }
 
   public String privxUnlockPrivacyGroup(
@@ -252,7 +252,7 @@ public class PrivacyRequestFactory {
         locker,
         privacyGroupId,
         signer,
-        OnchainGroupManagement.UNLOCK_GROUP_METHOD_SIGNATURE.toHexString());
+        FlexibleGroupManagement.UNLOCK_GROUP_METHOD_SIGNATURE.toHexString());
   }
 
   private String privxLockOrUnlockPrivacyGroup(
@@ -272,7 +272,7 @@ public class PrivacyRequestFactory {
             nonce,
             BigInteger.valueOf(1000),
             BigInteger.valueOf(3000000),
-            ONCHAIN_PRIVACY_PROXY.toHexString(),
+            FLEXIBLE_PRIVACY_PROXY.toHexString(),
             callData,
             Base64String.wrap(locker.getEnclaveKey()),
             privacyGroupId,
@@ -312,7 +312,7 @@ public class PrivacyRequestFactory {
             BigInteger.ZERO,
             BigInteger.valueOf(1000),
             BigInteger.valueOf(3000000),
-            ONCHAIN_PRIVACY_PROXY.toHexString(),
+            FLEXIBLE_PRIVACY_PROXY.toHexString(),
             payload.toHexString(),
             Base64String.wrap(privateFrom),
             Base64String.wrap(privacyGroupId.toArrayUnsafe()),
@@ -327,10 +327,10 @@ public class PrivacyRequestFactory {
     return new PrivxCreatePrivacyGroupResponse(privacyGroupId.toBase64String(), transactionHash);
   }
 
-  public Request<?, PrivxFindPrivacyGroupResponse> privxFindOnchainPrivacyGroup(
+  public Request<?, PrivxFindPrivacyGroupResponse> privxFindFlexiblePrivacyGroup(
       final List<Base64String> nodes) {
     return new Request<>(
-        "privx_findOnChainPrivacyGroup",
+        "privx_findFlexiblePrivacyGroup",
         singletonList(nodes),
         web3jService,
         PrivxFindPrivacyGroupResponse.class);
@@ -487,14 +487,14 @@ public class PrivacyRequestFactory {
         DebugGetStateRoot.class);
   }
 
-  public static class PrivxFindPrivacyGroupResponse extends Response<List<OnchainPrivacyGroup>> {
+  public static class PrivxFindPrivacyGroupResponse extends Response<List<FlexiblePrivacyGroup>> {
 
-    public List<OnchainPrivacyGroup> getGroups() {
+    public List<FlexiblePrivacyGroup> getGroups() {
       return getResult();
     }
   }
 
-  public static class OnchainPrivacyGroup {
+  public static class FlexiblePrivacyGroup {
 
     private final Base64String privacyGroupId;
     private final List<Base64String> members;
@@ -502,11 +502,11 @@ public class PrivacyRequestFactory {
     private final String description;
 
     public enum Type {
-      ONCHAIN
+      FLEXIBLE
     }
 
     @JsonCreator
-    public OnchainPrivacyGroup(
+    public FlexiblePrivacyGroup(
         @JsonProperty(value = "privacyGroupId") final String privacyGroupId,
         @JsonProperty(value = "type") final Type type,
         @JsonProperty(value = "name") final String name,
@@ -515,7 +515,7 @@ public class PrivacyRequestFactory {
       this(privacyGroupId, members);
     }
 
-    public OnchainPrivacyGroup(final String privacyGroupId, final List<Base64String> members) {
+    public FlexiblePrivacyGroup(final String privacyGroupId, final List<Base64String> members) {
       this.privacyGroupId = Base64String.wrap(privacyGroupId);
       this.name = "";
       this.description = "";
@@ -535,7 +535,7 @@ public class PrivacyRequestFactory {
     }
 
     public Type getType() {
-      return Type.ONCHAIN;
+      return Type.FLEXIBLE;
     }
 
     public List<Base64String> getMembers() {
@@ -550,7 +550,7 @@ public class PrivacyRequestFactory {
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      final OnchainPrivacyGroup that = (OnchainPrivacyGroup) o;
+      final FlexiblePrivacyGroup that = (FlexiblePrivacyGroup) o;
       return getPrivacyGroupId().equals(that.getPrivacyGroupId())
           && getName().equals(that.getName())
           && getDescription().equals(that.getDescription())
@@ -589,7 +589,7 @@ public class PrivacyRequestFactory {
 
   private Bytes encodeAddToGroupFunctionCall(final List<Bytes> participants) {
     return Bytes.concatenate(
-        OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE, encodeList(participants));
+        FlexibleGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE, encodeList(participants));
   }
 
   private Bytes encodeList(final List<Bytes> participants) {

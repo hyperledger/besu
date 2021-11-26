@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.PLUGIN_PRIVACY;
 
 import org.hyperledger.besu.datatypes.Wei;
@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnchainPrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -326,10 +326,10 @@ public class ProtocolSpecBuilder {
             (PrivacyPluginPrecompiledContract) precompileContractRegistry.get(PLUGIN_PRIVACY);
         privacyPluginPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
-      } else if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
-        final OnchainPrivacyPrecompiledContract onchainPrivacyPrecompiledContract =
-            (OnchainPrivacyPrecompiledContract) precompileContractRegistry.get(ONCHAIN_PRIVACY);
-        onchainPrivacyPrecompiledContract.setPrivateTransactionProcessor(
+      } else if (privacyParameters.isFlexiblePrivacyGroupsEnabled()) {
+        final FlexiblePrivacyPrecompiledContract flexiblePrivacyPrecompiledContract =
+            (FlexiblePrivacyPrecompiledContract) precompileContractRegistry.get(FLEXIBLE_PRIVACY);
+        flexiblePrivacyPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else {
         final PrivacyPrecompiledContract privacyPrecompiledContract =
