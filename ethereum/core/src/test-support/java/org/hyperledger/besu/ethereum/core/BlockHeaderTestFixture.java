@@ -129,12 +129,12 @@ public class BlockHeaderTestFixture {
   }
 
   public BlockHeaderTestFixture baseFeePerGas(final long baseFee) {
-    this.baseFee = Optional.of(baseFee);
+    this.baseFee = Optional.ofNullable(baseFee);
     return this;
   }
 
   public BlockHeaderTestFixture random(final Bytes32 random) {
-    this.random = Optional.of(random);
+    this.random = Optional.ofNullable(random);
     return this;
   }
 
