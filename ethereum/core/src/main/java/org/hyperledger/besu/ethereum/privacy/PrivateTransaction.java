@@ -100,11 +100,6 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
   // Caches the transaction sender.
   protected volatile Address sender;
 
-  // Caches the hash used to uniquely identify the transaction.
-  // This field will be removed in 1.5.0
-  @Deprecated(since = "1.4.3")
-  protected volatile Hash hash;
-
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 

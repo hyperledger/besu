@@ -1,5 +1,10 @@
 # Changelog
 
+## 21.10.4
+
+### Additions and Improvements
+- Removed deprecated hash variable `protected volatile Hash hash;`
+
 ## 21.10.3
 
 ### Additions and Improvements
