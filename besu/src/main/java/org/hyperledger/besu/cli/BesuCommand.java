@@ -645,7 +645,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--rpc-http-tls-protocol", "--rpc-http-tls-protocols"},
-      description = "Comma separated list of TLS protocols to support (default: TLSv1.2)",
+      description = "Comma separated list of TLS protocols to support (default: ${DEFAULT-VALUE})",
       split = ",",
       arity = "1..*")
   private final List<String> rpcHttpTlsProtocols = new ArrayList<>(DEFAULT_TLS_PROTOCOLS);

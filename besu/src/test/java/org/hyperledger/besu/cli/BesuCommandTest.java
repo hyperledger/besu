@@ -2364,7 +2364,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(tlsConfiguration.get().getClientAuthConfiguration()).isEmpty();
     assertThat(tlsConfiguration.get().getCipherSuites().get()).isEmpty();
     assertThat(tlsConfiguration.get().getSecureTransportProtocols().get())
-        .containsExactly("TLSv1.2");
+        .containsExactly("TLSv1.3", "TLSv1.2");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -2431,7 +2431,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String keystorePasswordFile = "/tmp/test.txt";
     final String protocols = "TLSv1.3,TLSv1.2";
     final String cipherSuites =
-        "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256";
+        "TLS_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256";
 
     parseCommand(
         "--rpc-http-enabled",
@@ -2461,7 +2461,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(tlsConfiguration.get().getClientAuthConfiguration()).isEmpty();
     assertThat(tlsConfiguration.get().getCipherSuites().get())
         .containsExactlyInAnyOrder(
-            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256");
+            "TLS_AES_256_GCM_SHA384",
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256");
     assertThat(tlsConfiguration.get().getSecureTransportProtocols().get())
         .containsExactlyInAnyOrder("TLSv1.2", "TLSv1.3");
 

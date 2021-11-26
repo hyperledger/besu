@@ -65,7 +65,7 @@ public interface DefaultCommandValues {
   String DEFAULT_KEY_VALUE_STORAGE_NAME = "rocksdb";
   String DEFAULT_SECURITY_MODULE = "localfile";
   String DEFAULT_KEYSTORE_TYPE = "JKS";
-  List<String> DEFAULT_TLS_PROTOCOLS = List.of("TLSv1.2");
+  List<String> DEFAULT_TLS_PROTOCOLS = List.of("TLSv1.3", "TLSv1.2");
 
   static Path getDefaultBesuDataPath(final Object command) {
     // this property is retrieved from Gradle tasks or Besu running shell script.
