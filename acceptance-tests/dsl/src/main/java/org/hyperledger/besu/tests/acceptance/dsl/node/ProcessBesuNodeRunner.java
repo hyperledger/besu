@@ -18,8 +18,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -96,7 +95,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add(node.p2pListenHost());
 
     params.add("--p2p-port");
-    params.add("0");
+    params.add(node.getP2pPort());
 
     if (node.getMiningParameters().isMiningEnabled()) {
       params.add("--miner-enabled");
@@ -131,21 +130,22 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add(node.getPrivacyParameters().getEnclavePublicKeyFile().getAbsolutePath());
       }
 
-      params.add("--privacy-marker-transaction-signing-key-file");
-      params.add(node.homeDirectory().resolve("key").toString());
-
-      if (node.getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
-        params.add("--privacy-onchain-groups-enabled");
+      if (!node.getExtraCLIOptions().contains("--plugin-privacy-service-signing-enabled=true")) {
+        params.add("--privacy-marker-transaction-signing-key-file");
+        params.add(node.homeDirectory().resolve("key").toString());
       }
 
-      if (node.getPrivacyParameters().isUnrestrictedPrivacyEnabled()) {
-        params.add("--Xprivacy-unrestricted-enabled");
+      if (node.getPrivacyParameters().isFlexiblePrivacyGroupsEnabled()) {
+        params.add("--privacy-flexible-groups-enabled");
+      }
+
+      if (node.getPrivacyParameters().isPrivacyPluginEnabled()) {
+        params.add("--Xprivacy-plugin-enabled");
       }
     }
 
-    params.add("--bootnodes");
-
     if (!node.getBootnodes().isEmpty()) {
+      params.add("--bootnodes");
       params.add(node.getBootnodes().stream().map(URI::toString).collect(Collectors.joining(",")));
     }
 
@@ -179,6 +179,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add("--rpc-http-authentication-jwt-public-key-file");
         params.add(node.jsonRpcConfiguration().getAuthenticationPublicKeyFile().getAbsolutePath());
       }
+      if (node.jsonRpcConfiguration().getAuthenticationAlgorithm() != null) {
+        params.add("--rpc-http-authentication-jwt-algorithm");
+        params.add(node.jsonRpcConfiguration().getAuthenticationAlgorithm().toString());
+      }
     }
 
     if (node.wsRpcEnabled()) {
@@ -200,6 +204,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add("--rpc-ws-authentication-jwt-public-key-file");
         params.add(
             node.webSocketConfiguration().getAuthenticationPublicKeyFile().getAbsolutePath());
+      }
+      if (node.webSocketConfiguration().getAuthenticationAlgorithm() != null) {
+        params.add("--rpc-ws-authentication-jwt-algorithm");
+        params.add(node.webSocketConfiguration().getAuthenticationAlgorithm().toString());
       }
     }
 
@@ -246,6 +254,26 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       final List<String> networkConfigParams =
           NetworkingOptions.fromConfig(node.getNetworkingConfiguration()).getCLIOptions();
       params.addAll(networkConfigParams);
+      if (node.getTLSConfiguration().isPresent()) {
+        final TLSConfiguration config = node.getTLSConfiguration().get();
+        params.add("--Xp2p-tls-enabled");
+        params.add("--Xp2p-tls-keystore-type");
+        params.add(config.getKeyStoreType());
+        params.add("--Xp2p-tls-keystore-file");
+        params.add(config.getKeyStorePath().toAbsolutePath().toString());
+        params.add("--Xp2p-tls-keystore-password-file");
+        params.add(config.getKeyStorePasswordPath().toAbsolutePath().toString());
+        params.add("--Xp2p-tls-crl-file");
+        params.add(config.getCrlPath().toAbsolutePath().toString());
+        if (null != config.getTrustStoreType()) {
+          params.add("--Xp2p-tls-truststore-type");
+          params.add(config.getTrustStoreType());
+          params.add("--Xp2p-tls-truststore-file");
+          params.add(config.getTrustStorePath().toAbsolutePath().toString());
+          params.add("--Xp2p-tls-truststore-password-file");
+          params.add(config.getTrustStorePasswordPath().toAbsolutePath().toString());
+        }
+      }
     }
 
     if (node.isRevertReasonEnabled()) {
@@ -298,6 +326,34 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
                   String.valueOf(
                       permissioningConfiguration.getNodeSmartContractInterfaceVersion()));
             });
+
+    node.getPkiKeyStoreConfiguration()
+        .ifPresent(
+            pkiConfig -> {
+              params.add("--Xpki-block-creation-enabled");
+
+              params.add("--Xpki-block-creation-keystore-certificate-alias");
+              params.add(pkiConfig.getCertificateAlias());
+
+              params.add("--Xpki-block-creation-keystore-type");
+              params.add(pkiConfig.getKeyStoreType());
+
+              params.add("--Xpki-block-creation-keystore-file");
+              params.add(pkiConfig.getKeyStorePath().toAbsolutePath().toString());
+
+              params.add("--Xpki-block-creation-keystore-password-file");
+              params.add(pkiConfig.getKeyStorePasswordPath().toAbsolutePath().toString());
+
+              params.add("--Xpki-block-creation-truststore-type");
+              params.add(pkiConfig.getTrustStoreType());
+
+              params.add("--Xpki-block-creation-truststore-file");
+              params.add(pkiConfig.getTrustStorePath().toAbsolutePath().toString());
+
+              params.add("--Xpki-block-creation-truststore-password-file");
+              params.add(pkiConfig.getTrustStorePasswordPath().toAbsolutePath().toString());
+            });
+
     params.addAll(node.getExtraCLIOptions());
 
     params.add("--key-value-storage");
@@ -398,8 +454,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     StaticNodesUtils.createStaticNodesFile(node.homeDirectory(), node.getStaticNodes());
   }
 
-  private String apiList(final Collection<RpcApi> rpcApis) {
-    return rpcApis.stream().map(RpcApis::getValue).collect(Collectors.joining(","));
+  private String apiList(final Collection<String> rpcApis) {
+    return String.join(",", rpcApis);
   }
 
   @Override

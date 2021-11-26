@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.account.Account;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -40,7 +40,7 @@ public class ChainHeadPrivateNonceProvider implements PrivateNonceProvider {
   @Override
   public long getNonce(final Address sender, final Bytes32 privacyGroupId) {
     final BlockHeader chainHeadHeader = blockchain.getChainHeadHeader();
-    Hash chainHeadHash = chainHeadHeader.getHash();
+    final Hash chainHeadHash = chainHeadHeader.getHash();
     final Hash stateRoot =
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, chainHeadHash);
     return privateWorldStateArchive

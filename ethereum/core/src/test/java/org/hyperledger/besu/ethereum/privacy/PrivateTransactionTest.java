@@ -15,13 +15,13 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.privacy.Restriction.RESTRICTED;
-import static org.hyperledger.besu.ethereum.privacy.Restriction.UNRESTRICTED;
+import static org.hyperledger.besu.plugin.data.Restriction.RESTRICTED;
+import static org.hyperledger.besu.plugin.data.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;

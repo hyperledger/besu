@@ -15,6 +15,7 @@
 package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -26,25 +27,23 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.SendResponse;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
-import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -52,12 +51,14 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
-import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
@@ -162,7 +163,7 @@ public class PrivacyReorgTest {
             .build();
     privacyParameters.setPrivacyUserId(ENCLAVE_PUBLIC_KEY.toBase64String());
     privacyController = mock(RestrictedDefaultPrivacyController.class);
-    when(privacyController.findOffChainPrivacyGroupByGroupId(any(), any()))
+    when(privacyController.findPrivacyGroupByGroupId(any(), any()))
         .thenReturn(Optional.of(new PrivacyGroup()));
 
     privateStateRootResolver =
@@ -175,7 +176,11 @@ public class PrivacyReorgTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
-            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+            .miningParameters(
+                new MiningParameters.Builder()
+                    .minTransactionGasPrice(Wei.of(1000))
+                    .enabled(false)
+                    .build())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .dataDirectory(dataDir)
@@ -183,6 +188,7 @@ public class PrivacyReorgTest {
             .privacyParameters(privacyParameters)
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .evmConfiguration(EvmConfiguration.DEFAULT)
             .build();
   }
 
@@ -457,7 +463,7 @@ public class PrivacyReorgTest {
         .gasPrice(Wei.of(1000))
         .nonce(0)
         .payload(payload)
-        .to(Address.DEFAULT_PRIVACY)
+        .to(DEFAULT_PRIVACY)
         .value(Wei.ZERO)
         .signAndBuild(KEY_PAIR);
   }

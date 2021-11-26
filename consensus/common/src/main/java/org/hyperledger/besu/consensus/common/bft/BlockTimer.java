@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -24,29 +25,30 @@ import java.util.concurrent.TimeUnit;
 
 /** Class for starting and keeping organised block timers */
 public class BlockTimer {
+
+  private final BftForksSchedule<? extends BftConfigOptions> bftForksSchedule;
   private final BftExecutors bftExecutors;
   private Optional<ScheduledFuture<?>> currentTimerTask;
   private final BftEventQueue queue;
-  private final long minimumTimeBetweenBlocksMillis;
   private final Clock clock;
 
   /**
    * Construct a BlockTimer with primed executor service ready to start timers
    *
    * @param queue The queue in which to put block expiry events
-   * @param minimumTimeBetweenBlocksSeconds Minimum timestamp difference between blocks
+   * @param bftForksSchedule Bft fork schedule that contains block period seconds
    * @param bftExecutors Executor services that timers can be scheduled with
    * @param clock System clock
    */
   public BlockTimer(
       final BftEventQueue queue,
-      final long minimumTimeBetweenBlocksSeconds,
+      final BftForksSchedule<? extends BftConfigOptions> bftForksSchedule,
       final BftExecutors bftExecutors,
       final Clock clock) {
     this.queue = queue;
+    this.bftForksSchedule = bftForksSchedule;
     this.bftExecutors = bftExecutors;
     this.currentTimerTask = Optional.empty();
-    this.minimumTimeBetweenBlocksMillis = minimumTimeBetweenBlocksSeconds * 1000;
     this.clock = clock;
   }
 
@@ -78,6 +80,9 @@ public class BlockTimer {
     final long now = clock.millis();
 
     // absolute time when the timer is supposed to expire
+    final int blockPeriodSeconds =
+        bftForksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();
+    final long minimumTimeBetweenBlocksMillis = blockPeriodSeconds * 1000L;
     final long expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
 
     if (expiryTime > now) {

@@ -14,23 +14,28 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.json.GasDeserializer;
 import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.evm.Gas;
 
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-@JsonIgnoreProperties({"nonce", "privateFor", "timestamp"})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonCallParameter extends CallParameter {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private final Optional<Boolean> strict;
 
@@ -60,5 +65,14 @@ public class JsonCallParameter extends CallParameter {
 
   public Optional<Boolean> isMaybeStrict() {
     return strict;
+  }
+
+  @JsonAnySetter
+  public void logUnknownProperties(final String key, final Object value) {
+    LOG.debug(
+        "unknown property - {} with value - {} and type - {} caught during serialization",
+        key,
+        value,
+        value.getClass());
   }
 }

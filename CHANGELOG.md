@@ -1,18 +1,197 @@
 # Changelog
 
+## 21.10.3
+
+### Additions and Improvements
+- Adding support of the NO_COLOR environment variable as described in the [NO_COLOR](https://no-color.org/) standard [#3085](https://github.com/hyperledger/besu/pull/3085)
+- Add `privx_findFlexiblePrivacyGroup` RPC Method, `privx_findOnchainPrivacyGroup` will be removed in a future release [#3075](https://github.com/hyperledger/besu/pull/3075)
+### Bug Fixes
+
+### Early Access Features
+- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
+
+## 21.10.2
+
+### Additions and Improvements
+- Add discovery options to genesis file [#2944](https://github.com/hyperledger/besu/pull/2944)
+- Add validate-config subcommand to perform basic syntax validation of TOML config [#2994](https://github.com/hyperledger/besu/pull/2994)
+- Updated Sepolia Nodes [#3034](https://github.com/hyperledger/besu/pull/3034) [#3035](https://github.com/hyperledger/besu/pull/3035)
+
+### Bug Fixes
+- Reduce shift calculations to shifts that may have an actual result. [#3039](https://github.com/hyperledger/besu/pull/3039)
+- DNS Discovery daemon wasn't started [#3033](https://github.com/hyperledger/besu/pull/3033)
+
+### Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.2/besu-21.10.2.zip \
+SHA256: 4b96d4d10c0c6128dc67333c8600e927ea135b4db5e5f74688a0753260b7b985
+
+## 21.10.1
+
+### Additions and Improvements
+- Add CLI autocomplete scripts. [#2854](https://github.com/hyperledger/besu/pull/2854)
+- Add support for PKCS11 keystore on PKI Block Creation. [#2865](https://github.com/hyperledger/besu/pull/2865)
+- Optimize EVM Memory for MLOAD Operations [#2917](https://github.com/hyperledger/besu/pull/2917)
+- Upgrade CircleCI OpenJDK docker image to version 11.0.12. [#2928](https://github.com/hyperledger/besu/pull/2928)
+- Update JDK 11 to latest version in Besu Docker images. [#2925](https://github.com/hyperledger/besu/pull/2925)
+- Add Sepolia proof-of-work testnet configurations [#2920](https://github.com/hyperledger/besu/pull/2920)
+- Allow block period to be configured for IBFT2 and QBFT using transitions [#2902](https://github.com/hyperledger/besu/pull/2902)
+- Add support for binary messages (0x02) for websocket. [#2980](https://github.com/hyperledger/besu/pull/2980)
+
+### Bug Fixes
+- Do not change the sender balance, but set gas fee to zero, when simulating a transaction without enforcing balance checks. [#2454](https://github.com/hyperledger/besu/pull/2454)
+- Ensure genesis block has the default base fee if london is at block 0 [#2920](https://github.com/hyperledger/besu/pull/2920) 
+- Fixes the exit condition for loading a BonsaiPersistedWorldState for a sibling block of the last one persisted [#2967](https://github.com/hyperledger/besu/pull/2967)
+
+### Early Access Features
+- Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
+
+### Download Link
+This release is not recommended for production use. \
+SHA256: 064df81be49c31ebfc0e1a5f03357e8f6f9a7f5e7bcb82e2b187e2d58e1704eb
+
+## 21.10.0
+
+### Additions and Improvements
+- The EVM has been factored out into a standalone module, suitable for inclusion as a library. [#2790](https://github.com/hyperledger/besu/pull/2790)
+- Low level performance improvements changes to cut worst-case EVM performance in half. [#2796](https://github.com/hyperledger/besu/pull/2796)
+- Migrate `ExceptionalHaltReason` from an enum to an interface to allow downstream users of the EVM to add new exceptional halt reasons. [#2810](https://github.com/hyperledger/besu/pull/2810)
+- reduces need for JUMPDEST analysis via caching [#2607](https://github.com/hyperledger/besu/pull/2821)
+- Add support for custom private key file for public-key export and public-key export-address commands [#2801](https://github.com/hyperledger/besu/pull/2801)
+- Add CLI autocomplete scripts. [#2854](https://github.com/hyperledger/besu/pull/2854)
+- Added support for PKCS11 keystore on PKI Block Creation. [#2865](https://github.com/hyperledger/besu/pull/2865)
+- add support for ArrowGlacier hardfork [#2943](https://github.com/hyperledger/besu/issues/2943)
+
+### Bug Fixes
+- Allow BESU_CONFIG_FILE environment to specify TOML file [#2455](https://github.com/hyperledger/besu/issues/2455)
+- Fix bug with private contracts not able to call public contracts that call public contracts [#2816](https://github.com/hyperledger/besu/pull/2816)
+- Fixes the exit condition for loading a BonsaiPersistedWorldState for a sibling block of the last one persisted [#2967](https://github.com/hyperledger/besu/pull/2967)
+- Fixes bonsai getMutable regression affecting fast-sync [#2934](https://github.com/hyperledger/besu/pull/2934)
+- Regression in RC1 involving LogOperation and frame memory overwrites [#2908](https://github.com/hyperledger/besu/pull/2908)
+- Allow `eth_call` and `eth_estimateGas` to accept contract address as sender. [#2891](https://github.com/hyperledger/besu/pull/2891)
+
+### Early Access Features
+- Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
+
+### Download Link
+This release is not recommended for production use. \
+SHA256: 71374454753c2ee595f4f34dc6913f731818d50150accbc98088aace313c6935
+
+## 21.10.0-RC4
+
+### Additions and Improvements
+
+### Bug Fixes
+- Fixes the exit condition for loading a BonsaiPersistedWorldState for a sibling block of the last one persisted [#2967](https://github.com/hyperledger/besu/pull/2967)
+- Fixes bonsai getMutable regression affecting fast-sync [#2934](https://github.com/hyperledger/besu/pull/2934)
+
+### Early Access Features
+### Download Link
+This release is not recommended for production use. \
+SHA256: b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793
+
+## 21.10.0-RC3
+
+### Bug Fixes
+- Regression in RC1 involving LogOperation and frame memory overwrites [#2908](https://github.com/hyperledger/besu/pull/2908)
+- Allow `eth_call` and `eth_estimateGas` to accept contract address as sender. [#2891](https://github.com/hyperledger/besu/pull/2891)
+- Fix Concurrency issues in Ethpeers. [#2896](https://github.com/hyperledger/besu/pull/2896)
+
+### Download
+This release is not recommended for production use. \
+SHA256: 3d4857589336717bf5e4e5ef711b9a7f3bc46b49e1cf5b3b6574a00ccc6eda94
+
+## 21.10.0-RC1/RC2
+### Additions and Improvements
+- The EVM has been factored out into a standalone module, suitable for inclusion as a library. [#2790](https://github.com/hyperledger/besu/pull/2790)
+- Low level performance improvements changes to cut worst-case EVM performance in half. [#2796](https://github.com/hyperledger/besu/pull/2796)
+- Migrate `ExceptionalHaltReason` from an enum to an interface to allow downstream users of the EVM to add new exceptional halt reasons. [#2810](https://github.com/hyperledger/besu/pull/2810)
+- reduces need for JUMPDEST analysis via caching [#2607](https://github.com/hyperledger/besu/pull/2821)
+- Add support for custom private key file for public-key export and public-key export-address commands [#2801](https://github.com/hyperledger/besu/pull/2801)
+
+### Bug Fixes
+- Allow BESU_CONFIG_FILE environment to specify TOML file [#2455](https://github.com/hyperledger/besu/issues/2455)
+- Fix bug with private contracts not able to call public contracts that call public contracts [#2816](https://github.com/hyperledger/besu/pull/2816)
+
+### Early Access Features
+
+### Download
+This release is not recommended for production use. \
+SHA256: 536612e5e4d7a5e7a582f729f01ba591ba68cc389e8379fea3571ed85322ff51
+
+
+## 21.7.4
+### Additions and Improvements
+- Upgrade Gradle to 7.2, which supports building with Java 17 [#2761](https://github.com/hyperledger/besu/pull/2376) 
+
+### Bug Fixes
+- Set an idle timeout for metrics connections, to clean up ports when no longer used [\#2748](https://github.com/hyperledger/besu/pull/2748)
+- Onchain privacy groups can be unlocked after being locked without having to add a participant [\#2693](https://github.com/hyperledger/besu/pull/2693)
+- Update Gas Schedule for Ethereum Classic [#2746](https://github.com/hyperledger/besu/pull/2746)
+
+### Early Access Features
+- \[EXPERIMENTAL\] Added support for QBFT with PKI-backed Block Creation. [#2647](https://github.com/hyperledger/besu/issues/2647)
+- \[EXPERIMENTAL\] Added support for QBFT to use retrieve validators from a smart contract [#2574](https://github.com/hyperledger/besu/pull/2574)
+
+### Download Link
+https://hyperledger.jfrog.io/native/besu-binaries/besu/21.7.4/besu-21.7.4.zip \
+SHA256: 778d3c42851db11fec9171f77b22662f2baeb9b2ce913d7cfaaf1042ec19b7f9
+
+## 21.7.3
+### Additions and Improvements
+- Migration to Apache Tuweni 2.0 [\#2376](https://github.com/hyperledger/besu/pull/2376)
+- \[EXPERIMENTAL\] Added support for DevP2P-over-TLS [#2536](https://github.com/hyperledger/besu/pull/2536)
+- `eth_getWork`, `eth_submitWork` support over the Stratum port [#2581](https://github.com/hyperledger/besu/pull/2581)
+- Stratum metrics [#2583](https://github.com/hyperledger/besu/pull/2583)
+- Support for mining ommers [#2576](https://github.com/hyperledger/besu/pull/2576)
+- Updated onchain permissioning to validate permissions on transaction submission [\#2595](https://github.com/hyperledger/besu/pull/2595)
+- Removed deprecated CLI option `--privacy-precompiled-address` [#2605](https://github.com/hyperledger/besu/pull/2605)
+- Removed code supporting EIP-1702. [#2657](https://github.com/hyperledger/besu/pull/2657)
+- A native library was added for the alternative signature algorithm secp256r1, which will be used by default [#2630](https://github.com/hyperledger/besu/pull/2630)
+- The command line option --Xsecp-native-enabled was added as an alias for --Xsecp256k1-native-enabled [#2630](https://github.com/hyperledger/besu/pull/2630)
+- Added Labelled gauges for metrics [#2646](https://github.com/hyperledger/besu/pull/2646)
+- support for `eth/66` networking protocol [#2365](https://github.com/hyperledger/besu/pull/2365)
+- update RPC methods for post london 1559 transaction [#2535](https://github.com/hyperledger/besu/pull/2535)
+- \[EXPERIMENTAL\] Added support for using DNS host name in place of IP address in onchain node permissioning rules [#2667](https://github.com/hyperledger/besu/pull/2667)
+- Implement EIP-3607 Reject transactions from senders with deployed code. [#2676](https://github.com/hyperledger/besu/pull/2676)
+- Ignore all unknown fields when supplied to eth_estimateGas or eth_call. [\#2690](https://github.com/hyperledger/besu/pull/2690)
+
+### Bug Fixes
+- Consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)
+- GetTransactionCount should return the latest transaction count if it is greater than the transaction pool [\#2633](https://github.com/hyperledger/besu/pull/2633)
+
+### Early Access Features
+
+## 21.7.2
+
+### Additions and Improvements
+This release contains improvements and bugfixes for optimum compatibility with other London client versions.
+
+## Bug Fixes
+- hotfix for private transaction identification for mainnet transactions [#2609](https://github.com/hyperledger/besu/pull/2609)
+
+## Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.7.2/besu-21.7.2.zip \
+db47fd9ba33b36436ed6798d2474f7621c733353fd04f49d6defffd12e3b6e14
+
+
 ## 21.7.1
 
 ### Additions and Improvements
 - `priv_call` now uses NO_TRACING OperationTracer implementation which improves memory usage [\#2482](https://github.com/hyperledger/besu/pull/2482)
+- Ping and Pong messages now support ENR encoding as scalars or bytes [\#2512](https://github.com/hyperledger/besu/pull/2512)
+
+### Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.7.1/besu-21.7.1.zip \
+sha256sum 83fc44e39a710a95d8b6cbbbf04010dea76122bafcc633a993cd15304905a402
 
 ## 21.7.0
 
-## 21.7.0 Features
-- QBFT is a Byzantine Fault Tolerant consensus algorithm, building on the capabilities of IBFT and IBFT 2.0. It aims to provide performance improvements in cases of excess round change, and provides interoperability with other EEA compliant clients, such as GoQuorum.
-  - Note: QBFT currently only supports new networks. Existing networks using IBFT2.0 cannot migrate to QBFT. This will become available in a future release.
-  - Note: QBFT is an early access feature pending community feedback. Please make use of QBFT in new development networks and reach out in case of issues or concerns
-
 ### Additions and Improvements
+This release contains the activation blocks for London across all supported testnets. They are: 
+  * Ropsten 10_499_401 (24 Jun 2021)
+  * Goerli 5_062_605 (30 Jun 2021)
+  * Rinkeby 8_897_988 (7 Jul 2021)
+  * Mainnet 12_965_000 (4 Aug 2021)
 - eip-1559 changes: accept transactions which have maxFeePerGas below current baseFee [\#2374](https://github.com/hyperledger/besu/pull/2374)
 - Introduced transitions for IBFT2 block rewards [\#1977](https://github.com/hyperledger/besu/pull/1977) 
 - Change Ethstats's status from experimental feature to stable. [\#2405](https://github.com/hyperledger/besu/pull/2405) 
@@ -26,11 +205,15 @@
 - Fixed NoSuchElementException with EIP1559 transaction receipts when using eth_getTransactionReceipt [\#2477](https://github.com/hyperledger/besu/pull/2477)
 
 ### Early Access Features
-This release contains the activation blocks for London across all supported testnets. They are: 
-  * Ropsten 10_499_401 (24 Jun 2021)
-  * Goerli 5_062_605 (30 Jun 2021)
-  * Rinkeby 8_897_988 (7 Jul 2021)
+- QBFT is a Byzantine Fault Tolerant consensus algorithm, building on the capabilities of IBFT and IBFT 2.0. It aims to provide performance improvements in cases of excess round change, and provides interoperability with other EEA compliant clients, such as GoQuorum.
+  - Note: QBFT currently only supports new networks. Existing networks using IBFT2.0 cannot migrate to QBFT. This will become available in a future release.
+  - Note: QBFT is an early access feature pending community feedback. Please make use of QBFT in new development networks and reach out in case of issues or concerns
+- GoQuorum-compatible privacy. This mode uses Tessera and is interoperable with GoQuorum.
+  - Note: GoQuorum-compatible privacy is an early access feature pending community feedback.
 
+### Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.7.0/besu-21.7.0.zip
+sha256sum 389465fdcc2cc5e5007a02dc2b8a2c43d577198867316bc5cc4392803ed71034
 
 ## 21.7.0-RC2
 
@@ -113,7 +296,7 @@ sha256: f415c9b67d26819caeb9940324b2b1b9ce6e872c9181052739438545e84e2531
 * Implemented [EIP-3541](https://eips.ethereum.org/EIPS/eip-3541): Reject new contracts starting with the 0xEF byte [\#2243](https://github.com/hyperledger/besu/pull/2243)
 * Implemented [EIP-3529](https://eips.ethereum.org/EIPS/eip-3529): Reduction in refunds [\#2238](https://github.com/hyperledger/besu/pull/2238)
 * Implemented [EIP-3554](https://eips.ethereum.org/EIPS/eip-3554): Difficulty Bomb Delay [\#2289](https://github.com/hyperledger/besu/pull/2289)
-
+* \[EXPERIMENTAL\] Added support for secp256r1 keys. [#2008](https://github.com/hyperledger/besu/pull/2008)
 
 ### Bug Fixes
 

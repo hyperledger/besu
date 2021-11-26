@@ -24,6 +24,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -33,11 +35,9 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection.PeerSendHandler;
@@ -76,7 +76,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -115,6 +114,24 @@ public final class EthProtocolManagerTest {
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
     assertThat(blockchainSetupUtil.getMaxBlockNumber()).isGreaterThanOrEqualTo(20L);
+  }
+
+  @Test
+  public void handleMalformedRequestIdMessage() {
+    try (final EthProtocolManager ethManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            () -> false,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig())) {
+      // this is a non-request id message, but we'll be processing it with eth66, make sure we
+      // disconnect the peer gracefully
+      final MessageData messageData = GetBlockHeadersMessage.create(1, 1, 0, false);
+      final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
+      ethManager.processMessage(EthProtocol.ETH66, new DefaultMessage(peer, messageData));
+      assertThat(peer.isDisconnected()).isTrue();
+    }
   }
 
   @Test
@@ -1009,8 +1026,7 @@ public final class EthProtocolManagerTest {
           metricsSystem,
           mock(SyncState.class),
           Wei.ZERO,
-          TransactionPoolConfiguration.DEFAULT,
-          Optional.empty());
+          TransactionPoolConfiguration.DEFAULT);
 
       // Send just a transaction message.
       final PeerConnection peer = setupPeer(ethManager, (cap, msg, connection) -> {});

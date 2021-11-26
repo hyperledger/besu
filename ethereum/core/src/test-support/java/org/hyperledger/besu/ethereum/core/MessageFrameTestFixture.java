@@ -14,12 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static org.hyperledger.besu.ethereum.vm.MessageFrame.DEFAULT_MAX_STACK_SIZE;
+import static org.hyperledger.besu.evm.frame.MessageFrame.DEFAULT_MAX_STACK_SIZE;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -28,7 +33,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class MessageFrameTestFixture {
 
@@ -38,18 +43,17 @@ public class MessageFrameTestFixture {
   private MessageFrame.Type type = MessageFrame.Type.MESSAGE_CALL;
   private Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
   private Optional<Blockchain> blockchain = Optional.empty();
-  private Optional<WorldUpdater> worldState = Optional.empty();
+  private Optional<WorldUpdater> worldUpdater = Optional.empty();
   private Gas initialGas = Gas.MAX_VALUE;
   private Address address = DEFAUT_ADDRESS;
   private Address sender = DEFAUT_ADDRESS;
   private Address originator = DEFAUT_ADDRESS;
   private Address contract = DEFAUT_ADDRESS;
-  private int contractAccountVersion = Account.DEFAULT_VERSION;
   private Wei gasPrice = Wei.ZERO;
   private Wei value = Wei.ZERO;
   private Bytes inputData = Bytes.EMPTY;
-  private Code code = new Code(Bytes.EMPTY);
-  private final List<Bytes32> stackItems = new ArrayList<>();
+  private Code code = new Code(Bytes.EMPTY, Hash.EMPTY);
+  private final List<UInt256> stackItems = new ArrayList<>();
   private Optional<BlockHeader> blockHeader = Optional.empty();
   private int depth = 0;
   private Optional<BlockHashLookup> blockHashLookup = Optional.empty();
@@ -76,13 +80,13 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  public MessageFrameTestFixture worldState(final WorldUpdater worldState) {
-    this.worldState = Optional.of(worldState);
+  public MessageFrameTestFixture worldUpdater(final WorldUpdater worldUpdater) {
+    this.worldUpdater = Optional.of(worldUpdater);
     return this;
   }
 
-  public MessageFrameTestFixture worldState(final MutableWorldState worldState) {
-    this.worldState = Optional.of(worldState.updater());
+  public MessageFrameTestFixture worldUpdater(final MutableWorldState worldState) {
+    this.worldUpdater = Optional.of(worldState.updater());
     return this;
   }
 
@@ -108,11 +112,6 @@ public class MessageFrameTestFixture {
 
   public MessageFrameTestFixture contract(final Address contract) {
     this.contract = contract;
-    return this;
-  }
-
-  public MessageFrameTestFixture contractAccountVersion(final int contractAccountVersion) {
-    this.contractAccountVersion = contractAccountVersion;
     return this;
   }
 
@@ -146,7 +145,7 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  public MessageFrameTestFixture pushStackItem(final Bytes32 item) {
+  public MessageFrameTestFixture pushStackItem(final UInt256 item) {
     stackItems.add(item);
     return this;
   }
@@ -164,8 +163,7 @@ public class MessageFrameTestFixture {
         MessageFrame.builder()
             .type(type)
             .messageFrameStack(messageFrameStack)
-            .blockchain(blockchain)
-            .worldState(worldState.orElseGet(this::createDefaultWorldState))
+            .worldUpdater(worldUpdater.orElseGet(this::createDefaultWorldUpdater))
             .initialGas(initialGas)
             .address(address)
             .originator(originator)
@@ -175,9 +173,8 @@ public class MessageFrameTestFixture {
             .value(value)
             .apparentValue(value)
             .contract(contract)
-            .contractAccountVersion(contractAccountVersion)
             .code(code)
-            .blockHeader(blockHeader)
+            .blockValues(blockHeader)
             .depth(depth)
             .completer(c -> {})
             .miningBeneficiary(blockHeader.getCoinbase())
@@ -189,7 +186,7 @@ public class MessageFrameTestFixture {
     return frame;
   }
 
-  private WorldUpdater createDefaultWorldState() {
+  private WorldUpdater createDefaultWorldUpdater() {
     return getOrCreateExecutionContextTestFixture().getStateArchive().getMutable().updater();
   }
 

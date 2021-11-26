@@ -99,10 +99,10 @@ public class DiscoveryConfiguration {
               .map(EnodeURLImpl::fromString)
               .collect(toList()));
 
-  public static final List<EnodeURL> CALAVERAS_BOOTSTRAP_NODES =
+  public static final List<EnodeURL> SEPOLIA_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
-                  "enode://9e1096aa59862a6f164994cb5cb16f5124d6c992cdbf4535ff7dea43ea1512afe5448dca9df1b7ab0726129603f1a3336b631e4d7a1a44c94daddd03241587f9@3.9.20.133:30303")
+                  "enode://9246d00bc8fd1742e5ad2428b80fc4dc45d786283e05ef6edbd9002cbc335d40998444732fbe921cb88e1d2c73d1b1de53bae6a2237996e9bfe14f871baf7066@18.168.182.86:30303")
               .map(EnodeURLImpl::fromString)
               .collect(toList()));
 
@@ -296,8 +296,9 @@ public class DiscoveryConfiguration {
     return dnsDiscoveryURL;
   }
 
-  public void setDnsDiscoveryURL(final String dnsDiscoveryURL) {
+  public DiscoveryConfiguration setDnsDiscoveryURL(final String dnsDiscoveryURL) {
     this.dnsDiscoveryURL = dnsDiscoveryURL;
+    return this;
   }
 
   @Override

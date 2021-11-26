@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 
 import java.util.OptionalLong;
 import java.util.function.Supplier;
@@ -29,17 +29,18 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 
 public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMethod {
-  private final Supplier<PendingTransactions> pendingTransactions;
+  private final Supplier<AbstractPendingTransactionsSorter> pendingTransactions;
   private final boolean resultAsDecimal;
 
   public EthGetTransactionCount(
-      final BlockchainQueries blockchain, final PendingTransactions pendingTransactions) {
+      final BlockchainQueries blockchain,
+      final AbstractPendingTransactionsSorter pendingTransactions) {
     this(Suppliers.ofInstance(blockchain), Suppliers.ofInstance(pendingTransactions), false);
   }
 
   public EthGetTransactionCount(
       final Supplier<BlockchainQueries> blockchain,
-      final Supplier<PendingTransactions> pendingTransactions,
+      final Supplier<AbstractPendingTransactionsSorter> pendingTransactions,
       final boolean resultAsDecimal) {
     super(blockchain);
     this.pendingTransactions = pendingTransactions;
@@ -61,11 +62,11 @@ public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMet
   protected Object pendingResult(final JsonRpcRequestContext request) {
     final Address address = request.getRequiredParameter(0, Address.class);
     final OptionalLong pendingNonce = pendingTransactions.get().getNextNonceForSender(address);
-    if (pendingNonce.isPresent()) {
-      return Quantity.create(pendingNonce.getAsLong());
-    } else {
-      return latestResult(request);
-    }
+    final long latestNonce =
+        getBlockchainQueries()
+            .getTransactionCount(
+                address, getBlockchainQueries().getBlockchain().getChainHead().getHash());
+    return Quantity.create(Math.max(pendingNonce.orElse(0), latestNonce));
   }
 
   @Override

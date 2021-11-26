@@ -16,13 +16,13 @@ package org.hyperledger.besu.consensus.ibft.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -74,7 +74,7 @@ public class IbftRoundFactory {
   public IbftRound createNewRoundWithState(
       final BlockHeader parentHeader, final RoundState roundState) {
     final ConsensusRoundIdentifier roundIdentifier = roundState.getRoundIdentifier();
-    final BftBlockCreator blockCreator =
+    final BlockCreator blockCreator =
         blockCreatorFactory.create(parentHeader, roundIdentifier.getRoundNumber());
 
     final IbftMessageTransmitter messageTransmitter =

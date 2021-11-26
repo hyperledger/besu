@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.messagedata;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.messagedata.AbstractBftMessageData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -33,8 +34,8 @@ public class RoundChangeMessageData extends AbstractBftMessageData {
         messageData, MESSAGE_CODE, RoundChangeMessageData.class, RoundChangeMessageData::new);
   }
 
-  public RoundChange decode() {
-    return RoundChange.decode(data);
+  public RoundChange decode(final BftExtraDataCodec bftExtraDataCodec) {
+    return RoundChange.decode(data, bftExtraDataCodec);
   }
 
   public static RoundChangeMessageData create(final RoundChange signedPayload) {

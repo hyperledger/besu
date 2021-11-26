@@ -15,7 +15,7 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.ethereum.core.AccessListEntry;
+import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.io.IOException;
 import java.util.ArrayList;

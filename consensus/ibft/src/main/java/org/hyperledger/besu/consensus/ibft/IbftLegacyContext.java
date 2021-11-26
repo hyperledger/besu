@@ -17,34 +17,27 @@ package org.hyperledger.besu.consensus.ibft;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.PoaContext;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 
 /** Holds the BFT specific mutable state. */
 public class IbftLegacyContext implements PoaContext {
 
-  private final VoteTallyCache voteTallyCache;
-  private final VoteProposer voteProposer;
+  private final ValidatorProvider validatorProvider;
   private final EpochManager epochManager;
   private final BlockInterface blockInterface;
 
   public IbftLegacyContext(
-      final VoteTallyCache voteTallyCache,
-      final VoteProposer voteProposer,
+      final ValidatorProvider validatorProvider,
       final EpochManager epochManager,
       final BlockInterface blockInterface) {
-    this.voteTallyCache = voteTallyCache;
-    this.voteProposer = voteProposer;
+    this.validatorProvider = validatorProvider;
     this.epochManager = epochManager;
     this.blockInterface = blockInterface;
   }
 
-  public VoteTallyCache getVoteTallyCache() {
-    return voteTallyCache;
-  }
-
-  public VoteProposer getVoteProposer() {
-    return voteProposer;
+  public ValidatorProvider getValidatorProvider() {
+    return validatorProvider;
   }
 
   public EpochManager getEpochManager() {
@@ -54,5 +47,10 @@ public class IbftLegacyContext implements PoaContext {
   @Override
   public BlockInterface getBlockInterface() {
     return blockInterface;
+  }
+
+  @Override
+  public <C extends ConsensusContext> C as(final Class<C> klass) {
+    return klass.cast(this);
   }
 }

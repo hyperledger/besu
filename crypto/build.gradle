@@ -36,9 +36,10 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.logging.log4j:log4j-api'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:units'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.hyperledger.besu:secp256k1'
+  implementation 'org.hyperledger.besu:secp256r1'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
 

@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVACY_NOT_ENABLED;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -33,8 +32,9 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Map;
 import java.util.Optional;
@@ -64,6 +64,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
   @Before
   public void setup() {
     when(rpcMethod.getName()).thenReturn("priv_method");
+
     privacyApiGroupJsonRpcMethods =
         new TestPrivacyApiGroupJsonRpcMethods(
             blockchainQueries, protocolSchedule, transactionPool, privacyParameters, rpcMethod);
@@ -153,7 +154,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
     privacyApiGroupJsonRpcMethods.create();
     final PrivacyController privacyController = privacyApiGroupJsonRpcMethods.privacyController;
 
-    assertThat(privacyController).isInstanceOf(RestrictedMultiTenancyPrivacyController.class);
+    assertThat(privacyController).isInstanceOf(MultiTenancyPrivacyController.class);
   }
 
   private User createUser(final String enclavePublicKey) {
@@ -178,15 +179,17 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
 
     @Override
     protected Map<String, JsonRpcMethod> create(
-        final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
+        final PrivacyController privacyController,
+        final PrivacyIdProvider privacyIdProvider,
+        final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
       this.privacyController = privacyController;
       this.privacyIdProvider = privacyIdProvider;
       return mapOf(rpcMethod);
     }
 
     @Override
-    protected RpcApi getApiGroup() {
-      return RpcApis.PRIV;
+    protected String getApiGroup() {
+      return RpcApis.PRIV.name();
     }
   }
 }

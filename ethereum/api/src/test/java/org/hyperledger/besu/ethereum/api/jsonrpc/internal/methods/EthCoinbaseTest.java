@@ -19,6 +19,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -26,7 +27,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.core.Address;
 
 import java.util.Optional;
 
@@ -64,7 +64,7 @@ public class EthCoinbaseTest {
     when(miningCoordinator.getCoinbase()).thenReturn(Optional.of(expectedAddress));
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(miningCoordinator).getCoinbase();
     verifyNoMoreInteractions(miningCoordinator);
   }
@@ -77,7 +77,7 @@ public class EthCoinbaseTest {
     when(miningCoordinator.getCoinbase()).thenReturn(Optional.empty());
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

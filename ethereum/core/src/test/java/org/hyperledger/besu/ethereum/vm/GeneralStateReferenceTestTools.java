@@ -16,14 +16,10 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -33,6 +29,10 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.util.Arrays;
@@ -145,7 +145,9 @@ public class GeneralStateReferenceTestTools {
     // Check the world state root hash.
     final Hash expectedRootHash = spec.getExpectedRootHash();
     assertThat(worldState.rootHash())
-        .withFailMessage("Unexpected world state root hash; computed state: %s", worldState)
+        .withFailMessage(
+            "Unexpected world state root hash; expected state: %s, computed state: %s",
+            spec.getExpectedRootHash(), worldState.rootHash())
         .isEqualTo(expectedRootHash);
 
     // Check the logs.

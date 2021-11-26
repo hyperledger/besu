@@ -27,14 +27,26 @@ jar {
   }
 }
 
+sourceSets {
+  test {
+    java {
+      compileClasspath += main.output
+      runtimeClasspath += main.output
+      srcDirs += file('./build/generated/sources/referencetests/java/test')
+    }
+  }
+}
+
 dependencies {
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
 
   implementation project(':config')
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':enclave')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
+  implementation project(':evm')
   implementation project(':metrics:core')
   implementation project(':plugin-api')
   implementation project(':services:kvstore')
@@ -45,8 +57,9 @@ dependencies {
   implementation 'io.vertx:vertx-core'
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.logging.log4j:log4j-api'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:units'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-concurrent'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
 
@@ -57,15 +70,16 @@ dependencies {
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':ethereum:api')
   testImplementation project(path: ':ethereum:referencetests')
   testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
   testImplementation project(':testutil')
 
   testImplementation 'junit:junit'
   testImplementation 'org.apache.logging.log4j:log4j-core'
-  testImplementation 'org.apache.tuweni:bytes'
-  testImplementation 'org.apache.tuweni:io'
-  testImplementation 'org.apache.tuweni:units'
+  testImplementation 'org.apache.tuweni:tuweni-bytes'
+  testImplementation 'org.apache.tuweni:tuweni-io'
+  testImplementation 'org.apache.tuweni:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
 
@@ -114,6 +128,7 @@ test {
 }
 
 def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix, String ... excludedPath) {
+  mkdir(destination)
   def referenceTestTemplate = templateFile.text
 
   // This is how many json files to include in each test file
@@ -142,63 +157,79 @@ def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, St
 }
 
 task blockchainReferenceTestsSetup {
+  inputs.files fileTree('../referencetests/src/test/resources/BlockchainTests')
+  outputs.files "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/blockchain"
   generateTestFiles(
     fileTree('../referencetests/src/test/resources/BlockchainTests'),
     file("./src/test/resources/org/hyperledger/besu/ethereum/vm/BlockchainReferenceTest.java.template"),
     "BlockchainTests",
-    "./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain",
+    "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/blockchain",
     "BlockchainReferenceTest",
     ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
     )
 }
 
 task legacyBlockchainReferenceTestsSetup {
+  inputs.files fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/BlockchainTests')
+  outputs.files "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/blockchain"
   generateTestFiles(
     fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/BlockchainTests'),
     file("./src/test/resources/org/hyperledger/besu/ethereum/vm/BlockchainReferenceTest.java.template"),
     "LegacyTests",
-    "./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain",
+    "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/blockchain",
     "LegacyBlockchainReferenceTest",
     ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
     )
 }
 
 task generalstateReferenceTestsSetup {
+  inputs.files fileTree("../referencetests/src/test/resources/GeneralStateTests")
+  outputs.files "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate"
   generateTestFiles(
     fileTree("../referencetests/src/test/resources/GeneralStateTests"),
     file("./src/test/resources/org/hyperledger/besu/ethereum/vm/GeneralStateReferenceTest.java.template"),
     "GeneralStateTests",
-    "./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate",
+    "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate",
     "GeneralStateReferenceTest"
     )
 }
 
 task legacyGeneralstateReferenceTestsSetup {
+  inputs.files fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/GeneralStateTests')
+  outputs.files "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate"
   generateTestFiles(
     fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/GeneralStateTests'),
     file("./src/test/resources/org/hyperledger/besu/ethereum/vm/GeneralStateReferenceTest.java.template"),
     "LegacyTests",
-    "./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate",
+    "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate",
     "LegacyGeneralStateReferenceTest"
     )
 }
 
 task generalstateRegressionReferenceTestsSetup {
+  inputs.files fileTree("./src/test/resources/regressions/generalstate")
+  outputs.files "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate"
   generateTestFiles(
     fileTree("./src/test/resources/regressions/generalstate"),
     file("./src/test/resources/org/hyperledger/besu/ethereum/vm/GeneralStateReferenceTest.java.template"),
     "regressions",
-    "./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate",
+    "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate",
     "GeneralStateRegressionReferenceTest"
     )
 }
 
+//TODO delete in Jan 2022.  This is left as a migration aid for reference tests moving to the build directory
 task cleanupReferenceTests(type: Delete) {
   delete fileTree("./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate/") {
     include("**/GeneralStateReferenceTest*.java")
     include("**/GeneralStateRegressionReferenceTest*.java")
+    include("**/LegacyGeneralStateReferenceTest*.java")
+    include("**/LegacyGeneralStateRegressionReferenceTest*.java")
   }
-  delete fileTree("./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain/") { include("**/BlockchainReferenceTest*.java") }
+  delete fileTree("./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain/") {
+    include("**/BlockchainReferenceTest*.java")
+    include("**/LegacyBlockchainReferenceTest*.java")
+  }
 }
 
 clean.dependsOn(cleanupReferenceTests)
@@ -214,6 +245,8 @@ task referenceTests(type: Test, dependsOn: [
   compileTestJava.mustRunAfter blockchainReferenceTestsSetup
   compileTestJava.mustRunAfter generalstateReferenceTestsSetup
   compileTestJava.mustRunAfter generalstateRegressionReferenceTestsSetup
+  compileTestJava.mustRunAfter legacyBlockchainReferenceTestsSetup
+  compileTestJava.mustRunAfter legacyGeneralstateReferenceTestsSetup
   doFirst {
     if (!file("../referencetests/src/test/resources/README.md").exists()) {
       throw new GradleException("ethereum/referencetests/src/test/resources/README.md missing: please clone submodules (git submodule update --init --recursive)")

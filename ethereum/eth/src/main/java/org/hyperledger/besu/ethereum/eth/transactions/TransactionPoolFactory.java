@@ -14,19 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
-import java.util.Optional;
 
 public class TransactionPoolFactory {
 
@@ -38,18 +41,11 @@ public class TransactionPoolFactory {
       final MetricsSystem metricsSystem,
       final SyncState syncState,
       final Wei minTransactionGasPrice,
-      final TransactionPoolConfiguration transactionPoolConfiguration,
-      final Optional<EIP1559> eip1559) {
+      final TransactionPoolConfiguration transactionPoolConfiguration) {
 
-    final PendingTransactions pendingTransactions =
-        new PendingTransactions(
-            transactionPoolConfiguration.getPendingTxRetentionPeriod(),
-            transactionPoolConfiguration.getTxPoolMaxSize(),
-            transactionPoolConfiguration.getPooledTransactionHashesSize(),
-            clock,
-            metricsSystem,
-            protocolContext.getBlockchain()::getChainHeadHeader,
-            transactionPoolConfiguration.getPriceBump());
+    final AbstractPendingTransactionsSorter pendingTransactions =
+        createPendingTransactionsSorter(
+            protocolSchedule, protocolContext, clock, metricsSystem, transactionPoolConfiguration);
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
     final TransactionsMessageSender transactionsMessageSender =
@@ -72,8 +68,7 @@ public class TransactionPoolFactory {
         transactionTracker,
         transactionsMessageSender,
         pendingTransactionTracker,
-        pendingTransactionsMessageSender,
-        eip1559);
+        pendingTransactionsMessageSender);
   }
 
   static TransactionPool createTransactionPool(
@@ -84,12 +79,11 @@ public class TransactionPoolFactory {
       final SyncState syncState,
       final Wei minTransactionGasPrice,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final PendingTransactions pendingTransactions,
+      final AbstractPendingTransactionsSorter pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final PeerPendingTransactionTracker pendingTransactionTracker,
-      final PendingTransactionsMessageSender pendingTransactionsMessageSender,
-      final Optional<EIP1559> eip1559) {
+      final PendingTransactionsMessageSender pendingTransactionsMessageSender) {
     final TransactionPool transactionPool =
         new TransactionPool(
             pendingTransactions,
@@ -104,7 +98,6 @@ public class TransactionPoolFactory {
             pendingTransactionTracker,
             minTransactionGasPrice,
             metricsSystem,
-            eip1559,
             transactionPoolConfiguration);
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
@@ -141,5 +134,38 @@ public class TransactionPoolFactory {
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
     ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
     return transactionPool;
+  }
+
+  private static AbstractPendingTransactionsSorter createPendingTransactionsSorter(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final Clock clock,
+      final MetricsSystem metricsSystem,
+      final TransactionPoolConfiguration transactionPoolConfiguration) {
+    boolean isFeeMarketImplementBaseFee =
+        protocolSchedule
+            .streamMilestoneBlocks()
+            .map(protocolSchedule::getByBlockNumber)
+            .map(ProtocolSpec::getFeeMarket)
+            .anyMatch(FeeMarket::implementsBaseFee);
+    if (isFeeMarketImplementBaseFee) {
+      return new BaseFeePendingTransactionsSorter(
+          transactionPoolConfiguration.getPendingTxRetentionPeriod(),
+          transactionPoolConfiguration.getTxPoolMaxSize(),
+          transactionPoolConfiguration.getPooledTransactionHashesSize(),
+          clock,
+          metricsSystem,
+          protocolContext.getBlockchain()::getChainHeadHeader,
+          transactionPoolConfiguration.getPriceBump());
+    } else {
+      return new GasPricePendingTransactionsSorter(
+          transactionPoolConfiguration.getPendingTxRetentionPeriod(),
+          transactionPoolConfiguration.getTxPoolMaxSize(),
+          transactionPoolConfiguration.getPooledTransactionHashesSize(),
+          clock,
+          metricsSystem,
+          protocolContext.getBlockchain()::getChainHeadHeader,
+          transactionPoolConfiguration.getPriceBump());
+    }
   }
 }

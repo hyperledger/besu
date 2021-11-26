@@ -16,7 +16,9 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -30,11 +32,14 @@ import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.assertj.core.api.Assertions;
@@ -47,6 +52,8 @@ public class FastSyncDownloaderTest {
 
   @SuppressWarnings("unchecked")
   private final FastSyncActions fastSyncActions = mock(FastSyncActions.class);
+
+  private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
 
   private final WorldStateDownloader worldStateDownloader = mock(WorldStateDownloader.class);
   private final FastSyncStateStorage storage = mock(FastSyncStateStorage.class);
@@ -61,6 +68,7 @@ public class FastSyncDownloaderTest {
   private final FastSyncDownloader downloader =
       new FastSyncDownloader(
           fastSyncActions,
+          worldStateStorage,
           worldStateDownloader,
           storage,
           taskCollection,
@@ -110,6 +118,7 @@ public class FastSyncDownloaderTest {
     final FastSyncDownloader resumedDownloader =
         new FastSyncDownloader(
             fastSyncActions,
+            worldStateStorage,
             worldStateDownloader,
             storage,
             taskCollection,
@@ -226,6 +235,41 @@ public class FastSyncDownloaderTest {
     chainFuture.completeExceptionally(new FastSyncException(FastSyncError.NO_PEERS_AVAILABLE));
     assertCompletedExceptionally(result, FastSyncError.NO_PEERS_AVAILABLE);
     assertThat(worldStateFuture).isCancelled();
+  }
+
+  @Test
+  public void shouldAbortIfStopped() {
+    final FastSyncState selectPivotBlockState = new FastSyncState(50);
+    final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(50).buildHeader();
+    final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader);
+    when(fastSyncActions.waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)).thenReturn(COMPLETE);
+    when(fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE))
+        .thenReturn(completedFuture(selectPivotBlockState));
+    doAnswer(
+            invocation -> {
+              CompletableFuture<FastSyncState> future = new CompletableFuture<>();
+              Executors.newSingleThreadScheduledExecutor()
+                  .schedule(
+                      () -> future.complete(downloadPivotBlockHeaderState),
+                      500,
+                      TimeUnit.MILLISECONDS);
+              return future;
+            })
+        .when(fastSyncActions)
+        .downloadPivotBlockHeader(selectPivotBlockState);
+
+    final CompletableFuture<FastSyncState> result = downloader.start();
+    downloader.stop();
+
+    Throwable thrown = catchThrowable(() -> result.get());
+    assertThat(thrown).hasCauseExactlyInstanceOf(CancellationException.class);
+
+    verify(fastSyncActions).waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE);
+    verify(fastSyncActions).selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE);
+    verify(fastSyncActions).downloadPivotBlockHeader(selectPivotBlockState);
+    verify(storage).storeState(downloadPivotBlockHeaderState);
+    verify(worldStateDownloader).cancel();
+    verifyNoMoreInteractions(fastSyncActions, worldStateDownloader, storage);
   }
 
   @Test

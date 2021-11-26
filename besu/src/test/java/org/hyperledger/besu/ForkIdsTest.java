@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.Collection;
 import java.util.List;
@@ -107,8 +108,10 @@ public class ForkIdsTest {
               new ForkId(Bytes.ofUnsignedInt(0x668db0afL), 9069000L),
               new ForkId(Bytes.ofUnsignedInt(0x879d6e30L), 9200000L),
               new ForkId(Bytes.ofUnsignedInt(0xe029e991L), 12244000L),
-              new ForkId(Bytes.ofUnsignedInt(0xeb440f6L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0xeb440f6L), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0xeb440f6L), 12965000L),
+              new ForkId(Bytes.ofUnsignedInt(0xb715077dL), 13773000L),
+              new ForkId(Bytes.ofUnsignedInt(0x20c327fc), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0x20c327fc), 0L))
         },
         new Object[] {
           NetworkName.MORDOR,
@@ -155,7 +158,8 @@ public class ForkIdsTest {
     final GenesisConfigFile genesisConfigFile =
         GenesisConfigFile.fromConfig(EthNetworkConfig.jsonConfig(chainName));
     final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
-    final ProtocolSchedule schedule = MainnetProtocolSchedule.fromConfig(configOptions);
+    final ProtocolSchedule schedule =
+        MainnetProtocolSchedule.fromConfig(configOptions, EvmConfiguration.DEFAULT);
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, schedule);
     final Blockchain mockBlockchain = mock(Blockchain.class);
 

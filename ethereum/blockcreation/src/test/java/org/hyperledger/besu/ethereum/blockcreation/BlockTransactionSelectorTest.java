@@ -24,32 +24,35 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -64,16 +67,21 @@ import java.util.Optional;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class BlockTransactionSelectorTest {
 
   private static final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private final Blockchain blockchain = new ReferenceTestBlockchain();
-  private final PendingTransactions pendingTransactions =
-      new PendingTransactions(
+  private final GasPricePendingTransactionsSorter pendingTransactions =
+      new GasPricePendingTransactionsSorter(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           5,
           5,
@@ -83,8 +91,14 @@ public class BlockTransactionSelectorTest {
           TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
   private final MutableWorldState worldState =
       InMemoryKeyValueStorageProvider.createInMemoryWorldState();
-  private final MainnetTransactionProcessor transactionProcessor =
-      mock(MainnetTransactionProcessor.class);
+  @Mock private MainnetTransactionProcessor transactionProcessor;
+  @Mock private MainnetTransactionValidator transactionValidator;
+
+  @Before
+  public void setup() {
+    when(transactionProcessor.getTransactionValidator()).thenReturn(transactionValidator);
+    when(transactionValidator.getGoQuorumCompatibilityMode()).thenReturn(true);
+  }
 
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
@@ -111,7 +125,8 @@ public class BlockTransactionSelectorTest {
   @Test
   public void emptyPendingTransactionsResultsInEmptyVettingResult() {
     final ProtocolSchedule protocolSchedule =
-        FixedDifficultyProtocolSchedule.create(GenesisConfigFile.development().getConfigOptions());
+        FixedDifficultyProtocolSchedule.create(
+            GenesisConfigFile.development().getConfigOptions(), EvmConfiguration.DEFAULT);
     final MainnetTransactionProcessor mainnetTransactionProcessor =
         protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
 
@@ -132,7 +147,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            FeeMarket.legacy());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -169,7 +184,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            FeeMarket.legacy());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -224,7 +239,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            FeeMarket.legacy());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -267,7 +282,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            FeeMarket.legacy());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -301,7 +316,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            FeeMarket.legacy());
 
     final Transaction tx = createTransaction(1);
     pendingTransactions.addRemoteTransaction(tx);
@@ -318,8 +333,8 @@ public class BlockTransactionSelectorTest {
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(300);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
-    final PendingTransactions pendingTransactions1559 =
-        new PendingTransactions(
+    final BaseFeePendingTransactionsSorter pendingTransactions1559 =
+        new BaseFeePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             5,
             5,
@@ -343,7 +358,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.eip1559());
+            FeeMarket.london(0L));
 
     // this should fill up all the block space
     final Transaction fillingLegacyTx =
@@ -410,7 +425,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            FeeMarket.legacy());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     // Add 3 transactions to the Pending Transactions, 79% of block, 100% of block and 10% of block
@@ -466,7 +481,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            FeeMarket.legacy());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     // Add 4 transactions to the Pending Transactions 15% (ok), 79% (ok), 25% (too large), 10%
@@ -526,7 +541,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            FeeMarket.legacy());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     final Transaction validTransaction =
@@ -606,7 +621,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier());
+            FeeMarket.legacy());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();

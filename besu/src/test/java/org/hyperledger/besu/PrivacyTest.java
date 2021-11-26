@@ -15,24 +15,26 @@
 package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.PrecompiledContract;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValuePrivacyStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
@@ -73,23 +75,22 @@ public class PrivacyTest {
   public void defaultPrivacy() throws IOException, URISyntaxException {
     final BesuController besuController = setUpControllerWithPrivacyEnabled(false);
 
-    final PrecompiledContract precompiledContract =
-        getPrecompile(besuController, Address.DEFAULT_PRIVACY);
+    final PrecompiledContract precompiledContract = getPrecompile(besuController, DEFAULT_PRIVACY);
 
     assertThat(precompiledContract.getName()).isEqualTo("Privacy");
   }
 
   @Test
-  public void onchainEnabledPrivacy() throws IOException, URISyntaxException {
+  public void flexibleEnabledPrivacy() throws IOException, URISyntaxException {
     final BesuController besuController = setUpControllerWithPrivacyEnabled(true);
 
-    final PrecompiledContract onchainPrecompiledContract =
-        getPrecompile(besuController, Address.ONCHAIN_PRIVACY);
+    final PrecompiledContract flexiblePrecompiledContract =
+        getPrecompile(besuController, FLEXIBLE_PRIVACY);
 
-    assertThat(onchainPrecompiledContract.getName()).isEqualTo("OnChainPrivacy");
+    assertThat(flexiblePrecompiledContract.getName()).isEqualTo("FlexiblePrivacy");
   }
 
-  private BesuController setUpControllerWithPrivacyEnabled(final boolean onChainEnabled)
+  private BesuController setUpControllerWithPrivacyEnabled(final boolean flexibleEnabled)
       throws IOException, URISyntaxException {
     final Path dataDir = folder.newFolder().toPath();
     final Path dbDir = dataDir.resolve("database");
@@ -99,7 +100,7 @@ public class PrivacyTest {
             .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
             .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
             .setEnclaveFactory(new EnclaveFactory(vertx))
-            .setOnchainPrivacyGroupsEnabled(onChainEnabled)
+            .setFlexiblePrivacyGroupsEnabled(flexibleEnabled)
             .build();
     return new BesuController.Builder()
         .fromGenesisConfig(GenesisConfigFile.mainnet())
@@ -107,7 +108,7 @@ public class PrivacyTest {
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.ONE)
-        .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+        .miningParameters(new MiningParameters.Builder().enabled(false).build())
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .dataDirectory(dataDir)
@@ -115,6 +116,7 @@ public class PrivacyTest {
         .privacyParameters(privacyParameters)
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .gasLimitCalculator(GasLimitCalculator.constant())
+        .evmConfiguration(EvmConfiguration.DEFAULT)
         .build();
   }
 
@@ -143,6 +145,6 @@ public class PrivacyTest {
         .getProtocolSchedule()
         .getByBlockNumber(1)
         .getPrecompileContractRegistry()
-        .get(defaultPrivacy, Account.DEFAULT_VERSION);
+        .get(defaultPrivacy);
   }
 }

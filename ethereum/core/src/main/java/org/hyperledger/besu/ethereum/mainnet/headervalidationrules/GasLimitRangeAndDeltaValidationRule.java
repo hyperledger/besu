@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 
 import java.util.Optional;
 
@@ -34,12 +34,12 @@ public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecifi
 
   private static final Logger LOG = LogManager.getLogger(GasLimitRangeAndDeltaValidationRule.class);
 
-  private final Optional<EIP1559> eip1559;
+  private final Optional<BaseFeeMarket> baseFeeMarket;
 
   public GasLimitRangeAndDeltaValidationRule(
-      final long minGasLimit, final long maxGasLimit, final Optional<EIP1559> eip1559) {
+      final long minGasLimit, final long maxGasLimit, final Optional<BaseFeeMarket> baseFeeMarket) {
     super(minGasLimit, maxGasLimit);
-    this.eip1559 = eip1559;
+    this.baseFeeMarket = baseFeeMarket;
   }
 
   public GasLimitRangeAndDeltaValidationRule(final long minGasLimit, final long maxGasLimit) {
@@ -59,11 +59,17 @@ public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecifi
       return false;
     }
 
-    long parentGasLimit = parent.getGasLimit();
-
-    if (eip1559.isPresent() && eip1559.get().isForkBlock(header.getNumber())) {
-      parentGasLimit = parent.getGasLimit() * eip1559.get().getFeeMarket().getSlackCoefficient();
+    if (baseFeeMarket.isEmpty() && header.getBaseFee().isPresent()) {
+      LOG.info(
+          "Invalid block header: basefee should not be present in a block without a base fee market");
+      return false;
     }
+
+    long parentGasLimit =
+        baseFeeMarket
+            .filter(baseFeeMarket -> baseFeeMarket.isForkBlock(header.getNumber()))
+            .map(baseFeeMarket -> parent.getGasLimit() * baseFeeMarket.getSlackCoefficient())
+            .orElse(parent.getGasLimit());
 
     final long difference = Math.abs(parentGasLimit - gasLimit);
     final long bounds = deltaBound(parentGasLimit);

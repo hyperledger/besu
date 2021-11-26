@@ -18,16 +18,23 @@ import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
 import org.hyperledger.besu.consensus.common.bft.network.PeerConnectionTracker;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class BftProtocolManager implements ProtocolManager {
+  private static final Logger LOG = LogManager.getLogger();
+
   private final BftEventQueue bftEventQueue;
   private final PeerConnectionTracker peers;
   private final Capability supportedCapability;
@@ -85,6 +92,11 @@ public class BftProtocolManager implements ProtocolManager {
    */
   @Override
   public void processMessage(final Capability cap, final Message message) {
+    final MessageData messageData = message.getData();
+    final int code = messageData.getCode();
+    final Address address = message.getConnection().getPeerInfo().getAddress();
+    LOG.trace("Process message {}, {}, from = {}", cap, code, address);
+
     final BftEvent messageEvent = BftEvents.fromMessage(message);
     bftEventQueue.add(messageEvent);
   }

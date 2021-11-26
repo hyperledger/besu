@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -206,7 +206,7 @@ public interface Blockchain {
   }
 
   /**
-   * Removes an previously added observer of any type.
+   * Removes a previously added observer of any type.
    *
    * @param observerId the ID of the observer to remove
    * @return {@code true} if the observer was removed; otherwise {@code false}

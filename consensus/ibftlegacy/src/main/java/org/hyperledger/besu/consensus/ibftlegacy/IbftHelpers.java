@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibftlegacy;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 
 public class IbftHelpers {
 

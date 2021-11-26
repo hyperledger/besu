@@ -467,7 +467,7 @@ public class PeerDiscoveryController {
         interaction -> {
           final PingPacketData data =
               PingPacketData.create(
-                  localPeer.getEndpoint(),
+                  Optional.of(localPeer.getEndpoint()),
                   peer.getEndpoint(),
                   localPeer.getNodeRecord().map(NodeRecord::getSeq).orElse(null));
           createPacket(
@@ -561,6 +561,7 @@ public class PeerDiscoveryController {
   private void respondToPing(
       final PingPacketData packetData, final Bytes pingHash, final DiscoveryPeer sender) {
     if (packetData.getExpiration() < Instant.now().getEpochSecond()) {
+      LOG.debug("ignoring expired PING");
       return;
     }
     // We don't care about the `from` field of the ping, we pong to the `sender`

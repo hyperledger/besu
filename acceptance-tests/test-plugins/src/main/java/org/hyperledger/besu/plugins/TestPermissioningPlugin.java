@@ -18,10 +18,12 @@ package org.hyperledger.besu.plugins;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.PermissioningService;
+import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
 import com.google.auto.service.AutoService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import picocli.CommandLine.Option;
 
 @AutoService(BesuPlugin.class)
 public class TestPermissioningPlugin implements BesuPlugin {
@@ -36,37 +38,45 @@ public class TestPermissioningPlugin implements BesuPlugin {
   private final String charlieNode =
       "ce7edc292d7b747fab2f23584bbafaffde5c8ff17cf689969614441e0527b90015ea9fee96aed6d9c0fc2fbe0bd1883dee223b3200246ff1e21976bdbc9a0fc8";
 
+  PermissioningService service;
+
   @Override
   public void register(final BesuContext context) {
-    PermissioningService service = context.getService(PermissioningService.class).get();
+    context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("permissioning", this);
+    service = context.getService(PermissioningService.class).get();
+  }
 
-    service.registerNodePermissioningProvider(
-        (sourceEnode, destinationEnode) -> {
-          if (sourceEnode.toString().contains(bobNode)
-              || destinationEnode.toString().contains(bobNode)) {
+  @Override
+  public void start() {
+    if (enabled) {
+      service.registerNodePermissioningProvider(
+          (sourceEnode, destinationEnode) -> {
+            if (sourceEnode.toString().contains(bobNode)
+                || destinationEnode.toString().contains(bobNode)) {
 
-            boolean isBobTalkingToAlice =
-                sourceEnode.toString().contains(aliceNode)
-                    || destinationEnode.toString().contains(aliceNode);
-            if (isBobTalkingToAlice) {
-              LOG.info("BLOCK CONNECTION from {}, to {}", sourceEnode, destinationEnode);
-            } else {
-              LOG.info("ALLOW CONNECTION from {}, to {}", sourceEnode, destinationEnode);
+              boolean isBobTalkingToAlice =
+                  sourceEnode.toString().contains(aliceNode)
+                      || destinationEnode.toString().contains(aliceNode);
+              if (isBobTalkingToAlice) {
+                LOG.info("BLOCK CONNECTION from {}, to {}", sourceEnode, destinationEnode);
+              } else {
+                LOG.info("ALLOW CONNECTION from {}, to {}", sourceEnode, destinationEnode);
+              }
+
+              return !isBobTalkingToAlice;
             }
+            return true;
+          });
 
-            return !isBobTalkingToAlice;
-          }
-          return true;
-        });
-
-    service.registerNodeMessagePermissioningProvider(
-        (destinationEnode, code) -> {
-          if (destinationEnode.toString().contains(charlieNode) && transactionMessage(code)) {
-            LOG.info("BLOCK MESSAGE to {} code {}", destinationEnode, code);
-            return false;
-          }
-          return true;
-        });
+      service.registerNodeMessagePermissioningProvider(
+          (destinationEnode, code) -> {
+            if (destinationEnode.toString().contains(charlieNode) && transactionMessage(code)) {
+              LOG.info("BLOCK MESSAGE to {} code {}", destinationEnode, code);
+              return false;
+            }
+            return true;
+          });
+    }
   }
 
   private boolean transactionMessage(final int code) {
@@ -74,8 +84,8 @@ public class TestPermissioningPlugin implements BesuPlugin {
   }
 
   @Override
-  public void start() {}
-
-  @Override
   public void stop() {}
+
+  @Option(names = "--plugin-permissioning-test-enabled")
+  boolean enabled = false;
 }

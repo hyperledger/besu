@@ -25,13 +25,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
@@ -125,8 +125,8 @@ public class PrivateTransactionLocatorTest {
   }
 
   @Test
-  public void locateBesuPrivateTransactionSentToOnchainPrivacyGroup() {
-    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnChain();
+  public void locateBesuPrivateTransactionSentToFlexiblePrivacyGroup() {
+    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnchain();
     final PrivateTransaction privateTransaction = privateTransactionBesu();
 
     final ExecutedPrivateTransaction expectedPrivateTx =
@@ -159,8 +159,8 @@ public class PrivateTransactionLocatorTest {
   }
 
   @Test
-  public void locateBesuPrivateTransactionFromAddBlobSentToOnchainPrivacyGroup() {
-    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnChain();
+  public void locateBesuPrivateTransactionFromAddBlobSentToFlexiblePrivacyGroup() {
+    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnchain();
     final PrivateTransaction privateTransaction = privateTransactionBesu();
 
     final ExecutedPrivateTransaction expectedPrivateTx =
@@ -174,7 +174,7 @@ public class PrivateTransactionLocatorTest {
 
   @Test
   public void locatePrivateTransactionWithNoEntryOnPGHeadBlockMap() {
-    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnChain();
+    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnchain();
     final PrivateTransaction privateTransaction = privateTransactionBesu();
 
     createExecutedPrivateTransactionFromAddBlob(pmt, privateTransaction);
@@ -190,7 +190,7 @@ public class PrivateTransactionLocatorTest {
 
   @Test
   public void locateBesuPrivateTransactionNotFoundInAddBlob() {
-    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnChain();
+    final Transaction pmt = PrivateTransactionDataFixture.privateMarkerTransactionOnchain();
     final PrivateTransaction privateTransaction = privateTransactionBesu();
 
     createExecutedPrivateTransactionFromAddBlob(pmt, privateTransaction);

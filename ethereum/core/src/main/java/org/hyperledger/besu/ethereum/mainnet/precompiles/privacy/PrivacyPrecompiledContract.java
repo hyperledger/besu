@@ -14,19 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
+import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
+import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
+
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
+import org.hyperledger.besu.enclave.EnclaveConfigurationException;
 import org.hyperledger.besu.enclave.EnclaveIOException;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -35,14 +39,18 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.BlockValues;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.data.Hash;
 
 import java.util.Base64;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -52,6 +60,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private final Enclave enclave;
   final WorldStateArchive privateWorldStateArchive;
   final PrivateStateRootResolver privateStateRootResolver;
+  private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
   PrivateTransactionProcessor privateTransactionProcessor;
 
   private static final Logger LOG = LogManager.getLogger();
@@ -65,16 +74,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateRootResolver(),
+        privacyParameters.getPrivateStateGenesisAllocator(),
         name);
-  }
-
-  @VisibleForTesting
-  PrivacyPrecompiledContract(
-      final GasCalculator gasCalculator,
-      final Enclave enclave,
-      final WorldStateArchive worldStateArchive,
-      final PrivateStateRootResolver privateStateRootResolver) {
-    this(gasCalculator, enclave, worldStateArchive, privateStateRootResolver, "Privacy");
   }
 
   protected PrivacyPrecompiledContract(
@@ -82,11 +83,13 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
       final PrivateStateRootResolver privateStateRootResolver,
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator,
       final String name) {
     super(name, gasCalculator);
     this.enclave = enclave;
     this.privateWorldStateArchive = worldStateArchive;
     this.privateStateRootResolver = privateStateRootResolver;
+    this.privateStateGenesisAllocator = privateStateGenesisAllocator;
   }
 
   public void setPrivateTransactionProcessor(
@@ -106,7 +109,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       return Bytes.EMPTY;
     }
 
-    final Hash pmtHash = messageFrame.getTransactionHash();
+    final org.hyperledger.besu.plugin.data.Hash pmtHash =
+        messageFrame.getContextVariable(KEY_TRANSACTION_HASH);
 
     final String key = input.toBase64String();
     final ReceiveResponse receiveResponse;
@@ -152,14 +156,22 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     LOG.debug("Processing private transaction {} in privacy group {}", pmtHash, privacyGroupId);
 
-    final PrivateMetadataUpdater privateMetadataUpdater = messageFrame.getPrivateMetadataUpdater();
+    final PrivateMetadataUpdater privateMetadataUpdater =
+        messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER);
     final Hash lastRootHash =
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
     final MutableWorldState disposablePrivateState =
-        privateWorldStateArchive.getMutable(lastRootHash, null).get();
+        privateWorldStateArchive.getMutable(fromPlugin(lastRootHash), null).get();
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
+
+    maybeApplyGenesisToPrivateWorldState(
+        lastRootHash,
+        disposablePrivateState,
+        privateWorldStateUpdater,
+        privacyGroupId,
+        messageFrame.getBlockValues().getNumber());
 
     final TransactionProcessingResult result =
         processPrivateTransaction(
@@ -176,8 +188,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       return Bytes.EMPTY;
     }
 
-    if (messageFrame.isPersistingPrivateState()) {
-
+    if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
       privateWorldStateUpdater.commit();
       disposablePrivateState.persist(null);
 
@@ -188,8 +199,20 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     return result.getOutput();
   }
 
+  protected void maybeApplyGenesisToPrivateWorldState(
+      final Hash lastRootHash,
+      final MutableWorldState disposablePrivateState,
+      final WorldUpdater privateWorldStateUpdater,
+      final Bytes32 privacyGroupId,
+      final long blockNumber) {
+    if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
+      this.privateStateGenesisAllocator.applyGenesisToPrivateWorldState(
+          disposablePrivateState, privateWorldStateUpdater, privacyGroupId, blockNumber);
+    }
+  }
+
   void storePrivateMetadata(
-      final Hash commitmentHash,
+      final org.hyperledger.besu.plugin.data.Hash commitmentHash,
       final Bytes32 privacyGroupId,
       final MutableWorldState disposablePrivateState,
       final PrivateMetadataUpdater privateMetadataUpdater,
@@ -206,7 +229,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     privateMetadataUpdater.updatePrivacyGroupHeadBlockMap(privacyGroupId);
     privateMetadataUpdater.addPrivateTransactionMetadata(
         privacyGroupId,
-        new PrivateTransactionMetadata(commitmentHash, disposablePrivateState.rootHash()));
+        new PrivateTransactionMetadata(
+            fromPlugin(commitmentHash), disposablePrivateState.rootHash()));
   }
 
   TransactionProcessingResult processPrivateTransaction(
@@ -216,11 +240,10 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final WorldUpdater privateWorldStateUpdater) {
 
     return privateTransactionProcessor.processTransaction(
-        messageFrame.getBlockchain(),
-        messageFrame.getWorldState(),
+        messageFrame.getWorldUpdater(),
         privateWorldStateUpdater,
-        messageFrame.getBlockHeader(),
-        messageFrame.getTransactionHash(),
+        (ProcessableBlockHeader) messageFrame.getBlockValues(),
+        messageFrame.getContextVariable(KEY_TRANSACTION_HASH),
         privateTransaction,
         messageFrame.getMiningBeneficiary(),
         OperationTracer.NO_TRACING,
@@ -250,21 +273,43 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     // If there's no PrivateMetadataUpdater, the precompile has not been called through the
     // PrivacyBlockProcessor. This indicates the PMT is being simulated and execution of the
     // precompile is not required.
-    return messageFrame.getPrivateMetadataUpdater() == null;
+    return !messageFrame.hasContextVariable(KEY_PRIVATE_METADATA_UPDATER);
   }
 
   boolean isMining(final MessageFrame messageFrame) {
     boolean isMining = false;
-    final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
+    final BlockValues currentBlockHeader = messageFrame.getBlockValues();
     if (!BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())) {
-      if (!messageFrame.isPersistingPrivateState()) {
-        isMining = true;
-      } else {
+      if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
         throw new IllegalArgumentException(
             "The MessageFrame contains an illegal block header type. Cannot persist private block"
                 + " metadata without current block hash.");
+      } else {
+        isMining = true;
       }
     }
     return isMining;
+  }
+
+  protected boolean privateFromMatchesSenderKey(
+      final Bytes transactionPrivateFrom, final String payloadSenderKey) {
+    if (payloadSenderKey == null) {
+      LOG.warn(
+          "Missing sender key from Orion response. Upgrade Orion to 1.6 to enforce privateFrom check.");
+      throw new EnclaveConfigurationException(
+          "Incompatible Orion version. Orion version must be 1.6.0 or greater.");
+    }
+
+    if (transactionPrivateFrom == null || transactionPrivateFrom.isEmpty()) {
+      LOG.warn("Private transaction is missing privateFrom");
+      return false;
+    }
+
+    if (!payloadSenderKey.equals(transactionPrivateFrom.toBase64String())) {
+      LOG.warn("Private transaction privateFrom doesn't match payload sender key");
+      return false;
+    }
+
+    return true;
   }
 }

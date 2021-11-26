@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.V
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -30,7 +31,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionGroupResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionResult;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.ExecutedPrivateTransaction;
@@ -85,7 +85,7 @@ public class PrivGetPrivateTransactionTest {
     final JsonRpcRequestContext request = createRequestContext();
     final PrivateTransactionResult result = makeRequest(request);
 
-    assertThat(result).isEqualToComparingFieldByField(expectedResult);
+    assertThat(result).usingRecursiveComparison().isEqualTo(expectedResult);
   }
 
   @Test
@@ -104,7 +104,7 @@ public class PrivGetPrivateTransactionTest {
     final JsonRpcRequestContext request = createRequestContext();
     final PrivateTransactionResult result = makeRequest(request);
 
-    assertThat(result).isEqualToComparingFieldByField(expectedResult);
+    assertThat(result).usingRecursiveComparison().isEqualTo(expectedResult);
   }
 
   @Test

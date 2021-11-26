@@ -70,6 +70,8 @@ rpc-http-tls-keystore-password-file="none.passwd"
 rpc-http-tls-client-auth-enabled=false
 rpc-http-tls-known-clients-file="rpc_tls_clients.txt"
 rpc-http-tls-ca-clients-enabled=false
+rpc-http-authentication-jwt-algorithm="RS256"
+rpc-ws-authentication-jwt-algorithm="RS256"
 
 # PRIVACY TLS
 privacy-tls-enabled=false
@@ -143,10 +145,10 @@ privacy-url="http://127.0.0.1:8888"
 privacy-public-key-file="./pubKey.pub"
 privacy-enabled=false
 privacy-multi-tenancy-enabled=true
-privacy-precompiled-address=9
 privacy-marker-transaction-signing-key-file="./signerKey"
 privacy-enable-database-migration=false
 privacy-onchain-groups-enabled=false
+privacy-flexible-groups-enabled=false
 
 # Transaction Pool
 tx-pool-retention-hours=999
@@ -179,3 +181,16 @@ Xaltbn128-native-enabled=false
 
 # compatibility flags
 compatibility-eth64-forkid-enabled=false
+
+#p2p over ssl
+Xp2p-tls-enabled=false
+Xp2p-tls-keystore-type="none"
+Xp2p-tls-keystore-file="none.file"
+Xp2p-tls-truststore-password-file="none"
+Xp2p-tls-truststore-type="none"
+Xp2p-tls-truststore-file="none.file"
+Xp2p-tls-keystore-password-file="none"
+Xp2p-tls-crl-file="none.file"
+
+#contracts
+Xevm-jumpdest-cache-weight-kb=32000

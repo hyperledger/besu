@@ -34,7 +34,7 @@ dependencies {
 
   implementation 'com.google.guava:guava'
   implementation 'io.opentelemetry:opentelemetry-api'
-  implementation 'org.apache.tuweni:bytes'
+  implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.bouncycastle:bcprov-jdk15on'
 
   testImplementation project(':testutil')
@@ -42,7 +42,7 @@ dependencies {
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'junit:junit'
-  testImplementation 'org.apache.tuweni:units'
+  testImplementation 'org.apache.tuweni:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
 }

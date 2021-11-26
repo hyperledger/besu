@@ -27,16 +27,16 @@ import org.hyperledger.besu.controller.MainnetBesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockSyncTestUtils;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -49,6 +49,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -59,6 +60,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
+import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
@@ -162,7 +164,7 @@ public final class RunnerTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .dataDirectory(dataDirAhead)
             .networkId(networkId)
-            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+            .miningParameters(new MiningParameters.Builder().enabled(false).build())
             .nodeKey(aheadDbNodeKey)
             .metricsSystem(noOpMetricsSystem)
             .privacyParameters(PrivacyParameters.DEFAULT)
@@ -170,6 +172,7 @@ public final class RunnerTest {
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .evmConfiguration(EvmConfiguration.DEFAULT)
             .build()) {
       setupState(blockCount, controller.getProtocolSchedule(), controller.getProtocolContext());
     }
@@ -182,7 +185,7 @@ public final class RunnerTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .dataDirectory(dataDirAhead)
             .networkId(networkId)
-            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+            .miningParameters(new MiningParameters.Builder().enabled(false).build())
             .nodeKey(aheadDbNodeKey)
             .metricsSystem(noOpMetricsSystem)
             .privacyParameters(PrivacyParameters.DEFAULT)
@@ -190,6 +193,7 @@ public final class RunnerTest {
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .evmConfiguration(EvmConfiguration.DEFAULT)
             .build();
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
@@ -208,7 +212,8 @@ public final class RunnerTest {
             .permissioningService(new PermissioningServiceImpl())
             .staticNodes(emptySet())
             .storageProvider(new InMemoryKeyValueStorageProvider())
-            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY));
+            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
+            .rpcEndpointService(new RpcEndpointServiceImpl());
 
     Runner runnerBehind = null;
     final Runner runnerAhead =
@@ -223,6 +228,7 @@ public final class RunnerTest {
             .pidPath(pidPath)
             .besuPluginContext(new BesuPluginContextImpl())
             .forkIdSupplier(() -> controllerAhead.getProtocolManager().getForkIdAsBytesList())
+            .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
     try {
 
@@ -249,7 +255,7 @@ public final class RunnerTest {
               .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
               .dataDirectory(dataDirBehind)
               .networkId(networkId)
-              .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+              .miningParameters(new MiningParameters.Builder().enabled(false).build())
               .nodeKey(NodeKeyUtils.generate())
               .storageProvider(new InMemoryKeyValueStorageProvider())
               .metricsSystem(noOpMetricsSystem)
@@ -257,6 +263,7 @@ public final class RunnerTest {
               .clock(TestClock.fixed())
               .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
               .gasLimitCalculator(GasLimitCalculator.constant())
+              .evmConfiguration(EvmConfiguration.DEFAULT)
               .build();
       final EnodeURL enode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =

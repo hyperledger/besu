@@ -14,13 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
+import static java.lang.Boolean.FALSE;
+
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
@@ -39,32 +41,25 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
   private final PoWHasher hasher;
 
   private final EpochCalculator epochCalculator;
-  private final boolean includeBaseFee;
-  private final Optional<EIP1559> eip1559;
+  private final Optional<FeeMarket> feeMarket;
 
   public ProofOfWorkValidationRule(
       final EpochCalculator epochCalculator,
-      final boolean includeBaseFee,
       final PoWHasher hasher,
-      final Optional<EIP1559> eip1559) {
+      final Optional<FeeMarket> feeMarket) {
     this.epochCalculator = epochCalculator;
-    this.includeBaseFee = includeBaseFee;
     this.hasher = hasher;
-    this.eip1559 = eip1559;
+    this.feeMarket = feeMarket;
   }
 
-  public ProofOfWorkValidationRule(
-      final EpochCalculator epochCalculator, final boolean includeBaseFee, final PoWHasher hasher) {
-    this(epochCalculator, includeBaseFee, hasher, Optional.empty());
+  public ProofOfWorkValidationRule(final EpochCalculator epochCalculator, final PoWHasher hasher) {
+    this(epochCalculator, hasher, Optional.empty());
   }
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
-    if (includeBaseFee) {
-      if (eip1559.isEmpty()) {
-        LOG.info("Invalid block header: EIP-1559 must be enabled");
-        return false;
-      } else if (header.getBaseFee().isEmpty()) {
+    if (imlementsBaseFeeMarket()) {
+      if (header.getBaseFee().isEmpty()) {
         LOG.info("Invalid block header: missing mandatory base fee.");
         return false;
       }
@@ -81,7 +76,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
       LOG.info("Invalid block header: difficulty is 0");
       return false;
     }
-    final BigInteger difficulty = header.getDifficulty().toBytes().toUnsignedBigInteger();
+    final BigInteger difficulty = header.getDifficulty().toUnsignedBigInteger();
     final UInt256 target =
         difficulty.equals(BigInteger.ONE)
             ? UInt256.MAX_VALUE
@@ -129,7 +124,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
     out.writeLongScalar(header.getGasUsed());
     out.writeLongScalar(header.getTimestamp());
     out.writeBytes(header.getExtraData());
-    if (includeBaseFee && header.getBaseFee().isPresent()) {
+    if (imlementsBaseFeeMarket() && header.getBaseFee().isPresent()) {
       out.writeLongScalar(header.getBaseFee().get());
     }
     out.endList();
@@ -140,5 +135,9 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
   @Override
   public boolean includeInLightValidation() {
     return false;
+  }
+
+  private boolean imlementsBaseFeeMarket() {
+    return feeMarket.map(FeeMarket::implementsBaseFee).orElse(FALSE);
   }
 }

@@ -15,12 +15,8 @@
 package org.hyperledger.besu.consensus.qbft.jsonrpc;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
-import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
-import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftDiscardValidatorVote;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetPendingVotes;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetSignerMetrics;
@@ -28,53 +24,43 @@ import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetValidatorsByBl
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetValidatorsByBlockNumber;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftProposeValidatorVote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 
 import java.util.Map;
 
 public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final ProtocolContext context;
+  private final ValidatorProvider readOnlyValidatorProvider;
 
-  public QbftJsonRpcMethods(final ProtocolContext context) {
+  public QbftJsonRpcMethods(
+      final ProtocolContext context, final ValidatorProvider readOnlyValidatorProvider) {
     this.context = context;
+    this.readOnlyValidatorProvider = readOnlyValidatorProvider;
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return QbftRpcApis.QBFT;
+  protected String getApiGroup() {
+    return RpcApis.QBFT.name();
   }
 
   @Override
   protected Map<String, JsonRpcMethod> create() {
-    final MutableBlockchain mutableBlockchain = context.getBlockchain();
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
-    final BftContext bftContext = context.getConsensusState(BftContext.class);
-    final VoteProposer voteProposer = bftContext.getVoteProposer();
+    final BftContext bftContext = context.getConsensusContext(BftContext.class);
     final BlockInterface blockInterface = bftContext.getBlockInterface();
-
-    final VoteTallyCache voteTallyCache = createVoteTallyCache(context, mutableBlockchain);
+    final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
 
     return mapOf(
-        new QbftProposeValidatorVote(voteProposer),
-        new QbftGetValidatorsByBlockNumber(blockchainQueries, blockInterface),
-        new QbftDiscardValidatorVote(voteProposer),
-        new QbftGetValidatorsByBlockHash(context.getBlockchain(), blockInterface),
-        new QbftGetSignerMetrics(voteTallyCache, blockInterface, blockchainQueries),
-        new QbftGetPendingVotes(voteProposer));
-  }
-
-  private VoteTallyCache createVoteTallyCache(
-      final ProtocolContext context, final MutableBlockchain blockchain) {
-    final BftContext bftContext = context.getConsensusState(BftContext.class);
-    final EpochManager epochManager = bftContext.getEpochManager();
-    final BftBlockInterface bftBlockInterface = bftContext.getBlockInterface();
-    final VoteTallyUpdater voteTallyUpdater = new VoteTallyUpdater(epochManager, bftBlockInterface);
-    return new VoteTallyCache(blockchain, voteTallyUpdater, epochManager, bftBlockInterface);
+        new QbftProposeValidatorVote(validatorProvider),
+        new QbftGetValidatorsByBlockNumber(blockchainQueries, readOnlyValidatorProvider),
+        new QbftDiscardValidatorVote(validatorProvider),
+        new QbftGetValidatorsByBlockHash(context.getBlockchain(), readOnlyValidatorProvider),
+        new QbftGetSignerMetrics(readOnlyValidatorProvider, blockInterface, blockchainQueries),
+        new QbftGetPendingVotes(validatorProvider));
   }
 }

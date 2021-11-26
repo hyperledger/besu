@@ -116,7 +116,7 @@ public class EnclaveFactory {
             convertFrom(privacyKeyStoreFile, privacyKeyStorePasswordFile));
       }
       clientOptions.setTrustOptions(
-          VertxTrustOptions.whitelistServers(privacyAllowlistFile, TRUST_CA));
+          VertxTrustOptions.allowlistServers(privacyAllowlistFile, TRUST_CA));
     } catch (final NoSuchFileException e) {
       throw new InvalidConfigurationException(
           "Requested file " + e.getMessage() + " does not exist at specified location.");

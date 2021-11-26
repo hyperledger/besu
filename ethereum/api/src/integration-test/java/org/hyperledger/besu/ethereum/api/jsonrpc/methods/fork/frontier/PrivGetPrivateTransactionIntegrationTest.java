@@ -25,6 +25,9 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.SendResponse;
@@ -36,17 +39,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
-import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 import org.hyperledger.enclave.testutil.OrionTestHarness;
 import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
@@ -137,7 +137,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
 
     privacyController =
         new RestrictedDefaultPrivacyController(
-            blockchain, privateStateStorage, enclave, null, null, null, null, null, null);
+            blockchain, privateStateStorage, enclave, null, null, null, null, null);
   }
 
   @After
@@ -182,6 +182,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
         (PrivateTransactionLegacyResult) response.getResult();
 
     assertThat(new PrivateTransactionLegacyResult(this.privateTransaction))
-        .isEqualToComparingFieldByField(result);
+        .usingRecursiveComparison()
+        .isEqualTo(result);
   }
 }

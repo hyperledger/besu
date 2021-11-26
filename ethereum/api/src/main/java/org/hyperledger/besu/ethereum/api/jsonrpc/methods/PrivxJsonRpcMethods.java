@@ -14,16 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.privx.PrivxFindOnChainPrivacyGroup;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.privx.PrivxFindFlexiblePrivacyGroup;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.privx.PrivxFindOnchainPrivacyGroup;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Map;
 
@@ -38,15 +39,19 @@ public class PrivxJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return RpcApis.PRIV;
+  protected String getApiGroup() {
+    return RpcApis.PRIV.name();
   }
 
   @Override
   protected Map<String, JsonRpcMethod> create(
-      final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
-    if (getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
-      return mapOf(new PrivxFindOnChainPrivacyGroup(privacyController, privacyIdProvider));
+      final PrivacyController privacyController,
+      final PrivacyIdProvider privacyIdProvider,
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
+    if (getPrivacyParameters().isFlexiblePrivacyGroupsEnabled()) {
+      return mapOf(
+          new PrivxFindFlexiblePrivacyGroup(privacyController, privacyIdProvider),
+          new PrivxFindOnchainPrivacyGroup(privacyController, privacyIdProvider));
     } else {
       return Map.of();
     }

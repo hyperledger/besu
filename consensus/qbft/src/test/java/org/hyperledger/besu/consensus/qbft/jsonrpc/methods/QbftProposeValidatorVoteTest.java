@@ -17,14 +17,20 @@ package org.hyperledger.besu.consensus.qbft.jsonrpc.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validator.VoteProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
+
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -32,7 +38,8 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 public class QbftProposeValidatorVoteTest {
-  private final VoteProposer voteProposer = mock(VoteProposer.class);
+  private final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+  private final VoteProvider voteProvider = mock(VoteProvider.class);
   private final String QBFT_METHOD = "qbft_proposeValidatorVote";
   private final String JSON_RPC_VERSION = "2.0";
   private QbftProposeValidatorVote method;
@@ -41,7 +48,8 @@ public class QbftProposeValidatorVoteTest {
 
   @Before
   public void setup() {
-    method = new QbftProposeValidatorVote(voteProposer);
+    method = new QbftProposeValidatorVote(validatorProvider);
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
   }
 
   @Test
@@ -90,6 +98,18 @@ public class QbftProposeValidatorVoteTest {
   }
 
   @Test
+  public void methodNotEnabledWhenNoVoteProvider() {
+    final JsonRpcRequestContext request = requestWithParams(Address.fromHexString("1"));
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.METHOD_NOT_ENABLED);
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.empty());
+
+    final JsonRpcResponse response = method.response(request);
+
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
   public void addValidator() {
     final Address parameterAddress = Address.fromHexString("1");
     final JsonRpcRequestContext request = requestWithParams(parameterAddress, "true");
@@ -98,9 +118,9 @@ public class QbftProposeValidatorVoteTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
 
-    verify(voteProposer).auth(parameterAddress);
+    verify(voteProvider).authVote(parameterAddress);
   }
 
   @Test
@@ -112,9 +132,9 @@ public class QbftProposeValidatorVoteTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
 
-    verify(voteProposer).drop(parameterAddress);
+    verify(voteProvider).dropVote(parameterAddress);
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

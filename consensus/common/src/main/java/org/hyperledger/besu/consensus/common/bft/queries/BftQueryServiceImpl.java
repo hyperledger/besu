@@ -17,10 +17,11 @@ package org.hyperledger.besu.consensus.common.bft.queries;
 import org.hyperledger.besu.consensus.common.PoaQueryServiceImpl;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.services.query.BftQueryService;
 
@@ -31,16 +32,19 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class BftQueryServiceImpl extends PoaQueryServiceImpl implements BftQueryService {
 
+  private final ValidatorProvider validatorProvider;
   private final String consensusMechanismName;
   private final BftBlockInterface bftBlockInterface;
 
   public BftQueryServiceImpl(
       final BftBlockInterface blockInterface,
       final Blockchain blockchain,
+      final ValidatorProvider validatorProvider,
       final NodeKey nodeKey,
       final String consensusMechanismName) {
     super(blockInterface, blockchain, nodeKey);
     this.bftBlockInterface = blockInterface;
+    this.validatorProvider = validatorProvider;
     this.consensusMechanismName = consensusMechanismName;
   }
 
@@ -56,6 +60,11 @@ public class BftQueryServiceImpl extends PoaQueryServiceImpl implements BftQuery
       final org.hyperledger.besu.plugin.data.BlockHeader header) {
     final BlockHeader headerFromChain = getHeaderFromChain(header);
     return Collections.unmodifiableList(bftBlockInterface.getCommitters(headerFromChain));
+  }
+
+  @Override
+  public Collection<Address> getValidatorsForLatestBlock() {
+    return Collections.unmodifiableCollection(validatorProvider.getValidatorsAtHead());
   }
 
   @Override

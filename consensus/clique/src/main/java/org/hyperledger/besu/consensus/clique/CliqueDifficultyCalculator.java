@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 
@@ -38,7 +38,7 @@ public class CliqueDifficultyCalculator implements DifficultyCalculator {
 
     final Address nextProposer =
         CliqueHelpers.getProposerForBlockAfter(
-            parent, context.getConsensusState(CliqueContext.class).getVoteTallyCache());
+            parent, context.getConsensusContext(CliqueContext.class).getValidatorProvider());
     return nextProposer.equals(localAddress) ? IN_TURN_DIFFICULTY : OUT_OF_TURN_DIFFICULTY;
   }
 }

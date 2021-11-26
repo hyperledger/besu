@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli.util;
 
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Wei;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,6 +69,8 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     } else if (optionSpec.isMultiValue() || isArray) {
       defaultValue = getListEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Integer.class) || optionSpec.type().equals(int.class)) {
+      defaultValue = getIntegerEntryAsString(optionSpec);
+    } else if (optionSpec.type().equals(Long.class) || optionSpec.type().equals(long.class)) {
       defaultValue = getIntegerEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Wei.class)) {
       defaultValue = getIntegerEntryAsString(optionSpec);
@@ -138,7 +140,7 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
           commandLine, String.format("Unable to read TOML configuration file %s", configFile));
   }
 
-  private void loadConfigurationFromFile() {
+  public void loadConfigurationFromFile() {
 
     if (result == null) {
       try {

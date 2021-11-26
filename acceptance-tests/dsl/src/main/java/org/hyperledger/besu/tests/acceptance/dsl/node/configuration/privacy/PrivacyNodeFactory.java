@@ -24,6 +24,8 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
@@ -39,7 +41,7 @@ public class PrivacyNodeFactory {
     this.vertx = vertx;
   }
 
-  private PrivacyNode create(
+  public PrivacyNode create(
       final PrivacyNodeConfiguration privacyNodeConfig,
       final EnclaveType enclaveType,
       final Optional<Network> containerNetwork)
@@ -62,15 +64,15 @@ public class PrivacyNodeFactory {
       final PrivacyAccount privacyAccount,
       final EnclaveType enclaveType,
       final Optional<Network> containerNetwork,
-      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isFlexiblePrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
-      final boolean isUnrestrictedEnabled)
+      final boolean isPrivacyPluginEnabled)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
-            isOnchainPrivacyGroupEnabled,
+            isFlexiblePrivacyGroupEnabled,
             isMultitenancyEnabled,
-            isUnrestrictedEnabled,
+            isPrivacyPluginEnabled,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .miningEnabled()
@@ -78,6 +80,8 @@ public class PrivacyNodeFactory {
                 .webSocketEnabled()
                 .enablePrivateTransactions()
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
+                .plugins(Collections.singletonList("testPlugins"))
+                .extraCLIOptions(List.of("--plugin-privacy-service-encryption-prefix=0xAA"))
                 .build(),
             new EnclaveKeyConfiguration(
                 privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
@@ -100,21 +104,23 @@ public class PrivacyNodeFactory {
       final PrivacyAccount privacyAccount,
       final EnclaveType enclaveType,
       final Optional<Network> containerNetwork,
-      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isFlexiblePrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
-      final boolean isUnrestrictedEnabled)
+      final boolean isPrivacyPluginEnabled)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
-            isOnchainPrivacyGroupEnabled,
+            isFlexiblePrivacyGroupEnabled,
             isMultitenancyEnabled,
-            isUnrestrictedEnabled,
+            isPrivacyPluginEnabled,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .jsonRpcEnabled()
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .enablePrivateTransactions()
                 .webSocketEnabled()
+                .plugins(Collections.singletonList("testPlugins"))
+                .extraCLIOptions(List.of("--plugin-privacy-service-encryption-prefix=0xBB"))
                 .build(),
             new EnclaveKeyConfiguration(
                 privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
@@ -129,7 +135,7 @@ public class PrivacyNodeFactory {
       final Optional<Network> containerNetwork)
       throws IOException {
     return createIbft2NodePrivacyEnabled(
-        name, privacyAccount, false, enclaveType, containerNetwork, false, false, false);
+        name, privacyAccount, false, enclaveType, containerNetwork, false, false, false, "0xAA");
   }
 
   public PrivacyNode createIbft2NodePrivacyEnabled(
@@ -138,15 +144,16 @@ public class PrivacyNodeFactory {
       final boolean minerEnabled,
       final EnclaveType enclaveType,
       final Optional<Network> containerNetwork,
-      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isFlexiblePrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
-      final boolean isUnrestrictedEnabled)
+      final boolean isPrivacyPluginEnabled,
+      final String unrestrictedPrefix)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
-            isOnchainPrivacyGroupEnabled,
+            isFlexiblePrivacyGroupEnabled,
             isMultitenancyEnabled,
-            isUnrestrictedEnabled,
+            isPrivacyPluginEnabled,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .miningEnabled()
@@ -156,6 +163,46 @@ public class PrivacyNodeFactory {
                 .genesisConfigProvider(genesis::createPrivacyIbft2GenesisConfig)
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .enablePrivateTransactions()
+                .plugins(Collections.singletonList("testPlugins"))
+                .extraCLIOptions(
+                    List.of("--plugin-privacy-service-encryption-prefix=" + unrestrictedPrefix))
+                .build(),
+            new EnclaveKeyConfiguration(
+                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+        enclaveType,
+        containerNetwork);
+  }
+
+  public PrivacyNode createIbft2NodePrivacyEnabledWithGenesis(
+      final String name,
+      final PrivacyAccount privacyAccount,
+      final boolean minerEnabled,
+      final EnclaveType enclaveType,
+      final Optional<Network> containerNetwork,
+      final boolean isFlexiblePrivacyGroupEnabled,
+      final boolean isMultitenancyEnabled,
+      final boolean isPrivacyPluginEnabled,
+      final String unrestrictedPrefix)
+      throws IOException {
+    return create(
+        new PrivacyNodeConfiguration(
+            isFlexiblePrivacyGroupEnabled,
+            isMultitenancyEnabled,
+            isPrivacyPluginEnabled,
+            new BesuNodeConfigurationBuilder()
+                .name(name)
+                .miningEnabled()
+                .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig(minerEnabled))
+                .webSocketConfiguration(node.createWebSocketEnabledConfig())
+                .devMode(false)
+                .genesisConfigProvider(genesis::createPrivacyIbft2GenesisConfig)
+                .keyFilePath(privacyAccount.getPrivateKeyPath())
+                .enablePrivateTransactions()
+                .plugins(Collections.singletonList("testPlugins"))
+                .extraCLIOptions(
+                    List.of(
+                        "--plugin-privacy-service-encryption-prefix=" + unrestrictedPrefix,
+                        "--plugin-privacy-service-genesis-enabled=true"))
                 .build(),
             new EnclaveKeyConfiguration(
                 privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
@@ -168,15 +215,16 @@ public class PrivacyNodeFactory {
       final PrivacyAccount privacyAccount,
       final EnclaveType enclaveType,
       final Optional<Network> containerNetwork,
-      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isFlexiblePrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
-      final boolean isUnrestrictedEnabled)
+      final boolean isPrivacyPluginEnabled,
+      final String unrestrictedPrefix)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
-            isOnchainPrivacyGroupEnabled,
+            isFlexiblePrivacyGroupEnabled,
             isMultitenancyEnabled,
-            isUnrestrictedEnabled,
+            isPrivacyPluginEnabled,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .miningEnabled()
@@ -186,6 +234,9 @@ public class PrivacyNodeFactory {
                 .genesisConfigProvider(genesis::createQbftGenesisConfig)
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .enablePrivateTransactions()
+                .plugins(Collections.singletonList("testPlugins"))
+                .extraCLIOptions(
+                    List.of("--plugin-privacy-service-encryption-prefix=" + unrestrictedPrefix))
                 .build(),
             new EnclaveKeyConfiguration(
                 privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
@@ -193,7 +244,7 @@ public class PrivacyNodeFactory {
         containerNetwork);
   }
 
-  public PrivacyNode createOnChainPrivacyGroupEnabledMinerNode(
+  public PrivacyNode createFlexiblePrivacyGroupEnabledMinerNode(
       final String name,
       final PrivacyAccount privacyAccount,
       final boolean multiTenancyEnabled,
@@ -217,6 +268,8 @@ public class PrivacyNodeFactory {
                 .jsonRpcEnabled()
                 .webSocketEnabled()
                 .enablePrivateTransactions()
+                .plugins(Collections.singletonList("testPlugins"))
+                .extraCLIOptions(List.of("--plugin-privacy-service-genesis-enabled=true"))
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .build(),
             new EnclaveKeyConfiguration(
@@ -225,7 +278,7 @@ public class PrivacyNodeFactory {
         containerNetwork);
   }
 
-  public PrivacyNode createOnChainPrivacyGroupEnabledNode(
+  public PrivacyNode createFlexiblePrivacyGroupEnabledNode(
       final String name,
       final PrivacyAccount privacyAccount,
       final boolean multiTenancyEnabled,
@@ -242,6 +295,8 @@ public class PrivacyNodeFactory {
                 .jsonRpcEnabled()
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .enablePrivateTransactions()
+                .plugins(Collections.singletonList("testPlugins"))
+                .extraCLIOptions(List.of("--plugin-privacy-service-genesis-enabled=true"))
                 .webSocketEnabled()
                 .build(),
             new EnclaveKeyConfiguration(

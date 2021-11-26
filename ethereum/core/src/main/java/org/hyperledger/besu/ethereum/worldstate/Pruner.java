@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.worldstate;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 
 import java.util.concurrent.ExecutorService;
@@ -171,7 +171,7 @@ public class Pruner {
       System.exit(1);
     } catch (final Exception e) {
       LOG.error(
-          "An unexpected error ocurred in the {} pruning phase: {}. Reattempting.",
+          "An unexpected error occurred in the {} pruning phase: {}. Reattempting.",
           getPruningPhase(),
           e.getMessage());
       pruningStrategy.clearMarks();

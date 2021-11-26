@@ -17,11 +17,13 @@ package org.hyperledger.besu.controller;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ConsensusContext;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -29,11 +31,9 @@ import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -65,6 +65,7 @@ import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
@@ -86,28 +87,31 @@ public abstract class BesuControllerBuilder {
   private static final Logger LOG = LogManager.getLogger();
 
   protected GenesisConfigFile genesisConfig;
-  private SynchronizerConfiguration syncConfig;
-  private EthProtocolConfiguration ethereumWireProtocolConfiguration;
+  protected SynchronizerConfiguration syncConfig;
+  protected EthProtocolConfiguration ethereumWireProtocolConfiguration;
   protected TransactionPoolConfiguration transactionPoolConfiguration;
   protected BigInteger networkId;
   protected MiningParameters miningParameters;
   protected ObservableMetricsSystem metricsSystem;
   protected PrivacyParameters privacyParameters;
+  protected Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration =
+      Optional.empty();
   protected Path dataDirectory;
   protected Clock clock;
   protected NodeKey nodeKey;
   protected boolean isRevertReasonEnabled;
   GasLimitCalculator gasLimitCalculator;
-  private StorageProvider storageProvider;
-  private boolean isPruningEnabled;
-  private PrunerConfiguration prunerConfiguration;
-  Map<String, String> genesisConfigOverrides;
-  private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
-  private long reorgLoggingThreshold;
-  private DataStorageConfiguration dataStorageConfiguration =
+  protected StorageProvider storageProvider;
+  protected boolean isPruningEnabled;
+  protected PrunerConfiguration prunerConfiguration;
+  protected Map<String, String> genesisConfigOverrides;
+  protected Map<Long, Hash> requiredBlocks = Collections.emptyMap();
+  protected long reorgLoggingThreshold;
+  protected DataStorageConfiguration dataStorageConfiguration =
       DataStorageConfiguration.DEFAULT_CONFIG;
-  private List<NodeMessagePermissioningProvider> messagePermissioningProviders =
+  protected List<NodeMessagePermissioningProvider> messagePermissioningProviders =
       Collections.emptyList();
+  protected EvmConfiguration evmConfiguration;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -159,6 +163,12 @@ public abstract class BesuControllerBuilder {
 
   public BesuControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
     this.privacyParameters = privacyParameters;
+    return this;
+  }
+
+  public BesuControllerBuilder pkiBlockCreationConfiguration(
+      final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration) {
+    this.pkiBlockCreationConfiguration = pkiBlockCreationConfiguration;
     return this;
   }
 
@@ -220,6 +230,11 @@ public abstract class BesuControllerBuilder {
     return this;
   }
 
+  public BesuControllerBuilder evmConfiguration(final EvmConfiguration evmConfiguration) {
+    this.evmConfiguration = evmConfiguration;
+    return this;
+  }
+
   public BesuController build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -234,7 +249,7 @@ public abstract class BesuControllerBuilder {
     checkNotNull(nodeKey, "Missing node key");
     checkNotNull(storageProvider, "Must supply a storage provider");
     checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
-
+    checkNotNull(evmConfiguration, "Missing evm config");
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
@@ -253,7 +268,11 @@ public abstract class BesuControllerBuilder {
         createWorldStateArchive(worldStateStorage, blockchain);
     final ProtocolContext protocolContext =
         ProtocolContext.init(
-            blockchain, worldStateArchive, genesisState, this::createConsensusContext);
+            blockchain,
+            worldStateArchive,
+            genesisState,
+            protocolSchedule,
+            this::createConsensusContext);
     validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
@@ -295,14 +314,6 @@ public abstract class BesuControllerBuilder {
     final SyncState syncState = new SyncState(blockchain, ethPeers);
     final boolean fastSyncEnabled = SyncMode.FAST.equals(syncConfig.getSyncMode());
 
-    final Optional<EIP1559> eip1559;
-    final GenesisConfigOptions genesisConfigOptions =
-        genesisConfig.getConfigOptions(genesisConfigOverrides);
-    if (genesisConfigOptions.getEIP1559BlockNumber().isPresent()) {
-      eip1559 = Optional.of(new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().getAsLong()));
-    } else {
-      eip1559 = Optional.empty();
-    }
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule,
@@ -312,8 +323,7 @@ public abstract class BesuControllerBuilder {
             metricsSystem,
             syncState,
             miningParameters.getMinTransactionGasPrice(),
-            transactionPoolConfiguration,
-            eip1559);
+            transactionPoolConfiguration);
 
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
@@ -351,7 +361,7 @@ public abstract class BesuControllerBuilder {
             ethProtocolManager);
 
     final PluginServiceFactory additionalPluginServices =
-        createAdditionalPluginServices(blockchain);
+        createAdditionalPluginServices(blockchain, protocolContext);
 
     final SubProtocolConfiguration subProtocolConfiguration =
         createSubProtocolConfiguration(ethProtocolManager);
@@ -407,8 +417,10 @@ public abstract class BesuControllerBuilder {
 
   protected void validateContext(final ProtocolContext context) {}
 
-  protected abstract Object createConsensusContext(
-      Blockchain blockchain, WorldStateArchive worldStateArchive);
+  protected abstract ConsensusContext createConsensusContext(
+      Blockchain blockchain,
+      WorldStateArchive worldStateArchive,
+      ProtocolSchedule protocolSchedule);
 
   protected String getSupportedProtocol() {
     return EthProtocol.NAME;
@@ -482,5 +494,5 @@ public abstract class BesuControllerBuilder {
   }
 
   protected abstract PluginServiceFactory createAdditionalPluginServices(
-      final Blockchain blockchain);
+      final Blockchain blockchain, final ProtocolContext protocolContext);
 }

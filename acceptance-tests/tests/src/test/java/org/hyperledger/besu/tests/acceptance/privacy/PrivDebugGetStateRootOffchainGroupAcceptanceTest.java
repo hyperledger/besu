@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.utils.Restriction.UNRESTRICTED;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
@@ -45,23 +45,27 @@ public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends Parameteri
     final Network containerNetwork = Network.newNetwork();
 
     aliceNode =
-        privacyBesu.createPrivateTransactionEnabledMinerNode(
+        privacyBesu.createIbft2NodePrivacyEnabled(
             "alice-node",
             PrivacyAccountResolver.ALICE,
+            false,
             enclaveType,
             Optional.of(containerNetwork),
             false,
             false,
-            restriction == UNRESTRICTED);
+            restriction == UNRESTRICTED,
+            "0xAA");
     bobNode =
-        privacyBesu.createPrivateTransactionEnabledMinerNode(
+        privacyBesu.createIbft2NodePrivacyEnabled(
             "bob-node",
             PrivacyAccountResolver.BOB,
+            false,
             enclaveType,
             Optional.of(containerNetwork),
             false,
             false,
-            restriction == UNRESTRICTED);
+            restriction == UNRESTRICTED,
+            "0xBB");
 
     privacyCluster.start(aliceNode, bobNode);
   }

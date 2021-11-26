@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -36,7 +37,7 @@ public class PingPacketDataTest {
     final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final UInt64 enrSeq = UInt64.ONE;
-    final PingPacketData packet = PingPacketData.create(from, to, enrSeq);
+    final PingPacketData packet = PingPacketData.create(Optional.of(from), to, enrSeq);
     final Bytes serialized = RLP.encode(packet::writeTo);
     final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
 
@@ -49,6 +50,57 @@ public class PingPacketDataTest {
 
   @Test
   public void readFrom() {
+    final int version = 4;
+    final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final long time = System.currentTimeMillis();
+    final UInt64 enrSeq = UInt64.ONE;
+
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeIntScalar(version);
+    from.encodeStandalone(out);
+    to.encodeStandalone(out);
+    out.writeLongScalar(time);
+    out.writeLongScalar(enrSeq.toLong());
+    out.endList();
+
+    final Bytes serialized = out.encoded();
+    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+
+    assertThat(deserialized.getFrom()).contains(from);
+    assertThat(deserialized.getTo()).isEqualTo(to);
+    assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getEnrSeq().isPresent()).isTrue();
+    assertThat(deserialized.getEnrSeq().get()).isEqualTo(enrSeq);
+  }
+
+  @Test
+  public void handlesNullEnr() {
+    final int version = 4;
+    final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final long time = System.currentTimeMillis();
+
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeIntScalar(version);
+    from.encodeStandalone(out);
+    to.encodeStandalone(out);
+    out.writeLongScalar(time);
+    out.endList();
+
+    final Bytes serialized = out.encoded();
+    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+
+    assertThat(deserialized.getFrom()).contains(from);
+    assertThat(deserialized.getTo()).isEqualTo(to);
+    assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getEnrSeq().isPresent()).isFalse();
+  }
+
+  @Test
+  public void handlesLegacyENREncode() {
     final int version = 4;
     final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
@@ -75,6 +127,81 @@ public class PingPacketDataTest {
   }
 
   @Test
+  public void handleOptionalSourceIP() {
+
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final long time = System.currentTimeMillis();
+    final UInt64 enrSeq = UInt64.ONE;
+
+    final PingPacketData anon = PingPacketData.create(Optional.empty(), to, time, enrSeq);
+
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    anon.writeTo(out);
+    final Bytes serialized = out.encoded();
+    System.out.println(serialized.toHexString());
+    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+
+    assertThat(deserialized.getFrom()).isEmpty();
+    assertThat(deserialized.getTo()).isEqualTo(to);
+    assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getEnrSeq().isPresent()).isTrue();
+    assertThat(deserialized.getEnrSeq().get()).isEqualTo(enrSeq);
+  }
+
+  @Test
+  public void handleSourcePortNullHost() {
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    final UInt64 enrSeq = UInt64.MAX_VALUE;
+    final long time = System.currentTimeMillis();
+
+    out.startList();
+    out.writeIntScalar(4);
+
+    ((RLPOutput) out).startList();
+    out.writeNull();
+    out.writeIntScalar(30303);
+    out.writeNull();
+    ((RLPOutput) out).endList();
+
+    to.encodeStandalone(out);
+    out.writeLongScalar(time);
+    out.writeBigIntegerScalar(enrSeq.toBigInteger());
+    out.endList();
+
+    final Bytes serialized = out.encoded();
+    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+
+    assertThat(deserialized.getFrom()).isPresent();
+    assertThat(deserialized.getFrom().get().getUdpPort()).isEqualTo(30303);
+    assertThat(deserialized.getFrom().get().getHost().isEmpty()).isTrue();
+    assertThat(deserialized.getFrom().get().getTcpPort().isEmpty()).isTrue();
+
+    assertThat(deserialized.getTo()).isEqualTo(to);
+    assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getEnrSeq().isPresent()).isTrue();
+    assertThat(deserialized.getEnrSeq().get()).isEqualTo(enrSeq);
+  }
+
+  @Test
+  public void legacyHandlesScalarEncode() {
+    final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final UInt64 enrSeq = UInt64.MAX_VALUE;
+    final PingPacketData ping = PingPacketData.create(Optional.of(from), to, enrSeq);
+
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    ping.writeTo(out);
+
+    final PingPacketData legacyPing = PingPacketData.legacyReadFrom(RLP.input(out.encoded()));
+
+    assertThat(legacyPing.getFrom().get()).isEqualTo(from);
+    assertThat(legacyPing.getTo()).isEqualTo(to);
+    assertThat(legacyPing.getEnrSeq().isPresent()).isTrue();
+    assertThat(legacyPing.getEnrSeq().get()).isEqualTo(enrSeq);
+  }
+
+  @Test
   public void readFrom_withExtraFields() {
     final int version = 4;
     final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
@@ -88,7 +215,7 @@ public class PingPacketDataTest {
     from.encodeStandalone(out);
     to.encodeStandalone(out);
     out.writeLongScalar(time);
-    out.writeBytes(enrSeq.toBytes());
+    out.writeLongScalar(enrSeq.toLong());
     // Add extra field
     out.writeLongScalar(11);
     out.endList();
@@ -117,7 +244,7 @@ public class PingPacketDataTest {
     from.encodeStandalone(out);
     to.encodeStandalone(out);
     out.writeLongScalar(time);
-    out.writeBytes(enrSeq.toBytes());
+    out.writeLongScalar(enrSeq.toLong());
     out.endList();
 
     final Bytes serialized = out.encoded();
@@ -144,7 +271,7 @@ public class PingPacketDataTest {
     from.encodeStandalone(out);
     to.encodeStandalone(out);
     out.writeLongScalar(time);
-    out.writeBytes(enrSeq.toBytes());
+    out.writeLongScalar(enrSeq.toLong());
     out.endList();
 
     final Bytes serialized = out.encoded();

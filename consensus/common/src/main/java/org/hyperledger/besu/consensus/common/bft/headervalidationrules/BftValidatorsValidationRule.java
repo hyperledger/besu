@@ -14,11 +14,10 @@
  */
 package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -43,9 +42,7 @@ public class BftValidatorsValidationRule implements AttachedBlockHeaderValidatio
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext context) {
     try {
-      final BftContext bftContext = context.getConsensusState(BftContext.class);
-      final ValidatorProvider validatorProvider =
-          bftContext.getVoteTallyCache().getVoteTallyAfterBlock(parent);
+      final BftContext bftContext = context.getConsensusContext(BftContext.class);
       final BftExtraData bftExtraData = bftContext.getBlockInterface().getExtraData(header);
 
       final NavigableSet<Address> sortedReportedValidators =
@@ -59,7 +56,8 @@ public class BftValidatorsValidationRule implements AttachedBlockHeaderValidatio
         return false;
       }
 
-      final Collection<Address> storedValidators = validatorProvider.getValidators();
+      final Collection<Address> storedValidators =
+          bftContext.getValidatorProvider().getValidatorsAfterBlock(parent);
       if (!Iterables.elementsEqual(bftExtraData.getValidators(), storedValidators)) {
         LOGGER.info(
             "Invalid block header: Incorrect validators. Expected {} but got {}.",

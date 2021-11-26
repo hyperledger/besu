@@ -22,6 +22,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -30,12 +32,11 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 
@@ -43,19 +44,28 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class GoQuorumBlockProcessorTest {
 
-  private final MainnetTransactionProcessor transactionProcessor =
-      mock(MainnetTransactionProcessor.class);
-  private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
-      mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
+  @Mock private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
+  @Mock private GoQuorumEnclave goQuorumEnclave;
+  @Mock private GoQuorumPrivateStorage goQuorumPrivateStorage;
+  @Mock private MainnetTransactionProcessor transactionProcessor;
+  @Mock private MainnetTransactionValidator transactionValidator;
 
-  private final GoQuorumEnclave goQuorumEnclave = mock(GoQuorumEnclave.class);
-  private final GoQuorumPrivateStorage goQuorumPrivateStorage = mock(GoQuorumPrivateStorage.class);
-  private final GoQuorumPrivacyParameters goQuorumPrivacyParameters =
-      new GoQuorumPrivacyParameters(goQuorumEnclave, "123", goQuorumPrivateStorage, null);
+  private GoQuorumPrivacyParameters goQuorumPrivacyParameters;
+
+  @Before
+  public void setup() {
+    goQuorumPrivacyParameters =
+        new GoQuorumPrivacyParameters(goQuorumEnclave, "123", goQuorumPrivateStorage, null);
+  }
 
   @Test
   public void noAccountCreatedWhenBlockRewardIsZeroAndSkipped() {
@@ -128,7 +138,7 @@ public class GoQuorumBlockProcessorTest {
     final BlockBody blockBody = mock(BlockBody.class);
     final Transaction transaction = mock(Transaction.class);
     when(transaction.getGasLimit()).thenReturn(1000L);
-    when(transaction.isGoQuorumPrivateTransaction()).thenReturn(true);
+    when(transaction.isGoQuorumPrivateTransaction(true)).thenReturn(true);
     when(transaction.getPayload()).thenReturn(Bytes.wrap(new byte[] {(byte) 1}));
     when(block.getBody()).thenReturn(blockBody);
     when(blockBody.getTransactions()).thenReturn(Collections.singletonList(transaction));
@@ -137,6 +147,8 @@ public class GoQuorumBlockProcessorTest {
     when(blockHeader.getGasLimit()).thenReturn(20000L);
     when(block.getHeader()).thenReturn(blockHeader);
     when(goQuorumEnclave.receive(any())).thenThrow(new EnclaveServerException(1, "a"));
+    when(transactionProcessor.getTransactionValidator()).thenReturn(transactionValidator);
+    when(transactionValidator.getGoQuorumCompatibilityMode()).thenReturn(true);
 
     assertThatThrownBy(() -> blockProcessor.processBlock(blockchain, worldState, worldState, block))
         .isExactlyInstanceOf(EnclaveServerException.class)

@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.consensus.common.jsonrpc;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteType;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validator.VoteType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
@@ -25,20 +27,25 @@ import java.util.stream.Collectors;
 
 public class AbstractVoteProposerMethod {
 
-  private final VoteProposer voteProposer;
+  private final ValidatorProvider validatorProvider;
 
-  public AbstractVoteProposerMethod(final VoteProposer voteProposer) {
-    this.voteProposer = voteProposer;
+  public AbstractVoteProposerMethod(final ValidatorProvider validatorProvider) {
+    this.validatorProvider = validatorProvider;
   }
 
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Map<String, Boolean> proposals =
-        voteProposer.getProposals().entrySet().stream()
-            .collect(
-                Collectors.toMap(
-                    proposal -> proposal.getKey().toString(),
-                    proposal -> proposal.getValue() == VoteType.ADD));
+    if (validatorProvider.getVoteProviderAtHead().isPresent()) {
+      final Map<String, Boolean> proposals =
+          validatorProvider.getVoteProviderAtHead().get().getProposals().entrySet().stream()
+              .collect(
+                  Collectors.toMap(
+                      proposal -> proposal.getKey().toString(),
+                      proposal -> proposal.getValue() == VoteType.ADD));
 
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), proposals);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), proposals);
+    } else {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.METHOD_NOT_ENABLED);
+    }
   }
 }

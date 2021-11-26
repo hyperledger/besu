@@ -17,13 +17,13 @@ package org.hyperledger.besu.consensus.qbft;
 import static org.hyperledger.besu.consensus.common.bft.Vote.ADD_BYTE_VALUE;
 import static org.hyperledger.besu.consensus.common.bft.Vote.DROP_BYTE_VALUE;
 
-import org.hyperledger.besu.consensus.common.VoteType;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Vote;
+import org.hyperledger.besu.consensus.common.validator.VoteType;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -87,7 +87,7 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
     final List<SECPSignature> seals =
         rlpInput.readList(
             rlp -> SignatureAlgorithmFactory.getInstance().decodeSignature(rlp.readBytes()));
-    rlpInput.leaveList();
+    rlpInput.leaveListLenient();
 
     return new BftExtraData(vanityData, seals, vote, round, validators);
   }
@@ -122,7 +122,7 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
     return encoder.encoded();
   }
 
-  private void encodeVote(final RLPOutput rlpOutput, final Vote vote) {
+  protected void encodeVote(final RLPOutput rlpOutput, final Vote vote) {
     final VoteType voteType = vote.isAuth() ? VoteType.ADD : VoteType.DROP;
     rlpOutput.startList();
     rlpOutput.writeBytes(vote.getRecipient());
@@ -134,7 +134,7 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
     rlpOutput.endList();
   }
 
-  private Vote decodeVote(final RLPInput rlpInput) {
+  protected Vote decodeVote(final RLPInput rlpInput) {
     rlpInput.enterList();
     final Address recipient = Address.readFrom(rlpInput);
 

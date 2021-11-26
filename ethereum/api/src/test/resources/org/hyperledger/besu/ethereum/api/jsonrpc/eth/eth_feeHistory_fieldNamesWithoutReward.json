@@ -12,11 +12,11 @@
     "jsonrpc": "2.0",
     "id": 28,
     "result": {
-      "oldestBlock": 31,
+      "oldestBlock": "0x1f",
       "baseFeePerGas": [
-        0,
-        0,
-        0
+        "0x0",
+        "0x0",
+        "0x0"
       ],
       "gasUsedRatio": [
         0.00773588677333021,

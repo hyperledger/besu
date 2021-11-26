@@ -118,7 +118,11 @@ public class Packet {
     final PacketType.Deserializer<?> deserializer = packetType.getDeserializer();
     final PacketData packetData;
     try {
-      packetData = deserializer.deserialize(RLP.input(message, PACKET_DATA_INDEX));
+      packetData =
+          deserializer.deserialize(
+              RLP.input(
+                  Bytes.wrapBuffer(
+                      message, PACKET_DATA_INDEX, message.length() - PACKET_DATA_INDEX)));
       return new Packet(packetType, packetData, Bytes.wrapBuffer(message));
     } catch (final RLPException e) {
       throw new PeerDiscoveryPacketDecodingException("Malformed packet of type: " + packetType, e);
@@ -193,8 +197,8 @@ public class Packet {
 
   private static Bytes encodeSignature(final SECPSignature signature) {
     final MutableBytes encoded = MutableBytes.create(65);
-    UInt256.valueOf(signature.getR()).toBytes().copyTo(encoded, 0);
-    UInt256.valueOf(signature.getS()).toBytes().copyTo(encoded, 32);
+    UInt256.valueOf(signature.getR()).copyTo(encoded, 0);
+    UInt256.valueOf(signature.getS()).copyTo(encoded, 32);
     final int v = signature.getRecId();
     encoded.set(64, (byte) v);
     return encoded;

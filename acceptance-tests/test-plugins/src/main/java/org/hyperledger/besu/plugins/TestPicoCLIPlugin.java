@@ -59,8 +59,7 @@ public class TestPicoCLIPlugin implements BesuPlugin {
 
     context
         .getService(PicoCLIOptions.class)
-        .ifPresent(
-            picoCLIOptions -> picoCLIOptions.addPicoCLIOptions("test", TestPicoCLIPlugin.this));
+        .ifPresent(picoCLIOptions -> picoCLIOptions.addPicoCLIOptions("test", this));
 
     callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
     writeSignal("registered");

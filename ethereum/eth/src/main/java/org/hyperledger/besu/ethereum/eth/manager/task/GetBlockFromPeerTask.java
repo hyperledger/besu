@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
@@ -74,13 +74,18 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
         .whenComplete(
             (r, t) -> {
               if (t != null) {
-                LOG.info(
-                    "Failed to download block {} from peer {}.",
+                LOG.debug(
+                    "Failed to download block {} from peer {} with message '{}' and cause '{}'",
                     blockIdentifier,
-                    assignedPeer.map(EthPeer::toString).orElse("<any>"));
+                    assignedPeer.map(EthPeer::toString).orElse("<any>"),
+                    t.getMessage(),
+                    t.getCause());
                 result.completeExceptionally(t);
               } else if (r.getResult().isEmpty()) {
-                LOG.info("Failed to download block {} from peer {}.", blockIdentifier, r.getPeer());
+                LOG.debug(
+                    "Failed to download block {} from peer {} with empty result.",
+                    blockIdentifier,
+                    r.getPeer());
                 result.completeExceptionally(new IncompleteResultsException());
               } else {
                 LOG.debug(
@@ -111,6 +116,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private CompletableFuture<PeerTaskResult<List<Block>>> completeBlock(
       final PeerTaskResult<List<BlockHeader>> headerResult) {
     if (headerResult.getResult().isEmpty()) {
+      LOG.debug("header result is empty.");
       return CompletableFuture.failedFuture(new IncompleteResultsException());
     }
 

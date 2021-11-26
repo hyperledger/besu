@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -110,7 +112,8 @@ public class IntrinsicGasTest {
   @Test
   public void validateGasCost() {
     Transaction t = Transaction.readFrom(RLP.input(Bytes.fromHexString(txRlp)));
-    Assertions.assertThat(gasCalculator.transactionIntrinsicGasCostAndAccessedState(t).getGas())
+    Assertions.assertThat(
+            gasCalculator.transactionIntrinsicGasCost(t.getPayload(), t.isContractCreation()))
         .isEqualTo(expectedGas);
   }
 }

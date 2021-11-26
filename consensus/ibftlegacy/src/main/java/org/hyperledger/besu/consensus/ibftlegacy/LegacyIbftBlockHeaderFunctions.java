@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.consensus.ibftlegacy;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 public class LegacyIbftBlockHeaderFunctions implements BlockHeaderFunctions {
 
   @Override
   public Hash hash(final BlockHeader header) {
-    return IbftBlockHashing.calculateHashOfIbftBlockOnChain(header);
+    return IbftBlockHashing.calculateHashOfIbftBlockOnchain(header);
   }
 
   @Override

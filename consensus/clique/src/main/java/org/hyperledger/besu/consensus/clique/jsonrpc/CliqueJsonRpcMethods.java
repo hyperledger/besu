@@ -23,11 +23,10 @@ import org.hyperledger.besu.consensus.clique.jsonrpc.methods.CliqueProposals;
 import org.hyperledger.besu.consensus.clique.jsonrpc.methods.Discard;
 import org.hyperledger.besu.consensus.clique.jsonrpc.methods.Propose;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -44,8 +43,8 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return CliqueRpcApis.CLIQUE;
+  protected String getApiGroup() {
+    return RpcApis.CLIQUE.name();
   }
 
   @Override
@@ -54,28 +53,29 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final WorldStateArchive worldStateArchive = context.getWorldStateArchive();
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, worldStateArchive);
-    final VoteProposer voteProposer =
-        context.getConsensusState(CliqueContext.class).getVoteProposer();
+    final ValidatorProvider validatorProvider =
+        context.getConsensusContext(CliqueContext.class).getValidatorProvider();
 
     // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
-    final VoteTallyCache voteTallyCache = createVoteTallyCache(context, blockchain);
+    final ValidatorProvider readOnlyValidatorProvider =
+        createValidatorProvider(context, blockchain);
 
     return mapOf(
-        new CliqueGetSigners(blockchainQueries, voteTallyCache),
-        new CliqueGetSignersAtHash(blockchainQueries, voteTallyCache),
-        new Propose(voteProposer),
-        new Discard(voteProposer),
-        new CliqueProposals(voteProposer),
-        new CliqueGetSignerMetrics(voteTallyCache, new CliqueBlockInterface(), blockchainQueries));
+        new CliqueGetSigners(blockchainQueries, readOnlyValidatorProvider),
+        new CliqueGetSignersAtHash(blockchainQueries, readOnlyValidatorProvider),
+        new Propose(validatorProvider),
+        new Discard(validatorProvider),
+        new CliqueProposals(validatorProvider),
+        new CliqueGetSignerMetrics(
+            readOnlyValidatorProvider, new CliqueBlockInterface(), blockchainQueries));
   }
 
-  private VoteTallyCache createVoteTallyCache(
+  private ValidatorProvider createValidatorProvider(
       final ProtocolContext context, final MutableBlockchain blockchain) {
     final EpochManager epochManager =
-        context.getConsensusState(CliqueContext.class).getEpochManager();
+        context.getConsensusContext(CliqueContext.class).getEpochManager();
     final CliqueBlockInterface cliqueBlockInterface = new CliqueBlockInterface();
-    final VoteTallyUpdater voteTallyUpdater =
-        new VoteTallyUpdater(epochManager, cliqueBlockInterface);
-    return new VoteTallyCache(blockchain, voteTallyUpdater, epochManager, cliqueBlockInterface);
+    return BlockValidatorProvider.nonForkingValidatorProvider(
+        blockchain, epochManager, cliqueBlockInterface);
   }
 }

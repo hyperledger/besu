@@ -18,11 +18,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -37,13 +38,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.Collections;
 import java.util.List;
@@ -52,7 +50,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.collect.Lists;
-import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
@@ -64,7 +61,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PrivGetLogsTest {
 
-  private final String ENCLAVE_KEY = "enclave_key";
   private final String PRIVACY_GROUP_ID = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
 
   @Mock private BlockchainQueries blockchainQueries;
@@ -109,9 +105,13 @@ public class PrivGetLogsTest {
         new FilterParameter(
             BlockParameter.EARLIEST,
             BlockParameter.EARLIEST,
+            null,
+            null,
             Collections.emptyList(),
             Collections.emptyList(),
-            Hash.ZERO);
+            Hash.ZERO,
+            null,
+            null);
 
     final JsonRpcRequestContext request = privGetLogRequest(PRIVACY_GROUP_ID, invalidFilter);
 
@@ -133,7 +133,7 @@ public class PrivGetLogsTest {
     when(blockHeader.getNumber()).thenReturn(100L);
 
     final FilterParameter blockHashFilter =
-        new FilterParameter(null, null, addresses, logTopics, blockHash);
+        new FilterParameter(null, null, null, null, addresses, logTopics, blockHash, null, null);
 
     final LogsQuery expectedQuery =
         new LogsQuery.Builder().addresses(addresses).topics(logTopics).build();
@@ -149,7 +149,15 @@ public class PrivGetLogsTest {
     final Hash blockHash = Hash.hash(Bytes32.random());
     final FilterParameter blockHashFilter =
         new FilterParameter(
-            null, null, Collections.emptyList(), Collections.emptyList(), blockHash);
+            null,
+            null,
+            null,
+            null,
+            Collections.emptyList(),
+            Collections.emptyList(),
+            blockHash,
+            null,
+            null);
 
     final List<LogWithMetadata> logWithMetadataList = logWithMetadataList(3);
     final LogsResult expectedLogsResult = new LogsResult(logWithMetadataList);
@@ -174,8 +182,12 @@ public class PrivGetLogsTest {
         new FilterParameter(
             BlockParameter.EARLIEST,
             BlockParameter.LATEST,
+            null,
+            null,
             Collections.emptyList(),
             Collections.emptyList(),
+            null,
+            null,
             null);
     final List<LogWithMetadata> logWithMetadataList = logWithMetadataList(3);
     final LogsResult expectedLogsResult = new LogsResult(logWithMetadataList);
@@ -192,40 +204,10 @@ public class PrivGetLogsTest {
     assertThat(logsResult).usingRecursiveComparison().isEqualTo(expectedLogsResult);
   }
 
-  @Test
-  public void multiTenancyCheckFailure() {
-    final User user = mock(User.class);
-    final FilterParameter filterParameter = mock(FilterParameter.class);
-    final BlockParameter blockParameter = new BlockParameter(100L);
-
-    when(privacyIdProvider.getPrivacyUserId(any())).thenReturn(ENCLAVE_KEY);
-    when(filterParameter.isValid()).thenReturn(true);
-    when(filterParameter.getBlockHash()).thenReturn(Optional.empty());
-    when(filterParameter.getFromBlock()).thenReturn(blockParameter);
-    when(filterParameter.getToBlock()).thenReturn(blockParameter);
-    doThrow(new MultiTenancyValidationException("msg"))
-        .when(privacyController)
-        .verifyPrivacyGroupContainsPrivacyUserId(
-            eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY), eq(Optional.of(99L)));
-
-    final JsonRpcRequestContext request =
-        privGetLogRequestWithUser(PRIVACY_GROUP_ID, filterParameter, user);
-
-    assertThatThrownBy(() -> method.response(request))
-        .isInstanceOf(MultiTenancyValidationException.class);
-  }
-
   private JsonRpcRequestContext privGetLogRequest(
       final String privacyGroupId, final FilterParameter filterParameter) {
     return new JsonRpcRequestContext(
         new JsonRpcRequest("2.0", "priv_getLogs", new Object[] {privacyGroupId, filterParameter}));
-  }
-
-  private JsonRpcRequestContext privGetLogRequestWithUser(
-      final String privacyGroupId, final FilterParameter filterParameter, final User user) {
-    return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", "priv_getLogs", new Object[] {privacyGroupId, filterParameter}),
-        user);
   }
 
   private List<LogWithMetadata> logWithMetadataList(final int length) {

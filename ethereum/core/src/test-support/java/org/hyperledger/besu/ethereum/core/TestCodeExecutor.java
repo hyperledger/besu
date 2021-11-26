@@ -15,14 +15,20 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.mainnet.MainnetMessageCallProcessor;
-import org.hyperledger.besu.ethereum.mainnet.PrecompileContractRegistry;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
+import org.hyperledger.besu.evm.processor.MessageCallProcessor;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -43,17 +49,14 @@ public class TestCodeExecutor {
   }
 
   public MessageFrame executeCode(
-      final String code,
-      final int accountVersion,
-      final long gasLimit,
-      final Consumer<MutableAccount> accountSetup) {
+      final String code, final long gasLimit, final Consumer<MutableAccount> accountSetup) {
     final ProtocolSpec protocolSpec = fixture.getProtocolSchedule().getByBlockNumber(0);
-    final WorldUpdater worldState =
+    final WorldUpdater worldUpdater =
         createInitialWorldState(accountSetup, fixture.getStateArchive());
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
 
-    final MainnetMessageCallProcessor messageCallProcessor =
-        new MainnetMessageCallProcessor(protocolSpec.getEvm(), new PrecompileContractRegistry());
+    final MessageCallProcessor messageCallProcessor =
+        new MessageCallProcessor(protocolSpec.getEvm(), new PrecompileContractRegistry());
 
     final Transaction transaction =
         Transaction.builder()
@@ -73,17 +76,16 @@ public class TestCodeExecutor {
         new MessageFrameTestFixture()
             .messageFrameStack(messageFrameStack)
             .blockchain(fixture.getBlockchain())
-            .worldState(worldState)
+            .worldUpdater(worldUpdater)
             .initialGas(Gas.of(gasLimit))
             .address(SENDER_ADDRESS)
             .originator(SENDER_ADDRESS)
             .contract(SENDER_ADDRESS)
-            .contractAccountVersion(accountVersion)
             .gasPrice(transaction.getGasPrice().get())
             .inputData(transaction.getPayload())
             .sender(SENDER_ADDRESS)
             .value(transaction.getValue())
-            .code(new Code(Bytes.fromHexString(code)))
+            .code(new Code(Bytes.fromHexString(code), Hash.EMPTY))
             .blockHeader(blockHeader)
             .depth(0)
             .build();

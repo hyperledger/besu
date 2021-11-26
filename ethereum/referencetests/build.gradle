@@ -26,9 +26,11 @@ configurations { testOutput }
 dependencies {
   implementation project(':config')
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   implementation project(':ethereum:rlp')
+  implementation project(':evm')
   implementation project(':services:kvstore')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -41,7 +43,7 @@ task ('validateReferenceTestSubmodule') {
   description = "Checks that the reference tests submodule is not accidentally changed"
   doLast {
     def result = new ByteArrayOutputStream()
-    def expectedHash = 'e0a8b2f9292fbaeb6ca2d69d461794e587aa123b'
+    def expectedHash = '1587f40e7f606140822307d47e88c8d09acc907a'
     def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/test/resources").toAbsolutePath()
     try {
       exec {

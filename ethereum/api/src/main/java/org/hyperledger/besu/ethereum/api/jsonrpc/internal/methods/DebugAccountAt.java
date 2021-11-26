@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
@@ -27,11 +29,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.account.Account;
 
 import java.util.Collections;
 import java.util.List;
@@ -86,9 +86,12 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
     }
 
     final Optional<TransactionTrace> transactionTrace =
-        blockTracerSupplier.get()
+        blockTracerSupplier
+            .get()
             .trace(blockHash, new DebugOperationTracer(new TraceOptions(false, true, true)))
-            .map(BlockTrace::getTransactionTraces).orElse(Collections.emptyList()).stream()
+            .map(BlockTrace::getTransactionTraces)
+            .orElse(Collections.emptyList())
+            .stream()
             .filter(
                 trxTrace ->
                     trxTrace

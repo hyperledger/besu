@@ -40,12 +40,10 @@ public class AdminLogsRepairCache implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Optional<Long> blockNumber = requestContext.getOptionalParameter(0, Long.class);
 
-    blockNumber.ifPresent(
-        bn ->
-            blockchainQueries
-                .getBlockchain()
-                .getBlockByNumber(bn)
-                .orElseThrow(() -> new IllegalStateException("Block not found, " + bn)));
+    if (blockNumber.isPresent()
+        && blockchainQueries.getBlockchain().getBlockByNumber(blockNumber.get()).isEmpty()) {
+      throw new IllegalStateException("Block not found, " + blockNumber.get());
+    }
 
     final TransactionLogBloomCacher transactionLogBloomCacher =
         blockchainQueries

@@ -17,10 +17,27 @@ package org.hyperledger.besu.plugin.services.permissioning;
 
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
+/**
+ * Allows you to register a provider that will decide if a devp2p message is permitted. <br>
+ * <br>
+ * A simple implementation can look like:
+ *
+ * <pre>{@code
+ * context
+ *    .getService(PermissioningService.class)
+ *    .get()
+ *    .registerNodeMessagePermissioningProvider((destinationEnode, code) -> {
+ *        // Your logic here
+ *        return true;
+ *    });
+ * }</pre>
+ */
 @FunctionalInterface
 public interface NodeMessagePermissioningProvider {
   /**
-   * Can be used to intercept messages before they are sent from besu.
+   * Can be used to intercept messages before they are sent from besu. <br>
+   * <br>
+   * <b>Note: this will be called on every message!</b>
    *
    * @param destinationEnode the enode you are about to send to
    * @param code devp2p code for the message

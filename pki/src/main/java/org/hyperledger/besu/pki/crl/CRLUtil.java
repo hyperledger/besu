@@ -31,7 +31,8 @@ public class CRLUtil {
     try {
       final List<X509CRL> crls =
           CertificateFactory.getInstance("X509")
-              .generateCRLs(new FileInputStream(Paths.get(path).toFile())).stream()
+              .generateCRLs(new FileInputStream(Paths.get(path).toFile()))
+              .stream()
               .map(X509CRL.class::cast)
               .collect(Collectors.toList());
 

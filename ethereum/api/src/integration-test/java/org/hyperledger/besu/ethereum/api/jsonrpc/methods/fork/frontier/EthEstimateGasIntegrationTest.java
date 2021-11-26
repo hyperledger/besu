@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods.fork.frontier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -26,9 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.util.Map;
@@ -78,7 +78,7 @@ public class EthEstimateGasIntegrationTest {
   public void shouldReturnExpectedValueForTransfer() {
     final JsonCallParameter callParameter =
         new JsonCallParameter(
-            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
+            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
             Address.fromHexString("0x8888f1f195afa192cfee860698584c030f4c9db1"),
             null,
             null,
@@ -99,7 +99,7 @@ public class EthEstimateGasIntegrationTest {
   public void shouldReturnExpectedValueForContractDeploy() {
     final JsonCallParameter callParameter =
         new JsonCallParameter(
-            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
+            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
             null,
             null,
             null,
@@ -121,7 +121,7 @@ public class EthEstimateGasIntegrationTest {
   public void shouldIgnoreSenderBalanceAccountWhenStrictModeDisabledAndReturnExpectedValue() {
     final JsonCallParameter callParameter =
         new JsonCallParameter(
-            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
+            Address.fromHexString("0x0000000000000000000000000000000000000000"),
             null,
             Gas.of(1),
             Wei.fromHexString("0x9999999999"),

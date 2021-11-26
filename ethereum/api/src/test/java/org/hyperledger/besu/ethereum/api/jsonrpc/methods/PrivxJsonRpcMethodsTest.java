@@ -16,11 +16,13 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.PRIVX_FIND_PRIVACY_GROUP;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.PRIVX_FIND_PRIVACY_GROUP_OLD;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.privx.PrivxFindOnChainPrivacyGroup;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.privx.PrivxFindFlexiblePrivacyGroup;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.privx.PrivxFindOnchainPrivacyGroup;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -54,8 +56,8 @@ public class PrivxJsonRpcMethodsTest {
   }
 
   @Test
-  public void privxFindPrivacyGroupMethodIsDisabledWhenOnchainPrivacyGroupIsDisabled() {
-    when(privacyParameters.isOnchainPrivacyGroupsEnabled()).thenReturn(false);
+  public void privxFindPrivacyGroupMethodIsDisabledWhenFlexiblePrivacyGroupIsDisabled() {
+    when(privacyParameters.isFlexiblePrivacyGroupsEnabled()).thenReturn(false);
     final Map<String, JsonRpcMethod> rpcMethods = privxJsonRpcMethods.create();
     final JsonRpcMethod method = rpcMethods.get(PRIVX_FIND_PRIVACY_GROUP.getMethodName());
 
@@ -63,12 +65,23 @@ public class PrivxJsonRpcMethodsTest {
   }
 
   @Test
-  public void privxFindPrivacyGroupMethodIsEnabledWhenOnchainPrivacyGroupIsEnabled() {
-    when(privacyParameters.isOnchainPrivacyGroupsEnabled()).thenReturn(true);
+  public void privxFindPrivacyGroupMethodIsEnabledWhenFlexiblePrivacyGroupIsEnabled() {
+    when(privacyParameters.isFlexiblePrivacyGroupsEnabled()).thenReturn(true);
     final Map<String, JsonRpcMethod> rpcMethods = privxJsonRpcMethods.create();
     final JsonRpcMethod method = rpcMethods.get(PRIVX_FIND_PRIVACY_GROUP.getMethodName());
 
     assertThat(method).isNotNull();
-    assertThat(method).isInstanceOf(PrivxFindOnChainPrivacyGroup.class);
+    assertThat(method).isInstanceOf(PrivxFindFlexiblePrivacyGroup.class);
+  }
+
+  @Deprecated
+  @Test
+  public void privxFindOnchainPrivacyGroupMethodIsStillEnabled() {
+    when(privacyParameters.isFlexiblePrivacyGroupsEnabled()).thenReturn(true);
+    final Map<String, JsonRpcMethod> rpcMethods = privxJsonRpcMethods.create();
+    final JsonRpcMethod method = rpcMethods.get(PRIVX_FIND_PRIVACY_GROUP_OLD.getMethodName());
+
+    assertThat(method).isNotNull();
+    assertThat(method).isInstanceOf(PrivxFindOnchainPrivacyGroup.class);
   }
 }

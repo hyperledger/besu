@@ -18,28 +18,35 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteType;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validator.VoteProvider;
+import org.hyperledger.besu.consensus.common.validator.VoteType;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
+
+import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public abstract class AbstractVoteProposerMethodTest {
 
-  private final VoteProposer voteProposer = mock(VoteProposer.class);
+  private final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+  private final VoteProvider voteProvider = mock(VoteProvider.class);
   private final String JSON_RPC_VERSION = "2.0";
 
   protected abstract AbstractVoteProposerMethod getMethod();
 
   protected abstract String getMethodName();
 
-  protected VoteProposer getVoteProposer() {
-    return voteProposer;
+  protected ValidatorProvider getValidatorProvider() {
+    return validatorProvider;
   }
 
   @Test
@@ -48,7 +55,8 @@ public abstract class AbstractVoteProposerMethodTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest(JSON_RPC_VERSION, getMethodName(), new Object[] {}));
 
-    when(voteProposer.getProposals())
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
+    when(voteProvider.getProposals())
         .thenReturn(
             ImmutableMap.of(
                 Address.fromHexString("1"),
@@ -67,6 +75,20 @@ public abstract class AbstractVoteProposerMethodTest {
 
     final JsonRpcResponse response = getMethod().response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void methodNotEnabledWhenNoVoteProvider() {
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(JSON_RPC_VERSION, getMethodName(), new Object[] {}));
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.METHOD_NOT_ENABLED);
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.empty());
+
+    final JsonRpcResponse response = getMethod().response(request);
+
+    Assertions.assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 }

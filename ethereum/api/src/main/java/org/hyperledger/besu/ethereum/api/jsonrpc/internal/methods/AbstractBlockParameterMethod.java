@@ -82,7 +82,6 @@ public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
           requestContext.getRequest().getId(), ((JsonRpcErrorResponse) response).getError());
     }
 
-    return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(), findResultByParamType(requestContext));
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }
 }

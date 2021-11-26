@@ -14,30 +14,31 @@
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import org.hyperledger.besu.consensus.clique.CliqueBlockHashing;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.ValidatorVote;
-import org.hyperledger.besu.consensus.common.VoteTally;
+import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class CliqueBlockCreator extends AbstractBlockCreator {
 
@@ -46,11 +47,11 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
 
   public CliqueBlockCreator(
       final Address coinbase,
+      final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
-      final PendingTransactions pendingTransactions,
+      final AbstractPendingTransactionsSorter pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final GasLimitCalculator gasLimitCalculator,
       final NodeKey nodeKey,
       final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
@@ -58,11 +59,11 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
       final EpochManager epochManager) {
     super(
         coinbase,
+        targetGasLimitSupplier,
         extraDataCalculator,
         pendingTransactions,
         protocolContext,
         protocolSchedule,
-        gasLimitCalculator,
         minTransactionGasPrice,
         Util.publicKeyToAddress(nodeKey.getPublicKey()),
         minBlockOccupancyRatio,
@@ -105,12 +106,15 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
     if (epochManager.isEpochBlock(sealableBlockHeader.getNumber())) {
       return Optional.empty();
     } else {
-      final CliqueContext cliqueContext = protocolContext.getConsensusState(CliqueContext.class);
-      final VoteTally voteTally =
-          cliqueContext.getVoteTallyCache().getVoteTallyAfterBlock(parentHeader);
+      final CliqueContext cliqueContext = protocolContext.getConsensusContext(CliqueContext.class);
+      checkState(
+          cliqueContext.getValidatorProvider().getVoteProviderAtHead().isPresent(),
+          "Clique requires a vote provider");
       return cliqueContext
-          .getVoteProposer()
-          .getVote(Util.publicKeyToAddress(nodeKey.getPublicKey()), voteTally);
+          .getValidatorProvider()
+          .getVoteProviderAtHead()
+          .get()
+          .getVoteAfterBlock(parentHeader, Util.publicKeyToAddress(nodeKey.getPublicKey()));
     }
   }
 

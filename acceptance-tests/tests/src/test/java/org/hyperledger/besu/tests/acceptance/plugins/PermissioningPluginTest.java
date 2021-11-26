@@ -15,7 +15,7 @@
 
 package org.hyperledger.besu.tests.acceptance.plugins;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
@@ -23,7 +23,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTransaction;
 
-import java.util.Collections;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +40,8 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
     final BesuNodeConfigurationBuilder builder =
         new BesuNodeConfigurationBuilder()
             .miningEnabled(false)
-            .plugins(Collections.singletonList("testPlugins"))
+            .plugins(List.of("testPlugins"))
+            .extraCLIOptions(List.of("--plugin-permissioning-test-enabled=true"))
             .jsonRpcEnabled()
             .jsonRpcTxPool()
             .jsonRpcAdmin();

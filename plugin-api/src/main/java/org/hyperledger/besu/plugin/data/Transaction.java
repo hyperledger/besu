@@ -109,16 +109,16 @@ public interface Transaction {
   BigInteger getV();
 
   /**
-   * Value corresponding to the 'V' component of the signature of the transaction.
+   * Value corresponding to the 'R' component of the signature of the transaction.
    *
-   * @return the 'V' component of the signature
+   * @return the 'R' component of the signature
    */
   BigInteger getR();
 
   /**
-   * Value corresponding to the 'V' component of the signature of the transaction.
+   * Value corresponding to the 'S' component of the signature of the transaction.
    *
-   * @return the 'V' component of the signature
+   * @return the 'S' component of the signature
    */
   BigInteger getS();
 
@@ -150,7 +150,7 @@ public interface Transaction {
   Optional<Bytes> getInit();
 
   /**
-   * An unlimited size byte array specifying theinput data of the message call.
+   * An unlimited size byte array specifying the input data of the message call.
    *
    * <p>Only present if this is a message call transaction, which is only true if {@link #getTo} is
    * present.

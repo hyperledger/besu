@@ -26,14 +26,14 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRp
 
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
@@ -172,7 +172,9 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
     final Transaction<Integer> transaction =
         privacyTransactions.getEeaTransactionCount(
             accountAddress, OTHER_ENCLAVE_PUBLIC_KEY, privateFor);
-    node.verify(priv.multiTenancyValidationFail(transaction, GET_PRIVATE_TRANSACTION_NONCE_ERROR));
+    node.verify(
+        priv.multiTenancyValidationFail(
+            transaction, PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY));
   }
 
   @Test

@@ -16,13 +16,14 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 
 public class KeccakHasherTest {
@@ -43,7 +44,8 @@ public class KeccakHasherTest {
         final long gasUsed,
         final long timestamp,
         final Bytes extraData,
-        final Long baseFee) {
+        final Long baseFee,
+        final Bytes32 random) {
       super(
           parentHash,
           ommersHash,
@@ -58,7 +60,8 @@ public class KeccakHasherTest {
           gasUsed,
           timestamp,
           extraData,
-          baseFee);
+          baseFee,
+          random);
     }
   }
 
@@ -103,6 +106,7 @@ public class KeccakHasherTest {
             7987824L,
             1538483791L,
             Bytes.fromHexString("0xd88301080f846765746888676f312e31302e31856c696e7578"),
+            null,
             null);
 
     PoWSolution result =

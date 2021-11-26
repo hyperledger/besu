@@ -16,17 +16,16 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldStateAtBlock;
 
-import org.hyperledger.besu.config.GoQuorumOptions;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.evm.account.Account;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -64,7 +63,8 @@ public class EthGetCode extends AbstractBlockParameterOrBlockHashMethod {
   @Override
   protected String resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
     final Address address = request.getRequiredParameter(0, Address.class);
-    if (GoQuorumOptions.goQuorumCompatibilityMode && privacyParameters.isPresent()) {
+    if (privacyParameters.isPresent()
+        && privacyParameters.get().getGoQuorumPrivacyParameters().isPresent()) {
       // get from private state if we can
       final Optional<BlockHeader> blockHeader =
           blockchainQueries.get().getBlockHeaderByHash(blockHash);

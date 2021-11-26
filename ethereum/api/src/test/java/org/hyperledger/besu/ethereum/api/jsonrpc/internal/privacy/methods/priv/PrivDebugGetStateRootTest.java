@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -35,7 +36,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 
@@ -89,8 +89,6 @@ public class PrivDebugGetStateRootTest {
   @Test
   public void shouldReturnErrorIfInvalidGroupId() {
     when(privacyController.findPrivacyGroupByGroupId(anyString(), anyString()))
-        .thenCallRealMethod();
-    when(privacyController.findOffChainPrivacyGroupByGroupId(anyString(), anyString()))
         .thenReturn(Optional.empty());
     final JsonRpcResponse response = method.response(request("not_base64", "latest"));
     assertThat(response.getType()).isEqualByComparingTo(JsonRpcResponseType.ERROR);
@@ -123,7 +121,7 @@ public class PrivDebugGetStateRootTest {
   }
 
   @Test
-  public void shouldReturnSuccessWhenOffChainGroupExists() {
+  public void shouldReturnSuccessWhenOffchainGroupExists() {
     final Hash hash = Hash.EMPTY_LIST_HASH;
     when(privacyController.findPrivacyGroupByGroupId(anyString(), anyString()))
         .thenReturn(Optional.of(PRIVACY_GROUP));

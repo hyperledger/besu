@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_PRIVACY_GROUP_ERROR;
 
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.Logger;
 
@@ -74,6 +76,17 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
     } catch (final MultiTenancyValidationException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), FIND_PRIVACY_GROUP_ERROR);
+    } catch (final EnclaveClientException e) {
+      final Pattern pattern = Pattern.compile("^Privacy group.*not found$");
+      if (e.getMessage().equals(JsonRpcError.ENCLAVE_PRIVACY_GROUP_MISSING.getMessage())
+          || pattern.matcher(e.getMessage()).find()) {
+        LOG.error("Failed to retrieve privacy group");
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), FIND_PRIVACY_GROUP_ERROR);
+      } else {
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
+      }
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);

@@ -25,6 +25,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -36,15 +39,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.evm.Gas;
 
 import java.util.Optional;
 
@@ -215,14 +217,79 @@ public class EthCallTest {
     verify(blockchainQueries).headBlockNumber();
   }
 
+  @Test
+  public void shouldAutoSelectIsAllowedExeceedingBalanceToTrueWhenGasPriceIsZero() {
+    JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
+    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.empty(), true);
+  }
+
+  @Test
+  public void shouldAutoSelectIsAllowedExeceedingBalanceToTrueWhenGasPriceIsZeroAfterEIP1559() {
+    JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
+    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(1L), true);
+  }
+
+  @Test
+  public void shouldAutoSelectIsAllowedExeceedingBalanceToFalseWhenGasPriceIsNotZero() {
+    JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
+    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.empty(), false);
+  }
+
+  @Test
+  public void shouldAutoSelectIsAllowedExeceedingBalanceToFalseWhenGasPriceIsNotZeroAfterEIP1559() {
+    JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
+    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(1L), false);
+  }
+
+  @Test
+  public void shouldAutoSelectIsAllowedExeceedingBalanceToTrueWhenFeesAreZero() {
+    JsonCallParameter callParameters = callParameter(null, Wei.ZERO, Wei.ZERO);
+    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(1L), true);
+  }
+
+  @Test
+  public void shouldAutoSelectIsAllowedExeceedingBalanceToFalseWhenFeesAreZero() {
+    JsonCallParameter callParameters = callParameter(null, Wei.ONE, Wei.ONE);
+    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(1L), false);
+  }
+
+  private void internalAutoSelectIsAllowedExeecdBalance(
+      final JsonCallParameter callParameter,
+      final Optional<Long> baseFee,
+      final boolean isAllowedExeedingBalance) {
+    final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
+
+    BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(baseFee);
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
+    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO)).thenReturn(Optional.of(blockHeader));
+
+    method.response(request);
+
+    TransactionValidationParams transactionValidationParams =
+        ImmutableTransactionValidationParams.builder()
+            .from(TransactionValidationParams.transactionSimulator())
+            .isAllowExceedingBalance(isAllowedExeedingBalance)
+            .build();
+
+    verify(transactionSimulator).process(any(), eq(transactionValidationParams), any(), any());
+  }
+
   private JsonCallParameter callParameter() {
+    return callParameter(Wei.ZERO, null, null);
+  }
+
+  private JsonCallParameter callParameter(
+      final Wei gasPrice, final Wei maxFeesPerGas, final Wei maxPriorityFeesPerGas) {
     return new JsonCallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
         Gas.ZERO,
-        Wei.ZERO,
-        null,
-        null,
+        gasPrice,
+        maxFeesPerGas,
+        maxPriorityFeesPerGas,
         Wei.ZERO,
         Bytes.EMPTY,
         null);

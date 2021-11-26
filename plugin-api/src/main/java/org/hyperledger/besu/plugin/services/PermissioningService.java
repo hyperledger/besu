@@ -17,8 +17,31 @@ package org.hyperledger.besu.plugin.services;
 import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
+/**
+ * This service allows plugins to decide who you should connect to and what you should send them.
+ *
+ * <p>Currently, there are two hooks available: connection permissioning and message permissioning.
+ *
+ * <ul>
+ *   <li><b>Connection permissioning</b> - checks if inbound and outbound connections to peers are
+ *       permitted. {@link NodeConnectionPermissioningProvider}
+ *   <li><b>Message permissioning</b> - checks if a devp2p message can be sent to a peer. {@link
+ *       NodeMessagePermissioningProvider}
+ * </ul>
+ */
 public interface PermissioningService extends BesuService {
+
+  /**
+   * Registers a callback to allow the interception of a peer connection request
+   *
+   * @param provider The provider to register
+   */
   void registerNodePermissioningProvider(NodeConnectionPermissioningProvider provider);
 
+  /**
+   * Registers a callback to allow the interception of a devp2p message sending request
+   *
+   * @param provider The provider to register
+   */
   void registerNodeMessagePermissioningProvider(NodeMessagePermissioningProvider provider);
 }

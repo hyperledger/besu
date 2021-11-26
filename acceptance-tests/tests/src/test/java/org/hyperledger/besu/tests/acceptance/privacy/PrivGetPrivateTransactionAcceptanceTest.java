@@ -17,8 +17,8 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 import static org.web3j.utils.Restriction.RESTRICTED;
 import static org.web3j.utils.Restriction.UNRESTRICTED;
 
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
@@ -55,7 +55,8 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
             Optional.of(containerNetwork),
             false,
             false,
-            restriction == UNRESTRICTED);
+            restriction == UNRESTRICTED,
+            "0xAA");
     bob =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "node2",
@@ -65,7 +66,8 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
             Optional.of(containerNetwork),
             false,
             false,
-            restriction == UNRESTRICTED);
+            restriction == UNRESTRICTED,
+            "0xBB");
 
     privacyCluster.start(alice, bob);
   }
@@ -110,10 +112,7 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
 
     alice.getBesu().verify(eth.expectSuccessfulTransactionReceipt(transactionHash.toString()));
 
-    // bob will get the transaction and process it in UNRESTRICTED mode.
-    if (restriction != UNRESTRICTED) {
-      bob.getBesu().verify(priv.getPrivateTransactionReturnsNull(transactionHash));
-    }
+    bob.getBesu().verify(priv.getPrivateTransactionReturnsNull(transactionHash));
   }
 
   private BytesValueRLPOutput getRLPOutput(final PrivateTransaction privateTransaction) {
@@ -125,10 +124,10 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
   private PrivateTransaction getValidSignedPrivateTransaction(
       final PrivacyNode node, final String privacyGoupId) {
 
-    org.hyperledger.besu.ethereum.privacy.Restriction besuRestriction =
+    org.hyperledger.besu.plugin.data.Restriction besuRestriction =
         restriction == RESTRICTED
-            ? org.hyperledger.besu.ethereum.privacy.Restriction.RESTRICTED
-            : org.hyperledger.besu.ethereum.privacy.Restriction.UNRESTRICTED;
+            ? org.hyperledger.besu.plugin.data.Restriction.RESTRICTED
+            : org.hyperledger.besu.plugin.data.Restriction.UNRESTRICTED;
 
     return PrivateTransaction.builder()
         .nonce(0)

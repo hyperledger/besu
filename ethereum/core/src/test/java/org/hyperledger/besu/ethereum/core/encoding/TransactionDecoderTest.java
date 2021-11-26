@@ -17,10 +17,9 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.hyperledger.besu.config.GoQuorumOptions;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -41,16 +40,15 @@ public class TransactionDecoderTest {
 
   @Test
   public void decodeGoQuorumPrivateTransactionRlp() {
-    GoQuorumOptions.goQuorumCompatibilityMode = true;
+    boolean goQuorumCompatibilityMode = true;
     RLPInput input = RLP.input(Bytes.fromHexString(GOQUORUM_PRIVATE_TX_RLP));
 
-    final Transaction transaction = TransactionDecoder.decodeForWire(input);
+    final Transaction transaction =
+        TransactionDecoder.decodeForWire(input, goQuorumCompatibilityMode);
     assertThat(transaction).isNotNull();
     assertThat(transaction.getV()).isEqualTo(38);
     assertThat(transaction.getSender())
         .isEqualByComparingTo(Address.fromHexString("0xed9d02e382b34818e88b88a309c7fe71e65f419d"));
-    GoQuorumOptions.goQuorumCompatibilityMode =
-        GoQuorumOptions.GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
   }
 
   @Test
@@ -76,8 +74,11 @@ public class TransactionDecoderTest {
   public void doesNotDecodeEIP1559WithLargeMaxFeePerGasOrLargeMaxPriorityFeePerGas() {
     final String txWithBigFees =
         "0x02f84e0101a1648a5f8b2dcad5ea5ba6b720ff069c1d87c21a4a6a5b3766b39e2c2792367bb066a1ffa5ffaf5b0560d3a9fb186c2ede2ae6751bc0b4fef9107cf36389630b6196a38805800180c0010203";
+    final boolean goQuorumCompatibilityMode = false;
     assertThatThrownBy(
-            () -> TransactionDecoder.decodeOpaqueBytes(Bytes.fromHexString(txWithBigFees)))
+            () ->
+                TransactionDecoder.decodeOpaqueBytes(
+                    Bytes.fromHexString(txWithBigFees), goQuorumCompatibilityMode))
         .isInstanceOf(RLPException.class);
   }
 }

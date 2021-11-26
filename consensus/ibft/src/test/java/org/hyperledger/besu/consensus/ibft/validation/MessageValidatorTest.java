@@ -34,11 +34,11 @@ import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -51,6 +51,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -89,9 +90,12 @@ public class MessageValidatorTest {
     when(proposalBlockConsistencyValidator.validateProposalMatchesBlock(any(), any(), any()))
         .thenReturn(true);
 
+    BftContext mockBftCtx = mock(BftContext.class);
+    when(mockBftCtx.as(Mockito.any())).thenReturn(mockBftCtx);
+
     protocolContext =
         new ProtocolContext(
-            mock(MutableBlockchain.class), mock(WorldStateArchive.class), mock(BftContext.class));
+            mock(MutableBlockchain.class), mock(WorldStateArchive.class), mockBftCtx);
 
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));

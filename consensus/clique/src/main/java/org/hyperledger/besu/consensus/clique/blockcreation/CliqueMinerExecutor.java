@@ -18,24 +18,24 @@ import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractMinerExecutor;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -51,19 +51,12 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
   public CliqueMinerExecutor(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final PendingTransactions pendingTransactions,
+      final AbstractPendingTransactionsSorter pendingTransactions,
       final NodeKey nodeKey,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final EpochManager epochManager,
-      final GasLimitCalculator gasLimitCalculator) {
-    super(
-        protocolContext,
-        protocolSchedule,
-        pendingTransactions,
-        miningParams,
-        blockScheduler,
-        gasLimitCalculator);
+      final EpochManager epochManager) {
+    super(protocolContext, protocolSchedule, pendingTransactions, miningParams, blockScheduler);
     this.nodeKey = nodeKey;
     this.localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     this.epochManager = epochManager;
@@ -78,11 +71,11 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
         (header) ->
             new CliqueBlockCreator(
                 localAddress, // TOOD(tmm): This can be removed (used for voting not coinbase).
+                () -> targetGasLimit.map(AtomicLong::longValue),
                 this::calculateExtraData,
                 pendingTransactions,
                 protocolContext,
                 protocolSchedule,
-                gasLimitCalculator,
                 nodeKey,
                 minTransactionGasPrice,
                 minBlockOccupancyRatio,
@@ -112,12 +105,13 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
         ConsensusHelpers.zeroLeftPad(extraData, CliqueExtraData.EXTRA_VANITY_LENGTH);
     // Building ON TOP of canonical head, if the next block is epoch, include validators.
     if (epochManager.isEpochBlock(parentHeader.getNumber() + 1)) {
-      final VoteTally voteTally =
+
+      final Collection<Address> storedValidators =
           protocolContext
-              .getConsensusState(CliqueContext.class)
-              .getVoteTallyCache()
-              .getVoteTallyAfterBlock(parentHeader);
-      validators.addAll(voteTally.getValidators());
+              .getConsensusContext(CliqueContext.class)
+              .getValidatorProvider()
+              .getValidatorsAfterBlock(parentHeader);
+      validators.addAll(storedValidators);
     }
 
     return CliqueExtraData.encodeUnsealed(vanityDataToInsert, validators);

@@ -19,24 +19,24 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
-import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
+import org.hyperledger.besu.evm.operation.Create2Operation;
+import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.ArrayDeque;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
@@ -129,7 +129,7 @@ public class Create2OperationTest {
 
   @Before
   public void setUp() {
-    final Bytes32 memoryOffset = Bytes32.fromHexString("0xFF");
+    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final Bytes codeBytes = Bytes.fromHexString(code);
     final UInt256 memoryLength = UInt256.valueOf(codeBytes.size());
     when(account.getMutable()).thenReturn(mutableAccount);
@@ -141,28 +141,25 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(sender))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(new Code(codeBytes))
+            .code(new Code(codeBytes, Hash.hash(codeBytes)))
             .depth(1)
             .completer(__ -> {})
-            .contractAccountVersion(0)
             .address(Address.fromHexString(sender))
             .blockHashLookup(mock(BlockHashLookup.class))
-            .blockHeader(mock(ProcessableBlockHeader.class))
-            .blockchain(mock(Blockchain.class))
+            .blockValues(mock(ProcessableBlockHeader.class))
             .gasPrice(Wei.ZERO)
             .messageFrameStack(new ArrayDeque<>())
             .miningBeneficiary(Address.ZERO)
             .originator(Address.ZERO)
             .initialGas(Gas.of(100000))
-            .worldState(worldUpdater)
+            .worldUpdater(worldUpdater)
             .build();
-    messageFrame.pushStackItem(Bytes32.fromHexString(salt));
-    messageFrame.pushStackItem(memoryLength.toBytes());
+    messageFrame.pushStackItem(UInt256.fromHexString(salt));
+    messageFrame.pushStackItem(memoryLength);
     messageFrame.pushStackItem(memoryOffset);
-    messageFrame.pushStackItem(Bytes32.ZERO);
-    messageFrame.expandMemory(UInt256.ZERO, UInt256.valueOf(500));
-    messageFrame.writeMemory(
-        UInt256.fromBytes(memoryOffset), UInt256.valueOf(code.length()), codeBytes);
+    messageFrame.pushStackItem(UInt256.ZERO);
+    messageFrame.expandMemory(0, 500);
+    messageFrame.writeMemory(memoryOffset.trimLeadingZeros().toInt(), code.length(), codeBytes);
 
     when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);

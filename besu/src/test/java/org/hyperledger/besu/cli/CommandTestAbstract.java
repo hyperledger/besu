@@ -37,10 +37,13 @@ import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -49,31 +52,40 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
+import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
+import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
+import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -122,6 +134,9 @@ public abstract class CommandTestAbstract {
   private final List<TestBesuCommand> besuCommands = new ArrayList<>();
   private KeyPair keyPair;
 
+  protected static final RpcEndpointServiceImpl rpcEndpointServiceImpl =
+      new RpcEndpointServiceImpl();
+
   @Mock protected RunnerBuilder mockRunnerBuilder;
   @Mock protected Runner mockRunner;
 
@@ -138,16 +153,24 @@ public abstract class CommandTestAbstract {
   @Mock protected RlpBlockImporter rlpBlockImporter;
   @Mock protected StorageServiceImpl storageService;
   @Mock protected SecurityModuleServiceImpl securityModuleService;
+  @Mock protected SecurityModule securityModule;
   @Mock protected BesuConfiguration commonPluginConfiguration;
   @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
   @Mock protected PrivacyKeyValueStorageFactory rocksDBSPrivacyStorageFactory;
   @Mock protected PicoCLIOptions cliOptions;
   @Mock protected NodeKey nodeKey;
   @Mock protected BesuPluginContextImpl mockBesuPluginContext;
+  @Mock protected MutableBlockchain mockMutableBlockchain;
+  @Mock protected WorldStateArchive mockWorldStateArchive;
+  @Mock protected TransactionPool mockTransactionPool;
+  @Mock protected PrivacyPluginServiceImpl privacyPluginService;
 
   @SuppressWarnings("PrivateStaticFinalLoggers") // @Mocks are inited by JUnit
   @Mock
   protected Logger mockLogger;
+
+  @Mock protected PkiBlockCreationConfigurationProvider mockPkiBlockCreationConfigProvider;
+  @Mock protected PkiBlockCreationConfiguration mockPkiBlockCreationConfiguration;
 
   @Captor protected ArgumentCaptor<Collection<Bytes>> bytesCollectionCollector;
   @Captor protected ArgumentCaptor<Path> pathArgumentCaptor;
@@ -163,6 +186,7 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<StorageProvider> storageProviderArgumentCaptor;
   @Captor protected ArgumentCaptor<EthProtocolConfiguration> ethProtocolConfigurationArgumentCaptor;
   @Captor protected ArgumentCaptor<DataStorageConfiguration> dataStorageConfigurationArgumentCaptor;
+  @Captor protected ArgumentCaptor<PkiKeyStoreConfiguration> pkiKeyStoreConfigurationArgumentCaptor;
 
   @Captor
   protected ArgumentCaptor<Optional<PermissioningConfiguration>>
@@ -189,6 +213,8 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.messagePermissioningProviders(any()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.privacyParameters(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.pkiBlockCreationConfiguration(any()))
+        .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.clock(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.isRevertReasonEnabled(false)).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.storageProvider(any())).thenReturn(mockControllerBuilder);
@@ -199,6 +225,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.requiredBlocks(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.reorgLoggingThreshold(anyLong())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.dataStorageConfiguration(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.evmConfiguration(any())).thenReturn(mockControllerBuilder);
 
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();
@@ -211,6 +238,10 @@ public abstract class CommandTestAbstract {
     lenient().when(mockController.getNodeKey()).thenReturn(nodeKey);
 
     when(mockEthProtocolManager.getBlockBroadcaster()).thenReturn(mockBlockBroadcaster);
+
+    when(mockProtocolContext.getBlockchain()).thenReturn(mockMutableBlockchain);
+    lenient().when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
+    when(mockController.getTransactionPool()).thenReturn(mockTransactionPool);
 
     when(mockRunnerBuilder.vertx(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.besuController(any())).thenReturn(mockRunnerBuilder);
@@ -249,6 +280,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.ethstatsContact(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.storageProvider(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.forkIdSupplier(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.rpcEndpointService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
     final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
@@ -266,6 +298,9 @@ public abstract class CommandTestAbstract {
         .when(storageService.getByName(eq("rocksdb-privacy")))
         .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
     lenient()
+        .when(securityModuleService.getByName(eq("localfile")))
+        .thenReturn(Optional.of(() -> securityModule));
+    lenient()
         .when(rocksDBSPrivacyStorageFactory.create(any(), any(), any()))
         .thenReturn(new InMemoryKeyValueStorage());
 
@@ -275,6 +310,11 @@ public abstract class CommandTestAbstract {
     lenient()
         .when(mockBesuPluginContext.getService(StorageService.class))
         .thenReturn(Optional.of(storageService));
+
+    lenient()
+        .doReturn(mockPkiBlockCreationConfiguration)
+        .when(mockPkiBlockCreationConfigProvider)
+        .load(pkiKeyStoreConfigurationArgumentCaptor.capture());
   }
 
   // Display outputs for debug purpose
@@ -314,8 +354,6 @@ public abstract class CommandTestAbstract {
     final TestBesuCommand besuCommand =
         new TestBesuCommand(
             mockLogger,
-            nodeKey,
-            keyPair,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -324,9 +362,18 @@ public abstract class CommandTestAbstract {
             mockBesuPluginContext,
             environment,
             storageService,
-            securityModuleService);
+            securityModuleService,
+            mockPkiBlockCreationConfigProvider,
+            privacyPluginService);
     besuCommands.add(besuCommand);
 
+    File defaultKeyFile =
+        KeyPairUtil.getDefaultKeyFile(DefaultCommandValues.getDefaultBesuDataPath(besuCommand));
+    try {
+      Files.writeString(defaultKeyFile.toPath(), keyPair.getPrivateKey().toString());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     besuCommand.setBesuConfiguration(commonPluginConfiguration);
 
     // parse using Ansi.OFF to be able to assert on non formatted output results
@@ -343,13 +390,9 @@ public abstract class CommandTestAbstract {
 
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
     private Vertx vertx;
-    private final NodeKey mockNodeKey;
-    private final KeyPair keyPair;
 
     TestBesuCommand(
         final Logger mockLogger,
-        final NodeKey mockNodeKey,
-        final KeyPair keyPair,
         final Supplier<RlpBlockImporter> mockBlockImporter,
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -358,7 +401,9 @@ public abstract class CommandTestAbstract {
         final BesuPluginContextImpl besuPluginContext,
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
-        final SecurityModuleServiceImpl securityModuleService) {
+        final SecurityModuleServiceImpl securityModuleService,
+        final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
+        final PrivacyPluginServiceImpl privacyPluginService) {
       super(
           mockLogger,
           mockBlockImporter,
@@ -370,9 +415,10 @@ public abstract class CommandTestAbstract {
           environment,
           storageService,
           securityModuleService,
-          new PermissioningServiceImpl());
-      this.mockNodeKey = mockNodeKey;
-      this.keyPair = keyPair;
+          new PermissioningServiceImpl(),
+          privacyPluginService,
+          pkiBlockCreationConfigProvider,
+          rpcEndpointServiceImpl);
     }
 
     @Override
@@ -387,15 +433,11 @@ public abstract class CommandTestAbstract {
     }
 
     @Override
-    NodeKey buildNodeKey() {
-      // for testing.
-      return mockNodeKey;
-    }
-
-    @Override
-    KeyPair loadKeyPair() {
-      // for testing.
-      return keyPair;
+    protected void enableGoQuorumCompatibilityMode() {
+      // We do *not* set the static GoQuorumOptions for test runs as
+      // these are only allowed to be set once during the program
+      // runtime.
+      isGoQuorumCompatibilityMode = true;
     }
 
     public CommandSpec getSpec() {

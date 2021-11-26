@@ -1,7 +1,11 @@
 
 dependencies {
-  implementation project(':plugin-api')
   implementation project(':besu')
+  implementation project(':crypto')
+  implementation project(':datatypes')
+  implementation project(':ethereum:core')
+  implementation project(':ethereum:rlp')
+  implementation project(':plugin-api')
   implementation 'com.google.auto.service:auto-service'
   implementation 'info.picocli:picocli'
   implementation 'org.apache.logging.log4j:log4j-api'

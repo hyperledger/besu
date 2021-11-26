@@ -14,13 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-// This class uses a public WorldUpdater and a private WorldUpdater to provide a
-// MutableWorldStateUpdater that can read and write from BOTH the private world state and the public
-// world state.
+// This class uses a public WorldUpdater and a private WorldUpdater to
+// provide a MutableWorldStateUpdater that can read and write from
+// BOTH the private world state and the public world state.
+//
+// Note that only writes to private states are committed to the
+// underlying storage (via
+// DefaultMutablePrivateWorldStateUpdater::commit) whereas public
+// state changes are discarded.
+//
+// World state obtained by this class must not be persisted: it allows
+// illegal write access from private to public contract data that
+// would result in world state divergence between nodes.
 public class GoQuorumMutablePrivateAndPublicWorldStateUpdater
     extends GoQuorumMutablePrivateWorldStateUpdater {
 

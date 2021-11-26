@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -40,6 +39,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Map;
 
@@ -58,13 +58,15 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return RpcApis.PRIV;
+  protected String getApiGroup() {
+    return RpcApis.PRIV.name();
   }
 
   @Override
   protected Map<String, JsonRpcMethod> create(
-      final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
+      final PrivacyController privacyController,
+      final PrivacyIdProvider privacyIdProvider,
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
 
     final Map<String, JsonRpcMethod> RPC_METHODS =
         mapOf(
@@ -73,7 +75,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
             new PrivDistributeRawTransaction(
                 privacyController,
                 privacyIdProvider,
-                getPrivacyParameters().isOnchainPrivacyGroupsEnabled()),
+                getPrivacyParameters().isFlexiblePrivacyGroupsEnabled()),
             new PrivGetCode(getBlockchainQueries(), privacyController, privacyIdProvider),
             new PrivGetLogs(
                 getBlockchainQueries(), getPrivacyQueries(), privacyController, privacyIdProvider),
@@ -89,7 +91,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
             new PrivNewFilter(filterManager, privacyController, privacyIdProvider),
             new PrivUninstallFilter(filterManager, privacyController, privacyIdProvider));
 
-    if (!getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
+    if (!getPrivacyParameters().isFlexiblePrivacyGroupsEnabled()) {
       final Map<String, JsonRpcMethod> OFFCHAIN_METHODS =
           mapOf(
               new PrivCreatePrivacyGroup(privacyController, privacyIdProvider),

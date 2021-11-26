@@ -16,12 +16,12 @@ package org.hyperledger.besu.ethereum.stratum;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
@@ -63,7 +63,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   }
 
   @Override
-  public boolean canHandle(final String initialMessage, final StratumConnection conn) {
+  public boolean maybeHandle(final String initialMessage, final StratumConnection conn) {
     JsonRpcRequest req;
     try {
       req = new JsonObject(initialMessage).mapTo(JsonRpcRequest.class);
@@ -81,7 +81,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
       conn.send(response + "\n");
     } catch (JsonProcessingException e) {
       LOG.debug(e.getMessage(), e);
-      conn.close(null);
+      conn.close();
     }
 
     return true;
@@ -118,7 +118,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
       }
     } catch (IllegalArgumentException | IOException e) {
       LOG.debug(e.getMessage(), e);
-      conn.close(null);
+      conn.close();
     }
   }
 

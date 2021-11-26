@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
-import static org.apache.tuweni.net.tls.VertxTrustOptions.whitelistClients;
+import static org.apache.tuweni.net.tls.VertxTrustOptions.allowlistClients;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_REQUEST;
 
 import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
@@ -63,6 +63,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
@@ -94,6 +95,7 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.auth.User;
@@ -227,6 +229,10 @@ public class JsonRpcHttpService {
     LOG.info("Starting JSON-RPC service on {}:{}", config.getHost(), config.getPort());
     LOG.debug("max number of active connections {}", maxActiveConnections);
     this.tracer = GlobalOpenTelemetry.getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
+
+    // Handle JDK8 Optionals (de)serialization
+    DatabindCodec.mapper().registerModule(new Jdk8Module());
+    DatabindCodec.prettyMapper().registerModule(new Jdk8Module());
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     try {
@@ -430,7 +436,7 @@ public class JsonRpcHttpService {
         .ifPresent(
             knownClientsFile ->
                 httpServerOptions.setTrustOptions(
-                    whitelistClients(
+                    allowlistClients(
                         knownClientsFile, clientAuthConfiguration.isCaClientsEnabled())));
   }
 

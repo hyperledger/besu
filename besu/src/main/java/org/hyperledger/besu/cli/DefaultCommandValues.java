@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.cli;
 
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
@@ -53,6 +54,7 @@ public interface DefaultCommandValues {
   String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
   String MANDATORY_PORT_FORMAT_HELP = "<PORT>";
   NatMethod DEFAULT_NAT_METHOD = NatMethod.AUTO;
+  JwtAlgorithm DEFAULT_JWT_ALGORITHM = JwtAlgorithm.RS256;
   int FAST_SYNC_MIN_PEER_COUNT = 5;
   int DEFAULT_MAX_PEERS = 25;
   int DEFAULT_HTTP_MAX_CONNECTIONS = 80;
@@ -61,6 +63,7 @@ public interface DefaultCommandValues {
       RlpxConfiguration.DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED;
   String DEFAULT_KEY_VALUE_STORAGE_NAME = "rocksdb";
   String DEFAULT_SECURITY_MODULE = "localfile";
+  String DEFAULT_KEYSTORE_TYPE = "JKS";
 
   static Path getDefaultBesuDataPath(final Object command) {
     // this property is retrieved from Gradle tasks or Besu running shell script.

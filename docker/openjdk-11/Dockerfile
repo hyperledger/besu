@@ -1,5 +1,5 @@
 
-FROM adoptopenjdk/openjdk11:jre-11.0.11_9
+FROM openjdk:11-jre-slim-buster
 
 ARG VERSION="dev"
 

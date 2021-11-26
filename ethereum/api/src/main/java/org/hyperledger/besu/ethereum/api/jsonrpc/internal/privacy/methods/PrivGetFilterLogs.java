@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.List;
@@ -53,7 +54,9 @@ public class PrivGetFilterLogs implements JsonRpcMethod {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
     final String filterId = request.getRequiredParameter(1, String.class);
 
-    checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(request, privacyGroupId);
+    if (privacyController instanceof MultiTenancyPrivacyController) {
+      checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(request, privacyGroupId);
+    }
 
     final List<LogWithMetadata> logs = filterManager.logs(filterId);
     if (logs != null) {

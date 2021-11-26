@@ -19,9 +19,12 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConve
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -33,6 +36,9 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.util.NonceProvider;
+import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Optional;
 
@@ -43,9 +49,19 @@ import org.apache.tuweni.bytes.Bytes;
 public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
   private static final Logger LOG = getLogger();
   private final TransactionPool transactionPool;
+  private final PrivacyIdProvider privacyIdProvider;
+  private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
+  private final NonceProvider publicNonceProvider;
 
-  protected AbstractEeaSendRawTransaction(final TransactionPool transactionPool) {
+  protected AbstractEeaSendRawTransaction(
+      final TransactionPool transactionPool,
+      final PrivacyIdProvider privacyIdProvider,
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
+      final NonceProvider publicNonceProvider) {
     this.transactionPool = transactionPool;
+    this.privacyIdProvider = privacyIdProvider;
+    this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
+    this.publicNonceProvider = publicNonceProvider;
   }
 
   @Override
@@ -56,6 +72,7 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Object id = requestContext.getRequest().getId();
+    final Optional<User> user = requestContext.getUser();
     final String rawPrivateTransaction = requestContext.getRequiredParameter(0, String.class);
 
     try {
@@ -63,22 +80,25 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
           PrivateTransaction.readFrom(RLP.input(Bytes.fromHexString(rawPrivateTransaction)));
 
       final ValidationResult<TransactionInvalidReason> validationResult =
-          validatePrivateTransaction(privateTransaction, requestContext.getUser());
+          validatePrivateTransaction(privateTransaction, user);
 
       if (!validationResult.isValid()) {
         return new JsonRpcErrorResponse(
             id, convertTransactionInvalidReason(validationResult.getInvalidReason()));
       }
 
+      final org.hyperledger.besu.plugin.data.Address sender =
+          privateMarkerTransactionFactory.getSender(
+              privateTransaction, privacyIdProvider.getPrivacyUserId(user));
+
       final Transaction privateMarkerTransaction =
-          createPrivateMarkerTransaction(privateTransaction, requestContext.getUser());
+          createPrivateMarkerTransaction(Address.fromPlugin(sender), privateTransaction, user);
 
       return transactionPool
           .addLocalTransaction(privateMarkerTransaction)
           .either(
               () -> new JsonRpcSuccessResponse(id, privateMarkerTransaction.getHash().toString()),
               errorReason -> getJsonRpcErrorResponse(id, errorReason));
-
     } catch (final JsonRpcErrorResponseException e) {
       return new JsonRpcErrorResponse(id, e.getJsonRpcError());
     } catch (final IllegalArgumentException | RLPException e) {
@@ -101,5 +121,34 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
       final PrivateTransaction privateTransaction, final Optional<User> user);
 
   protected abstract Transaction createPrivateMarkerTransaction(
-      final PrivateTransaction privateTransaction, final Optional<User> user);
+      final Address sender, final PrivateTransaction privateTransaction, final Optional<User> user);
+
+  protected Transaction createPrivateMarkerTransaction(
+      final Address sender,
+      final Address privacyPrecompileAddress,
+      final String pmtPayload,
+      final PrivateTransaction privateTransaction,
+      final String privacyUserId) {
+
+    final long nonce = publicNonceProvider.getNonce(sender);
+
+    final Transaction unsignedPrivateMarkerTransaction =
+        new Transaction.Builder()
+            .type(TransactionType.FRONTIER)
+            .sender(sender)
+            .nonce(nonce)
+            .gasPrice(privateTransaction.getGasPrice())
+            .gasLimit(getGasLimit(privateTransaction, pmtPayload))
+            .to(privacyPrecompileAddress)
+            .value(Wei.ZERO)
+            .payload(Bytes.fromBase64String(pmtPayload))
+            .build();
+
+    final Bytes rlpBytes =
+        privateMarkerTransactionFactory.create(
+            unsignedPrivateMarkerTransaction, privateTransaction, privacyUserId);
+    return Transaction.readFrom(rlpBytes);
+  }
+
+  protected abstract long getGasLimit(PrivateTransaction privateTransaction, String pmtPayload);
 }

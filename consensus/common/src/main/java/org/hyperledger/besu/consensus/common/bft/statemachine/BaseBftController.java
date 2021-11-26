@@ -90,7 +90,10 @@ public abstract class BaseBftController implements BftEventHandler {
     // the currentHeightManager, but CAN be the same directly following import).
     if (bftMessage.getRoundIdentifier().getSequenceNumber()
         <= blockchain.getChainHeadBlockNumber()) {
-      LOG.debug("Discarding a message which targets a height not above current chain height.");
+      LOG.debug(
+          "Discarding a message which targets a height {} not above current chain height {}.",
+          bftMessage.getRoundIdentifier().getSequenceNumber(),
+          blockchain.getChainHeadBlockNumber());
       return;
     }
 

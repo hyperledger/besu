@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -91,7 +91,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
   @Override
   public Optional<Hash> getBlockHash(final long blockNumber) {
-    return get(BLOCK_HASH_PREFIX, UInt256.valueOf(blockNumber).toBytes()).map(this::bytesToHash);
+    return get(BLOCK_HASH_PREFIX, UInt256.valueOf(blockNumber)).map(this::bytesToHash);
   }
 
   @Override
@@ -154,12 +154,12 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
     @Override
     public void putBlockHash(final long blockNumber, final Hash blockHash) {
-      set(BLOCK_HASH_PREFIX, UInt256.valueOf(blockNumber).toBytes(), blockHash);
+      set(BLOCK_HASH_PREFIX, UInt256.valueOf(blockNumber), blockHash);
     }
 
     @Override
     public void putTotalDifficulty(final Hash blockHash, final Difficulty totalDifficulty) {
-      set(TOTAL_DIFFICULTY_PREFIX, blockHash, totalDifficulty.toBytes());
+      set(TOTAL_DIFFICULTY_PREFIX, blockHash, totalDifficulty);
     }
 
     @Override
@@ -176,7 +176,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
     @Override
     public void removeBlockHash(final long blockNumber) {
-      remove(BLOCK_HASH_PREFIX, UInt256.valueOf(blockNumber).toBytes());
+      remove(BLOCK_HASH_PREFIX, UInt256.valueOf(blockNumber));
     }
 
     @Override

@@ -16,11 +16,13 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 import org.hyperledger.besu.util.ExceptionUtils;
 
@@ -43,6 +45,7 @@ public class FastSyncDownloader {
 
   private static final Logger LOG = LogManager.getLogger();
   private final FastSyncActions fastSyncActions;
+  private final WorldStateStorage worldStateStorage;
   private final WorldStateDownloader worldStateDownloader;
   private final FastSyncStateStorage fastSyncStateStorage;
   private final TaskCollection<NodeDataRequest> taskCollection;
@@ -53,12 +56,14 @@ public class FastSyncDownloader {
 
   public FastSyncDownloader(
       final FastSyncActions fastSyncActions,
+      final WorldStateStorage worldStateStorage,
       final WorldStateDownloader worldStateDownloader,
       final FastSyncStateStorage fastSyncStateStorage,
       final TaskCollection<NodeDataRequest> taskCollection,
       final Path fastSyncDataDirectory,
       final FastSyncState initialFastSyncState) {
     this.fastSyncActions = fastSyncActions;
+    this.worldStateStorage = worldStateStorage;
     this.worldStateDownloader = worldStateDownloader;
     this.fastSyncStateStorage = fastSyncStateStorage;
     this.taskCollection = taskCollection;
@@ -75,6 +80,9 @@ public class FastSyncDownloader {
 
   private CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
     LOG.info("Starting fast sync.");
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      worldStateStorage.clear();
+    }
     return exceptionallyCompose(
         fastSyncActions
             .waitForSuitablePeers(fastSyncState)
@@ -88,11 +96,14 @@ public class FastSyncDownloader {
 
   private CompletableFuture<FastSyncState> handleFailure(final Throwable error) {
     trailingPeerRequirements = Optional.empty();
-    if (ExceptionUtils.rootCause(error) instanceof FastSyncException) {
+    Throwable rootCause = ExceptionUtils.rootCause(error);
+    if (rootCause instanceof FastSyncException) {
       return CompletableFuture.failedFuture(error);
-    } else if (ExceptionUtils.rootCause(error) instanceof StalledDownloadException) {
+    } else if (rootCause instanceof StalledDownloadException) {
       LOG.info("Re-pivoting to newer block.");
       return start(FastSyncState.EMPTY_SYNC_STATE);
+    } else if (rootCause instanceof CancellationException) {
+      return CompletableFuture.failedFuture(error);
     } else {
       LOG.error(
           "Encountered an unexpected error during fast sync. Restarting fast sync in "
@@ -107,6 +118,7 @@ public class FastSyncDownloader {
   public void stop() {
     synchronized (this) {
       if (running.compareAndSet(true, false)) {
+        LOG.info("Stopping fast sync");
         // Cancelling the world state download will also cause the chain download to be cancelled.
         worldStateDownloader.cancel();
       }

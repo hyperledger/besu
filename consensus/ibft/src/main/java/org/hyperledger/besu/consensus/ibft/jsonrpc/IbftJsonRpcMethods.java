@@ -16,11 +16,10 @@ package org.hyperledger.besu.consensus.ibft.jsonrpc;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftDiscardValidatorVote;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetPendingVotes;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetSignerMetrics;
@@ -28,7 +27,7 @@ import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetValidatorsByBl
 import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetValidatorsByBlockNumber;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftProposeValidatorVote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -45,35 +44,39 @@ public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return IbftRpcApis.IBFT;
+  protected String getApiGroup() {
+    return RpcApis.IBFT.name();
   }
 
   @Override
   protected Map<String, JsonRpcMethod> create() {
+    final MutableBlockchain blockchain = context.getBlockchain();
     final BlockchainQueries blockchainQueries =
-        new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
-    final BftContext bftContext = context.getConsensusState(BftContext.class);
-    final VoteProposer voteProposer = bftContext.getVoteProposer();
+        new BlockchainQueries(blockchain, context.getWorldStateArchive());
+    final BftContext bftContext = context.getConsensusContext(BftContext.class);
     final BlockInterface blockInterface = bftContext.getBlockInterface();
+    final ValidatorProvider validatorProvider =
+        context.getConsensusContext(BftContext.class).getValidatorProvider();
 
-    final VoteTallyCache voteTallyCache = createVoteTallyCache(context);
+    // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
+    final ValidatorProvider readOnlyValidatorProvider =
+        createValidatorProvider(context, blockchain);
 
     return mapOf(
-        new IbftProposeValidatorVote(voteProposer),
+        new IbftProposeValidatorVote(validatorProvider),
         new IbftGetValidatorsByBlockNumber(blockchainQueries, blockInterface),
-        new IbftDiscardValidatorVote(voteProposer),
-        new IbftGetValidatorsByBlockHash(context.getBlockchain(), blockInterface),
-        new IbftGetSignerMetrics(voteTallyCache, blockInterface, blockchainQueries),
-        new IbftGetPendingVotes(voteProposer));
+        new IbftDiscardValidatorVote(validatorProvider),
+        new IbftGetValidatorsByBlockHash(blockchain, blockInterface),
+        new IbftGetSignerMetrics(readOnlyValidatorProvider, blockInterface, blockchainQueries),
+        new IbftGetPendingVotes(validatorProvider));
   }
 
-  private VoteTallyCache createVoteTallyCache(final ProtocolContext context) {
-    final BftContext bftContext = context.getConsensusState(BftContext.class);
+  private ValidatorProvider createValidatorProvider(
+      final ProtocolContext context, final MutableBlockchain blockchain) {
+    final BftContext bftContext = context.getConsensusContext(BftContext.class);
     final EpochManager epochManager = bftContext.getEpochManager();
     final BftBlockInterface bftBlockInterface = bftContext.getBlockInterface();
-    final VoteTallyUpdater voteTallyUpdater = new VoteTallyUpdater(epochManager, bftBlockInterface);
-    final MutableBlockchain blockchain = context.getBlockchain();
-    return new VoteTallyCache(blockchain, voteTallyUpdater, epochManager, bftBlockInterface);
+    return BlockValidatorProvider.nonForkingValidatorProvider(
+        blockchain, epochManager, bftBlockInterface);
   }
 }

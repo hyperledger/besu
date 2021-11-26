@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.account.Account;
 
 import java.util.Optional;
 
@@ -51,6 +51,6 @@ public class AccountAdapter extends AdapterBase {
 
   public Optional<Bytes32> getStorage(final DataFetchingEnvironment environment) {
     final Bytes32 slot = environment.getArgument("slot");
-    return Optional.of(account.getStorageValue(UInt256.fromBytes(slot)).toBytes());
+    return Optional.of(account.getStorageValue(UInt256.fromBytes(slot)));
   }
 }

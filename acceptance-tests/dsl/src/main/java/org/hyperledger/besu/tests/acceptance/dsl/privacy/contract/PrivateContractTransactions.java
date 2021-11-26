@@ -51,31 +51,16 @@ public class PrivateContractTransactions {
       final String privateFrom,
       final String... privateFor) {
     return createSmartContract(
-        clazz,
-        transactionSigningKey,
-        Restriction.RESTRICTED,
-        privateFrom,
-        Arrays.asList(privateFor));
+        clazz, transactionSigningKey, privateFrom, Arrays.asList(privateFor));
   }
 
   public <T extends Contract> DeployPrivateSmartContractTransaction<T> createSmartContract(
       final Class<T> clazz,
       final String transactionSigningKey,
-      final Restriction restriction,
-      final String privateFrom,
-      final String... privateFor) {
-    return createSmartContract(
-        clazz, transactionSigningKey, restriction, privateFrom, Arrays.asList(privateFor));
-  }
-
-  public <T extends Contract> DeployPrivateSmartContractTransaction<T> createSmartContract(
-      final Class<T> clazz,
-      final String transactionSigningKey,
-      final Restriction restriction,
       final String privateFrom,
       final List<String> privateFor) {
     return new DeployPrivateSmartContractTransaction<>(
-        clazz, transactionSigningKey, restriction, privateFrom, privateFor);
+        clazz, transactionSigningKey, privateFrom, privateFor);
   }
 
   public CallPrivateSmartContractFunction callSmartContract(
@@ -136,7 +121,7 @@ public class PrivateContractTransactions {
         contractAddress, clazz, transactionSigningKey, privateFrom, Arrays.asList(privateFor));
   }
 
-  private <T extends Contract> LoadPrivateSmartContractTransaction<T> loadSmartContract(
+  public <T extends Contract> LoadPrivateSmartContractTransaction<T> loadSmartContract(
       final String contractAddress,
       final Class<T> clazz,
       final String transactionSigningKey,
@@ -146,13 +131,24 @@ public class PrivateContractTransactions {
         contractAddress, clazz, transactionSigningKey, privateFrom, privateFor);
   }
 
-  public CallOnChainPermissioningPrivateSmartContractFunction callOnChainPermissioningSmartContract(
+  public <T extends Contract>
+      LoadPrivateSmartContractTransactionWithPrivacyGroupId<T> loadSmartContractWithPrivacyGroupId(
+          final String contractAddress,
+          final Class<T> clazz,
+          final String transactionSigningKey,
+          final String privateFrom,
+          final String privacyGroupId) {
+    return new LoadPrivateSmartContractTransactionWithPrivacyGroupId<>(
+        contractAddress, clazz, transactionSigningKey, privateFrom, privacyGroupId);
+  }
+
+  public CallOnchainPermissioningPrivateSmartContractFunction callOnchainPermissioningSmartContract(
       final String contractAddress,
       final String encodedFunction,
       final String transactionSigningKey,
       final String privateFrom,
       final String privacyGroupId) {
-    return new CallOnChainPermissioningPrivateSmartContractFunction(
+    return new CallOnchainPermissioningPrivateSmartContractFunction(
         contractAddress, encodedFunction, transactionSigningKey, privateFrom, privacyGroupId);
   }
 }

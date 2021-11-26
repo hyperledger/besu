@@ -38,6 +38,6 @@ public class PrivGetPrivateTransactionSuccess implements Condition {
   @Override
   public void verify(final Node node) {
     final PrivateTransactionGroupResponse result = node.execute(transaction);
-    assertThat(result).isEqualToComparingFieldByField(privateTransaction);
+    assertThat(result).usingRecursiveComparison().isEqualTo(privateTransaction);
   }
 }

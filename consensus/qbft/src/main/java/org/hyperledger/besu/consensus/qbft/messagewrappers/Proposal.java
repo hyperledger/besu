@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.messagewrappers;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
@@ -69,10 +70,11 @@ public class Proposal extends BftMessage<ProposalPayload> {
     return rlpOut.encoded();
   }
 
-  public static Proposal decode(final Bytes data) {
+  public static Proposal decode(final Bytes data, final BftExtraDataCodec bftExtraDataCodec) {
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
-    final SignedData<ProposalPayload> payload = readPayload(rlpIn, ProposalPayload::readFrom);
+    final SignedData<ProposalPayload> payload =
+        readPayload(rlpIn, rlpInput -> ProposalPayload.readFrom(rlpInput, bftExtraDataCodec));
 
     rlpIn.enterList();
     final List<SignedData<RoundChangePayload>> roundChanges =

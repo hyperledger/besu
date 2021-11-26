@@ -14,26 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionRequestMapper;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
+import org.hyperledger.besu.ethereum.privacy.FlexiblePrivacyController;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PluginPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
-import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
-import org.hyperledger.besu.ethereum.privacy.UnrestrictedPrivacyController;
-import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -46,19 +41,16 @@ public class PrivateWebSocketMethodsFactory {
   private final SubscriptionManager subscriptionManager;
   private final ProtocolSchedule protocolSchedule;
   private final BlockchainQueries blockchainQueries;
-  private final TransactionPool transactionPool;
 
   public PrivateWebSocketMethodsFactory(
       final PrivacyParameters privacyParameters,
       final SubscriptionManager subscriptionManager,
       final ProtocolSchedule protocolSchedule,
-      final BlockchainQueries blockchainQueries,
-      final TransactionPool transactionPool) {
+      final BlockchainQueries blockchainQueries) {
     this.privacyParameters = privacyParameters;
     this.subscriptionManager = subscriptionManager;
     this.protocolSchedule = protocolSchedule;
     this.blockchainQueries = blockchainQueries;
-    this.transactionPool = transactionPool;
   }
 
   public Collection<JsonRpcMethod> methods() {
@@ -73,47 +65,40 @@ public class PrivateWebSocketMethodsFactory {
             subscriptionManager, subscriptionRequestMapper, privacyController, privacyIdProvider));
   }
 
-  private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory() {
-
-    final Address privateContractAddress = privacyParameters.getPrivacyAddress();
-
-    if (privacyParameters.getSigningKeyPair().isPresent()) {
-      return new FixedKeySigningPrivateMarkerTransactionFactory(
-          privateContractAddress,
-          new LatestNonceProvider(blockchainQueries, transactionPool.getPendingTransactions()),
-          privacyParameters.getSigningKeyPair().get());
-    }
-    return new RandomSigningPrivateMarkerTransactionFactory(privateContractAddress);
-  }
-
   private PrivacyController createPrivacyController() {
     final Optional<BigInteger> chainId = protocolSchedule.getChainId();
-    if (privacyParameters.isUnrestrictedPrivacyEnabled()) {
-      return new UnrestrictedPrivacyController(
+    if (privacyParameters.isPrivacyPluginEnabled()) {
+      return new PluginPrivacyController(
           blockchainQueries.getBlockchain(),
           privacyParameters,
           chainId,
-          createPrivateMarkerTransactionFactory(),
           createPrivateTransactionSimulator(),
           createPrivateNonceProvider(),
           privacyParameters.getPrivateWorldStateReader());
     } else {
-      final RestrictedDefaultPrivacyController restrictedDefaultPrivacyController =
-          new RestrictedDefaultPrivacyController(
-              blockchainQueries.getBlockchain(),
-              privacyParameters,
-              chainId,
-              createPrivateMarkerTransactionFactory(),
-              createPrivateTransactionSimulator(),
-              createPrivateNonceProvider(),
-              privacyParameters.getPrivateWorldStateReader());
+      final PrivacyController restrictedPrivacyController;
+      if (privacyParameters.isFlexiblePrivacyGroupsEnabled()) {
+        restrictedPrivacyController =
+            new FlexiblePrivacyController(
+                blockchainQueries.getBlockchain(),
+                privacyParameters,
+                chainId,
+                createPrivateTransactionSimulator(),
+                createPrivateNonceProvider(),
+                privacyParameters.getPrivateWorldStateReader());
+      } else {
+        restrictedPrivacyController =
+            new RestrictedDefaultPrivacyController(
+                blockchainQueries.getBlockchain(),
+                privacyParameters,
+                chainId,
+                createPrivateTransactionSimulator(),
+                createPrivateNonceProvider(),
+                privacyParameters.getPrivateWorldStateReader());
+      }
       return privacyParameters.isMultiTenancyEnabled()
-          ? new RestrictedMultiTenancyPrivacyController(
-              restrictedDefaultPrivacyController,
-              chainId,
-              privacyParameters.getEnclave(),
-              privacyParameters.isOnchainPrivacyGroupsEnabled())
-          : restrictedDefaultPrivacyController;
+          ? new MultiTenancyPrivacyController(restrictedPrivacyController)
+          : restrictedPrivacyController;
     }
   }
 

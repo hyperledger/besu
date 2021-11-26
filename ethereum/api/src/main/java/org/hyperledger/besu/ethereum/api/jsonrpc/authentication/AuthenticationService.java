@@ -27,10 +27,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
+import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
-import io.vertx.ext.jwt.JWTOptions;
 import io.vertx.ext.web.RoutingContext;
 
 /** Provides authentication handlers for use in the http and websocket services */
@@ -66,7 +66,8 @@ public class AuthenticationService {
         vertx,
         config.isAuthenticationEnabled(),
         config.getAuthenticationCredentialsFile(),
-        config.getAuthenticationPublicKeyFile());
+        config.getAuthenticationPublicKeyFile(),
+        config.getAuthenticationAlgorithm());
   }
 
   /**
@@ -85,23 +86,30 @@ public class AuthenticationService {
         vertx,
         config.isAuthenticationEnabled(),
         config.getAuthenticationCredentialsFile(),
-        config.getAuthenticationPublicKeyFile());
+        config.getAuthenticationPublicKeyFile(),
+        config.getAuthenticationAlgorithm());
   }
 
   private static Optional<AuthenticationService> create(
       final Vertx vertx,
       final boolean authenticationEnabled,
       final String authenticationCredentialsFile,
-      final File authenticationPublicKeyFile) {
+      final File authenticationPublicKeyFile,
+      final JwtAlgorithm authenticationAlgorithm) {
     if (!authenticationEnabled) {
       return Optional.empty();
     }
 
-    final JWTAuthOptions jwtAuthOptions =
-        authenticationPublicKeyFile == null
-            ? jwtAuthOptionsFactory.createWithGeneratedKeyPair()
-            : jwtAuthOptionsFactory.createForExternalPublicKey(authenticationPublicKeyFile);
-
+    final JWTAuthOptions jwtAuthOptions;
+    if (authenticationPublicKeyFile == null) {
+      jwtAuthOptions = jwtAuthOptionsFactory.createWithGeneratedKeyPair();
+    } else {
+      jwtAuthOptions =
+          authenticationAlgorithm == null
+              ? jwtAuthOptionsFactory.createForExternalPublicKey(authenticationPublicKeyFile)
+              : jwtAuthOptionsFactory.createForExternalPublicKeyWithAlgorithm(
+                  authenticationPublicKeyFile, authenticationAlgorithm.toString());
+    }
     final Optional<AuthProvider> credentialAuthProvider =
         makeCredentialAuthProvider(vertx, authenticationEnabled, authenticationCredentialsFile);
 

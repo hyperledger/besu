@@ -22,20 +22,18 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.clique.headervalidationrules.SignerRateLimitValidationRule;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.List;
@@ -78,11 +76,9 @@ public class NodeCanProduceNextBlockTest {
 
     blockChain = createInMemoryBlockchain(genesisBlock);
 
-    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
-    final VoteProposer voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
     headerBuilder.number(1).parentHash(genesisBlock.getHash());
@@ -104,11 +100,9 @@ public class NodeCanProduceNextBlockTest {
 
     blockChain = createInMemoryBlockchain(genesisBlock);
 
-    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
-    final VoteProposer voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
     headerBuilder.number(1).parentHash(genesisBlock.getHash());
@@ -139,11 +133,9 @@ public class NodeCanProduceNextBlockTest {
 
     blockChain = createInMemoryBlockchain(genesisBlock);
 
-    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
-    final VoteProposer voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
@@ -170,11 +162,9 @@ public class NodeCanProduceNextBlockTest {
 
     blockChain = createInMemoryBlockchain(genesisBlock);
 
-    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
-    final VoteProposer voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
@@ -216,11 +206,9 @@ public class NodeCanProduceNextBlockTest {
 
     blockChain = createInMemoryBlockchain(genesisBlock);
 
-    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
-    final VoteProposer voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(genesisBlock.getHash()).number(1);
@@ -246,11 +234,9 @@ public class NodeCanProduceNextBlockTest {
 
     blockChain = createInMemoryBlockchain(genesisBlock);
 
-    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
-    final VoteProposer voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(Hash.ZERO).number(3);
@@ -271,11 +257,9 @@ public class NodeCanProduceNextBlockTest {
 
     blockChain = createInMemoryBlockchain(genesisBlock);
 
-    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
-    final VoteProposer voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
     headerBuilder.parentHash(Hash.ZERO).number(3);

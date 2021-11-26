@@ -19,9 +19,9 @@ import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 
 public class PrivacyNodeConfiguration {
 
-  private final boolean isOnchainPrivacyGroupEnabled;
+  private final boolean isFlexiblePrivacyGroupEnabled;
   private final boolean isMultitenancyEnabled;
-  private final boolean isUnrestrictedEnabled;
+  private final boolean isPrivacyPluginEnabled;
   private final BesuNodeConfiguration besuConfig;
   private final EnclaveKeyConfiguration keyConfig;
 
@@ -30,29 +30,29 @@ public class PrivacyNodeConfiguration {
     this(false, false, false, besuConfig, keyConfig);
   }
 
-  PrivacyNodeConfiguration(
-      final boolean isOnchainPrivacyGroupEnabled,
+  public PrivacyNodeConfiguration(
+      final boolean isFlexiblePrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
-      final boolean isUnrestrictedEnabled,
+      final boolean isPrivacyPluginEnabled,
       final BesuNodeConfiguration besuConfig,
       final EnclaveKeyConfiguration keyConfig) {
-    this.isOnchainPrivacyGroupEnabled = isOnchainPrivacyGroupEnabled;
+    this.isFlexiblePrivacyGroupEnabled = isFlexiblePrivacyGroupEnabled;
     this.besuConfig = besuConfig;
     this.keyConfig = keyConfig;
     this.isMultitenancyEnabled = isMultitenancyEnabled;
-    this.isUnrestrictedEnabled = isUnrestrictedEnabled;
+    this.isPrivacyPluginEnabled = isPrivacyPluginEnabled;
   }
 
-  public boolean isOnchainPrivacyGroupEnabled() {
-    return isOnchainPrivacyGroupEnabled;
+  public boolean isFlexiblePrivacyGroupEnabled() {
+    return isFlexiblePrivacyGroupEnabled;
   }
 
   public boolean isMultitenancyEnabled() {
     return isMultitenancyEnabled;
   }
 
-  public boolean isUnrestrictedEnabled() {
-    return isUnrestrictedEnabled;
+  public boolean isPrivacyPluginEnabled() {
+    return isPrivacyPluginEnabled;
   }
 
   public BesuNodeConfiguration getBesuConfig() {

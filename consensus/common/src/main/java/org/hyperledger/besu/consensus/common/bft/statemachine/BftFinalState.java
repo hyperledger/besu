@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.common.bft.statemachine;
 
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -22,15 +21,16 @@ import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 
 import java.time.Clock;
 import java.util.Collection;
 
 /** This is the full data set, or context, required for many of the aspects of BFT workflows. */
 public class BftFinalState {
-  private final VoteTallyCache voteTallyCache;
+  private final ValidatorProvider validatorProvider;
   private final NodeKey nodeKey;
   private final Address localAddress;
   private final ProposerSelector proposerSelector;
@@ -41,7 +41,7 @@ public class BftFinalState {
   private final ValidatorMulticaster validatorMulticaster;
 
   public BftFinalState(
-      final VoteTallyCache voteTallyCache,
+      final ValidatorProvider validatorProvider,
       final NodeKey nodeKey,
       final Address localAddress,
       final ProposerSelector proposerSelector,
@@ -50,7 +50,7 @@ public class BftFinalState {
       final BlockTimer blockTimer,
       final BftBlockCreatorFactory blockCreatorFactory,
       final Clock clock) {
-    this.voteTallyCache = voteTallyCache;
+    this.validatorProvider = validatorProvider;
     this.nodeKey = nodeKey;
     this.localAddress = localAddress;
     this.proposerSelector = proposerSelector;
@@ -66,7 +66,7 @@ public class BftFinalState {
   }
 
   public Collection<Address> getValidators() {
-    return voteTallyCache.getVoteTallyAtHead().getValidators();
+    return validatorProvider.getValidatorsAtHead();
   }
 
   public NodeKey getNodeKey() {

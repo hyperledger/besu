@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.consensus.ibftlegacy.headervalidationrules;
 
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.ibft.IbftLegacyContext;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraData;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftHelpers;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -56,16 +55,14 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext context) {
     try {
-      final ValidatorProvider validatorProvider =
+      final Collection<Address> storedValidators =
           context
-              .getConsensusState(IbftLegacyContext.class)
-              .getVoteTallyCache()
-              .getVoteTallyAfterBlock(parent);
+              .getConsensusContext(IbftLegacyContext.class)
+              .getValidatorProvider()
+              .getValidatorsAfterBlock(parent);
       final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
 
       final Address proposer = IbftBlockHashing.recoverProposerAddress(header, ibftExtraData);
-
-      final Collection<Address> storedValidators = validatorProvider.getValidators();
 
       if (!storedValidators.contains(proposer)) {
         LOG.info("Invalid block header: Proposer sealing block is not a member of the validators.");

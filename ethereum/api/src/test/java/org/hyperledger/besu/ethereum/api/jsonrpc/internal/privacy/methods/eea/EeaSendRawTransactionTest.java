@@ -55,15 +55,19 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
   final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
-  final String MOCK_ORION_KEY = "";
 
-  RestrictedOffChainEeaSendRawTransaction method;
+  RestrictedOffchainEeaSendRawTransaction method;
 
   @Before
   public void before() {
+
     method =
-        new RestrictedOffChainEeaSendRawTransaction(
-            transactionPool, privacyController, privacyIdProvider);
+        new RestrictedOffchainEeaSendRawTransaction(
+            transactionPool,
+            privacyIdProvider,
+            privateMarkerTransactionFactory,
+            address -> 0,
+            privacyController);
   }
 
   @Test
@@ -217,8 +221,6 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
         .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(), anyString()))
         .thenReturn(ValidationResult.valid());
-    when(privacyController.createPrivateMarkerTransaction(any(), any(), any()))
-        .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any()))
         .thenReturn(ValidationResult.invalid(transactionInvalidReason));
 

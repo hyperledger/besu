@@ -31,18 +31,20 @@ dependencies {
   implementation project(':consensus:common')
   implementation project(':config')
   implementation project(':crypto')
+  implementation project(':datatypes')
   implementation project(':ethereum:api')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')
+  implementation project(':evm')
   implementation project(':services:kvstore')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:units'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
@@ -51,6 +53,7 @@ dependencies {
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
   testImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
+  testImplementation project(':evm')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':metrics:core')
   testImplementation project(':testutil')

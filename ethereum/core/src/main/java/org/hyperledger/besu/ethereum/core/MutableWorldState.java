@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.evm.worldstate.MutableWorldView;
+import org.hyperledger.besu.evm.worldstate.WorldState;
+
 public interface MutableWorldState extends WorldState, MutableWorldView {
 
   /**

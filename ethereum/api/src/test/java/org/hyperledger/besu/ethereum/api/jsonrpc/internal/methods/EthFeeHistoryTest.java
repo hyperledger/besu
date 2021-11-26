@@ -22,7 +22,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -30,17 +29,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FeeHistoryResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FeeHistory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistoryResult;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -64,7 +63,7 @@ public class EthFeeHistoryTest {
   @Test
   public void params() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     // should fail because no required params given
     assertThatThrownBy(this::feeHistoryRequest).isInstanceOf(InvalidJsonRpcParameters.class);
@@ -82,24 +81,25 @@ public class EthFeeHistoryTest {
   @Test
   public void allFieldsPresentForLatestBlock() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(eq(11L))).thenReturn(londonSpec);
     assertThat(
             ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest", new double[] {100.0}))
                 .getResult())
         .isEqualTo(
-            ImmutableFeeHistoryResult.builder()
-                .oldestBlock(10)
-                .baseFeePerGas(List.of(25496L, 28683L))
-                .gasUsedRatio(List.of(0.9999999992132459))
-                .reward(List.of(List.of(1524763764L)))
-                .build());
+            FeeHistory.FeeHistoryResult.from(
+                ImmutableFeeHistory.builder()
+                    .oldestBlock(10)
+                    .baseFeePerGas(List.of(25496L, 28683L))
+                    .gasUsedRatio(List.of(0.9999999992132459))
+                    .reward(List.of(List.of(1524763764L)))
+                    .build()));
   }
 
   @Test
   public void cantGetBlockHigherThanChainHead() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     assertThat(((JsonRpcErrorResponse) feeHistoryRequest(2, "11", new double[] {100.0})).getError())
         .isEqualTo(JsonRpcError.INVALID_PARAMS);
@@ -108,7 +108,7 @@ public class EthFeeHistoryTest {
   @Test
   public void blockCountBounds() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest(0, "latest", new double[] {100.0}))
@@ -123,12 +123,12 @@ public class EthFeeHistoryTest {
   @Test
   public void doesntGoPastChainHeadWithHighBlockCount() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
-    final FeeHistoryResult result =
+    final FeeHistory.FeeHistoryResult result =
         (ImmutableFeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest(20, "latest")).getResult();
-    assertThat(result.getOldestBlock()).isEqualTo(0);
+    assertThat(Long.decode(result.getOldestBlock())).isEqualTo(0);
     assertThat(result.getBaseFeePerGas()).hasSize(12);
     assertThat(result.getGasUsedRatio()).hasSize(11);
     assertThat(result.getReward()).isNull();
@@ -137,18 +137,19 @@ public class EthFeeHistoryTest {
   @Test
   public void correctlyHandlesForkBlock() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(11)));
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(11));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
-    final FeeHistoryResult result =
-        (FeeHistoryResult) ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest")).getResult();
-    assertThat(result.getBaseFeePerGas().get(1))
-        .isEqualTo(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
+    final FeeHistory.FeeHistoryResult result =
+        (FeeHistory.FeeHistoryResult)
+            ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest")).getResult();
+    assertThat(Long.decode(result.getBaseFeePerGas().get(1)))
+        .isEqualTo(FeeMarket.london(11).getInitialBasefee());
   }
 
   @Test
   public void allZeroPercentilesForZeroBlock() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     final BlockDataGenerator.BlockOptions blockOptions = BlockDataGenerator.BlockOptions.create();
     blockOptions.hasTransactions(false);
@@ -156,11 +157,11 @@ public class EthFeeHistoryTest {
     blockOptions.setBlockNumber(11);
     final Block emptyBlock = gen.block(blockOptions);
     blockchain.appendBlock(emptyBlock, gen.receipts(emptyBlock));
-    final FeeHistoryResult result =
-        (FeeHistoryResult)
+    final FeeHistory.FeeHistoryResult result =
+        (FeeHistory.FeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest", new double[] {100.0}))
                 .getResult();
-    assertThat(result.getReward()).isEqualTo(List.of(List.of(0L)));
+    assertThat(result.getReward()).isEqualTo(List.of(List.of("0x0")));
   }
 
   private JsonRpcResponse feeHistoryRequest(final Object... params) {

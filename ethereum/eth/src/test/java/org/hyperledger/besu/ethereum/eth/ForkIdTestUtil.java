@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.eth;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.ForkId;
 
 import java.util.Arrays;
@@ -64,7 +64,7 @@ public class ForkIdTestUtil {
     public static final List<Long> MAINNET =
         Arrays.asList(
             1920000L, 1150000L, 2463000L, 2675000L, 2675000L, 4370000L, 7280000L, 7280000L,
-            9069000L, 9200000L);
+            9069000L, 9200000L, 12244000L, 12965000L, 13773000L);
     public static final List<Long> ROPSTEN =
         Arrays.asList(0L, 0L, 10L, 1700000L, 4230000L, 4939394L, 6485846L, 7117117L);
     public static final List<Long> RINKEBY =
@@ -76,15 +76,19 @@ public class ForkIdTestUtil {
   public static class ForkIds {
     public static final List<ForkId> MAINNET =
         Arrays.asList(
-            new ForkId(Bytes.fromHexString("0xfc64ec04"), 1150000L), // Unsynced
+            new ForkId(
+                Bytes.fromHexString("0xfc64ec04"), 1150000L), // Unsynced / last Frontier block
             new ForkId(Bytes.fromHexString("0x97c2c34c"), 1920000L), // First Homestead block
             new ForkId(Bytes.fromHexString("0x91d1f948"), 2463000L), // First DAO block
             new ForkId(Bytes.fromHexString("0x7a64da13"), 2675000L), // First Tangerine block
             new ForkId(Bytes.fromHexString("0x3edd5b10"), 4370000L), // First Spurious block
             new ForkId(Bytes.fromHexString("0xa00bc324"), 7280000L), // First Byzantium block
-            new ForkId(Bytes.fromHexString("0x668db0af"), 9069000L),
-            new ForkId(Bytes.fromHexString("0x879d6e30"), 9200000L),
-            new ForkId(Bytes.fromHexString("0xe029e991"), 0L));
+            new ForkId(Bytes.fromHexString("0x668db0af"), 9069000L), // First Petersburg block
+            new ForkId(Bytes.fromHexString("0x879d6e30"), 9200000L), // First Istanbul block
+            new ForkId(Bytes.fromHexString("0xe029e991"), 12244000L), // First Muir Glacier block
+            new ForkId(Bytes.fromHexString("0x0eb440f6"), 12965000L), // First Berlin block
+            new ForkId(Bytes.fromHexString("0xb715077d"), 13773000L), // First London block
+            new ForkId(Bytes.fromHexString("0x20c327fc"), 0L)); // First Arrow Glacier block
     public static final List<ForkId> ROPSTEN =
         Arrays.asList(
             new ForkId(Bytes.fromHexString("0x30c7ddbc"), 10L),

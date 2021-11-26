@@ -17,11 +17,12 @@ package org.hyperledger.besu.consensus.clique.jsonrpc.methods;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.Address.fromHexString;
+import static org.hyperledger.besu.datatypes.Address.fromHexString;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -30,10 +31,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.List;
 import java.util.Optional;
@@ -53,13 +52,12 @@ public class CliqueGetSignersTest {
   private List<String> validatorAsStrings;
 
   @Mock private BlockchainQueries blockchainQueries;
-  @Mock private VoteTallyCache voteTallyCache;
+  @Mock private ValidatorProvider validatorProvider;
   @Mock private BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata;
-  @Mock private VoteTally voteTally;
 
   @Before
   public void setup() {
-    method = new CliqueGetSigners(blockchainQueries, voteTallyCache);
+    method = new CliqueGetSigners(blockchainQueries, validatorProvider);
 
     final String genesisBlockExtraData =
         "52657370656374206d7920617574686f7269746168207e452e436172746d616e42eb768f2244c8811c63729a21a3569731535f067ffc57839b00206d1ad20c69a1981b489f772031b279182d99e65703f0076e4812653aab85fca0f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
@@ -89,8 +87,7 @@ public class CliqueGetSignersTest {
     when(blockchainQueries.headBlockNumber()).thenReturn(3065995L);
     when(blockchainQueries.blockByNumber(3065995L)).thenReturn(Optional.of(blockWithMetadata));
     when(blockWithMetadata.getHeader()).thenReturn(blockHeader);
-    when(voteTallyCache.getVoteTallyAfterBlock(blockHeader)).thenReturn(voteTally);
-    when(voteTally.getValidators()).thenReturn(validators);
+    when(validatorProvider.getValidatorsAfterBlock(blockHeader)).thenReturn(validators);
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
     assertThat(response.getResult()).isEqualTo(validatorAsStrings);
@@ -105,8 +102,7 @@ public class CliqueGetSignersTest {
 
     when(blockchainQueries.blockByNumber(3065995L)).thenReturn(Optional.of(blockWithMetadata));
     when(blockWithMetadata.getHeader()).thenReturn(blockHeader);
-    when(voteTallyCache.getVoteTallyAfterBlock(blockHeader)).thenReturn(voteTally);
-    when(voteTally.getValidators()).thenReturn(validators);
+    when(validatorProvider.getValidatorsAfterBlock(blockHeader)).thenReturn(validators);
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
     assertThat(response.getResult()).isEqualTo(validatorAsStrings);

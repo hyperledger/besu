@@ -17,14 +17,13 @@ package org.hyperledger.besu.config;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -36,6 +35,7 @@ public class GenesisConfigFile {
   public static final GenesisConfigFile DEFAULT =
       new GenesisConfigFile(JsonUtil.createEmptyObjectNode());
 
+  public static final long BASEFEE_AT_GENESIS_DEFAULT_VALUE = 1000000000L;
   private final ObjectNode configRoot;
 
   private GenesisConfigFile(final ObjectNode config) {
@@ -94,7 +94,20 @@ public class GenesisConfigFile {
   public GenesisConfigOptions getConfigOptions(final Map<String, String> overrides) {
     final ObjectNode config =
         JsonUtil.getObjectNode(configRoot, "config").orElse(JsonUtil.createEmptyObjectNode());
-    return JsonGenesisConfigOptions.fromJsonObjectWithOverrides(config, overrides);
+
+    Map<String, String> overridesRef = overrides;
+
+    // if baseFeePerGas has been explicitly configured, pass it as an override:
+    final var optBaseFee = getBaseFeePerGas();
+    if (optBaseFee.isPresent()) {
+      overridesRef =
+          Streams.concat(
+                  overrides.entrySet().stream(),
+                  Stream.of(Map.entry("baseFeePerGas", optBaseFee.get().toString())))
+              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    return JsonGenesisConfigOptions.fromJsonObjectWithOverrides(config, overridesRef);
   }
 
   public Stream<GenesisAllocation> streamAllocations() {
@@ -130,8 +143,12 @@ public class GenesisConfigFile {
   }
 
   public Optional<Long> getGenesisBaseFeePerGas() {
-    return Optional.of(getBaseFeePerGas().orElse(ExperimentalEIPs.initialBasefee))
-        .filter(z -> 0L == getConfigOptions().getEIP1559BlockNumber().orElse(-1L));
+    // if we have a base fee market at genesis, get either the configured baseFeePerGas, or the
+    // default
+    return getBaseFeePerGas()
+        .map(Optional::of)
+        .orElseGet(() -> Optional.of(BASEFEE_AT_GENESIS_DEFAULT_VALUE))
+        .filter(z -> 0L == getConfigOptions().getLondonBlockNumber().orElse(-1L));
   }
 
   public String getMixHash() {

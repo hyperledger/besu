@@ -17,8 +17,8 @@ package org.hyperledger.besu.tests.acceptance.database;
 
 import static java.util.Collections.singletonList;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.tests.acceptance.AbstractPreexistingNodeTest;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;

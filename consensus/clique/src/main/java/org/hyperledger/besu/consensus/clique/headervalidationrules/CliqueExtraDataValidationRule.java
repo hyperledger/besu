@@ -17,9 +17,8 @@ package org.hyperledger.besu.consensus.clique.headervalidationrules;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteTally;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -56,13 +55,12 @@ public class CliqueExtraDataValidationRule implements AttachedBlockHeaderValidat
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     try {
-      final VoteTally validatorProvider =
+      final Collection<Address> storedValidators =
           protocolContext
-              .getConsensusState(CliqueContext.class)
-              .getVoteTallyCache()
-              .getVoteTallyAfterBlock(parent);
+              .getConsensusContext(CliqueContext.class)
+              .getValidatorProvider()
+              .getValidatorsAfterBlock(parent);
 
-      final Collection<Address> storedValidators = validatorProvider.getValidators();
       return extraDataIsValid(storedValidators, header);
 
     } catch (final RLPException ex) {

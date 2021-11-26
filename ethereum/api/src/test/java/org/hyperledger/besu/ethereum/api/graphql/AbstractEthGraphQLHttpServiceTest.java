@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.graphql;
 
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -30,11 +31,11 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -138,12 +139,13 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
             transactionPoolMock.addLocalTransaction(
                 ArgumentMatchers.argThat(tx -> tx.getNonce() == 16)))
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
-    final PendingTransactions pendingTransactionsMock = Mockito.mock(PendingTransactions.class);
+    final GasPricePendingTransactionsSorter pendingTransactionsMock =
+        Mockito.mock(GasPricePendingTransactionsSorter.class);
     Mockito.when(transactionPoolMock.getPendingTransactions()).thenReturn(pendingTransactionsMock);
     Mockito.when(pendingTransactionsMock.getTransactionInfo())
         .thenReturn(
             Collections.singleton(
-                new PendingTransactions.TransactionInfo(
+                new AbstractPendingTransactionsSorter.TransactionInfo(
                     Transaction.builder()
                         .type(TransactionType.FRONTIER)
                         .nonce(42)

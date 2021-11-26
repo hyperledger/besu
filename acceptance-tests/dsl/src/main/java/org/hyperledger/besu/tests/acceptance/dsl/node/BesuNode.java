@@ -22,15 +22,17 @@ import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.NodeConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
@@ -87,6 +89,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private KeyPair keyPair;
   private final Properties portsProperties = new Properties();
   private final Boolean p2pEnabled;
+  private final int p2pPort;
+  private final Optional<TLSConfiguration> tlsConfiguration;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean revertReasonEnabled;
 
@@ -116,6 +120,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<String> staticNodes;
   private boolean isDnsEnabled = false;
   private Optional<Integer> exitCode = Optional.empty();
+  private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
 
   public BesuNode(
       final String name,
@@ -130,6 +135,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final NetworkName network,
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
+      final int p2pPort,
+      final Optional<TLSConfiguration> tlsConfiguration,
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
@@ -142,7 +149,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final boolean isDnsEnabled,
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
-      final Optional<KeyPair> keyPair)
+      final Optional<KeyPair> keyPair,
+      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     keyfilePath.ifPresent(
@@ -169,6 +177,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.devMode = devMode;
     this.network = network;
     this.p2pEnabled = p2pEnabled;
+    this.p2pPort = p2pPort;
+    this.tlsConfiguration = tlsConfiguration;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
@@ -191,6 +201,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
     privacyParameters.ifPresent(this::setPrivacyParameters);
+    this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
     LOG.info("Created BesuNode {}", this.toString());
   }
 
@@ -233,10 +244,15 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public URI enodeUrl() {
     final String discport = isDiscoveryEnabled() ? "?discport=" + getDiscoveryPort() : "";
-    return URI.create("enode://" + getNodeId() + "@" + LOCALHOST + ":" + getP2pPort() + discport);
+    return URI.create(
+        "enode://" + getNodeId() + "@" + LOCALHOST + ":" + getRuntimeP2pPort() + discport);
   }
 
-  private String getP2pPort() {
+  public String getP2pPort() {
+    return String.valueOf(p2pPort);
+  }
+
+  private String getRuntimeP2pPort() {
     final String port = portsProperties.getProperty("p2p");
     if (port == null) {
       throw new IllegalStateException("Requested p2p port before ports properties was written");
@@ -560,6 +576,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return p2pEnabled;
   }
 
+  public Optional<TLSConfiguration> getTLSConfiguration() {
+    return tlsConfiguration;
+  }
+
   public NetworkingConfiguration getNetworkingConfiguration() {
     return networkingConfiguration;
   }
@@ -646,6 +666,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public List<String> getRunCommand() {
     return runCommand;
+  }
+
+  public Optional<PkiKeyStoreConfiguration> getPkiKeyStoreConfiguration() {
+    return pkiKeyStoreConfiguration;
   }
 
   @Override

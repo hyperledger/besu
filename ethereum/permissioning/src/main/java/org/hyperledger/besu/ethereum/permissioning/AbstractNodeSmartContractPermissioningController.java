@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -73,7 +73,7 @@ public abstract class AbstractNodeSmartContractPermissioningController
    *
    * @param sourceEnode The enode url of the node initiating the connection
    * @param destinationEnode The enode url of the node receiving the connection
-   * @return boolean of whether or not to permit the connection to occur
+   * @return boolean of whether to permit the connection
    */
   @Override
   public boolean isConnectionPermitted(

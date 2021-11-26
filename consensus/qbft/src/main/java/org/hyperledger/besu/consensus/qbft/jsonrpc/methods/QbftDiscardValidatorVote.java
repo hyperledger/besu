@@ -14,23 +14,25 @@
  */
 package org.hyperledger.besu.consensus.qbft.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class QbftDiscardValidatorVote implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
-  private final VoteProposer voteProposer;
+  private final ValidatorProvider validatorProvider;
 
-  public QbftDiscardValidatorVote(final VoteProposer voteProposer) {
-    this.voteProposer = voteProposer;
+  public QbftDiscardValidatorVote(final ValidatorProvider validatorProvider) {
+    this.validatorProvider = validatorProvider;
   }
 
   @Override
@@ -40,10 +42,15 @@ public class QbftDiscardValidatorVote implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Address validatorAddress = requestContext.getRequiredParameter(0, Address.class);
-    LOG.trace("Received RPC rpcName={} address={}", getName(), validatorAddress);
-    voteProposer.discard(validatorAddress);
+    if (validatorProvider.getVoteProviderAtHead().isPresent()) {
+      final Address validatorAddress = requestContext.getRequiredParameter(0, Address.class);
+      LOG.trace("Received RPC rpcName={} address={}", getName(), validatorAddress);
+      validatorProvider.getVoteProviderAtHead().get().discardVote(validatorAddress);
 
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
+    } else {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.METHOD_NOT_ENABLED);
+    }
   }
 }

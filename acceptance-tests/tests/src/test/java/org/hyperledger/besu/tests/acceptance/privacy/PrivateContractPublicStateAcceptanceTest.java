@@ -15,24 +15,27 @@
 package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.CrossContractReader;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.besu.tests.web3j.generated.RemoteSimpleStorage;
+import org.hyperledger.besu.tests.web3j.generated.SimpleStorage;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.RemoteFunctionCall;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.tx.exceptions.ContractCallException;
 import org.web3j.utils.Restriction;
 
@@ -69,7 +72,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
   }
 
   @Test
-  @Ignore("Web3j needs to be updated https://github.com/hyperledger/besu/issues/2098")
   public void mustAllowAccessToPublicStateFromPrivateTx() throws Exception {
     final EventEmitter publicEventEmitter =
         transactionNode.execute(contractTransactions.createSmartContract(EventEmitter.class));
@@ -82,7 +84,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             privateContractTransactions.createSmartContract(
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
-                restriction,
                 transactionNode.getEnclaveKey()));
 
     final RemoteFunctionCall<BigInteger> remoteFunctionCall =
@@ -99,7 +100,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             (privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 transactionNode.getTransactionSigningKey(),
-                restriction,
                 transactionNode.getEnclaveKey())));
 
     final TransactionReceipt receipt = privateEventEmitter.store(BigInteger.valueOf(12)).send();
@@ -119,18 +119,16 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             privateContractTransactions.createSmartContract(
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
-                restriction,
                 transactionNode.getEnclaveKey()));
 
     final CrossContractReader publicReader =
         transactionNode.execute(
             contractTransactions.createSmartContract(CrossContractReader.class));
 
-    final PrivateTransactionReceipt transactionReceipt =
-        (PrivateTransactionReceipt)
-            privateReader.incrementRemote(publicReader.getContractAddress()).send();
-
-    assertThat(transactionReceipt.getOutput()).isEqualTo("0x");
+    assertThatExceptionOfType(TransactionException.class)
+        .isThrownBy(() -> privateReader.incrementRemote(publicReader.getContractAddress()).send())
+        .returns(
+            "0x", e -> ((PrivateTransactionReceipt) e.getTransactionReceipt().get()).getOutput());
   }
 
   @Test
@@ -141,18 +139,15 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             privateContractTransactions.createSmartContract(
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
-                restriction,
                 transactionNode.getEnclaveKey()));
 
     final CrossContractReader publicReader =
         transactionNode.execute(
             contractTransactions.createSmartContract(CrossContractReader.class));
 
-    final PrivateTransactionReceipt transactionReceipt =
-        (PrivateTransactionReceipt)
-            privateReader.deployRemote(publicReader.getContractAddress()).send();
-
-    assertThat(transactionReceipt.getLogs().size()).isEqualTo(0);
+    assertThatExceptionOfType(TransactionException.class)
+        .isThrownBy(() -> privateReader.deployRemote(publicReader.getContractAddress()).send())
+        .returns(0, e -> e.getTransactionReceipt().get().getLogs().size());
   }
 
   @Test
@@ -162,7 +157,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             privateContractTransactions.createSmartContract(
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
-                restriction,
                 transactionNode.getEnclaveKey()));
 
     final CrossContractReader publicReader =
@@ -170,10 +164,52 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             .getBesu()
             .execute(contractTransactions.createSmartContract(CrossContractReader.class));
 
-    final PrivateTransactionReceipt transactionReceipt =
-        (PrivateTransactionReceipt)
-            privateReader.remoteDestroy(publicReader.getContractAddress()).send();
+    assertThatExceptionOfType(TransactionException.class)
+        .isThrownBy(() -> privateReader.remoteDestroy(publicReader.getContractAddress()).send())
+        .withMessage(
+            "Transaction null has failed with status: 0x0. Gas used: unknown. Revert reason: '0x'.")
+        .returns(
+            "0x", e -> ((PrivateTransactionReceipt) e.getTransactionReceipt().get()).getOutput());
+  }
 
-    assertThat(transactionReceipt.getOutput()).isEqualTo("0x");
+  @Test
+  public void privateContractCanCallPublicContractThatCallsPublicContract() throws Exception {
+    final SimpleStorage simpleStorage =
+        transactionNode
+            .getBesu()
+            .execute(contractTransactions.createSmartContract(SimpleStorage.class));
+
+    final RemoteSimpleStorage remoteSimpleStorage =
+        transactionNode
+            .getBesu()
+            .execute(contractTransactions.createSmartContract(RemoteSimpleStorage.class));
+
+    remoteSimpleStorage.setRemote(simpleStorage.getContractAddress()).send();
+
+    final RemoteSimpleStorage reallyRemoteSimpleStorage =
+        transactionNode
+            .getBesu()
+            .execute(contractTransactions.createSmartContract(RemoteSimpleStorage.class));
+
+    reallyRemoteSimpleStorage.setRemote(remoteSimpleStorage.getContractAddress()).send();
+
+    simpleStorage.set(BigInteger.valueOf(42)).send();
+
+    assertThat(simpleStorage.get().send()).isEqualTo(BigInteger.valueOf(42));
+    assertThat(remoteSimpleStorage.get().send()).isEqualTo(BigInteger.valueOf(42));
+    assertThat(reallyRemoteSimpleStorage.get().send()).isEqualTo(BigInteger.valueOf(42));
+
+    final RemoteSimpleStorage privateRemoteSimpleStorage =
+        transactionNode.execute(
+            privateContractTransactions.createSmartContract(
+                RemoteSimpleStorage.class,
+                transactionNode.getTransactionSigningKey(),
+                transactionNode.getEnclaveKey()));
+
+    privateRemoteSimpleStorage.setRemote(simpleStorage.getContractAddress()).send();
+    assertThat(privateRemoteSimpleStorage.get().send()).isEqualTo(BigInteger.valueOf(42));
+
+    privateRemoteSimpleStorage.setRemote(reallyRemoteSimpleStorage.getContractAddress()).send();
+    assertThat(privateRemoteSimpleStorage.get().send()).isEqualTo(BigInteger.valueOf(42));
   }
 }

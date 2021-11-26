@@ -15,13 +15,13 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.HashMap;
@@ -41,7 +41,6 @@ public class ReferenceTestWorldState extends DefaultMutableWorldState {
     private final long nonce;
     private final Wei balance;
     private final Bytes code;
-    private final int version;
     private final Map<UInt256, UInt256> storage;
 
     private static Map<UInt256, UInt256> parseStorage(final Map<String, String> values) {
@@ -56,17 +55,11 @@ public class ReferenceTestWorldState extends DefaultMutableWorldState {
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("balance") final String balance,
         @JsonProperty("storage") final Map<String, String> storage,
-        @JsonProperty("code") final String code,
-        @JsonProperty("version") final String version) {
+        @JsonProperty("code") final String code) {
       this.nonce = Long.decode(nonce);
       this.balance = Wei.fromHexString(balance);
       this.code = Bytes.fromHexString(code);
       this.storage = parseStorage(storage);
-      if (version != null) {
-        this.version = Integer.decode(version);
-      } else {
-        this.version = 0;
-      }
     }
 
     public long getNonce() {
@@ -81,10 +74,6 @@ public class ReferenceTestWorldState extends DefaultMutableWorldState {
       return code;
     }
 
-    public int getVersion() {
-      return version;
-    }
-
     public Map<UInt256, UInt256> getStorage() {
       return storage;
     }
@@ -96,7 +85,6 @@ public class ReferenceTestWorldState extends DefaultMutableWorldState {
     account.setNonce(toCopy.getNonce());
     account.setBalance(toCopy.getBalance());
     account.setCode(toCopy.getCode());
-    account.setVersion(toCopy.getVersion());
     for (final Map.Entry<UInt256, UInt256> entry : toCopy.getStorage().entrySet()) {
       account.setStorageValue(entry.getKey(), entry.getValue());
     }

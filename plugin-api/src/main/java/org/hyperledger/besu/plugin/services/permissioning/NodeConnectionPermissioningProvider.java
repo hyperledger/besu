@@ -16,6 +16,21 @@ package org.hyperledger.besu.plugin.services.permissioning;
 
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
+/**
+ * Allows you to register a provider that will decide if a peer connection is permitted. <br>
+ * <br>
+ * A simple implementation can look like:
+ *
+ * <pre>{@code
+ * context
+ *    .getService(PermissioningService.class)
+ *    .get()
+ *    .registerNodePermissioningProvider((sourceEnode, destinationEnode) -> {
+ *        // Your logic here
+ *        return true;
+ *     });
+ * }</pre>
+ */
 @FunctionalInterface
 public interface NodeConnectionPermissioningProvider {
   /**

@@ -20,6 +20,7 @@ import java.security.Security;
 import java.security.cert.CertPathBuilder;
 import java.security.cert.CertPathBuilderException;
 import java.security.cert.CertStore;
+import java.security.cert.CollectionCertStoreParameters;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.PKIXRevocationChecker;
 import java.security.cert.PKIXRevocationChecker.Option;
@@ -54,11 +55,9 @@ public class CmsValidator {
   private static final Logger LOGGER = LogManager.getLogger();
 
   private final KeyStoreWrapper truststore;
-  private final Optional<CertStore> crlCertStore;
 
-  public CmsValidator(final KeyStoreWrapper truststore, final CertStore crlCertStore) {
+  public CmsValidator(final KeyStoreWrapper truststore) {
     this.truststore = truststore;
-    this.crlCertStore = Optional.ofNullable(crlCertStore);
   }
 
   /**
@@ -71,6 +70,10 @@ public class CmsValidator {
    *     is trusted, otherwise returns false.
    */
   public boolean validate(final Bytes cms, final Bytes expectedContent) {
+    if (cms == null || cms == Bytes.EMPTY) {
+      return false;
+    }
+
     try {
       LOGGER.trace("Validating CMS message");
 
@@ -146,17 +149,18 @@ public class CmsValidator {
           new PKIXBuilderParameters(truststore.getKeyStore(), targetConstraints);
 
       // Adding CertStore with CRLs (if present, otherwise disabling revocation check)
-      crlCertStore.ifPresentOrElse(
-          CRLs -> {
-            params.addCertStore(CRLs);
-            PKIXRevocationChecker rc = (PKIXRevocationChecker) cpb.getRevocationChecker();
-            rc.setOptions(EnumSet.of(Option.PREFER_CRLS));
-            params.addCertPathChecker(rc);
-          },
-          () -> {
-            LOGGER.warn("No CRL CertStore provided. CRL validation will be disabled.");
-            params.setRevocationEnabled(false);
-          });
+      createCRLCertStore(truststore)
+          .ifPresentOrElse(
+              CRLs -> {
+                params.addCertStore(CRLs);
+                PKIXRevocationChecker rc = (PKIXRevocationChecker) cpb.getRevocationChecker();
+                rc.setOptions(EnumSet.of(Option.PREFER_CRLS));
+                params.addCertPathChecker(rc);
+              },
+              () -> {
+                LOGGER.warn("No CRL CertStore provided. CRL validation will be disabled.");
+                params.setRevocationEnabled(false);
+              });
 
       // Read certificates sent on the CMS message and adding it to the path building algorithm
       final CertStore cmsCertificates =
@@ -176,6 +180,20 @@ public class CmsValidator {
     } catch (final Exception e) {
       LOGGER.error("Error validating certificate chain");
       throw new RuntimeException("Error validating certificate chain", e);
+    }
+  }
+
+  private Optional<CertStore> createCRLCertStore(final KeyStoreWrapper truststore) {
+    if (truststore.getCRLs() != null) {
+      try {
+        return Optional.of(
+            CertStore.getInstance(
+                "Collection", new CollectionCertStoreParameters(truststore.getCRLs())));
+      } catch (final Exception e) {
+        throw new RuntimeException("Error loading CRLs from Truststore", e);
+      }
+    } else {
+      return Optional.empty();
     }
   }
 }

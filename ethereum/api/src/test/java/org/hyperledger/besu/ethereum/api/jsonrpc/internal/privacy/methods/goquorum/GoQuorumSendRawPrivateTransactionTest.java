@@ -21,10 +21,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -34,16 +35,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.G
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.GoQuorumSendRawTxArgs;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.plugin.data.Restriction;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -80,7 +79,10 @@ public class GoQuorumSendRawPrivateTransactionTest {
 
   @Before
   public void before() {
-    method = new GoQuorumSendRawPrivateTransaction(enclave, transactionPool, privacyIdProvider);
+    boolean goQuorumCompatibilityMode = true;
+    method =
+        new GoQuorumSendRawPrivateTransaction(
+            enclave, transactionPool, privacyIdProvider, goQuorumCompatibilityMode);
   }
 
   @Test
@@ -126,8 +128,6 @@ public class GoQuorumSendRawPrivateTransactionTest {
 
   @Test
   public void validTransactionIsSentToTransactionPool() {
-    GoQuorumOptions.goQuorumCompatibilityMode = true;
-
     when(enclave.sendSignedTransaction(any(), any())).thenReturn(null);
 
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
@@ -158,7 +158,7 @@ public class GoQuorumSendRawPrivateTransactionTest {
 
     final JsonRpcResponse actualResponse = method.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verifyNoInteractions(transactionPool);
   }
 
@@ -223,7 +223,7 @@ public class GoQuorumSendRawPrivateTransactionTest {
 
     final JsonRpcResponse actualResponse = method.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
   }

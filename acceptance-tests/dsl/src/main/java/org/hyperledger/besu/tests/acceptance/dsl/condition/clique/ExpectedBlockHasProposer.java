@@ -18,7 +18,7 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.clique.CliqueBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.tests.acceptance.dsl.BlockUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;

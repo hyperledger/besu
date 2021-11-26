@@ -17,22 +17,27 @@ package org.hyperledger.besu.tests.acceptance.bft;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BftAcceptanceTestParameterization {
 
-  public static List<Object[]> FACTORIES =
-      List.of(
-          new Object[] {
-            "ibft",
-            new BftAcceptanceTestParameterization(
-                BesuNodeFactory::createIbft2Node, BesuNodeFactory::createIbft2NodeWithValidators)
-          },
-          new Object[] {
-            "qbft",
-            new BftAcceptanceTestParameterization(
-                BesuNodeFactory::createQbftNode, BesuNodeFactory::createQbftNodeWithValidators)
-          });
+  public static List<Object[]> getFactories() {
+    final List<Object[]> ret = new ArrayList<>();
+    ret.addAll(
+        List.of(
+            new Object[] {
+              "ibft",
+              new BftAcceptanceTestParameterization(
+                  BesuNodeFactory::createIbft2Node, BesuNodeFactory::createIbft2NodeWithValidators)
+            },
+            new Object[] {
+              "qbft",
+              new BftAcceptanceTestParameterization(
+                  BesuNodeFactory::createQbftNode, BesuNodeFactory::createQbftNodeWithValidators)
+            }));
+    return ret;
+  }
 
   @FunctionalInterface
   public interface NodeCreator {
