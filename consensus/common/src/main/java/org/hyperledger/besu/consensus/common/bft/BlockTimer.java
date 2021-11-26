@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 

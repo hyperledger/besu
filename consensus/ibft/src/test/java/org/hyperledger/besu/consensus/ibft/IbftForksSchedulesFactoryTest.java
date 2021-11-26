@@ -24,7 +24,7 @@ import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
-import org.hyperledger.besu.consensus.common.bft.ForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
 import java.util.HashMap;

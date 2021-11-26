@@ -26,7 +26,7 @@ import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.common.bft.ForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;

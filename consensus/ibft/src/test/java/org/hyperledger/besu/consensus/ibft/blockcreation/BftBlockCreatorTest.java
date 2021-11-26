@@ -28,7 +28,7 @@ import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.ForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;

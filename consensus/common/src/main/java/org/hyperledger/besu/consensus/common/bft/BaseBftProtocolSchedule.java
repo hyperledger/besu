@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;

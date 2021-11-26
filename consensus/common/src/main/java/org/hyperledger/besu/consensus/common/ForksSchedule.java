@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,13 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft;
+package org.hyperledger.besu.consensus.common;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
-import org.hyperledger.besu.consensus.common.ForkSpec;
 
 import java.util.Collection;
 import java.util.Collections;

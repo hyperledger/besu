@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.JsonBftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.ethereum.core.BlockHeader;

@@ -24,7 +24,7 @@ import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.ForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.datatypes.Address;

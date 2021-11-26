@@ -27,7 +27,7 @@ import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
-import org.hyperledger.besu.consensus.common.bft.ForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.datatypes.Address;

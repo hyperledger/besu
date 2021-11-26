@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.qbft.validator;
 
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.ForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.datatypes.Address;

@@ -18,7 +18,7 @@ import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
-import org.hyperledger.besu.consensus.common.bft.ForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
 public class IbftForksSchedulesFactory {

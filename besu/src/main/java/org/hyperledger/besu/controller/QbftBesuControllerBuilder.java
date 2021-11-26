@@ -30,7 +30,7 @@ import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
-import org.hyperledger.besu.consensus.common.bft.ForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.UniqueMessageMulticaster;

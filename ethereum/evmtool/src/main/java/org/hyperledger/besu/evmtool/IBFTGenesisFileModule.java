@@ -18,7 +18,7 @@ package org.hyperledger.besu.evmtool;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.bft.ForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.IbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.ibft.IbftProtocolSchedule;

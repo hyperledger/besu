@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 
 import java.math.BigInteger;
 import java.util.Map;
