@@ -28,6 +28,7 @@ public class CommandLineUtils {
       "{} has been ignored because {} was not defined on the command line.";
   public static final String MULTI_DEPENDENCY_WARNING_MSG =
       "{} ignored because none of {} was defined.";
+  public static final String DEPRECATION_WARNING_MSG = "{} has been deprecated, use {} instead.";
 
   /**
    * Check if options are passed that require an option to be true to have any effect and log a
