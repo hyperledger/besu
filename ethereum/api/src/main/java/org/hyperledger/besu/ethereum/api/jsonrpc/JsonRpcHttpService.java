@@ -822,12 +822,9 @@ public class JsonRpcHttpService {
   }
 
   static class JsonResponseStreamer extends OutputStream {
-    private static final int SINGLE_WRITES_BUFFER_SIZE = 10000;
     private final HttpServerResponse response;
-    private final Semaphore paused = new Semaphore(1);
-    private final byte[] singleWritesBuf = new byte[SINGLE_WRITES_BUFFER_SIZE];
-    private int singleWritesLen = 0;
-
+    private final Semaphore paused = new Semaphore(0);
+    private final byte[] singleByteBuf = new byte[1];
     private boolean chunked = false;
 
     public JsonResponseStreamer(final HttpServerResponse response) {
@@ -836,11 +833,8 @@ public class JsonRpcHttpService {
 
     @Override
     public void write(final int b) throws IOException {
-      singleWritesBuf[singleWritesLen++] = (byte) b;
-      if (singleWritesLen >= SINGLE_WRITES_BUFFER_SIZE) {
-        write(singleWritesBuf, 0, singleWritesLen);
-        singleWritesLen = 0;
-      }
+      singleByteBuf[0] = (byte) b;
+      write(singleByteBuf, 0, 1);
     }
 
     @Override
@@ -870,13 +864,7 @@ public class JsonRpcHttpService {
 
     @Override
     public void close() throws IOException {
-      if (singleWritesLen > 0) {
-        write(singleWritesBuf, 0, singleWritesLen);
-      }
       response.end();
     }
-
-    @Override
-    public void flush() throws IOException {}
   }
 }

@@ -45,6 +45,7 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.RequestOptions;
+import io.vertx.core.http.WebSocketConnectOptions;
 import io.vertx.core.http.impl.headers.VertxHttpHeaders;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -210,23 +211,29 @@ public class WebSocketServiceLoginTest {
     options.setPort(websocketConfiguration.getPort());
     final MultiMap headers = new VertxHttpHeaders();
     String badtoken = "badtoken";
-    if (badtoken != null) {
-      headers.add("Authorization", "Bearer " + badtoken);
-    }
+    headers.add("Authorization", "Bearer " + badtoken);
+
+    final StringBuilder response = new StringBuilder(expectedResponse.length());
+
+    WebSocketConnectOptions connectionOptions =
+        new WebSocketConnectOptions(options).setHeaders(headers);
+
     httpClient.websocket(
-        options,
-        headers,
+        connectionOptions,
         webSocket -> {
           webSocket.writeTextMessage(request);
 
-          webSocket.handler(
-              buffer -> {
-                context.assertEquals(expectedResponse, buffer.toString());
-                async.complete();
+          webSocket.frameHandler(
+              frame -> {
+                response.append(frame.textData());
+                if (frame.isFinal()) {
+                  async.complete();
+                }
               });
         });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    context.assertEquals(expectedResponse, response.toString());
   }
 
   @Test
@@ -250,20 +257,26 @@ public class WebSocketServiceLoginTest {
     if (goodToken != null) {
       headers.add("Authorization", "Bearer " + goodToken);
     }
+
+    final StringBuilder response = new StringBuilder(expectedResponse.length());
+
     httpClient.websocket(
         options,
         headers,
         webSocket -> {
           webSocket.writeTextMessage(requestSub);
 
-          webSocket.handler(
-              buffer -> {
-                context.assertEquals(expectedResponse, buffer.toString());
-                async.complete();
+          webSocket.frameHandler(
+              frame -> {
+                response.append(frame.textData());
+                if (frame.isFinal()) {
+                  async.complete();
+                }
               });
         });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    context.assertEquals(expectedResponse, response.toString());
   }
 
   @Test

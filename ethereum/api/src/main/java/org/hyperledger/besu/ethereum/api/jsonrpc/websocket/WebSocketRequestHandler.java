@@ -32,10 +32,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauth
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Semaphore;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -43,6 +50,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.http.WebSocketFrame;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -54,6 +63,12 @@ import org.apache.logging.log4j.Logger;
 public class WebSocketRequestHandler {
 
   private static final Logger LOG = LogManager.getLogger();
+  private static final Buffer EMPTY_BUFFER = Buffer.buffer();
+  private static final ObjectWriter JSON_OBJECT_WRITER =
+      new ObjectMapper()
+          .registerModule(new Jdk8Module()) // Handle JDK8 Optionals (de)serialization
+          .writer()
+          .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
 
   private final Vertx vertx;
   private final Map<String, JsonRpcMethod> methods;
@@ -71,29 +86,31 @@ public class WebSocketRequestHandler {
     this.timeoutSec = timeoutSec;
   }
 
-  public void handle(final String id, final String payload) {
-    handle(Optional.empty(), id, payload, Optional.empty());
+  public void handle(final ServerWebSocket websocket, final String payload) {
+    handle(Optional.empty(), websocket, payload, Optional.empty());
   }
 
   public void handle(
       final Optional<AuthenticationService> authenticationService,
-      final String id,
+      final ServerWebSocket websocket,
       final String payload,
       final Optional<User> user) {
     vertx.executeBlocking(
-        executeHandler(authenticationService, id, payload, user), false, resultHandler(id));
+        executeHandler(authenticationService, websocket, payload, user),
+        false,
+        resultHandler(websocket));
   }
 
   private Handler<Promise<Object>> executeHandler(
       final Optional<AuthenticationService> authenticationService,
-      final String id,
+      final ServerWebSocket websocket,
       final String payload,
       final Optional<User> user) {
     return future -> {
       final String json = payload.trim();
       if (!json.isEmpty() && json.charAt(0) == '{') {
         try {
-          handleSingleRequest(authenticationService, id, user, future, getRequest(payload));
+          handleSingleRequest(authenticationService, websocket, user, future, getRequest(payload));
         } catch (final IllegalArgumentException | DecodeException e) {
           LOG.debug("Error mapping json to WebSocketRpcRequest", e);
           future.complete(new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST));
@@ -110,14 +127,14 @@ public class WebSocketRequestHandler {
         }
         // handle batch request
         LOG.debug("batch request size {}", jsonArray.size());
-        handleJsonBatchRequest(authenticationService, id, jsonArray, user);
+        handleJsonBatchRequest(authenticationService, websocket, jsonArray, user);
       }
     };
   }
 
   private JsonRpcResponse process(
       final Optional<AuthenticationService> authenticationService,
-      final String id,
+      final ServerWebSocket websocket,
       final Optional<User> user,
       final WebSocketRpcRequest requestBody) {
 
@@ -128,7 +145,7 @@ public class WebSocketRequestHandler {
     final JsonRpcMethod method = methods.get(requestBody.getMethod());
     try {
       LOG.debug("WS-RPC request -> {}", requestBody.getMethod());
-      requestBody.setConnectionId(id);
+      requestBody.setConnectionId(websocket.textHandlerID());
       if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
         final JsonRpcRequestContext requestContext =
             new JsonRpcRequestContext(
@@ -151,17 +168,17 @@ public class WebSocketRequestHandler {
 
   private void handleSingleRequest(
       final Optional<AuthenticationService> authenticationService,
-      final String id,
+      final ServerWebSocket websocket,
       final Optional<User> user,
       final Promise<Object> future,
       final WebSocketRpcRequest requestBody) {
-    future.complete(process(authenticationService, id, user, requestBody));
+    future.complete(process(authenticationService, websocket, user, requestBody));
   }
 
   @SuppressWarnings("rawtypes")
   private void handleJsonBatchRequest(
       final Optional<AuthenticationService> authenticationService,
-      final String id,
+      final ServerWebSocket websocket,
       final JsonArray jsonArray,
       final Optional<User> user) {
     // Interpret json as rpc request
@@ -178,7 +195,11 @@ public class WebSocketRequestHandler {
                   vertx.executeBlocking(
                       future ->
                           future.complete(
-                              process(authenticationService, id, user, getRequest(req.toString()))),
+                              process(
+                                  authenticationService,
+                                  websocket,
+                                  user,
+                                  getRequest(req.toString()))),
                       false,
                       ar -> {
                         if (ar.failed()) {
@@ -200,7 +221,7 @@ public class WebSocketRequestHandler {
                       .filter(this::isNonEmptyResponses)
                       .toArray(JsonRpcResponse[]::new);
 
-              vertx.eventBus().send(id, Json.encode(completed));
+              replyToClient(websocket, completed);
             });
   }
 
@@ -208,19 +229,22 @@ public class WebSocketRequestHandler {
     return Json.decodeValue(payload, WebSocketRpcRequest.class);
   }
 
-  private Handler<AsyncResult<Object>> resultHandler(final String id) {
+  private Handler<AsyncResult<Object>> resultHandler(final ServerWebSocket websocket) {
     return result -> {
       if (result.succeeded()) {
-        replyToClient(id, Json.encodeToBuffer(result.result()));
+        replyToClient(websocket, result.result());
       } else {
-        replyToClient(
-            id, Json.encodeToBuffer(new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR)));
+        replyToClient(websocket, new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR));
       }
     };
   }
 
-  private void replyToClient(final String id, final Buffer request) {
-    vertx.eventBus().send(id, request.toString());
+  private void replyToClient(final ServerWebSocket websocket, final Object result) {
+    try {
+      JSON_OBJECT_WRITER.writeValue(new JsonResponseStreamer(websocket), result);
+    } catch (IOException ex) {
+      LOG.error("Error streaming JSON-RPC response", ex);
+    }
   }
 
   private JsonRpcResponse errorResponse(final Object id, final JsonRpcError error) {
@@ -229,5 +253,61 @@ public class WebSocketRequestHandler {
 
   private boolean isNonEmptyResponses(final JsonRpcResponse result) {
     return result.getType() != JsonRpcResponseType.NONE;
+  }
+
+  static class JsonResponseStreamer extends OutputStream {
+    private final ServerWebSocket response;
+    private final Semaphore paused = new Semaphore(0);
+    private final byte[] singleByteBuf = new byte[1];
+    private boolean firstFrame = true;
+    private Buffer buffer = EMPTY_BUFFER;
+
+    public JsonResponseStreamer(final ServerWebSocket response) {
+      this.response = response;
+    }
+
+    @Override
+    public void write(final int b) throws IOException {
+      singleByteBuf[0] = (byte) b;
+      write(singleByteBuf, 0, 1);
+    }
+
+    @Override
+    public void write(final byte[] bbuf, final int off, final int len) throws IOException {
+      if (buffer != EMPTY_BUFFER) {
+        writeFrame(buffer, false);
+      }
+
+      Buffer buf = Buffer.buffer(len);
+      buf.appendBytes(bbuf, off, len);
+      buffer = buf;
+    }
+
+    private void writeFrame(final Buffer buf, final boolean isFinal) throws IOException {
+      if (response.writeQueueFull()) {
+        LOG.debug("HttpResponse write queue is full pausing streaming");
+        response.drainHandler(e -> paused.release());
+        try {
+          paused.acquire();
+          LOG.debug("HttpResponse write queue is not accepting more data, resuming streaming");
+        } catch (InterruptedException ex) {
+          Thread.currentThread().interrupt();
+          throw new IOException(
+              "Interrupted while waiting for HttpServerResponse to drain the write queue", ex);
+        }
+      }
+
+      if (firstFrame) {
+        response.writeFrame(WebSocketFrame.textFrame(buf.toString(), isFinal));
+        firstFrame = false;
+      } else {
+        response.writeFrame(WebSocketFrame.continuationFrame(buf, isFinal));
+      }
+    }
+
+    @Override
+    public void close() throws IOException {
+      writeFrame(buffer, true);
+    }
   }
 }
