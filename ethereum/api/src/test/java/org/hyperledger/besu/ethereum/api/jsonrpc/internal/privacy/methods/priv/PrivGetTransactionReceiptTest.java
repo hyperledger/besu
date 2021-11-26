@@ -210,7 +210,6 @@ public class PrivGetTransactionReceiptTest {
         0,
         0,
         markerTransaction.getHash(),
-        privateTransaction.getHash(),
         privateTransaction.getPrivateFrom(),
         privateTransaction.getPrivateFor().isPresent()
             ? privateTransaction.getPrivateFor().get()
