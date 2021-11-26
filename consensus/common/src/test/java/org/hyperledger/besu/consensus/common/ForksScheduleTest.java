@@ -23,11 +23,11 @@ import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.JsonBftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.common.ForksSchedule.BftSpecCreator;
+import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
 import java.util.List;
 import java.util.Map;
 
-import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -68,7 +68,10 @@ public class ForksScheduleTest {
     final BftSpecCreator<BftConfigOptions, BftFork> specCreator =
         Mockito.mock(BftSpecCreator.class);
 
-    assertThatThrownBy(() -> ForksSchedule.createForBftConfigOptions(genesisConfigOptions, List.of(fork), specCreator))
+    assertThatThrownBy(
+            () ->
+                ForksSchedule.createForBftConfigOptions(
+                    genesisConfigOptions, List.of(fork), specCreator))
         .hasMessage("Transition cannot be created for genesis block");
   }
 
@@ -105,7 +108,8 @@ public class ForksScheduleTest {
     when(specCreator.create(new ForkSpec<>(1, configOptions1), fork2)).thenReturn(configOptions2);
 
     final ForksSchedule<BftConfigOptions> schedule =
-        ForksSchedule.createForBftConfigOptions(genesisConfigOptions, List.of(fork1, fork2), specCreator);
+        ForksSchedule.createForBftConfigOptions(
+            genesisConfigOptions, List.of(fork1, fork2), specCreator);
     assertThat(schedule.getFork(0)).isEqualTo(genesisForkSpec);
     assertThat(schedule.getFork(1)).isEqualTo(new ForkSpec<>(1, configOptions1));
     assertThat(schedule.getFork(2)).isEqualTo(new ForkSpec<>(2, configOptions2));
