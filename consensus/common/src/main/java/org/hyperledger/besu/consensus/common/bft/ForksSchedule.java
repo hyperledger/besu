@@ -47,7 +47,7 @@ public class ForksSchedule<C> {
     this.forks.addAll(forks);
   }
 
-  public static <T extends BftConfigOptions, U extends BftFork> ForksSchedule<T> create(
+  public static <T extends BftConfigOptions, U extends BftFork> ForksSchedule<T> createForBftConfigOptions(
       final T initial, final List<U> forks, final BftSpecCreator<T, U> specCreator) {
     checkArgument(
         forks.stream().allMatch(f -> f.getForkBlock() > 0),

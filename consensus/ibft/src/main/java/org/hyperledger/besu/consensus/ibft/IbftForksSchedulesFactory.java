@@ -24,7 +24,7 @@ import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 public class IbftForksSchedulesFactory {
 
   public static ForksSchedule<BftConfigOptions> create(final GenesisConfigOptions genesisConfig) {
-    return ForksSchedule.create(
+    return ForksSchedule.createForBftConfigOptions(
         genesisConfig.getBftConfigOptions(),
         genesisConfig.getTransitions().getIbftForks(),
         IbftForksSchedulesFactory::createBftConfigOptions);

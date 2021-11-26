@@ -27,7 +27,7 @@ import java.util.Optional;
 public class QbftForksSchedulesFactory {
 
   public static ForksSchedule<QbftConfigOptions> create(final GenesisConfigOptions genesisConfig) {
-    return ForksSchedule.create(
+    return ForksSchedule.createForBftConfigOptions(
         genesisConfig.getQbftConfigOptions(),
         genesisConfig.getTransitions().getQbftForks(),
         QbftForksSchedulesFactory::createQbftConfigOptions);
