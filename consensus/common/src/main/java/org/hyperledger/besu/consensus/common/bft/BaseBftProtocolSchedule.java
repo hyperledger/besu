@@ -43,14 +43,14 @@ public abstract class BaseBftProtocolSchedule {
 
   public ProtocolSchedule createProtocolSchedule(
       final GenesisConfigOptions config,
-      final BftForksSchedule<? extends BftConfigOptions> bftForksSchedule,
+      final ForksSchedule<? extends BftConfigOptions> forksSchedule,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
 
-    bftForksSchedule
+    forksSchedule
         .getForks()
         .forEach(
             forkSpec ->

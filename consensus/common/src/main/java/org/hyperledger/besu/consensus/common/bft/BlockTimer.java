@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 /** Class for starting and keeping organised block timers */
 public class BlockTimer {
 
-  private final BftForksSchedule<? extends BftConfigOptions> bftForksSchedule;
+  private final ForksSchedule<? extends BftConfigOptions> forksSchedule;
   private final BftExecutors bftExecutors;
   private Optional<ScheduledFuture<?>> currentTimerTask;
   private final BftEventQueue queue;
@@ -36,17 +36,17 @@ public class BlockTimer {
    * Construct a BlockTimer with primed executor service ready to start timers
    *
    * @param queue The queue in which to put block expiry events
-   * @param bftForksSchedule Bft fork schedule that contains block period seconds
+   * @param forksSchedule Bft fork schedule that contains block period seconds
    * @param bftExecutors Executor services that timers can be scheduled with
    * @param clock System clock
    */
   public BlockTimer(
       final BftEventQueue queue,
-      final BftForksSchedule<? extends BftConfigOptions> bftForksSchedule,
+      final ForksSchedule<? extends BftConfigOptions> forksSchedule,
       final BftExecutors bftExecutors,
       final Clock clock) {
     this.queue = queue;
-    this.bftForksSchedule = bftForksSchedule;
+    this.forksSchedule = forksSchedule;
     this.bftExecutors = bftExecutors;
     this.currentTimerTask = Optional.empty();
     this.clock = clock;
@@ -81,7 +81,7 @@ public class BlockTimer {
 
     // absolute time when the timer is supposed to expire
     final int blockPeriodSeconds =
-        bftForksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();
+        forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();
     final long minimumTimeBetweenBlocksMillis = blockPeriodSeconds * 1000L;
     final long expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
 

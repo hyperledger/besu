@@ -21,7 +21,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.ForksSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -34,7 +34,7 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
-      final BftForksSchedule<QbftConfigOptions> qbftForksSchedule,
+      final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
@@ -51,7 +51,7 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
-      final BftForksSchedule<QbftConfigOptions> qbftForksSchedule,
+      final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration) {
     return create(
@@ -65,7 +65,7 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
-      final BftForksSchedule<QbftConfigOptions> qbftForksSchedule,
+      final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec) {
     return create(

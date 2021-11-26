@@ -194,7 +194,7 @@ public class BaseBftProtocolScheduleTest {
         };
     return bftProtocolSchedule.createProtocolSchedule(
         genesisConfig,
-        new BftForksSchedule<>(genesisFork, forks),
+        new ForksSchedule<>(genesisFork, forks),
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,

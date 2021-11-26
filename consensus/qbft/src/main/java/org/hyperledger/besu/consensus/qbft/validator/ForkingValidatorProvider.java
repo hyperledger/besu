@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.qbft.validator;
 
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
@@ -31,13 +31,13 @@ import java.util.Optional;
 public class ForkingValidatorProvider implements ValidatorProvider {
 
   private final Blockchain blockchain;
-  private final BftForksSchedule<QbftConfigOptions> forksSchedule;
+  private final ForksSchedule<QbftConfigOptions> forksSchedule;
   private final BlockValidatorProvider blockValidatorProvider;
   private final TransactionValidatorProvider transactionValidatorProvider;
 
   public ForkingValidatorProvider(
       final Blockchain blockchain,
-      final BftForksSchedule<QbftConfigOptions> forksSchedule,
+      final ForksSchedule<QbftConfigOptions> forksSchedule,
       final BlockValidatorProvider blockValidatorProvider,
       final TransactionValidatorProvider transactionValidatorProvider) {
     this.blockchain = blockchain;

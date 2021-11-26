@@ -49,7 +49,7 @@ public class BlockTimerTest {
   private BftExecutors bftExecutors;
   private BftEventQueue mockQueue;
   private Clock mockClock;
-  private BftForksSchedule<BftConfigOptions> mockForksSchedule;
+  private ForksSchedule<BftConfigOptions> mockForksSchedule;
 
   @Before
   @SuppressWarnings("unchecked")
@@ -57,7 +57,7 @@ public class BlockTimerTest {
     bftExecutors = mock(BftExecutors.class);
     mockQueue = mock(BftEventQueue.class);
     mockClock = mock(Clock.class);
-    mockForksSchedule = mock(BftForksSchedule.class);
+    mockForksSchedule = mock(ForksSchedule.class);
   }
 
   @Test

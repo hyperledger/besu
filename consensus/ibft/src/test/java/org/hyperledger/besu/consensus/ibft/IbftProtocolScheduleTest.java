@@ -30,7 +30,7 @@ import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -95,7 +95,7 @@ public class IbftProtocolScheduleTest {
       final List<ForkSpec<BftConfigOptions>> forks) {
     return IbftProtocolSchedule.create(
         genesisConfig,
-        new BftForksSchedule<>(genesisFork, forks),
+        new ForksSchedule<>(genesisFork, forks),
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,

@@ -22,7 +22,7 @@ import java.util.Optional;
 
 /**
  * A mutable {@link BftConfigOptions} that is used for building config for transitions in the {@link
- * BftForksSchedule}.
+ * ForksSchedule}.
  */
 public class MutableBftConfigOptions implements BftConfigOptions {
   private long epochLength;

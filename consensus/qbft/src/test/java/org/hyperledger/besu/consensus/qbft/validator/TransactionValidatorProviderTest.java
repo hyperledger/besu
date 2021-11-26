@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.ForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -54,15 +54,14 @@ public class TransactionValidatorProviderTest {
   protected Block block_1;
   protected Block block_2;
   private Block block_3;
-  private BftForksSchedule<QbftConfigOptions> forksSchedule;
+  private ForksSchedule<QbftConfigOptions> forksSchedule;
 
   private final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
   private static final Address CONTRACT_ADDRESS = Address.fromHexString("1");
 
   @Before
   public void setup() {
-    forksSchedule =
-        new BftForksSchedule<>(createContractForkSpec(0L, CONTRACT_ADDRESS), emptyList());
+    forksSchedule = new ForksSchedule<>(createContractForkSpec(0L, CONTRACT_ADDRESS), emptyList());
     genesisBlock = createEmptyBlock(0, Hash.ZERO);
     blockChain = createInMemoryBlockchain(genesisBlock);
     headerBuilder.extraData(Bytes.wrap(new byte[32]));

@@ -18,7 +18,7 @@ package org.hyperledger.besu.evmtool;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.ForksSchedule;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.IbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.ibft.IbftProtocolSchedule;
@@ -39,7 +39,7 @@ class IBFTGenesisFileModule extends GenesisFileModule {
   ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
-    final BftForksSchedule<BftConfigOptions> forksSchedule =
+    final ForksSchedule<BftConfigOptions> forksSchedule =
         IbftForksSchedulesFactory.create(configOptions);
     return IbftProtocolSchedule.create(
         configOptions, forksSchedule, bftExtraDataEncoder, EvmConfiguration.DEFAULT);
