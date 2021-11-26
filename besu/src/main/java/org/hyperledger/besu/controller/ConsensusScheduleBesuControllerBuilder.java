@@ -23,8 +23,8 @@ import static org.hyperledger.besu.ethereum.core.BlockHeader.GENESIS_BLOCK_NUMBE
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.CombinedProtocolScheduleFactory;
 import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.SchedulableMiningCoordinator;
 import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.SchedulableMiningCoordinator;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
