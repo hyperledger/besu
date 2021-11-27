@@ -27,7 +27,7 @@ public class DifficultyOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(frame.getBlockValues().getDifficultyBytes());
+    frame.pushStackItem(frame.getBlockValues().getMixHashOrRandom());
 
     return successResponse;
   }
