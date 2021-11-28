@@ -18,6 +18,8 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class DifficultyOperation extends AbstractFixedCostOperation {
 
   public DifficultyOperation(final GasCalculator gasCalculator) {
@@ -27,8 +29,12 @@ public class DifficultyOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(frame.getBlockValues().getMixHashOrRandom());
-
+    if (frame.getBlockValues().getDifficultyBytes() == null
+        || frame.getBlockValues().getDifficultyBytes().equals(Bytes.of(0))) {
+      frame.pushStackItem(frame.getBlockValues().getMixHashOrRandom());
+    } else {
+      frame.pushStackItem(frame.getBlockValues().getDifficultyBytes());
+    }
     return successResponse;
   }
 }
