@@ -50,19 +50,22 @@ public class TransferTransaction
   private final Unit transferUnit;
   private final BigInteger gasPrice;
   private final BigInteger nonce;
+  private final Optional<BigInteger> chainId;
 
   public TransferTransaction(
       final Account sender,
       final Account recipient,
       final Amount transferAmount,
       final Amount gasPrice,
-      final BigInteger nonce) {
+      final BigInteger nonce,
+      Optional<BigInteger> chainId) {
     this.sender = sender;
     this.recipient = recipient;
     this.transferAmount = transferAmount.getValue();
     this.transferUnit = transferAmount.getUnit();
     this.gasPrice = gasPrice == null ? MINIMUM_GAS_PRICE : convertGasPriceToWei(gasPrice);
     this.nonce = nonce;
+    this.chainId = chainId;
   }
 
   @Override
@@ -108,8 +111,8 @@ public class TransferTransaction
     }
   }
 
-  private Optional<BigInteger> getNonce() {
-    return nonce == null ? Optional.empty() : Optional.of(nonce);
+  private BigInteger getNonce() {
+    return Optional.ofNullable(nonce).orElseGet(sender::getNextNonce);
   }
 
   private BigInteger convertGasPriceToWei(final Amount unconverted) {
@@ -127,13 +130,28 @@ public class TransferTransaction
   }
 
   private RawTransaction createRawTransaction() {
-    final Optional<BigInteger> nonce = getNonce();
+    return chainId
+        .map(this::createTransactionWithChainId)
+        .orElseGet(this::createTransactionWithoutChainId);
+  }
 
+  private RawTransaction createTransactionWithoutChainId() {
     return RawTransaction.createEtherTransaction(
-        nonce.orElse(nonce.orElseGet(sender::getNextNonce)),
+        getNonce(),
         gasPrice,
         INTRINSIC_GAS,
         recipient.getAddress(),
         Convert.toWei(transferAmount, transferUnit).toBigIntegerExact());
+  }
+
+  private RawTransaction createTransactionWithChainId(BigInteger chainId) {
+    return RawTransaction.createEtherTransaction(
+        chainId.longValueExact(),
+        getNonce(),
+        INTRINSIC_GAS,
+        recipient.getAddress(),
+        Convert.toWei(transferAmount, transferUnit).toBigIntegerExact(),
+        gasPrice,
+        BigInteger.ZERO);
   }
 }
