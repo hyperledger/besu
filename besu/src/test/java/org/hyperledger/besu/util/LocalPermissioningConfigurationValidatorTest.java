@@ -18,6 +18,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
+import com.google.common.collect.Lists;
+import com.google.common.io.Resources;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
@@ -26,14 +32,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBuilder;
 import org.hyperledger.besu.plugin.data.EnodeURL;
-
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-
-import com.google.common.collect.Lists;
-import com.google.common.io.Resources;
 import org.junit.Test;
 
 public class LocalPermissioningConfigurationValidatorTest {
@@ -196,7 +194,8 @@ public class LocalPermissioningConfigurationValidatorTest {
                     toml.toAbsolutePath().toString()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
-            "Invalid enode URL syntax. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'. Invalid ip address.");
+            "Invalid enode URL syntax 'enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@localhost:4567'. "
+                + "Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'. Invalid ip address.");
   }
 
   @Test
@@ -220,6 +219,7 @@ public class LocalPermissioningConfigurationValidatorTest {
                     toml.toAbsolutePath().toString()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
-            "Invalid enode URL syntax. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'. Invalid ip address.");
+            "Invalid enode URL syntax 'enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@hostname:4567'. "
+                + "Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'. Invalid ip address.");
   }
 }
