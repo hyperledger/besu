@@ -3,7 +3,7 @@
 ## 21.10.4
 
 ### Additions and Improvements
-- Removed deprecated hash variable `protected volatile Hash hash;`
+- Removed deprecated hash variable `protected volatile Hash hash;` which was used for private transactions [#3110](https://github.com/hyperledger/besu/pull/3110)
 
 ## 21.10.3
 
