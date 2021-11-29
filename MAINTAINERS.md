@@ -6,7 +6,6 @@
 
 | Name             | Github           | LFID             |
 | ---------------- | ---------------- | ---------------- |
-| Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Adrian Sutton    | ajsutton         | ajsutton         |
 | Antoine Toulme   | atoulme          | atoulme          |
 | Antony Denyer    | antonydenyer     | antonydenyer     |
@@ -23,7 +22,6 @@
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
 | Mark Terry       | mark-terry       | m.terry          |
 | Karim Taam       | matkt            | matkt            |
-| Meredith Baxter  | mbaxter          | mbaxter          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Sajida Zouarhi   | sajz             | SajidaZ          |
 | Simon Dudley     | siladu           | siladu           |
@@ -38,11 +36,13 @@
 
 | Name             | Github           | LFID             |
 |------------------|------------------|------------------|
+| Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Chris Hare       | CjHare           | cjhare           |
 | David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
 | Edward Mack      | edwardmack       | mackcom          | 
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
+| Meredith Baxter  | mbaxter          | mbaxter          |
 | Rob Dawson       | rojotek          | RobDawson        |
 | Tim Beiko        | timbeiko         | timbeiko         |
 | Trent Mohay      | rain-on          | trent.mohay      |
