@@ -64,13 +64,13 @@ public class PrivacyNodeFactory {
       final PrivacyAccount privacyAccount,
       final EnclaveType enclaveType,
       final Optional<Network> containerNetwork,
-      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isFlexiblePrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
       final boolean isPrivacyPluginEnabled)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
-            isOnchainPrivacyGroupEnabled,
+            isFlexiblePrivacyGroupEnabled,
             isMultitenancyEnabled,
             isPrivacyPluginEnabled,
             new BesuNodeConfigurationBuilder()
@@ -104,13 +104,13 @@ public class PrivacyNodeFactory {
       final PrivacyAccount privacyAccount,
       final EnclaveType enclaveType,
       final Optional<Network> containerNetwork,
-      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isFlexiblePrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
       final boolean isPrivacyPluginEnabled)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
-            isOnchainPrivacyGroupEnabled,
+            isFlexiblePrivacyGroupEnabled,
             isMultitenancyEnabled,
             isPrivacyPluginEnabled,
             new BesuNodeConfigurationBuilder()
@@ -144,14 +144,14 @@ public class PrivacyNodeFactory {
       final boolean minerEnabled,
       final EnclaveType enclaveType,
       final Optional<Network> containerNetwork,
-      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isFlexiblePrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
       final boolean isPrivacyPluginEnabled,
       final String unrestrictedPrefix)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
-            isOnchainPrivacyGroupEnabled,
+            isFlexiblePrivacyGroupEnabled,
             isMultitenancyEnabled,
             isPrivacyPluginEnabled,
             new BesuNodeConfigurationBuilder()
@@ -179,14 +179,14 @@ public class PrivacyNodeFactory {
       final boolean minerEnabled,
       final EnclaveType enclaveType,
       final Optional<Network> containerNetwork,
-      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isFlexiblePrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
       final boolean isPrivacyPluginEnabled,
       final String unrestrictedPrefix)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
-            isOnchainPrivacyGroupEnabled,
+            isFlexiblePrivacyGroupEnabled,
             isMultitenancyEnabled,
             isPrivacyPluginEnabled,
             new BesuNodeConfigurationBuilder()
@@ -215,14 +215,14 @@ public class PrivacyNodeFactory {
       final PrivacyAccount privacyAccount,
       final EnclaveType enclaveType,
       final Optional<Network> containerNetwork,
-      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isFlexiblePrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
       final boolean isPrivacyPluginEnabled,
       final String unrestrictedPrefix)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
-            isOnchainPrivacyGroupEnabled,
+            isFlexiblePrivacyGroupEnabled,
             isMultitenancyEnabled,
             isPrivacyPluginEnabled,
             new BesuNodeConfigurationBuilder()
@@ -244,7 +244,7 @@ public class PrivacyNodeFactory {
         containerNetwork);
   }
 
-  public PrivacyNode createOnchainPrivacyGroupEnabledMinerNode(
+  public PrivacyNode createFlexiblePrivacyGroupEnabledMinerNode(
       final String name,
       final PrivacyAccount privacyAccount,
       final boolean multiTenancyEnabled,
@@ -278,7 +278,7 @@ public class PrivacyNodeFactory {
         containerNetwork);
   }
 
-  public PrivacyNode createOnchainPrivacyGroupEnabledNode(
+  public PrivacyNode createFlexiblePrivacyGroupEnabledNode(
       final String name,
       final PrivacyAccount privacyAccount,
       final boolean multiTenancyEnabled,

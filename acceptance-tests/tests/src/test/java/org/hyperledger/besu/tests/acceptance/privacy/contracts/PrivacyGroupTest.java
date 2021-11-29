@@ -16,7 +16,7 @@ package org.hyperledger.besu.tests.acceptance.privacy.contracts;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.privacy.contracts.generated.DefaultOnchainPrivacyGroupManagementContract;
+import org.hyperledger.besu.privacy.contracts.generated.DefaultFlexiblePrivacyGroupManagementContract;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
@@ -40,7 +40,7 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
       Base64String.wrap("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=");
   private final Base64String thirdParticipant =
       Base64String.wrap("Jo2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=");
-  private DefaultOnchainPrivacyGroupManagementContract defaultPrivacyGroupManagementContract;
+  private DefaultFlexiblePrivacyGroupManagementContract defaultPrivacyGroupManagementContract;
 
   private static final String RAW_FIRST_PARTICIPANT = "0x5aa68ac0";
   private static final String RAW_ADD_PARTICIPANT =
@@ -61,7 +61,7 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
     defaultPrivacyGroupManagementContract =
         minerNode.execute(
             contractTransactions.createSmartContract(
-                DefaultOnchainPrivacyGroupManagementContract.class));
+                DefaultFlexiblePrivacyGroupManagementContract.class));
   }
 
   @Test

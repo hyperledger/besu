@@ -38,12 +38,12 @@ import org.junit.runners.Parameterized.Parameters;
 import org.testcontainers.containers.Network;
 
 @RunWith(Parameterized.class)
-public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
-    extends OnchainPrivacyAcceptanceTestBase {
+public class PrivDebugGetStateRootFlexibleGroupAcceptanceTest
+    extends FlexiblePrivacyAcceptanceTestBase {
 
   private final EnclaveType enclaveType;
 
-  public PrivDebugGetStateRootOnchainGroupAcceptanceTest(final EnclaveType enclaveType) {
+  public PrivDebugGetStateRootFlexibleGroupAcceptanceTest(final EnclaveType enclaveType) {
     this.enclaveType = enclaveType;
   }
 
@@ -60,14 +60,14 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
     final Network containerNetwork = Network.newNetwork();
 
     aliceNode =
-        privacyBesu.createOnchainPrivacyGroupEnabledMinerNode(
+        privacyBesu.createFlexiblePrivacyGroupEnabledMinerNode(
             "alice-node",
             PrivacyAccountResolver.ALICE,
             false,
             enclaveType,
             Optional.of(containerNetwork));
     bobNode =
-        privacyBesu.createOnchainPrivacyGroupEnabledNode(
+        privacyBesu.createFlexiblePrivacyGroupEnabledNode(
             "bob-node",
             PrivacyAccountResolver.BOB,
             false,
@@ -79,7 +79,7 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
 
   @Test
   public void nodesInGroupShouldHaveSameStateRoot() {
-    final String privacyGroupId = createOnchainPrivacyGroup(aliceNode, bobNode);
+    final String privacyGroupId = createFlexiblePrivacyGroup(aliceNode, bobNode);
 
     final Hash aliceStateRootId =
         aliceNode
@@ -112,7 +112,7 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
     waitForBlockHeight(aliceNode, 2);
     waitForBlockHeight(bobNode, 2);
 
-    final String privacyGroupId = createOnchainPrivacyGroup(aliceNode, bobNode);
+    final String privacyGroupId = createFlexiblePrivacyGroup(aliceNode, bobNode);
 
     waitForBlockHeight(aliceNode, 10);
     waitForBlockHeight(bobNode, 10);
@@ -140,7 +140,7 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
 
   @Test
   public void canInteractWithPrivateGenesisPreCompile() throws Exception {
-    final String privacyGroupId = createOnchainPrivacyGroup(aliceNode, bobNode);
+    final String privacyGroupId = createFlexiblePrivacyGroup(aliceNode, bobNode);
 
     final EventEmitter eventEmitter =
         aliceNode.execute(

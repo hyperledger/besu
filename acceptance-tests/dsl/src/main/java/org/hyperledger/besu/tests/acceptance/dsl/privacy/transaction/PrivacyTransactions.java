@@ -51,44 +51,44 @@ public class PrivacyTransactions {
     return new RestrictedCreatePrivacyGroupTransaction(name, description, nodes);
   }
 
-  public CreateOnchainPrivacyGroupTransaction createOnchainPrivacyGroup(
+  public CreateFlexiblePrivacyGroupTransaction createFlexiblePrivacyGroup(
       final PrivacyNode creator,
       final String privateFrom,
       final List<String> addresses,
       final String token) {
     creator.getBesu().useAuthenticationTokenInHeaderForJsonRpc(token);
-    return new CreateOnchainPrivacyGroupTransaction(creator, privateFrom, addresses);
+    return new CreateFlexiblePrivacyGroupTransaction(creator, privateFrom, addresses);
   }
 
-  public CreateOnchainPrivacyGroupTransaction createOnchainPrivacyGroup(
+  public CreateFlexiblePrivacyGroupTransaction createFlexiblePrivacyGroup(
       final PrivacyNode creator, final String privateFrom, final List<String> addresses) {
-    return new CreateOnchainPrivacyGroupTransaction(creator, privateFrom, addresses);
+    return new CreateFlexiblePrivacyGroupTransaction(creator, privateFrom, addresses);
   }
 
-  public AddToOnchainPrivacyGroupTransaction addToPrivacyGroup(
+  public AddToFlexiblePrivacyGroupTransaction addToPrivacyGroup(
       final String privacyGroupId,
       final PrivacyNode adder,
       final Credentials signer,
       final PrivacyNode... nodes) {
-    return new AddToOnchainPrivacyGroupTransaction(privacyGroupId, adder, signer, nodes);
+    return new AddToFlexiblePrivacyGroupTransaction(privacyGroupId, adder, signer, nodes);
   }
 
-  public LockOnchainPrivacyGroupTransaction privxLockPrivacyGroupAndCheck(
+  public LockFlexiblePrivacyGroupTransaction privxLockPrivacyGroupAndCheck(
       final String privacyGroupId, final PrivacyNode locker, final Credentials signer) {
-    return new LockOnchainPrivacyGroupTransaction(privacyGroupId, locker, signer);
+    return new LockFlexiblePrivacyGroupTransaction(privacyGroupId, locker, signer);
   }
 
-  public UnlockOnchainPrivacyGroupTransaction privxUnlockPrivacyGroupAndCheck(
+  public UnlockFlexiblePrivacyGroupTransaction privxUnlockPrivacyGroupAndCheck(
       final String privacyGroupId, final PrivacyNode locker, final Credentials signer) {
-    return new UnlockOnchainPrivacyGroupTransaction(privacyGroupId, locker, signer);
+    return new UnlockFlexiblePrivacyGroupTransaction(privacyGroupId, locker, signer);
   }
 
   public FindPrivacyGroupTransaction findPrivacyGroup(final List<String> nodes) {
     return new FindPrivacyGroupTransaction(nodes);
   }
 
-  public FindOnchainPrivacyGroupTransaction findOnchainPrivacyGroup(final List<String> nodes) {
-    return new FindOnchainPrivacyGroupTransaction(nodes);
+  public FindFlexiblePrivacyGroupTransaction findFlexiblePrivacyGroup(final List<String> nodes) {
+    return new FindFlexiblePrivacyGroupTransaction(nodes);
   }
 
   public PrivDistributeTransactionTransaction privDistributeTransaction(
@@ -115,12 +115,12 @@ public class PrivacyTransactions {
     return new PrivGetLogsTransaction(privacyGroupId, filterParameter);
   }
 
-  public RemoveFromOnchainPrivacyGroupTransaction removeFromPrivacyGroup(
+  public RemoveFromFlexiblePrivacyGroupTransaction removeFromPrivacyGroup(
       final String privacyGroupId,
       final String remover,
       final Credentials signer,
       final String memberToRemove) {
-    return new RemoveFromOnchainPrivacyGroupTransaction(
+    return new RemoveFromFlexiblePrivacyGroupTransaction(
         privacyGroupId, remover, signer, memberToRemove);
   }
 

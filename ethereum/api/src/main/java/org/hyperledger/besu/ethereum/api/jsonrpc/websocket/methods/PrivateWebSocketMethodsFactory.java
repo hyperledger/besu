@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
+import org.hyperledger.besu.ethereum.privacy.FlexiblePrivacyController;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
-import org.hyperledger.besu.ethereum.privacy.OnchainPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PluginPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
@@ -77,9 +77,9 @@ public class PrivateWebSocketMethodsFactory {
           privacyParameters.getPrivateWorldStateReader());
     } else {
       final PrivacyController restrictedPrivacyController;
-      if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
+      if (privacyParameters.isFlexiblePrivacyGroupsEnabled()) {
         restrictedPrivacyController =
-            new OnchainPrivacyController(
+            new FlexiblePrivacyController(
                 blockchainQueries.getBlockchain(),
                 privacyParameters,
                 chainId,

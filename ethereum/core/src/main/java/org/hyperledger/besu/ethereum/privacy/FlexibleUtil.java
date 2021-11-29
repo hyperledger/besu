@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.privacy.group.OnchainGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
+import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.datatypes.Address;
 
@@ -25,14 +25,14 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class OnchainUtil {
+public class FlexibleUtil {
 
-  private OnchainUtil() {}
+  private FlexibleUtil() {}
 
   public static boolean isGroupAdditionTransaction(final PrivateTransaction privateTransaction) {
     final Optional<Address> to = privateTransaction.getTo();
     return to.isPresent()
-        && to.get().equals(ONCHAIN_PRIVACY_PROXY)
+        && to.get().equals(FLEXIBLE_PRIVACY_PROXY)
         && privateTransaction
             .getPayload()
             .toHexString()

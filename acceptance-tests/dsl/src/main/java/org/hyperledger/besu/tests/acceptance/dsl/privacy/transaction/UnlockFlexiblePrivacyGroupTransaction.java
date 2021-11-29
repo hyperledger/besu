@@ -19,38 +19,28 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.web3j.crypto.Credentials;
+import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.utils.Base64String;
 
-public class AddToOnchainPrivacyGroupTransaction implements Transaction<String> {
+public class UnlockFlexiblePrivacyGroupTransaction implements Transaction<String> {
   private final Base64String privacyGroupId;
-  private final PrivacyNode adder;
-  private final List<String> addresses;
+  private final PrivacyNode locker;
   private final Credentials signer;
 
-  public AddToOnchainPrivacyGroupTransaction(
-      final String privacyGroupId,
-      final PrivacyNode adder,
-      final Credentials signer,
-      final PrivacyNode... nodes) {
+  public UnlockFlexiblePrivacyGroupTransaction(
+      final String privacyGroupId, final PrivacyNode locker, final Credentials signer) {
     this.privacyGroupId = Base64String.wrap(privacyGroupId);
-    this.adder = adder;
+    this.locker = locker;
     this.signer = signer;
-    this.addresses =
-        Arrays.stream(nodes)
-            .map(n -> n.getEnclave().getDefaultPublicKey())
-            .collect(Collectors.toList());
   }
 
   @Override
   public String execute(final NodeRequests node) {
     try {
-      return node.privacy().privxAddToPrivacyGroup(privacyGroupId, adder, signer, addresses);
-    } catch (final IOException e) {
+      return node.privacy().privxUnlockPrivacyGroup(locker, privacyGroupId, signer);
+    } catch (final IOException | TransactionException e) {
       throw new RuntimeException(e);
     }
   }
