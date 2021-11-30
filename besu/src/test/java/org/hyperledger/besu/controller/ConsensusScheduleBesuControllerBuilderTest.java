@@ -17,13 +17,20 @@
  */
 package org.hyperledger.besu.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.SchedulableContext;
+import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.ethereum.ConsensusContext;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -97,5 +104,44 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     expectedProtocolSchedulesSpecs.add(new ForkSpec<>(30L, protocolSchedule3));
     Mockito.verify(combinedProtocolScheduleFactory)
         .apply(expectedProtocolSchedulesSpecs, Optional.of(BigInteger.TEN));
+  }
+
+  @Test
+  public void mustCreateSchedulableContext() {
+    final ConsensusContext context1 = Mockito.mock(ConsensusContext.class);
+    final ConsensusContext context2 = Mockito.mock(ConsensusContext.class);
+
+    final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule = new TreeMap<>();
+    besuControllerBuilderSchedule.put(0L, besuControllerBuilder1);
+    besuControllerBuilderSchedule.put(10L, besuControllerBuilder2);
+
+    when(besuControllerBuilder1.createConsensusContext(any(), any(), any())).thenReturn(context1);
+    when(besuControllerBuilder2.createConsensusContext(any(), any(), any())).thenReturn(context2);
+
+    final ConsensusScheduleBesuControllerBuilder controllerBuilder =
+        new ConsensusScheduleBesuControllerBuilder(besuControllerBuilderSchedule);
+    final ConsensusContext consensusContext =
+        controllerBuilder.createConsensusContext(
+            Mockito.mock(Blockchain.class),
+            Mockito.mock(WorldStateArchive.class),
+            Mockito.mock(ProtocolSchedule.class));
+
+    assertThat(consensusContext).isInstanceOf(SchedulableContext.class);
+    final SchedulableContext schedulableContext = (SchedulableContext) consensusContext;
+
+    final BftForksSchedule<ConsensusContext> contextSchedule =
+        schedulableContext.getConsensusContextSchedule();
+
+    final NavigableSet<ForkSpec<ConsensusContext>> expectedConsensusContextSpecs =
+        new TreeSet<>(ForkSpec.COMPARATOR);
+    expectedConsensusContextSpecs.add(new ForkSpec<>(0L, context1));
+    expectedConsensusContextSpecs.add(new ForkSpec<>(10L, context2));
+    assertThat(contextSchedule.getForks()).isEqualTo(expectedConsensusContextSpecs);
+
+    assertThat(contextSchedule.getFork(0).getValue()).isSameAs(context1);
+    assertThat(contextSchedule.getFork(1).getValue()).isSameAs(context1);
+    assertThat(contextSchedule.getFork(9).getValue()).isSameAs(context1);
+    assertThat(contextSchedule.getFork(10).getValue()).isSameAs(context2);
+    assertThat(contextSchedule.getFork(11).getValue()).isSameAs(context2);
   }
 }
