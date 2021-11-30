@@ -109,6 +109,8 @@ public class PrivacyReorgTest {
       "0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590";
   private static final Bytes32 PRIVACY_GROUP_BYTES32 =
       Bytes32.fromHexString("0xf250d523ae9164722b06ca25cfa2a7f3c45df96b09e215236f886c876f715bfa");
+  private static final Bytes32 PRIVACY_TRANSACTION_PAYLOAD =
+      Bytes32.fromHexString("0xa250d523ae9164722b06ca25cfa2a7f3c45df96b09e215236f886c876f715bfa");
 
   // EventEmitter contract binary
   private static final Bytes MOCK_PAYLOAD =
@@ -156,7 +158,7 @@ public class PrivacyReorgTest {
             .gasLimit(60000)
             .gasPrice(Wei.of(1000))
             .nonce(0)
-            .payload(Bytes32.random())
+            .payload(PRIVACY_TRANSACTION_PAYLOAD)
             .to(DEFAULT_PRIVACY)
             .value(Wei.ZERO)
             .signAndBuild(KEY_PAIR);
