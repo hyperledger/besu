@@ -103,31 +103,35 @@ public class Runner implements AutoCloseable {
             cacher -> new AutoTransactionLogBloomCachingService(blockchain, cacher));
   }
 
-  public void start() {
+  public void startExternalServices() {
+    LOG.info("Starting Ethereum services ... ");
+    metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
+
+    jsonRpc.ifPresent(service -> waitForServiceToStart("jsonRpc", service.start()));
+    graphQLHttp.ifPresent(service -> waitForServiceToStart("graphQLHttp", service.start()));
+    websocketRpc.ifPresent(service -> waitForServiceToStart("websocketRpc", service.start()));
+    stratumServer.ifPresent(server -> waitForServiceToStart("stratum", server.start()));
+    autoTransactionLogBloomCachingService.ifPresent(AutoTransactionLogBloomCachingService::start);
+    ethStatsService.ifPresent(EthStatsService::start);
+  }
+
+  public void startEthereumMainLoop() {
     try {
       LOG.info("Starting Ethereum main loop ... ");
-      metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
       natService.start();
       networkRunner.start();
       if (networkRunner.getNetwork().isP2pEnabled()) {
         besuController.getSynchronizer().start();
       }
       besuController.getMiningCoordinator().start();
-      stratumServer.ifPresent(server -> waitForServiceToStart("stratum", server.start()));
       vertx.setPeriodic(
           TimeUnit.MINUTES.toMillis(1),
           time ->
               besuController.getTransactionPool().getPendingTransactions().evictOldTransactions());
-      jsonRpc.ifPresent(service -> waitForServiceToStart("jsonRpc", service.start()));
-      graphQLHttp.ifPresent(service -> waitForServiceToStart("graphQLHttp", service.start()));
-      websocketRpc.ifPresent(service -> waitForServiceToStart("websocketRpc", service.start()));
-      ethStatsService.ifPresent(EthStatsService::start);
       LOG.info("Ethereum main loop is up.");
       writeBesuPortsToFile();
       writeBesuNetworksToFile();
-      autoTransactionLogBloomCachingService.ifPresent(AutoTransactionLogBloomCachingService::start);
       writePidFile();
-
     } catch (final Exception ex) {
       LOG.error("Startup failed", ex);
       throw new IllegalStateException(ex);

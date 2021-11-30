@@ -231,8 +231,8 @@ public final class RunnerTest {
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
     try {
-
-      runnerAhead.start();
+      runnerAhead.startExternalServices();
+      runnerAhead.startEthereumMainLoop();
       assertThat(pidPath.toFile().exists()).isTrue();
 
       final SynchronizerConfiguration syncConfigBehind =
@@ -285,7 +285,8 @@ public final class RunnerTest {
               .forkIdSupplier(() -> controllerBehind.getProtocolManager().getForkIdAsBytesList())
               .build();
 
-      runnerBehind.start();
+      runnerBehind.startExternalServices();
+      runnerBehind.startEthereumMainLoop();
 
       final int behindJsonRpcPort = runnerBehind.getJsonRpcPort().get();
       final Call.Factory client = new OkHttpClient();

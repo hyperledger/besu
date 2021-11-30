@@ -1267,10 +1267,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       validateOptions();
       configure();
       initController();
+
+      var runner = buildRunner();
+      runner.startExternalServices();
+
       startPlugins();
       validatePluginOptions();
       preSynchronization();
-      startSynchronization();
+
+      runner.startEthereumMainLoop();
+      runner.awaitStop();
 
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
@@ -1431,8 +1437,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     preSynchronizationTaskRunner.runTasks(besuController);
   }
 
-  private void startSynchronization() {
-    synchronize(
+  private Runner buildRunner() {
+    return synchronize(
         besuController,
         p2pEnabled,
         p2pTLSConfiguration,
@@ -2458,7 +2464,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   // Blockchain synchronization from peers.
-  private void synchronize(
+  private Runner synchronize(
       final BesuController controller,
       final boolean p2pEnabled,
       final Optional<TLSConfiguration> p2pTLSConfiguration,
@@ -2524,8 +2530,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .build();
 
     addShutdownHook(runner);
-    runner.start();
-    runner.awaitStop();
+
+    return runner;
   }
 
   protected Vertx createVertx(final VertxOptions vertxOptions) {

@@ -176,15 +176,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
     runnerBuilder.permissioningConfiguration(node.getPermissioningConfiguration());
 
-    besuPluginContext.addService(
-        BesuEvents.class,
-        new BesuEventsImpl(
-            besuController.getProtocolContext().getBlockchain(),
-            besuController.getProtocolManager().getBlockBroadcaster(),
-            besuController.getTransactionPool(),
-            besuController.getSyncState()));
-    besuPluginContext.startPlugins();
-
     final Runner runner =
         runnerBuilder
             .vertx(Vertx.vertx())
@@ -215,7 +206,18 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
 
-    runner.start();
+    runner.startExternalServices();
+
+    besuPluginContext.addService(
+        BesuEvents.class,
+        new BesuEventsImpl(
+            besuController.getProtocolContext().getBlockchain(),
+            besuController.getProtocolManager().getBlockBroadcaster(),
+            besuController.getTransactionPool(),
+            besuController.getSyncState()));
+    besuPluginContext.startPlugins();
+
+    runner.startEthereumMainLoop();
 
     besuRunners.put(node.getName(), runner);
     ThreadContext.remove("node");
