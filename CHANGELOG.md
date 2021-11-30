@@ -16,6 +16,7 @@
 - The invalid value is now shown when `--bootnodes` cannot parse an item to make it easier to identify which option is invalid. 
 - Adding two new options to be able to specify desired TLS protocol version and Java cipher suites [#3105](https://github.com/hyperledger/besu/pull/3105)
 - Implements [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) to repurpose DIFFICULTY opcode after the merge as a source of entropy from the Beacon chain. [#3081](https://github.com/hyperledger/besu/issues/3081)
+- The invalid value is now shown when `--bootnodes` cannot parse an item to make it easier to identify which option is invalid.
 ### Bug Fixes
 
 ### Early Access Features
