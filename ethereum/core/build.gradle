@@ -87,7 +87,6 @@ dependencies {
   integrationTestImplementation project(':testutil')
 
   integrationTestImplementation 'junit:junit'
-  integrationTestImplementation 'net.consensys:orion'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-core'
 

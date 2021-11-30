@@ -22,17 +22,18 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
-import org.hyperledger.enclave.testutil.OrionTestHarness;
-import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
 import org.awaitility.Awaitility;
+import org.hyperledger.enclave.testutil.TesseraTestHarness;
+import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -49,7 +50,7 @@ public class EnclaveTest {
   private Vertx vertx;
   private EnclaveFactory factory;
 
-  private static OrionTestHarness testHarness;
+  private static TesseraTestHarness testHarness;
 
   @Before
   public void setUp() throws Exception {
@@ -58,10 +59,10 @@ public class EnclaveTest {
     folder.create();
 
     testHarness =
-        OrionTestHarnessFactory.create(
+        TesseraTestHarnessFactory.create(
             "enclave",
             folder.newFolder().toPath(),
-            new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_0.key"));
+            new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_0.key"), Optional.empty());
 
     testHarness.start();
 
@@ -85,7 +86,7 @@ public class EnclaveTest {
 
     final Throwable t = catchThrowable(() -> enclave.receive(MOCK_KEY, publicKey));
 
-    assertThat(t.getMessage()).isEqualTo("EnclavePayloadNotFound");
+    assertThat(t.getMessage()).isEqualTo("Message with hash was not found");
   }
 
   @Test
