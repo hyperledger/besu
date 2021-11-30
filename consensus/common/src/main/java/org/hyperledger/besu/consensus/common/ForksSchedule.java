@@ -22,15 +22,12 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 
-import com.google.common.annotations.VisibleForTesting;
-
 public class ForksSchedule<C> {
 
   private final NavigableSet<ForkSpec<C>> forks =
       new TreeSet<>(
           Comparator.comparing((Function<ForkSpec<C>, Long>) ForkSpec::getBlock).reversed());
 
-  @VisibleForTesting
   public ForksSchedule(final ForkSpec<C> genesisFork, final Collection<ForkSpec<C>> forks) {
     this.forks.add(genesisFork);
     this.forks.addAll(forks);
