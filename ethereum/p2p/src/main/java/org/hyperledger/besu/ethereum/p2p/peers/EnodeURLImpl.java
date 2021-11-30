@@ -81,7 +81,9 @@ public class EnodeURLImpl implements EnodeURL {
       return fromURI(URI.create(value), enodeDnsConfiguration);
     } catch (IllegalArgumentException e) {
       String message =
-          "Invalid enode URL syntax. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.";
+          String.format(
+              "Invalid enode URL syntax '%s'. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.",
+              value);
       if (e.getMessage() != null) {
         message += " " + e.getMessage();
       }
