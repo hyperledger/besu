@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
+import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -267,7 +268,7 @@ public abstract class BesuControllerBuilder {
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(worldStateStorage, blockchain);
     final ProtocolContext protocolContext =
-        ProtocolContext.init(
+        createProtocolContext(
             blockchain,
             worldStateArchive,
             genesisState,
@@ -449,6 +450,16 @@ public abstract class BesuControllerBuilder {
         fastSyncEnabled,
         scheduler,
         genesisConfig.getForks());
+  }
+
+  protected ProtocolContext createProtocolContext(
+      final MutableBlockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final GenesisState genesisState,
+      final ProtocolSchedule protocolSchedule,
+      final ConsensusContextFactory consensusContextFactory) {
+    return ProtocolContext.init(
+        blockchain, worldStateArchive, genesisState, protocolSchedule, consensusContextFactory);
   }
 
   private WorldStateArchive createWorldStateArchive(

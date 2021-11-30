@@ -31,7 +31,7 @@ import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 
-public class BftForksSchedule<C extends BftConfigOptions> {
+public class BftForksSchedule<C> {
 
   private final NavigableSet<ForkSpec<C>> forks =
       new TreeSet<>(
