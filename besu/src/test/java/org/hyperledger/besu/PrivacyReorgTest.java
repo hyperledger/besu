@@ -98,15 +98,6 @@ public class PrivacyReorgTest {
                           "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
   private static final Bytes ENCLAVE_PUBLIC_KEY =
       Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
-
-  private static final String FIRST_BLOCK_WITH_NO_TRANSACTIONS_STATE_ROOT =
-      "0xb0784ff11dffceac824188583f20f3b8bb4ca275e033b3b1c0e280915743be7f";
-  private static final String FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT =
-      "0xe33629724501c0bc271a2b6858da64d3e92048d7e0cd019c5646770330694ff4";
-  private static final String BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT =
-      "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461";
-  private static final String STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE =
-      "0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590";
   private static final Bytes32 PRIVACY_GROUP_BYTES32 =
       Bytes32.fromHexString("0xf250d523ae9164722b06ca25cfa2a7f3c45df96b09e215236f886c876f715bfa");
   private static final Bytes32 PRIVACY_TRANSACTION_PAYLOAD =
@@ -221,7 +212,7 @@ public class PrivacyReorgTest {
             getBlockOptionsWithTransaction(
                 blockchain.getGenesisBlock(),
                 privacyMarkerTransaction,
-                FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT));
+                gen.firstBlockWithSingleTransactionStateRoot()));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
 
@@ -260,13 +251,13 @@ public class PrivacyReorgTest {
             getBlockOptionsWithTransaction(
                 blockchain.getGenesisBlock(),
                 privacyMarkerTransaction,
-                FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT));
+                gen.firstBlockWithSingleTransactionStateRoot()));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
 
     // Check that the private state root is not the empty state
     assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
+        privateStateRootResolver, blockchain, gen.stateRootAfterTransactionAppendedToEmptyState());
 
     // Create parallel fork of length 1 which removes privacy marker transaction
     final Block forkBlock =
@@ -274,7 +265,7 @@ public class PrivacyReorgTest {
             getBlockOptionsNoTransactionWithDifficulty(
                 blockchain.getGenesisBlock(),
                 blockchain.getChainHeadHeader().getDifficulty().plus(10L),
-                FIRST_BLOCK_WITH_NO_TRANSACTIONS_STATE_ROOT));
+                gen.firstBlockWithNoTransactionsStateRoot()));
 
     appendBlock(besuController, blockchain, protocolContext, forkBlock);
 
@@ -307,7 +298,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state root is not the empty state
     assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
+        privateStateRootResolver, blockchain, gen.stateRootAfterTransactionAppendedToEmptyState());
 
     // Create parallel fork of length 1 which removes privacy marker transaction
     final Difficulty remainingDifficultyToOutpace =
@@ -346,7 +337,7 @@ public class PrivacyReorgTest {
             getBlockOptionsWithTransaction(
                 blockchain.getGenesisBlock(),
                 privacyMarkerTransaction,
-                FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT));
+                gen.firstBlockWithSingleTransactionStateRoot()));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
 
@@ -354,7 +345,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state root is not the empty state
     assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
+        privateStateRootResolver, blockchain, gen.stateRootAfterTransactionAppendedToEmptyState());
 
     // Create parallel fork of length 1 which removes privacy marker transaction
     final Block forkBlock =
@@ -362,11 +353,11 @@ public class PrivacyReorgTest {
             getBlockOptionsNoTransactionWithDifficulty(
                 blockchain.getGenesisBlock(),
                 firstBlock.getHeader().getDifficulty().plus(10L),
-                FIRST_BLOCK_WITH_NO_TRANSACTIONS_STATE_ROOT));
+                gen.firstBlockWithNoTransactionsStateRoot()));
 
     // Check that the private state root did not change
     assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
+        privateStateRootResolver, blockchain, gen.stateRootAfterTransactionAppendedToEmptyState());
 
     final String secondForkBlockStateRoot =
         "0x76b8747d05fabcc87b2cfba519da0b1359b29fe7553bfd4837746edf31fb95fc";
@@ -400,7 +391,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state did change after reorg
     assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
+        privateStateRootResolver, blockchain, gen.stateRootAfterTransactionAppendedToEmptyState());
   }
 
   @SuppressWarnings("unchecked")
@@ -455,7 +446,7 @@ public class PrivacyReorgTest {
     return getBlockOptions(
         new BlockDataGenerator.BlockOptions()
             .addTransaction(transaction)
-            .setReceiptsRoot(Hash.fromHexString(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT))
+            .setReceiptsRoot(Hash.fromHexString(gen.blockWithSingleTransactionReceiptsRoot()))
             .setGasUsed(23176)
             .setStateRoot(Hash.fromHexString(stateRoot)),
         parentBlock);
@@ -482,7 +473,7 @@ public class PrivacyReorgTest {
         new BlockDataGenerator.BlockOptions()
             .addTransaction(transaction)
             .setDifficulty(difficulty)
-            .setReceiptsRoot(Hash.fromHexString(BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT))
+            .setReceiptsRoot(Hash.fromHexString(gen.blockWithSingleTransactionReceiptsRoot()))
             .setGasUsed(23176)
             .setStateRoot(Hash.fromHexString(stateRoot)),
         parentBlock);

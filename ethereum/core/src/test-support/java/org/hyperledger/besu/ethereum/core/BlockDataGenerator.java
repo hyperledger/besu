@@ -91,6 +91,23 @@ public class BlockDataGenerator {
     this.blockOptionsSupplier = blockOptionsSupplier;
   }
 
+  // Next step -> actually generate these based on the seed
+  public String firstBlockWithNoTransactionsStateRoot() {
+    return "0xb0784ff11dffceac824188583f20f3b8bb4ca275e033b3b1c0e280915743be7f";
+  }
+
+  public String firstBlockWithSingleTransactionStateRoot() {
+    return "0xe33629724501c0bc271a2b6858da64d3e92048d7e0cd019c5646770330694ff4";
+  }
+
+  public String blockWithSingleTransactionReceiptsRoot() {
+    return "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461";
+  }
+
+  public String stateRootAfterTransactionAppendedToEmptyState() {
+    return "0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590";
+  }
+
   private KeyPairGenerator createKeyPairGenerator(final long seed) {
     final KeyPairGenerator keyPairGenerator;
     try {
