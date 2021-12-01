@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.common;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -38,13 +37,13 @@ public class SchedulableMiningCoordinator implements MiningCoordinator, BlockAdd
 
   private static final Logger LOG = getLogger();
 
-  private final BftForksSchedule<MiningCoordinator> miningCoordinatorSchedule;
+  private final ForksSchedule<MiningCoordinator> miningCoordinatorSchedule;
   private final Blockchain blockchain;
   private MiningCoordinator activeMiningCoordinator;
   private long blockAddedObserverId;
 
   public SchedulableMiningCoordinator(
-      final BftForksSchedule<MiningCoordinator> miningCoordinatorSchedule,
+      final ForksSchedule<MiningCoordinator> miningCoordinatorSchedule,
       final Blockchain blockchain) {
     this.miningCoordinatorSchedule = miningCoordinatorSchedule;
     this.blockchain = blockchain;
@@ -133,7 +132,7 @@ public class SchedulableMiningCoordinator implements MiningCoordinator, BlockAdd
   }
 
   @VisibleForTesting
-  public BftForksSchedule<MiningCoordinator> getMiningCoordinatorSchedule() {
+  public ForksSchedule<MiningCoordinator> getMiningCoordinatorSchedule() {
     return this.miningCoordinatorSchedule;
   }
 }

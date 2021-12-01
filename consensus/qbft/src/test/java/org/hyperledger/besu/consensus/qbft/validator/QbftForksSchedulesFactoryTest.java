@@ -27,7 +27,7 @@ import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.datatypes.Address;
@@ -53,7 +53,7 @@ public class QbftForksSchedulesFactoryTest {
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.qbftConfigOptions(qbftConfigOptions);
 
-    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+    final ForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(genesisConfigOptions);
     assertThat(forksSchedule.getFork(0)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
     assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
@@ -81,7 +81,7 @@ public class QbftForksSchedulesFactoryTest {
                 QbftFork.VALIDATOR_CONTRACT_ADDRESS_KEY,
                 "10"));
 
-    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+    final ForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
     assertThat(forksSchedule.getFork(0))
         .usingRecursiveComparison()
@@ -141,7 +141,7 @@ public class QbftForksSchedulesFactoryTest {
                 BftFork.VALIDATORS_KEY,
                 JsonUtil.getObjectMapper().createArrayNode().addAll(jsonValidators)));
 
-    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+    final ForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
 
     assertThat(forksSchedule.getFork(1).getValue().getValidatorContractAddress()).isEmpty();

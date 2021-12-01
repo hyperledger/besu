@@ -16,9 +16,9 @@ package org.hyperledger.besu.consensus.ibft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -31,7 +31,7 @@ public class IbftProtocolSchedule extends BaseBftProtocolSchedule {
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
-      final BftForksSchedule<BftConfigOptions> bftForksSchedule,
+      final ForksSchedule<BftConfigOptions> forksSchedule,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
@@ -39,7 +39,7 @@ public class IbftProtocolSchedule extends BaseBftProtocolSchedule {
     return new IbftProtocolSchedule()
         .createProtocolSchedule(
             config,
-            bftForksSchedule,
+            forksSchedule,
             privacyParameters,
             isRevertReasonEnabled,
             bftExtraDataCodec,
@@ -48,12 +48,12 @@ public class IbftProtocolSchedule extends BaseBftProtocolSchedule {
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
-      final BftForksSchedule<BftConfigOptions> bftForksSchedule,
+      final ForksSchedule<BftConfigOptions> forksSchedule,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration) {
     return create(
         config,
-        bftForksSchedule,
+        forksSchedule,
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,

@@ -21,7 +21,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
@@ -52,7 +51,7 @@ public class SchedulableMiningCoordinatorTest {
   @Mock private BlockBody blockBody;
   private Block block;
   private BlockAddedEvent blockEvent;
-  private BftForksSchedule<MiningCoordinator> miningCoordinatorSchedule;
+  private ForksSchedule<MiningCoordinator> miningCoordinatorSchedule;
   private static final long MIGRATION_BLOCK_NUMBER = 5L;
 
   @Before
@@ -61,7 +60,7 @@ public class SchedulableMiningCoordinatorTest {
         new ForkSpec<>(GENESIS_BLOCK_NUMBER, coordinator1);
     final ForkSpec<MiningCoordinator> migrationFork =
         new ForkSpec<>(MIGRATION_BLOCK_NUMBER, coordinator2);
-    miningCoordinatorSchedule = new BftForksSchedule<>(genesisFork, List.of(migrationFork));
+    miningCoordinatorSchedule = new ForksSchedule<>(genesisFork, List.of(migrationFork));
     this.block = new Block(blockHeader, blockBody);
     blockEvent = BlockAddedEvent.createForHeadAdvancement(this.block, emptyList(), emptyList());
   }
@@ -102,8 +101,8 @@ public class SchedulableMiningCoordinatorTest {
 
   @Test
   public void onBlockAddedShouldNotDelegateWhenDelegateIsNoop() {
-    BftForksSchedule<MiningCoordinator> noopCoordinatorSchedule =
-        new BftForksSchedule<>(new ForkSpec<>(GENESIS_BLOCK_NUMBER, noopCoordinator), emptyList());
+    ForksSchedule<MiningCoordinator> noopCoordinatorSchedule =
+        new ForksSchedule<>(new ForkSpec<>(GENESIS_BLOCK_NUMBER, noopCoordinator), emptyList());
     when(blockHeader.getNumber()).thenReturn(GENESIS_BLOCK_NUMBER);
 
     new SchedulableMiningCoordinator(noopCoordinatorSchedule, blockchain).onBlockAdded(blockEvent);
