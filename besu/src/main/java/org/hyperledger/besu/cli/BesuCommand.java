@@ -450,9 +450,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--network"},
       paramLabel = MANDATORY_NETWORK_FORMAT_HELP,
+      defaultValue = "MAINNET",
       description =
           "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
-              + " (default: MAINNET)")
+              + " (default: ${DEFAULT-VALUE})")
   private final NetworkName network = null;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
@@ -1694,7 +1695,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     ? SyncMode.FAST
                     : SyncMode.FULL);
 
-    ethNetworkConfig = updateNetworkConfig(getNetwork());
+    ethNetworkConfig = updateNetworkConfig(network);
 
     checkGoQuorumCompatibilityConfig(ethNetworkConfig);
 
@@ -1771,12 +1772,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return key;
   }
 
-  private NetworkName getNetwork() {
-    // noinspection ConstantConditions network is not always null but injected by
-    // PicoCLI if used
-    return network == null ? MAINNET : network;
-  }
-
   private void ensureAllNodesAreInAllowlist(
       final Collection<EnodeURL> enodeAddresses,
       final LocalPermissioningConfiguration permissioningConfiguration) {
@@ -1803,7 +1798,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public BesuControllerBuilder getControllerBuilder() {
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
     return controllerBuilderFactory
-        .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
+        .fromEthNetworkConfig(updateNetworkConfig(network), genesisConfigOverrides)
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .dataDirectory(dataDir())
@@ -2532,7 +2527,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       // noinspection ConstantConditions network is not always null but injected by
       // PicoCLI if used
-      if (this.network != null) {
+      if (commandLine.getParseResult().hasMatchedOption("network")) {
         // We check if network option was really provided by user and not only looking
         // at the
         // default value.
