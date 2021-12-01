@@ -61,6 +61,7 @@ public class BesuPluginContextImplTest {
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
 
+    contextImpl.beforeExternalServices();
     contextImpl.startPlugins();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("started");
 
@@ -75,6 +76,9 @@ public class BesuPluginContextImplTest {
 
     assertThat(contextImpl.getPlugins()).isEmpty();
     contextImpl.registerPlugins(new File(".").toPath());
+    assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
+
+    contextImpl.beforeExternalServices();
     assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
 
     contextImpl.startPlugins();
@@ -98,6 +102,7 @@ public class BesuPluginContextImplTest {
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
 
+    contextImpl.beforeExternalServices();
     contextImpl.startPlugins();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("failstart");
     assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
@@ -120,6 +125,7 @@ public class BesuPluginContextImplTest {
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
 
+    contextImpl.beforeExternalServices();
     contextImpl.startPlugins();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("started");
 
@@ -140,6 +146,7 @@ public class BesuPluginContextImplTest {
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(registerPlugins);
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(contextImpl::stopPlugins);
 
+    contextImpl.beforeExternalServices();
     contextImpl.startPlugins();
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(registerPlugins);
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(contextImpl::startPlugins);

@@ -206,6 +206,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
 
+    besuPluginContext.beforeExternalServices();
+
     runner.startExternalServices();
 
     besuPluginContext.addService(

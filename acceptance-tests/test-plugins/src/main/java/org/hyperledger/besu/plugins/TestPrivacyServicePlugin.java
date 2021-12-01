@@ -51,7 +51,7 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
   }
 
   @Override
-  public void start() {
+  public void beforeExternalServices() {
     LOG.info("Start Plugins with options " + this);
 
     TestPrivacyPluginPayloadProvider payloadProvider = new TestPrivacyPluginPayloadProvider();
@@ -68,6 +68,9 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
       privateMarkerTransactionFactory.setSigningKeyEnbaled(signingKey);
     }
   }
+
+  @Override
+  public void start() {}
 
   @Override
   public void stop() {}

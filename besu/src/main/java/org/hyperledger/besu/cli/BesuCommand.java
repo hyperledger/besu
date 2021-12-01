@@ -1268,6 +1268,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       configure();
       initController();
 
+      besuPluginContext.beforeExternalServices();
+
       var runner = buildRunner();
       runner.startExternalServices();
 

@@ -47,7 +47,7 @@ public class TestPermissioningPlugin implements BesuPlugin {
   }
 
   @Override
-  public void start() {
+  public void beforeExternalServices() {
     if (enabled) {
       service.registerNodePermissioningProvider(
           (sourceEnode, destinationEnode) -> {
@@ -78,6 +78,9 @@ public class TestPermissioningPlugin implements BesuPlugin {
           });
     }
   }
+
+  @Override
+  public void start() {}
 
   private boolean transactionMessage(final int code) {
     return code == 0x02 || code == 0x08 || code == 0x09 || code == 0x0a;
