@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
+import org.hyperledger.besu.consensus.merge.blockcreation.backward.sync.BackwardsSyncContext;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -56,7 +57,13 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         protocolSchedule,
         transactionPool.getPendingTransactions(),
         miningParameters,
-        blockValidator);
+        blockValidator,
+        new BackwardsSyncContext(
+            protocolContext,
+            protocolSchedule,
+            metricsSystem,
+            ethProtocolManager.ethContext(),
+            blockValidator));
   }
 
   @Override

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.blockcreation.backward.sync.BackwardsSyncContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -55,6 +56,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   private final MergeContext mergeContext;
   private final BlockValidator blockValidator;
   private final ProtocolContext protocolContext;
+  private final BackwardsSyncContext backwardsSyncContext;
   private final ProtocolSchedule protocolSchedule;
 
   public MergeCoordinator(
@@ -62,12 +64,14 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       final ProtocolSchedule protocolSchedule,
       final AbstractPendingTransactionsSorter pendingTransactions,
       final MiningParameters miningParams,
-      final BlockValidator blockValidator) {
+      final BlockValidator blockValidator,
+      final BackwardsSyncContext backwardsSyncContext) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.blockValidator = blockValidator;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.miningParameters = miningParams;
+    this.backwardsSyncContext = backwardsSyncContext;
     this.targetGasLimit =
         miningParameters
             .getTargetGasLimit()
@@ -187,6 +191,21 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public boolean executeBlock(final Block block) {
+    // TODO: if we are missing the parentHash, attempt backwards sync
+    // https://github.com/hyperledger/besu/issues/2912
+
+    protocolContext
+        .getBlockchain()
+        .getBlockHeader(block.getHeader().getParentHash())
+        .ifPresentOrElse(
+            blockHeader ->
+                LOG.debug(
+                    "Parent of block {} is already present",
+                    block.getHash().toString().substring(0, 20)),
+            () -> backwardsSyncContext.syncBackwardsUntil(block));
+
+    // TODO: End Jiri
+
     final var chain = protocolContext.getBlockchain();
     var optResult =
         blockValidator.validateAndProcessBlock(
