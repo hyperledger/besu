@@ -2789,10 +2789,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private static boolean ensureGoQuorumCompatibilityModeNotUsedOnMainnet(
       final GenesisConfigOptions genesisConfigOptions, final EthNetworkConfig ethNetworkConfig) {
-    return ethNetworkConfig.getNetworkId().equals(EthNetworkConfig.MAINNET_NETWORK_ID)
+    return ethNetworkConfig.getNetworkId().equals(MAINNET.getNetworkId())
         || genesisConfigOptions
             .getChainId()
-            .map(chainId -> chainId.equals(EthNetworkConfig.MAINNET_NETWORK_ID))
+            .map(chainId -> chainId.equals(MAINNET.getNetworkId()))
             .orElse(false);
   }
 
