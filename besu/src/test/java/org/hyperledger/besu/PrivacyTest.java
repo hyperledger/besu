@@ -16,7 +16,7 @@ package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.ONCHAIN_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
@@ -81,16 +81,16 @@ public class PrivacyTest {
   }
 
   @Test
-  public void onchainEnabledPrivacy() throws IOException, URISyntaxException {
+  public void flexibleEnabledPrivacy() throws IOException, URISyntaxException {
     final BesuController besuController = setUpControllerWithPrivacyEnabled(true);
 
-    final PrecompiledContract onchainPrecompiledContract =
-        getPrecompile(besuController, ONCHAIN_PRIVACY);
+    final PrecompiledContract flexiblePrecompiledContract =
+        getPrecompile(besuController, FLEXIBLE_PRIVACY);
 
-    assertThat(onchainPrecompiledContract.getName()).isEqualTo("OnchainPrivacy");
+    assertThat(flexiblePrecompiledContract.getName()).isEqualTo("FlexiblePrivacy");
   }
 
-  private BesuController setUpControllerWithPrivacyEnabled(final boolean onchainEnabled)
+  private BesuController setUpControllerWithPrivacyEnabled(final boolean flexibleEnabled)
       throws IOException, URISyntaxException {
     final Path dataDir = folder.newFolder().toPath();
     final Path dbDir = dataDir.resolve("database");
@@ -100,7 +100,7 @@ public class PrivacyTest {
             .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
             .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
             .setEnclaveFactory(new EnclaveFactory(vertx))
-            .setOnchainPrivacyGroupsEnabled(onchainEnabled)
+            .setFlexiblePrivacyGroupsEnabled(flexibleEnabled)
             .build();
     return new BesuController.Builder()
         .fromGenesisConfig(GenesisConfigFile.mainnet())
