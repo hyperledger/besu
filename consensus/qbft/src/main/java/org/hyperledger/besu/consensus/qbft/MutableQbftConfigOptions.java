@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.qbft;
 
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
 import java.util.Optional;
@@ -23,7 +23,7 @@ import java.util.OptionalLong;
 
 /**
  * A mutable {@link QbftConfigOptions} that is used for building config for transitions in the
- * {@link BftForksSchedule}.
+ * {@link ForksSchedule}.
  */
 public class MutableQbftConfigOptions extends MutableBftConfigOptions implements QbftConfigOptions {
   private Optional<String> validatorContractAddress;
