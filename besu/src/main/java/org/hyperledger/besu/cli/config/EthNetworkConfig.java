@@ -22,17 +22,13 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import com.google.common.base.Preconditions;
-import com.google.common.io.Resources;
 
 public class EthNetworkConfig {
 
@@ -46,8 +42,8 @@ public class EthNetworkConfig {
       final BigInteger networkId,
       final List<EnodeURL> bootNodes,
       final String dnsDiscoveryUrl) {
-    Preconditions.checkNotNull(genesisConfig);
-    Preconditions.checkNotNull(bootNodes);
+    Objects.requireNonNull(genesisConfig);
+    Objects.requireNonNull(bootNodes);
     this.genesisConfig = genesisConfig;
     this.networkId = networkId;
     this.bootNodes = bootNodes;
@@ -124,10 +120,10 @@ public class EthNetworkConfig {
   }
 
   private static String jsonConfig(final String resourceName) {
-    try {
-      final URI uri = EthNetworkConfig.class.getResource(resourceName).toURI();
-      return Resources.toString(uri.toURL(), UTF_8);
-    } catch (final URISyntaxException | IOException e) {
+    try (final InputStream genesisFileInputStream =
+        EthNetworkConfig.class.getResourceAsStream(resourceName)) {
+      return new String(genesisFileInputStream.readAllBytes(), UTF_8);
+    } catch (IOException | NullPointerException e) {
       throw new IllegalStateException(e);
     }
   }
