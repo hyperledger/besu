@@ -6,6 +6,7 @@
 
 | Name             | Github           | LFID             |
 | ---------------- | ---------------- | ---------------- |
+| Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Adrian Sutton    | ajsutton         | ajsutton         |
 | Antoine Toulme   | atoulme          | atoulme          |
 | Antony Denyer    | antonydenyer     | antonydenyer     |
@@ -36,7 +37,6 @@
 
 | Name             | Github           | LFID             |
 |------------------|------------------|------------------|
-| Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Chris Hare       | CjHare           | cjhare           |
 | David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
