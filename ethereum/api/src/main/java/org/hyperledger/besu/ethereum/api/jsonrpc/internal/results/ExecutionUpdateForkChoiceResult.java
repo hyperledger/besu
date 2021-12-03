@@ -44,6 +44,6 @@ public class ExecutionUpdateForkChoiceResult {
   @JsonGetter(value = "payloadId")
   @JsonInclude(NON_NULL)
   public String getPayloadId() {
-    return Optional.ofNullable(payloadId).map(PayloadIdentifier::toShortHexString).orElse(null);
+    return Optional.ofNullable(payloadId).map(PayloadIdentifier::toHexString).orElse(null);
   }
 }
