@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.hyperledger.besu.plugin.BesuPlugin;
-import org.hyperledger.besu.plugins.TestPicoCLIPlugin;
+import org.hyperledger.besu.tests.acceptance.plugins.TestPicoCLIPlugin;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.After;
 import org.junit.BeforeClass;
@@ -57,7 +58,7 @@ public class BesuPluginContextImplTest {
     assertThat(contextImpl.getPlugins()).isNotEmpty();
 
     final Optional<TestPicoCLIPlugin> testPluginOptional = findTestPlugin(contextImpl.getPlugins());
-    assertThat(testPluginOptional).isPresent();
+    Assertions.assertThat(testPluginOptional).isPresent();
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
 

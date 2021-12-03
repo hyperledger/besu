@@ -13,7 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.plugins.privacy;
+package org.hyperledger.besu.tests.acceptance.plugins.privacy;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.data.Address;

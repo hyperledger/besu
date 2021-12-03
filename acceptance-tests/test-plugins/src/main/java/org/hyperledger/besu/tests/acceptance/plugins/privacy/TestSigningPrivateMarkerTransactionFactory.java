@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugins.privacy;
+package org.hyperledger.besu.tests.acceptance.plugins.privacy;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.datatypes.Address.extract;
@@ -66,12 +66,12 @@ public class TestSigningPrivateMarkerTransactionFactory implements PrivateMarker
             .gasLimit(unsignedPrivateMarkerTransaction.getGasLimit())
             .to(
                 org.hyperledger.besu.datatypes.Address.fromPlugin(
-                    unsignedPrivateMarkerTransaction.getTo().get()))
+                    unsignedPrivateMarkerTransaction.getTo().orElseThrow()))
             .value(Wei.fromQuantity(unsignedPrivateMarkerTransaction.getValue()))
             .payload(unsignedPrivateMarkerTransaction.getPayload())
             .signAndBuild(aliceFixedSigningKey);
 
-    LOG.info("Signing PMT from " + sender);
+    LOG.info("Signing PMT from {}", sender);
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     transaction.writeTo(out);
