@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.data.Quantity;
 
 import java.math.BigInteger;
-import java.util.Random;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -26,7 +26,6 @@ import org.apache.tuweni.units.bigints.UInt64;
 public class PayloadIdentifier implements Quantity {
 
   private final UInt64 val;
-  static final Random rand = new Random();
 
   @JsonCreator
   public PayloadIdentifier(final String payloadId) {
@@ -37,11 +36,8 @@ public class PayloadIdentifier implements Quantity {
     this.val = UInt64.valueOf(payloadId);
   }
 
-  public static PayloadIdentifier random() {
-    long lng = rand.nextLong();
-    // address corner case of nextLong returning a negative value
-    lng = (lng == Long.MIN_VALUE) ? 0 : Math.abs(lng);
-    return new PayloadIdentifier(lng);
+  public static PayloadIdentifier forPayloadParams(final Hash parentHash, final Long timestamp) {
+    return new PayloadIdentifier(((long) parentHash.toHexString().hashCode()) << 32 | timestamp);
   }
 
   @Override

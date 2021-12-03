@@ -153,7 +153,8 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       final Bytes32 random,
       final Address feeRecipient) {
 
-    final PayloadIdentifier payloadIdentifier = PayloadIdentifier.random();
+    final PayloadIdentifier payloadIdentifier =
+        PayloadIdentifier.forPayloadParams(parentHeader.getBlockHash(), timestamp);
     final MergeBlockCreator mergeBlockCreator =
         this.mergeBlockCreator.forParams(parentHeader, random, Optional.ofNullable(feeRecipient));
 
