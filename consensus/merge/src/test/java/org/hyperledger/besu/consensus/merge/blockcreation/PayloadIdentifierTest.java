@@ -16,6 +16,8 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import org.hyperledger.besu.datatypes.Hash;
+
 import java.util.List;
 
 import org.junit.Test;
@@ -37,7 +39,7 @@ public class PayloadIdentifierTest {
 
   @Test
   public void conversionCoverage() {
-    var idTest = PayloadIdentifier.random();
+    var idTest = PayloadIdentifier.forPayloadParams(Hash.ZERO, 1337L);
     assertThat(new PayloadIdentifier(idTest.getAsBigInteger().longValue())).isEqualTo(idTest);
     assertThat(new PayloadIdentifier(idTest.getValue().longValue())).isEqualTo(idTest);
   }

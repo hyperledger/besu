@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -51,7 +52,8 @@ public class EngineGetPayloadTest {
   private EngineGetPayload method;
   private static final Vertx vertx = Vertx.vertx();
   private static final BlockResultFactory factory = new BlockResultFactory();
-  private static final PayloadIdentifier mockPid = PayloadIdentifier.random();
+  private static final PayloadIdentifier mockPid =
+      PayloadIdentifier.forPayloadParams(Hash.ZERO, 1337L);
   private static final BlockHeader mockHeader =
       new BlockHeaderTestFixture().random(Bytes32.random()).buildHeader();
   private static final Block mockBlock =
@@ -92,7 +94,7 @@ public class EngineGetPayloadTest {
 
   @Test
   public void shouldFailForUnknownPayloadId() {
-    var resp = resp(PayloadIdentifier.random());
+    var resp = resp(PayloadIdentifier.forPayloadParams(Hash.ZERO, 0L));
     assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
   }
 
