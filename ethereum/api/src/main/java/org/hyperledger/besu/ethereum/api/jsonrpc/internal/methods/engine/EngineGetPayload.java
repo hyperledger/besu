@@ -56,7 +56,7 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
 
     final Optional<Block> block = mergeContext.retrieveBlockById(payloadId);
     if (block.isPresent()) {
-      LOG.debug("assembledBlock " + block.map(Block::toString).orElse(""));
+      LOG.debug("assembledBlock {}", block.map(Block::toString).get());
       return new JsonRpcSuccessResponse(
           request.getRequest().getId(),
           blockResultFactory.executionTransactionComplete(block.get()));

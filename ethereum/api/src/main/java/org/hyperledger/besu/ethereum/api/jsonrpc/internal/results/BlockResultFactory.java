@@ -85,28 +85,6 @@ public class BlockResultFactory {
         block.getHeader(), txs, ommers, block.getHeader().getDifficulty(), block.calculateSize());
   }
 
-  public BlockResult opaqueTransactionComplete(final Block block) {
-    final List<String> txs =
-        block.getBody().getTransactions().stream()
-            .map(TransactionEncoder::encodeOpaqueBytes)
-            .map(Bytes::toHexString)
-            .collect(Collectors.toList());
-
-    final List<JsonNode> ommers =
-        block.getBody().getOmmers().stream()
-            .map(BlockHeader::getHash)
-            .map(Hash::toString)
-            .map(TextNode::new)
-            .collect(Collectors.toList());
-    return new ConsensusBlockResult(
-        block.getHeader(),
-        txs,
-        ommers,
-        block.getHeader().getDifficulty(),
-        block.calculateSize(),
-        true);
-  }
-
   public ExecutionBlockResult executionTransactionComplete(final Block block) {
     final List<String> txs =
         block.getBody().getTransactions().stream()

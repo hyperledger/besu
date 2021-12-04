@@ -23,8 +23,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.datatypes.Address;
@@ -54,8 +54,8 @@ public class QbftBlockCreatorFactoryTest {
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
     qbftConfigOptions.setValidatorContractAddress(Optional.of("1"));
     final ForkSpec<QbftConfigOptions> spec = new ForkSpec<>(0, qbftConfigOptions);
-    final BftForksSchedule<QbftConfigOptions> bftForksSchedule = mock(BftForksSchedule.class);
-    when(bftForksSchedule.getFork(anyLong())).thenReturn(spec);
+    final ForksSchedule<QbftConfigOptions> forksSchedule = mock(ForksSchedule.class);
+    when(forksSchedule.getFork(anyLong())).thenReturn(spec);
 
     qbftBlockCreatorFactory =
         new QbftBlockCreatorFactory(
@@ -66,7 +66,7 @@ public class QbftBlockCreatorFactoryTest {
             mock(Address.class),
             mock(Address.class),
             extraDataCodec,
-            bftForksSchedule);
+            forksSchedule);
   }
 
   @Test

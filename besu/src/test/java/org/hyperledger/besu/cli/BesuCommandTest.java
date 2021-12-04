@@ -1305,7 +1305,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--bootnodes", "invalid_enode_url");
     assertThat(commandOutput.toString()).isEmpty();
     final String expectedErrorOutputStart =
-        "Invalid enode URL syntax. Enode URL should have the following format "
+        "Invalid enode URL syntax 'invalid_enode_url'. Enode URL should have the following format "
             + "'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.";
     assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
   }
@@ -1330,7 +1330,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--bootnodes=invalid_enode_url");
     assertThat(commandOutput.toString()).isEmpty();
     final String expectedErrorOutputStart =
-        "Invalid enode URL syntax. Enode URL should have the following format "
+        "Invalid enode URL syntax 'invalid_enode_url'. Enode URL should have the following format "
             + "'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.";
     assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
   }
