@@ -43,6 +43,11 @@ public enum RpcMethod {
   DEBUG_TRACE_TRANSACTION("debug_traceTransaction"),
   DEBUG_BATCH_RAW_TRANSACTION("debug_batchSendRawTransaction"),
   DEBUG_GET_BAD_BLOCKS("debug_getBadBlocks"),
+
+  ENGINE_GET_PAYLOAD("engine_getPayloadV1"),
+  ENGINE_EXECUTE_PAYLOAD("engine_executePayloadV1"),
+  ENGINE_FORKCHOICE_UPDATED("engine_forkchoiceUpdatedV1"),
+
   GOQUORUM_ETH_GET_QUORUM_PAYLOAD("eth_getQuorumPayload"),
   GOQUORUM_STORE_RAW("goquorum_storeRaw"),
   PRIV_CALL("priv_call"),
