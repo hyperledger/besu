@@ -22,11 +22,11 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-public class ScheduableProtocolContext extends ProtocolContext {
+public class SchedulableProtocolContext extends ProtocolContext {
 
   private final ForksSchedule<ConsensusContext> consensusContextSchedule;
 
-  public ScheduableProtocolContext(
+  public SchedulableProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ForksSchedule<ConsensusContext> consensusContextSchedule) {
@@ -47,7 +47,7 @@ public class ScheduableProtocolContext extends ProtocolContext {
     final ConsensusContext consensusContext =
         consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule);
     final SchedulableContext schedulableContext = consensusContext.as(SchedulableContext.class);
-    return new ScheduableProtocolContext(
+    return new SchedulableProtocolContext(
         blockchain, worldStateArchive, schedulableContext.getConsensusContextSchedule());
   }
 

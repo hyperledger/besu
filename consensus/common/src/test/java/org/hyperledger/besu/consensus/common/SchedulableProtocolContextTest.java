@@ -27,7 +27,7 @@ import java.util.List;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class ScheduableProtocolContextTest {
+public class SchedulableProtocolContextTest {
 
   @Test
   public void returnsContextForSpecificChainHeight() {
@@ -42,18 +42,18 @@ public class ScheduableProtocolContextTest {
 
     final ForksSchedule<ConsensusContext> contextSchedule =
         new ForksSchedule<>(new ForkSpec<>(0L, context1), List.of(new ForkSpec<>(10L, context2)));
-    final ScheduableProtocolContext scheduableProtocolContext =
-        new ScheduableProtocolContext(blockchain, worldStateArchive, contextSchedule);
+    final SchedulableProtocolContext schedulableProtocolContext =
+        new SchedulableProtocolContext(blockchain, worldStateArchive, contextSchedule);
 
-    assertThat(scheduableProtocolContext.getConsensusContext(ConsensusContext.class))
+    assertThat(schedulableProtocolContext.getConsensusContext(ConsensusContext.class))
         .isSameAs(context1);
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(2L);
-    assertThat(scheduableProtocolContext.getConsensusContext(ConsensusContext.class))
+    assertThat(schedulableProtocolContext.getConsensusContext(ConsensusContext.class))
         .isSameAs(context1);
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(10L);
-    assertThat(scheduableProtocolContext.getConsensusContext(ConsensusContext.class))
+    assertThat(schedulableProtocolContext.getConsensusContext(ConsensusContext.class))
         .isSameAs(context2);
   }
 }
