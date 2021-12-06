@@ -33,7 +33,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class SchedulableMiningCoordinator implements MiningCoordinator, BlockAddedObserver {
+public class MigratingMiningCoordinator implements MiningCoordinator, BlockAddedObserver {
 
   private static final Logger LOG = getLogger();
 
@@ -42,7 +42,7 @@ public class SchedulableMiningCoordinator implements MiningCoordinator, BlockAdd
   private MiningCoordinator activeMiningCoordinator;
   private long blockAddedObserverId;
 
-  public SchedulableMiningCoordinator(
+  public MigratingMiningCoordinator(
       final ForksSchedule<MiningCoordinator> miningCoordinatorSchedule,
       final Blockchain blockchain) {
     this.miningCoordinatorSchedule = miningCoordinatorSchedule;

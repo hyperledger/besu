@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
-import org.hyperledger.besu.consensus.common.SchedulableMiningCoordinator;
+import org.hyperledger.besu.consensus.common.MigratingMiningCoordinator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -138,39 +138,27 @@ public class ConsensusScheduleBesuControllerBuilderTest {
             mock(SyncState.class),
             mock(EthProtocolManager.class));
 
-    assertThat(miningCoordinator).isInstanceOf(SchedulableMiningCoordinator.class);
-    final SchedulableMiningCoordinator schedulableMiningCoordinator =
-        (SchedulableMiningCoordinator) miningCoordinator;
+    assertThat(miningCoordinator).isInstanceOf(MigratingMiningCoordinator.class);
+    final MigratingMiningCoordinator migratingMiningCoordinator =
+        (MigratingMiningCoordinator) miningCoordinator;
 
     SoftAssertions.assertSoftly(
         (softly) -> {
           softly
               .assertThat(
-                  schedulableMiningCoordinator
-                      .getMiningCoordinatorSchedule()
-                      .getFork(0L)
-                      .getValue())
+                  migratingMiningCoordinator.getMiningCoordinatorSchedule().getFork(0L).getValue())
               .isSameAs(miningCoordinator1);
           softly
               .assertThat(
-                  schedulableMiningCoordinator
-                      .getMiningCoordinatorSchedule()
-                      .getFork(4L)
-                      .getValue())
+                  migratingMiningCoordinator.getMiningCoordinatorSchedule().getFork(4L).getValue())
               .isSameAs(miningCoordinator1);
           softly
               .assertThat(
-                  schedulableMiningCoordinator
-                      .getMiningCoordinatorSchedule()
-                      .getFork(5L)
-                      .getValue())
+                  migratingMiningCoordinator.getMiningCoordinatorSchedule().getFork(5L).getValue())
               .isSameAs(miningCoordinator2);
           softly
               .assertThat(
-                  schedulableMiningCoordinator
-                      .getMiningCoordinatorSchedule()
-                      .getFork(6L)
-                      .getValue())
+                  migratingMiningCoordinator.getMiningCoordinatorSchedule().getFork(6L).getValue())
               .isSameAs(miningCoordinator2);
         });
   }

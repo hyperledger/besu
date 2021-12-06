@@ -41,7 +41,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SchedulableMiningCoordinatorTest {
+public class MigratingMiningCoordinatorTest {
 
   @Mock private BftMiningCoordinator coordinator1;
   @Mock private BftMiningCoordinator coordinator2;
@@ -67,8 +67,8 @@ public class SchedulableMiningCoordinatorTest {
 
   @Test
   public void startShouldRegisterThisCoordinatorAsObserver() {
-    final SchedulableMiningCoordinator coordinator =
-        new SchedulableMiningCoordinator(miningCoordinatorSchedule, blockchain);
+    final MigratingMiningCoordinator coordinator =
+        new MigratingMiningCoordinator(miningCoordinatorSchedule, blockchain);
 
     coordinator.start();
 
@@ -77,8 +77,8 @@ public class SchedulableMiningCoordinatorTest {
 
   @Test
   public void stopShouldUnregisterThisCoordinatorAsObserver() {
-    final SchedulableMiningCoordinator coordinator =
-        new SchedulableMiningCoordinator(miningCoordinatorSchedule, blockchain);
+    final MigratingMiningCoordinator coordinator =
+        new MigratingMiningCoordinator(miningCoordinatorSchedule, blockchain);
     when(blockchain.observeBlockAdded(coordinator)).thenReturn(1L);
 
     coordinator.start();
@@ -91,8 +91,7 @@ public class SchedulableMiningCoordinatorTest {
   public void onBlockAddedShouldMigrateToNextMiningCoordinatorAndDelegate() {
     when(blockHeader.getNumber()).thenReturn(MIGRATION_BLOCK_NUMBER - 1);
 
-    new SchedulableMiningCoordinator(miningCoordinatorSchedule, blockchain)
-        .onBlockAdded(blockEvent);
+    new MigratingMiningCoordinator(miningCoordinatorSchedule, blockchain).onBlockAdded(blockEvent);
 
     verify(coordinator1).stop();
     verify(coordinator2).start();
@@ -105,7 +104,7 @@ public class SchedulableMiningCoordinatorTest {
         new ForksSchedule<>(new ForkSpec<>(GENESIS_BLOCK_NUMBER, noopCoordinator), emptyList());
     when(blockHeader.getNumber()).thenReturn(GENESIS_BLOCK_NUMBER);
 
-    new SchedulableMiningCoordinator(noopCoordinatorSchedule, blockchain).onBlockAdded(blockEvent);
+    new MigratingMiningCoordinator(noopCoordinatorSchedule, blockchain).onBlockAdded(blockEvent);
 
     verifyNoInteractions(noopCoordinator);
   }
@@ -179,7 +178,7 @@ public class SchedulableMiningCoordinatorTest {
       final MiningCoordinator expectedInactiveCoordinator) {
     when(blockchain.getChainHeadBlockNumber()).thenReturn(blockHeight);
 
-    methodUnderTest.accept(new SchedulableMiningCoordinator(miningCoordinatorSchedule, blockchain));
+    methodUnderTest.accept(new MigratingMiningCoordinator(miningCoordinatorSchedule, blockchain));
 
     methodUnderTest.accept(verify(expectedActiveCoordinator));
     verifyNoInteractions(expectedInactiveCoordinator);
@@ -199,7 +198,7 @@ public class SchedulableMiningCoordinatorTest {
       throws InterruptedException {
     when(blockchain.getChainHeadBlockNumber()).thenReturn(blockHeight);
 
-    new SchedulableMiningCoordinator(miningCoordinatorSchedule, blockchain).awaitStop();
+    new MigratingMiningCoordinator(miningCoordinatorSchedule, blockchain).awaitStop();
 
     verify(expectedActiveCoordinator).awaitStop();
     verifyNoInteractions(expectedInactiveCoordinator);
@@ -219,8 +218,7 @@ public class SchedulableMiningCoordinatorTest {
     when(blockchain.getChainHeadBlockNumber()).thenReturn(blockHeight);
     when(blockHeader.getNumber()).thenReturn(blockHeight);
 
-    new SchedulableMiningCoordinator(miningCoordinatorSchedule, blockchain)
-        .onBlockAdded(blockEvent);
+    new MigratingMiningCoordinator(miningCoordinatorSchedule, blockchain).onBlockAdded(blockEvent);
 
     verify(expectedActiveCoordinator).onBlockAdded(blockEvent);
     verifyNoInteractions(expectedInactiveCoordinator);
