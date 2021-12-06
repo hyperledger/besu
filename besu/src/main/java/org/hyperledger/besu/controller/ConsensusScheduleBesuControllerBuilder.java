@@ -166,7 +166,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
                         e.getValue()
                             .createConsensusContext(
                                 blockchain, worldStateArchive, protocolSchedule)))
-            .sorted(ForkSpec.COMPARATOR)
             .collect(Collectors.toList());
     final ForksSchedule<ConsensusContext> consensusContextsSchedule =
         new ForksSchedule<>(
