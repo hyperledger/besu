@@ -44,7 +44,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.enclave.testutil.EnclaveTestHarness;
 import org.hyperledger.enclave.testutil.EnclaveType;
 import org.hyperledger.enclave.testutil.NoopEnclaveTestHarness;
-import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
 import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 
 import java.io.IOException;
@@ -74,7 +73,7 @@ public class PrivacyNode implements AutoCloseable {
   private final EnclaveTestHarness enclave;
   private final BesuNode besu;
   private final Vertx vertx;
-  private final boolean isOnchainPrivacyEnabled;
+  private final boolean isFlexiblePrivacyEnabled;
   private final boolean isMultitenancyEnabled;
   private final boolean isPrivacyPluginEnabled;
 
@@ -92,7 +91,7 @@ public class PrivacyNode implements AutoCloseable {
 
     final BesuNodeConfiguration besuConfig = config;
 
-    isOnchainPrivacyEnabled = privacyConfiguration.isOnchainPrivacyGroupEnabled();
+    isFlexiblePrivacyEnabled = privacyConfiguration.isFlexiblePrivacyGroupEnabled();
     isMultitenancyEnabled = privacyConfiguration.isMultitenancyEnabled();
     isPrivacyPluginEnabled = privacyConfiguration.isPrivacyPluginEnabled();
 
@@ -110,6 +109,7 @@ public class PrivacyNode implements AutoCloseable {
             besuConfig.getNetwork(),
             besuConfig.getGenesisConfigProvider(),
             besuConfig.isP2pEnabled(),
+            besuConfig.getP2pPort(),
             besuConfig.getTLSConfiguration(),
             besuConfig.getNetworkingConfiguration(),
             besuConfig.isDiscoveryEnabled(),
@@ -196,18 +196,23 @@ public class PrivacyNode implements AutoCloseable {
       final Path dataDir = Files.createTempDirectory("acctest-privacy");
       final Path dbDir = dataDir.resolve(DATABASE_PATH);
 
-      privacyParameters =
+      var builder =
           new PrivacyParameters.Builder()
               .setEnabled(true)
               .setEnclaveUrl(enclave.clientUrl())
-              .setPrivacyUserIdUsingFile(enclave.getPublicKeyPaths().get(0).toFile())
               .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
               .setPrivateKeyPath(KeyPairUtil.getDefaultKeyFile(besu.homeDirectory()).toPath())
               .setEnclaveFactory(new EnclaveFactory(vertx))
-              .setOnchainPrivacyGroupsEnabled(isOnchainPrivacyEnabled)
+              .setFlexiblePrivacyGroupsEnabled(isFlexiblePrivacyEnabled)
               .setMultiTenancyEnabled(isMultitenancyEnabled)
-              .setPrivacyPluginEnabled(isPrivacyPluginEnabled)
-              .build();
+              .setPrivacyPluginEnabled(isPrivacyPluginEnabled);
+
+      if (enclave.getPublicKeyPaths().size() > 0) {
+        builder.setPrivacyUserIdUsingFile(enclave.getPublicKeyPaths().get(0).toFile());
+      }
+
+      privacyParameters = builder.build();
+
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
@@ -287,8 +292,7 @@ public class PrivacyNode implements AutoCloseable {
 
     switch (enclaveType) {
       case ORION:
-        return OrionTestHarnessFactory.create(
-            config.getName(), tempDir, privacyConfiguration.getKeyConfig());
+        throw new UnsupportedOperationException("The Orion tests are getting deprecated");
       case TESSERA:
         return TesseraTestHarnessFactory.create(
             config.getName(), tempDir, privacyConfiguration.getKeyConfig(), containerNetwork);

@@ -16,8 +16,8 @@
 package org.hyperledger.besu.consensus.qbft.validator;
 
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
@@ -27,18 +27,17 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Collection;
 import java.util.Optional;
-import java.util.function.Function;
 
 public class ForkingValidatorProvider implements ValidatorProvider {
 
   private final Blockchain blockchain;
-  private final BftForksSchedule<QbftConfigOptions> forksSchedule;
+  private final ForksSchedule<QbftConfigOptions> forksSchedule;
   private final BlockValidatorProvider blockValidatorProvider;
   private final TransactionValidatorProvider transactionValidatorProvider;
 
   public ForkingValidatorProvider(
       final Blockchain blockchain,
-      final BftForksSchedule<QbftConfigOptions> forksSchedule,
+      final ForksSchedule<QbftConfigOptions> forksSchedule,
       final BlockValidatorProvider blockValidatorProvider,
       final TransactionValidatorProvider transactionValidatorProvider) {
     this.blockchain = blockchain;
@@ -49,18 +48,19 @@ public class ForkingValidatorProvider implements ValidatorProvider {
 
   @Override
   public Collection<Address> getValidatorsAtHead() {
-    final BlockHeader header = blockchain.getChainHeadHeader();
-    return getValidators(header.getNumber(), ValidatorProvider::getValidatorsAtHead);
+    final BlockHeader chainHead = blockchain.getChainHeadHeader();
+    return getValidatorsAfterBlock(chainHead);
   }
 
   @Override
-  public Collection<Address> getValidatorsAfterBlock(final BlockHeader header) {
-    return getValidators(header.getNumber(), p -> p.getValidatorsAfterBlock(header));
+  public Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
+    final long nextBlock = parentHeader.getNumber() + 1;
+    return resolveValidatorProvider(nextBlock).getValidatorsAfterBlock(parentHeader);
   }
 
   @Override
   public Collection<Address> getValidatorsForBlock(final BlockHeader header) {
-    return getValidators(header.getNumber(), p -> p.getValidatorsForBlock(header));
+    return resolveValidatorProvider(header.getNumber()).getValidatorsForBlock(header);
   }
 
   @Override
@@ -74,31 +74,9 @@ public class ForkingValidatorProvider implements ValidatorProvider {
     return resolveValidatorProvider(header.getNumber() + 1).getVoteProviderAtHead();
   }
 
-  private Collection<Address> getValidators(
-      final long block, final Function<ValidatorProvider, Collection<Address>> getValidators) {
-    final BftForkSpec<QbftConfigOptions> forkSpec = forksSchedule.getFork(block);
-    final ValidatorProvider validatorProvider = resolveValidatorProvider(block);
-
-    // when moving to a block validator the first block needs to be initialised or created with
-    // the previous block state otherwise we would have no validators
-    if (!forkSpec.getConfigOptions().isValidatorContractMode()) {
-      if (block > 0 && block == forkSpec.getBlock()) {
-        final long prevBlockNumber = block - 1L;
-        final Optional<BlockHeader> prevBlockHeader = blockchain.getBlockHeader(prevBlockNumber);
-        if (prevBlockHeader.isPresent()) {
-          return resolveValidatorProvider(prevBlockNumber)
-              .getValidatorsForBlock(prevBlockHeader.get());
-        }
-      }
-      return getValidators.apply(validatorProvider);
-    }
-
-    return getValidators.apply(validatorProvider);
-  }
-
   private ValidatorProvider resolveValidatorProvider(final long block) {
-    final BftForkSpec<QbftConfigOptions> fork = forksSchedule.getFork(block);
-    return fork.getConfigOptions().isValidatorContractMode()
+    final ForkSpec<QbftConfigOptions> fork = forksSchedule.getFork(block);
+    return fork.getValue().isValidatorContractMode()
         ? transactionValidatorProvider
         : blockValidatorProvider;
   }

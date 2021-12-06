@@ -26,11 +26,11 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -79,10 +79,10 @@ public class IbftProtocolScheduleTest {
     final ProtocolSchedule schedule =
         createProtocolSchedule(
             JsonGenesisConfigOptions.fromJsonObject(JsonUtil.createEmptyObjectNode()),
-            new BftForkSpec<>(0, JsonQbftConfigOptions.DEFAULT),
+            new ForkSpec<>(0, JsonQbftConfigOptions.DEFAULT),
             List.of(
-                new BftForkSpec<>(1, arbitraryTransition),
-                new BftForkSpec<>(2, JsonQbftConfigOptions.DEFAULT)));
+                new ForkSpec<>(1, arbitraryTransition),
+                new ForkSpec<>(2, JsonQbftConfigOptions.DEFAULT)));
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(3);
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 0)).isTrue();
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 1)).isTrue();
@@ -91,11 +91,11 @@ public class IbftProtocolScheduleTest {
 
   private ProtocolSchedule createProtocolSchedule(
       final GenesisConfigOptions genesisConfig,
-      final BftForkSpec<BftConfigOptions> genesisFork,
-      final List<BftForkSpec<BftConfigOptions>> forks) {
+      final ForkSpec<BftConfigOptions> genesisFork,
+      final List<ForkSpec<BftConfigOptions>> forks) {
     return IbftProtocolSchedule.create(
         genesisConfig,
-        new BftForksSchedule<>(genesisFork, forks),
+        new ForksSchedule<>(genesisFork, forks),
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,

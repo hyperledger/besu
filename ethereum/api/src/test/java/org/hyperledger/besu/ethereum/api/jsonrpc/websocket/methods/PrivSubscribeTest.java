@@ -15,10 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -34,7 +32,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.PrivateSubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionRequestMapper;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
-import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import io.vertx.core.json.Json;
@@ -108,33 +105,6 @@ public class PrivSubscribeTest {
             jsonRpcrequestContext.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
 
     assertThat(privSubscribe.response(jsonRpcrequestContext)).isEqualTo(expectedResponse);
-  }
-
-  @Test
-  public void multiTenancyCheckFailure() {
-    final User user = mock(User.class);
-    final WebSocketRpcRequest webSocketRequest = createWebSocketRpcRequest();
-    final JsonRpcRequestContext jsonRpcrequestContext =
-        new JsonRpcRequestContext(webSocketRequest, user);
-
-    final PrivateSubscribeRequest subscribeRequest =
-        new PrivateSubscribeRequest(
-            SubscriptionType.LOGS,
-            null,
-            null,
-            webSocketRequest.getConnectionId(),
-            PRIVACY_GROUP_ID,
-            "public_key");
-
-    when(mapperMock.mapPrivateSubscribeRequest(any(), any())).thenReturn(subscribeRequest);
-    when(privacyIdProvider.getPrivacyUserId(any())).thenReturn(ENCLAVE_KEY);
-    doThrow(new MultiTenancyValidationException("msg"))
-        .when(privacyController)
-        .verifyPrivacyGroupContainsPrivacyUserId(eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY));
-
-    assertThatThrownBy(() -> privSubscribe.response(jsonRpcrequestContext))
-        .isInstanceOf(MultiTenancyValidationException.class)
-        .hasMessageContaining("msg");
   }
 
   @Test

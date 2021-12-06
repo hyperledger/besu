@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
@@ -33,7 +35,6 @@ import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
@@ -108,6 +109,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -406,15 +408,14 @@ public class TestContextBuilder {
 
     final BftBlockInterface blockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
 
-    final BftForksSchedule<QbftConfigOptions> forksSchedule =
+    final ForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(genesisConfigOptions);
 
     final ProtocolSchedule protocolSchedule =
         QbftProtocolSchedule.create(
             genesisConfigOptions, forksSchedule, BFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
 
-    final BftValidatorOverrides validatorOverrides =
-        new BftValidatorOverrides(Collections.emptyMap());
+    final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule);
 
@@ -423,7 +424,7 @@ public class TestContextBuilder {
             blockChain, epochManager, blockInterface, validatorOverrides);
     final TransactionValidatorProvider transactionValidatorProvider =
         new TransactionValidatorProvider(
-            blockChain, new ValidatorContractController(transactionSimulator, forksSchedule));
+            blockChain, new ValidatorContractController(transactionSimulator), forksSchedule);
     final ValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, transactionValidatorProvider);
@@ -462,7 +463,7 @@ public class TestContextBuilder {
     final BftExecutors bftExecutors = BftExecutors.create(new NoOpMetricsSystem());
     final BftFinalState finalState =
         new BftFinalState(
-            protocolContext.getConsensusState(BftContext.class).getValidatorProvider(),
+            protocolContext.getConsensusContext(BftContext.class).getValidatorProvider(),
             nodeKey,
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
@@ -531,5 +532,22 @@ public class TestContextBuilder {
           Optional.of(VALIDATOR_CONTRACT_ADDRESS.toHexString()));
     }
     return qbftConfigOptions;
+  }
+
+  private static BftValidatorOverrides convertBftForks(final List<QbftFork> bftForks) {
+    final Map<Long, List<Address>> result = new HashMap<>();
+
+    for (final BftFork fork : bftForks) {
+      fork.getValidators()
+          .ifPresent(
+              validators ->
+                  result.put(
+                      fork.getForkBlock(),
+                      validators.stream()
+                          .map(Address::fromHexString)
+                          .collect(Collectors.toList())));
+    }
+
+    return new BftValidatorOverrides(result);
   }
 }

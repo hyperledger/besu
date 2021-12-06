@@ -23,13 +23,13 @@ import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
@@ -307,7 +307,7 @@ public class TestContextBuilder {
     genesisConfigOptions.byzantiumBlock(0);
     genesisConfigOptions.transitions(TestTransitions.createIbftTestTransitions(bftForks));
 
-    final BftForksSchedule<BftConfigOptions> forksSchedule =
+    final ForksSchedule<BftConfigOptions> forksSchedule =
         IbftForksSchedulesFactory.create(genesisConfigOptions);
 
     final ProtocolSchedule protocolSchedule =
@@ -357,7 +357,7 @@ public class TestContextBuilder {
     final BftExecutors bftExecutors = BftExecutors.create(new NoOpMetricsSystem());
     final BftFinalState finalState =
         new BftFinalState(
-            protocolContext.getConsensusState(BftContext.class).getValidatorProvider(),
+            protocolContext.getConsensusContext(BftContext.class).getValidatorProvider(),
             nodeKey,
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,

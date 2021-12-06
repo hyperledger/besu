@@ -16,9 +16,9 @@ package org.hyperledger.besu.consensus.qbft.blockcreation;
 
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.datatypes.Address;
@@ -36,7 +36,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** Supports contract based voters and validators in extra data */
 public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
-  private final BftForksSchedule<QbftConfigOptions> forksSchedule;
+  private final ForksSchedule<QbftConfigOptions> forksSchedule;
 
   public QbftBlockCreatorFactory(
       final AbstractPendingTransactionsSorter pendingTransactions,
@@ -46,7 +46,7 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
       final Address localAddress,
       final Address miningBeneficiary,
       final BftExtraDataCodec bftExtraDataCodec,
-      final BftForksSchedule<QbftConfigOptions> forksSchedule) {
+      final ForksSchedule<QbftConfigOptions> forksSchedule) {
     super(
         pendingTransactions,
         protocolContext,
@@ -61,7 +61,7 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
   @Override
   public BlockCreator create(final BlockHeader parentHeader, final int round) {
     final BlockCreator blockCreator = super.create(parentHeader, round);
-    final QbftContext qbftContext = protocolContext.getConsensusState(QbftContext.class);
+    final QbftContext qbftContext = protocolContext.getConsensusContext(QbftContext.class);
     if (qbftContext.getPkiBlockCreationConfiguration().isEmpty()) {
       return blockCreator;
     } else {
@@ -72,10 +72,7 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
 
   @Override
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
-    if (forksSchedule
-        .getFork(parentHeader.getNumber() + 1L)
-        .getConfigOptions()
-        .isValidatorContractMode()) {
+    if (forksSchedule.getFork(parentHeader.getNumber() + 1L).getValue().isValidatorContractMode()) {
       // vote and validators will come from contract instead of block
       final BftExtraData extraData =
           new BftExtraData(

@@ -114,7 +114,7 @@ public final class KubernetesClusterIpNatManagerTest {
             p2pPort,
             p2pPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 
   @Test
@@ -133,7 +133,7 @@ public final class KubernetesClusterIpNatManagerTest {
             rpcHttpPort,
             rpcHttpPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 
   @Test
@@ -152,6 +152,6 @@ public final class KubernetesClusterIpNatManagerTest {
             p2pPort,
             p2pPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 }

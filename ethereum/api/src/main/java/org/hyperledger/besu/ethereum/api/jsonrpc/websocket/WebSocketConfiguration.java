@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 
 import java.io.File;
 import java.util.Arrays;
@@ -40,6 +41,7 @@ public class WebSocketConfiguration {
   private String authenticationCredentialsFile;
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private File authenticationPublicKeyFile;
+  private JwtAlgorithm authenticationAlgorithm = JwtAlgorithm.RS256;
   private long timeoutSec;
   private int maxActiveConnections;
 
@@ -118,6 +120,14 @@ public class WebSocketConfiguration {
 
   public void setAuthenticationPublicKeyFile(final File authenticationPublicKeyFile) {
     this.authenticationPublicKeyFile = authenticationPublicKeyFile;
+  }
+
+  public JwtAlgorithm getAuthenticationAlgorithm() {
+    return authenticationAlgorithm;
+  }
+
+  public void setAuthenticationAlgorithm(final JwtAlgorithm algorithm) {
+    authenticationAlgorithm = algorithm;
   }
 
   public long getTimeoutSec() {

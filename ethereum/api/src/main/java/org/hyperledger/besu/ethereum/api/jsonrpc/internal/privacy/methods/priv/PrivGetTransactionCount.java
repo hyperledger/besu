@@ -61,7 +61,7 @@ public class PrivGetTransactionCount implements JsonRpcMethod {
 
     try {
       final long nonce =
-          privacyController.determineBesuNonce(
+          privacyController.determineNonce(
               address,
               privacyGroupId,
               privacyIdProvider.getPrivacyUserId(requestContext.getUser()));

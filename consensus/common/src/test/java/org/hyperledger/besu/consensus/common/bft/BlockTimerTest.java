@@ -26,6 +26,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.JsonBftConfigOptions;
+import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -48,7 +50,7 @@ public class BlockTimerTest {
   private BftExecutors bftExecutors;
   private BftEventQueue mockQueue;
   private Clock mockClock;
-  private BftForksSchedule<BftConfigOptions> mockForksSchedule;
+  private ForksSchedule<BftConfigOptions> mockForksSchedule;
 
   @Before
   @SuppressWarnings("unchecked")
@@ -56,7 +58,7 @@ public class BlockTimerTest {
     bftExecutors = mock(BftExecutors.class);
     mockQueue = mock(BftEventQueue.class);
     mockClock = mock(Clock.class);
-    mockForksSchedule = mock(BftForksSchedule.class);
+    mockForksSchedule = mock(ForksSchedule.class);
   }
 
   @Test
@@ -78,7 +80,7 @@ public class BlockTimerTest {
     final long EXPECTED_DELAY = 10_000L;
 
     when(mockForksSchedule.getFork(anyLong()))
-        .thenReturn(new BftForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS)));
+        .thenReturn(new ForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS)));
 
     final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
 
@@ -107,7 +109,7 @@ public class BlockTimerTest {
     final long EXPECTED_DELAY = 500;
 
     when(mockForksSchedule.getFork(anyLong()))
-        .thenReturn(new BftForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS)));
+        .thenReturn(new ForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS)));
     when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
     final BlockHeader header =
@@ -140,7 +142,8 @@ public class BlockTimerTest {
     final BftEvent queuedEvent = eventQueue.poll(0, TimeUnit.SECONDS);
     assertThat(queuedEvent).isInstanceOf(BlockTimerExpiry.class);
     assertThat(((BlockTimerExpiry) queuedEvent).getRoundIndentifier())
-        .isEqualToComparingFieldByField(round);
+        .usingRecursiveComparison()
+        .isEqualTo(round);
   }
 
   @Test
@@ -150,7 +153,7 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 500;
 
     when(mockForksSchedule.getFork(anyLong()))
-        .thenReturn(new BftForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS)));
+        .thenReturn(new ForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS)));
 
     final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
 
@@ -169,7 +172,8 @@ public class BlockTimerTest {
 
     assertThat(bftEventCaptor.getValue() instanceof BlockTimerExpiry).isTrue();
     assertThat(((BlockTimerExpiry) bftEventCaptor.getValue()).getRoundIndentifier())
-        .isEqualToComparingFieldByField(round);
+        .usingRecursiveComparison()
+        .isEqualTo(round);
   }
 
   @Test
@@ -179,7 +183,7 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 500L;
 
     when(mockForksSchedule.getFork(anyLong()))
-        .thenReturn(new BftForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS)));
+        .thenReturn(new ForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS)));
 
     final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
 
@@ -198,7 +202,8 @@ public class BlockTimerTest {
 
     assertThat(bftEventCaptor.getValue() instanceof BlockTimerExpiry).isTrue();
     assertThat(((BlockTimerExpiry) bftEventCaptor.getValue()).getRoundIndentifier())
-        .isEqualToComparingFieldByField(round);
+        .usingRecursiveComparison()
+        .isEqualTo(round);
   }
 
   @Test
@@ -208,7 +213,7 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 500L;
 
     when(mockForksSchedule.getFork(anyLong()))
-        .thenReturn(new BftForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS)));
+        .thenReturn(new ForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS)));
 
     final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
 
@@ -236,7 +241,7 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 500L;
 
     when(mockForksSchedule.getFork(anyLong()))
-        .thenReturn(new BftForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS)));
+        .thenReturn(new ForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS)));
 
     final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
 

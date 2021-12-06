@@ -25,6 +25,8 @@ import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;
 
+import org.mockito.Mockito;
+
 public class IbftLegacyContextBuilder {
 
   public static IbftLegacyContext setupContextWithValidators(final Collection<Address> validators) {
@@ -33,6 +35,7 @@ public class IbftLegacyContextBuilder {
         mock(ValidatorProvider.class, withSettings().lenient());
     when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
+    when(bftContext.as(Mockito.any())).thenReturn(bftContext);
     return bftContext;
   }
 }

@@ -19,11 +19,11 @@ import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
@@ -86,7 +86,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
   private BftConfigOptions bftConfig;
-  private BftForksSchedule<BftConfigOptions> bftForksSchedule;
+  private ForksSchedule<BftConfigOptions> forksSchedule;
   private ValidatorPeers peers;
 
   @Override
@@ -98,7 +98,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected void prepForBuild() {
     bftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getBftConfigOptions();
     bftEventQueue = new BftEventQueue(bftConfig.getMessageQueueLimit());
-    bftForksSchedule = IbftForksSchedulesFactory.create(genesisConfig.getConfigOptions());
+    forksSchedule = IbftForksSchedulesFactory.create(genesisConfig.getConfigOptions());
   }
 
   @Override
@@ -141,7 +141,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             bftExtraDataCodec().get());
 
     final ValidatorProvider validatorProvider =
-        protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
+        protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockchain, bftBlockInterface().get(), true, validatorProvider);
@@ -163,7 +163,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             proposerSelector,
             uniqueMessageMulticaster,
             new RoundTimer(bftEventQueue, bftConfig.getRequestTimeoutSeconds(), bftExecutors),
-            new BlockTimer(bftEventQueue, bftForksSchedule, bftExecutors, clock),
+            new BlockTimer(bftEventQueue, forksSchedule, bftExecutors, clock),
             blockCreatorFactory,
             clock);
 
@@ -226,7 +226,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext) {
     final ValidatorProvider validatorProvider =
-        protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
+        protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();
     return new IbftQueryPluginServiceFactory(
         blockchain, bftBlockInterface().get(), validatorProvider, nodeKey);
   }
@@ -235,7 +235,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected ProtocolSchedule createProtocolSchedule() {
     return IbftProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
-        bftForksSchedule,
+        forksSchedule,
         privacyParameters,
         isRevertReasonEnabled,
         bftExtraDataCodec().get(),

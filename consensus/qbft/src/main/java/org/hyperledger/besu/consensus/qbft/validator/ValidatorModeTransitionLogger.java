@@ -16,8 +16,8 @@
 package org.hyperledger.besu.consensus.qbft.validator;
 
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.function.Consumer;
@@ -30,30 +30,29 @@ public class ValidatorModeTransitionLogger {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final BftForksSchedule<QbftConfigOptions> bftForksSchedule;
+  private final ForksSchedule<QbftConfigOptions> forksSchedule;
   private final Consumer<String> msgConsumer;
 
-  public ValidatorModeTransitionLogger(final BftForksSchedule<QbftConfigOptions> bftForksSchedule) {
-    this.bftForksSchedule = bftForksSchedule;
+  public ValidatorModeTransitionLogger(final ForksSchedule<QbftConfigOptions> forksSchedule) {
+    this.forksSchedule = forksSchedule;
     this.msgConsumer = LOG::info;
   }
 
   @VisibleForTesting
   ValidatorModeTransitionLogger(
-      final BftForksSchedule<QbftConfigOptions> bftForksSchedule,
-      final Consumer<String> msgConsumer) {
-    this.bftForksSchedule = bftForksSchedule;
+      final ForksSchedule<QbftConfigOptions> forksSchedule, final Consumer<String> msgConsumer) {
+    this.forksSchedule = forksSchedule;
     this.msgConsumer = msgConsumer;
   }
 
   public void logTransitionChange(final BlockHeader parentHeader) {
-    final BftForkSpec<QbftConfigOptions> currentForkSpec =
-        bftForksSchedule.getFork(parentHeader.getNumber());
-    final BftForkSpec<QbftConfigOptions> nextForkSpec =
-        bftForksSchedule.getFork(parentHeader.getNumber() + 1L);
+    final ForkSpec<QbftConfigOptions> currentForkSpec =
+        forksSchedule.getFork(parentHeader.getNumber());
+    final ForkSpec<QbftConfigOptions> nextForkSpec =
+        forksSchedule.getFork(parentHeader.getNumber() + 1L);
 
-    final QbftConfigOptions currentConfigOptions = currentForkSpec.getConfigOptions();
-    final QbftConfigOptions nextConfigOptions = nextForkSpec.getConfigOptions();
+    final QbftConfigOptions currentConfigOptions = currentForkSpec.getValue();
+    final QbftConfigOptions nextConfigOptions = nextForkSpec.getValue();
 
     if (hasChangedConfig(currentConfigOptions, nextConfigOptions)) {
       msgConsumer.accept(

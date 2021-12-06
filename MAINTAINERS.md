@@ -11,10 +11,12 @@
 | Antoine Toulme   | atoulme          | atoulme          |
 | Antony Denyer    | antonydenyer     | antonydenyer     |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
-| David Mechler    | davemec          | davemec          |
-| Edward Mack      | edwardmack       | mackcom          | 
+| Daniel Lehrner   | daniellehrner    | daniellehrner    |
+| Diego López León | diega            | diega            |
+| Fabio Di Fabio   | fab-10           | fab-10           |
 | Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jason Frame      | jframe           | jframe           |
+| Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
@@ -25,8 +27,9 @@
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Sajida Zouarhi   | sajz             | SajidaZ          |
+| Simon Dudley     | siladu           | siladu           |
 | Stefan Pingel    | pinges           | pinges           |
-| Trent Mohay      | rain-on          | trent.mohay      |
+| Taccat Isid      | taccatisid       | taccatisid       |
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Danno Ferrin     | shemnon          | shemnon          |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
@@ -37,10 +40,13 @@
 | Name             | Github           | LFID             |
 |------------------|------------------|------------------|
 | Chris Hare       | CjHare           | cjhare           |
+| David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
+| Edward Mack      | edwardmack       | mackcom          | 
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Rob Dawson       | rojotek          | RobDawson        |
 | Tim Beiko        | timbeiko         | timbeiko         |
+| Trent Mohay      | rain-on          | trent.mohay      |
 
 ## Becoming a Maintainer
 

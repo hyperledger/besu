@@ -23,8 +23,8 @@ import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForkSpec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
 import java.util.HashMap;
@@ -40,11 +40,11 @@ public class IbftForksSchedulesFactoryTest {
   public void createsScheduleForJustGenesisConfig() {
     final MutableBftConfigOptions bftConfigOptions =
         new MutableBftConfigOptions(JsonQbftConfigOptions.DEFAULT);
-    final BftForkSpec<BftConfigOptions> expectedForkSpec = new BftForkSpec<>(0, bftConfigOptions);
+    final ForkSpec<BftConfigOptions> expectedForkSpec = new ForkSpec<>(0, bftConfigOptions);
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.bftConfigOptions(bftConfigOptions);
 
-    final BftForksSchedule<BftConfigOptions> forksSchedule =
+    final ForksSchedule<BftConfigOptions> forksSchedule =
         IbftForksSchedulesFactory.create(genesisConfigOptions);
     assertThat(forksSchedule.getFork(0)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
     assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
@@ -66,11 +66,11 @@ public class IbftForksSchedulesFactoryTest {
                 BftFork.BLOCK_REWARD_KEY,
                 "5"));
 
-    final BftForksSchedule<BftConfigOptions> forksSchedule =
+    final ForksSchedule<BftConfigOptions> forksSchedule =
         IbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
     assertThat(forksSchedule.getFork(0))
         .usingRecursiveComparison()
-        .isEqualTo(new BftForkSpec<>(0, configOptions));
+        .isEqualTo(new ForkSpec<>(0, configOptions));
 
     final Map<String, Object> forkOptions = new HashMap<>(configOptions.asMap());
     forkOptions.put(BftFork.BLOCK_PERIOD_SECONDS_KEY, 10);
@@ -80,7 +80,7 @@ public class IbftForksSchedulesFactoryTest {
         new MutableBftConfigOptions(
             new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(forkOptions)));
 
-    final BftForkSpec<BftConfigOptions> expectedFork = new BftForkSpec<>(1, expectedForkConfig);
+    final ForkSpec<BftConfigOptions> expectedFork = new ForkSpec<>(1, expectedForkConfig);
     assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedFork);
     assertThat(forksSchedule.getFork(2)).usingRecursiveComparison().isEqualTo(expectedFork);
   }

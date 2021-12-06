@@ -71,6 +71,7 @@ public class BesuNodeFactory {
         config.getNetwork(),
         config.getGenesisConfigProvider(),
         config.isP2pEnabled(),
+        config.getP2pPort(),
         config.getTLSConfiguration(),
         config.getNetworkingConfiguration(),
         config.isDiscoveryEnabled(),
@@ -185,15 +186,27 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createNodeWithAuthenticationUsingJwtPublicKey(final String name)
+  public BesuNode createNodeWithAuthenticationUsingRsaJwtPublicKey(final String name)
       throws IOException, URISyntaxException {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
             .jsonRpcEnabled()
-            .jsonRpcAuthenticationUsingPublicKeyEnabled()
+            .jsonRpcAuthenticationUsingRSA()
             .webSocketEnabled()
-            .webSocketAuthenticationUsingPublicKeyEnabled()
+            .webSocketAuthenticationUsingRsaPublicKeyEnabled()
+            .build());
+  }
+
+  public BesuNode createNodeWithAuthenticationUsingEcdsaJwtPublicKey(final String name)
+      throws IOException, URISyntaxException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .jsonRpcEnabled()
+            .jsonRpcAuthenticationUsingECDSA()
+            .webSocketEnabled()
+            .webSocketAuthenticationUsingEcdsaPublicKeyEnabled()
             .build());
   }
 
@@ -211,14 +224,14 @@ public class BesuNodeFactory {
       final String enclaveUrl,
       final String authFile,
       final String privTransactionSigningKey,
-      final boolean enableOnchainPrivacy)
+      final boolean enableFlexiblePrivacy)
       throws IOException, URISyntaxException {
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     final PrivacyParameters privacyParameters =
         privacyParametersBuilder
             .setMultiTenancyEnabled(true)
             .setEnabled(true)
-            .setOnchainPrivacyGroupsEnabled(enableOnchainPrivacy)
+            .setFlexiblePrivacyGroupsEnabled(enableFlexiblePrivacy)
             .setStorageProvider(new InMemoryPrivacyStorageProvider())
             .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
             .setEnclaveUrl(URI.create(enclaveUrl))

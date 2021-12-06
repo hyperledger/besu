@@ -94,7 +94,7 @@ public class PrivDistributeRawTransactionTest {
 
     final JsonRpcResponse actualResponse = method.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(privacyController)
         .createPrivateMarkerTransactionPayload(
             any(PrivateTransaction.class), eq(ENCLAVE_PUBLIC_KEY), any());
@@ -123,6 +123,6 @@ public class PrivDistributeRawTransactionTest {
 
     final JsonRpcResponse actualResponse = method.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 }
