@@ -25,8 +25,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.SchedulableContext;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -129,7 +129,7 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     assertThat(consensusContext).isInstanceOf(SchedulableContext.class);
     final SchedulableContext schedulableContext = (SchedulableContext) consensusContext;
 
-    final BftForksSchedule<ConsensusContext> contextSchedule =
+    final ForksSchedule<ConsensusContext> contextSchedule =
         schedulableContext.getConsensusContextSchedule();
 
     final NavigableSet<ForkSpec<ConsensusContext>> expectedConsensusContextSpecs =
