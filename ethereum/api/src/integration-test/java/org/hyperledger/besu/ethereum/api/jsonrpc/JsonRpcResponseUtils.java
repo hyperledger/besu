@@ -93,7 +93,7 @@ public class JsonRpcResponseUtils {
     final long timestamp = unsignedLong(values.get(TIMESTAMP));
     final long nonce = unsignedLong(values.get(NONCE));
     final Wei baseFee =
-        values.containsKey(BASEFEE) ? Wei.of(unsignedLong(values.get(BASEFEE))) : null;
+        values.containsKey(BASEFEE) ? Wei.of(unsignedInt256(values.get(BASEFEE))) : null;
     final Difficulty totalDifficulty = Difficulty.of(unsignedInt256(values.get(TOTAL_DIFFICULTY)));
     final int size = unsignedInt(values.get(SIZE));
 
