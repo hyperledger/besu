@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.JsonBftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -49,7 +50,7 @@ public class BlockTimerTest {
   private BftExecutors bftExecutors;
   private BftEventQueue mockQueue;
   private Clock mockClock;
-  private BftForksSchedule<BftConfigOptions> mockForksSchedule;
+  private ForksSchedule<BftConfigOptions> mockForksSchedule;
 
   @Before
   @SuppressWarnings("unchecked")
@@ -57,7 +58,7 @@ public class BlockTimerTest {
     bftExecutors = mock(BftExecutors.class);
     mockQueue = mock(BftEventQueue.class);
     mockClock = mock(Clock.class);
-    mockForksSchedule = mock(BftForksSchedule.class);
+    mockForksSchedule = mock(ForksSchedule.class);
   }
 
   @Test

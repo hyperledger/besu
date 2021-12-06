@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -22,7 +23,7 @@ import java.util.Optional;
 
 /**
  * A mutable {@link BftConfigOptions} that is used for building config for transitions in the {@link
- * BftForksSchedule}.
+ * ForksSchedule}.
  */
 public class MutableBftConfigOptions implements BftConfigOptions {
   private long epochLength;

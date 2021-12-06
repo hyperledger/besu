@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,35 +19,20 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NavigableSet;
-import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Function;
 
-import com.google.common.annotations.VisibleForTesting;
-
-public class BftForksSchedule<C extends BftConfigOptions> {
-
-  private final NavigableSet<ForkSpec<C>> forks =
-      new TreeSet<>(
-          Comparator.comparing((Function<ForkSpec<C>, Long>) ForkSpec::getBlock).reversed());
+public class BftForksScheduleFactory {
 
   public interface BftSpecCreator<T extends BftConfigOptions, U extends BftFork> {
     T create(ForkSpec<T> lastSpec, U fork);
   }
 
-  @VisibleForTesting
-  public BftForksSchedule(final ForkSpec<C> genesisFork, final Collection<ForkSpec<C>> forks) {
-    this.forks.add(genesisFork);
-    this.forks.addAll(forks);
-  }
-
-  public static <T extends BftConfigOptions, U extends BftFork> BftForksSchedule<T> create(
+  public static <T extends BftConfigOptions, U extends BftFork> ForksSchedule<T> create(
       final T initial, final List<U> forks, final BftSpecCreator<T, U> specCreator) {
     checkArgument(
         forks.stream().allMatch(f -> f.getForkBlock() > 0),
@@ -68,20 +53,6 @@ public class BftForksSchedule<C extends BftConfigOptions> {
               specs.add(new ForkSpec<>(f.getForkBlock(), spec));
             });
 
-    return new BftForksSchedule<>(initialForkSpec, specs.tailSet(initialForkSpec, false));
-  }
-
-  public ForkSpec<C> getFork(final long blockNumber) {
-    for (final ForkSpec<C> f : forks) {
-      if (blockNumber >= f.getBlock()) {
-        return f;
-      }
-    }
-
-    return forks.first();
-  }
-
-  public Set<ForkSpec<C>> getForks() {
-    return Collections.unmodifiableSet(forks);
+    return new ForksSchedule<>(initialForkSpec, specs.tailSet(initialForkSpec, false));
   }
 }

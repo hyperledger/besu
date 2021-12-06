@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.qbft.validator;
 
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.datatypes.Address;
@@ -34,7 +34,7 @@ public class TransactionValidatorProvider implements ValidatorProvider {
 
   private final Blockchain blockchain;
   private final ValidatorContractController validatorContractController;
-  private final BftForksSchedule<QbftConfigOptions> forksSchedule;
+  private final ForksSchedule<QbftConfigOptions> forksSchedule;
   private final Cache<Long, Collection<Address>> afterBlockValidatorCache =
       CacheBuilder.newBuilder().maximumSize(100).build();
   private final Cache<Long, Collection<Address>> forBlockValidatorCache =
@@ -43,7 +43,7 @@ public class TransactionValidatorProvider implements ValidatorProvider {
   public TransactionValidatorProvider(
       final Blockchain blockchain,
       final ValidatorContractController validatorContractController,
-      final BftForksSchedule<QbftConfigOptions> forksSchedule) {
+      final ForksSchedule<QbftConfigOptions> forksSchedule) {
     this.blockchain = blockchain;
     this.validatorContractController = validatorContractController;
     this.forksSchedule = forksSchedule;

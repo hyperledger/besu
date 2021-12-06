@@ -18,14 +18,14 @@ import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.BftForksScheduleFactory;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
 public class IbftForksSchedulesFactory {
 
-  public static BftForksSchedule<BftConfigOptions> create(
-      final GenesisConfigOptions genesisConfig) {
-    return BftForksSchedule.create(
+  public static ForksSchedule<BftConfigOptions> create(final GenesisConfigOptions genesisConfig) {
+    return BftForksScheduleFactory.create(
         genesisConfig.getBftConfigOptions(),
         genesisConfig.getTransitions().getIbftForks(),
         IbftForksSchedulesFactory::createBftConfigOptions);
