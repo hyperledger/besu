@@ -50,8 +50,8 @@ public class TransactionReplacementByFeeMarketRule implements TransactionPoolRep
     Wei newEffPrice = priceOf(newTransactionInfo.getTransaction(), baseFee);
     Wei newEffPriority = newTransactionInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee);
 
-    // bail early if price is or priority is not strictly positive
-    if (newEffPrice.compareTo(Wei.ZERO) <= 0) {
+    // bail early if price is not strictly positive
+    if (newEffPrice.equals(Wei.ZERO)) {
       return false;
     }
 
