@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -41,9 +40,8 @@ public class ScheduableProtocolContextTest {
     final ConsensusContext context2 = Mockito.mock(ConsensusContext.class);
     when(context2.as(any())).thenReturn(context2);
 
-    final BftForksSchedule<ConsensusContext> contextSchedule =
-        new BftForksSchedule<>(
-            new ForkSpec<>(0L, context1), List.of(new ForkSpec<>(10L, context2)));
+    final ForksSchedule<ConsensusContext> contextSchedule =
+        new ForksSchedule<>(new ForkSpec<>(0L, context1), List.of(new ForkSpec<>(10L, context2)));
     final ScheduableProtocolContext scheduableProtocolContext =
         new ScheduableProtocolContext(blockchain, worldStateArchive, contextSchedule);
 

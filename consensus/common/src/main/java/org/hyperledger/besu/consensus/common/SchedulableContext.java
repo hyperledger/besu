@@ -14,18 +14,17 @@
  */
 package org.hyperledger.besu.consensus.common;
 
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 
 public class SchedulableContext implements ConsensusContext {
 
-  private final BftForksSchedule<ConsensusContext> consensusContextSchedule;
+  private final ForksSchedule<ConsensusContext> consensusContextSchedule;
 
-  public SchedulableContext(final BftForksSchedule<ConsensusContext> consensusContextSchedule) {
+  public SchedulableContext(final ForksSchedule<ConsensusContext> consensusContextSchedule) {
     this.consensusContextSchedule = consensusContextSchedule;
   }
 
-  public BftForksSchedule<ConsensusContext> getConsensusContextSchedule() {
+  public ForksSchedule<ConsensusContext> getConsensusContextSchedule() {
     return consensusContextSchedule;
   }
 

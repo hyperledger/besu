@@ -21,9 +21,9 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.CombinedProtocolScheduleFactory;
 import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.ScheduableProtocolContext;
 import org.hyperledger.besu.consensus.common.SchedulableContext;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -168,8 +168,8 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
                                 blockchain, worldStateArchive, protocolSchedule)))
             .sorted(ForkSpec.COMPARATOR)
             .collect(Collectors.toList());
-    final BftForksSchedule<ConsensusContext> consensusContextsSchedule =
-        new BftForksSchedule<>(
+    final ForksSchedule<ConsensusContext> consensusContextsSchedule =
+        new ForksSchedule<>(
             consensusContextSpecs.get(0),
             consensusContextSpecs.subList(1, consensusContextSpecs.size()));
     return new SchedulableContext(consensusContextsSchedule);

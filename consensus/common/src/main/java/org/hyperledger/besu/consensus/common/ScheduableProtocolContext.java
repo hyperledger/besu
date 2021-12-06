@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.common;
 
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -25,12 +24,12 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 public class ScheduableProtocolContext extends ProtocolContext {
 
-  private final BftForksSchedule<ConsensusContext> consensusContextSchedule;
+  private final ForksSchedule<ConsensusContext> consensusContextSchedule;
 
   public ScheduableProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final BftForksSchedule<ConsensusContext> consensusContextSchedule) {
+      final ForksSchedule<ConsensusContext> consensusContextSchedule) {
     super(blockchain, worldStateArchive, null);
     this.consensusContextSchedule = consensusContextSchedule;
   }
