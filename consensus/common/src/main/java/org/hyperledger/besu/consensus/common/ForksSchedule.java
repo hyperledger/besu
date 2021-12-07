@@ -28,8 +28,7 @@ public class ForksSchedule<C> {
       new TreeSet<>(
           Comparator.comparing((Function<ForkSpec<C>, Long>) ForkSpec::getBlock).reversed());
 
-  public ForksSchedule(final ForkSpec<C> genesisFork, final Collection<ForkSpec<C>> forks) {
-    this.forks.add(genesisFork);
+  public ForksSchedule(final Collection<ForkSpec<C>> forks) {
     this.forks.addAll(forks);
   }
 
