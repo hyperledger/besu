@@ -136,9 +136,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
                                 ethProtocolManager)))
             .collect(Collectors.toList());
     final ForksSchedule<MiningCoordinator> miningCoordinatorSchedule =
-        new ForksSchedule<>(
-            miningCoordinatorForkSpecs.get(0),
-            miningCoordinatorForkSpecs.subList(1, miningCoordinatorForkSpecs.size()));
+        new ForksSchedule<>(miningCoordinatorForkSpecs);
 
     return new MigratingMiningCoordinator(
         miningCoordinatorSchedule, protocolContext.getBlockchain());

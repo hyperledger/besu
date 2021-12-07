@@ -60,7 +60,7 @@ public class MigratingMiningCoordinatorTest {
         new ForkSpec<>(GENESIS_BLOCK_NUMBER, coordinator1);
     final ForkSpec<MiningCoordinator> migrationFork =
         new ForkSpec<>(MIGRATION_BLOCK_NUMBER, coordinator2);
-    miningCoordinatorSchedule = new ForksSchedule<>(genesisFork, List.of(migrationFork));
+    miningCoordinatorSchedule = new ForksSchedule<>(List.of(genesisFork, migrationFork));
     this.block = new Block(blockHeader, blockBody);
     blockEvent = BlockAddedEvent.createForHeadAdvancement(this.block, emptyList(), emptyList());
   }
@@ -101,7 +101,7 @@ public class MigratingMiningCoordinatorTest {
   @Test
   public void onBlockAddedShouldNotDelegateWhenDelegateIsNoop() {
     ForksSchedule<MiningCoordinator> noopCoordinatorSchedule =
-        new ForksSchedule<>(new ForkSpec<>(GENESIS_BLOCK_NUMBER, noopCoordinator), emptyList());
+        new ForksSchedule<>(List.of(new ForkSpec<>(GENESIS_BLOCK_NUMBER, noopCoordinator)));
     when(blockHeader.getNumber()).thenReturn(GENESIS_BLOCK_NUMBER);
 
     new MigratingMiningCoordinator(noopCoordinatorSchedule, blockchain).onBlockAdded(blockEvent);
