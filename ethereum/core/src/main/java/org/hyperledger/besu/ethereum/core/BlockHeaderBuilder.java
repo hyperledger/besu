@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.time.Instant;
@@ -57,7 +58,7 @@ public class BlockHeaderBuilder {
 
   private Bytes extraData;
 
-  private Long baseFee = null;
+  private Wei baseFee = null;
 
   private Bytes32 mixHashOrRandom = null;
 
@@ -321,7 +322,7 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder baseFee(final Long baseFee) {
+  public BlockHeaderBuilder baseFee(final Wei baseFee) {
     this.baseFee = baseFee;
     return this;
   }

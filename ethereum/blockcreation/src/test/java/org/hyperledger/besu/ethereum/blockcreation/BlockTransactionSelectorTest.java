@@ -118,7 +118,7 @@ public class BlockTransactionSelectorTest {
         .number(1)
         .gasLimit(gasLimit)
         .timestamp(Instant.now().toEpochMilli())
-        .baseFee(1L)
+        .baseFee(Wei.ONE)
         .buildProcessableBlockHeader();
   }
 
@@ -342,7 +342,7 @@ public class BlockTransactionSelectorTest {
             metricsSystem,
             () -> {
               final BlockHeader mockBlockHeader = mock(BlockHeader.class);
-              when(mockBlockHeader.getBaseFee()).thenReturn(Optional.of(1L));
+              when(mockBlockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));
               return mockBlockHeader;
             },
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);

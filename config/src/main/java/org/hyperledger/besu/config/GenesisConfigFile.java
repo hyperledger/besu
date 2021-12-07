@@ -17,6 +17,8 @@ package org.hyperledger.besu.config;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,7 +37,7 @@ public class GenesisConfigFile {
   public static final GenesisConfigFile DEFAULT =
       new GenesisConfigFile(JsonUtil.createEmptyObjectNode());
 
-  public static final long BASEFEE_AT_GENESIS_DEFAULT_VALUE = 1000000000L;
+  public static final Wei BASEFEE_AT_GENESIS_DEFAULT_VALUE = Wei.of(1000000000L);
   private final ObjectNode configRoot;
 
   private GenesisConfigFile(final ObjectNode config) {
@@ -137,12 +139,12 @@ public class GenesisConfigFile {
     return parseLong("gasLimit", getFirstRequiredString("gaslimit", "gastarget"));
   }
 
-  public Optional<Long> getBaseFeePerGas() {
+  public Optional<Wei> getBaseFeePerGas() {
     return JsonUtil.getString(configRoot, "basefeepergas")
-        .map(baseFeeStr -> parseLong("baseFeePerGas", baseFeeStr));
+        .map(baseFeeStr -> Wei.of(parseLong("baseFeePerGas", baseFeeStr)));
   }
 
-  public Optional<Long> getGenesisBaseFeePerGas() {
+  public Optional<Wei> getGenesisBaseFeePerGas() {
     // if we have a base fee market at genesis, get either the configured baseFeePerGas, or the
     // default
     return getBaseFeePerGas()
