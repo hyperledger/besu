@@ -26,17 +26,22 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.MigratingContext;
 import org.hyperledger.besu.consensus.common.MigratingMiningCoordinator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -161,5 +166,44 @@ public class ConsensusScheduleBesuControllerBuilderTest {
                   migratingMiningCoordinator.getMiningCoordinatorSchedule().getFork(6L).getValue())
               .isSameAs(miningCoordinator2);
         });
+  }
+
+  @Test
+  public void createsMigratingContext() {
+    final ConsensusContext context1 = Mockito.mock(ConsensusContext.class);
+    final ConsensusContext context2 = Mockito.mock(ConsensusContext.class);
+
+    final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule = new TreeMap<>();
+    besuControllerBuilderSchedule.put(0L, besuControllerBuilder1);
+    besuControllerBuilderSchedule.put(10L, besuControllerBuilder2);
+
+    when(besuControllerBuilder1.createConsensusContext(any(), any(), any())).thenReturn(context1);
+    when(besuControllerBuilder2.createConsensusContext(any(), any(), any())).thenReturn(context2);
+
+    final ConsensusScheduleBesuControllerBuilder controllerBuilder =
+        new ConsensusScheduleBesuControllerBuilder(besuControllerBuilderSchedule);
+    final ConsensusContext consensusContext =
+        controllerBuilder.createConsensusContext(
+            Mockito.mock(Blockchain.class),
+            Mockito.mock(WorldStateArchive.class),
+            Mockito.mock(ProtocolSchedule.class));
+
+    assertThat(consensusContext).isInstanceOf(MigratingContext.class);
+    final MigratingContext migratingContext = (MigratingContext) consensusContext;
+
+    final ForksSchedule<ConsensusContext> contextSchedule =
+        migratingContext.getConsensusContextSchedule();
+
+    final NavigableSet<ForkSpec<ConsensusContext>> expectedConsensusContextSpecs =
+        new TreeSet<>(ForkSpec.COMPARATOR);
+    expectedConsensusContextSpecs.add(new ForkSpec<>(0L, context1));
+    expectedConsensusContextSpecs.add(new ForkSpec<>(10L, context2));
+    assertThat(contextSchedule.getForks()).isEqualTo(expectedConsensusContextSpecs);
+
+    assertThat(contextSchedule.getFork(0).getValue()).isSameAs(context1);
+    assertThat(contextSchedule.getFork(1).getValue()).isSameAs(context1);
+    assertThat(contextSchedule.getFork(9).getValue()).isSameAs(context1);
+    assertThat(contextSchedule.getFork(10).getValue()).isSameAs(context2);
+    assertThat(contextSchedule.getFork(11).getValue()).isSameAs(context2);
   }
 }
