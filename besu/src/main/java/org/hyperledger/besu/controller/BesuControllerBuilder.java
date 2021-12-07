@@ -267,13 +267,14 @@ public abstract class BesuControllerBuilder {
 
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(worldStateStorage, blockchain);
+
+    if (blockchain.getChainHeadBlockNumber() < 1) {
+      genesisState.writeStateTo(worldStateArchive.getMutable());
+    }
+
     final ProtocolContext protocolContext =
         createProtocolContext(
-            blockchain,
-            worldStateArchive,
-            genesisState,
-            protocolSchedule,
-            this::createConsensusContext);
+            blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
     validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
@@ -455,11 +456,10 @@ public abstract class BesuControllerBuilder {
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final GenesisState genesisState,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory) {
     return ProtocolContext.init(
-        blockchain, worldStateArchive, genesisState, protocolSchedule, consensusContextFactory);
+        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
   }
 
   private WorldStateArchive createWorldStateArchive(

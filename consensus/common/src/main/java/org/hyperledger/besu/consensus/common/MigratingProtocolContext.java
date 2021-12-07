@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.common;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -37,13 +36,8 @@ public class MigratingProtocolContext extends ProtocolContext {
   public static ProtocolContext init(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final GenesisState genesisState,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory) {
-    if (blockchain.getChainHeadBlockNumber() < 1) {
-      genesisState.writeStateTo(worldStateArchive.getMutable());
-    }
-
     final ConsensusContext consensusContext =
         consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule);
     final MigratingContext migratingContext = consensusContext.as(MigratingContext.class);

@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -161,11 +160,10 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final GenesisState genesisState,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory) {
     return MigratingProtocolContext.init(
-        blockchain, worldStateArchive, genesisState, protocolSchedule, consensusContextFactory);
+        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
   }
 
   @Override
