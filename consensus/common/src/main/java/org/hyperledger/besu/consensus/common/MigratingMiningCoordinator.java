@@ -134,7 +134,7 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
       startActiveMiningCoordinator();
     }
     if (activeMiningCoordinator instanceof BlockAddedObserver) {
-      ((BlockAddedObserver) this.activeMiningCoordinator).onBlockAdded(event);
+      ((BlockAddedObserver) activeMiningCoordinator).onBlockAdded(event);
     }
   }
 
