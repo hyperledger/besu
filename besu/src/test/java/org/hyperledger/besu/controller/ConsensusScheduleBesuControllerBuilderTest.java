@@ -116,7 +116,7 @@ public class ConsensusScheduleBesuControllerBuilderTest {
   }
 
   @Test
-  public void createsScheduableMiningCoordinator() {
+  public void createsMigratingMiningCoordinator() {
     final Map<Long, BesuControllerBuilder> consensusSchedule =
         Map.of(0L, besuControllerBuilder1, 5L, besuControllerBuilder2);
 
