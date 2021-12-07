@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,29 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum;
+package org.hyperledger.besu.consensus.common;
 
+import org.hyperledger.besu.ethereum.ConsensusContext;
+import org.hyperledger.besu.ethereum.ConsensusContextFactory;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-/**
- * Holds the mutable state used to track the current context of the protocol. This is primarily the
- * blockchain and world state archive, but can also hold arbitrary context required by a particular
- * consensus algorithm.
- */
-public class ProtocolContext {
-  private final MutableBlockchain blockchain;
-  private final WorldStateArchive worldStateArchive;
-  private final ConsensusContext consensusContext;
+public class MigratingProtocolContext extends ProtocolContext {
 
-  public ProtocolContext(
+  private final ForksSchedule<ConsensusContext> consensusContextSchedule;
+
+  public MigratingProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ConsensusContext consensusContext) {
-    this.blockchain = blockchain;
-    this.worldStateArchive = worldStateArchive;
-    this.consensusContext = consensusContext;
+      final ForksSchedule<ConsensusContext> consensusContextSchedule) {
+    super(blockchain, worldStateArchive, null);
+    this.consensusContextSchedule = consensusContextSchedule;
   }
 
   public static ProtocolContext init(
@@ -42,21 +38,16 @@ public class ProtocolContext {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory) {
-    return new ProtocolContext(
-        blockchain,
-        worldStateArchive,
-        consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule));
+    final ConsensusContext consensusContext =
+        consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule);
+    final MigratingContext migratingContext = consensusContext.as(MigratingContext.class);
+    return new MigratingProtocolContext(
+        blockchain, worldStateArchive, migratingContext.getConsensusContextSchedule());
   }
 
-  public MutableBlockchain getBlockchain() {
-    return blockchain;
-  }
-
-  public WorldStateArchive getWorldStateArchive() {
-    return worldStateArchive;
-  }
-
+  @Override
   public <C extends ConsensusContext> C getConsensusContext(final Class<C> klass) {
-    return consensusContext.as(klass);
+    final long chainHeadBlockNumber = getBlockchain().getChainHeadBlockNumber();
+    return consensusContextSchedule.getFork(chainHeadBlockNumber).getValue().as(klass);
   }
 }

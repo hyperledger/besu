@@ -24,16 +24,20 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.CombinedProtocolScheduleFactory;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.MigratingContext;
 import org.hyperledger.besu.consensus.common.MigratingMiningCoordinator;
+import org.hyperledger.besu.consensus.common.MigratingProtocolContext;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
+import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -153,13 +157,33 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   }
 
   @Override
+  protected ProtocolContext createProtocolContext(
+      final MutableBlockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule,
+      final ConsensusContextFactory consensusContextFactory) {
+    return MigratingProtocolContext.init(
+        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
+  }
+
+  @Override
   protected ConsensusContext createConsensusContext(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    return besuControllerBuilderSchedule
-        .get(0L)
-        .createConsensusContext(blockchain, worldStateArchive, protocolSchedule);
+    final List<ForkSpec<ConsensusContext>> consensusContextSpecs =
+        besuControllerBuilderSchedule.entrySet().stream()
+            .map(
+                e ->
+                    new ForkSpec<>(
+                        e.getKey(),
+                        e.getValue()
+                            .createConsensusContext(
+                                blockchain, worldStateArchive, protocolSchedule)))
+            .collect(Collectors.toList());
+    final ForksSchedule<ConsensusContext> consensusContextsSchedule =
+        new ForksSchedule<>(consensusContextSpecs);
+    return new MigratingContext(consensusContextsSchedule);
   }
 
   @Override
