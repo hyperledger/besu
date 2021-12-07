@@ -54,6 +54,10 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
   @Override
   public void start() {
     blockAddedObserverId = blockchain.observeBlockAdded(this);
+    startActiveMiningCoordinator();
+  }
+
+  private void startActiveMiningCoordinator() {
     activeMiningCoordinator.start();
     if (activeMiningCoordinator instanceof BlockAddedObserver) {
       ((BlockAddedObserver) activeMiningCoordinator).removeObserver();
@@ -126,14 +130,11 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
           activeMiningCoordinator.getClass().getSimpleName(),
           nextMiningCoordinator.getClass().getSimpleName());
       activeMiningCoordinator.stop();
-      nextMiningCoordinator.start();
       activeMiningCoordinator = nextMiningCoordinator;
+      startActiveMiningCoordinator();
     }
     if (activeMiningCoordinator instanceof BlockAddedObserver) {
-      final BlockAddedObserver delegateBlockObserver =
-          (BlockAddedObserver) this.activeMiningCoordinator;
-      delegateBlockObserver.removeObserver();
-      delegateBlockObserver.onBlockAdded(event);
+      ((BlockAddedObserver) this.activeMiningCoordinator).onBlockAdded(event);
     }
   }
 
