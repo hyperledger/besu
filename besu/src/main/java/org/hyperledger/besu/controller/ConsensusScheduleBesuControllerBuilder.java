@@ -24,9 +24,9 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.CombinedProtocolScheduleFactory;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.MigratingContext;
 import org.hyperledger.besu.consensus.common.MigratingMiningCoordinator;
-import org.hyperledger.besu.consensus.common.SchedulableContext;
-import org.hyperledger.besu.consensus.common.SchedulableProtocolContext;
+import org.hyperledger.besu.consensus.common.MigratingProtocolContext;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -164,7 +164,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
       final GenesisState genesisState,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory) {
-    return SchedulableProtocolContext.init(
+    return MigratingProtocolContext.init(
         blockchain, worldStateArchive, genesisState, protocolSchedule, consensusContextFactory);
   }
 
@@ -185,7 +185,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
             .collect(Collectors.toList());
     final ForksSchedule<ConsensusContext> consensusContextsSchedule =
         new ForksSchedule<>(consensusContextSpecs);
-    return new SchedulableContext(consensusContextsSchedule);
+    return new MigratingContext(consensusContextsSchedule);
   }
 
   @Override

@@ -27,7 +27,7 @@ import java.util.List;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class SchedulableProtocolContextTest {
+public class MigratingProtocolContextTest {
 
   @Test
   public void returnsContextForSpecificChainHeight() {
@@ -41,19 +41,19 @@ public class SchedulableProtocolContextTest {
     when(context2.as(any())).thenReturn(context2);
 
     final ForksSchedule<ConsensusContext> contextSchedule =
-        new ForksSchedule<>(new ForkSpec<>(0L, context1), List.of(new ForkSpec<>(10L, context2)));
-    final SchedulableProtocolContext schedulableProtocolContext =
-        new SchedulableProtocolContext(blockchain, worldStateArchive, contextSchedule);
+        new ForksSchedule<>(List.of(new ForkSpec<>(0L, context1), new ForkSpec<>(10L, context2)));
+    final MigratingProtocolContext migratingProtocolContext =
+        new MigratingProtocolContext(blockchain, worldStateArchive, contextSchedule);
 
-    assertThat(schedulableProtocolContext.getConsensusContext(ConsensusContext.class))
+    assertThat(migratingProtocolContext.getConsensusContext(ConsensusContext.class))
         .isSameAs(context1);
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(2L);
-    assertThat(schedulableProtocolContext.getConsensusContext(ConsensusContext.class))
+    assertThat(migratingProtocolContext.getConsensusContext(ConsensusContext.class))
         .isSameAs(context1);
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(10L);
-    assertThat(schedulableProtocolContext.getConsensusContext(ConsensusContext.class))
+    assertThat(migratingProtocolContext.getConsensusContext(ConsensusContext.class))
         .isSameAs(context2);
   }
 }

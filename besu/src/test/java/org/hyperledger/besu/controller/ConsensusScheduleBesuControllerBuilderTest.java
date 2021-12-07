@@ -27,8 +27,8 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.MigratingContext;
 import org.hyperledger.besu.consensus.common.MigratingMiningCoordinator;
-import org.hyperledger.besu.consensus.common.SchedulableContext;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -188,11 +188,11 @@ public class ConsensusScheduleBesuControllerBuilderTest {
             Mockito.mock(WorldStateArchive.class),
             Mockito.mock(ProtocolSchedule.class));
 
-    assertThat(consensusContext).isInstanceOf(SchedulableContext.class);
-    final SchedulableContext schedulableContext = (SchedulableContext) consensusContext;
+    assertThat(consensusContext).isInstanceOf(MigratingContext.class);
+    final MigratingContext migratingContext = (MigratingContext) consensusContext;
 
     final ForksSchedule<ConsensusContext> contextSchedule =
-        schedulableContext.getConsensusContextSchedule();
+        migratingContext.getConsensusContextSchedule();
 
     final NavigableSet<ForkSpec<ConsensusContext>> expectedConsensusContextSpecs =
         new TreeSet<>(ForkSpec.COMPARATOR);
