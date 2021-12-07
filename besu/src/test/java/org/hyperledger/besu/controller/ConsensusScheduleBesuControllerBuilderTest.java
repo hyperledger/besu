@@ -121,7 +121,7 @@ public class ConsensusScheduleBesuControllerBuilderTest {
   }
 
   @Test
-  public void createsScheduableMiningCoordinator() {
+  public void createsMigratingMiningCoordinator() {
     final Map<Long, BesuControllerBuilder> consensusSchedule =
         Map.of(0L, besuControllerBuilder1, 5L, besuControllerBuilder2);
 
@@ -169,7 +169,7 @@ public class ConsensusScheduleBesuControllerBuilderTest {
   }
 
   @Test
-  public void mustCreateSchedulableContext() {
+  public void createsMigratingContext() {
     final ConsensusContext context1 = Mockito.mock(ConsensusContext.class);
     final ConsensusContext context2 = Mockito.mock(ConsensusContext.class);
 
