@@ -61,7 +61,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
         requestContext.getOptionalParameter(1, ExecutionPayloadAttributesParameter.class);
 
     if (mergeContext.isSyncing()) {
-      // if we are syncing, return SYNCINC
+      // if we are syncing, return SYNCING
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
           new ExecutionUpdateForkChoiceResult(ForkChoiceStatus.SYNCING, null));
@@ -94,7 +94,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
           pid ->
               LOG.debug(
                   "returning identifier {} for requested payload {}",
-                  pid.serialize(),
+                  pid.toHexString(),
                   optionalPayloadAttributes.map(ExecutionPayloadAttributesParameter::serialize)));
 
       return new JsonRpcSuccessResponse(
