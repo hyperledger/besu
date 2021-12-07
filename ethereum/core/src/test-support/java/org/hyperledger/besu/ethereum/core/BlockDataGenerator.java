@@ -305,7 +305,7 @@ public class BlockDataGenerator {
             .nonce(blockNonce)
             .blockHeaderFunctions(
                 options.getBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
-    options.getBaseFee(Optional.of(uint256(2).toLong())).ifPresent(blockHeaderBuilder::baseFee);
+    options.getBaseFee(Optional.of(Wei.of(uint256(2)))).ifPresent(blockHeaderBuilder::baseFee);
     return blockHeaderBuilder.buildBlockHeader();
   }
 
@@ -629,7 +629,7 @@ public class BlockDataGenerator {
     private boolean hasTransactions = true;
     private TransactionType[] transactionTypes = TransactionType.values();
     private Optional<Address> coinbase = Optional.empty();
-    private Optional<Optional<Long>> maybeBaseFee = Optional.empty();
+    private Optional<Optional<Wei>> maybeBaseFee = Optional.empty();
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -783,11 +783,11 @@ public class BlockDataGenerator {
       return coinbase.orElse(defaultValue);
     }
 
-    public Optional<Long> getBaseFee(final Optional<Long> defaultValue) {
+    public Optional<Wei> getBaseFee(final Optional<Wei> defaultValue) {
       return maybeBaseFee.orElse(defaultValue);
     }
 
-    public BlockOptions setBaseFee(final Optional<Long> baseFee) {
+    public BlockOptions setBaseFee(final Optional<Wei> baseFee) {
       this.maybeBaseFee = Optional.of(baseFee);
       return this;
     }

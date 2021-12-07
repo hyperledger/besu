@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.frame;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -38,7 +40,7 @@ public interface BlockValues {
    *
    * @return the raw bytes of the extra data field
    */
-  default Optional<Long> getBaseFee() {
+  default Optional<Wei> getBaseFee() {
     return Optional.empty();
   }
 
