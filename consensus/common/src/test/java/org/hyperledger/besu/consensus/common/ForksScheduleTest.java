@@ -27,17 +27,6 @@ import org.junit.Test;
 public class ForksScheduleTest {
 
   @Test
-  public void retrievesGenesisFork() {
-    final ForkSpec<BftConfigOptions> genesisForkSpec =
-        new ForkSpec<>(0, JsonBftConfigOptions.DEFAULT);
-
-    final ForksSchedule<BftConfigOptions> schedule =
-        new ForksSchedule<>(genesisForkSpec, List.of());
-    assertThat(schedule.getFork(0)).isEqualTo(genesisForkSpec);
-    assertThat(schedule.getFork(1)).isEqualTo(genesisForkSpec);
-  }
-
-  @Test
   public void retrievesLatestFork() {
     final ForkSpec<BftConfigOptions> genesisForkSpec =
         new ForkSpec<>(0, JsonBftConfigOptions.DEFAULT);
@@ -45,7 +34,7 @@ public class ForksScheduleTest {
     final ForkSpec<BftConfigOptions> forkSpec2 = createForkSpec(2, 20);
 
     final ForksSchedule<BftConfigOptions> schedule =
-        new ForksSchedule<>(genesisForkSpec, List.of(forkSpec1, forkSpec2));
+        new ForksSchedule<>(List.of(genesisForkSpec, forkSpec1, forkSpec2));
 
     assertThat(schedule.getFork(0)).isEqualTo(genesisForkSpec);
     assertThat(schedule.getFork(1)).isEqualTo(forkSpec1);
