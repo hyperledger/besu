@@ -23,10 +23,10 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeersTask;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
@@ -112,6 +112,29 @@ public class BlockPropagationManager {
     ethContext
         .getEthMessages()
         .subscribe(EthPV62.NEW_BLOCK_HASHES, this::handleNewBlockHashesFromNetwork);
+    ethContext
+        .getEthPeers()
+        .subscribeConnect(
+            peer ->
+                syncState
+                    .syncStatus()
+                    .ifPresent(
+                        syncStatus ->
+                            GetBlockFromPeerTask.create(
+                                    protocolSchedule,
+                                    ethContext,
+                                    Optional.empty(),
+                                    syncStatus.getCurrentBlock() + 1,
+                                    metricsSystem)
+                                .run()
+                                .whenComplete(
+                                    (blockPeerTaskResult, throwable) -> {
+                                      if (throwable == null
+                                          && blockPeerTaskResult.getResult() != null) {
+                                        importOrSavePendingBlock(
+                                            blockPeerTaskResult.getResult(), peer.nodeId());
+                                      }
+                                    })));
   }
 
   private void onBlockAdded(final BlockAddedEvent blockAddedEvent) {
@@ -148,27 +171,6 @@ public class BlockPropagationManager {
               (r, t) -> {
                 if (r != null) {
                   LOG.info("Imported {} pending blocks", r.size());
-                }
-              });
-    } else {
-
-      LOG.trace("Not ready for import blocks found for {}", newBlock.getHeader().getNumber());
-
-      pendingBlocksManager
-          .lowestAnnouncedBlock()
-          .map(ProcessableBlockHeader::getNumber)
-          .ifPresent(
-              minAnnouncedBlockNumber -> {
-                long distance =
-                    minAnnouncedBlockNumber
-                        - protocolContext.getBlockchain().getChainHeadBlockNumber();
-                LOG.trace(
-                    "Found lowest announced block {} with distance {}",
-                    minAnnouncedBlockNumber,
-                    distance);
-                if (distance < config.getBlockPropagationRange().upperEndpoint()
-                    && minAnnouncedBlockNumber > newBlock.getHeader().getNumber()) {
-                  retrieveMissingAnnouncedBlock(newBlock.getHeader().getNumber() + 1);
                 }
               });
     }

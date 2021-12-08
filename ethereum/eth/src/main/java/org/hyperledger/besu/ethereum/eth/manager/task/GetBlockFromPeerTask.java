@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
+import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.USELESS_PEER;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -80,12 +82,14 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
                     assignedPeer.map(EthPeer::toString).orElse("<any>"),
                     t.getMessage(),
                     t.getCause());
+                r.getPeer().disconnect(USELESS_PEER);
                 result.completeExceptionally(t);
               } else if (r.getResult().isEmpty()) {
                 LOG.debug(
                     "Failed to download block {} from peer {} with empty result.",
                     blockIdentifier,
                     r.getPeer());
+                r.getPeer().disconnect(USELESS_PEER);
                 result.completeExceptionally(new IncompleteResultsException());
               } else {
                 LOG.debug(
