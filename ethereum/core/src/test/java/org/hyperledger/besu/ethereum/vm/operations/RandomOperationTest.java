@@ -28,13 +28,14 @@ import org.hyperledger.besu.evm.operation.Operation;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.evm.operation.RandomOperation;
 import org.junit.Test;
 
-public class DifficultyOperationTest {
+public class RandomOperationTest {
 
   @Test
   public void pushesRandWhenDifficultyZero() {
-    DifficultyOperation op = new DifficultyOperation(new LondonGasCalculator());
+    RandomOperation op = new RandomOperation(new LondonGasCalculator());
     MessageFrame messageFrame = mock(MessageFrame.class);
     BlockValues blockHeader = mock(BlockValues.class);
     Bytes32 rand = Bytes32.fromHexString("0xb0b0face");
@@ -49,7 +50,7 @@ public class DifficultyOperationTest {
 
   @Test
   public void pushesDifficultyWhenPresent() {
-    DifficultyOperation op = new DifficultyOperation(new LondonGasCalculator());
+    RandomOperation op = new RandomOperation(new LondonGasCalculator());
     MessageFrame messageFrame = mock(MessageFrame.class);
     BlockValues blockHeader = mock(BlockValues.class);
     Bytes32 rand = Bytes32.fromHexString("0xb0b0face");
