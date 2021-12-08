@@ -115,8 +115,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     final String tesseraMessage = JsonRpcError.TESSERA_NODE_MISSING_PEER_URL.getMessage();
 
-    assertThat(throwable.getMessage())
-        .has(matchTesseraEnclaveMessage(tesseraMessage));
+    assertThat(throwable.getMessage()).has(matchTesseraEnclaveMessage(tesseraMessage));
   }
 
   @Test
@@ -198,8 +197,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
         catchThrowable(() -> alice.execute(privacyTransactions.createPrivacyGroup(null, null)));
     final String tesseraMessage = JsonRpcError.TESSERA_CREATE_GROUP_INCLUDE_SELF.getMessage();
 
-    assertThat(throwable.getMessage())
-        .has(matchTesseraEnclaveMessage(tesseraMessage));
+    assertThat(throwable.getMessage()).has(matchTesseraEnclaveMessage(tesseraMessage));
   }
 
   private Condition<String> matchTesseraEnclaveMessage(final String enclaveMessage) {
