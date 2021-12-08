@@ -26,9 +26,9 @@ import org.apache.tuweni.bytes.Bytes32;
 @JsonPropertyOrder({
   "blockHash",
   "parentHash",
-  "coinbase",
+  "feeRecipient",
   "stateRoot",
-  "receiptRoot",
+  "receiptsRoot",
   "logsBloom",
   "random",
   "blockNumber",
@@ -42,9 +42,9 @@ import org.apache.tuweni.bytes.Bytes32;
 public class ExecutionBlockResult {
   protected final String blockHash;
   private final String parentHash;
-  private final String coinbase;
+  private final String feeRecipient;
   private final String stateRoot;
-  private final String receiptRoot;
+  private final String receiptsRoot;
   private final String logsBloom;
   private final String random;
   private final String blockNumber;
@@ -61,14 +61,14 @@ public class ExecutionBlockResult {
     this.parentHash = header.getParentHash().toString();
     this.logsBloom = header.getLogsBloom().toString();
     this.stateRoot = header.getStateRoot().toString();
-    this.receiptRoot = header.getReceiptsRoot().toString();
+    this.receiptsRoot = header.getReceiptsRoot().toString();
     this.extraData = header.getExtraData().toString();
     this.baseFeePerGas = header.getBaseFee().map(Quantity::create).orElse(null);
     this.gasLimit = Quantity.create(header.getGasLimit());
     this.gasUsed = Quantity.create(header.getGasUsed());
     this.timestamp = Quantity.create(header.getTimestamp());
     this.transactions = transactions;
-    this.coinbase = header.getCoinbase().toString();
+    this.feeRecipient = header.getCoinbase().toString();
     this.random = header.getRandom().map(Bytes32::toHexString).orElse(null);
   }
 
@@ -102,9 +102,9 @@ public class ExecutionBlockResult {
     return stateRoot;
   }
 
-  @JsonGetter(value = "receiptRoot")
+  @JsonGetter(value = "receiptsRoot")
   public String getReceiptRoot() {
-    return receiptRoot;
+    return receiptsRoot;
   }
 
   @JsonGetter(value = "extraData")
@@ -137,9 +137,9 @@ public class ExecutionBlockResult {
     return transactions;
   }
 
-  @JsonGetter(value = "coinbase")
+  @JsonGetter(value = "feeRecipient")
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  public String getCoinbase() {
-    return coinbase;
+  public String getFeeRecipient() {
+    return feeRecipient;
   }
 }

@@ -88,7 +88,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
                       parentHeader.get(),
                       payloadAttributes.getTimestamp(),
                       payloadAttributes.getRandom(),
-                      payloadAttributes.getFeeRecipient()));
+                      payloadAttributes.getSuggestedFeeRecipient()));
 
       payloadId.ifPresent(
           pid ->

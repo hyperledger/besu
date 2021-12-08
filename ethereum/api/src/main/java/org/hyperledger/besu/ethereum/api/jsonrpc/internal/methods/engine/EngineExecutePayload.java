@@ -80,7 +80,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
     Object reqId = requestContext.getRequest().getId();
 
     if (mergeContext.isSyncing()) {
-      return respondWith(reqId, blockParam.getBlockHash(), SYNCING);
+      return respondWith(reqId, Optional.empty(), SYNCING);
     }
 
     // create a no-op candidate block here, since we already have this payload
@@ -138,16 +138,16 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
     }
 
     // return result response
-    return respondWith(reqId, newBlockHeader.getHash(), execSuccess ? VALID : INVALID);
+    return respondWith(reqId, Optional.of(newBlockHeader.getHash()), execSuccess ? VALID : INVALID);
   }
 
   JsonRpcResponse respondWith(
-      final Object requestId, final Hash blockHash, final ExecutionStatus status) {
+      final Object requestId, final Optional<Hash> blockHash, final ExecutionStatus status) {
     return new JsonRpcSuccessResponse(
         requestId,
         ImmutableMap.of(
-            "blockHash",
-            Optional.ofNullable(blockHash).map(Hash::toShortHexString).orElse(null),
+            "latestValidHash",
+            blockHash.map(Hash::toHexString).orElse(null),
             "status",
             status.name()));
   }
