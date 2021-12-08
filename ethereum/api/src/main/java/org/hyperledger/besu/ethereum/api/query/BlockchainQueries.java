@@ -863,7 +863,7 @@ public class BlockchainQueries {
   private List<TransactionWithMetadata> formatTransactions(
       final List<Transaction> txs,
       final long blockNumber,
-      final Optional<Long> baseFee,
+      final Optional<Wei> baseFee,
       final Hash blockHash) {
     final int count = txs.size();
     final List<TransactionWithMetadata> result = new ArrayList<>(count);

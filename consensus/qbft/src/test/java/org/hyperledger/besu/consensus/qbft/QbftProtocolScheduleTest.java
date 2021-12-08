@@ -25,8 +25,8 @@ import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -84,8 +84,10 @@ public class QbftProtocolScheduleTest {
     final ProtocolSchedule schedule =
         createProtocolSchedule(
             JsonGenesisConfigOptions.fromJsonObject(JsonUtil.createEmptyObjectNode()),
-            new ForkSpec<>(0, qbftConfigOptions),
-            List.of(new ForkSpec<>(1, arbitraryTransition), new ForkSpec<>(2, contractTransition)));
+            List.of(
+                new ForkSpec<>(0, qbftConfigOptions),
+                new ForkSpec<>(1, arbitraryTransition),
+                new ForkSpec<>(2, contractTransition)));
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(3);
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 0)).isTrue();
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 1)).isTrue();
@@ -108,8 +110,8 @@ public class QbftProtocolScheduleTest {
     final ProtocolSchedule schedule =
         createProtocolSchedule(
             JsonGenesisConfigOptions.fromJsonObject(JsonUtil.createEmptyObjectNode()),
-            new ForkSpec<>(0, JsonQbftConfigOptions.DEFAULT),
             List.of(
+                new ForkSpec<>(0, JsonQbftConfigOptions.DEFAULT),
                 new ForkSpec<>(1, arbitraryTransition),
                 new ForkSpec<>(2, JsonQbftConfigOptions.DEFAULT)));
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(3);
@@ -119,12 +121,10 @@ public class QbftProtocolScheduleTest {
   }
 
   private ProtocolSchedule createProtocolSchedule(
-      final GenesisConfigOptions genesisConfig,
-      final ForkSpec<QbftConfigOptions> genesisFork,
-      final List<ForkSpec<QbftConfigOptions>> forks) {
+      final GenesisConfigOptions genesisConfig, final List<ForkSpec<QbftConfigOptions>> forks) {
     return QbftProtocolSchedule.create(
         genesisConfig,
-        new BftForksSchedule<>(genesisFork, forks),
+        new ForksSchedule<>(forks),
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,

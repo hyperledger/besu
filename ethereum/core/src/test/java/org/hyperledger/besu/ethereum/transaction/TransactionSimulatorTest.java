@@ -167,7 +167,7 @@ public class TransactionSimulatorTest {
   public void shouldSetFeePerGasToZeroWhenExceedingBalanceAllowed() {
     final CallParameter callParameter = eip1559TransactionCallParameter(Wei.ONE, Wei.ONE);
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L, 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, Wei.ONE);
     mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
@@ -231,7 +231,7 @@ public class TransactionSimulatorTest {
   public void shouldNotSetFeePerGasToZeroWhenExceedingBalanceIsNotAllowed() {
     final CallParameter callParameter = eip1559TransactionCallParameter(Wei.ONE, Wei.ONE);
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L, 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, Wei.ONE);
     mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
@@ -462,7 +462,7 @@ public class TransactionSimulatorTest {
   public void shouldReturnSuccessfulResultWhenEip1559TransactionProcessingIsSuccessful() {
     final CallParameter callParameter = eip1559TransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L, 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, Wei.ONE);
     mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
@@ -517,7 +517,7 @@ public class TransactionSimulatorTest {
   }
 
   private void mockBlockchainForBlockHeader(
-      final Hash stateRoot, final long blockNumber, final long baseFee) {
+      final Hash stateRoot, final long blockNumber, final Wei baseFee) {
     final BlockHeader blockHeader = mock(BlockHeader.class, Answers.RETURNS_MOCKS);
     when(blockHeader.getStateRoot()).thenReturn(stateRoot);
     when(blockHeader.getNumber()).thenReturn(blockNumber);

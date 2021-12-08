@@ -22,11 +22,11 @@ import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
@@ -97,7 +97,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
   private QbftConfigOptions qbftConfig;
-  private BftForksSchedule<QbftConfigOptions> qbftForksSchedule;
+  private ForksSchedule<QbftConfigOptions> qbftForksSchedule;
   private ValidatorPeers peers;
   private TransactionValidatorProvider transactionValidatorProvider;
 

@@ -105,7 +105,7 @@ public class MainnetTransactionValidator {
    */
   public ValidationResult<TransactionInvalidReason> validate(
       final Transaction transaction,
-      final Optional<Long> baseFee,
+      final Optional<Wei> baseFee,
       final TransactionValidationParams transactionValidationParams) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
         validateTransactionSignature(transaction);
@@ -131,7 +131,7 @@ public class MainnetTransactionValidator {
     if (baseFee.isPresent()) {
       final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, baseFee);
       if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
-          && price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
+          && price.compareTo(baseFee.orElseThrow()) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
             "gasPrice is less than the current BaseFee");

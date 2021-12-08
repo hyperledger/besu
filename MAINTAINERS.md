@@ -17,6 +17,7 @@
 | Frank Li         | frankisawesome   | frankliawesome   |
 | Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jason Frame      | jframe           | jframe           |
+| Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |

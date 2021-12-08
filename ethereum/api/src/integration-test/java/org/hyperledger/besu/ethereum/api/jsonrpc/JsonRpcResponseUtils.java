@@ -32,8 +32,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.STATE
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TIMESTAMP;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TOTAL_DIFFICULTY;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TRANSACTION_ROOT;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
@@ -94,7 +92,8 @@ public class JsonRpcResponseUtils {
     final long gasUsed = unsignedLong(values.get(GAS_USED));
     final long timestamp = unsignedLong(values.get(TIMESTAMP));
     final long nonce = unsignedLong(values.get(NONCE));
-    final Long baseFee = values.containsKey(BASEFEE) ? unsignedLong(values.get(BASEFEE)) : null;
+    final Wei baseFee =
+        values.containsKey(BASEFEE) ? Wei.of(unsignedInt256(values.get(BASEFEE))) : null;
     final Difficulty totalDifficulty = Difficulty.of(unsignedInt256(values.get(TOTAL_DIFFICULTY)));
     final int size = unsignedInt(values.get(SIZE));
 
@@ -148,7 +147,7 @@ public class JsonRpcResponseUtils {
       final TransactionType transactionType,
       final String blockHash,
       final String blockNumber,
-      final Long baseFee,
+      final Wei baseFee,
       final String fromAddress,
       final String gas,
       final String gasPrice,
@@ -164,22 +163,16 @@ public class JsonRpcResponseUtils {
       final String r,
       final String s) {
 
-    final Transaction transaction = mock(Transaction.class);
-    when(transaction.getType()).thenReturn(transactionType);
-    when(transaction.getGasPrice()).thenReturn(Optional.of(Wei.fromHexString(gasPrice)));
-    when(transaction.getNonce()).thenReturn(unsignedLong(nonce));
-    when(transaction.getV()).thenReturn(bigInteger(v));
-    when(transaction.getR()).thenReturn(bigInteger(r));
-    when(transaction.getS()).thenReturn(bigInteger(s));
-    when(transaction.getHash()).thenReturn(hash(hash));
-    when(transaction.getTo()).thenReturn(Optional.ofNullable(address(toAddress)));
-    when(transaction.getSender()).thenReturn(address(fromAddress));
-    when(transaction.getPayload()).thenReturn(bytes(input));
-    when(transaction.getValue()).thenReturn(wei(value));
-    when(transaction.getGasLimit()).thenReturn(unsignedLong(gas));
-    when(transaction.getPublicKey()).thenReturn(Optional.ofNullable(publicKey));
-    when(transaction.getSignature())
-        .thenReturn(
+    final Transaction transaction =
+        new Transaction(
+            transactionType,
+            unsignedLong(nonce),
+            Optional.of(Wei.fromHexString(gasPrice)),
+            Optional.empty(),
+            Optional.empty(),
+            unsignedLong(gas),
+            Optional.ofNullable(address(toAddress)),
+            wei(value),
             SignatureAlgorithmFactory.getInstance()
                 .createSignature(
                     Bytes.fromHexString(r).toUnsignedBigInteger(),
@@ -187,7 +180,12 @@ public class JsonRpcResponseUtils {
                     Bytes.fromHexString(v)
                         .toUnsignedBigInteger()
                         .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
-                        .byteValueExact()));
+                        .byteValueExact()),
+            bytes(input),
+            Optional.empty(),
+            address(fromAddress),
+            Optional.empty(),
+            Optional.of(bigInteger(v)));
 
     return new TransactionCompleteResult(
         new TransactionWithMetadata(

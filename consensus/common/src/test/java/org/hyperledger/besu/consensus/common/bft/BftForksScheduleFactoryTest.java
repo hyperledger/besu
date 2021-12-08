@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,7 +23,8 @@ import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.JsonBftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.common.ForkSpec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule.BftSpecCreator;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.BftForksScheduleFactory.BftSpecCreator;
 
 import java.util.List;
 import java.util.Map;
@@ -31,34 +32,7 @@ import java.util.Map;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class BftForksScheduleTest {
-
-  @Test
-  public void retrievesGenesisFork() {
-    final ForkSpec<BftConfigOptions> genesisForkSpec =
-        new ForkSpec<>(0, JsonBftConfigOptions.DEFAULT);
-
-    final BftForksSchedule<BftConfigOptions> schedule =
-        new BftForksSchedule<>(genesisForkSpec, List.of());
-    assertThat(schedule.getFork(0)).isEqualTo(genesisForkSpec);
-    assertThat(schedule.getFork(1)).isEqualTo(genesisForkSpec);
-  }
-
-  @Test
-  public void retrievesLatestFork() {
-    final ForkSpec<BftConfigOptions> genesisForkSpec =
-        new ForkSpec<>(0, JsonBftConfigOptions.DEFAULT);
-    final ForkSpec<BftConfigOptions> forkSpec1 = createForkSpec(1, 10);
-    final ForkSpec<BftConfigOptions> forkSpec2 = createForkSpec(2, 20);
-
-    final BftForksSchedule<BftConfigOptions> schedule =
-        new BftForksSchedule<>(genesisForkSpec, List.of(forkSpec1, forkSpec2));
-
-    assertThat(schedule.getFork(0)).isEqualTo(genesisForkSpec);
-    assertThat(schedule.getFork(1)).isEqualTo(forkSpec1);
-    assertThat(schedule.getFork(2)).isEqualTo(forkSpec2);
-    assertThat(schedule.getFork(3)).isEqualTo(forkSpec2);
-  }
+public class BftForksScheduleFactoryTest {
 
   @Test
   @SuppressWarnings("unchecked")
@@ -69,7 +43,7 @@ public class BftForksScheduleTest {
         Mockito.mock(BftSpecCreator.class);
 
     assertThatThrownBy(
-            () -> BftForksSchedule.create(genesisConfigOptions, List.of(fork), specCreator))
+            () -> BftForksScheduleFactory.create(genesisConfigOptions, List.of(fork), specCreator))
         .hasMessage("Transition cannot be created for genesis block");
   }
 
@@ -85,7 +59,7 @@ public class BftForksScheduleTest {
 
     assertThatThrownBy(
             () ->
-                BftForksSchedule.create(
+                BftForksScheduleFactory.create(
                     genesisConfigOptions, List.of(fork1, fork2, fork3), specCreator))
         .hasMessage("Duplicate transitions cannot be created for the same block");
   }
@@ -105,17 +79,11 @@ public class BftForksScheduleTest {
     when(specCreator.create(genesisForkSpec, fork1)).thenReturn(configOptions1);
     when(specCreator.create(new ForkSpec<>(1, configOptions1), fork2)).thenReturn(configOptions2);
 
-    final BftForksSchedule<BftConfigOptions> schedule =
-        BftForksSchedule.create(genesisConfigOptions, List.of(fork1, fork2), specCreator);
+    final ForksSchedule<BftConfigOptions> schedule =
+        BftForksScheduleFactory.create(genesisConfigOptions, List.of(fork1, fork2), specCreator);
     assertThat(schedule.getFork(0)).isEqualTo(genesisForkSpec);
     assertThat(schedule.getFork(1)).isEqualTo(new ForkSpec<>(1, configOptions1));
     assertThat(schedule.getFork(2)).isEqualTo(new ForkSpec<>(2, configOptions2));
-  }
-
-  private ForkSpec<BftConfigOptions> createForkSpec(
-      final long block, final int blockPeriodSeconds) {
-    final MutableBftConfigOptions bftConfigOptions = createBftConfigOptions(blockPeriodSeconds);
-    return new ForkSpec<>(block, bftConfigOptions);
   }
 
   private MutableBftConfigOptions createBftConfigOptions(final int blockPeriodSeconds) {

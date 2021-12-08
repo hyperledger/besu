@@ -26,7 +26,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
@@ -97,8 +97,8 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void usesInitialValidatorProviderWhenNoForks() {
-    final BftForksSchedule<QbftConfigOptions> forksSchedule =
-        new BftForksSchedule<>(createBlockForkSpec(0), List.of());
+    final ForksSchedule<QbftConfigOptions> forksSchedule =
+        new ForksSchedule<>(List.of(createBlockForkSpec(0)));
 
     final ForkingValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
@@ -114,9 +114,9 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void migratesFromBlockToContractValidatorProvider() {
-    final BftForksSchedule<QbftConfigOptions> forksSchedule =
-        new BftForksSchedule<>(
-            createBlockForkSpec(0), List.of(createContractForkSpec(1L, CONTRACT_ADDRESS_1)));
+    final ForksSchedule<QbftConfigOptions> forksSchedule =
+        new ForksSchedule<>(
+            List.of(createBlockForkSpec(0), createContractForkSpec(1L, CONTRACT_ADDRESS_1)));
     final ForkingValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
@@ -127,9 +127,9 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void migratesFromContractToBlockValidatorProvider() {
-    final BftForksSchedule<QbftConfigOptions> forksSchedule =
-        new BftForksSchedule<>(
-            createContractForkSpec(0, CONTRACT_ADDRESS_1), List.of(createBlockForkSpec(1)));
+    final ForksSchedule<QbftConfigOptions> forksSchedule =
+        new ForksSchedule<>(
+            List.of(createContractForkSpec(0, CONTRACT_ADDRESS_1), createBlockForkSpec(1)));
     final ForkingValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);
@@ -145,10 +145,10 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void migratesFromContractToContractValidatorProvider() {
-    final BftForksSchedule<QbftConfigOptions> forksSchedule =
-        new BftForksSchedule<>(
-            createBlockForkSpec(0),
+    final ForksSchedule<QbftConfigOptions> forksSchedule =
+        new ForksSchedule<>(
             List.of(
+                createBlockForkSpec(0),
                 createContractForkSpec(1L, CONTRACT_ADDRESS_1),
                 createContractForkSpec(2L, CONTRACT_ADDRESS_2)));
 
@@ -163,10 +163,12 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void voteProviderIsDelegatesToHeadFork_whenHeadIsContractFork() {
-    final BftForksSchedule<QbftConfigOptions> forksSchedule =
-        new BftForksSchedule<>(
-            createBlockForkSpec(0),
-            List.of(createBlockForkSpec(1), createContractForkSpec(2, CONTRACT_ADDRESS_1)));
+    final ForksSchedule<QbftConfigOptions> forksSchedule =
+        new ForksSchedule<>(
+            List.of(
+                createBlockForkSpec(0),
+                createBlockForkSpec(1),
+                createContractForkSpec(2, CONTRACT_ADDRESS_1)));
 
     final ForkingValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
@@ -180,8 +182,8 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void voteProviderIsDelegatesToHeadFork_whenHeadIsBlockFork() {
-    final BftForksSchedule<QbftConfigOptions> forksSchedule =
-        new BftForksSchedule<>(createBlockForkSpec(0), emptyList());
+    final ForksSchedule<QbftConfigOptions> forksSchedule =
+        new ForksSchedule<>(List.of(createBlockForkSpec(0)));
 
     final ForkingValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
@@ -195,10 +197,12 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void getVoteProviderAfterBlock_correctVoteProviderIsResolved() {
-    final BftForksSchedule<QbftConfigOptions> forksSchedule =
-        new BftForksSchedule<>(
-            createBlockForkSpec(0),
-            List.of(createBlockForkSpec(1), createContractForkSpec(2, CONTRACT_ADDRESS_1)));
+    final ForksSchedule<QbftConfigOptions> forksSchedule =
+        new ForksSchedule<>(
+            List.of(
+                createBlockForkSpec(0),
+                createBlockForkSpec(1),
+                createContractForkSpec(2, CONTRACT_ADDRESS_1)));
     final ForkingValidatorProvider validatorProvider =
         new ForkingValidatorProvider(
             blockChain, forksSchedule, blockValidatorProvider, contractValidatorProvider);

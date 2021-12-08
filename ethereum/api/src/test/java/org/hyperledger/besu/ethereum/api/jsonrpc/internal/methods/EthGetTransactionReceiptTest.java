@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256s;
 import org.junit.Test;
 
 public class EthGetTransactionReceiptTest {
@@ -185,7 +186,7 @@ public class EthGetTransactionReceiptTest {
     when(blockchain.headBlockNumber()).thenReturn(1L);
     final Transaction transaction1559 =
         new BlockDataGenerator().transaction(TransactionType.EIP1559);
-    final long baseFee = 1L;
+    final Wei baseFee = Wei.ONE;
     final TransactionReceiptWithMetadata transactionReceiptWithMetadata =
         TransactionReceiptWithMetadata.create(
             statusReceipt, transaction1559, hash, 1, 2, Optional.of(baseFee), blockHash, 4);
@@ -199,10 +200,10 @@ public class EthGetTransactionReceiptTest {
         (TransactionReceiptStatusResult) response.getResult();
 
     assertThat(result.getStatus()).isEqualTo("0x1");
-    assertThat(Long.decode(result.getEffectiveGasPrice()))
+    assertThat(Wei.fromHexString(result.getEffectiveGasPrice()))
         .isEqualTo(
-            Math.min(
-                baseFee + transaction1559.getMaxPriorityFeePerGas().get().toLong(),
-                transaction1559.getMaxFeePerGas().get().toLong()));
+            UInt256s.min(
+                baseFee.add(transaction1559.getMaxPriorityFeePerGas().get()),
+                transaction1559.getMaxFeePerGas().get()));
   }
 }

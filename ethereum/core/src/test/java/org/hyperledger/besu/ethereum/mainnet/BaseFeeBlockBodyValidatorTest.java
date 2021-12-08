@@ -63,7 +63,7 @@ public class BaseFeeBlockBodyValidatorTest {
 
   @Test
   public void BlockBodyValidatorSucceed() {
-    when(blockHeader.getBaseFee()).thenReturn(Optional.of(10L));
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.of(10L)));
     when(block.getBody())
         .thenReturn(
             new BlockBody(
@@ -83,7 +83,7 @@ public class BaseFeeBlockBodyValidatorTest {
 
   @Test
   public void BlockBodyValidatorFail_GasPrice() {
-    when(blockHeader.getBaseFee()).thenReturn(Optional.of(10L));
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.of(10L)));
     when(block.getBody())
         .thenReturn(
             new BlockBody(
@@ -97,7 +97,7 @@ public class BaseFeeBlockBodyValidatorTest {
 
   @Test
   public void BlockBodyValidatorFail_MaxFeePerGas() {
-    when(blockHeader.getBaseFee()).thenReturn(Optional.of(10L));
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.of(10L)));
     when(block.getBody())
         .thenReturn(
             new BlockBody(
