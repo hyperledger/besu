@@ -104,7 +104,7 @@ public class Runner implements AutoCloseable {
   }
 
   public void startExternalServices() {
-    LOG.info("Starting Ethereum services ... ");
+    LOG.info("Starting external services ... ");
     metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
 
     jsonRpc.ifPresent(service -> waitForServiceToStart("jsonRpc", service.start()));
