@@ -39,4 +39,19 @@ public class RunHelpTest extends AcceptanceTestBase {
     assertThat(consoleContents)
         .startsWith("Usage:\n\nbesu [OPTIONS] [COMMAND]\n\nDescription:\n\n");
   }
+
+
+  @Test
+  public void testShowsHelpAndExitsTwo() throws IOException {
+    final BesuNode node = besu.runCommand("--help");
+    cluster.startConsoleCapture();
+    cluster.runNodeStart(node);
+    WaitUtils.waitFor(5000, () -> node.verify(exitedSuccessfully));
+
+    // assert that no random startup or ending logging appears.
+    // if the help text changes then updates are appropriate.
+    final String consoleContents = cluster.getConsoleContents();
+    assertThat(consoleContents)
+        .startsWith("Usage:\n\nbesu [OPTIONS] [COMMAND]\n\nDescription:\n\n");
+  }
 }
