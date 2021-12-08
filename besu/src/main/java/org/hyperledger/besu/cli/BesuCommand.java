@@ -1881,6 +1881,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           asList("--rpc-http-authentication-jwt-algorithm"));
     }
 
+    if (isRpcHttpAuthenticationEnabled) {
+      CommandLineUtils.checkOptionDependencies(
+          logger,
+          commandLine,
+          "--rpc-http-authentication-public-key-file",
+          rpcHttpAuthenticationPublicKeyFile == null,
+          asList("--rpc-http-authentication-jwt-algorithm"));
+    }
+
     if (isRpcHttpAuthenticationEnabled
         && rpcHttpAuthenticationCredentialsFile() == null
         && rpcHttpAuthenticationPublicKeyFile == null) {
@@ -2526,19 +2535,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network));
 
     // custom genesis file use comes with specific default values for the genesis
-    // file itself
-    // but also for the network id and the bootnodes list.
+    // file itself but also for the network id and the bootnodes list.
     if (genesisFile != null) {
 
       // noinspection ConstantConditions network is not always null but injected by
       // PicoCLI if used
       if (this.network != null) {
         // We check if network option was really provided by user and not only looking
-        // at the
-        // default value.
+        // at the default value.
         // if user provided it and provided the genesis file option at the same time, it
-        // raises a
-        // conflict error
+        // raises a conflict error
         throw new ParameterException(
             this.commandLine,
             "--network option and --genesis-file option can't be used at the same time.  Please "
@@ -2549,14 +2555,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       if (networkId == null) {
         // if no network id option is defined on the CLI we have to set a default value
-        // from the
-        // genesis file.
+        // from the genesis file.
         // We do the genesis parsing only in this case as we already have network id
         // constants
         // for known networks to speed up the process.
         // Also we have to parse the genesis as we don't already have a parsed version
-        // at this
-        // stage.
+        // at this stage.
         // If no chain id is found in the genesis as it's an optional, we use mainnet
         // network id.
         try {
