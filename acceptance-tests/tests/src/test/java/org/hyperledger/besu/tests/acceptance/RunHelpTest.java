@@ -40,7 +40,6 @@ public class RunHelpTest extends AcceptanceTestBase {
         .startsWith("Usage:\n\nbesu [OPTIONS] [COMMAND]\n\nDescription:\n\n");
   }
 
-
   @Test
   public void testShowsHelpAndExitsTwo() throws IOException {
     final BesuNode node = besu.runCommand("--help");
