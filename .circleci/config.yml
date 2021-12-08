@@ -290,18 +290,6 @@ workflows:
       - testWindows:
           requires:
             - assemble
-      - referenceTests:
-          requires:
-            - assemble
-      - integrationTests:
-          requires:
-            - assemble
-      - acceptanceTests:
-          requires:
-            - assemble
-      - acceptanceTestsQuorum:
-          requires:
-            - assemble
       - buildDocker:
           requires:
             - assemble
