@@ -801,7 +801,8 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   classDirectories.from files(subprojects.sourceSets.main.output).asFileTree.matching {
     excludes = [
       'org/hyperledger/besu/tests/acceptance/**',
-      'org/hyperledger/besu/tests/acceptance/dsl/**'
+      'org/hyperledger/besu/tests/acceptance/dsl/**',
+      'org/hyperledger/besu/tests/acceptance/dsl/node/**'
     ]
   }
   executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
@@ -910,6 +911,7 @@ distributions {
 }
 
 check.dependsOn checkSpdxHeader
+jacocoTestReport.mustRunAfter(compileTestJava)
 build.dependsOn verifyDistributions
 artifactoryPublish.dependsOn verifyDistributions
 artifactoryPublish.mustRunAfter(distTar)
