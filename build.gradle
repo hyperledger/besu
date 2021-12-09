@@ -793,10 +793,18 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs).asFileTree.matching {
-    exclude 'org/hyperledger/besu/tests/acceptance/**'
+    excludes = [
+      'org/hyperledger/besu/tests/acceptance/**',
+      'org/hyperledger/besu/tests/acceptance/dsl/**',
+      'org/hyperledger/besu/tests/acceptance/dsl/node/**'
+    ]
   }
   sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs).asFileTree.matching {
-    exclude 'org/hyperledger/besu/tests/acceptance/**'
+    excludes = [
+      'org/hyperledger/besu/tests/acceptance/**',
+      'org/hyperledger/besu/tests/acceptance/dsl/**',
+      'org/hyperledger/besu/tests/acceptance/dsl/node/**'
+    ]
   }
   classDirectories.from files(subprojects.sourceSets.main.output).asFileTree.matching {
     excludes = [
@@ -911,7 +919,7 @@ distributions {
 }
 
 check.dependsOn checkSpdxHeader
-jacocoTestReport.mustRunAfter(compileTestJava)
+jacocoTestReport.dependsOn compileTestJava
 build.dependsOn verifyDistributions
 artifactoryPublish.dependsOn verifyDistributions
 artifactoryPublish.mustRunAfter(distTar)
