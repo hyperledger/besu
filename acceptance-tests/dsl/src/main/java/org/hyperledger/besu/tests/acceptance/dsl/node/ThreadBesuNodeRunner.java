@@ -119,6 +119,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       throw new UnsupportedOperationException("commands are not supported with thread runner");
     }
 
+    if (node.getRunCommand().isEmpty()) {
+      LOG.info("putting in some extra code to see if sonar gets flagged. DELETEME");
+    }
     final StorageServiceImpl storageService = new StorageServiceImpl();
     final SecurityModuleServiceImpl securityModuleService = new SecurityModuleServiceImpl();
     final Path dataDir = node.homeDirectory();
@@ -225,6 +228,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   public void stopNode(final BesuNode node) {
     final BesuPluginContextImpl pluginContext = besuPluginContextMap.remove(node);
     if (pluginContext != null) {
+      LOG.info("putting in some more code to flag sonar - DELETEME");
       pluginContext.stopPlugins();
     }
     node.stop();
@@ -233,6 +237,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
   @Override
   public void shutdown() {
+    LOG.info("shutdown putting in some more code to flag sonar - DELETEME");
     // stop all plugins from pluginContext
     besuPluginContextMap.values().forEach(BesuPluginContextImpl::stopPlugins);
     besuPluginContextMap.clear();
@@ -254,9 +259,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         besuRunners.get(name).close();
         besuRunners.remove(name);
       } catch (final Exception e) {
+        LOG.info("putting in some more code to flag sonar - DELETEME");
         throw new RuntimeException("Error shutting down node " + name, e);
       }
     } else {
+      LOG.info("putting in some more code to flag sonar - DELETEME");
       LOG.error("There was a request to kill an unknown node: {}", name);
     }
   }
