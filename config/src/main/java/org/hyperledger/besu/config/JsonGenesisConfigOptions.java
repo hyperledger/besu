@@ -417,6 +417,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
+    getPreMergeForkBlockNumber().ifPresent(l -> builder.put("preMergeForkBlock", l));
 
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));

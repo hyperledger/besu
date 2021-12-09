@@ -60,6 +60,7 @@ public class EthNetworkConfig {
   private static final String GOERLI_GENESIS = "/goerli.json";
   private static final String SEPOLIA_GENESIS = "/sepolia.json";
   private static final String DEV_GENESIS = "/dev.json";
+  private static final String PREMERGE_GENESIS = "/preMerge.json";
   private static final String DEV_ECIP1049_GENESIS = "/ecip1049_dev.json";
   private static final String CLASSIC_GENESIS = "/classic.json";
   private static final String KOTTI_GENESIS = "/kotti.json";
@@ -160,6 +161,9 @@ public class EthNetworkConfig {
       case DEV:
         return new EthNetworkConfig(
             jsonConfig(DEV_GENESIS), DEV_NETWORK_ID, new ArrayList<>(), null);
+      case PREMERGE:
+        return new EthNetworkConfig(
+            jsonConfig(PREMERGE_GENESIS), DEV_NETWORK_ID, new ArrayList<>(), null);
       case CLASSIC:
         return new EthNetworkConfig(
             jsonConfig(CLASSIC_GENESIS), CLASSIC_NETWORK_ID, CLASSIC_BOOTSTRAP_NODES, null);
@@ -206,6 +210,8 @@ public class EthNetworkConfig {
         return jsonConfig(GOERLI_GENESIS);
       case DEV:
         return jsonConfig(DEV_GENESIS);
+      case PREMERGE:
+        return jsonConfig(PREMERGE_GENESIS);
       case ECIP1049_DEV:
         return jsonConfig(DEV_ECIP1049_GENESIS);
       case CLASSIC:

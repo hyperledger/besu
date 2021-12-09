@@ -21,6 +21,7 @@ public enum NetworkName {
   SEPOLIA,
   GOERLI,
   DEV,
+  PREMERGE,
   CLASSIC,
   KOTTI,
   MORDOR,

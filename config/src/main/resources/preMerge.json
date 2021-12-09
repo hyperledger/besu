@@ -1,7 +1,8 @@
 {
   "config": {
     "chainId": 1337,
-    "petersburgBlock": 0,
+    "londonBlock": 0,
+    "preMergeForkBlock": 10,
     "contractSizeLimit": 2147483647,
     "ethash": {
       "fixeddifficulty": 100
