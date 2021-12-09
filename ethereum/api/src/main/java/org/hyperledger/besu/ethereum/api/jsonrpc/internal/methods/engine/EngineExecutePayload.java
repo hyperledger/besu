@@ -86,7 +86,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
     // create a no-op candidate block here, since we already have this payload
     if (protocolContext.getBlockchain().getBlockByHash(blockParam.getBlockHash()).isPresent()) {
       LOG.debug("block already present");
-      return respondWith(reqId, blockParam.getBlockHash(), VALID);
+      return respondWith(reqId, Optional.of(blockParam.getBlockHash()), VALID);
     }
 
     try {
@@ -104,7 +104,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
               .collect(Collectors.toList());
     } catch (final RLPException | IllegalArgumentException e) {
       LOG.warn("failed to decode transactions from newBlock RPC", e);
-      return respondWith(reqId, blockParam.getBlockHash(), INVALID);
+      return respondWith(reqId, Optional.of(blockParam.getBlockHash()), INVALID);
     }
 
     final BlockHeader newBlockHeader =

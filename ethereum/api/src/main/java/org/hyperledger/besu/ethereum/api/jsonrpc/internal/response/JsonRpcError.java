@@ -68,10 +68,9 @@ public enum JsonRpcError {
   MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS(
       32000, "Max priority fee per gas exceeds max fee per gas"),
 
-  // engine failures
-  ACTION_NOT_ALLOWED(2, "Action not allowed"),
-  UNKNOWN_HEADER(4, "Unknown header"),
-  UNKNOWN_PAYLOAD(5, "Unknown payload"),
+  // Execution engine failures
+  UNKNOWN_PAYLOAD(-32001, "Payload does not exist / is not available"),
+  INVALID_TERMINAL_BLOCK(-32002, "Terminal block doesn't satisfy terminal block conditions"),
 
   // Miner failures
   COINBASE_NOT_SET(-32010, "Coinbase not set. Unable to start mining without a coinbase"),

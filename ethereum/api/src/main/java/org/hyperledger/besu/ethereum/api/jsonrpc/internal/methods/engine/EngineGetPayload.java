@@ -61,6 +61,6 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
           request.getRequest().getId(),
           blockResultFactory.executionTransactionComplete(block.get()));
     }
-    return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND);
+    return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.UNKNOWN_PAYLOAD);
   }
 }
