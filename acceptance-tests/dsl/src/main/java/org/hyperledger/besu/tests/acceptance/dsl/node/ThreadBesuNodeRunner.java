@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
-import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 
 import org.hyperledger.besu.Runner;
@@ -30,6 +29,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
@@ -138,7 +138,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .map(EnodeURLImpl::fromURI)
             .collect(Collectors.toList());
     final EthNetworkConfig.Builder networkConfigBuilder =
-        new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(DEV))
+        new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(node.getNetwork()))
             .setBootNodes(bootnodes);
     node.getConfiguration().getGenesisConfig().ifPresent(networkConfigBuilder::setGenesisConfig);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
@@ -152,6 +152,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .withMetricsSystem(metricsSystem)
             .build();
 
+    final TransactionPoolConfiguration txPoolConfig =
+        ImmutableTransactionPoolConfiguration.builder()
+            .strictTransactionReplayProtectionEnabled(node.isStrictTxReplayProtectionEnabled())
+            .build();
+
     final BesuController besuController =
         builder
             .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
@@ -160,7 +165,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .privacyParameters(node.getPrivacyParameters())
             .nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))))
             .metricsSystem(metricsSystem)
-            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
+            .transactionPoolConfiguration(txPoolConfig)
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .clock(Clock.systemUTC())
             .isRevertReasonEnabled(node.isRevertReasonEnabled())

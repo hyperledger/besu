@@ -121,6 +121,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private boolean isDnsEnabled = false;
   private Optional<Integer> exitCode = Optional.empty();
   private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
+  private final boolean isStrictTxReplayProtectionEnabled;
 
   public BesuNode(
       final String name,
@@ -150,9 +151,11 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
-      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration)
+      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
+      final boolean isStrictTxReplayProtectionEnabled)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
+    this.isStrictTxReplayProtectionEnabled = isStrictTxReplayProtectionEnabled;
     keyfilePath.ifPresent(
         path -> {
           try {
@@ -670,6 +673,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public Optional<PkiKeyStoreConfiguration> getPkiKeyStoreConfiguration() {
     return pkiKeyStoreConfiguration;
+  }
+
+  public boolean isStrictTxReplayProtectionEnabled() {
+    return isStrictTxReplayProtectionEnabled;
   }
 
   @Override
