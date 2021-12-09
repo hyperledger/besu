@@ -41,6 +41,7 @@ public class BadCLIOptionsPlugin implements BesuPlugin {
 
   @Override
   public void register(final BesuContext context) {
+    LOG.info(" putting in some more code to flag sonar - DELETEME");
     LOG.info("Registering BadCliOptionsPlugin");
     callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
     writeStatus("init");
@@ -58,12 +59,14 @@ public class BadCLIOptionsPlugin implements BesuPlugin {
 
   @Override
   public void start() {
+    LOG.info(" putting in some more code to flag sonar - DELETEME");
     LOG.info("Starting BadCliOptionsPlugin");
     writeStatus("start");
   }
 
   @Override
   public void stop() {
+    LOG.info(" putting in some more code to flag sonar - DELETEME");
     LOG.info("Stopping BadCliOptionsPlugin");
     writeStatus("stop");
   }
