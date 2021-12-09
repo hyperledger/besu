@@ -154,7 +154,7 @@ public class ForkIdsTest {
         new Object[] {
           NetworkName.DEV,
           List.of(
-              new ForkId(Bytes.ofUnsignedInt(0x467948ad), 10), //started at london
+              new ForkId(Bytes.ofUnsignedInt(0x467948ad), 10), // started at london
               new ForkId(Bytes.ofUnsignedInt(0x38c50ed4), 0),
               new ForkId(Bytes.ofUnsignedInt(0x38c50ed4), 0))
         });
