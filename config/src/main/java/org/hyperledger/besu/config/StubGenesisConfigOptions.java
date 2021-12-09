@@ -41,6 +41,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong berlinBlockNumber = OptionalLong.empty();
   private OptionalLong londonBlockNumber = OptionalLong.empty();
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
+  private OptionalLong preMergeForkBlockNumber = OptionalLong.empty();
   private Optional<UInt256> terminalTotalDifficulty = Optional.empty();
 
   private Optional<Wei> baseFeePerGas = Optional.empty();
@@ -193,6 +194,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getArrowGlacierBlockNumber() {
     return arrowGlacierBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getPreMergeForkBlockNumber() {
+    return preMergeForkBlockNumber;
   }
 
   @Override
@@ -428,6 +434,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions arrowGlacierBlock(final long blockNumber) {
     arrowGlacierBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions preMergeForkBlock(final long blockNumber) {
+    preMergeForkBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

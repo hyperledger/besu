@@ -18,8 +18,6 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.bytes.Bytes;
-
 public class DifficultyOperation extends AbstractFixedCostOperation {
 
   public DifficultyOperation(final GasCalculator gasCalculator) {

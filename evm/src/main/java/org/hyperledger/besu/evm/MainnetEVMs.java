@@ -25,11 +25,6 @@ import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-
-import java.math.BigInteger;
-
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.AddressOperation;
@@ -110,6 +105,11 @@ import org.hyperledger.besu.evm.operation.SubOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
 import org.hyperledger.besu.evm.operation.TimestampOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
+
+import java.math.BigInteger;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** Provides EVMs supporting the appropriate operations for mainnet hard forks. */
 public abstract class MainnetEVMs {
@@ -369,30 +369,30 @@ public abstract class MainnetEVMs {
     registry.put(new BaseFeeOperation(gasCalculator));
   }
 
-  public static EVM eip4399(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return eip4399(new LondonGasCalculator(), chainId, evmConfiguration);
+  public static EVM preMergeFork(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return preMergeFork(new LondonGasCalculator(), chainId, evmConfiguration);
   }
 
-  public static EVM eip4399(
-          final GasCalculator gasCalculator,
-          final BigInteger chainId,
-          final EvmConfiguration evmConfiguration) {
-    return new EVM(eip4399Operations(gasCalculator, chainId), gasCalculator, evmConfiguration);
+  public static EVM preMergeFork(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(preMergeForkOperations(gasCalculator, chainId), gasCalculator, evmConfiguration);
   }
 
-  public static OperationRegistry eip4399Operations(
-          final GasCalculator gasCalculator, final BigInteger chainId) {
+  public static OperationRegistry preMergeForkOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
     OperationRegistry operationRegistry = new OperationRegistry();
-    registerEIP4399Operations(operationRegistry, gasCalculator,chainId);
+    registerPreMergeForkOperations(operationRegistry, gasCalculator, chainId);
     return operationRegistry;
   }
 
-  public static void registerEIP4399Operations(
-          final OperationRegistry registry,
-          final GasCalculator gasCalculator,
-          final BigInteger chainID) {
+  public static void registerPreMergeForkOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
     registerLondonOperations(registry, gasCalculator, chainID);
     registry.put(new RandomOperation(gasCalculator));
   }
-
 }
