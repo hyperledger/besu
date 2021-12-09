@@ -99,9 +99,14 @@ public class VertxRequestTransmitter implements RequestTransmitter {
                 request
                     .result()
                     .send(
-                        h ->
+                        h -> {
+                          if (h.succeeded()) {
                             handleResponse(
-                                newRequest.result().response().result(), responseHandler, result));
+                                newRequest.result().response().result(), responseHandler, result);
+                          } else {
+                            result.completeExceptionally(h.cause());
+                          }
+                        });
               })
           .onFailure(result::completeExceptionally);
 
