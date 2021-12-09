@@ -1881,15 +1881,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           asList("--rpc-http-authentication-jwt-algorithm"));
     }
 
-    if (isRpcHttpAuthenticationEnabled) {
-      CommandLineUtils.checkOptionDependencies(
-          logger,
-          commandLine,
-          "--rpc-http-authentication-public-key-file",
-          rpcHttpAuthenticationPublicKeyFile == null,
-          asList("--rpc-http-authentication-jwt-algorithm"));
-    }
-
     if (isRpcHttpAuthenticationEnabled
         && rpcHttpAuthenticationCredentialsFile() == null
         && rpcHttpAuthenticationPublicKeyFile == null) {
