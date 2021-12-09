@@ -799,7 +799,7 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
     exclude 'org/hyperledger/besu/tests/acceptance/**/*'
   }
   classDirectories.from files(subprojects.sourceSets.main.output).asFileTree.matching {
-    exclude 'org/hyperledger/besu/tests/acceptance/**/*'
+    exclude ['org/hyperledger/besu/tests/acceptance/**/*','org/hyperledger/besu/tests/acceptance/dsl/**/*']
   }
   executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
   reports {
