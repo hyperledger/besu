@@ -27,6 +27,8 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Before;
@@ -34,6 +36,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 public class BadCLIOptionsPluginTest extends AcceptanceTestBase {
+  private static final Logger LOG = LogManager.getLogger();
   private BesuNode node;
 
   @Before
@@ -53,6 +56,7 @@ public class BadCLIOptionsPluginTest extends AcceptanceTestBase {
 
   @Test
   public void shouldNotRegister() {
+    LOG.info("putting in some more code to flag sonar - DELETEME");
     final Path registrationFile = node.homeDirectory().resolve("plugins/badCLIOptions.init");
     waitForFile(registrationFile);
     assertThat(node.homeDirectory().resolve("plugins/badCliOptions.register")).doesNotExist();
@@ -60,6 +64,7 @@ public class BadCLIOptionsPluginTest extends AcceptanceTestBase {
 
   @Test
   public void shouldNotStart() {
+    LOG.info("putting in some more code to flag sonar - DELETEME");
     // depend on the good PicoCLIOptions to tell us when it should be up
     final Path registrationFile = node.homeDirectory().resolve("plugins/pluginLifecycle.started");
     waitForFile(registrationFile);
@@ -77,6 +82,7 @@ public class BadCLIOptionsPluginTest extends AcceptanceTestBase {
   }
 
   private void waitForFile(final Path path) {
+    LOG.info("putting in some more code to flag sonar - DELETEME");
     final File file = path.toFile();
     Awaitility.waitAtMost(30, TimeUnit.SECONDS)
         .until(
