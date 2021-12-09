@@ -30,6 +30,7 @@ import java.util.Optional;
 
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
+import org.web3j.crypto.TransactionUtils;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.utils.Convert;
 import org.web3j.utils.Convert.Unit;
@@ -58,7 +59,7 @@ public class TransferTransaction
       final Amount transferAmount,
       final Amount gasPrice,
       final BigInteger nonce,
-      Optional<BigInteger> chainId) {
+      final Optional<BigInteger> chainId) {
     this.sender = sender;
     this.recipient = recipient;
     this.transferAmount = transferAmount.getValue();
@@ -144,14 +145,14 @@ public class TransferTransaction
         Convert.toWei(transferAmount, transferUnit).toBigIntegerExact());
   }
 
-  private RawTransaction createTransactionWithChainId(BigInteger chainId) {
+  private RawTransaction createTransactionWithChainId(final BigInteger chainId) {
     return RawTransaction.createEtherTransaction(
         chainId.longValueExact(),
         getNonce(),
         INTRINSIC_GAS,
         recipient.getAddress(),
         Convert.toWei(transferAmount, transferUnit).toBigIntegerExact(),
-        gasPrice,
-        BigInteger.ZERO);
+        BigInteger.ONE,
+        gasPrice);
   }
 }

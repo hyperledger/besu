@@ -64,12 +64,12 @@ public class TransferTransactionBuilder {
     return new TransferTransaction(sender, recipient, transferAmount, gasPrice, nonce, chainId);
   }
 
-  public TransferTransactionBuilder chainId(BigInteger chainId) {
+  public TransferTransactionBuilder chainId(final BigInteger chainId) {
     this.chainId = Optional.ofNullable(chainId);
     return this;
   }
 
-  public TransferTransactionBuilder chainId(Long chainId) {
+  public TransferTransactionBuilder chainId(final Long chainId) {
     checkNotNull(chainId);
     return chainId(BigInteger.valueOf(chainId));
   }
