@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
@@ -37,7 +38,7 @@ public class ExecutionPayloadParameter {
   private final Hash stateRoot;
   private final long blockNumber;
   private final Bytes32 random;
-  private final long baseFeePerGas;
+  private final Wei baseFeePerGas;
   private final long gasLimit;
   private final long gasUsed;
   private final long timestamp;
@@ -53,7 +54,7 @@ public class ExecutionPayloadParameter {
       @JsonProperty("feeRecipient") final Address feeRecipient,
       @JsonProperty("stateRoot") final Hash stateRoot,
       @JsonProperty("blockNumber") final UnsignedLongParameter blockNumber,
-      @JsonProperty("baseFeePerGas") final UnsignedLongParameter baseFeePerGas,
+      @JsonProperty("baseFeePerGas") final String baseFeePerGas,
       @JsonProperty("gasLimit") final UnsignedLongParameter gasLimit,
       @JsonProperty("gasUsed") final UnsignedLongParameter gasUsed,
       @JsonProperty("timestamp") final UnsignedLongParameter timestamp,
@@ -67,7 +68,7 @@ public class ExecutionPayloadParameter {
     this.feeRecipient = feeRecipient;
     this.stateRoot = stateRoot;
     this.blockNumber = blockNumber.getValue();
-    this.baseFeePerGas = baseFeePerGas.getValue();
+    this.baseFeePerGas = Wei.fromHexString(baseFeePerGas);
     this.gasLimit = gasLimit.getValue();
     this.gasUsed = gasUsed.getValue();
     this.timestamp = timestamp.getValue();
@@ -98,7 +99,7 @@ public class ExecutionPayloadParameter {
     return blockNumber;
   }
 
-  public long getBaseFeePerGas() {
+  public Wei getBaseFeePerGas() {
     return baseFeePerGas;
   }
 
