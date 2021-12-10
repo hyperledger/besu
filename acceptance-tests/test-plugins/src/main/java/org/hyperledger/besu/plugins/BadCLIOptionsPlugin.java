@@ -54,6 +54,14 @@ public class BadCLIOptionsPlugin implements BesuPlugin {
                   picoCLIOptions.addPicoCLIOptions("bad-cli", BadCLIOptionsPlugin.this));
     }
 
+    if (System.getProperty("TEST_BAD_CLI", "false").equals("true")) {
+      context
+          .getService(PicoCLIOptions.class)
+          .ifPresent(
+              picoCLIOptions ->
+                  picoCLIOptions.addPicoCLIOptions("bad-cli", BadCLIOptionsPlugin.this));
+    }
+
     writeStatus("register");
   }
 
