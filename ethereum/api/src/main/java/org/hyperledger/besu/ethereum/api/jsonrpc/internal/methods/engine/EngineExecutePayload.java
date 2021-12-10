@@ -114,7 +114,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
         new BlockHeader(
             blockParam.getParentHash(),
             OMMERS_HASH_CONSTANT,
-            blockParam.getCoinbase(),
+            blockParam.getFeeRecipient(),
             blockParam.getStateRoot(),
             BodyValidation.transactionsRoot(transactions),
             blockParam.getReceiptsRoot(),
@@ -150,8 +150,11 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
     }
 
     // return result response
-    return respondWith(
-        reqId, newBlockHeader.getHash(), execSuccess ? VALID : INVALID, errorMessage);
+    if (execSuccess) {
+      return respondWith(reqId, newBlockHeader.getHash(), VALID, errorMessage);
+    } else {
+      return respondWith(reqId, latestValidAncestor.get(), INVALID, errorMessage);
+    }
   }
 
   JsonRpcResponse respondWith(
