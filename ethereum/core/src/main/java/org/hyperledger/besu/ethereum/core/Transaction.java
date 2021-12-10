@@ -47,6 +47,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt256s;
 
 /** An operation submitted by an external actor to be applied to the system. */
 public class Transaction
@@ -390,7 +391,7 @@ public class Transaction
    * Boolean which indicates the transaction has associated cost data, whether gas price or 1559 fee
    * market parameters.
    *
-   * @return whether cost params are presetn
+   * @return whether cost params are present
    */
   public boolean hasCostParams() {
     return Arrays.asList(getGasPrice(), getMaxFeePerGas(), getMaxPriorityFeePerGas()).stream()
@@ -399,22 +400,24 @@ public class Transaction
         .anyMatch(q -> q.longValue() > 0L);
   }
 
-  public long getEffectivePriorityFeePerGas(final Optional<Long> maybeBaseFee) {
+  public Wei getEffectivePriorityFeePerGas(final Optional<Wei> maybeBaseFee) {
     return maybeBaseFee
         .map(
             baseFee -> {
               if (getType().supports1559FeeMarket()) {
-                return Math.min(
-                    getMaxPriorityFeePerGas().get().getAsBigInteger().longValue(),
-                    getMaxFeePerGas().get().getAsBigInteger().longValue() - baseFee);
+                if (baseFee.greaterOrEqualThan(getMaxFeePerGas().get())) {
+                  return Wei.ZERO;
+                }
+                return UInt256s.min(
+                    getMaxPriorityFeePerGas().get(), getMaxFeePerGas().get().subtract(baseFee));
               } else {
-                return getGasPrice().get().getValue().longValue() - baseFee;
+                if (baseFee.greaterOrEqualThan(getGasPrice().get())) {
+                  return Wei.ZERO;
+                }
+                return getGasPrice().get().subtract(baseFee);
               }
             })
-        .map(
-            maybeNegativeEffectivePriorityFeePerGas ->
-                Math.max(0, maybeNegativeEffectivePriorityFeePerGas))
-        .orElseGet(() -> getGasPrice().map(Wei::getValue).map(Number::longValue).orElse(0L));
+        .orElseGet(() -> getGasPrice().orElse(Wei.ZERO));
   }
   /**
    * Returns the transaction gas limit.
@@ -1058,7 +1061,7 @@ public class Transaction
    * @param baseFeePerGas optional baseFee from the block header, if we are post-london
    * @return the effective gas price.
    */
-  public final Wei getEffectiveGasPrice(final Optional<Long> baseFeePerGas) {
-    return Wei.of(getEffectivePriorityFeePerGas(baseFeePerGas) + baseFeePerGas.orElse(0L));
+  public final Wei getEffectiveGasPrice(final Optional<Wei> baseFeePerGas) {
+    return getEffectivePriorityFeePerGas(baseFeePerGas).add(baseFeePerGas.orElse(Wei.ZERO));
   }
 }

@@ -284,7 +284,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     final BigInteger difficulty =
         difficultyCalculator.nextDifficulty(timestamp, parentHeader, protocolContext);
 
-    final Long baseFee =
+    final Wei baseFee =
         Optional.of(protocolSpec.getFeeMarket())
             .filter(FeeMarket::implementsBaseFee)
             .map(BaseFeeMarket.class::cast)
@@ -292,7 +292,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                 feeMarket ->
                     feeMarket.computeBaseFee(
                         newBlockNumber,
-                        parentHeader.getBaseFee().orElse(0L),
+                        parentHeader.getBaseFee().orElse(Wei.ZERO),
                         parentHeader.getGasUsed(),
                         feeMarket.targetGasUsed(parentHeader)))
             .orElse(null);

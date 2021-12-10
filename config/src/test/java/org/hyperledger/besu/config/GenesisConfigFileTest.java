@@ -148,7 +148,7 @@ public class GenesisConfigFileTest {
     GenesisConfigFile withBaseFeeAtGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":0},\"baseFeePerGas\":\"0xa\"}");
     assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isPresent();
-    assertThat(withBaseFeeAtGenesis.getBaseFeePerGas().get()).isEqualTo(10L);
+    assertThat(withBaseFeeAtGenesis.getBaseFeePerGas().get().toLong()).isEqualTo(10L);
   }
 
   @Test
@@ -167,7 +167,7 @@ public class GenesisConfigFileTest {
     GenesisConfigFile withBaseFeeNotAtGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":10},\"baseFeePerGas\":\"0xa\"}");
     // specified baseFeePerGas:
-    assertThat(withBaseFeeNotAtGenesis.getBaseFeePerGas().get()).isEqualTo(10L);
+    assertThat(withBaseFeeNotAtGenesis.getBaseFeePerGas().get().toLong()).isEqualTo(10L);
     // but no baseFeePerGas since london block is not at genesis:
     assertThat(withBaseFeeNotAtGenesis.getGenesisBaseFeePerGas()).isNotPresent();
   }
@@ -176,7 +176,7 @@ public class GenesisConfigFileTest {
   public void shouldOverrideConfigOptionsBaseFeeWhenSpecified() {
     GenesisConfigOptions withOverrides =
         EMPTY_CONFIG.getConfigOptions(Map.of("baseFeePerGas", "8"));
-    assertThat(withOverrides.getBaseFeePerGas().getAsLong()).isEqualTo(8L);
+    assertThat(withOverrides.getBaseFeePerGas().get().toLong()).isEqualTo(8L);
   }
 
   @Test

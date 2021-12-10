@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.retesteth.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -104,7 +105,7 @@ public class TestSetChainParamsTest {
     final BlockHeader blockHeader = context.getBlockHeader(0);
     assertThat(blockHeader.getDifficulty()).isEqualTo(UInt256.fromHexString("0x20000"));
     assertThat(blockHeader.getGasLimit()).isEqualTo(1234L);
-    assertThat(blockHeader.getBaseFee()).hasValue(12345L);
+    assertThat(blockHeader.getBaseFee()).hasValue(Wei.of(12345L));
     assertThat(blockHeader.getExtraData().toHexString()).isEqualTo("0x00");
     assertThat(blockHeader.getTimestamp()).isEqualTo(0l);
     assertThat(blockHeader.getNonce()).isEqualTo(0L);

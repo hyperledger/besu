@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.rlp;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class BytesValueRLPOutputTest {
@@ -173,6 +174,23 @@ public class BytesValueRLPOutputTest {
   private void assertLongScalar(final Bytes expected, final long toTest) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeLongScalar(toTest);
+    assertThat(out.encoded()).isEqualTo(expected);
+  }
+
+  @Test
+  public void uint256Scalar() {
+    // Scalar should be encoded as the minimal byte array representing the number. For 0, that means
+    // the empty byte array, which is a short element of zero-length, so 0x80.
+    assertUInt256Scalar(h("0x80"), UInt256.valueOf(0));
+
+    assertUInt256Scalar(h("0x01"), UInt256.valueOf(1));
+    assertUInt256Scalar(h("0x0F"), UInt256.valueOf(15));
+    assertUInt256Scalar(h("0x820400"), UInt256.valueOf(1024));
+  }
+
+  private void assertUInt256Scalar(final Bytes expected, final UInt256 toTest) {
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.writeUInt256Scalar(toTest);
     assertThat(out.encoded()).isEqualTo(expected);
   }
 
