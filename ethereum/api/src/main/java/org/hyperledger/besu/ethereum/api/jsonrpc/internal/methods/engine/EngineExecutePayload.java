@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionPayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineExecutionResult;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -40,10 +41,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.ImmutableMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.EncodeException;
 import io.vertx.core.json.Json;
@@ -80,13 +79,13 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
     Object reqId = requestContext.getRequest().getId();
 
     if (mergeContext.isSyncing()) {
-      return respondWith(reqId, blockParam.getBlockHash(), SYNCING);
+      return respondWith(reqId, null, SYNCING, null);
     }
 
-    // create a no-op candidate block here, since we already have this payload
+    // we already have this payload
     if (protocolContext.getBlockchain().getBlockByHash(blockParam.getBlockHash()).isPresent()) {
       LOG.debug("block already present");
-      return respondWith(reqId, blockParam.getBlockHash(), VALID);
+      return respondWith(reqId, blockParam.getBlockHash(), VALID, null);
     }
 
     try {
@@ -104,14 +103,18 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
               .collect(Collectors.toList());
     } catch (final RLPException | IllegalArgumentException e) {
       LOG.warn("failed to decode transactions from newBlock RPC", e);
-      return respondWith(reqId, blockParam.getBlockHash(), INVALID);
+      return respondWith(
+          reqId,
+          blockParam.getBlockHash(),
+          INVALID,
+          "Failed to decode transactions from block parameter");
     }
 
     final BlockHeader newBlockHeader =
         new BlockHeader(
             blockParam.getParentHash(),
             OMMERS_HASH_CONSTANT,
-            blockParam.getCoinbase(),
+            blockParam.getFeeRecipient(),
             blockParam.getStateRoot(),
             BodyValidation.transactionsRoot(transactions),
             blockParam.getReceiptsRoot(),
@@ -127,28 +130,39 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
             0,
             headerFunctions);
 
+    final var block =
+        new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
+    final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(block);
+
+    if (latestValidAncestor.isEmpty()) {
+      return respondWith(reqId, null, SYNCING, null);
+    }
+
     boolean execSuccess = false;
+    String errorMessage = null;
     // ensure the block hash matches the blockParam hash
     if (newBlockHeader.getHash().equals(blockParam.getBlockHash())) {
 
       // execute block
-      execSuccess =
-          mergeCoordinator.executeBlock(
-              new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList())));
+      execSuccess = mergeCoordinator.executeBlock(block);
+    } else {
+      errorMessage = "Computed block hash does not match block hash parameter";
     }
 
     // return result response
-    return respondWith(reqId, newBlockHeader.getHash(), execSuccess ? VALID : INVALID);
+    if (execSuccess) {
+      return respondWith(reqId, newBlockHeader.getHash(), VALID, errorMessage);
+    } else {
+      return respondWith(reqId, latestValidAncestor.get(), INVALID, errorMessage);
+    }
   }
 
   JsonRpcResponse respondWith(
-      final Object requestId, final Hash blockHash, final ExecutionStatus status) {
+      final Object requestId,
+      final Hash blockHash,
+      final ExecutionStatus status,
+      final String errorMessage) {
     return new JsonRpcSuccessResponse(
-        requestId,
-        ImmutableMap.of(
-            "blockHash",
-            Optional.ofNullable(blockHash).map(Hash::toShortHexString).orElse(null),
-            "status",
-            status.name()));
+        requestId, new EngineExecutionResult(status, blockHash, errorMessage));
   }
 }

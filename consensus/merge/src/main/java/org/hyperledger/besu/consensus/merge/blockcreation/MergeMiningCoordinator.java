@@ -20,6 +20,8 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes32;
 
 public interface MergeMiningCoordinator extends MiningCoordinator {
@@ -32,4 +34,6 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   boolean executeBlock(final Block block);
 
   void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash);
+
+  Optional<Hash> getLatestValidAncestor(Block block);
 }

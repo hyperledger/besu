@@ -25,16 +25,16 @@ public class ExecutionPayloadAttributesParameter {
 
   final Long timestamp;
   final Bytes32 random;
-  final Address feeRecipient;
+  final Address suggestedFeeRecipient;
 
   @JsonCreator
   public ExecutionPayloadAttributesParameter(
       @JsonProperty("timestamp") final String timestamp,
       @JsonProperty("random") final String random,
-      @JsonProperty("feeRecpient") final String feeRecipient) {
+      @JsonProperty("suggestedFeeRecipient") final String suggestedFeeRecipient) {
     this.timestamp = Long.decode(timestamp);
     this.random = Bytes32.fromHexString(random);
-    this.feeRecipient = Address.fromHexString(feeRecipient);
+    this.suggestedFeeRecipient = Address.fromHexString(suggestedFeeRecipient);
   }
 
   public Long getTimestamp() {
@@ -45,15 +45,15 @@ public class ExecutionPayloadAttributesParameter {
     return random;
   }
 
-  public Address getFeeRecipient() {
-    return feeRecipient;
+  public Address getSuggestedFeeRecipient() {
+    return suggestedFeeRecipient;
   }
 
   public String serialize() {
     return new JsonObject()
         .put("timestamp", timestamp)
-        .put("random", random.toShortHexString())
-        .put("feeRecipient", feeRecipient.toShortHexString())
+        .put("random", random.toHexString())
+        .put("suggestedFeeRecipient", suggestedFeeRecipient.toHexString())
         .encode();
   }
 }

@@ -26,11 +26,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"status", "payloadId"})
-public class ExecutionUpdateForkChoiceResult {
+public class EngineUpdateForkChoiceResult {
   private final ForkChoiceStatus status;
   private final PayloadIdentifier payloadId;
 
-  public ExecutionUpdateForkChoiceResult(
+  public EngineUpdateForkChoiceResult(
       final ForkChoiceStatus status, final PayloadIdentifier payloadId) {
     this.status = status;
     this.payloadId = payloadId;

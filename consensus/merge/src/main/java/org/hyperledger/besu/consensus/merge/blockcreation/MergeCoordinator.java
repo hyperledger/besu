@@ -20,6 +20,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -53,6 +55,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   private final MergeContext mergeContext;
   private final BlockValidator blockValidator;
   private final ProtocolContext protocolContext;
+  private final ProtocolSchedule protocolSchedule;
 
   public MergeCoordinator(
       final ProtocolContext protocolContext,
@@ -61,6 +64,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       final MiningParameters miningParams,
       final BlockValidator blockValidator) {
     this.protocolContext = protocolContext;
+    this.protocolSchedule = protocolSchedule;
     this.blockValidator = blockValidator;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.miningParameters = miningParams;
@@ -183,9 +187,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public boolean executeBlock(final Block block) {
-    // TODO: if we are missing the parentHash, attempt backwards sync
-    // https://github.com/hyperledger/besu/issues/2912
-
+    final var chain = protocolContext.getBlockchain();
     var optResult =
         blockValidator.validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE);
@@ -193,8 +195,15 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     optResult.ifPresent(
         result -> {
           result.worldState.persist(block.getHeader());
-          protocolContext.getBlockchain().appendBlock(block, result.receipts);
+          chain.appendBlock(block, result.receipts);
         });
+
+    if (!optResult.isPresent()) {
+      protocolSchedule
+          .getByBlockNumber(chain.getChainHeadBlockNumber())
+          .getBadBlocksManager()
+          .addBadBlock(block);
+    }
 
     return optResult.isPresent();
   }
@@ -250,6 +259,46 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
     // set the new finalized block if it present
     newFinalized.ifPresent(mergeContext::setFinalized);
+  }
+
+  @Override
+  public Optional<Hash> getLatestValidAncestor(final Block block) {
+    final var chain = protocolContext.getBlockchain();
+    final var self = chain.getBlockHeader(block.getHash());
+
+    if (self.isEmpty()) {
+      final var badBlocks =
+          protocolSchedule.getByBlockNumber(block.getHeader().getNumber()).getBadBlocksManager();
+      return findValidAncestor(chain, block.getHeader().getParentHash(), badBlocks);
+    }
+    return self.map(BlockHeader::getHash);
+  }
+
+  private Optional<Hash> findValidAncestor(
+      final Blockchain chain, final Hash parentHash, final BadBlockManager badBlocks) {
+
+    // check chain first
+    final var parent =
+        chain
+            .getBlockHeader(parentHash)
+            .map(BlockHeader::getHash)
+            .map(Optional::of)
+            .orElseGet(
+                () ->
+                    badBlocks
+                        .getBadBlock(parentHash)
+                        .map(
+                            badParent ->
+                                findValidAncestor(
+                                    chain, badParent.getHeader().getParentHash(), badBlocks))
+                        .orElse(Optional.empty()));
+
+    if (parent.isEmpty()) {
+      // TODO: start a backward sync for parentHash if parent is not available
+      // https://github.com/hyperledger/besu/issues/2912
+    }
+
+    return parent;
   }
 
   private boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock) {

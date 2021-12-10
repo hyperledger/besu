@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ExecutionUpdateForkChoiceResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkChoiceResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
@@ -64,7 +64,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
       // if we are syncing, return SYNCING
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
-          new ExecutionUpdateForkChoiceResult(ForkChoiceStatus.SYNCING, null));
+          new EngineUpdateForkChoiceResult(ForkChoiceStatus.SYNCING, null));
     }
 
     LOG.info(
@@ -88,7 +88,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
                       parentHeader.get(),
                       payloadAttributes.getTimestamp(),
                       payloadAttributes.getRandom(),
-                      payloadAttributes.getFeeRecipient()));
+                      payloadAttributes.getSuggestedFeeRecipient()));
 
       payloadId.ifPresent(
           pid ->
@@ -99,7 +99,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
-          new ExecutionUpdateForkChoiceResult(ForkChoiceStatus.SUCCESS, payloadId.orElse(null)));
+          new EngineUpdateForkChoiceResult(ForkChoiceStatus.SUCCESS, payloadId.orElse(null)));
     }
 
     // else fail with parent not found

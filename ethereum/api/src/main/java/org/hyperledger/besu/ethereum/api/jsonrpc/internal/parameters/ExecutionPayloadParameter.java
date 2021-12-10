@@ -25,15 +25,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
- * parentHash: DATA, 32 Bytes coinbase: DATA, 20 Bytes stateRoot: DATA, 32 Bytes receiptRoot: DATA,
- * 32 Bytes logsBloom: DATA, 256 Bytes random: DATA, 32 Bytes blockNumber: QUANTITY gasLimit:
+ * parentHash: DATA, 32 Bytes feeRecipient: DATA, 20 Bytes stateRoot: DATA, 32 Bytes receiptsRoot:
+ * DATA, 32 Bytes logsBloom: DATA, 256 Bytes random: DATA, 32 Bytes blockNumber: QUANTITY gasLimit:
  * QUANTITY gasUsed: QUANTITY timestamp: QUANTITY baseFeePerGas: QUANTITY blockHash: DATA, 32 Bytes
  * transactions: Array of TypedTransaction
  */
 public class ExecutionPayloadParameter {
   private final Hash blockHash;
   private final Hash parentHash;
-  private final Address coinbase;
+  private final Address feeRecipient;
   private final Hash stateRoot;
   private final long blockNumber;
   private final Bytes32 random;
@@ -50,7 +50,7 @@ public class ExecutionPayloadParameter {
   public ExecutionPayloadParameter(
       @JsonProperty("blockHash") final Hash blockHash,
       @JsonProperty("parentHash") final Hash parentHash,
-      @JsonProperty("miner") final Address coinbase,
+      @JsonProperty("feeRecipient") final Address feeRecipient,
       @JsonProperty("stateRoot") final Hash stateRoot,
       @JsonProperty("blockNumber") final UnsignedLongParameter blockNumber,
       @JsonProperty("baseFeePerGas") final UnsignedLongParameter baseFeePerGas,
@@ -64,7 +64,7 @@ public class ExecutionPayloadParameter {
       @JsonProperty("transactions") final List<String> transactions) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
-    this.coinbase = coinbase;
+    this.feeRecipient = feeRecipient;
     this.stateRoot = stateRoot;
     this.blockNumber = blockNumber.getValue();
     this.baseFeePerGas = baseFeePerGas.getValue();
@@ -86,8 +86,8 @@ public class ExecutionPayloadParameter {
     return parentHash;
   }
 
-  public Address getCoinbase() {
-    return coinbase;
+  public Address getFeeRecipient() {
+    return feeRecipient;
   }
 
   public Hash getStateRoot() {
