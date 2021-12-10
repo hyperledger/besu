@@ -5,7 +5,7 @@
 ### Additions and Improvements
 - Represent baseFee as Wei instead of long accordingly to the spec [#2785] (https://github.com/hyperledger/besu/issues/2785)
 
-### 21.10.4-SNAPSHOT Breaking Changes
+### 21.10.4 Breaking Changes
 - Plugin API: BlockHeader.getBaseFee() method now returns an optional Wei instead of an optional Long
 
 ### Additions and Improvements
