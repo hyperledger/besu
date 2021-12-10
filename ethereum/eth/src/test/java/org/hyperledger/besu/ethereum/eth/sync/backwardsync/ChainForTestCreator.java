@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -120,7 +121,7 @@ public class ChainForTestCreator {
         0,
         0,
         Bytes.EMPTY,
-        0L,
+        Wei.ZERO,
         Hash.EMPTY,
         0,
         new MainnetBlockHeaderFunctions());
