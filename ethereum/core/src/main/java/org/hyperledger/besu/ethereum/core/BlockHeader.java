@@ -136,6 +136,11 @@ public class BlockHeader extends SealableBlockHeader
     return Hash.wrap(mixHashOrRandom);
   }
 
+  @Override
+  public Bytes32 getMixHashOrRandom() {
+    return mixHashOrRandom;
+  }
+
   /**
    * Returns the block nonce.
    *
