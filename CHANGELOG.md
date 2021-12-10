@@ -1,6 +1,6 @@
 # Changelog
 
-## 21.10.4-SNAPSHOT
+## 21.10.4
 
 ### Additions and Improvements
 - Represent baseFee as Wei instead of long accordingly to the spec [#2785] (https://github.com/hyperledger/besu/issues/2785)
