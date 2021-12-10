@@ -31,7 +31,7 @@ public class TransactionReplacementByGasPriceRule implements TransactionPoolRepl
   public boolean shouldReplace(
       final TransactionInfo existingTransactionInfo,
       final TransactionInfo newTransactionInfo,
-      final Optional<Long> baseFee) {
+      final Optional<Wei> baseFee) {
     assert existingTransactionInfo.getTransaction() != null
         && newTransactionInfo.getTransaction() != null;
 

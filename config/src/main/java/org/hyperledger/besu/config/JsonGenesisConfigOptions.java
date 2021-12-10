@@ -17,6 +17,8 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.isNull;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
@@ -270,11 +272,12 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getBaseFeePerGas() {
+  public Optional<Wei> getBaseFeePerGas() {
     return Optional.ofNullable(configOverrides.get("baseFeePerGas"))
         .map(Long::parseLong)
-        .map(OptionalLong::of)
-        .orElse(OptionalLong.empty());
+        .map(Wei::of)
+        .map(Optional::of)
+        .orElse(Optional.empty());
   }
 
   @Override

@@ -1698,7 +1698,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final Transaction transaction,
       final Integer index,
       final Hash blockHash,
-      final Optional<Long> baseFee,
+      final Optional<Wei> baseFee,
       final Long blockNumber) {
     assertThat(Hash.fromHexString(result.getString("hash"))).isEqualTo(transaction.getHash());
     assertThat(Long.decode(result.getString("nonce"))).isEqualByComparingTo(transaction.getNonce());
