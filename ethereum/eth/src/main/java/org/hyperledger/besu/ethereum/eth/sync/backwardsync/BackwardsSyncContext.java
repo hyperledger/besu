@@ -66,14 +66,17 @@ public class BackwardsSyncContext {
           "Starting new backward sync towards a pivot {} at height {}",
           () -> newPivot.getHash().toString().substring(0, 20),
           () -> newPivot.getHeader().getNumber());
-      this.currentChain.set(new BackwardChain(newPivot));
-      this.currentBackwardSyncFuture.set(prepareBackwardSyncFuture(this.currentChain.get()));
+      final BackwardChain newChain = new BackwardChain(newPivot);
+      this.currentChain.set(newChain);
+      backwardChainMap.put(newPivot.getHeader().getNumber(), newChain);
+      this.currentBackwardSyncFuture.set(prepareBackwardSyncFuture(newChain));
       return currentBackwardSyncFuture.get();
     }
     if (newPivot.getHeader().getParentHash().equals(currentChain.get().getPivot().getHash())) {
       LOG.debug(
           "Backward sync is ongoing. Appending expected next block to the end of backward sync chain");
       backwardChain.appendExpectedBlock(newPivot);
+      backwardChainMap.put(newPivot.getHeader().getNumber(), backwardChain);
       return currentBackwardSyncFuture.get();
     }
     LOG.debug(
@@ -84,6 +87,7 @@ public class BackwardsSyncContext {
         () -> newPivot.getHeader().getNumber());
 
     BackwardChain newBackwardChain = new BackwardChain(newPivot);
+    backwardChainMap.put(newPivot.getHeader().getNumber(), newBackwardChain);
     this.currentChain.set(
         newBackwardChain); // the current ongoing backward sync will finish its current step and end
 
@@ -149,5 +153,9 @@ public class BackwardsSyncContext {
 
   public BackwardChain findCorrectChainFromPivot(final long number) {
     return backwardChainMap.get(number);
+  }
+
+  public void putCurrentChainToHeight(final long height, final BackwardChain backwardChain) {
+    backwardChainMap.put(height, backwardChain);
   }
 }

@@ -166,11 +166,15 @@ public class BackwardSyncStepTest {
   public void shouldSaveHeaderDelegatesProperly() {
     final BackwardChain chain = Mockito.mock(BackwardChain.class);
     final BlockHeader header = Mockito.mock(BlockHeader.class);
+
+    when(header.getNumber()).thenReturn(12345L);
+
     BackwardSyncStep step = new BackwardSyncStep(context, chain);
 
     step.saveHeader(header);
 
     verify(chain).saveHeader(header);
+    verify(context).putCurrentChainToHeight(12345L, chain);
   }
 
   @Test

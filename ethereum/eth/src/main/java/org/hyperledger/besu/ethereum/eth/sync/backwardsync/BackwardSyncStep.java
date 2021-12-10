@@ -89,6 +89,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
   @VisibleForTesting
   protected Void saveHeader(final BlockHeader blockHeader) {
     backwardChain.saveHeader(blockHeader);
+    context.putCurrentChainToHeight(blockHeader.getNumber(), backwardChain);
     return null;
   }
 
