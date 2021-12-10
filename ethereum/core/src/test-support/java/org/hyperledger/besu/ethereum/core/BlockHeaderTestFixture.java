@@ -135,7 +135,7 @@ public class BlockHeaderTestFixture {
   }
 
   public BlockHeaderTestFixture random(final Bytes32 random) {
-    this.random = Optional.of(random);
+    this.random = Optional.ofNullable(random);
     return this;
   }
 
