@@ -279,8 +279,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public Optional<Wei> getBaseFeePerGas() {
     return Optional.ofNullable(configOverrides.get("baseFeePerGas"))
-        .map(Long::parseLong)
-        .map(Wei::of)
+        .map(Wei::fromHexString)
         .map(Optional::of)
         .orElse(Optional.empty());
   }
