@@ -36,7 +36,6 @@ public class EthTaskException extends RuntimeException {
     NO_AVAILABLE_PEERS,
     PEER_BREACHED_PROTOCOL,
     INCOMPLETE_RESULTS,
-    ALREADY_EXIST_RESULTS,
     MAX_RETRIES_REACHED
   }
 }

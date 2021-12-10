@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersTask;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
@@ -112,29 +111,6 @@ public class BlockPropagationManager {
     ethContext
         .getEthMessages()
         .subscribe(EthPV62.NEW_BLOCK_HASHES, this::handleNewBlockHashesFromNetwork);
-    ethContext
-        .getEthPeers()
-        .subscribeConnect(
-            peer ->
-                syncState
-                    .syncStatus()
-                    .ifPresent(
-                        syncStatus ->
-                            GetBlockFromPeerTask.create(
-                                    protocolSchedule,
-                                    ethContext,
-                                    Optional.empty(),
-                                    syncStatus.getCurrentBlock() + 1,
-                                    metricsSystem)
-                                .run()
-                                .whenComplete(
-                                    (blockPeerTaskResult, throwable) -> {
-                                      if (throwable == null
-                                          && blockPeerTaskResult.getResult() != null) {
-                                        importOrSavePendingBlock(
-                                            blockPeerTaskResult.getResult(), peer.nodeId());
-                                      }
-                                    })));
   }
 
   private void onBlockAdded(final BlockAddedEvent blockAddedEvent) {

@@ -84,7 +84,6 @@ public class GetBlockFromPeersTask extends AbstractEthTask<AbstractPeerTask.Peer
     final AbstractPeerTask<Block> getBlockTask =
         GetBlockFromPeerTask.create(protocolSchedule, ethContext, hash, blockNumber, metricsSystem)
             .assignPeer(peer);
-
     getBlockTask
         .run()
         .whenComplete(
