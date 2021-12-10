@@ -5,6 +5,9 @@
 ### Additions and Improvements
 - Represent baseFee as Wei instead of long accordingly to the spec [#2785] (https://github.com/hyperledger/besu/issues/2785)
 
+### Bug Fixes
+- Updated log4j to 2.15.0 and disabled JNDI message format lookups to improve security.
+
 ### <Next RC> Breaking Changes
 - Plugin API: BlockHeader.getBaseFee() method now returns an optional Wei instead of an optional Long
 
