@@ -1,17 +1,12 @@
 # Changelog
 
-## <Next RC>
+## 21.10.4
 
 ### Additions and Improvements
 - Represent baseFee as Wei instead of long accordingly to the spec [#2785] (https://github.com/hyperledger/besu/issues/2785)
 
-### Bug Fixes
-- Updated log4j to 2.15.0 and disabled JNDI message format lookups to improve security.
-
-### <Next RC> Breaking Changes
+### 21.10.4 Breaking Changes
 - Plugin API: BlockHeader.getBaseFee() method now returns an optional Wei instead of an optional Long
-
-## 21.10.3
 
 ### Additions and Improvements
 - Adding support of the NO_COLOR environment variable as described in the [NO_COLOR](https://no-color.org/) standard [#3085](https://github.com/hyperledger/besu/pull/3085)
@@ -24,6 +19,15 @@
 
 ### Early Access Features
 - Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
+
+## 21.10.3
+
+### Bug Fixes
+- Updated log4j to 2.15.0 and disabled JNDI message format lookups to improve security.
+
+### Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/20.10.3/besu-20.10.3.zip \
+SHA256: b5f46d945754dedcbbb1e5dd96bf2bfd13272ff09c6a66c0150b979a578f4389
 
 ## 21.10.2
 
