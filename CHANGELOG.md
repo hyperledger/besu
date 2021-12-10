@@ -27,7 +27,7 @@
 
 ### Download Link
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/20.10.3/besu-20.10.3.zip \
-SHA256: b5f46d945754dedcbbb1e5dd96bf2bfd13272ff09c6a66c0150b979a578f4389
+SHA256: 78eb3ee9174e2c4594f4845670ad66d44479de6f470b2b950d056102f57d839e
 
 ## 21.10.2
 
