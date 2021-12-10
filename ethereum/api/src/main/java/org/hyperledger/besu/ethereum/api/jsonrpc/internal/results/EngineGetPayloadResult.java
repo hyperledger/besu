@@ -39,7 +39,7 @@ import org.apache.tuweni.bytes.Bytes32;
   "baseFeePerGas",
   "transactions"
 })
-public class ExecutionBlockResult {
+public class EngineGetPayloadResult {
   protected final String blockHash;
   private final String parentHash;
   private final String feeRecipient;
@@ -55,7 +55,7 @@ public class ExecutionBlockResult {
   private final String baseFeePerGas;
   protected final List<String> transactions;
 
-  public ExecutionBlockResult(final BlockHeader header, final List<String> transactions) {
+  public EngineGetPayloadResult(final BlockHeader header, final List<String> transactions) {
     this.blockNumber = Quantity.create(header.getNumber());
     this.blockHash = header.getHash().toString();
     this.parentHash = header.getParentHash().toString();
