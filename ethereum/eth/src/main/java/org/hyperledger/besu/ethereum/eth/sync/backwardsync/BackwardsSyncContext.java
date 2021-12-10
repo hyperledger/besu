@@ -67,7 +67,8 @@ public class BackwardsSyncContext {
           () -> newPivot.getHash().toString().substring(0, 20),
           () -> newPivot.getHeader().getNumber());
       this.currentChain.set(new BackwardChain(newPivot));
-      return prepareBackwardSyncFuture(this.currentChain.get());
+      this.currentBackwardSyncFuture.set(prepareBackwardSyncFuture(this.currentChain.get()));
+      return currentBackwardSyncFuture.get();
     }
     if (newPivot.getHeader().getParentHash().equals(currentChain.get().getPivot().getHash())) {
       LOG.debug(
@@ -92,7 +93,8 @@ public class BackwardsSyncContext {
             .handle(
                 (unused, error) -> {
                   if (error != null) {
-                    if (error instanceof BackwardSyncException) {
+                    if ((error.getCause() != null)
+                        && (error.getCause() instanceof BackwardSyncException)) {
                       LOG.debug(
                           "Previous Backward sync ended exceptionally with message {}",
                           error.getMessage());

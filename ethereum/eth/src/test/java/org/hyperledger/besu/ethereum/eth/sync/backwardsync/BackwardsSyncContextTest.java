@@ -117,6 +117,47 @@ public class BackwardsSyncContextTest {
     final CompletableFuture<Void> future =
         context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT));
 
+    respondUntilFutureIsDone(future);
+
+    future.get();
+    assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
+  }
+
+  @Test
+  public void shouldAddExpectedBlock() throws Exception {
+
+    final CompletableFuture<Void> future =
+        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT - 1));
+
+    final CompletableFuture<Void> secondFuture =
+        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT));
+
+    assertThat(future).isSameAs(secondFuture);
+
+    respondUntilFutureIsDone(future);
+
+    secondFuture.get();
+    assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
+  }
+
+  @Test
+  public void shouldReplaceFlowWhenBlockWasSkipped() throws Exception {
+
+    final CompletableFuture<Void> future =
+        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT - 10));
+
+    final CompletableFuture<Void> secondFuture =
+        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT));
+
+    assertThat(future).isNotSameAs(secondFuture);
+
+    respondUntilFutureIsDone(secondFuture);
+
+    secondFuture.get();
+    assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
+  }
+
+  private void respondUntilFutureIsDone(final CompletableFuture<Void> future) {
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
 
@@ -130,9 +171,6 @@ public class BackwardsSyncContextTest {
           }
           return !future.isDone();
         });
-
-    future.get();
-    assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
   }
 
   @NotNull
