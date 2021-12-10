@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeersTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersTask;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage.NewBlockHash;
@@ -275,25 +275,13 @@ public class BlockPropagationManager {
     }
   }
 
-  private CompletableFuture<Block> retrieveMissingAnnouncedBlock(final long blockNumber) {
-    LOG.trace("Retrieve missing announced block {} from peer", blockNumber);
-    final List<EthPeer> peers =
-        ethContext.getEthPeers().streamBestPeers().collect(Collectors.toList());
-    final GetBlockFromPeersTask getBlockTask =
-        GetBlockFromPeersTask.create(
-            peers, protocolSchedule, ethContext, Optional.empty(), blockNumber, metricsSystem);
-    return getBlockTask
-        .run()
-        .thenCompose((r) -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()));
-  }
-
   private CompletableFuture<Block> processAnnouncedBlock(
       final List<EthPeer> peers, final NewBlockHash newBlock) {
-    final GetBlockFromPeersTask getBlockTask =
-        GetBlockFromPeersTask.create(
-            peers,
-            protocolSchedule,
+    final RetryingGetBlockFromPeersTask getBlockTask =
+        RetryingGetBlockFromPeersTask.create(
             ethContext,
+            protocolSchedule,
+            peers,
             Optional.of(newBlock.hash()),
             newBlock.number(),
             metricsSystem);

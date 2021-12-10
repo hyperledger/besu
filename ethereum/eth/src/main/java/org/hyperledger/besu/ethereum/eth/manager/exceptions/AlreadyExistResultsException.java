@@ -14,29 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.exceptions;
 
-public class EthTaskException extends RuntimeException {
+public class AlreadyExistResultsException extends EthTaskException {
 
-  private final FailureReason failureReason;
-
-  EthTaskException(final FailureReason failureReason) {
-    this("Task failed: " + failureReason.name(), failureReason);
-  }
-
-  EthTaskException(final String message, final FailureReason failureReason) {
-    super(message);
-    this.failureReason = failureReason;
-  }
-
-  public FailureReason reason() {
-    return failureReason;
-  }
-
-  public enum FailureReason {
-    PEER_DISCONNECTED,
-    NO_AVAILABLE_PEERS,
-    PEER_BREACHED_PROTOCOL,
-    INCOMPLETE_RESULTS,
-    ALREADY_EXIST_RESULTS,
-    MAX_RETRIES_REACHED
+  public AlreadyExistResultsException() {
+    super(FailureReason.ALREADY_EXIST_RESULTS);
   }
 }
