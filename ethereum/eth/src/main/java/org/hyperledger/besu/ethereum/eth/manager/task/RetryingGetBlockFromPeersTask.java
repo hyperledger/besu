@@ -88,7 +88,7 @@ public class RetryingGetBlockFromPeersTask
   }
 
   @Override
-  protected void handleTaskError(Throwable error) {
+  protected void handleTaskError(final Throwable error) {
     if (getRetryCount() < getMaxRetries()) {
       LOG.info(
           "Failed to get block with hash {} and number {} retrying later", blockHash, blockNumber);
