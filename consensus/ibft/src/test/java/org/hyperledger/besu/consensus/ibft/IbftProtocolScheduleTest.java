@@ -79,8 +79,8 @@ public class IbftProtocolScheduleTest {
     final ProtocolSchedule schedule =
         createProtocolSchedule(
             JsonGenesisConfigOptions.fromJsonObject(JsonUtil.createEmptyObjectNode()),
-            new ForkSpec<>(0, JsonQbftConfigOptions.DEFAULT),
             List.of(
+                new ForkSpec<>(0, JsonQbftConfigOptions.DEFAULT),
                 new ForkSpec<>(1, arbitraryTransition),
                 new ForkSpec<>(2, JsonQbftConfigOptions.DEFAULT)));
     assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(3);
@@ -90,12 +90,10 @@ public class IbftProtocolScheduleTest {
   }
 
   private ProtocolSchedule createProtocolSchedule(
-      final GenesisConfigOptions genesisConfig,
-      final ForkSpec<BftConfigOptions> genesisFork,
-      final List<ForkSpec<BftConfigOptions>> forks) {
+      final GenesisConfigOptions genesisConfig, final List<ForkSpec<BftConfigOptions>> forks) {
     return IbftProtocolSchedule.create(
         genesisConfig,
-        new ForksSchedule<>(genesisFork, forks),
+        new ForksSchedule<>(forks),
         PrivacyParameters.DEFAULT,
         false,
         bftExtraDataCodec,

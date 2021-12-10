@@ -38,14 +38,14 @@ public class CoinbaseFeePriceCalculatorTest {
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
   private final Gas coinbaseFee;
   private final Wei transactionGasPrice;
-  private final Optional<Long> baseFee;
+  private final Optional<Wei> baseFee;
   private final Wei expectedPrice;
 
   public CoinbaseFeePriceCalculatorTest(
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
       final Gas coinbaseFee,
       final Wei transactionGasPrice,
-      final Optional<Long> baseFee,
+      final Optional<Wei> baseFee,
       final Wei expectedPrice) {
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
     this.coinbaseFee = coinbaseFee;
@@ -61,7 +61,7 @@ public class CoinbaseFeePriceCalculatorTest {
           // legacy transaction must return gas price * gas
           {FRONTIER_CALCULATOR, Gas.of(100), Wei.of(10L), Optional.empty(), Wei.of(1000L)},
           // EIP-1559 must return gas * (gas price - base fee)
-          {EIP_1559_CALCULATOR, Gas.of(100), Wei.of(10L), Optional.of(4L), Wei.of(600L)},
+          {EIP_1559_CALCULATOR, Gas.of(100), Wei.of(10L), Optional.of(Wei.of(4L)), Wei.of(600L)},
           // Negative transaction gas price case
           // {EIP_1559_CALCULATOR, Gas.of(100), Wei.of(95L), Optional.of(100L), Wei.of(-500L)}
         });

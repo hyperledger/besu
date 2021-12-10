@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +83,7 @@ public interface GenesisConfigOptions {
 
   OptionalLong getArrowGlacierBlockNumber();
 
-  OptionalLong getBaseFeePerGas();
+  Optional<Wei> getBaseFeePerGas();
 
   Optional<UInt256> getTerminalTotalDifficulty();
 
