@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
@@ -26,7 +25,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collections;
@@ -34,7 +32,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class MergeBlockCreator extends AbstractBlockCreator {
@@ -85,12 +82,10 @@ public class MergeBlockCreator extends AbstractBlockCreator {
 
   @Override
   protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
-    final PoWSolution solution = new PoWSolution(0, Hash.ZERO, Bytes.EMPTY, Bytes.EMPTY);
     return BlockHeaderBuilder.create()
         .difficulty(Difficulty.ZERO)
         .populateFrom(sealableBlockHeader)
-        .mixHash(solution.getMixHash())
-        .nonce(solution.getNonce())
+        .nonce(0L)
         .blockHeaderFunctions(blockHeaderFunctions)
         .buildBlockHeader();
   }

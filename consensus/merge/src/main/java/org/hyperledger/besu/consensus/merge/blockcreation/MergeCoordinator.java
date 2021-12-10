@@ -178,7 +178,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
                 LOG.warn("something went wrong creating block", throwable);
               } else {
                 executeBlock(bestBlock);
-                mergeContext.replacePayloadById(payloadIdentifier, bestBlock);
+                mergeContext.putPayloadById(payloadIdentifier, bestBlock);
               }
             });
 
@@ -302,6 +302,13 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   private boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock) {
+    LOG.debug(
+        "checking if finalized block {}:{} is ancestor of {}:{}",
+        ancestorBlock.getNumber(),
+        ancestorBlock.getBlockHash(),
+        newBlock.getNumber(),
+        newBlock.getBlockHash());
+
     if (ancestorBlock.getBlockHash().equals(newBlock.getHash())) {
       return true;
     } else if (ancestorBlock.getNumber() < newBlock.getNumber()) {

@@ -22,17 +22,13 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.google.common.collect.EvictingQueue;
 
 public class PostMergeContext implements MergeContext {
-  private static final Logger LOG = LogManager.getLogger();
   private static PostMergeContext singleton;
 
   private final AtomicReference<SyncState> syncState;
@@ -43,7 +39,7 @@ public class PostMergeContext implements MergeContext {
   private final Subscribers<NewMergeStateCallback> newMergeStateCallbackSubscribers =
       Subscribers.create();
 
-  private final Map<PayloadIdentifier, Block> blocksInProgressById = new ConcurrentHashMap<>();
+  private final EvictingQueue<PayloadTuple> blocksInProgress = EvictingQueue.create(12);
 
   // latest finalized block
   // TODO: persist this to storage https://github.com/hyperledger/besu/issues/2913
@@ -143,18 +139,24 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public void putPayloadById(final PayloadIdentifier payloadId, final Block block) {
-    blocksInProgressById.put(payloadId, block);
-  }
-
-  @Override
-  public void replacePayloadById(final PayloadIdentifier payloadId, final Block block) {
-    if (blocksInProgressById.replace(payloadId, block) == null) {
-      LOG.warn("");
-    }
+    blocksInProgress.add(new PayloadTuple(payloadId, block));
   }
 
   @Override
   public Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId) {
-    return Optional.ofNullable(blocksInProgressById.remove(payloadId));
+    return blocksInProgress.stream()
+        .filter(z -> z.payloadIdentifier.equals(payloadId))
+        .map(z -> z.block)
+        .findFirst();
+  }
+
+  static class PayloadTuple {
+    final PayloadIdentifier payloadIdentifier;
+    final Block block;
+
+    PayloadTuple(final PayloadIdentifier payloadIdentifier, final Block block) {
+      this.payloadIdentifier = payloadIdentifier;
+      this.block = block;
+    }
   }
 }

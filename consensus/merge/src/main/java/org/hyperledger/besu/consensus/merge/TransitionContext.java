@@ -97,11 +97,6 @@ public class TransitionContext implements MergeContext {
   }
 
   @Override
-  public void replacePayloadById(final PayloadIdentifier payloadId, final Block block) {
-    postMergeContext.replacePayloadById(payloadId, block);
-  }
-
-  @Override
   public Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId) {
     return postMergeContext.retrieveBlockById(payloadId);
   }
