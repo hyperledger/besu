@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -171,7 +172,7 @@ public class BlockchainReferenceTestCaseSpec {
           Long.decode(gasUsed), // gasUsed
           Long.decode(timestamp), // timestamp
           Bytes.fromHexString(extraData), // extraData
-          baseFee != null ? Long.decode(baseFee) : null, // baseFee
+          baseFee != null ? Wei.fromHexString(baseFee) : null, // baseFee
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexString(nonce).getLong(0),
           new BlockHeaderFunctions() {

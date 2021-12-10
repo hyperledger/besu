@@ -53,6 +53,6 @@ public class BftForksScheduleFactory {
               specs.add(new ForkSpec<>(f.getForkBlock(), spec));
             });
 
-    return new ForksSchedule<>(initialForkSpec, specs.tailSet(initialForkSpec, false));
+    return new ForksSchedule<>(specs);
   }
 }

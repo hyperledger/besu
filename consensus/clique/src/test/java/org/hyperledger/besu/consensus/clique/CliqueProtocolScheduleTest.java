@@ -141,7 +141,7 @@ public class CliqueProtocolScheduleTest {
 
     // premature BaseFeeMarket block
     BlockHeader emptyLondonBlock1 =
-        headerBuilder.baseFeePerGas(1000000000L).gasLimit(10000L).buildHeader();
+        headerBuilder.baseFeePerGas(Wei.of(1000000000L)).gasLimit(10000L).buildHeader();
 
     // first BaseFeeMarket block
     BlockHeader emptyLondonBlock2 =

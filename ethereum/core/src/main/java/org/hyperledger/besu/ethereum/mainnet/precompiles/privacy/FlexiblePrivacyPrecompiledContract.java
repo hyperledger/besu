@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.privacy.FlexiblePrivacyGroupContract;
+import org.hyperledger.besu.ethereum.privacy.FlexibleUtil;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -46,7 +47,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.util.Subscribers;
 
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -292,21 +292,12 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
     if (members.isEmpty() && isAddingParticipant) {
       // creating a new group, so we are checking whether the privateFrom is one of the members of
       // the new group
-      participantsFromParameter = getParticipantsFromParameter(privateTransaction.getPayload());
+      participantsFromParameter =
+          FlexibleUtil.getParticipantsFromParameter(privateTransaction.getPayload());
     }
     final String base64privateFrom = privateFrom.toBase64String();
     return members.contains(base64privateFrom)
         || participantsFromParameter.contains(base64privateFrom);
-  }
-
-  // TODO: this method is copied from DefaultPrivacyController. Fix the duplication in a separate GI
-  private List<String> getParticipantsFromParameter(final Bytes input) {
-    final List<String> participants = new ArrayList<>();
-    final Bytes mungedParticipants = input.slice(4 + 32 + 32);
-    for (int i = 0; i <= mungedParticipants.size() - 32; i += 32) {
-      participants.add(mungedParticipants.slice(i, 32).toBase64String());
-    }
-    return participants;
   }
 
   private String getRemovedParticipantFromParameter(final Bytes input) {
