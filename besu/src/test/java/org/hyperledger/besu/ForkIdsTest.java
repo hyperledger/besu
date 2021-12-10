@@ -150,13 +150,6 @@ public class ForkIdsTest {
               new ForkId(Bytes.ofUnsignedInt(0xdb63a1caL), 13189133),
               new ForkId(Bytes.ofUnsignedInt(0x0f6bf187L), 0),
               new ForkId(Bytes.ofUnsignedInt(0x0f6bf187L), 0))
-        },
-        new Object[] {
-          NetworkName.PREMERGE,
-          List.of(
-              new ForkId(Bytes.ofUnsignedInt(0x467948ad), 10), // started at london
-              new ForkId(Bytes.ofUnsignedInt(0x38c50ed4), 0),
-              new ForkId(Bytes.ofUnsignedInt(0x38c50ed4), 0))
         });
   }
 
