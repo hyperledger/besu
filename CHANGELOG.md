@@ -14,6 +14,7 @@
 - Adding support of the NO_COLOR environment variable as described in the [NO_COLOR](https://no-color.org/) standard [#3085](https://github.com/hyperledger/besu/pull/3085)
 - Add `privx_findFlexiblePrivacyGroup` RPC Method, `privx_findOnchainPrivacyGroup` will be removed in a future release [#3075](https://github.com/hyperledger/besu/pull/3075)
 - The invalid value is now shown when `--bootnodes` cannot parse an item to make it easier to identify which option is invalid. 
+- Adding two new options to be able to specify desired TLS protocol version and Java cipher suites [#3105](https://github.com/hyperledger/besu/pull/3105)
 ### Bug Fixes
 
 ### Early Access Features
