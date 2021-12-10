@@ -1,5 +1,10 @@
 # Changelog
 
+## 21.10.3
+
+### Bug Fixes
+- Updated log4j to 2.15.0 and disabled JNDI message format lookups to improve security.
+
 ## 21.10.2
 
 ### Additions and Improvements
