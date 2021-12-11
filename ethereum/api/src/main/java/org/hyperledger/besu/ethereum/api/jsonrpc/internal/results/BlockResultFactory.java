@@ -85,14 +85,14 @@ public class BlockResultFactory {
         block.getHeader(), txs, ommers, block.getHeader().getDifficulty(), block.calculateSize());
   }
 
-  public ExecutionBlockResult executionTransactionComplete(final Block block) {
+  public EngineGetPayloadResult enginePayloadTransactionComplete(final Block block) {
     final List<String> txs =
         block.getBody().getTransactions().stream()
             .map(TransactionEncoder::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
-    return new ExecutionBlockResult(block.getHeader(), txs);
+    return new EngineGetPayloadResult(block.getHeader(), txs);
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {

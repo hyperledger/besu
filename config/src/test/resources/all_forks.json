@@ -12,6 +12,7 @@
     "berlinBlock": 10,
     "londonBlock": 11,
     "arrowGlacierBlock": 12,
+    "preMergeForkBlock": 13,
     "ecip1015Block": 102,
     "dieHardBlock": 103,
     "gothamBlock": 104,

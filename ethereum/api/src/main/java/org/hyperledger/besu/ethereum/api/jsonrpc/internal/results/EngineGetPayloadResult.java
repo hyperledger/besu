@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -26,9 +26,9 @@ import org.apache.tuweni.bytes.Bytes32;
 @JsonPropertyOrder({
   "blockHash",
   "parentHash",
-  "coinbase",
+  "feeRecipient",
   "stateRoot",
-  "receiptRoot",
+  "receiptsRoot",
   "logsBloom",
   "random",
   "blockNumber",
@@ -39,12 +39,12 @@ import org.apache.tuweni.bytes.Bytes32;
   "baseFeePerGas",
   "transactions"
 })
-public class ExecutionBlockResult {
+public class EngineGetPayloadResult {
   protected final String blockHash;
   private final String parentHash;
-  private final String coinbase;
+  private final String feeRecipient;
   private final String stateRoot;
-  private final String receiptRoot;
+  private final String receiptsRoot;
   private final String logsBloom;
   private final String random;
   private final String blockNumber;
@@ -55,20 +55,20 @@ public class ExecutionBlockResult {
   private final String baseFeePerGas;
   protected final List<String> transactions;
 
-  public ExecutionBlockResult(final BlockHeader header, final List<String> transactions) {
+  public EngineGetPayloadResult(final BlockHeader header, final List<String> transactions) {
     this.blockNumber = Quantity.create(header.getNumber());
     this.blockHash = header.getHash().toString();
     this.parentHash = header.getParentHash().toString();
     this.logsBloom = header.getLogsBloom().toString();
     this.stateRoot = header.getStateRoot().toString();
-    this.receiptRoot = header.getReceiptsRoot().toString();
+    this.receiptsRoot = header.getReceiptsRoot().toString();
     this.extraData = header.getExtraData().toString();
     this.baseFeePerGas = header.getBaseFee().map(Quantity::create).orElse(null);
     this.gasLimit = Quantity.create(header.getGasLimit());
     this.gasUsed = Quantity.create(header.getGasUsed());
     this.timestamp = Quantity.create(header.getTimestamp());
     this.transactions = transactions;
-    this.coinbase = header.getCoinbase().toString();
+    this.feeRecipient = header.getCoinbase().toString();
     this.random = header.getRandom().map(Bytes32::toHexString).orElse(null);
   }
 
@@ -102,9 +102,9 @@ public class ExecutionBlockResult {
     return stateRoot;
   }
 
-  @JsonGetter(value = "receiptRoot")
+  @JsonGetter(value = "receiptsRoot")
   public String getReceiptRoot() {
-    return receiptRoot;
+    return receiptsRoot;
   }
 
   @JsonGetter(value = "extraData")
@@ -137,9 +137,9 @@ public class ExecutionBlockResult {
     return transactions;
   }
 
-  @JsonGetter(value = "coinbase")
+  @JsonGetter(value = "feeRecipient")
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  public String getCoinbase() {
-    return coinbase;
+  public String getFeeRecipient() {
+    return feeRecipient;
   }
 }

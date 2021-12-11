@@ -105,7 +105,7 @@ public class GenesisConfigFile {
       overridesRef =
           Streams.concat(
                   overrides.entrySet().stream(),
-                  Stream.of(Map.entry("baseFeePerGas", optBaseFee.get().toString())))
+                  Stream.of(Map.entry("baseFeePerGas", optBaseFee.get().toShortHexString())))
               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
