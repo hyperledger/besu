@@ -38,7 +38,6 @@ public class AdminAddPeerAcceptanceTest extends AcceptanceTestBase {
     nodeA = besu.createArchiveNodeWithDiscoveryDisabledAndAdmin("nodeA");
     nodeB = besu.createArchiveNodeWithDiscoveryDisabledAndAdmin("nodeB");
     noDiscoveryCluster.start(nodeA, nodeB);
-    System.out.println("Trigger Coverage run");
   }
 
   @After

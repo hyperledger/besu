@@ -41,18 +41,9 @@ public class BadCLIOptionsPlugin implements BesuPlugin {
 
   @Override
   public void register(final BesuContext context) {
-    LOG.info("Trigger sonar cloud");
     LOG.info("Registering BadCliOptionsPlugin");
     callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
     writeStatus("init");
-
-    if (System.getProperty("TEST_BAD_CLI", "false").equals("true")) {
-      context
-          .getService(PicoCLIOptions.class)
-          .ifPresent(
-              picoCLIOptions ->
-                  picoCLIOptions.addPicoCLIOptions("bad-cli", BadCLIOptionsPlugin.this));
-    }
 
     if (System.getProperty("TEST_BAD_CLI", "false").equals("true")) {
       context
