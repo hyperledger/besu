@@ -1948,7 +1948,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-tls-ca-clients-enabled",
             "--rpc-http-authentication-jwt-algorithm",
             "--rpc-http-tls-protocols",
-            "--rpc-http-tls-ciphersuites"));
+            "--rpc-http-tls-cipher-suite",
+            "--rpc-http-tls-cipher-suites"));
   }
 
   private void checkRpcTlsOptionsDependencies() {
@@ -1964,7 +1965,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-tls-known-clients-file",
             "--rpc-http-tls-ca-clients-enabled",
             "--rpc-http-tls-protocols",
-            "--rpc-http-tls-ciphersuites"));
+            "--rpc-http-tls-cipher-suite",
+            "--rpc-http-tls-cipher-suites"));
   }
 
   private void checkRpcTlsClientAuthOptionsDependencies() {
