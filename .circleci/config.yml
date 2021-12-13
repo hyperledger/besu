@@ -146,7 +146,7 @@ jobs:
           command: ./gradlew --no-daemon jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
 
   integrationTests:
-    executor: besu_executor_med
+    executor: xl_machine_executor
     steps:
       - prepare
       - attach_workspace:
