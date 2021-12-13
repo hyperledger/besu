@@ -23,6 +23,10 @@
 ### Bug Fixes
 - Updated log4j to 2.15.0 and disabled JNDI message format lookups to improve security.
 
+### Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.3/besu-21.10.3.zip \
+SHA256: 78eb3ee9174e2c4594f4845670ad66d44479de6f470b2b950d056102f57d839e
+
 ## 21.10.2
 
 ### Additions and Improvements
