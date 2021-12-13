@@ -33,11 +33,11 @@ public class PayloadIdentifier implements Quantity {
   }
 
   public PayloadIdentifier(final Long payloadId) {
-    this.val = UInt64.valueOf(payloadId);
+    this.val = UInt64.valueOf(Math.abs(payloadId));
   }
 
   public static PayloadIdentifier forPayloadParams(final Hash parentHash, final Long timestamp) {
-    return new PayloadIdentifier(((long) parentHash.toHexString().hashCode()) << 32 | timestamp);
+    return new PayloadIdentifier(((long) parentHash.toHexString().hashCode()) ^ timestamp);
   }
 
   @Override
