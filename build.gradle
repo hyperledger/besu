@@ -37,6 +37,7 @@ sonarqube {
     property "sonar.organization", "hyperledger"
     property "sonar.host.url", "https://sonarcloud.io"
     property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
+    property "sonar.coverage.exclusions", "acceptance-tests/**/*"
   }
 }
 
@@ -471,6 +472,8 @@ applicationDefaultJvmArgs = [
   // We shutdown log4j ourselves, as otherwise this shutdown hook runs before our own and whatever
   // happens during shutdown is not logged.
   '-Dlog4j.shutdownHookEnabled=false',
+  // Disable JNI lookups in log4j messages to improve security
+  '-Dlog4j2.formatMsgNoLookups=true',
   // Redirect java.util.logging loggers to use log4j2.
   '-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager',
   // Suppress Java JPMS warnings.  Document the reason for each suppression.
