@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.config.GenesisConfigFile.fromConfig;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -148,7 +150,7 @@ public class GenesisConfigFileTest {
     GenesisConfigFile withBaseFeeAtGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":0},\"baseFeePerGas\":\"0xa\"}");
     assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isPresent();
-    assertThat(withBaseFeeAtGenesis.getBaseFeePerGas().get()).isEqualTo(10L);
+    assertThat(withBaseFeeAtGenesis.getBaseFeePerGas().get().toLong()).isEqualTo(10L);
   }
 
   @Test
@@ -167,7 +169,7 @@ public class GenesisConfigFileTest {
     GenesisConfigFile withBaseFeeNotAtGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":10},\"baseFeePerGas\":\"0xa\"}");
     // specified baseFeePerGas:
-    assertThat(withBaseFeeNotAtGenesis.getBaseFeePerGas().get()).isEqualTo(10L);
+    assertThat(withBaseFeeNotAtGenesis.getBaseFeePerGas().get().toLong()).isEqualTo(10L);
     // but no baseFeePerGas since london block is not at genesis:
     assertThat(withBaseFeeNotAtGenesis.getGenesisBaseFeePerGas()).isNotPresent();
   }
@@ -175,8 +177,8 @@ public class GenesisConfigFileTest {
   @Test
   public void shouldOverrideConfigOptionsBaseFeeWhenSpecified() {
     GenesisConfigOptions withOverrides =
-        EMPTY_CONFIG.getConfigOptions(Map.of("baseFeePerGas", "8"));
-    assertThat(withOverrides.getBaseFeePerGas().getAsLong()).isEqualTo(8L);
+        EMPTY_CONFIG.getConfigOptions(Map.of("baseFeePerGas", Wei.of(8).toString()));
+    assertThat(withOverrides.getBaseFeePerGas().get().toLong()).isEqualTo(8L);
   }
 
   @Test

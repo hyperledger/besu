@@ -17,6 +17,8 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.isNull;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
@@ -270,11 +272,16 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getBaseFeePerGas() {
+  public OptionalLong getPreMergeForkBlockNumber() {
+    return getOptionalLong("premergeforkblock");
+  }
+
+  @Override
+  public Optional<Wei> getBaseFeePerGas() {
     return Optional.ofNullable(configOverrides.get("baseFeePerGas"))
-        .map(Long::parseLong)
-        .map(OptionalLong::of)
-        .orElse(OptionalLong.empty());
+        .map(Wei::fromHexString)
+        .map(Optional::of)
+        .orElse(Optional.empty());
   }
 
   @Override
@@ -409,6 +416,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
+    getPreMergeForkBlockNumber().ifPresent(l -> builder.put("preMergeForkBlock", l));
 
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
@@ -514,6 +522,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getBerlinBlockNumber(),
             getLondonBlockNumber(),
             getArrowGlacierBlockNumber(),
+            getPreMergeForkBlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
             getGothamBlockNumber(),

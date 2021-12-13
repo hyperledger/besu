@@ -20,6 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -31,7 +32,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** A memory holder for testing. */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -69,7 +69,7 @@ public class ReferenceTestEnv extends BlockHeader {
         0L,
         Long.decode(timestamp),
         Bytes.EMPTY,
-        Optional.ofNullable(baseFee).map(UInt256::fromHexString).map(UInt256::toLong).orElse(null),
+        Optional.ofNullable(baseFee).map(Wei::fromHexString).orElse(null),
         Hash.ZERO,
         0L,
         new MainnetBlockHeaderFunctions());

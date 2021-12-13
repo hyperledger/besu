@@ -18,16 +18,22 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-public class DifficultyOperation extends AbstractFixedCostOperation {
+import org.apache.tuweni.bytes.Bytes;
 
-  public DifficultyOperation(final GasCalculator gasCalculator) {
-    super(0x44, "DIFFICULTY", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+public class RandomOperation extends AbstractFixedCostOperation {
+
+  public RandomOperation(final GasCalculator gasCalculator) {
+    super(0x44, "RANDOM", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(frame.getBlockValues().getDifficultyBytes());
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
+    if (frame.getBlockValues().getDifficultyBytes() == null
+        || frame.getBlockValues().getDifficultyBytes().equals(Bytes.of(0))) {
+      frame.pushStackItem(frame.getBlockValues().getMixHashOrRandom());
+    } else {
+      frame.pushStackItem(frame.getBlockValues().getDifficultyBytes());
+    }
     return successResponse;
   }
 }

@@ -79,7 +79,7 @@ public class LogRollingTests {
           0,
           0,
           Bytes.EMPTY,
-          0L,
+          Wei.ZERO,
           Hash.ZERO,
           0,
           new MainnetBlockHeaderFunctions());
@@ -98,7 +98,7 @@ public class LogRollingTests {
           0,
           0,
           Bytes.EMPTY,
-          0L,
+          Wei.ZERO,
           Hash.ZERO,
           0,
           new MainnetBlockHeaderFunctions());

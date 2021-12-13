@@ -226,7 +226,7 @@ public class EthCallTest {
   @Test
   public void shouldAutoSelectIsAllowedExeceedingBalanceToTrueWhenGasPriceIsZeroAfterEIP1559() {
     JsonCallParameter callParameters = callParameter(Wei.ZERO, null, null);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(1L), true);
+    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), true);
   }
 
   @Test
@@ -238,24 +238,24 @@ public class EthCallTest {
   @Test
   public void shouldAutoSelectIsAllowedExeceedingBalanceToFalseWhenGasPriceIsNotZeroAfterEIP1559() {
     JsonCallParameter callParameters = callParameter(Wei.ONE, null, null);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(1L), false);
+    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), false);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExeceedingBalanceToTrueWhenFeesAreZero() {
     JsonCallParameter callParameters = callParameter(null, Wei.ZERO, Wei.ZERO);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(1L), true);
+    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), true);
   }
 
   @Test
   public void shouldAutoSelectIsAllowedExeceedingBalanceToFalseWhenFeesAreZero() {
     JsonCallParameter callParameters = callParameter(null, Wei.ONE, Wei.ONE);
-    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(1L), false);
+    internalAutoSelectIsAllowedExeecdBalance(callParameters, Optional.of(Wei.ONE), false);
   }
 
   private void internalAutoSelectIsAllowedExeecdBalance(
       final JsonCallParameter callParameter,
-      final Optional<Long> baseFee,
+      final Optional<Wei> baseFee,
       final boolean isAllowedExeedingBalance) {
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
 
