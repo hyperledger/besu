@@ -21,17 +21,14 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 
 public class ConstantOmmersHashRule implements AttachedBlockHeaderValidationRule {
+
+  private static final Hash mergeConstant =
+      Hash.fromHexString("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347");
+
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
-    if (header
-        .getOmmersHash()
-        .equals(
-            Hash.fromHexString(
-                "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"))) {
-      return true;
-    }
-    return false;
+    return header.getOmmersHash().equals(mergeConstant);
   }
 
   @Override
