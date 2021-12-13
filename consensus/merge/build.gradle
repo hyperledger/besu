@@ -52,4 +52,6 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.mockito:mockito-core'
+  testImplementation project(':ethereum:core')
 }
