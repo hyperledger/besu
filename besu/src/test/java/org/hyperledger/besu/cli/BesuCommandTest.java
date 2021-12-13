@@ -2472,6 +2472,30 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcHttpTlsWarnIfCipherSuitesSpecifiedWithoutTls() {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    final String cipherSuites = "Invalid";
+
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        host,
+        "--rpc-http-port",
+        String.valueOf(port),
+        "--rpc-http-tls-cipher-suite",
+        cipherSuites);
+    verify(mockLogger)
+        .warn(
+            "{} has been ignored because {} was not defined on the command line.",
+            "--rpc-http-tls-cipher-suite",
+            "--rpc-http-tls-enabled");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void graphQLHttpHostAndPortOptionsMustBeUsed() {
 
     final String host = "1.2.3.4";
