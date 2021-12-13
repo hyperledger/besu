@@ -285,11 +285,11 @@ public class WebSocketRequestHandler {
 
     private void writeFrame(final Buffer buf, final boolean isFinal) throws IOException {
       if (response.writeQueueFull()) {
-        LOG.debug("HttpResponse write queue is full pausing streaming");
+        LOG.debug("WebSocketResponse write queue is full pausing streaming");
         response.drainHandler(e -> paused.release());
         try {
           paused.acquire();
-          LOG.debug("HttpResponse write queue is not accepting more data, resuming streaming");
+          LOG.debug("WebSocketResponse write queue is not accepting more data, resuming streaming");
         } catch (InterruptedException ex) {
           Thread.currentThread().interrupt();
           throw new IOException(
