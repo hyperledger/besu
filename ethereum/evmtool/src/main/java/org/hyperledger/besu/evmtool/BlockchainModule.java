@@ -61,7 +61,6 @@ public class BlockchainModule {
       final GenesisState genesisState,
       @Named("KeyValueStorageName") final String keyValueStorageName) {
     if ("memory".equals(keyValueStorageName)) {
-      System.out.println("trigger bad coverage");
       final MutableWorldState mutableWorldState =
           new DefaultMutableWorldState(worldStateStorage, worldStatePreimageStorage);
       genesisState.writeStateTo(mutableWorldState);
