@@ -67,7 +67,6 @@ public interface BesuPlugin {
    * @return a {@link CompletableFuture}
    */
   default CompletableFuture<Void> reloadConfiguration() {
-    System.out.println("Not covered");
     return CompletableFuture.completedFuture(null);
   }
 
