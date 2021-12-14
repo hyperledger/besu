@@ -15,6 +15,7 @@
 
 ### Bug Fixes
 - Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
+- Update log4j to 2.16.0.
 
 ### Early Access Features
 - Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
