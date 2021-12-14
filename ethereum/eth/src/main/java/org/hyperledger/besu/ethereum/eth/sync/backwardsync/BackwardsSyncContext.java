@@ -59,6 +59,12 @@ public class BackwardsSyncContext {
     this.metricsSystem = metricsSystem;
   }
 
+  public boolean isSyncing() {
+    return Optional.ofNullable(currentBackwardSyncFuture.get())
+        .map(CompletableFuture::isDone)
+        .orElse(Boolean.FALSE);
+  }
+
   public CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
     final BackwardChain backwardChain = currentChain.get();
     if (backwardChain == null) {

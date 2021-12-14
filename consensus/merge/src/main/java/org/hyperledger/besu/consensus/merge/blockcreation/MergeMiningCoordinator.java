@@ -36,4 +36,6 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash);
 
   Optional<Hash> getLatestValidAncestor(Block block);
+
+  boolean isBackwardSyncing();
 }

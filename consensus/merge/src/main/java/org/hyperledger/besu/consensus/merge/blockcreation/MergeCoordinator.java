@@ -293,31 +293,28 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     return self.map(BlockHeader::getHash);
   }
 
+  @Override
+  public boolean isBackwardSyncing() {
+    return backwardsSyncContext.isSyncing();
+  }
+
   private Optional<Hash> findValidAncestor(
       final Blockchain chain, final Hash parentHash, final BadBlockManager badBlocks) {
 
     // check chain first
-    final var parent =
-        chain
-            .getBlockHeader(parentHash)
-            .map(BlockHeader::getHash)
-            .map(Optional::of)
-            .orElseGet(
-                () ->
-                    badBlocks
-                        .getBadBlock(parentHash)
-                        .map(
-                            badParent ->
-                                findValidAncestor(
-                                    chain, badParent.getHeader().getParentHash(), badBlocks))
-                        .orElse(Optional.empty()));
-
-    if (parent.isEmpty()) {
-      // TODO: start a backward sync for parentHash if parent is not available
-      // https://github.com/hyperledger/besu/issues/2912
-    }
-
-    return parent;
+    return chain
+        .getBlockHeader(parentHash)
+        .map(BlockHeader::getHash)
+        .map(Optional::of)
+        .orElseGet(
+            () ->
+                badBlocks
+                    .getBadBlock(parentHash)
+                    .map(
+                        badParent ->
+                            findValidAncestor(
+                                chain, badParent.getHeader().getParentHash(), badBlocks))
+                    .orElse(Optional.empty()));
   }
 
   private boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock) {
