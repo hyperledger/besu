@@ -589,6 +589,30 @@ public abstract class MainnetProtocolSpecs {
         .name("ArrowGlacier");
   }
 
+  static ProtocolSpecBuilder preMergeForkDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+
+    return arrowGlacierDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.preMergeFork(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .name("PreMergeFork");
+  }
+
   private static TransactionReceipt frontierTransactionReceiptFactory(
       // ignored because it's always FRONTIER
       final TransactionType __,

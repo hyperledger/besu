@@ -19,10 +19,11 @@ import org.hyperledger.besu.datatypes.Wei;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * Block Header Values used by various EVM Opcodes. This is not a complete BlocHeader, just the
- * values that are returned by various operations.
+ * values that are returned or accessed by various operations.
  */
 public interface BlockValues {
 
@@ -32,6 +33,15 @@ public interface BlockValues {
    * @return the block difficulty
    */
   default Bytes getDifficultyBytes() {
+    return null;
+  }
+
+  /**
+   * Returns the mixHash before merge, and the randao value after
+   *
+   * @return the mixHash before merge, and the randao value after
+   */
+  default Bytes32 getMixHashOrRandom() {
     return null;
   }
 
