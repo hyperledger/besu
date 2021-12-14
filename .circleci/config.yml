@@ -296,9 +296,9 @@ workflows:
       - integrationTests:
           requires:
             - assemble
-      - acceptanceTests:
-          requires:
-            - assemble
+#      - acceptanceTests:
+#          requires:
+#            - assemble
       - acceptanceTestsQuorum:
           requires:
             - assemble
@@ -314,7 +314,7 @@ workflows:
           requires:
             - integrationTests
             - unitTests
-            - acceptanceTests
+#            - acceptanceTests
             - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
@@ -327,7 +327,7 @@ workflows:
           requires:
             - integrationTests
             - unitTests
-            - acceptanceTests
+#            - acceptanceTests
             - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
