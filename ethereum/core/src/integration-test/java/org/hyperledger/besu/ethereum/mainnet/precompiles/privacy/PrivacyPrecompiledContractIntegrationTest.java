@@ -218,7 +218,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     final Throwable thrown = catchThrowable(() -> enclave.send(s, publicKeys.get(0), publicKeys));
 
-    assertThat(thrown).hasMessageContaining("EnclaveDecodePublicKey");
+    assertThat(thrown).hasMessageContaining("Index 9 out of bounds for length 9");
   }
 
   @Test
@@ -230,6 +230,6 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     final Throwable thrown = catchThrowable(() -> enclave.send(s, publicKeys.get(0), publicKeys));
 
-    assertThat(thrown).hasMessageContaining("NodeMissingPeerUrl");
+    assertThat(thrown).hasMessageContaining("Recipient not found for key:");
   }
 }
