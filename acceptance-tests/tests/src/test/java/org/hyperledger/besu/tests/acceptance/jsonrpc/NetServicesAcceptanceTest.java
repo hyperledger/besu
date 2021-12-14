@@ -21,6 +21,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurati
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public class NetServicesAcceptanceTest extends AcceptanceTestBase {
@@ -30,11 +31,15 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
   private Node nodeA;
   private Node nodeB;
 
-  @Test
-  public void shouldIndicateNetServicesEnabled() throws Exception {
+  @Before
+  public void setup() {
     final ClusterConfiguration clusterConfiguration =
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
     noDiscoveryCluster = new Cluster(clusterConfiguration, net);
+  }
+
+  @Test
+  public void shouldIndicateNetServicesEnabled() throws Exception {
     nodeA = besu.createArchiveNodeNetServicesEnabled("nodeA");
     nodeB = besu.createArchiveNodeNetServicesEnabled("nodeB");
     noDiscoveryCluster.start(nodeA, nodeB);
@@ -45,9 +50,6 @@ public class NetServicesAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldNotDisplayDisabledServices() throws Exception {
-    final ClusterConfiguration clusterConfiguration =
-        new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
-    noDiscoveryCluster = new Cluster(clusterConfiguration, net);
     nodeA = besu.createArchiveNodeNetServicesDisabled("nodeA");
     nodeB = besu.createArchiveNodeNetServicesDisabled("nodeB");
     noDiscoveryCluster.start(nodeA, nodeB);
