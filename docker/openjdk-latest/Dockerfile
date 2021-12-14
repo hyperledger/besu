@@ -1,5 +1,5 @@
 
-FROM debian:bullseye-slim
+FROM ubuntu:20.04
 ARG VERSION="dev"
 
 RUN apt-get update && \
