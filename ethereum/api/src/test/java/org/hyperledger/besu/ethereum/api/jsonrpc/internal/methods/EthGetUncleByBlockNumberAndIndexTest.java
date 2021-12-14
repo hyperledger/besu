@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -109,7 +110,7 @@ public class EthGetUncleByBlockNumberAndIndexTest {
   public void shouldReturnExpectedBlockResult() {
     final JsonRpcRequestContext request =
         getUncleByBlockNumberAndIndex(new Object[] {"0x1", "0x0"});
-    final BlockHeader header = blockHeaderTestFixture.baseFeePerGas(7L).buildHeader();
+    final BlockHeader header = blockHeaderTestFixture.baseFeePerGas(Wei.of(7L)).buildHeader();
     final BlockResult expectedBlockResult = blockResult(header);
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, expectedBlockResult);
 

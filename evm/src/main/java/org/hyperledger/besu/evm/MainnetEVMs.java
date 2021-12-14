@@ -81,6 +81,7 @@ import org.hyperledger.besu.evm.operation.OriginOperation;
 import org.hyperledger.besu.evm.operation.PCOperation;
 import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
+import org.hyperledger.besu.evm.operation.RandomOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataCopyOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataSizeOperation;
 import org.hyperledger.besu.evm.operation.ReturnOperation;
@@ -366,5 +367,32 @@ public abstract class MainnetEVMs {
       final BigInteger chainId) {
     registerIstanbulOperations(registry, gasCalculator, chainId);
     registry.put(new BaseFeeOperation(gasCalculator));
+  }
+
+  public static EVM preMergeFork(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return preMergeFork(new LondonGasCalculator(), chainId, evmConfiguration);
+  }
+
+  public static EVM preMergeFork(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(preMergeForkOperations(gasCalculator, chainId), gasCalculator, evmConfiguration);
+  }
+
+  public static OperationRegistry preMergeForkOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerPreMergeForkOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  public static void registerPreMergeForkOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerLondonOperations(registry, gasCalculator, chainID);
+    registry.put(new RandomOperation(gasCalculator));
   }
 }

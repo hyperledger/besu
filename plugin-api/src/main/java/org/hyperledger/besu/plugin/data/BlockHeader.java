@@ -166,7 +166,7 @@ public interface BlockHeader {
    * @return The BASEFEE of this header.
    */
   @Unstable
-  default Optional<Long> getBaseFee() {
+  default Optional<? extends Quantity> getBaseFee() {
     return Optional.empty();
   }
 

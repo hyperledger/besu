@@ -164,7 +164,7 @@ public class TransactionSimulator {
       if (header.getBaseFee().isPresent()) {
         blockHeaderToProcess =
             BlockHeaderBuilder.fromHeader(header)
-                .baseFee(0L)
+                .baseFee(Wei.ZERO)
                 .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions())
                 .buildBlockHeader();
       }

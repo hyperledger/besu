@@ -156,4 +156,9 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
       eventQueue.add(new NewChainHead(event.getBlock().getHeader()));
     }
   }
+
+  @Override
+  public void removeObserver() {
+    blockchain.removeObserver(blockAddedObserverId);
+  }
 }

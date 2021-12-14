@@ -425,7 +425,7 @@ public class MainnetTransactionProcessor {
         final var coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
         final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
         if (blockHeader.getBaseFee().isPresent()) {
-          final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
+          final Wei baseFee = blockHeader.getBaseFee().get();
           if (transactionGasPrice.compareTo(baseFee) < 0) {
             return TransactionProcessingResult.failed(
                 gasUsedByTransaction.toLong(),

@@ -415,6 +415,19 @@ public class JsonRpcHttpService {
           .setUseAlpn(true);
 
       tlsConfiguration
+          .getSecureTransportProtocols()
+          .ifPresent(httpServerOptions::setEnabledSecureTransportProtocols);
+
+      tlsConfiguration
+          .getCipherSuites()
+          .ifPresent(
+              cipherSuites -> {
+                for (String cs : cipherSuites) {
+                  httpServerOptions.addEnabledCipherSuite(cs);
+                }
+              });
+
+      tlsConfiguration
           .getClientAuthConfiguration()
           .ifPresent(
               clientAuthConfiguration ->

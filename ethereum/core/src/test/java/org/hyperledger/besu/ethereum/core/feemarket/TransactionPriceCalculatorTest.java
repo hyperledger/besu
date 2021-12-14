@@ -46,7 +46,7 @@ public class TransactionPriceCalculatorTest {
   private final Wei gasPrice;
   private final Wei maxPriorityFeePerGas;
   private final Wei maxFeePerGas;
-  private final Optional<Long> baseFee;
+  private final Optional<Wei> baseFee;
   private final Wei expectedPrice;
 
   public TransactionPriceCalculatorTest(
@@ -55,7 +55,7 @@ public class TransactionPriceCalculatorTest {
       final Wei gasPrice,
       final Wei maxPriorityFeePerGas,
       final Wei maxFeePerGas,
-      final Optional<Long> baseFee,
+      final Optional<Wei> baseFee,
       final Wei expectedPrice) {
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.transactionType = transactionType;
@@ -84,7 +84,13 @@ public class TransactionPriceCalculatorTest {
           },
           // legacy transaction must return gas price
           {
-            EIP_1559_CALCULATOR, FRONTIER, Wei.of(578L), null, null, Optional.of(150L), Wei.of(578L)
+            EIP_1559_CALCULATOR,
+            FRONTIER,
+            Wei.of(578L),
+            null,
+            null,
+            Optional.of(Wei.of(150L)),
+            Wei.of(578L)
           },
           // ACCESSLIST transaction must return gas price
           {
@@ -93,7 +99,7 @@ public class TransactionPriceCalculatorTest {
             Wei.of(578L),
             null,
             null,
-            Optional.of(150L),
+            Optional.of(Wei.of(150L)),
             Wei.of(578L)
           },
           // EIP-1559 must return maxPriorityFeePerGas + base fee
@@ -103,7 +109,7 @@ public class TransactionPriceCalculatorTest {
             null,
             Wei.of(100L),
             Wei.of(300L),
-            Optional.of(150L),
+            Optional.of(Wei.of(150L)),
             Wei.of(250L)
           },
           // EIP-1559 must return fee cap
@@ -113,7 +119,7 @@ public class TransactionPriceCalculatorTest {
             null,
             Wei.of(100L),
             Wei.of(300L),
-            Optional.of(250L),
+            Optional.of(Wei.of(250L)),
             Wei.of(300L)
           }
         });

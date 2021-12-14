@@ -14,34 +14,35 @@
  */
 package org.hyperledger.besu.ethereum.core.feemarket;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 
 public class BaseFee {
-  private final long value;
-  private final long delta;
-  private final long minNextValue;
-  private final long maxNextValue;
+  private final Wei value;
+  private final Wei delta;
+  private final Wei minNextValue;
+  private final Wei maxNextValue;
 
-  public BaseFee(final BaseFeeMarket feeMarket, final long value) {
+  public BaseFee(final BaseFeeMarket feeMarket, final Wei value) {
     this.value = value;
-    this.delta = Math.floorDiv(value, feeMarket.getBasefeeMaxChangeDenominator());
-    this.minNextValue = value - delta;
-    this.maxNextValue = value + delta;
+    this.delta = value.divide(feeMarket.getBasefeeMaxChangeDenominator());
+    this.minNextValue = value.subtract(delta);
+    this.maxNextValue = value.add(delta);
   }
 
-  public long getValue() {
+  public Wei getValue() {
     return value;
   }
 
-  public long getDelta() {
+  public Wei getDelta() {
     return delta;
   }
 
-  public long getMinNextValue() {
+  public Wei getMinNextValue() {
     return minNextValue;
   }
 
-  public long getMaxNextValue() {
+  public Wei getMaxNextValue() {
     return maxNextValue;
   }
 }
