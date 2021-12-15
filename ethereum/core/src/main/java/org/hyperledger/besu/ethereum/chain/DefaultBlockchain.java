@@ -85,10 +85,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     checkNotNull(metricsSystem);
 
     this.blockchainStorage = blockchainStorage;
-    genesisBlock.ifPresent(
-        block -> {
-          this.setGenesis(block, dataDirectory);
-        });
+    genesisBlock.ifPresent(block -> this.setGenesis(block, dataDirectory));
 
     final Hash chainHead = blockchainStorage.getChainHead().get();
     chainHeader = blockchainStorage.getBlockHeader(chainHead).get();
