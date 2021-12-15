@@ -239,7 +239,7 @@ public class BlockPropagationManager {
         if (!peers.contains(message.getPeer())) {
           peers.add(message.getPeer());
         }
-        processAnnouncedBlock(peers, newBlock)
+        processAnnouncedBlock(newBlock)
             .whenComplete((r, t) -> requestedBlocks.remove(newBlock.hash()));
       }
     } catch (final RLPException e) {
@@ -251,13 +251,11 @@ public class BlockPropagationManager {
     }
   }
 
-  private CompletableFuture<Block> processAnnouncedBlock(
-      final List<EthPeer> peers, final NewBlockHash newBlock) {
+  private CompletableFuture<Block> processAnnouncedBlock(final NewBlockHash newBlock) {
     final RetryingGetBlockFromPeersTask getBlockTask =
         RetryingGetBlockFromPeersTask.create(
             ethContext,
             protocolSchedule,
-            peers,
             Optional.of(newBlock.hash()),
             newBlock.number(),
             metricsSystem);

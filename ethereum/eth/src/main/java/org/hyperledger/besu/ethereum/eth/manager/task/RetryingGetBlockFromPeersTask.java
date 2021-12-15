@@ -22,10 +22,10 @@ import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsExc
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,21 +38,18 @@ public class RetryingGetBlockFromPeersTask
   private static final Logger LOG = LogManager.getLogger();
 
   private final ProtocolSchedule protocolSchedule;
-  private final List<EthPeer> peers;
   private final Optional<Hash> blockHash;
   private final long blockNumber;
 
   public RetryingGetBlockFromPeersTask(
       final EthContext ethContext,
       final ProtocolSchedule protocolSchedule,
-      final List<EthPeer> peers,
       final MetricsSystem metricsSystem,
       final Optional<Hash> blockHash,
       final long blockNumber,
       final int maxRetries) {
     super(ethContext, maxRetries, Objects::isNull, metricsSystem);
     this.protocolSchedule = protocolSchedule;
-    this.peers = peers;
     this.blockHash = blockHash;
     this.blockNumber = blockNumber;
   }
@@ -60,12 +57,11 @@ public class RetryingGetBlockFromPeersTask
   public static RetryingGetBlockFromPeersTask create(
       final EthContext ethContext,
       final ProtocolSchedule protocolSchedule,
-      final List<EthPeer> peers,
       final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
     return new RetryingGetBlockFromPeersTask(
-        ethContext, protocolSchedule, peers, metricsSystem, hash, blockNumber, DEFAULT_MAX_RETRIES);
+        ethContext, protocolSchedule, metricsSystem, hash, blockNumber, DEFAULT_MAX_RETRIES);
   }
 
   @Override
@@ -73,7 +69,12 @@ public class RetryingGetBlockFromPeersTask
       final Optional<EthPeer> assignedPeer) {
     final GetBlockFromPeersTask getHeadersTask =
         GetBlockFromPeersTask.create(
-            peers, protocolSchedule, getEthContext(), blockHash, blockNumber, getMetricsSystem());
+            getEthContext().getEthPeers().streamAvailablePeers().collect(Collectors.toList()),
+            protocolSchedule,
+            getEthContext(),
+            blockHash,
+            blockNumber,
+            getMetricsSystem());
     return executeSubTask(getHeadersTask::run)
         .thenApply(
             peerResult -> {
