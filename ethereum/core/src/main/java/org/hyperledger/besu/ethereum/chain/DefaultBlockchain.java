@@ -34,6 +34,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -70,12 +71,24 @@ public class DefaultBlockchain implements MutableBlockchain {
       final BlockchainStorage blockchainStorage,
       final MetricsSystem metricsSystem,
       final long reorgLoggingThreshold) {
+    this(genesisBlock, blockchainStorage, metricsSystem, reorgLoggingThreshold, null);
+  }
+
+  private DefaultBlockchain(
+      final Optional<Block> genesisBlock,
+      final BlockchainStorage blockchainStorage,
+      final MetricsSystem metricsSystem,
+      final long reorgLoggingThreshold,
+      final Path dataDirectory) {
     checkNotNull(genesisBlock);
     checkNotNull(blockchainStorage);
     checkNotNull(metricsSystem);
 
     this.blockchainStorage = blockchainStorage;
-    genesisBlock.ifPresent(this::setGenesis);
+    genesisBlock.ifPresent(
+        block -> {
+          this.setGenesis(block, dataDirectory);
+        });
 
     final Hash chainHead = blockchainStorage.getChainHead().get();
     chainHeader = blockchainStorage.getBlockHeader(chainHead).get();
@@ -135,6 +148,21 @@ public class DefaultBlockchain implements MutableBlockchain {
     checkNotNull(genesisBlock);
     return new DefaultBlockchain(
         Optional.of(genesisBlock), blockchainStorage, metricsSystem, reorgLoggingThreshold);
+  }
+
+  public static MutableBlockchain createMutable(
+      final Block genesisBlock,
+      final BlockchainStorage blockchainStorage,
+      final MetricsSystem metricsSystem,
+      final long reorgLoggingThreshold,
+      final Path dataDirectory) {
+    checkNotNull(genesisBlock);
+    return new DefaultBlockchain(
+        Optional.of(genesisBlock),
+        blockchainStorage,
+        metricsSystem,
+        reorgLoggingThreshold,
+        dataDirectory);
   }
 
   public static Blockchain create(
@@ -507,7 +535,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     return new HashSet<>(blockchainStorage.getForkHeads());
   }
 
-  private void setGenesis(final Block genesisBlock) {
+  private void setGenesis(final Block genesisBlock, final Path dataDirectory) {
     checkArgument(
         genesisBlock.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER,
         "Invalid genesis block.");
@@ -530,8 +558,15 @@ public class DefaultBlockchain implements MutableBlockchain {
         throw new IllegalStateException("Blockchain is missing genesis block data.");
       }
       if (!genesisHash.get().equals(genesisBlock.getHash())) {
+        final String firstLine;
+        if (dataDirectory != null) {
+          firstLine =
+              "Supplied genesis block does not match stored chain data in " + dataDirectory + "\n";
+        } else {
+          firstLine = "Supplied genesis block does not match stored chain data\n";
+        }
         throw new InvalidConfigurationException(
-            "Supplied genesis block does not match stored chain data.\n"
+            firstLine
                 + "Please specify a different data directory with --data-path or specify the original genesis file with --genesis-file.");
       }
     }

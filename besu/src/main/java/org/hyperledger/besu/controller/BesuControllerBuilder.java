@@ -263,7 +263,11 @@ public abstract class BesuControllerBuilder {
 
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
-            genesisState.getBlock(), blockchainStorage, metricsSystem, reorgLoggingThreshold);
+            genesisState.getBlock(),
+            blockchainStorage,
+            metricsSystem,
+            reorgLoggingThreshold,
+            dataDirectory);
 
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(worldStateStorage, blockchain);
