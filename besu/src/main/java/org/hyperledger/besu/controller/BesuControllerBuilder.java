@@ -505,6 +505,21 @@ public abstract class BesuControllerBuilder {
               protocolSchedule, metricsSystem, requiredBlock.getKey(), requiredBlock.getValue()));
     }
 
+    final OptionalLong powTerminalBlockNumber =
+        genesisConfig.getConfigOptions(genesisConfigOverrides).getTerminalBlockNumber();
+    final Optional<Hash> powTerminalBlockHash =
+        genesisConfig.getConfigOptions(genesisConfigOverrides).getTerminalBlockHash();
+    if (powTerminalBlockHash.isPresent() && powTerminalBlockNumber.isPresent()) {
+      validators.add(
+          new RequiredBlocksPeerValidator(
+              protocolSchedule,
+              metricsSystem,
+              powTerminalBlockNumber.getAsLong(),
+              powTerminalBlockHash.get()));
+    } else {
+      LOG.debug("unable to validate peers with terminal difficulty blocks");
+    }
+
     return validators;
   }
 

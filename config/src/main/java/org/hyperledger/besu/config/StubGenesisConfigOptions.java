@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.math.BigInteger;
@@ -42,6 +43,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong londonBlockNumber = OptionalLong.empty();
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong preMergeForkBlockNumber = OptionalLong.empty();
+  private OptionalLong terminalBlockNumber = OptionalLong.empty();
+  private Optional<Hash> terminalBlockHash = Optional.empty();
   private Optional<UInt256> terminalTotalDifficulty = Optional.empty();
 
   private Optional<Wei> baseFeePerGas = Optional.empty();
@@ -212,6 +215,16 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getTerminalBlockNumber() {
+    return terminalBlockNumber;
+  }
+
+  @Override
+  public Optional<Hash> getTerminalBlockHash() {
+    return terminalBlockHash;
+  }
+
+  @Override
   public OptionalLong getClassicForkBlock() {
     return classicForkBlock;
   }
@@ -313,6 +326,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
     getPreMergeForkBlockNumber().ifPresent(l -> builder.put("preMergeForkBlock", l));
+    getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
+    getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h));
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
     getEcip1015BlockNumber().ifPresent(l -> builder.put("ecip1015Block", l));
@@ -446,6 +461,16 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   public StubGenesisConfigOptions terminalTotalDifficulty(
       final UInt256 updatedTerminalTotalDifficulty) {
     terminalTotalDifficulty = Optional.of(updatedTerminalTotalDifficulty);
+    return this;
+  }
+
+  public StubGenesisConfigOptions terminalBlockNumber(final long blockNumber) {
+    terminalBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions terminalBlockHash(final Hash blockHash) {
+    terminalBlockHash = Optional.of(blockHash);
     return this;
   }
 
