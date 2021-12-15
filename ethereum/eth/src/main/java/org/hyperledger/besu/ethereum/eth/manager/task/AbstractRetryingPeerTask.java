@@ -142,11 +142,11 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     return error instanceof TimeoutException || (!assignedPeer.isPresent() && isPeerError);
   }
 
-  public EthContext getEthContext() {
+  protected EthContext getEthContext() {
     return ethContext;
   }
 
-  public MetricsSystem getMetricsSystem() {
+  protected MetricsSystem getMetricsSystem() {
     return metricsSystem;
   }
 
