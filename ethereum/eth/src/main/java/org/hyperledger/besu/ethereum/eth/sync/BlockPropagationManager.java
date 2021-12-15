@@ -23,11 +23,10 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeersTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersTask;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage.NewBlockHash;
@@ -150,27 +149,6 @@ public class BlockPropagationManager {
                   LOG.info("Imported {} pending blocks", r.size());
                 }
               });
-    } else {
-
-      LOG.trace("Not ready for import blocks found for {}", newBlock.getHeader().getNumber());
-
-      pendingBlocksManager
-          .lowestAnnouncedBlock()
-          .map(ProcessableBlockHeader::getNumber)
-          .ifPresent(
-              minAnnouncedBlockNumber -> {
-                long distance =
-                    minAnnouncedBlockNumber
-                        - protocolContext.getBlockchain().getChainHeadBlockNumber();
-                LOG.trace(
-                    "Found lowest announced block {} with distance {}",
-                    minAnnouncedBlockNumber,
-                    distance);
-                if (distance < config.getBlockPropagationRange().upperEndpoint()
-                    && minAnnouncedBlockNumber > newBlock.getHeader().getNumber()) {
-                  retrieveMissingAnnouncedBlock(newBlock.getHeader().getNumber() + 1);
-                }
-              });
     }
 
     if (blockAddedEvent.getEventType().equals(EventType.HEAD_ADVANCED)) {
@@ -261,7 +239,7 @@ public class BlockPropagationManager {
         if (!peers.contains(message.getPeer())) {
           peers.add(message.getPeer());
         }
-        processAnnouncedBlock(peers, newBlock)
+        processAnnouncedBlock(newBlock)
             .whenComplete((r, t) -> requestedBlocks.remove(newBlock.hash()));
       }
     } catch (final RLPException e) {
@@ -273,25 +251,11 @@ public class BlockPropagationManager {
     }
   }
 
-  private CompletableFuture<Block> retrieveMissingAnnouncedBlock(final long blockNumber) {
-    LOG.trace("Retrieve missing announced block {} from peer", blockNumber);
-    final List<EthPeer> peers =
-        ethContext.getEthPeers().streamBestPeers().collect(Collectors.toList());
-    final GetBlockFromPeersTask getBlockTask =
-        GetBlockFromPeersTask.create(
-            peers, protocolSchedule, ethContext, Optional.empty(), blockNumber, metricsSystem);
-    return getBlockTask
-        .run()
-        .thenCompose((r) -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()));
-  }
-
-  private CompletableFuture<Block> processAnnouncedBlock(
-      final List<EthPeer> peers, final NewBlockHash newBlock) {
-    final GetBlockFromPeersTask getBlockTask =
-        GetBlockFromPeersTask.create(
-            peers,
-            protocolSchedule,
+  private CompletableFuture<Block> processAnnouncedBlock(final NewBlockHash newBlock) {
+    final RetryingGetBlockFromPeersTask getBlockTask =
+        RetryingGetBlockFromPeersTask.create(
             ethContext,
+            protocolSchedule,
             Optional.of(newBlock.hash()),
             newBlock.number(),
             metricsSystem);
