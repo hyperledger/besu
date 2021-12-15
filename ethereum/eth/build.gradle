@@ -83,6 +83,8 @@ dependencies {
   jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   jmhImplementation project(':plugins:rocksdb')
 
+  implementation 'org.apache.tuweni:tuweni-devp2p'
+  implementation 'org.apache.tuweni:tuweni-dns-discovery'
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
 }
 

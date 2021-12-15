@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,88 +12,89 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.worldstate;
+package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
+/** Requests state (account) Merkle trie nodes by path */
+public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
-  AccountTrieNodeDataRequest(final Hash hash, final Optional<Bytes> location) {
-    super(RequestType.ACCOUNT_TRIE_NODE, hash, location);
+  public AccountTrieNodeDataRequest(
+      final Optional<TrieNodeDataRequest> parent, final Hash nodeHash, final Bytes location) {
+    super(parent, nodeHash, location);
   }
 
   @Override
-  protected void doPersist(final Updater updater) {
-    updater.putAccountStateTrieNode(getLocation().orElse(Bytes.EMPTY), getHash(), getData());
+  public List<List<Bytes>> getPaths() {
+    return List.of(List.of(CompactEncoding.encode(getLocation())));
   }
 
   @Override
-  public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getAccountTrieNodeData(getLocation().orElse(Bytes.EMPTY), getHash());
+  protected void doPersist(final WorldStateStorage worldStateStorage, final Updater updater) {
+    updater.putAccountStateTrieNode(getLocation(), getHash(), getData().orElseThrow());
   }
 
   @Override
-  protected NodeDataRequest createChildNodeDataRequest(
-      final Hash childHash, final Optional<Bytes> location) {
-    return createAccountDataRequest(childHash, location);
+  protected boolean isValidResponse(
+      final SnapSyncState fastSyncState,
+      final EthPeers ethPeers,
+      final WorldStateProofProvider worldStateProofProvider) {
+    return getData().isPresent();
   }
 
   @Override
-  protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
+  protected SnapDataRequest createChildNodeDataRequest(final Hash hash, final Bytes location) {
+    return new AccountTrieNodeDataRequest(Optional.of(this), hash, location);
+  }
+
+  @Override
+  protected Stream<SnapDataRequest> getRequestsFromTrieNodeValue(
       final WorldStateStorage worldStateStorage,
       final Optional<Bytes> location,
       final Bytes path,
       final Bytes value) {
-    final Stream.Builder<NodeDataRequest> builder = Stream.builder();
+    final Stream.Builder<SnapDataRequest> builder = Stream.builder();
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
-    // Add code, if appropriate
 
-    final Optional<Hash> accountHash =
-        Optional.of(
-            Hash.wrap(
-                Bytes32.wrap(
-                    CompactEncoding.pathToBytes(
-                        Bytes.concatenate(getLocation().orElse(Bytes.EMPTY), path)))));
+    final Hash accountHash =
+        Hash.wrap(
+            Bytes32.wrap(CompactEncoding.pathToBytes(Bytes.concatenate(getLocation(), path))));
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
-          .putAccountInfoState(accountHash.get(), value)
+          .putAccountInfoState(accountHash, value)
           .commit();
     }
 
-    if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
-      builder.add(createCodeRequest(accountValue.getCodeHash(), accountHash));
-    }
     // Add storage, if appropriate
     if (!accountValue.getStorageRoot().equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       // If storage is non-empty queue download
-
-      final NodeDataRequest storageNode =
-          createStorageDataRequest(accountValue.getStorageRoot(), accountHash, Optional.empty());
+      final SnapDataRequest storageNode =
+          createStorageTrieNodeRequest(
+              Optional.of(this), accountHash, accountValue.getStorageRoot(), Bytes.EMPTY);
       builder.add(storageNode);
     }
     return builder.build();
   }
 
   @Override
-  protected void writeTo(final RLPOutput out) {
-    out.startList();
-    out.writeByte(getRequestType().getValue());
-    out.writeBytes(getHash());
-    getLocation().ifPresent(out::writeBytes);
-    out.endList();
+  public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
+    return ((BonsaiWorldStateKeyValueStorage) worldStateStorage)
+        .getAccountStateTrieNodeWithStatus(getLocation(), getHash());
   }
 }

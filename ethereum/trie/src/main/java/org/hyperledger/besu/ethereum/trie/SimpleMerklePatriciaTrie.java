@@ -91,7 +91,7 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
-  public void removePath(final K path) {
+  public void removePath(final K path, final RemoveVisitor<V> removeVisitor) {
     checkNotNull(path);
     this.root = root.accept(removeVisitor, path);
   }

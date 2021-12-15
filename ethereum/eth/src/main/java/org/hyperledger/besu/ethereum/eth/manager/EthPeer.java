@@ -29,6 +29,9 @@ import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetPooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.GetByteCodesMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.GetStorageRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.GetTrieNodes;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -38,7 +41,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
-import java.math.BigInteger;
 import java.time.Clock;
 import java.util.Collections;
 import java.util.HashMap;
@@ -127,9 +129,7 @@ public class EthPeer {
     this.requestManagers = new HashMap<>();
 
     initEthRequestManagers();
-    if (connection.capability(SnapProtocol.NAME) != null) {
-      initSnapRequestManagers();
-    }
+    initSnapRequestManagers();
   }
 
   private void initEthRequestManagers() {
@@ -158,6 +158,10 @@ public class EthPeer {
         SnapV1.GET_ACCOUNT_RANGE, new RequestManager(this, true, SnapProtocol.NAME));
     snapRequestManagers.put(
         SnapV1.GET_STORAGE_RANGE, new RequestManager(this, true, SnapProtocol.NAME));
+    snapRequestManagers.put(
+        SnapV1.GET_BYTECODES, new RequestManager(this, true, SnapProtocol.NAME));
+    snapRequestManagers.put(
+        SnapV1.GET_TRIE_NODES, new RequestManager(this, true, SnapProtocol.NAME));
     requestManagers.put(SnapProtocol.NAME, snapRequestManagers);
   }
 
@@ -288,16 +292,26 @@ public class EthPeer {
         requestManagers.get(EthProtocol.NAME).get(EthPV65.GET_POOLED_TRANSACTIONS), message);
   }
 
-  public RequestManager.ResponseStream getAccountRange(
-      final Hash rootHash,
-      final Hash startingHash,
-      final Hash endingHash,
-      final BigInteger responseBytes)
+  public RequestManager.ResponseStream getSnapAccountRange(final GetAccountRangeMessage message)
       throws PeerNotConnected {
-    final GetAccountRangeMessage message =
-        GetAccountRangeMessage.create(rootHash, startingHash, endingHash, responseBytes);
     return sendRequest(
         requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_ACCOUNT_RANGE), message);
+  }
+
+  public RequestManager.ResponseStream getSnapStorageRange(final GetStorageRangeMessage message)
+      throws PeerNotConnected {
+    return sendRequest(
+        requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_STORAGE_RANGE), message);
+  }
+
+  public RequestManager.ResponseStream getSnapBytecode(final GetByteCodesMessage message)
+      throws PeerNotConnected {
+    return sendRequest(requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_BYTECODES), message);
+  }
+
+  public RequestManager.ResponseStream getSnapTrieNode(final GetTrieNodes message)
+      throws PeerNotConnected {
+    return sendRequest(requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_TRIE_NODES), message);
   }
 
   private RequestManager.ResponseStream sendRequest(

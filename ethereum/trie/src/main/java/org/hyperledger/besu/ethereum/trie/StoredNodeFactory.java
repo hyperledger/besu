@@ -213,7 +213,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
     return new BranchNode<>(location, children, value, this, valueSerializer);
   }
 
-  private LeafNode<V> decodeLeaf(
+  protected LeafNode<V> decodeLeaf(
       final Bytes location,
       final Bytes path,
       final RLPInput valueRlp,
@@ -221,8 +221,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
     if (valueRlp.nextIsNull()) {
       throw new MerkleTrieException(errMessage.get() + ": leaf has null value");
     }
-    final V value = decodeValue(valueRlp, errMessage);
-    return new LeafNode<>(location, path, value, this, valueSerializer);
+    return new LeafNode<>(location, path, decodeValue(valueRlp, errMessage), this, valueSerializer);
   }
 
   @SuppressWarnings("unchecked")

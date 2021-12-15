@@ -55,6 +55,7 @@ import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
@@ -98,7 +99,7 @@ public final class SnapProtocolManagerTest {
   public void disconnectOnUnsolicitedMessage() {
     try (final SnapProtocolManager snapManager = create(worldStateArchive)) {
       final MessageData messageData =
-          AccountRangeMessage.create(new TreeMap<>(), new ArrayList<>())
+          AccountRangeMessage.create(new TreeMap<>(), new ArrayDeque<>())
               .wrapMessageData(BigInteger.ONE);
       final MockPeerConnection peer =
           setupPeerWithoutStatusExchange(snapManager, (cap, msg, conn) -> {});

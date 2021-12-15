@@ -19,15 +19,23 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class BatchingReadPipe<T> implements ReadPipe<List<T>> {
 
   private final ReadPipe<T> input;
-  private final int maximumBatchSize;
+  private final Supplier<Integer> maximumBatchSize;
   private final Counter batchCounter;
 
   public BatchingReadPipe(
       final ReadPipe<T> input, final int maximumBatchSize, final Counter batchCounter) {
+    this(input, () -> maximumBatchSize, batchCounter);
+  }
+
+  public BatchingReadPipe(
+      final ReadPipe<T> input,
+      final Supplier<Integer> maximumBatchSize,
+      final Counter batchCounter) {
     this.input = input;
     this.maximumBatchSize = maximumBatchSize;
     this.batchCounter = batchCounter;
@@ -53,7 +61,7 @@ public class BatchingReadPipe<T> implements ReadPipe<List<T>> {
     }
     final List<T> batch = new ArrayList<>();
     batch.add(firstItem);
-    input.drainTo(batch, maximumBatchSize - 1);
+    input.drainTo(batch, maximumBatchSize.get() - 1);
     batchCounter.inc();
     return batch;
   }
@@ -61,7 +69,7 @@ public class BatchingReadPipe<T> implements ReadPipe<List<T>> {
   @Override
   public List<T> poll() {
     final List<T> batch = new ArrayList<>();
-    input.drainTo(batch, maximumBatchSize);
+    input.drainTo(batch, maximumBatchSize.get());
     if (batch.isEmpty()) {
       // Poll has to return null if the pipe is empty
       return null;

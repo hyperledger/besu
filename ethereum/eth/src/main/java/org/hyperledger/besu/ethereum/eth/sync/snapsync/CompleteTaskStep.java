@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,9 +12,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.worldstate;
+package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.RunnableCounter;
@@ -57,14 +56,14 @@ public class CompleteTaskStep {
   }
 
   public void markAsCompleteOrFailed(
-      final BlockHeader header,
-      final WorldDownloadState downloadState,
-      final Task<NodeDataRequest> task) {
-    if (task.getData().getData() != null) {
-      enqueueChildren(task, header, downloadState);
+      final SnapSyncState snapSyncState,
+      final SnapWorldDownloadState downloadState,
+      final Task<SnapDataRequest> task) {
+    if (task.getData().getData().isPresent()) {
       completedRequestsCounter.inc();
       task.markCompleted();
-      downloadState.checkCompletion(worldStateStorage, header);
+      downloadState.checkCompletion(
+          worldStateStorage, snapSyncState.getPivotBlockHeader().orElseThrow());
     } else {
       retriedRequestsCounter.inc();
       task.markFailed();
@@ -81,26 +80,11 @@ public class CompleteTaskStep {
         worldStatePendingRequestsCurrentSupplier.getAsLong());
   }
 
-  long getCompletedRequests() {
+  public long getCompletedRequests() {
     return completedRequestsCounter.get();
   }
 
-  long getPendingRequests() {
+  public long getPendingRequests() {
     return worldStatePendingRequestsCurrentSupplier.getAsLong();
-  }
-
-  private void enqueueChildren(
-      final Task<NodeDataRequest> task,
-      final BlockHeader blockHeader,
-      final WorldDownloadState downloadState) {
-    final NodeDataRequest request = task.getData();
-    // Only queue rootnode children if we started from scratch
-    if (!downloadState.downloadWasResumed() || !isRootState(blockHeader, request)) {
-      downloadState.enqueueRequests(request.getChildRequests(worldStateStorage));
-    }
-  }
-
-  private boolean isRootState(final BlockHeader blockHeader, final NodeDataRequest request) {
-    return request.getHash().equals(blockHeader.getStateRoot());
   }
 }

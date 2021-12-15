@@ -14,19 +14,32 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
 import java.util.AbstractMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractSnapMessageData extends AbstractMessageData {
 
+  private Optional<Hash> overrideStateRoot;
+
   public AbstractSnapMessageData(final Bytes data) {
     super(data);
+    overrideStateRoot = Optional.empty();
+  }
+
+  public Optional<Hash> getOverrideStateRoot() {
+    return overrideStateRoot;
+  }
+
+  public void setOverrideStateRoot(final Optional<Hash> overrideStateRoot) {
+    this.overrideStateRoot = overrideStateRoot;
   }
 
   @Override

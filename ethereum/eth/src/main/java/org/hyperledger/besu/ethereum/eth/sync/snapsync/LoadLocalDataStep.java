@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.worldstate;
+package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -41,14 +41,19 @@ public class LoadLocalDataStep {
             "Total number of node data requests completed using existing data");
   }
 
-  public Stream<Task<NodeDataRequest>> loadLocalData(
-      final Task<NodeDataRequest> task, final Pipe<Task<NodeDataRequest>> completedTasks) {
-    final NodeDataRequest request = task.getData();
+  public Stream<Task<SnapDataRequest>> loadLocalData(
+      final Task<SnapDataRequest> task, final Pipe<Task<SnapDataRequest>> completedTasks) {
+    final SnapDataRequest request = task.getData();
+    // check if the node is not already present in the database
+
     final Optional<Bytes> existingData = request.getExistingData(worldStateStorage);
     if (existingData.isPresent()) {
       existingNodeCounter.inc();
-      request.setData(existingData.get());
-      request.setRequiresPersisting(false);
+      request.setData(existingData);
+      if (task.getData() instanceof TrieNodeDataRequest) {
+        ((TrieNodeDataRequest) task.getData())
+            .parent.ifPresent(TrieNodeDataRequest::notifyChildFound);
+      }
       completedTasks.put(task);
       return Stream.empty();
     }

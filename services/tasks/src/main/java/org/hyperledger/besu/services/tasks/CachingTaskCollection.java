@@ -23,14 +23,14 @@ import java.util.Set;
 public class CachingTaskCollection<T> implements TaskCollection<T> {
 
   public static final int DEFAULT_CACHE_SIZE = 1_000_000;
-  private final int maxCacheSize;
+  protected final int maxCacheSize;
 
   // The underlying collection
-  private final TaskCollection<T> wrappedCollection;
+  protected final TaskCollection<T> wrappedCollection;
   /**
    * A cache of tasks to operate on before going to {@link CachingTaskCollection#wrappedCollection}
    */
-  private final Queue<Task<T>> cache = new ArrayDeque<>();
+  protected final Queue<Task<T>> cache = new ArrayDeque<>();
   // Tasks that have been removed, but not marked completed yet
   private final Set<Task<T>> outstandingTasks = new HashSet<>();
 
@@ -116,17 +116,17 @@ public class CachingTaskCollection<T> implements TaskCollection<T> {
     closed = true;
   }
 
-  private void assertNotClosed() {
+  protected void assertNotClosed() {
     if (closed) {
       throw new IllegalStateException("Attempt to access closed " + getClass().getSimpleName());
     }
   }
 
-  private static class CachedTask<T> implements Task<T> {
+  protected static class CachedTask<T> implements Task<T> {
     private final CachingTaskCollection<T> cachingTaskCollection;
     private final T data;
 
-    private CachedTask(final CachingTaskCollection<T> cachingTaskCollection, final T data) {
+    public CachedTask(final CachingTaskCollection<T> cachingTaskCollection, final T data) {
       this.cachingTaskCollection = cachingTaskCollection;
       this.data = data;
     }

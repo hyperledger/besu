@@ -72,7 +72,7 @@ public final class StorageRangeMessage extends AbstractSnapMessageData {
     return new StorageRangeMessage(tmp.encoded());
   }
 
-  private StorageRangeMessage(final Bytes data) {
+  public StorageRangeMessage(final Bytes data) {
     super(data);
   }
 
@@ -89,7 +89,7 @@ public final class StorageRangeMessage extends AbstractSnapMessageData {
 
   public SlotRangeData slotsData(final boolean withRequestId) {
     final ArrayDeque<TreeMap<Bytes32, Bytes>> slots = new ArrayDeque<>();
-    final List<Bytes> proofs;
+    final ArrayDeque<Bytes> proofs = new ArrayDeque<>();
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
 
@@ -106,7 +106,12 @@ public final class StorageRangeMessage extends AbstractSnapMessageData {
                 return Void.TYPE; // we don't need the response
               });
         });
-    proofs = input.readList(rlpInput -> input.readBytes());
+
+    input.enterList();
+    while (!input.isEndOfCurrentList()) {
+      proofs.add(input.readBytes());
+    }
+    input.leaveList();
 
     input.leaveList();
     return ImmutableSlotRangeData.builder().slots(slots).proofs(proofs).build();
@@ -117,6 +122,6 @@ public final class StorageRangeMessage extends AbstractSnapMessageData {
 
     ArrayDeque<TreeMap<Bytes32, Bytes>> slots();
 
-    List<Bytes> proofs();
+    ArrayDeque<Bytes> proofs();
   }
 }

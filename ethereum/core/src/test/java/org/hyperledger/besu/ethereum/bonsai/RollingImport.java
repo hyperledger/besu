@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.util.io.RollingFileReader;
 
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.javatuples.Pair;
 
 public class RollingImport {
 
@@ -55,14 +57,12 @@ public class RollingImport {
     final InMemoryKeyValueStorage trieLogStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-    final InMemoryKeyValueStorage trieBucketStorage =
-        (InMemoryKeyValueStorage)
+    final Pair<KeyValueStorage, KeyValueStorage> trieBucketsStorage =
+        Pair.with(
             provider.getStorageBySegmentIdentifier(
-                KeyValueSegmentIdentifier.TRIE_SNAP_FIRST_BUCKET);
-    final InMemoryKeyValueStorage trieBucket2Storage =
-        (InMemoryKeyValueStorage)
+                KeyValueSegmentIdentifier.TRIE_SNAP_FIRST_BUCKET),
             provider.getStorageBySegmentIdentifier(
-                KeyValueSegmentIdentifier.TRIE_SNAP_SECOND_BUCKET);
+                KeyValueSegmentIdentifier.TRIE_SNAP_SECOND_BUCKET));
     final BonsaiPersistedWorldState bonsaiState =
         new BonsaiPersistedWorldState(
             archive,
@@ -72,8 +72,7 @@ public class RollingImport {
                 storageStorage,
                 trieBranchStorage,
                 trieLogStorage,
-                trieBucketStorage,
-                trieBucket2Storage));
+                trieBucketsStorage));
 
     int count = 0;
     while (!reader.isDone()) {

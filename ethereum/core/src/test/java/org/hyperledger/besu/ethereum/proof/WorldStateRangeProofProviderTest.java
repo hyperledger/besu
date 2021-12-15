@@ -1,3 +1,17 @@
+/*
+ * Copyright contributors to Hyperledger Besu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.ethereum.proof;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -9,6 +23,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.RangedStorageEntriesCollector;
+import org.hyperledger.besu.ethereum.trie.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
@@ -66,39 +81,14 @@ public class WorldStateRangeProofProviderTest {
         worldStateProofProvider.getAccountProofRelatedNodes(
             Hash.wrap(accountStateTrie.getRootHash()), accounts.lastKey()));
 
-    // validate the range proof
-
-    // reconstruct the trie with the proof
-    Map<Bytes32, Bytes> proofsEntries = Collections.synchronizedMap(new HashMap<>());
-    for (Bytes proof : proofs) {
-      proofsEntries.put(Hash.hash(proof), proof);
-    }
-    final InnerNodeDiscoveryManager<Bytes> snapStoredNodeFactory =
-        new InnerNodeDiscoveryManager<>(
-            (location, hash) -> Optional.ofNullable(proofsEntries.get(hash)),
-            Function.identity(),
-            Function.identity(),
-            Bytes32.ZERO,
-            accounts.lastKey());
-
-    // search inner nodes
-    MerklePatriciaTrie<Bytes, Bytes> trie =
-        new StoredMerklePatriciaTrie<>(snapStoredNodeFactory, accountStateTrie.getRootHash());
-    trie.visitAll(node -> {});
-
-    final Bytes[] innerNodes = snapStoredNodeFactory.getInnerNodes().toArray(new Bytes[0]);
-    for (Bytes innerNode : innerNodes) {
-      trie.removePath(innerNode);
-    }
-
-    assertThat(accountStateTrie.getRootHash()).isNotEqualByComparingTo(trie.getRootHash());
-
-    Bytes32[] accountsToSave = accounts.keySet().toArray(new Bytes32[0]);
-    for (int i = 0; i < 10; i++) {
-      trie.put(accountsToSave[i], accounts.get(accountsToSave[i]));
-    }
-
-    assertThat(accountStateTrie.getRootHash()).isEqualByComparingTo(trie.getRootHash());
+    assertThat(
+            worldStateProofProvider.isValidRangeProof(
+                Bytes32.ZERO,
+                MAX_RANGE,
+                accountStateTrie.getRootHash(),
+                Optional.of(proofs),
+                accounts))
+        .isTrue();
   }
 
   @Test
@@ -135,7 +125,8 @@ public class WorldStateRangeProofProviderTest {
             Function.identity(),
             Function.identity(),
             Bytes32.ZERO,
-            accounts.lastKey());
+            accounts.lastKey(),
+            true);
 
     // search inner nodes
     MerklePatriciaTrie<Bytes, Bytes> trie =
@@ -144,7 +135,7 @@ public class WorldStateRangeProofProviderTest {
 
     final Bytes[] innerNodes = snapStoredNodeFactory.getInnerNodes().toArray(new Bytes[0]);
     for (Bytes innerNode : innerNodes) {
-      trie.removePath(innerNode);
+      trie.removePath(innerNode, new RemoveVisitor<>(false));
     }
 
     assertThat(accountStateTrie.getRootHash()).isNotEqualByComparingTo(trie.getRootHash());
@@ -193,7 +184,8 @@ public class WorldStateRangeProofProviderTest {
             Function.identity(),
             Function.identity(),
             Bytes32.ZERO,
-            invalidAccounts.lastKey());
+            invalidAccounts.lastKey(),
+            true);
 
     // search inner nodes
     MerklePatriciaTrie<Bytes, Bytes> trie =
@@ -202,7 +194,7 @@ public class WorldStateRangeProofProviderTest {
 
     final Bytes[] innerNodes = snapStoredNodeFactory.getInnerNodes().toArray(new Bytes[0]);
     for (Bytes innerNode : innerNodes) {
-      trie.removePath(innerNode);
+      trie.removePath(innerNode, new RemoveVisitor<>(false));
     }
 
     assertThat(accountStateTrie.getRootHash()).isNotEqualByComparingTo(trie.getRootHash());

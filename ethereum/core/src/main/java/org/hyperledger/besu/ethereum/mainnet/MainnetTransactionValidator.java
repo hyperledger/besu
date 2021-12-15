@@ -198,6 +198,7 @@ public class MainnetTransactionValidator {
     }
 
     if (!validationParams.isAllowFutureNonce() && senderNonce != transaction.getNonce()) {
+      System.out.println("senderNonce " + senderNonce + " " + transaction.getNonce());
       return ValidationResult.invalid(
           TransactionInvalidReason.INCORRECT_NONCE,
           String.format(

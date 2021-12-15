@@ -82,7 +82,6 @@ public class FastSyncActions {
     if (fastSyncState.hasPivotBlockHeader()) {
       return waitForAnyPeer().thenApply(ignore -> fastSyncState);
     }
-
     LOG.debug("Waiting for at least {} peers.", syncConfig.getFastSyncMinimumPeerCount());
     return waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
         .thenApply(successfulWaitResult -> fastSyncState);
@@ -190,7 +189,7 @@ public class FastSyncActions {
         .downloadPivotBlockHeader();
   }
 
-  public ChainDownloader createChainDownloader(final FastSyncState currentState) {
+  public ChainDownloader createFastChainDownloader(final FastSyncState currentState) {
     return FastSyncChainDownloader.create(
         syncConfig,
         protocolSchedule,
@@ -198,6 +197,10 @@ public class FastSyncActions {
         ethContext,
         syncState,
         metricsSystem,
-        currentState.getPivotBlockHeader().get());
+        currentState);
+  }
+
+  public SyncState getSyncState() {
+    return syncState;
   }
 }

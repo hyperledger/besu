@@ -76,9 +76,9 @@ public class InMemoryTaskQueue<T> implements TaskCollection<T> {
   }
 
   private void assertNotClosed() {
-    if (closed.get()) {
+    /*if (closed.get()) {
       throw new IllegalStateException("Attempt to access closed " + getClass().getSimpleName());
-    }
+    }*/
   }
 
   private synchronized void handleFailedTask(final InMemoryTask<T> task) {

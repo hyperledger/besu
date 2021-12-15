@@ -32,6 +32,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldStateDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
@@ -113,7 +115,7 @@ public class WorldStateDownloaderBenchmark {
                 NodeDataRequest::deserialize),
             0);
     worldStateDownloader =
-        new WorldStateDownloader(
+        new FastWorldStateDownloader(
             ethContext,
             worldStateStorage,
             pendingRequests,
@@ -147,7 +149,7 @@ public class WorldStateDownloaderBenchmark {
 
   @Benchmark
   public Optional<Bytes> downloadWorldState() {
-    final CompletableFuture<Void> result = worldStateDownloader.run(blockHeader);
+    final CompletableFuture<Void> result = worldStateDownloader.run(null, blockHeader);
     if (result.isDone()) {
       throw new IllegalStateException("World state download was already complete");
     }

@@ -14,21 +14,32 @@
  */
 package org.hyperledger.besu.ethereum.proof;
 
+import static org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.Proof;
+import org.hyperledger.besu.ethereum.trie.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.Function;
 
+import com.google.common.collect.Ordering;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -105,5 +116,87 @@ public class WorldStateProofProvider {
         rootHash,
         b -> b,
         b -> b);
+  }
+
+  public boolean isValidRangeProof(
+      final Bytes32 startKeyHash,
+      final Bytes32 endKeyHash,
+      final Bytes32 rootHash,
+      final Optional<List<Bytes>> proofs,
+      final TreeMap<Bytes32, Bytes> keys) {
+
+    // check if it's monotonic increasing
+    if (!Ordering.natural().isOrdered(keys.keySet())) {
+      return false;
+    }
+
+    // when proof is empty we need to have all of the keys to reconstruct the trie
+    if (proofs.isEmpty()) {
+      final Map<Bytes32, Bytes> db = new HashMap<>();
+      final MerklePatriciaTrie<Bytes, Bytes> trie =
+          new StoredMerklePatriciaTrie<>(
+              new StoredNodeFactory<>(
+                  (location, hash) -> Optional.ofNullable(db.get(hash)),
+                  Function.identity(),
+                  Function.identity()),
+              EMPTY_TRIE_NODE_HASH);
+      // add the received keys in the trie
+      for (Map.Entry<Bytes32, Bytes> key : keys.entrySet()) {
+        trie.put(key.getKey(), key.getValue());
+      }
+      // check if the generated root hash is valid
+      return rootHash.equals(trie.getRootHash());
+    }
+
+    // reconstruct a part of the trie with the proof
+    Map<Bytes32, Bytes> proofsEntries = Collections.synchronizedMap(new HashMap<>());
+    for (Bytes proof : proofs.orElseThrow()) {
+      proofsEntries.put(Hash.hash(proof), proof);
+    }
+
+    if (keys.isEmpty()) {
+      final MerklePatriciaTrie<Bytes, Bytes> trie =
+          new StoredMerklePatriciaTrie<>(
+              new InnerNodeDiscoveryManager<>(
+                  (location, hash) -> Optional.ofNullable(proofsEntries.get(hash)),
+                  Function.identity(),
+                  Function.identity(),
+                  startKeyHash,
+                  endKeyHash,
+                  false),
+              rootHash);
+      try {
+        // check is there is not missing element
+        trie.entriesFrom(startKeyHash, Integer.MAX_VALUE);
+      } catch (MerkleTrieException e) {
+        return false;
+      }
+      return true;
+    }
+
+    // search inner nodes in the range create by the proofs and remove
+    final InnerNodeDiscoveryManager<Bytes> snapStoredNodeFactory =
+        new InnerNodeDiscoveryManager<>(
+            (location, hash) -> Optional.ofNullable(proofsEntries.get(hash)),
+            Function.identity(),
+            Function.identity(),
+            startKeyHash,
+            keys.lastKey(),
+            true);
+    final MerklePatriciaTrie<Bytes, Bytes> trie =
+        new StoredMerklePatriciaTrie<>(snapStoredNodeFactory, rootHash);
+    trie.visitAll(node -> {});
+    final Bytes[] innerNodes = snapStoredNodeFactory.getInnerNodes().toArray(new Bytes[0]);
+    for (Bytes innerNode : innerNodes) {
+      trie.removePath(innerNode, new RemoveVisitor<>(false));
+    }
+
+    // add the received keys in the trie to reconstruct the trie
+    for (Map.Entry<Bytes32, Bytes> account : keys.entrySet()) {
+      trie.put(account.getKey(), account.getValue());
+    }
+
+    // check if the generated root hash is valid
+    return rootHash.equals(trie.getRootHash());
   }
 }

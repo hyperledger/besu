@@ -43,8 +43,8 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
 
   public static GetAccountRangeMessage create(
       final Hash worldStateRootHash,
-      final Hash startKeyHash,
-      final Hash endKeyHash,
+      final Bytes32 startKeyHash,
+      final Bytes32 endKeyHash,
       final BigInteger responseBytes) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
@@ -56,7 +56,7 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
     return new GetAccountRangeMessage(tmp.encoded());
   }
 
-  private GetAccountRangeMessage(final Bytes data) {
+  public GetAccountRangeMessage(final Bytes data) {
     super(data);
   }
 
@@ -83,15 +83,21 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
     if (withRequestId) input.skipNext();
+    final Hash worldStateRootHash = Hash.wrap(Bytes32.wrap(input.readBytes32()));
     final ImmutableRange range =
         ImmutableRange.builder()
-            .worldStateRootHash(Hash.wrap(Bytes32.wrap(input.readBytes32())))
+            .worldStateRootHash(getOverrideStateRoot().orElse(worldStateRootHash))
             .startKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())))
             .endKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())))
             .responseBytes(input.readBigIntegerScalar())
             .build();
     input.leaveList();
     return range;
+  }
+
+  @Override
+  public String toString() {
+    return "GetAccountRangeMessage{" + "data=" + data + '}';
   }
 
   @Value.Immutable

@@ -20,8 +20,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldStateDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.sync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -41,11 +42,11 @@ import org.apache.logging.log4j.Logger;
 
 public class FastDownloaderFactory {
 
-  private static final String FAST_SYNC_FOLDER = "fastsync";
+  protected static final String FAST_SYNC_FOLDER = "fastsync";
 
   private static final Logger LOG = LogManager.getLogger();
 
-  public static Optional<FastSyncDownloader> create(
+  public static Optional<FastSyncDownloader<NodeDataRequest>> createFastDownloader(
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
       final ProtocolSchedule protocolSchedule,
@@ -83,24 +84,26 @@ public class FastDownloaderFactory {
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       worldStateStorage.clear();
     }
-    final CachingTaskCollection<NodeDataRequest> taskCollection =
+
+    final CachingTaskCollection<NodeDataRequest> snapTaskCollection =
         createWorldStateDownloaderTaskCollection(
             getStateQueueDirectory(dataDirectory),
             metricsSystem,
             syncConfig.getWorldStateTaskCacheSize());
-    final WorldStateDownloader worldStateDownloader =
-        new WorldStateDownloader(
+    final WorldStateDownloader snapWorldStateDownloader =
+        new FastWorldStateDownloader(
             ethContext,
             worldStateStorage,
-            taskCollection,
+            snapTaskCollection,
             syncConfig.getWorldStateHashCountPerRequest(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             syncConfig.getWorldStateMinMillisBeforeStalling(),
             clock,
             metricsSystem);
-    final FastSyncDownloader fastSyncDownloader =
-        new FastSyncDownloader(
+
+    final FastSyncDownloader<NodeDataRequest> fastSyncDownloader =
+        new FastSyncDownloader<>(
             new FastSyncActions(
                 syncConfig,
                 protocolSchedule,
@@ -108,34 +111,34 @@ public class FastDownloaderFactory {
                 ethContext,
                 syncState,
                 metricsSystem),
-            worldStateStorage,
-            worldStateDownloader,
+            snapWorldStateDownloader,
             fastSyncStateStorage,
-            taskCollection,
+            snapTaskCollection,
             fastSyncDataDirectory,
-            fastSyncState);
-    syncState.setWorldStateDownloadStatus(worldStateDownloader);
+            fastSyncState) {};
+    syncState.setWorldStateDownloadStatus(snapWorldStateDownloader);
     return Optional.of(fastSyncDownloader);
   }
 
-  private static Path getStateQueueDirectory(final Path dataDirectory) {
+  protected static Path getStateQueueDirectory(final Path dataDirectory) {
     final Path queueDataDir = getFastSyncDataDirectory(dataDirectory).resolve("statequeue");
     ensureDirectoryExists(queueDataDir.toFile());
     return queueDataDir;
   }
 
-  private static Path getFastSyncDataDirectory(final Path dataDirectory) {
+  protected static Path getFastSyncDataDirectory(final Path dataDirectory) {
     final Path fastSyncDataDir = dataDirectory.resolve(FAST_SYNC_FOLDER);
     ensureDirectoryExists(fastSyncDataDir.toFile());
     return fastSyncDataDir;
   }
 
-  private static void ensureDirectoryExists(final File dir) {
+  protected static void ensureDirectoryExists(final File dir) {
     if (!dir.mkdirs() && !dir.isDirectory()) {
       throw new IllegalStateException("Unable to create directory: " + dir.getAbsolutePath());
     }
   }
 
+  @SuppressWarnings("UnusedMethod")
   private static CachingTaskCollection<NodeDataRequest> createWorldStateDownloaderTaskCollection(
       final Path dataDirectory,
       final MetricsSystem metricsSystem,

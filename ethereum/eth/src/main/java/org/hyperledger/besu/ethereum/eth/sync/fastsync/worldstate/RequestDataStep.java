@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.worldstate;
+package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -48,7 +48,7 @@ public class RequestDataStep {
                 ethContext, hashes, pivotBlockNumber, metricsSystem));
   }
 
-  RequestDataStep(
+  public RequestDataStep(
       final BiFunction<List<Hash>, Long, EthTask<Map<Hash, Bytes>>> getNodeDataTaskFactory) {
     this.getNodeDataTaskFactory = getNodeDataTaskFactory;
   }
@@ -56,7 +56,7 @@ public class RequestDataStep {
   public CompletableFuture<List<Task<NodeDataRequest>>> requestData(
       final List<Task<NodeDataRequest>> requestTasks,
       final BlockHeader blockHeader,
-      final WorldDownloadState downloadState) {
+      final FastWorldDownloadState downloadState) {
     final List<Hash> hashes =
         requestTasks.stream()
             .map(Task::getData)
@@ -80,7 +80,7 @@ public class RequestDataStep {
   private CompletableFuture<Map<Hash, Bytes>> sendRequest(
       final BlockHeader blockHeader,
       final List<Hash> hashes,
-      final WorldDownloadState downloadState) {
+      final FastWorldDownloadState downloadState) {
     final EthTask<Map<Hash, Bytes>> task =
         getNodeDataTaskFactory.apply(hashes, blockHeader.getNumber());
     downloadState.addOutstandingTask(task);

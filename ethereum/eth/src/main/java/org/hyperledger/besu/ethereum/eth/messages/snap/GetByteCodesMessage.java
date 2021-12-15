@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages.snap;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -22,13 +21,16 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
 
+import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.immutables.value.Value;
 
 public final class GetByteCodesMessage extends AbstractSnapMessageData {
+
+  final Optional<ArrayDeque<Bytes32>> accountHashes;
 
   public static GetByteCodesMessage readFrom(final MessageData message) {
     if (message instanceof GetByteCodesMessage) {
@@ -39,35 +41,40 @@ public final class GetByteCodesMessage extends AbstractSnapMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a GetByteCodesMessage.", code));
     }
-    return new GetByteCodesMessage(message.getData());
+    return new GetByteCodesMessage(Optional.empty(), message.getData());
   }
 
   public static GetByteCodesMessage create(
-      final List<Hash> hashes, final BigInteger responseBytes) {
-    return create(Optional.empty(), hashes, responseBytes);
+      final Optional<ArrayDeque<Bytes32>> accountHashes,
+      final ArrayDeque<Bytes32> codeHashes,
+      final BigInteger responseBytes) {
+    return create(Optional.empty(), accountHashes, codeHashes, responseBytes);
   }
 
   public static GetByteCodesMessage create(
       final Optional<BigInteger> requestId,
-      final List<Hash> hashes,
+      final Optional<ArrayDeque<Bytes32>> accountHashes,
+      final ArrayDeque<Bytes32> codeHashes,
       final BigInteger responseBytes) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     requestId.ifPresent(tmp::writeBigIntegerScalar);
-    tmp.writeList(hashes, (hash, rlpOutput) -> rlpOutput.writeBytes(hash));
+    tmp.writeList(codeHashes, (hash, rlpOutput) -> rlpOutput.writeBytes(hash));
     tmp.writeBigIntegerScalar(responseBytes);
     tmp.endList();
-    return new GetByteCodesMessage(tmp.encoded());
+    return new GetByteCodesMessage(accountHashes, tmp.encoded());
   }
 
-  private GetByteCodesMessage(final Bytes data) {
+  public GetByteCodesMessage(final Optional<ArrayDeque<Bytes32>> accountHashes, final Bytes data) {
     super(data);
+    this.accountHashes = accountHashes;
   }
 
   @Override
   protected Bytes wrap(final BigInteger requestId) {
-    final GetByteCodesMessage.ByteCodesRequest request = request(false);
-    return create(Optional.of(requestId), request.hashes(), request.responseBytes()).getData();
+    final CodeHashes request = codeHashes(false);
+    return create(Optional.of(requestId), accountHashes, request.hashes(), request.responseBytes())
+        .getData();
   }
 
   @Override
@@ -75,23 +82,30 @@ public final class GetByteCodesMessage extends AbstractSnapMessageData {
     return SnapV1.GET_BYTECODES;
   }
 
-  public ByteCodesRequest request(final boolean withRequestId) {
+  public CodeHashes codeHashes(final boolean withRequestId) {
+    final ArrayDeque<Bytes32> hashes = new ArrayDeque<>();
+    final BigInteger responseBytes;
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
     if (withRequestId) input.skipNext();
-    final ImmutableByteCodesRequest request =
-        ImmutableByteCodesRequest.builder()
-            .hashes(input.readList(rlpInput -> Hash.wrap(rlpInput.readBytes32())))
-            .responseBytes(input.readBigIntegerScalar())
-            .build();
+    input.enterList();
+    while (!input.isEndOfCurrentList()) {
+      hashes.add(input.readBytes32());
+    }
     input.leaveList();
-    return request;
+    responseBytes = input.readBigIntegerScalar();
+    input.leaveList();
+    return ImmutableCodeHashes.builder().hashes(hashes).responseBytes(responseBytes).build();
+  }
+
+  public Optional<ArrayDeque<Bytes32>> getAccountHashes() {
+    return accountHashes;
   }
 
   @Value.Immutable
-  public interface ByteCodesRequest {
+  public interface CodeHashes {
 
-    List<Hash> hashes();
+    ArrayDeque<Bytes32> hashes();
 
     BigInteger responseBytes();
   }

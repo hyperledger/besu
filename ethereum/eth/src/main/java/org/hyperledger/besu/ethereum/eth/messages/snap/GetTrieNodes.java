@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.messages.snap;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.TrieNodeDataRequest;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -43,11 +44,18 @@ public final class GetTrieNodes extends AbstractSnapMessageData {
     return new GetTrieNodes(message.getData());
   }
 
+  public static GetTrieNodes createWithRequest(
+      final Hash worldStateRootHash,
+      final TrieNodeDataRequest request,
+      final BigInteger responseBytes) {
+    return create(Optional.empty(), worldStateRootHash, request.getPaths(), responseBytes);
+  }
+
   public static GetTrieNodes create(
       final Hash worldStateRootHash,
-      final List<List<Bytes>> paths,
+      final List<List<Bytes>> requests,
       final BigInteger responseBytes) {
-    return create(Optional.empty(), worldStateRootHash, paths, responseBytes);
+    return create(Optional.empty(), worldStateRootHash, requests, responseBytes);
   }
 
   public static GetTrieNodes create(
@@ -68,7 +76,7 @@ public final class GetTrieNodes extends AbstractSnapMessageData {
     return new GetTrieNodes(tmp.encoded());
   }
 
-  private GetTrieNodes(final Bytes data) {
+  public GetTrieNodes(final Bytes data) {
     super(data);
   }
 

@@ -24,6 +24,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
+import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 
 public final class TrieNodes extends AbstractSnapMessageData {
@@ -53,7 +54,7 @@ public final class TrieNodes extends AbstractSnapMessageData {
     return new TrieNodes(tmp.encoded());
   }
 
-  private TrieNodes(final Bytes data) {
+  public TrieNodes(final Bytes data) {
     super(data);
   }
 
@@ -68,12 +69,17 @@ public final class TrieNodes extends AbstractSnapMessageData {
     return SnapV1.TRIE_NODES;
   }
 
-  public List<Bytes> nodes(final boolean withRequestId) {
+  public ArrayDeque<Bytes> nodes(final boolean withRequestId) {
+    final ArrayDeque<Bytes> trieNodes = new ArrayDeque<>();
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
     if (withRequestId) input.skipNext();
-    List<Bytes> nodes = input.readList(RLPInput::readBytes);
+    input.enterList();
+    while (!input.isEndOfCurrentList()) {
+      trieNodes.add(input.readBytes());
+    }
     input.leaveList();
-    return nodes;
+    input.leaveList();
+    return trieNodes;
   }
 }

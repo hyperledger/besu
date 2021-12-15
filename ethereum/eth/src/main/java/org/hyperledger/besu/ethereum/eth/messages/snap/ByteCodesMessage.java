@@ -24,6 +24,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
+import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.immutables.value.Value;
 
@@ -55,7 +56,7 @@ public final class ByteCodesMessage extends AbstractSnapMessageData {
     return new ByteCodesMessage(tmp.encoded());
   }
 
-  private ByteCodesMessage(final Bytes data) {
+  public ByteCodesMessage(final Bytes data) {
     super(data);
   }
 
@@ -71,18 +72,22 @@ public final class ByteCodesMessage extends AbstractSnapMessageData {
   }
 
   public ByteCodes bytecodes(final boolean withRequestId) {
+    final ArrayDeque<Bytes> codes = new ArrayDeque<>();
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
     if (withRequestId) input.skipNext();
-    final ImmutableByteCodes byteCodes =
-        ImmutableByteCodes.builder().codes(input.readList(RLPInput::readBytes)).build();
+    input.enterList();
+    while (!input.isEndOfCurrentList()) {
+      codes.add(input.readBytes());
+    }
     input.leaveList();
-    return byteCodes;
+    input.leaveList();
+    return ImmutableByteCodes.builder().codes(codes).build();
   }
 
   @Value.Immutable
   public interface ByteCodes {
 
-    List<Bytes> codes();
+    ArrayDeque<Bytes> codes();
   }
 }

@@ -32,15 +32,23 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
 
   private final Bytes startKeyHash, endKeyHash;
 
+  private boolean allowMissingElementInRange;
+
   public InnerNodeDiscoveryManager(
       final NodeLoader nodeLoader,
       final Function<V, Bytes> valueSerializer,
       final Function<Bytes, V> valueDeserializer,
       final Bytes32 startKeyHash,
-      final Bytes32 endKeyHash) {
+      final Bytes32 endKeyHash,
+      final boolean allowMissingElementInRange) {
     super(nodeLoader, valueSerializer, valueDeserializer);
     this.startKeyHash = createPath(startKeyHash);
     this.endKeyHash = createPath(endKeyHash);
+    this.allowMissingElementInRange = allowMissingElementInRange;
+  }
+
+  public void setAllowMissingElementInRange(final boolean allowMissingElementInRange) {
+    this.allowMissingElementInRange = allowMissingElementInRange;
   }
 
   @Override
@@ -51,8 +59,7 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
       final Supplier<String> errMessage) {
     final ExtensionNode<V> vNode =
         (ExtensionNode<V>) super.decodeExtension(location, path, valueRlp, errMessage);
-    final Node<V> child = vNode.getChild();
-    if (child instanceof StoredNode && isInRange(child)) {
+    if (isInRange(Bytes.concatenate(location, Bytes.of(0)))) {
       innerNodes.add(Bytes.concatenate(location, Bytes.of(0)));
     }
     return vNode;
@@ -64,8 +71,7 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
     final BranchNode<V> vBranchNode = super.decodeBranch(location, nodeRLPs, errMessage);
     final List<Node<V>> children = vBranchNode.getChildren();
     for (int i = 0; i < children.size(); i++) {
-      final Node<V> child = children.get(i);
-      if (isInRange(child)) {
+      if (isInRange(Bytes.concatenate(location, Bytes.of(i)))) {
         innerNodes.add(Bytes.concatenate(location, Bytes.of(i)));
       }
     }
@@ -73,24 +79,41 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
   }
 
   @Override
+  protected LeafNode<V> decodeLeaf(
+      final Bytes location,
+      final Bytes path,
+      final RLPInput valueRlp,
+      final Supplier<String> errMessage) {
+    final LeafNode<V> vLeafNode = super.decodeLeaf(location, path, valueRlp, errMessage);
+    final Bytes concatenatePath = Bytes.concatenate(location, path);
+    if (isInRange(concatenatePath.slice(0, concatenatePath.size() - 1))) {
+      innerNodes.add(Bytes.concatenate(location, path));
+    }
+    return vLeafNode;
+  }
+
+  @Override
   public Optional<Node<V>> retrieve(final Bytes location, final Bytes32 hash)
       throws MerkleTrieException {
-    return super.retrieve(location, hash).or(() -> Optional.of(new MissingNode<>(hash, location)));
+    return super.retrieve(location, hash)
+        .or(
+            () -> {
+              if (!allowMissingElementInRange && isInRange(location)) {
+                return Optional.empty();
+              }
+              return Optional.of(new MissingNode<>(hash, location));
+            });
   }
 
   public List<Bytes> getInnerNodes() {
     return innerNodes;
   }
 
-  private boolean isInRange(final Node<V> node) {
-    return node.getLocation()
-        .map(
-            location ->
-                location.size() >= startKeyHash.size()
-                    && location.size() <= endKeyHash.size()
-                    && location.compareTo(startKeyHash) >= 0
-                    && location.compareTo(endKeyHash) <= 0)
-        .orElse(false);
+  private boolean isInRange(final Bytes location) {
+    return location.size() >= startKeyHash.size()
+        && location.size() <= endKeyHash.size()
+        && location.compareTo(startKeyHash) >= 0
+        && location.compareTo(endKeyHash) <= 0;
   }
 
   private Bytes createPath(final Bytes bytes) {

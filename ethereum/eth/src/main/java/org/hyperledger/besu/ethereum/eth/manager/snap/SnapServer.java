@@ -116,7 +116,7 @@ class SnapServer {
                     RangedStorageEntriesCollector.collectEntries(
                         collector, visitor, root, range.startKeyHash()));
 
-    final List<Bytes> proof =
+    final ArrayDeque<Bytes> proof =
         new ArrayDeque<>(
             worldStateArchive.getAccountProofRelatedNodes(
                 range.worldStateRootHash(), Hash.wrap(range.startKeyHash())));
@@ -148,9 +148,9 @@ class SnapServer {
     final ArrayDeque<TreeMap<Bytes32, Bytes>> slots = new ArrayDeque<>();
     final List<Bytes> proofs = new ArrayDeque<>();
 
-    final Iterator<Hash> iterator = range.accountHashes().iterator();
+    final Iterator<Bytes32> iterator = range.hashes().iterator();
     while (iterator.hasNext() && visitor.getState().continueIterating()) {
-      final Hash currentAccountHash = iterator.next();
+      final Hash currentAccountHash = Hash.wrap(iterator.next());
       final StoredMerklePatriciaTrie<Bytes, Bytes> trie =
           new StoredMerklePatriciaTrie<>(
               (location, key) ->
@@ -186,7 +186,7 @@ class SnapServer {
     final GetByteCodesMessage getByteCodesMessage = GetByteCodesMessage.readFrom(message);
     final BonsaiPersistedWorldState worldState =
         (BonsaiPersistedWorldState) worldStateArchive.getMutable();
-    final GetByteCodesMessage.ByteCodesRequest request = getByteCodesMessage.request(true);
+    final GetByteCodesMessage.CodeHashes request = getByteCodesMessage.codeHashes(true);
 
     final int maxResponseBytes = Math.min(request.responseBytes().intValue(), MAX_RESPONSE_SIZE);
     final AtomicInteger currentResponseSize = new AtomicInteger();
@@ -194,7 +194,7 @@ class SnapServer {
     LOGGER.info("Receive get bytecodes message for {}", request.hashes());
 
     final ArrayList<Bytes> foundBytecodes = new ArrayList<>();
-    for (Hash hash : request.hashes()) {
+    for (Bytes32 hash : request.hashes()) {
       final Optional<Bytes> code = worldState.getWorldStateStorage().getCode(hash, null);
       if (code.isEmpty()) {
         return DisconnectMessage.create(DisconnectReason.UNKNOWN);

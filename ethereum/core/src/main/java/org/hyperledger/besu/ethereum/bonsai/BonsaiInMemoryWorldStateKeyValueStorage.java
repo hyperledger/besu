@@ -31,53 +31,35 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final KeyValueStorage codeStorage,
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
-      final KeyValueStorage trieLogStorage,
-      final KeyValueStorage snapTrieBranchBucketStorage,
-      final KeyValueStorage snapTrieBranchSecondBucketStorage) {
-    super(
-        accountStorage,
-        codeStorage,
-        storageStorage,
-        trieBranchStorage,
-        trieLogStorage,
-        snapTrieBranchBucketStorage,
-        snapTrieBranchSecondBucketStorage);
+      final KeyValueStorage trieLogStorage) {
+    super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
   }
 
   @Override
   public InMemoryUpdater updater() {
     return new InMemoryUpdater(
-        this,
         accountStorage.startTransaction(),
         codeStorage.startTransaction(),
         storageStorage.startTransaction(),
         trieBranchStorage.startTransaction(),
-        trieLogStorage.startTransaction(),
-        snapTrieBranchBucketStorage.startTransaction(),
-        snapTrieBranchSecondBucketStorage.startTransaction());
+        trieLogStorage.startTransaction());
   }
 
   public static class InMemoryUpdater extends BonsaiWorldStateKeyValueStorage.Updater
       implements WorldStateStorage.Updater {
 
     public InMemoryUpdater(
-        final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage,
         final KeyValueStorageTransaction accountStorageTransaction,
         final KeyValueStorageTransaction codeStorageTransaction,
         final KeyValueStorageTransaction storageStorageTransaction,
         final KeyValueStorageTransaction trieBranchStorageTransaction,
-        final KeyValueStorageTransaction trieLogStorageTransaction,
-        final KeyValueStorageTransaction snapTrieBranchBucketStorageTransaction,
-        final KeyValueStorageTransaction snapTrieBranchSecondBucketStorageTransaction) {
+        final KeyValueStorageTransaction trieLogStorageTransaction) {
       super(
-          bonsaiWorldStateKeyValueStorage,
           accountStorageTransaction,
           codeStorageTransaction,
           storageStorageTransaction,
           trieBranchStorageTransaction,
-          trieLogStorageTransaction,
-          snapTrieBranchBucketStorageTransaction,
-          snapTrieBranchSecondBucketStorageTransaction);
+          trieLogStorageTransaction);
     }
 
     @Override

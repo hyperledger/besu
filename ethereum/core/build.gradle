@@ -62,6 +62,7 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
+  implementation 'org.javatuples:javatuples'
 
   implementation 'org.xerial.snappy:snappy-java'
 

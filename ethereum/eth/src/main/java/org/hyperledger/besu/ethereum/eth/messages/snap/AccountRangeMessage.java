@@ -19,14 +19,15 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
 import com.google.common.collect.Maps;
+import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.immutables.value.Value;
@@ -46,14 +47,14 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
   }
 
   public static AccountRangeMessage create(
-      final Map<Bytes32, Bytes> accounts, final List<Bytes> proof) {
+      final Map<Bytes32, Bytes> accounts, final ArrayDeque<Bytes> proof) {
     return create(Optional.empty(), accounts, proof);
   }
 
   public static AccountRangeMessage create(
       final Optional<BigInteger> requestId,
       final Map<Bytes32, Bytes> accounts,
-      final List<Bytes> proof) {
+      final ArrayDeque<Bytes> proof) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     requestId.ifPresent(tmp::writeBigIntegerScalar);
@@ -70,7 +71,7 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
     return new AccountRangeMessage(tmp.encoded());
   }
 
-  private AccountRangeMessage(final Bytes data) {
+  public AccountRangeMessage(final Bytes data) {
     super(data);
   }
 
@@ -86,8 +87,8 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
   }
 
   public AccountRangeData accountData(final boolean withRequestId) {
-    final Map<Bytes32, Bytes> accounts = new TreeMap<>();
-    final List<Bytes> proofs;
+    final TreeMap<Bytes32, Bytes> accounts = new TreeMap<>();
+    final ArrayDeque<Bytes> proofs = new ArrayDeque<>();
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
 
@@ -98,23 +99,41 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
             rlpInput -> {
               rlpInput.enterList();
               Map.Entry<Bytes32, Bytes> entry =
-                  Maps.immutableEntry(rlpInput.readBytes32(), rlpInput.readAsRlp().raw());
+                  Maps.immutableEntry(rlpInput.readBytes32(), toFullAccount(rlpInput.readAsRlp()));
               rlpInput.leaveList();
               return entry;
             })
         .forEach(entry -> accounts.put(entry.getKey(), entry.getValue()));
 
-    proofs = input.readList(rlpInput -> input.readBytes());
+    input.enterList();
+    while (!input.isEndOfCurrentList()) {
+      proofs.add(input.readBytes());
+    }
+    input.leaveList();
 
     input.leaveList();
     return ImmutableAccountRangeData.builder().accounts(accounts).proofs(proofs).build();
   }
 
+  private Bytes toFullAccount(final RLPInput rlpInput) {
+    final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(rlpInput);
+
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    rlpOutput.startList();
+    rlpOutput.writeLongScalar(accountValue.getNonce()); // nonce
+    rlpOutput.writeUInt256Scalar(accountValue.getBalance()); // balance
+    rlpOutput.writeBytes(accountValue.getStorageRoot());
+    rlpOutput.writeBytes(accountValue.getCodeHash());
+    rlpOutput.endList();
+
+    return rlpOutput.encoded();
+  }
+
   @Value.Immutable
   public interface AccountRangeData {
 
-    Map<Bytes32, Bytes> accounts();
+    TreeMap<Bytes32, Bytes> accounts();
 
-    List<Bytes> proofs();
+    ArrayDeque<Bytes> proofs();
   }
 }

@@ -50,7 +50,7 @@ public class TrieNodeDecoder {
   /**
    * Flattens this node and all of its inlined nodes and node references into a list.
    *
-   * @param location The location in the trie.
+   * @param location The locationdecodeNodes in the trie.
    * @param nodeRlp The bytes of the trie node to be decoded.
    * @return A list of nodes and node references embedded in the given rlp.
    */
