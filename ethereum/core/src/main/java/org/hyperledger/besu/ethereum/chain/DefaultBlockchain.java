@@ -563,7 +563,7 @@ public class DefaultBlockchain implements MutableBlockchain {
           firstLine =
               "Supplied genesis block does not match stored chain data in " + dataDirectory + "\n";
         } else {
-          firstLine = "Supplied genesis block does not match stored chain data\n";
+          firstLine = "Supplied genesis block does not match stored chain data.\n";
         }
         throw new InvalidConfigurationException(
             firstLine
