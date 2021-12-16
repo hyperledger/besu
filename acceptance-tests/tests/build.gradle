@@ -11,78 +11,78 @@
  * specific language governing permissions and limitations under the License.
  */
 
-plugins {
-  id 'org.web3j' version '4.8.4'
-  id 'org.web3j.solidity' version '0.3.2'
-}
+//plugins {
+//  id 'org.web3j' version '4.8.4'
+//  id 'org.web3j.solidity' version '0.3.2'
+//}
 
-web3j {
-  generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated'
-}
+//web3j {
+//  generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated'
+//}
 
-sourceSets.main.solidity.srcDirs = ["$projectDir/contracts"]
+//sourceSets.main.solidity.srcDirs = ["$projectDir/contracts"]
 
-solidity {
-  resolvePackages = false
-}
+//solidity {
+//  resolvePackages = false
+//}
 
 dependencies {
-  implementation project(':crypto')
-
-  testImplementation project(':acceptance-tests:dsl')
-  testImplementation project(':acceptance-tests:test-plugins')
-  testImplementation project(':besu')
-  testImplementation project(':config')
-  testImplementation project(':consensus:clique')
-  testImplementation project(':datatypes')
-  testImplementation project(':enclave')
-  testImplementation project(':ethereum:api')
-  testImplementation project(':ethereum:core')
-  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project(':ethereum:p2p')
-  testImplementation project(':ethereum:permissioning')
-  testImplementation project(':ethereum:rlp')
-  testImplementation project(':metrics:core')
-  testImplementation project(':plugin-api')
-  testImplementation project(':privacy-contracts')
-  testImplementation project(':testutil')
-  testImplementation project(':util')
-
-  testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
-  testImplementation 'commons-io:commons-io'
-  testImplementation 'io.grpc:grpc-core'
-  testImplementation 'io.grpc:grpc-netty'
-  testImplementation 'io.grpc:grpc-stub'
-  testImplementation 'io.netty:netty-all'
-  testImplementation 'io.opentelemetry:opentelemetry-api'
-  testImplementation 'io.opentelemetry:opentelemetry-proto'
-  testImplementation 'io.opentelemetry:opentelemetry-sdk'
-  testImplementation 'io.opentelemetry:opentelemetry-sdk-trace'
-  testImplementation 'io.opentelemetry:opentelemetry-exporter-otlp'
-  testImplementation 'io.opentracing.contrib:opentracing-okhttp3'
-  testImplementation 'io.opentracing:opentracing-api'
-  testImplementation 'io.opentracing:opentracing-util'
-  testImplementation 'io.jaegertracing:jaeger-client'
-  testImplementation 'junit:junit'
-  testImplementation 'net.consensys:orion'
-  testImplementation 'org.apache.commons:commons-compress'
-  testImplementation 'org.apache.tuweni:tuweni-crypto'
-  testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.awaitility:awaitility'
-  testImplementation 'org.web3j:abi'
-  testImplementation 'org.web3j:besu'
-
-  testImplementation 'org.testcontainers:testcontainers'
+  //  implementation project(':crypto')
+  //
+  //  testImplementation project(':acceptance-tests:dsl')
+  //  testImplementation project(':acceptance-tests:test-plugins')
+  //  testImplementation project(':besu')
+  //  testImplementation project(':config')
+  //  testImplementation project(':consensus:clique')
+  //  testImplementation project(':datatypes')
+  //  testImplementation project(':enclave')
+  //  testImplementation project(':ethereum:api')
+  //  testImplementation project(':ethereum:core')
+  //  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  //  testImplementation project(':ethereum:p2p')
+  //  testImplementation project(':ethereum:permissioning')
+  //  testImplementation project(':ethereum:rlp')
+  //  testImplementation project(':metrics:core')
+  //  testImplementation project(':plugin-api')
+  //  testImplementation project(':privacy-contracts')
+  //  testImplementation project(':testutil')
+  //  testImplementation project(':util')
+  //
+  //  testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
+  //  testImplementation 'commons-io:commons-io'
+  //  testImplementation 'io.grpc:grpc-core'
+  //  testImplementation 'io.grpc:grpc-netty'
+  //  testImplementation 'io.grpc:grpc-stub'
+  //  testImplementation 'io.netty:netty-all'
+  //  testImplementation 'io.opentelemetry:opentelemetry-api'
+  //  testImplementation 'io.opentelemetry:opentelemetry-proto'
+  //  testImplementation 'io.opentelemetry:opentelemetry-sdk'
+  //  testImplementation 'io.opentelemetry:opentelemetry-sdk-trace'
+  //  testImplementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+  //  testImplementation 'io.opentracing.contrib:opentracing-okhttp3'
+  //  testImplementation 'io.opentracing:opentracing-api'
+  //  testImplementation 'io.opentracing:opentracing-util'
+  //  testImplementation 'io.jaegertracing:jaeger-client'
+  //  testImplementation 'junit:junit'
+  //  testImplementation 'net.consensys:orion'
+  //  testImplementation 'org.apache.commons:commons-compress'
+  //  testImplementation 'org.apache.tuweni:tuweni-crypto'
+  //  testImplementation 'org.assertj:assertj-core'
+  //  testImplementation 'org.awaitility:awaitility'
+  //  testImplementation 'org.web3j:abi'
+  //  testImplementation 'org.web3j:besu'
+  //
+  //  testImplementation 'org.testcontainers:testcontainers'
 }
 
 test.enabled = false
 
 sourceSets {
-  test {
-    resources {
-      srcDirs "${rootDir}/acceptance-tests/test-plugins/build/libs"
-    }
-  }
+  //  test {
+  //    resources {
+  //      srcDirs "${rootDir}/acceptance-tests/test-plugins/build/libs"
+  //    }
+  //  }
 }
 
 processTestResources.dependsOn(':acceptance-tests:test-plugins:testPluginsJar')
