@@ -37,8 +37,9 @@ commands:
       - run:
           name: Install Packages - LibSodium, nssdb
           command: |
+            sudo add-apt-repository ppa:ethereum/ethereum
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools
+            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools solc
             sudo service haveged restart
       - restore_cache:
           name: Restore cached gradle dependencies
@@ -92,7 +93,8 @@ jobs:
       - run:
           name: Assemble
           command: |
-            ./gradlew --no-daemon clean spotlessCheck compileJava compileTestJava assemble
+            /usr/bin/solc --version
+            ./gradlew --info --no-daemon clean spotlessCheck compileJava compileTestJava assemble
       - save_cache:
           name: Caching gradle dependencies
           key: deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
