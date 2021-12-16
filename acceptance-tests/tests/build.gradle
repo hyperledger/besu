@@ -23,6 +23,7 @@ web3j {
 sourceSets.main.solidity.srcDirs = ["$projectDir/contracts"]
 
 solidity {
+  resolvePackages = false
   executable = "solcjs -v"
   version = "0.8.10"
 }
