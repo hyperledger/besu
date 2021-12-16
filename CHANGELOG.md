@@ -1,23 +1,33 @@
 # Changelog
 
-## <Next RC>
+## 21.10.4
 
 ### Additions and Improvements
 - Represent baseFee as Wei instead of long accordingly to the spec [#2785] (https://github.com/hyperledger/besu/issues/2785)
 
-### <Next RC> Breaking Changes
+### 21.10.4 Breaking Changes
 - Plugin API: BlockHeader.getBaseFee() method now returns an optional Wei instead of an optional Long
-
-## 21.10.3
 
 ### Additions and Improvements
 - Adding support of the NO_COLOR environment variable as described in the [NO_COLOR](https://no-color.org/) standard [#3085](https://github.com/hyperledger/besu/pull/3085)
 - Add `privx_findFlexiblePrivacyGroup` RPC Method, `privx_findOnchainPrivacyGroup` will be removed in a future release [#3075](https://github.com/hyperledger/besu/pull/3075)
 - The invalid value is now shown when `--bootnodes` cannot parse an item to make it easier to identify which option is invalid. 
+- Adding two new options to be able to specify desired TLS protocol version and Java cipher suites [#3105](https://github.com/hyperledger/besu/pull/3105)
+- Implements [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) to repurpose DIFFICULTY opcode after the merge as a source of entropy from the Beacon chain. [#3081](https://github.com/hyperledger/besu/issues/3081)
+
 ### Bug Fixes
 
 ### Early Access Features
 - Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
+
+## 21.10.3
+
+### Bug Fixes
+- Updated log4j to 2.15.0 and disabled JNDI message format lookups to improve security.
+
+### Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.3/besu-21.10.3.zip \
+SHA256: 78eb3ee9174e2c4594f4845670ad66d44479de6f470b2b950d056102f57d839e
 
 ## 21.10.2
 

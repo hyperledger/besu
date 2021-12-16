@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.config.GenesisConfigFile.fromConfig;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -175,7 +177,7 @@ public class GenesisConfigFileTest {
   @Test
   public void shouldOverrideConfigOptionsBaseFeeWhenSpecified() {
     GenesisConfigOptions withOverrides =
-        EMPTY_CONFIG.getConfigOptions(Map.of("baseFeePerGas", "8"));
+        EMPTY_CONFIG.getConfigOptions(Map.of("baseFeePerGas", Wei.of(8).toString()));
     assertThat(withOverrides.getBaseFeePerGas().get().toLong()).isEqualTo(8L);
   }
 
