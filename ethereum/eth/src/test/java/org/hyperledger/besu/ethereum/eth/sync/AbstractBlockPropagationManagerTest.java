@@ -83,7 +83,6 @@ public abstract class AbstractBlockPropagationManagerTest {
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
-  @Ignore // temporarily ignore waiting on Karim's fix
   public void importsAnnouncedBlocks_aheadOfChainInOrder() {
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
