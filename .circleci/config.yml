@@ -39,7 +39,7 @@ commands:
           command: |
             sudo apt-get update
             sudo apt-get install -y software-properties-common
-            sudo add-apt-repository ppa:ethereum/ethereum
+            sudo add-apt-repository -y ppa:ethereum/ethereum
             sudo apt-get update
             sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools solc
             sudo service haveged restart
