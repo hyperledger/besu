@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardsSyncContext;
@@ -44,6 +45,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 public class MergeCoordinator implements MergeMiningCoordinator {
   private static final Logger LOG = LogManager.getLogger();
@@ -283,6 +285,28 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
     // set the new finalized block if it present
     newFinalized.ifPresent(mergeContext::setFinalized);
+  }
+
+  public boolean latestValidAncestorDescendsFromTerminal(final Block block) {
+    Optional<Hash> validAncestorHash = this.getLatestValidAncestor(block);
+    if(validAncestorHash.isPresent()) {
+      final Optional<BlockHeader> maybeFinalized = mergeContext.getFinalized();
+      if(maybeFinalized.isPresent()) {
+        return isDescendantOf(maybeFinalized.get(), block.getHeader());
+      } else {
+        //TODO: figure out how to get this from genesis config... or any kind of config
+        long terminalBlockNumber = 14000000L;
+        Optional<BlockHeader> terminalBlockHeader = protocolContext.getBlockchain().getBlockHeader(terminalBlockNumber);
+        if(terminalBlockHeader.isPresent()) {
+          return isDescendantOf(terminalBlockHeader.get(), block.getHeader());
+        } else {
+          LOG.warn("Couldn't find terminal block, no blocks will be valid");
+          return false;
+        }
+      }
+    } else {
+      return false;
+    }
   }
 
   @Override

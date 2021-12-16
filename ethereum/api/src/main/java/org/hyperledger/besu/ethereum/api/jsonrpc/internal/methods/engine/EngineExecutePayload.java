@@ -88,6 +88,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
 
     LOG.trace("blockparam: {}", () -> Json.encodePrettily(blockParam));
 
+
     final List<Transaction> transactions;
     try {
       transactions =
