@@ -136,8 +136,9 @@ class GenerateBlockchainConfig implements Runnable {
   /** Generates output directory with all required configuration files. */
   private void generateBlockchainConfig() {
     try {
-      handleOutputDirectory();
       parseConfig();
+      validateBlockPeriodSeconds();
+      handleOutputDirectory();
       processEcCurve();
       if (generateNodesKeys) {
         generateNodesKeys();
@@ -279,6 +280,25 @@ class GenerateBlockchainConfig implements Runnable {
     nodesConfig =
         JsonUtil.getObjectNode(blockchainConfig, "nodes").orElse(JsonUtil.createEmptyObjectNode());
     generateNodesKeys = JsonUtil.getBoolean(nodesConfig, "generate", false);
+  }
+
+  /**
+   * Validate the value of the genesis config property validateblockperiodseconds.
+   *
+   * @throws NumberFormatException If the value is invalid.
+   */
+  private void validateBlockPeriodSeconds() {
+    try {
+      var blockPeriodSeconds =
+          Integer.parseInt(genesisConfig.path("config").path("ibft2").path("blockperiodseconds").asText());
+      if (blockPeriodSeconds < 1)  { throw new NumberFormatException(String.valueOf(blockPeriodSeconds)); }
+    } catch (NumberFormatException e) {
+      throw new NumberFormatException(
+          new StringBuilder()
+              .append("Invalid genesis config property value, blockperiodseconds: ")
+              .append(e.getMessage())
+              .toString());
+    }
   }
 
   /** Sets the selected signature algorithm instance in SignatureAlgorithmFactory. */
