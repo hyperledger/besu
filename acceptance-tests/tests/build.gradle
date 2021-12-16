@@ -24,7 +24,7 @@ sourceSets.main.solidity.srcDirs = ["$projectDir/contracts"]
 
 solidity {
   resolvePackages = false
-  version = "0.5.5"
+  version = "0.5.17"
 }
 
 dependencies {
