@@ -38,10 +38,10 @@ commands:
           name: Install Packages - LibSodium, nssdb, solc
           command: |
             sudo apt-get update
-            sudo apt-get install -y software-properties-common
+            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools software-properties-common
             sudo add-apt-repository -y ppa:ethereum/ethereum
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools solc
+            sudo apt-get install -y solc
             sudo service haveged restart
       - restore_cache:
           name: Restore cached gradle dependencies
