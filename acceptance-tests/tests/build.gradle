@@ -24,6 +24,8 @@ sourceSets.main.solidity.srcDirs = ["$projectDir/contracts"]
 
 solidity {
   resolvePackages = false
+  //Note: if this is null web3j-sokt will try and download the 'right' version for you
+  executable = System.getenv('SOLC_BINARY_PATH') ?: null
 }
 
 dependencies {

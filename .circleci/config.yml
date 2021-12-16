@@ -35,10 +35,11 @@ commands:
     steps:
       - checkout
       - run:
-          name: Install Packages - LibSodium, nssdb
+          name: Install Packages - LibSodium, nssdb, solc
           command: |
+            sudo add-apt-repository ppa:ethereum/ethereum
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools
+            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools solc
             sudo service haveged restart
       - restore_cache:
           name: Restore cached gradle dependencies
@@ -190,6 +191,7 @@ jobs:
           name: AcceptanceTests
           no_output_timeout: 30m
           command: |
+            export SOLC_BINARY_PATH=$(which solc)
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
               | sed 's@.*/src/test/java/@@' \
               | sed 's@/@.@g' \
