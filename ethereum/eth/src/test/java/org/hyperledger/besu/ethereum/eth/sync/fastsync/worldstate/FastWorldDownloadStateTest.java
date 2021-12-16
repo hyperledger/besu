@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
-import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
@@ -67,7 +66,7 @@ public class FastWorldDownloadStateTest {
       mock(WorldStateDownloadProcess.class);
 
   private final TestClock clock = new TestClock();
-  private final WorldDownloadState downloadState =
+  private final FastWorldDownloadState downloadState =
       new FastWorldDownloadState(
           pendingRequests, MAX_REQUESTS_WITHOUT_PROGRESS, MIN_MILLIS_BEFORE_STALLING, clock);
 
@@ -221,7 +220,7 @@ public class FastWorldDownloadStateTest {
     assertThat(pendingRequests.isEmpty()).isTrue();
   }
 
-  private void assertWorldStateStalled(final WorldDownloadState state) {
+  private void assertWorldStateStalled(final FastWorldDownloadState state) {
     final CompletableFuture<Void> future = state.getDownloadFuture();
     assertThat(future).isCompletedExceptionally();
     assertThatThrownBy(future::get)

@@ -23,7 +23,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StubTask;
-import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -38,7 +37,7 @@ public class CompleteTaskStepTest {
 
   private static final Hash ROOT_HASH = Hash.hash(Bytes.of(1, 2, 3));
   private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
-  private final WorldDownloadState downloadState = mock(WorldDownloadState.class);
+  private final FastWorldDownloadState downloadState = mock(FastWorldDownloadState.class);
   private final BlockHeader blockHeader =
       new BlockHeaderTestFixture().stateRoot(ROOT_HASH).buildHeader();
 

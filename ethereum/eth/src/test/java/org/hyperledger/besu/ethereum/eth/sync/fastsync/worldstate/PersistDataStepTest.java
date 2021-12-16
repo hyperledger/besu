@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StubTask;
-import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.Task;
@@ -40,7 +39,7 @@ public class PersistDataStepTest {
 
   private final WorldStateStorage worldStateStorage =
       new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.FOREST);
-  private final WorldDownloadState downloadState = mock(WorldDownloadState.class);
+  private final FastWorldDownloadState downloadState = mock(FastWorldDownloadState.class);
 
   private final Bytes rootNodeData = Bytes.of(1, 1, 1, 1);
   private final BlockHeader blockHeader =
