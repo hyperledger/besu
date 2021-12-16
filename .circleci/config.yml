@@ -39,9 +39,9 @@ commands:
           command: |
             sudo apt-get update
             sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools software-properties-common
-            sudo add-apt-repository -y ppa:ethereum/ethereum
-            sudo apt-get update
-            sudo apt-get install -y solc
+            curl -fsSL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+            sudo apt-get update && sudo apt-get install -y nodejs
+            sudo npm install -g solc
             sudo service haveged restart
       - restore_cache:
           name: Restore cached gradle dependencies
