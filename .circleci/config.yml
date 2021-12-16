@@ -94,6 +94,7 @@ jobs:
           name: Assemble
           command: |
             ./gradlew --info --no-daemon clean spotlessCheck compileJava compileTestJava assemble
+            ls ~/.web3j/solc/
       - save_cache:
           name: Caching gradle dependencies
           key: deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
