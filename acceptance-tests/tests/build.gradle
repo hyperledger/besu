@@ -11,14 +11,14 @@
  * specific language governing permissions and limitations under the License.
  */
 
-//plugins {
-//  id 'org.web3j' version '4.8.4'
-//  id 'org.web3j.solidity' version '0.3.2'
-//}
+plugins {
+  id 'org.web3j' version '4.8.4'
+  //  id 'org.web3j.solidity' version '0.3.2'
+}
 
-//web3j {
-//  generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated'
-//}
+web3j {
+  generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated'
+}
 
 //sourceSets.main.solidity.srcDirs = ["$projectDir/contracts"]
 
