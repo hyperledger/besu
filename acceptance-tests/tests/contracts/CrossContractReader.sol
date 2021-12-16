@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-pragma solidity >=0.4.0 <0.6.0;
+pragma solidity >=0.4.0 <0.9.0;
 
 import "./EventEmitter.sol";
 
@@ -50,7 +50,7 @@ contract CrossContractReader {
     }
 
     function destroy() public {
-        selfdestruct(msg.sender);
+        selfdestruct(payable(msg.sender));
     }
 
     function remoteDestroy(address crossAddress) public {
