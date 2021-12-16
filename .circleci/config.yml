@@ -93,8 +93,7 @@ jobs:
       - run:
           name: Assemble
           command: |
-            /usr/bin/solc --version
-            ./gradlew --info --no-daemon clean spotlessCheck compileJava compileTestJava assemble
+            ./gradlew --no-daemon clean spotlessCheck compileJava compileTestJava assemble
       - save_cache:
           name: Caching gradle dependencies
           key: deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
