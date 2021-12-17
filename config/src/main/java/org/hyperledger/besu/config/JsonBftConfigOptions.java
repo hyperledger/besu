@@ -51,7 +51,19 @@ public class JsonBftConfigOptions implements BftConfigOptions {
 
   @Override
   public int getBlockPeriodSeconds() {
-    return JsonUtil.getInt(bftConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
+    final String blockPeriodSecondsRaw =
+        bftConfigRoot.get("blockperiodseconds").asText(String.valueOf(DEFAULT_BLOCK_PERIOD_SECONDS));
+    try {
+      final int blockPeriodSeconds = Integer.parseInt(blockPeriodSecondsRaw);
+      if (blockPeriodSeconds < 1) throw new NumberFormatException(String.valueOf(blockPeriodSeconds));
+      return blockPeriodSeconds;
+    } catch (NumberFormatException e) {
+      throw new NumberFormatException(
+          new StringBuilder()
+              .append("Invalid genesis config property value, blockperiodseconds, should be a positive integer: ")
+              .append(blockPeriodSecondsRaw)
+              .toString());
+    }
   }
 
   @Override
