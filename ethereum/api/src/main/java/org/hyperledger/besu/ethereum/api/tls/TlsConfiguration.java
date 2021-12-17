@@ -18,21 +18,31 @@ package org.hyperledger.besu.ethereum.api.tls;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 
 public class TlsConfiguration {
+
   private final Path keyStorePath;
   private final Supplier<String> keyStorePasswordSupplier;
   private final Optional<TlsClientAuthConfiguration> clientAuthConfiguration;
+  private final Optional<Set<String>> secureTransportProtocols;
+  private final Optional<Set<String>> cipherSuites;
 
   private TlsConfiguration(
       final Path keyStorePath,
       final Supplier<String> keyStorePasswordSupplier,
-      final Optional<TlsClientAuthConfiguration> clientAuthConfiguration) {
+      final Optional<TlsClientAuthConfiguration> clientAuthConfiguration,
+      final Optional<Set<String>> secureTransportProtocols,
+      final Optional<Set<String>> cipherSuites) {
     this.keyStorePath = keyStorePath;
     this.keyStorePasswordSupplier = keyStorePasswordSupplier;
     this.clientAuthConfiguration = clientAuthConfiguration;
+    this.secureTransportProtocols = secureTransportProtocols;
+    this.cipherSuites = cipherSuites;
   }
 
   public Path getKeyStorePath() {
@@ -47,10 +57,20 @@ public class TlsConfiguration {
     return clientAuthConfiguration;
   }
 
+  public Optional<Set<String>> getSecureTransportProtocols() {
+    return secureTransportProtocols;
+  }
+
+  public Optional<Set<String>> getCipherSuites() {
+    return cipherSuites;
+  }
+
   public static final class Builder {
     private Path keyStorePath;
     private Supplier<String> keyStorePasswordSupplier;
     private TlsClientAuthConfiguration clientAuthConfiguration;
+    private Set<String> secureTransportProtocols;
+    private Set<String> cipherSuites;
 
     private Builder() {}
 
@@ -74,11 +94,25 @@ public class TlsConfiguration {
       return this;
     }
 
+    public Builder withSecureTransportProtocols(final List<String> secureTransportProtocols) {
+      this.secureTransportProtocols = new HashSet<>(secureTransportProtocols);
+      return this;
+    }
+
+    public Builder withCipherSuites(final List<String> cipherSuites) {
+      this.cipherSuites = new HashSet<>(cipherSuites);
+      return this;
+    }
+
     public TlsConfiguration build() {
       requireNonNull(keyStorePath, "Key Store Path must not be null");
       requireNonNull(keyStorePasswordSupplier, "Key Store password supplier must not be null");
       return new TlsConfiguration(
-          keyStorePath, keyStorePasswordSupplier, Optional.ofNullable(clientAuthConfiguration));
+          keyStorePath,
+          keyStorePasswordSupplier,
+          Optional.ofNullable(clientAuthConfiguration),
+          Optional.ofNullable(secureTransportProtocols),
+          Optional.ofNullable(cipherSuites));
     }
   }
 }

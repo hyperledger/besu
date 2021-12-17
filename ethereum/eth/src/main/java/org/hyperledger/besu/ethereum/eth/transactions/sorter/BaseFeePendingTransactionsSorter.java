@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ALREADY_KNOWN;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -48,7 +49,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private Optional<Long> baseFee;
+  private Optional<Wei> baseFee;
 
   public BaseFeePendingTransactionsSorter(
       final int maxTransactionRetentionHours,
@@ -157,18 +158,18 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
         } else {
           // there are both static and dynamic txs remaining so we need to compare them by their
           // effective priority fees
-          final long dynamicRangeEffectivePriorityFee =
+          final Wei dynamicRangeEffectivePriorityFee =
               currentDynamicRangeTransaction
                   .get()
                   .getTransaction()
                   .getEffectivePriorityFeePerGas(baseFee);
-          final long staticRangeEffectivePriorityFee =
+          final Wei staticRangeEffectivePriorityFee =
               currentStaticRangeTransaction
                   .get()
                   .getTransaction()
                   .getEffectivePriorityFeePerGas(baseFee);
           final TransactionInfo best;
-          if (dynamicRangeEffectivePriorityFee > staticRangeEffectivePriorityFee) {
+          if (dynamicRangeEffectivePriorityFee.compareTo(staticRangeEffectivePriorityFee) > 0) {
             best = currentDynamicRangeTransaction.get();
             currentDynamicRangeTransaction = getNextOptional(dynamicRangeIterable);
           } else {
@@ -236,25 +237,25 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
     return ADDED;
   }
 
-  private boolean isInStaticRange(final Transaction transaction, final Optional<Long> baseFee) {
+  private boolean isInStaticRange(final Transaction transaction, final Optional<Wei> baseFee) {
     return transaction
         .getMaxPriorityFeePerGas()
         .map(
             maxPriorityFeePerGas ->
-                transaction.getEffectivePriorityFeePerGas(baseFee)
-                    >= maxPriorityFeePerGas.getValue().longValue())
+                transaction.getEffectivePriorityFeePerGas(baseFee).compareTo(maxPriorityFeePerGas)
+                    >= 0)
         .orElse(
             // non-eip-1559 txs can't be in static range
             false);
   }
 
-  public void updateBaseFee(final Long newBaseFee) {
+  public void updateBaseFee(final Wei newBaseFee) {
     LOG.trace("Updating base fee from {} to {}", this.baseFee, newBaseFee);
-    if (this.baseFee.orElse(0L).equals(newBaseFee)) {
+    if (this.baseFee.orElse(Wei.ZERO).equals(newBaseFee)) {
       return;
     }
     synchronized (lock) {
-      final boolean baseFeeIncreased = newBaseFee > this.baseFee.orElse(0L);
+      final boolean baseFeeIncreased = newBaseFee.compareTo(this.baseFee.orElse(Wei.ZERO)) > 0;
       this.baseFee = Optional.of(newBaseFee);
       if (baseFeeIncreased) {
         // base fee increases can only cause transactions to go from static to dynamic range

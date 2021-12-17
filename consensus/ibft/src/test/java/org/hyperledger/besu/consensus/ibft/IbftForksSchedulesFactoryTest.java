@@ -24,7 +24,7 @@ import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
-import org.hyperledger.besu.consensus.common.bft.BftForksSchedule;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
 import java.util.HashMap;
@@ -44,7 +44,7 @@ public class IbftForksSchedulesFactoryTest {
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.bftConfigOptions(bftConfigOptions);
 
-    final BftForksSchedule<BftConfigOptions> forksSchedule =
+    final ForksSchedule<BftConfigOptions> forksSchedule =
         IbftForksSchedulesFactory.create(genesisConfigOptions);
     assertThat(forksSchedule.getFork(0)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
     assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
@@ -66,7 +66,7 @@ public class IbftForksSchedulesFactoryTest {
                 BftFork.BLOCK_REWARD_KEY,
                 "5"));
 
-    final BftForksSchedule<BftConfigOptions> forksSchedule =
+    final ForksSchedule<BftConfigOptions> forksSchedule =
         IbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
     assertThat(forksSchedule.getFork(0))
         .usingRecursiveComparison()

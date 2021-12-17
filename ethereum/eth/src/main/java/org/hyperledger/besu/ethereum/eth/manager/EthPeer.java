@@ -161,7 +161,7 @@ public class EthPeer {
   public RequestManager.ResponseStream send(final MessageData messageData) throws PeerNotConnected {
     if (permissioningProviders.stream()
         .anyMatch(p -> !p.isMessagePermitted(connection.getRemoteEnode(), messageData.getCode()))) {
-      LOG.info(
+      LOG.debug(
           "Permissioning blocked sending of message code {} to {}",
           messageData.getCode(),
           connection.getRemoteEnode());

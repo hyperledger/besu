@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -177,7 +178,7 @@ public class ProofOfWorkValidationRuleTest {
     final BlockHeaderBuilder headerBuilder =
         BlockHeaderBuilder.fromHeader(blockHeader)
             .difficulty(Difficulty.ONE)
-            .baseFee(10L)
+            .baseFee(Wei.of(10L))
             .blockHeaderFunctions(mainnetBlockHashFunction())
             .timestamp(1);
     final BlockHeader preHeader = headerBuilder.buildBlockHeader();

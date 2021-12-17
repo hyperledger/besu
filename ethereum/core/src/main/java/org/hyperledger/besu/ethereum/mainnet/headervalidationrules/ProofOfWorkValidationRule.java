@@ -125,7 +125,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
     out.writeLongScalar(header.getTimestamp());
     out.writeBytes(header.getExtraData());
     if (imlementsBaseFeeMarket() && header.getBaseFee().isPresent()) {
-      out.writeLongScalar(header.getBaseFee().get());
+      out.writeUInt256Scalar(header.getBaseFee().get());
     }
     out.endList();
 

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum;
 
-import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -41,13 +40,8 @@ public class ProtocolContext {
   public static ProtocolContext init(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final GenesisState genesisState,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory) {
-    if (blockchain.getChainHeadBlockNumber() < 1) {
-      genesisState.writeStateTo(worldStateArchive.getMutable());
-    }
-
     return new ProtocolContext(
         blockchain,
         worldStateArchive,

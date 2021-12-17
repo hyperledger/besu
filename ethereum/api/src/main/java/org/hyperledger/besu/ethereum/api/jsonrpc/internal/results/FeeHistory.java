@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import static java.util.stream.Collectors.toUnmodifiableList;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -29,11 +31,11 @@ public interface FeeHistory {
 
   long getOldestBlock();
 
-  List<Long> getBaseFeePerGas();
+  List<Wei> getBaseFeePerGas();
 
   List<Double> getGasUsedRatio();
 
-  Optional<List<List<Long>>> getReward();
+  Optional<List<List<Wei>>> getReward();
 
   @Value.Immutable
   @Value.Style(allParameters = true)
