@@ -17,6 +17,7 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Map;
 
@@ -68,6 +69,20 @@ public class JsonBftConfigOptionsTest {
   public void shouldGetDefaultBlockPeriodFromDefaultConfig() {
     assertThat(JsonBftConfigOptions.DEFAULT.getBlockPeriodSeconds())
         .isEqualTo(EXPECTED_DEFAULT_BLOCK_PERIOD);
+  }
+
+  @Test
+  public void shouldThrowOnNonPositiveBlockPeriod() {
+    final BftConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", 0));
+    assertThatThrownBy(() -> config.getBlockPeriodSeconds())
+        .isInstanceOf(NumberFormatException.class);
+  }
+
+  @Test
+  public void shouldThrowOnBlockPeriodDecimal() {
+    final BftConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", 1.99));
+    assertThatThrownBy(() -> config.getBlockPeriodSeconds())
+            .isInstanceOf(NumberFormatException.class);
   }
 
   @Test
