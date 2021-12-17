@@ -82,7 +82,7 @@ public class JsonBftConfigOptionsTest {
   public void shouldThrowOnBlockPeriodDecimal() {
     final BftConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", 1.99));
     assertThatThrownBy(() -> config.getBlockPeriodSeconds())
-            .isInstanceOf(NumberFormatException.class);
+        .isInstanceOf(NumberFormatException.class);
   }
 
   @Test

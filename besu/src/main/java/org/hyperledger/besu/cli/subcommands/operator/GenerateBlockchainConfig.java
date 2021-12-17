@@ -290,12 +290,16 @@ class GenerateBlockchainConfig implements Runnable {
   private void validateBlockPeriodSeconds() {
     try {
       var blockPeriodSeconds =
-          Integer.parseInt(genesisConfig.path("config").path("ibft2").path("blockperiodseconds").asText());
-      if (blockPeriodSeconds < 1)  { throw new NumberFormatException(String.valueOf(blockPeriodSeconds)); }
+          Integer.parseInt(
+              genesisConfig.path("config").path("ibft2").path("blockperiodseconds").asText());
+      if (blockPeriodSeconds < 1) {
+        throw new NumberFormatException(String.valueOf(blockPeriodSeconds));
+      }
     } catch (NumberFormatException e) {
       throw new NumberFormatException(
           new StringBuilder()
-              .append("Invalid genesis config property value, blockperiodseconds: ")
+              .append(
+                  "Invalid genesis config property value, blockperiodseconds, should be a positive integer: ")
               .append(e.getMessage())
               .toString());
     }
