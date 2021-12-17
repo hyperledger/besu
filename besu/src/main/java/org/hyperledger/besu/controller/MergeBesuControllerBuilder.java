@@ -18,7 +18,6 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
-import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -45,9 +44,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
 
-    BlockValidator blockValidator =
-        protocolSchedule.getByBlockNumber(Long.MAX_VALUE).getBlockValidator();
-
     // TODO: revisit how we stop/manage the synchronizer
     // https://github.com/hyperledger/besu/issues/2898
     this.syncState.set(syncState);
@@ -57,13 +53,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         protocolSchedule,
         transactionPool.getPendingTransactions(),
         miningParameters,
-        blockValidator,
         new BackwardsSyncContext(
-            protocolContext,
-            protocolSchedule,
-            metricsSystem,
-            ethProtocolManager.ethContext(),
-            blockValidator));
+            protocolContext, protocolSchedule, metricsSystem, ethProtocolManager.ethContext()));
   }
 
   @Override

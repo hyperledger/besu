@@ -18,7 +18,6 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -54,7 +53,6 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   final MergeBlockCreatorFactory mergeBlockCreator;
   final AtomicReference<Bytes> extraData = new AtomicReference<>(Bytes.fromHexString("0x"));
   private final MergeContext mergeContext;
-  private final BlockValidator blockValidator;
   private final ProtocolContext protocolContext;
   private final BackwardsSyncContext backwardsSyncContext;
   private final ProtocolSchedule protocolSchedule;
@@ -64,11 +62,9 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       final ProtocolSchedule protocolSchedule,
       final AbstractPendingTransactionsSorter pendingTransactions,
       final MiningParameters miningParams,
-      final BlockValidator blockValidator,
       final BackwardsSyncContext backwardsSyncContext) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
-    this.blockValidator = blockValidator;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.miningParameters = miningParams;
     this.backwardsSyncContext = backwardsSyncContext;
@@ -79,7 +75,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
             .orElse(new AtomicLong(30000000L));
 
     this.mergeBlockCreator =
-        (parentHeader, random, address) ->
+        (parentHeader, address) ->
             new MergeBlockCreator(
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 () -> Optional.of(targetGasLimit.longValue()),
@@ -88,7 +84,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
                 protocolContext,
                 protocolSchedule,
                 this.miningParameters.getMinTransactionGasPrice(),
-                this.miningParameters.getCoinbase().orElse(Address.ZERO),
+                address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 this.miningParameters.getMinBlockOccupancyRatio(),
                 parentHeader);
   }
@@ -164,13 +160,16 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     final PayloadIdentifier payloadIdentifier =
         PayloadIdentifier.forPayloadParams(parentHeader.getBlockHash(), timestamp);
     final MergeBlockCreator mergeBlockCreator =
-        this.mergeBlockCreator.forParams(parentHeader, random, Optional.ofNullable(feeRecipient));
+        this.mergeBlockCreator.forParams(parentHeader, Optional.ofNullable(feeRecipient));
 
     // put the empty block in first
     final Block emptyBlock =
         mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp);
-    executeBlock(emptyBlock);
-    mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
+    if (executeBlock(emptyBlock)) {
+      mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
+    } else {
+      LOG.warn("failed to execute empty block proposal {}", emptyBlock.getHash());
+    }
 
     // start working on a full block and update the payload value and candidate when it's ready
     CompletableFuture.supplyAsync(
@@ -181,8 +180,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
               if (throwable != null) {
                 LOG.warn("something went wrong creating block", throwable);
               } else {
-                executeBlock(bestBlock);
-                mergeContext.putPayloadById(payloadIdentifier, bestBlock);
+                if (executeBlock(bestBlock)) {
+                  mergeContext.putPayloadById(payloadIdentifier, bestBlock);
+                } else {
+                  LOG.warn("failed to execute block proposal {}", bestBlock.getHash());
+                }
               }
             });
 
@@ -208,8 +210,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
     final var chain = protocolContext.getBlockchain();
     var optResult =
-        blockValidator.validateAndProcessBlock(
-            protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE);
+        protocolSchedule
+            .getByBlockNumber(block.getHeader().getNumber())
+            .getBlockValidator()
+            .validateAndProcessBlock(
+                protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE);
 
     optResult.ifPresent(
         result -> {
@@ -340,6 +345,6 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @FunctionalInterface
   interface MergeBlockCreatorFactory {
-    MergeBlockCreator forParams(BlockHeader header, Bytes32 random, Optional<Address> feeRecipient);
+    MergeBlockCreator forParams(BlockHeader header, Optional<Address> feeRecipient);
   }
 }

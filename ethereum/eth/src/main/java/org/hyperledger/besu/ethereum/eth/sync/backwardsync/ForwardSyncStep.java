@@ -98,7 +98,7 @@ public class ForwardSyncStep extends BackwardSyncTask {
         () -> block.getHeader().getHash().toString().substring(0, 20));
     var optResult =
         context
-            .getBlockValidator()
+            .getBlockValidator(block.getHeader().getNumber())
             .validateAndProcessBlock(
                 context.getProtocolContext(),
                 block,

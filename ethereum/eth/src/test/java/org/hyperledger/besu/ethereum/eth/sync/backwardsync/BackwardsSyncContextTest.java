@@ -20,6 +20,7 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
@@ -35,6 +36,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -48,6 +50,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -56,14 +59,19 @@ public class BackwardsSyncContextTest {
   public static final int REMOTE_HEIGHT = 50;
   public static final int LOCAL_HEIGHT = 25;
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
-  private final ProtocolSchedule protocolSchedule =
-      MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions());
 
   private BackwardsSyncContext context;
 
   private MutableBlockchain remoteBlockchain;
   private RespondingEthPeer peer;
   private MutableBlockchain localBlockchain;
+
+  @Spy
+  private ProtocolSchedule protocolSchedule =
+      MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions());
+
+  @Spy private ProtocolSpec mockProtocolSpec = protocolSchedule.getByBlockNumber(0L);
+
   @Mock private ProtocolContext protocolContext;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
@@ -73,6 +81,8 @@ public class BackwardsSyncContextTest {
 
   @Before
   public void setup() {
+    when(mockProtocolSpec.getBlockValidator()).thenReturn(blockValidator);
+    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);
     Block genesisBlock = blockDataGenerator.genesisBlock();
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
     localBlockchain = createInMemoryBlockchain(genesisBlock);
@@ -107,8 +117,7 @@ public class BackwardsSyncContextTest {
             });
 
     context =
-        new BackwardsSyncContext(
-            protocolContext, protocolSchedule, metricsSystem, ethContext, blockValidator);
+        new BackwardsSyncContext(protocolContext, protocolSchedule, metricsSystem, ethContext);
   }
 
   @Test
