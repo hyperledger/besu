@@ -52,7 +52,10 @@ public class JsonBftConfigOptions implements BftConfigOptions {
   @Override
   public int getBlockPeriodSeconds() {
     final String blockPeriodSecondsRaw =
-        bftConfigRoot.get("blockperiodseconds").asText(String.valueOf(DEFAULT_BLOCK_PERIOD_SECONDS));
+        JsonUtil.getValueAsString(
+            bftConfigRoot,
+            "blockperiodseconds",
+            String.valueOf(DEFAULT_BLOCK_PERIOD_SECONDS));
     try {
       final int blockPeriodSeconds = Integer.parseInt(blockPeriodSecondsRaw);
       if (blockPeriodSeconds < 1) throw new NumberFormatException(String.valueOf(blockPeriodSeconds));
