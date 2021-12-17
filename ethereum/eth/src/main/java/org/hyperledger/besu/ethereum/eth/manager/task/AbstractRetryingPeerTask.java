@@ -100,7 +100,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   protected abstract CompletableFuture<T> executePeerTask(Optional<EthPeer> assignedPeer);
 
-  private void handleTaskError(final Throwable error) {
+  protected void handleTaskError(final Throwable error) {
     final Throwable cause = ExceptionUtils.rootCause(error);
     if (!isRetryableError(cause)) {
       // Complete exceptionally
@@ -133,13 +133,21 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
                 .scheduleFutureTask(this::executeTaskTimed, Duration.ofSeconds(1)));
   }
 
-  private boolean isRetryableError(final Throwable error) {
+  protected boolean isRetryableError(final Throwable error) {
     final boolean isPeerError =
         error instanceof PeerBreachedProtocolException
             || error instanceof PeerDisconnectedException
             || error instanceof NoAvailablePeersException;
 
     return error instanceof TimeoutException || (!assignedPeer.isPresent() && isPeerError);
+  }
+
+  protected EthContext getEthContext() {
+    return ethContext;
+  }
+
+  protected MetricsSystem getMetricsSystem() {
+    return metricsSystem;
   }
 
   public int getRetryCount() {
