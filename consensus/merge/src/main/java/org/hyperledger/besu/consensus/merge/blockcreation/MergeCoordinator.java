@@ -18,7 +18,6 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -54,7 +53,6 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   final MergeBlockCreatorFactory mergeBlockCreator;
   final AtomicReference<Bytes> extraData = new AtomicReference<>(Bytes.fromHexString("0x"));
   private final MergeContext mergeContext;
-  private final BlockValidator blockValidator;
   private final ProtocolContext protocolContext;
   private final BackwardsSyncContext backwardsSyncContext;
   private final ProtocolSchedule protocolSchedule;
@@ -64,11 +62,9 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       final ProtocolSchedule protocolSchedule,
       final AbstractPendingTransactionsSorter pendingTransactions,
       final MiningParameters miningParams,
-      final BlockValidator blockValidator,
       final BackwardsSyncContext backwardsSyncContext) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
-    this.blockValidator = blockValidator;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.miningParameters = miningParams;
     this.backwardsSyncContext = backwardsSyncContext;
@@ -214,8 +210,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
     final var chain = protocolContext.getBlockchain();
     var optResult =
-        blockValidator.validateAndProcessBlock(
-            protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE);
+        protocolSchedule
+            .getByBlockNumber(block.getHeader().getNumber())
+            .getBlockValidator()
+            .validateAndProcessBlock(
+                protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE);
 
     optResult.ifPresent(
         result -> {

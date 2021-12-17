@@ -48,7 +48,7 @@ public class MergeBlockCreator extends AbstractBlockCreator {
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     super(
-        coinbase,
+        miningBeneficiary,
         targetGasLimitSupplier,
         extraDataCalculator,
         pendingTransactions,

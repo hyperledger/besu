@@ -20,6 +20,7 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -96,7 +97,7 @@ public class ForwardSyncStepTest {
     EthContext ethContext = ethProtocolManager.ethContext();
     when(context.getEthContext()).thenReturn(ethContext);
 
-    when(context.getBlockValidator().validateAndProcessBlock(any(), any(), any(), any()))
+    when(context.getBlockValidator(anyLong()).validateAndProcessBlock(any(), any(), any(), any()))
         .thenAnswer(
             invocation -> {
               final Object[] arguments = invocation.getArguments();

@@ -36,7 +36,6 @@ public class BackwardsSyncContext {
 
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
-  private final BlockValidator blockValidator;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
 
@@ -49,12 +48,10 @@ public class BackwardsSyncContext {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
-      final EthContext ethContext,
-      final BlockValidator blockValidator) {
+      final EthContext ethContext) {
 
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
-    this.blockValidator = blockValidator;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
   }
@@ -153,8 +150,8 @@ public class BackwardsSyncContext {
     return protocolContext;
   }
 
-  public BlockValidator getBlockValidator() {
-    return blockValidator;
+  public BlockValidator getBlockValidator(final long blockNumber) {
+    return protocolSchedule.getByBlockNumber(blockNumber).getBlockValidator();
   }
 
   public BackwardChain findCorrectChainFromPivot(final long number) {

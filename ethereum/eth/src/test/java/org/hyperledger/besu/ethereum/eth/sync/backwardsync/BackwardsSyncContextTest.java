@@ -107,8 +107,7 @@ public class BackwardsSyncContextTest {
             });
 
     context =
-        new BackwardsSyncContext(
-            protocolContext, protocolSchedule, metricsSystem, ethContext, blockValidator);
+        new BackwardsSyncContext(protocolContext, protocolSchedule, metricsSystem, ethContext);
   }
 
   @Test
