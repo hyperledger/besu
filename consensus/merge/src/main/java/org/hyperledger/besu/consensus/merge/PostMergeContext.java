@@ -22,9 +22,14 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.EvictingQueue;
 
@@ -139,15 +144,22 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public void putPayloadById(final PayloadIdentifier payloadId, final Block block) {
+    var priorsById = retrieveTuplesById(payloadId)
+        .collect(Collectors.toUnmodifiableList());
     blocksInProgress.add(new PayloadTuple(payloadId, block));
+    priorsById.stream().forEach(blocksInProgress::remove);
   }
 
   @Override
   public Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId) {
-    return blocksInProgress.stream()
-        .filter(z -> z.payloadIdentifier.equals(payloadId))
-        .map(z -> z.block)
+    return retrieveTuplesById(payloadId)
+        .map(tuple -> tuple.block)
         .findFirst();
+  }
+
+  Stream<PayloadTuple> retrieveTuplesById(final PayloadIdentifier payloadId) {
+    return blocksInProgress.stream()
+        .filter(z -> z.payloadIdentifier.equals(payloadId));
   }
 
   static class PayloadTuple {

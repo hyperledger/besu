@@ -79,7 +79,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
             .orElse(new AtomicLong(30000000L));
 
     this.mergeBlockCreator =
-        (parentHeader, random, address) ->
+        (parentHeader, address) ->
             new MergeBlockCreator(
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 () -> Optional.of(targetGasLimit.longValue()),
@@ -88,7 +88,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
                 protocolContext,
                 protocolSchedule,
                 this.miningParameters.getMinTransactionGasPrice(),
-                this.miningParameters.getCoinbase().orElse(Address.ZERO),
+                address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 this.miningParameters.getMinBlockOccupancyRatio(),
                 parentHeader);
   }
@@ -164,13 +164,16 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     final PayloadIdentifier payloadIdentifier =
         PayloadIdentifier.forPayloadParams(parentHeader.getBlockHash(), timestamp);
     final MergeBlockCreator mergeBlockCreator =
-        this.mergeBlockCreator.forParams(parentHeader, random, Optional.ofNullable(feeRecipient));
+        this.mergeBlockCreator.forParams(parentHeader, Optional.ofNullable(feeRecipient));
 
     // put the empty block in first
     final Block emptyBlock =
         mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp);
-    executeBlock(emptyBlock);
-    mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
+    if (executeBlock(emptyBlock)) {
+      mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
+    } else {
+      LOG.warn("failed to execute empty block proposal {}", emptyBlock.getHash());
+    }
 
     // start working on a full block and update the payload value and candidate when it's ready
     CompletableFuture.supplyAsync(
@@ -181,8 +184,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
               if (throwable != null) {
                 LOG.warn("something went wrong creating block", throwable);
               } else {
-                executeBlock(bestBlock);
-                mergeContext.putPayloadById(payloadIdentifier, bestBlock);
+                if (executeBlock(bestBlock)) {
+                  mergeContext.putPayloadById(payloadIdentifier, bestBlock);
+                } else {
+                  LOG.warn("failed to execute block proposal {}", bestBlock.getHash());
+                }
               }
             });
 
@@ -340,6 +346,6 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @FunctionalInterface
   interface MergeBlockCreatorFactory {
-    MergeBlockCreator forParams(BlockHeader header, Bytes32 random, Optional<Address> feeRecipient);
+    MergeBlockCreator forParams(BlockHeader header, Optional<Address> feeRecipient);
   }
 }

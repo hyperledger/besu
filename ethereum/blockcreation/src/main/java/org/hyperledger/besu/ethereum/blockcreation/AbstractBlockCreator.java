@@ -300,12 +300,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     final Bytes32 random = maybeRandom.orElse(null);
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
-        .coinbase(
-            Optional.ofNullable(coinbase)
-                .orElseGet(
-                    () ->
-                        // supply a ZERO coinbase if unspecified AND merge is enabled:
-                        MergeOptions.isMergeEnabled() ? Address.ZERO : null))
+        .coinbase(coinbase)
         .difficulty(Difficulty.of(difficulty))
         .number(newBlockNumber)
         .gasLimit(gasLimit)

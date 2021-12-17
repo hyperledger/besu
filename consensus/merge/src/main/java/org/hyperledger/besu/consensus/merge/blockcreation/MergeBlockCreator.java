@@ -65,7 +65,7 @@ public class MergeBlockCreator extends AbstractBlockCreator {
       final Bytes32 random,
       final long timestamp) {
     return createBlock(
-        Optional.empty(),
+        maybeTransactions,
         Optional.of(Collections.emptyList()),
         Optional.of(random),
         timestamp,
