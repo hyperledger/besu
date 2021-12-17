@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardsSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -55,6 +56,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   private final MergeContext mergeContext;
   private final BlockValidator blockValidator;
   private final ProtocolContext protocolContext;
+  private final BackwardsSyncContext backwardsSyncContext;
   private final ProtocolSchedule protocolSchedule;
 
   public MergeCoordinator(
@@ -62,12 +64,14 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       final ProtocolSchedule protocolSchedule,
       final AbstractPendingTransactionsSorter pendingTransactions,
       final MiningParameters miningParams,
-      final BlockValidator blockValidator) {
+      final BlockValidator blockValidator,
+      final BackwardsSyncContext backwardsSyncContext) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.blockValidator = blockValidator;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.miningParameters = miningParams;
+    this.backwardsSyncContext = backwardsSyncContext;
     this.targetGasLimit =
         miningParameters
             .getTargetGasLimit()
@@ -187,6 +191,21 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public boolean executeBlock(final Block block) {
+    // TODO: if we are missing the parentHash, attempt backwards sync
+    // https://github.com/hyperledger/besu/issues/2912
+
+    protocolContext
+        .getBlockchain()
+        .getBlockHeader(block.getHeader().getParentHash())
+        .ifPresentOrElse(
+            blockHeader ->
+                LOG.debug(
+                    "Parent of block {} is already present",
+                    block.getHash().toString().substring(0, 20)),
+            () -> backwardsSyncContext.syncBackwardsUntil(block));
+
+    // TODO: End Jiri
+
     final var chain = protocolContext.getBlockchain();
     var optResult =
         blockValidator.validateAndProcessBlock(
@@ -274,31 +293,28 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     return self.map(BlockHeader::getHash);
   }
 
+  @Override
+  public boolean isBackwardSyncing() {
+    return backwardsSyncContext.isSyncing();
+  }
+
   private Optional<Hash> findValidAncestor(
       final Blockchain chain, final Hash parentHash, final BadBlockManager badBlocks) {
 
     // check chain first
-    final var parent =
-        chain
-            .getBlockHeader(parentHash)
-            .map(BlockHeader::getHash)
-            .map(Optional::of)
-            .orElseGet(
-                () ->
-                    badBlocks
-                        .getBadBlock(parentHash)
-                        .map(
-                            badParent ->
-                                findValidAncestor(
-                                    chain, badParent.getHeader().getParentHash(), badBlocks))
-                        .orElse(Optional.empty()));
-
-    if (parent.isEmpty()) {
-      // TODO: start a backward sync for parentHash if parent is not available
-      // https://github.com/hyperledger/besu/issues/2912
-    }
-
-    return parent;
+    return chain
+        .getBlockHeader(parentHash)
+        .map(BlockHeader::getHash)
+        .map(Optional::of)
+        .orElseGet(
+            () ->
+                badBlocks
+                    .getBadBlock(parentHash)
+                    .map(
+                        badParent ->
+                            findValidAncestor(
+                                chain, badParent.getHeader().getParentHash(), badBlocks))
+                    .orElse(Optional.empty()));
   }
 
   private boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock) {

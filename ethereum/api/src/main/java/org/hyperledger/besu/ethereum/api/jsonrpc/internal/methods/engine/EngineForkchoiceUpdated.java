@@ -60,7 +60,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     final Optional<ExecutionPayloadAttributesParameter> optionalPayloadAttributes =
         requestContext.getOptionalParameter(1, ExecutionPayloadAttributesParameter.class);
 
-    if (mergeContext.isSyncing()) {
+    if (mergeContext.isSyncing() || mergeCoordinator.isBackwardSyncing()) {
       // if we are syncing, return SYNCING
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
