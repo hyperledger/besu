@@ -133,4 +133,9 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   public Optional<Hash> getLatestValidAncestor(final Block block) {
     return mergeCoordinator.getLatestValidAncestor(block);
   }
+
+  @Override
+  public boolean isBackwardSyncing() {
+    return mergeCoordinator.isBackwardSyncing();
+  }
 }
