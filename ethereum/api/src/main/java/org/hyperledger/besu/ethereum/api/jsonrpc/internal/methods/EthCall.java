@@ -126,9 +126,6 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
 
   private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
     final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
-    if (callParams.getTo() == null) {
-      throw new InvalidJsonRpcParameters("Missing \"to\" field in call arguments");
-    }
     if (callParams.getGasPrice() != null
         && (callParams.getMaxFeePerGas().isPresent()
             || callParams.getMaxPriorityFeePerGas().isPresent())) {
