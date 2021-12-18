@@ -1,22 +1,14 @@
 # Changelog
 
-## 22.1.0-RC
-
-### 22.1.0 Breaking Changes
-- Plugin API: BlockHeader.getBaseFee() method now returns an optional Wei instead of an optional Long [#3065](https://github.com/hyperledger/besu/issues/3065)
-
-### Additions and Improvements
-- Represent baseFee as Wei instead of long accordingly to the spec [#2785](https://github.com/hyperledger/besu/issues/2785)
-- Implements [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) to repurpose DIFFICULTY opcode after the merge as a source of entropy from the Beacon chain. [#3081](https://github.com/hyperledger/besu/issues/3081)
+## 21.10.5
 
 ### Bug Fixes
-- Update log4j to 2.16.0.
-- Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
+- Update log4j2 to 2.17.0. [#3198](https://github.com/hyperledger/besu/pull/3198)
 
 ## 21.10.4
 
 ### Bug Fixes
-- Update log4j to 2.16.0.
+- Update log4j2 to 2.16.0.
 - Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
 
 ## 21.10.3
