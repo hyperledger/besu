@@ -6,7 +6,7 @@ orbs:
 executors:
   besu_executor_med: # 2cpu, 4G ram
     docker:
-      - image: circleci/openjdk:11.0.12-jdk-buster
+      - image: cimg/openjdk:11.0
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -14,7 +14,7 @@ executors:
 
   besu_executor_xl: # 8cpu, 16G ram
     docker:
-      - image: circleci/openjdk:11.0.12-jdk-buster
+      - image: cimg/openjdk:11.0
     resource_class: xlarge
     working_directory: ~/project
     environment:
@@ -35,14 +35,11 @@ commands:
     steps:
       - checkout
       - run:
-          name: Install Packages - LibSodium, nssdb, solc
+          name: Install Packages - LibSodium, nssdb
           command: |
+            sudo add-apt-repository ppa:ethereum/ethereum
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools software-properties-common wget
-            curl -fsSL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-            sudo apt-get update && sudo apt-get install -y nodejs
-            sudo wget https://github.com/ethereum/solc-bin/blob/gh-pages/linux-amd64/solc-linux-amd64-v0.8.9+commit.e5eed63a?raw=true -O /usr/bin/solc
-            sudo chmod +x /usr/bin/solc
+            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools solc
             sudo service haveged restart
       - restore_cache:
           name: Restore cached gradle dependencies
@@ -201,7 +198,7 @@ jobs:
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            ./gradlew --no-daemon --info acceptanceTest $GRADLE_ARGS
+            ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
 
