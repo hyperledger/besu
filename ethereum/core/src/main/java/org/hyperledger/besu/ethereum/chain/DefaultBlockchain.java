@@ -558,7 +558,8 @@ public class DefaultBlockchain implements MutableBlockchain {
             "Supplied genesis block does not match stored chain data in "
                 + dataDirectory
                 + ".\n"
-                + "Please specify a different data directory with --data-path, specify the original genesis file with --genesis-file or supply a testnet/mainnet options via --network.");
+                + "Please specify a different data directory with --data-path, specify the original genesis file with "
+                + "--genesis-file or supply a testnet/mainnet options via --network.");
       }
     }
   }
