@@ -267,7 +267,7 @@ public abstract class BesuControllerBuilder {
             blockchainStorage,
             metricsSystem,
             reorgLoggingThreshold,
-            dataDirectory);
+            dataDirectory.toString());
 
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(worldStateStorage, blockchain);

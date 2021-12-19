@@ -34,7 +34,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.Subscribers;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -79,7 +78,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final BlockchainStorage blockchainStorage,
       final MetricsSystem metricsSystem,
       final long reorgLoggingThreshold,
-      final Path dataDirectory) {
+      final String dataDirectory) {
     checkNotNull(genesisBlock);
     checkNotNull(blockchainStorage);
     checkNotNull(metricsSystem);
@@ -152,7 +151,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final BlockchainStorage blockchainStorage,
       final MetricsSystem metricsSystem,
       final long reorgLoggingThreshold,
-      final Path dataDirectory) {
+      final String dataDirectory) {
     checkNotNull(genesisBlock);
     return new DefaultBlockchain(
         Optional.of(genesisBlock),
@@ -532,7 +531,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     return new HashSet<>(blockchainStorage.getForkHeads());
   }
 
-  private void setGenesis(final Block genesisBlock, final Path dataDirectory) {
+  private void setGenesis(final Block genesisBlock, final String dataDirectory) {
     checkArgument(
         genesisBlock.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER,
         "Invalid genesis block.");
@@ -555,16 +554,11 @@ public class DefaultBlockchain implements MutableBlockchain {
         throw new IllegalStateException("Blockchain is missing genesis block data.");
       }
       if (!genesisHash.get().equals(genesisBlock.getHash())) {
-        final String firstLine;
-        if (dataDirectory != null) {
-          firstLine =
-              "Supplied genesis block does not match stored chain data in " + dataDirectory + "\n";
-        } else {
-          firstLine = "Supplied genesis block does not match stored chain data.\n";
-        }
         throw new InvalidConfigurationException(
-            firstLine
-                + "Please specify a different data directory with --data-path or specify the original genesis file with --genesis-file.");
+            "Supplied genesis block does not match stored chain data in "
+                + dataDirectory
+                + ".\n"
+                + "Please specify a different data directory with --data-path, specify the original genesis file with --genesis-file or supply a testnet/mainnet options via --network.");
       }
     }
   }
