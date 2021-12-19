@@ -5,6 +5,7 @@
 ### Additions and Improvements
 
 ### Bug Fixes
+- Make 'to' field optional in eth_call method according to the spec [#3177] (https://github.com/hyperledger/besu/pull/3177)
 
 ## 22.1.0-RC1
 
