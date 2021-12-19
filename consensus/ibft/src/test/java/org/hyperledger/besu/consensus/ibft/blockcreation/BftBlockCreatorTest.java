@@ -98,7 +98,7 @@ public class BftBlockCreatorTest {
         GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
             .getConfigOptions();
     final ForksSchedule<BftConfigOptions> forksSchedule =
-        new ForksSchedule<>(new ForkSpec<>(0, configOptions.getBftConfigOptions()), List.of());
+        new ForksSchedule<>(List.of(new ForkSpec<>(0, configOptions.getBftConfigOptions())));
     final ProtocolSchedule protocolSchedule =
         bftProtocolSchedule.createProtocolSchedule(
             configOptions,

@@ -36,7 +36,7 @@ public class LegacyFeeMarket implements FeeMarket {
 
   @Override
   public Wei minTransactionPriceInNextBlock(
-      final Transaction transaction, final Supplier<Optional<Long>> baseFeeSupplier) {
+      final Transaction transaction, final Supplier<Optional<Wei>> baseFeeSupplier) {
     return txPriceCalculator.price(transaction, Optional.empty());
   }
 }

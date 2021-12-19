@@ -187,6 +187,8 @@ import java.net.SocketException;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -205,6 +207,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -639,6 +643,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Enable to accept clients certificate signed by a valid CA for client authentication (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcHttpTlsCAClientsEnabled = false;
+
+  @Option(
+      names = {"--rpc-http-tls-protocol", "--rpc-http-tls-protocols"},
+      description = "Comma separated list of TLS protocols to support (default: ${DEFAULT-VALUE})",
+      split = ",",
+      arity = "1..*")
+  private final List<String> rpcHttpTlsProtocols = new ArrayList<>(DEFAULT_TLS_PROTOCOLS);
+
+  @Option(
+      names = {"--rpc-http-tls-cipher-suite", "--rpc-http-tls-cipher-suites"},
+      description = "Comma separated list of TLS cipher suites to support",
+      split = ",",
+      arity = "1..*")
+  private final List<String> rpcHttpTlsCipherSuites = new ArrayList<>();
 
   @Option(
       names = {"--rpc-ws-enabled"},
@@ -1923,7 +1941,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-tls-client-auth-enabled",
             "--rpc-http-tls-known-clients-file",
             "--rpc-http-tls-ca-clients-enabled",
-            "--rpc-http-authentication-jwt-algorithm"));
+            "--rpc-http-authentication-jwt-algorithm",
+            "--rpc-http-tls-protocols",
+            "--rpc-http-tls-cipher-suite",
+            "--rpc-http-tls-cipher-suites"));
   }
 
   private void checkRpcTlsOptionsDependencies() {
@@ -1937,7 +1958,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-tls-keystore-password-file",
             "--rpc-http-tls-client-auth-enabled",
             "--rpc-http-tls-known-clients-file",
-            "--rpc-http-tls-ca-clients-enabled"));
+            "--rpc-http-tls-ca-clients-enabled",
+            "--rpc-http-tls-protocols",
+            "--rpc-http-tls-cipher-suite",
+            "--rpc-http-tls-cipher-suites"));
   }
 
   private void checkRpcTlsClientAuthOptionsDependencies() {
@@ -1985,12 +2009,32 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Known-clients file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
     }
 
+    rpcHttpTlsProtocols.retainAll(getJDKEnabledProtocols());
+    if (rpcHttpTlsProtocols.isEmpty()) {
+      throw new ParameterException(
+          commandLine,
+          "No valid TLS protocols specified (the following protocols are enabled: "
+              + getJDKEnabledProtocols()
+              + ")");
+    }
+
+    for (String cipherSuite : rpcHttpTlsCipherSuites) {
+      if (!getJDKEnabledCypherSuites().contains(cipherSuite)) {
+        throw new ParameterException(
+            commandLine, "Invalid TLS cipher suite specified " + cipherSuite);
+      }
+    }
+
+    rpcHttpTlsCipherSuites.retainAll(getJDKEnabledCypherSuites());
+
     return Optional.of(
         TlsConfiguration.Builder.aTlsConfiguration()
             .withKeyStorePath(rpcHttpTlsKeyStoreFile)
             .withKeyStorePasswordSupplier(
                 new FileBasedPasswordProvider(rpcHttpTlsKeyStorePasswordFile))
             .withClientAuthConfiguration(rpcHttpTlsClientAuthConfiguration())
+            .withSecureTransportProtocols(rpcHttpTlsProtocols)
+            .withCipherSuites(rpcHttpTlsCipherSuites)
             .build());
   }
 
@@ -2851,5 +2895,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // this static flag is read by the RLP decoder
     GoQuorumOptions.setGoQuorumCompatibilityMode(true);
     isGoQuorumCompatibilityMode = true;
+  }
+
+  public static List<String> getJDKEnabledCypherSuites() {
+    try {
+      SSLContext context = SSLContext.getInstance("TLS");
+      context.init(null, null, null);
+      SSLEngine engine = context.createSSLEngine();
+      return Arrays.asList(engine.getEnabledCipherSuites());
+    } catch (KeyManagementException | NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static List<String> getJDKEnabledProtocols() {
+    try {
+      SSLContext context = SSLContext.getInstance("TLS");
+      context.init(null, null, null);
+      SSLEngine engine = context.createSSLEngine();
+      return Arrays.asList(engine.getEnabledProtocols());
+    } catch (KeyManagementException | NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

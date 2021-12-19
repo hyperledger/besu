@@ -14,8 +14,10 @@
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
+| Frank Li         | frankisawesome   | frankliawesome   |
 | Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jason Frame      | jframe           | jframe           |
+| Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |

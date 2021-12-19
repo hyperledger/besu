@@ -52,7 +52,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 public class BlockResult implements JsonRpcResult {
 
   private final String number;
-  private final String hash;
+  protected final String hash;
   private final String mixHash;
   private final String parentHash;
   private final String nonce;
@@ -70,7 +70,7 @@ public class BlockResult implements JsonRpcResult {
   private final String gasLimit;
   private final String gasUsed;
   private final String timestamp;
-  private final List<TransactionResult> transactions;
+  protected final List<TransactionResult> transactions;
   private final List<JsonNode> ommers;
   private final String coinbase;
 
