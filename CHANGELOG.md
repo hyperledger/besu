@@ -11,21 +11,11 @@
 - Update log4j2 to 2.16.0.
 - Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
 
-## 21.10.3
-
-### Additions and Improvements
-- Represent baseFee as Wei instead of long accordingly to the spec [#2785](https://github.com/hyperledger/besu/issues/2785)
-- Adding support of the NO_COLOR environment variable as described in the [NO_COLOR](https://no-color.org/) standard [#3085](https://github.com/hyperledger/besu/pull/3085)
-- Add `privx_findFlexiblePrivacyGroup` RPC Method, `privx_findOnchainPrivacyGroup` will be removed in a future release [#3075](https://github.com/hyperledger/besu/pull/3075)
-- The invalid value is now shown when `--bootnodes` cannot parse an item to make it easier to identify which option is invalid. 
-- Adding two new options to be able to specify desired TLS protocol version and Java cipher suites [#3105](https://github.com/hyperledger/besu/pull/3105)
-- Implements [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) to repurpose DIFFICULTY opcode after the merge as a source of entropy from the Beacon chain. [#3081](https://github.com/hyperledger/besu/issues/3081)
-
-### Bug Fixes
-- Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
-
-### Early Access Features
-- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.4/besu-21.10.4.tar.gz \
+SHA256 ed21ee852c261e1a123db5fa6f5826bfc925756d74e1ec42a9580d77874280fa
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.4/besu-21.10.4.zip \
+SHA256 ef730e42bc47605f5f863c7f700e3dc1e513a53e29ab5e52ffbd31174a112375
 
 ## 21.10.3
 
