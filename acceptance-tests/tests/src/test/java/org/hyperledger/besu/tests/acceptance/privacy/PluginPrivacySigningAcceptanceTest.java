@@ -26,13 +26,15 @@ import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.web3j.protocol.core.DefaultBlockParameter;
+import org.web3j.protocol.core.methods.response.EthBlock.Block;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBase {
@@ -69,7 +71,6 @@ public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBas
   }
 
   @Test
-  @Ignore // since changing the solidity code in #3183 the contractAddress is incorrect
   public void canDeployContractSignedByPlugin() throws Exception {
     final String contractAddress = "0xd0152772c54cecfa7684f09f7616dcc825545dff";
 
@@ -85,11 +86,19 @@ public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBas
         .verify(eventEmitter);
     privateContractVerifier.validContractCodeProvided().verify(eventEmitter);
 
+    final BigInteger blockNumberContractDeployed =
+        eventEmitter.getTransactionReceipt().get().getBlockNumber();
+    final Block blockContractDeployed =
+        minerNode.execute(
+            ethTransactions.block(DefaultBlockParameter.valueOf(blockNumberContractDeployed)));
+
+    assertThat(blockContractDeployed.getTransactions().size()).isEqualTo(1);
+
+    final String transactionHashContractDeployed =
+        (String) blockContractDeployed.getTransactions().get(0).get();
     final TransactionReceipt pmtReceipt =
         minerNode
-            .execute(
-                ethTransactions.getTransactionReceipt(
-                    "0xa65bc3b91e85a864a90be966f7b6da88cb7a1dcefe972c8840dfa5f6d25a4299"))
+            .execute(ethTransactions.getTransactionReceipt(transactionHashContractDeployed))
             .get();
 
     assertThat(pmtReceipt.getStatus()).isEqualTo("0x1");
