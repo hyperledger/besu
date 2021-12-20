@@ -3,6 +3,7 @@
 ## 22.1.0-RC2
 
 ### Additions and Improvements
+- Removed deprecated hash variable `protected volatile Hash hash;` which was used for private transactions [#3110](https://github.com/hyperledger/besu/pull/3110)
 
 ### Bug Fixes
 - Make 'to' field optional in eth_call method according to the spec [#3177] (https://github.com/hyperledger/besu/pull/3177)
@@ -33,10 +34,6 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC1/besu-22.1
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC1/besu-22.1.0-RC1.tar.gz \ SHA256 302ead51c85bf282047104974968ce88ce626df609082700e6e187b26180e0fd
 
 ## 21.10.3
-
-### Additions and Improvements
-
-- Removed deprecated hash variable `protected volatile Hash hash;` which was used for private transactions [#3110](https://github.com/hyperledger/besu/pull/3110)
 
 ### Bug Fixes
 - Updated log4j to 2.15.0 and disabled JNDI message format lookups to improve security.

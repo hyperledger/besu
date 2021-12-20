@@ -54,8 +54,8 @@ class FileStateChecker extends DefaultTask {
 
 If this is a deliberate change where you have thought through backwards compatibility,
 then update "Expected" for "Calculated" in the appropriate build.gradle as the knownHash for this task.
-Expected   : ${this.knownHash}
-Calculated : ${currentHash}
+Expected   : DhISJBKoARZyoiT387UIA7QfcEwyOcIYm17f/fLsJRM=
+Calculated : pDLQUs2Gl9hFV1ecKSacbbfwovrjMf/IBPiY1zkOZlI=
 """)
     }
   }
