@@ -559,7 +559,7 @@ public class DefaultBlockchain implements MutableBlockchain {
                 + dataDirectory
                 + ".\n"
                 + "Please specify a different data directory with --data-path, specify the original genesis file with "
-                + "--genesis-file or supply a testnet/mainnet options via --network.");
+                + "--genesis-file or supply a testnet/mainnet option with --network.");
       }
     }
   }

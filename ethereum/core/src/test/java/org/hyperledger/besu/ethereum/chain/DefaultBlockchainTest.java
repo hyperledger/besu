@@ -94,7 +94,7 @@ public class DefaultBlockchainTest {
         .hasMessageContaining(
             "Supplied genesis block does not match stored chain data in /test/path.\n"
                 + "Please specify a different data directory with --data-path, specify the original genesis file with "
-                + "--genesis-file or supply a testnet/mainnet options via --network.");
+                + "--genesis-file or supply a testnet/mainnet option with --network.");
   }
 
   @Test
