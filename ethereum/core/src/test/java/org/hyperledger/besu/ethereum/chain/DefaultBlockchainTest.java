@@ -92,7 +92,7 @@ public class DefaultBlockchainTest {
     assertThatThrownBy(() -> createMutableBlockchain(kvStore, gen.genesisBlock(), "/test/path"))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
-            "Supplied genesis block does not match stored chain data in /test/path.\n"
+            "Supplied genesis block does not match chain data stored in /test/path.\n"
                 + "Please specify a different data directory with --data-path, specify the original genesis file with "
                 + "--genesis-file or supply a testnet/mainnet option with --network.");
   }

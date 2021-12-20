@@ -555,7 +555,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       }
       if (!genesisHash.get().equals(genesisBlock.getHash())) {
         throw new InvalidConfigurationException(
-            "Supplied genesis block does not match stored chain data in "
+            "Supplied genesis block does not match chain data stored in "
                 + dataDirectory
                 + ".\n"
                 + "Please specify a different data directory with --data-path, specify the original genesis file with "
