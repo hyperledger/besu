@@ -70,12 +70,21 @@ public class DefaultBlockchain implements MutableBlockchain {
       final BlockchainStorage blockchainStorage,
       final MetricsSystem metricsSystem,
       final long reorgLoggingThreshold) {
+    this(genesisBlock, blockchainStorage, metricsSystem, reorgLoggingThreshold, null);
+  }
+
+  private DefaultBlockchain(
+      final Optional<Block> genesisBlock,
+      final BlockchainStorage blockchainStorage,
+      final MetricsSystem metricsSystem,
+      final long reorgLoggingThreshold,
+      final String dataDirectory) {
     checkNotNull(genesisBlock);
     checkNotNull(blockchainStorage);
     checkNotNull(metricsSystem);
 
     this.blockchainStorage = blockchainStorage;
-    genesisBlock.ifPresent(this::setGenesis);
+    genesisBlock.ifPresent(block -> this.setGenesis(block, dataDirectory));
 
     final Hash chainHead = blockchainStorage.getChainHead().get();
     chainHeader = blockchainStorage.getBlockHeader(chainHead).get();
@@ -135,6 +144,21 @@ public class DefaultBlockchain implements MutableBlockchain {
     checkNotNull(genesisBlock);
     return new DefaultBlockchain(
         Optional.of(genesisBlock), blockchainStorage, metricsSystem, reorgLoggingThreshold);
+  }
+
+  public static MutableBlockchain createMutable(
+      final Block genesisBlock,
+      final BlockchainStorage blockchainStorage,
+      final MetricsSystem metricsSystem,
+      final long reorgLoggingThreshold,
+      final String dataDirectory) {
+    checkNotNull(genesisBlock);
+    return new DefaultBlockchain(
+        Optional.of(genesisBlock),
+        blockchainStorage,
+        metricsSystem,
+        reorgLoggingThreshold,
+        dataDirectory);
   }
 
   public static Blockchain create(
@@ -507,7 +531,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     return new HashSet<>(blockchainStorage.getForkHeads());
   }
 
-  private void setGenesis(final Block genesisBlock) {
+  private void setGenesis(final Block genesisBlock, final String dataDirectory) {
     checkArgument(
         genesisBlock.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER,
         "Invalid genesis block.");
@@ -531,8 +555,11 @@ public class DefaultBlockchain implements MutableBlockchain {
       }
       if (!genesisHash.get().equals(genesisBlock.getHash())) {
         throw new InvalidConfigurationException(
-            "Supplied genesis block does not match stored chain data.\n"
-                + "Please specify a different data directory with --data-path or specify the original genesis file with --genesis-file.");
+            "Supplied genesis block does not match chain data stored in "
+                + dataDirectory
+                + ".\n"
+                + "Please specify a different data directory with --data-path, specify the original genesis file with "
+                + "--genesis-file or supply a testnet/mainnet option with --network.");
       }
     }
   }
