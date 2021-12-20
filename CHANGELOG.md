@@ -13,6 +13,10 @@
 
 ### Bug Fixes
 - Update log4j to 2.17.0
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.tar.gz \ SHA256 0d1b6ed8f3e1325ad0d4acabad63c192385e6dcbefe40dc6b647e8ad106445a8
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.zip SHA256 \ a1689a8a65c4c6f633b686983a6a1653e7ac86e742ad2ec6351176482d6e0c57
  
 ## 22.1.0-RC1
 
