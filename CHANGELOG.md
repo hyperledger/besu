@@ -4,10 +4,21 @@
 
 ### Additions and Improvements
 - Removed deprecated hash variable `protected volatile Hash hash;` which was used for private transactions [#3110](https://github.com/hyperledger/besu/pull/3110)
+- Re-order external services (e.g JsonRpcHttpService) to start before blocks start processing [#3118](https://github.com/hyperledger/besu/pull/3118)
 
 ### Bug Fixes
+- Update log4j to 2.16.0.
 - Make 'to' field optional in eth_call method according to the spec [#3177] (https://github.com/hyperledger/besu/pull/3177)
 
+## 21.10.5
+
+### Bug Fixes
+- Update log4j to 2.17.0
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.tar.gz \ SHA256 0d1b6ed8f3e1325ad0d4acabad63c192385e6dcbefe40dc6b647e8ad106445a8
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.zip SHA256 \ a1689a8a65c4c6f633b686983a6a1653e7ac86e742ad2ec6351176482d6e0c57
+ 
 ## 22.1.0-RC1
 
 ### 22.1.0-RC1 Breaking Changes
@@ -15,32 +26,44 @@
 
 ### Additions and Improvements
 - Represent baseFee as Wei instead of long accordingly to the spec [#2785](https://github.com/hyperledger/besu/issues/2785)
-- Adding support of the NO_COLOR environment variable as described in the [NO_COLOR](https://no-color.org/) standard [#3085](https://github.com/hyperledger/besu/pull/3085)
-- Add `privx_findFlexiblePrivacyGroup` RPC Method, `privx_findOnchainPrivacyGroup` will be removed in a future release [#3075](https://github.com/hyperledger/besu/pull/3075)
-- The invalid value is now shown when `--bootnodes` cannot parse an item to make it easier to identify which option is invalid.
-- Adding two new options to be able to specify desired TLS protocol version and Java cipher suites [#3105](https://github.com/hyperledger/besu/pull/3105)
 - Implements [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) to repurpose DIFFICULTY opcode after the merge as a source of entropy from the Beacon chain. [#3081](https://github.com/hyperledger/besu/issues/3081)
-- Re-order external services (e.g JsonRpcHttpService) to start before blocks start processing [#3118](https://github.com/hyperledger/besu/pull/3118)
 
 ### Bug Fixes
-- Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
 - Update log4j to 2.16.0.
-
-### Early Access Features
-- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
+- Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
 
 ### Download Links
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC1/besu-22.1.0-RC1.zip \ SHA256: 8f471a30a7d22a6830c5f7ed87d1f2110bdaeb6751007ffa0fb44783a7c80850
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC1/besu-22.1.0-RC1.tar.gz \ SHA256 302ead51c85bf282047104974968ce88ce626df609082700e6e187b26180e0fd
 
-## 21.10.3
+## 21.10.4
 
 ### Bug Fixes
+- Update log4j to 2.16.0.
+- Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
+
+### Download links
+This release is not recommended for production use.
+
+## 21.10.3
+
+### Additions and Improvements
 - Updated log4j to 2.15.0 and disabled JNDI message format lookups to improve security.
+- Represent baseFee as Wei instead of long accordingly to the spec [#2785](https://github.com/hyperledger/besu/issues/2785)
+- Adding support of the NO_COLOR environment variable as described in the [NO_COLOR](https://no-color.org/) standard [#3085](https://github.com/hyperledger/besu/pull/3085)
+- Add `privx_findFlexiblePrivacyGroup` RPC Method, `privx_findOnchainPrivacyGroup` will be removed in a future release [#3075](https://github.com/hyperledger/besu/pull/3075)
+- The invalid value is now shown when `--bootnodes` cannot parse an item to make it easier to identify which option is invalid.
+- Adding two new options to be able to specify desired TLS protocol version and Java cipher suites [#3105](https://github.com/hyperledger/besu/pull/3105)
+- Implements [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) to repurpose DIFFICULTY opcode after the merge as a source of entropy from the Beacon chain. [#3081](https://github.com/hyperledger/besu/issues/3081)
+
+### Bug Fixes
+- Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
+
+### Early Access Features
+- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
 
 ### Download Link
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.3/besu-21.10.3.zip \
-SHA256: 78eb3ee9174e2c4594f4845670ad66d44479de6f470b2b950d056102f57d839e
+This release is not recommended for production use.
 
 ## 21.10.2
 
@@ -54,8 +77,7 @@ SHA256: 78eb3ee9174e2c4594f4845670ad66d44479de6f470b2b950d056102f57d839e
 - DNS Discovery daemon wasn't started [#3033](https://github.com/hyperledger/besu/pull/3033)
 
 ### Download Link
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.2/besu-21.10.2.zip \
-SHA256: 4b96d4d10c0c6128dc67333c8600e927ea135b4db5e5f74688a0753260b7b985
+This release is not recommended for production use.
 
 ## 21.10.1
 
@@ -78,8 +100,7 @@ SHA256: 4b96d4d10c0c6128dc67333c8600e927ea135b4db5e5f74688a0753260b7b985
 - Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
 
 ### Download Link
-This release is not recommended for production use. \
-SHA256: 064df81be49c31ebfc0e1a5f03357e8f6f9a7f5e7bcb82e2b187e2d58e1704eb
+This release is not recommended for production use.
 
 ## 21.10.0
 
