@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,7 +29,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -78,32 +76,6 @@ public class EthCallTest {
   }
 
   @Test
-  public void shouldThrowInvalidJsonRpcParametersExceptionWhenMissingToField() {
-    final JsonCallParameter callParameter =
-        new JsonCallParameter(
-            Address.fromHexString("0x0"),
-            null,
-            Gas.ZERO,
-            Wei.ZERO,
-            null,
-            null,
-            Wei.ZERO,
-            Bytes.EMPTY,
-            null);
-    final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
-    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
-    when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
-
-    final Throwable thrown = catchThrowable(() -> method.response(request));
-
-    assertThat(thrown)
-        .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasNoCause()
-        .hasMessage("Missing \"to\" field in call arguments");
-  }
-
-  @Test
   public void shouldReturnInternalErrorWhenProcessorReturnsEmpty() {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
     final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, INTERNAL_ERROR);
@@ -124,8 +96,7 @@ public class EthCallTest {
   @Test
   public void shouldAcceptRequestWhenMissingOptionalFields() {
     final JsonCallParameter callParameter =
-        new JsonCallParameter(
-            null, Address.fromHexString("0x0"), null, null, null, null, null, null, null);
+        new JsonCallParameter(null, null, null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = ethCallRequest(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Bytes.of().toString());
