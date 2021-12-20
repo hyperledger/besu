@@ -13,7 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.plugins;
+package org.hyperledger.besu.tests.acceptance.plugins;
 
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
@@ -29,25 +29,25 @@ import picocli.CommandLine.Option;
 public class TestPermissioningPlugin implements BesuPlugin {
   private static final Logger LOG = LogManager.getLogger();
 
-  private final String aliceNode =
+  private static final String aliceNode =
       "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
 
-  private final String bobNode =
+  private static final String bobNode =
       "af80b90d25145da28c583359beb47b21796b2fe1a23c1511e443e7a64dfdb27d7434c380f0aa4c500e220aa1a9d068514b1ff4d5019e624e7ba1efe82b340a59";
 
-  private final String charlieNode =
+  private static final String charlieNode =
       "ce7edc292d7b747fab2f23584bbafaffde5c8ff17cf689969614441e0527b90015ea9fee96aed6d9c0fc2fbe0bd1883dee223b3200246ff1e21976bdbc9a0fc8";
 
   PermissioningService service;
 
   @Override
   public void register(final BesuContext context) {
-    context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("permissioning", this);
-    service = context.getService(PermissioningService.class).get();
+    context.getService(PicoCLIOptions.class).orElseThrow().addPicoCLIOptions("permissioning", this);
+    service = context.getService(PermissioningService.class).orElseThrow();
   }
 
   @Override
-  public void start() {
+  public void beforeExternalServices() {
     if (enabled) {
       service.registerNodePermissioningProvider(
           (sourceEnode, destinationEnode) -> {
@@ -78,6 +78,9 @@ public class TestPermissioningPlugin implements BesuPlugin {
           });
     }
   }
+
+  @Override
+  public void start() {}
 
   private boolean transactionMessage(final int code) {
     return code == 0x02 || code == 0x08 || code == 0x09 || code == 0x0a;

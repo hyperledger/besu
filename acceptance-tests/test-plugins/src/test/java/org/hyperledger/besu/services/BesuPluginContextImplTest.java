@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.hyperledger.besu.plugin.BesuPlugin;
-import org.hyperledger.besu.plugins.TestPicoCLIPlugin;
+import org.hyperledger.besu.tests.acceptance.plugins.TestPicoCLIPlugin;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.After;
 import org.junit.BeforeClass;
@@ -57,10 +58,11 @@ public class BesuPluginContextImplTest {
     assertThat(contextImpl.getPlugins()).isNotEmpty();
 
     final Optional<TestPicoCLIPlugin> testPluginOptional = findTestPlugin(contextImpl.getPlugins());
-    assertThat(testPluginOptional).isPresent();
+    Assertions.assertThat(testPluginOptional).isPresent();
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
 
+    contextImpl.beforeExternalServices();
     contextImpl.startPlugins();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("started");
 
@@ -75,6 +77,9 @@ public class BesuPluginContextImplTest {
 
     assertThat(contextImpl.getPlugins()).isEmpty();
     contextImpl.registerPlugins(new File(".").toPath());
+    assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
+
+    contextImpl.beforeExternalServices();
     assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
 
     contextImpl.startPlugins();
@@ -98,6 +103,7 @@ public class BesuPluginContextImplTest {
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
 
+    contextImpl.beforeExternalServices();
     contextImpl.startPlugins();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("failstart");
     assertThat(contextImpl.getPlugins()).isNotInstanceOfAny(TestPicoCLIPlugin.class);
@@ -120,6 +126,7 @@ public class BesuPluginContextImplTest {
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
 
+    contextImpl.beforeExternalServices();
     contextImpl.startPlugins();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("started");
 
@@ -140,6 +147,7 @@ public class BesuPluginContextImplTest {
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(registerPlugins);
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(contextImpl::stopPlugins);
 
+    contextImpl.beforeExternalServices();
     contextImpl.startPlugins();
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(registerPlugins);
     assertThatExceptionOfType(IllegalStateException.class).isThrownBy(contextImpl::startPlugins);

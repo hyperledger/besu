@@ -11,7 +11,12 @@
     "istanbulBlock":0,
     "berlinBlock":0,
     "londonBlock":0,
-    "ethash":{}
+    "ethash":{},
+    "discovery": {
+      "bootnodes": [
+        "enode://9246d00bc8fd1742e5ad2428b80fc4dc45d786283e05ef6edbd9002cbc335d40998444732fbe921cb88e1d2c73d1b1de53bae6a2237996e9bfe14f871baf7066@18.168.182.86:30303"
+      ]
+    }
   },
   "alloc":{
     "0xa2A6d93439144FFE4D27c9E088dCD8b783946263": {"balance": "0xD3C21BCECCEDA1000000"},
