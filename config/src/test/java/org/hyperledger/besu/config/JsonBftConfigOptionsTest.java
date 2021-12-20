@@ -72,17 +72,10 @@ public class JsonBftConfigOptionsTest {
   }
 
   @Test
-  public void shouldThrowOnNonPositiveBlockPeriod() {
-    final BftConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", 0));
+  public void shouldThrowOnDecimalBlockPeriod() {
+    final BftConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", 1.5));
     assertThatThrownBy(() -> config.getBlockPeriodSeconds())
-        .isInstanceOf(NumberFormatException.class);
-  }
-
-  @Test
-  public void shouldThrowOnBlockPeriodDecimal() {
-    final BftConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", 1.99));
-    assertThatThrownBy(() -> config.getBlockPeriodSeconds())
-        .isInstanceOf(NumberFormatException.class);
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test

@@ -21,6 +21,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.util.number.PositiveNumber;
 
 public class JsonBftConfigOptions implements BftConfigOptions {
 
@@ -51,20 +52,17 @@ public class JsonBftConfigOptions implements BftConfigOptions {
 
   @Override
   public int getBlockPeriodSeconds() {
-    final String blockPeriodSecondsRaw =
-        JsonUtil.getValueAsString(
-            bftConfigRoot, "blockperiodseconds", String.valueOf(DEFAULT_BLOCK_PERIOD_SECONDS));
     try {
-      final int blockPeriodSeconds = Integer.parseInt(blockPeriodSecondsRaw);
-      if (blockPeriodSeconds < 1)
-        throw new NumberFormatException(String.valueOf(blockPeriodSeconds));
-      return blockPeriodSeconds;
-    } catch (NumberFormatException e) {
-      throw new NumberFormatException(
+      final String blockPeriodSecondsRaw =
+          JsonUtil.getValueAsString(
+              bftConfigRoot, "blockperiodseconds", String.valueOf(DEFAULT_BLOCK_PERIOD_SECONDS));
+      return PositiveNumber.fromString(blockPeriodSecondsRaw).getValue();
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(
           new StringBuilder()
               .append(
                   "Invalid genesis config property value, blockperiodseconds, should be a positive integer: ")
-              .append(blockPeriodSecondsRaw)
+              .append(e.getMessage())
               .toString());
     }
   }
