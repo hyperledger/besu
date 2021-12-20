@@ -11,74 +11,74 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-package org.hyperledger.besu.plugins;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
+package org.hyperledger.besu.tests.acceptance.plugins;
 
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
-import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
+import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.auto.service.AutoService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import picocli.CommandLine.Option;
 
 @AutoService(BesuPlugin.class)
-public class BadCLIOptionsPlugin implements BesuPlugin {
+public class TestBesuEventsPlugin implements BesuPlugin {
   private static final Logger LOG = LogManager.getLogger();
 
-  @Option(names = "--poorly-named-option")
-  String poorlyNamedOption = "nothing";
+  private BesuContext context;
 
+  private Optional<Long> subscriptionId;
+  private final AtomicInteger blockCounter = new AtomicInteger();
   private File callbackDir;
 
   @Override
   public void register(final BesuContext context) {
-    LOG.info("Registering BadCliOptionsPlugin");
+    this.context = context;
+    LOG.info("Registered");
     callbackDir = new File(System.getProperty("besu.plugins.dir", "plugins"));
-    writeStatus("init");
-
-    if (System.getProperty("TEST_BAD_CLI", "false").equals("true")) {
-      context
-          .getService(PicoCLIOptions.class)
-          .ifPresent(
-              picoCLIOptions ->
-                  picoCLIOptions.addPicoCLIOptions("bad-cli", BadCLIOptionsPlugin.this));
-    }
-
-    writeStatus("register");
   }
 
   @Override
   public void start() {
-    LOG.info("Starting BadCliOptionsPlugin");
-    writeStatus("start");
+    subscriptionId =
+        context
+            .getService(BesuEvents.class)
+            .map(events -> events.addBlockPropagatedListener(this::onBlockAnnounce));
+    LOG.info("Listening with ID#" + subscriptionId);
   }
 
   @Override
   public void stop() {
-    LOG.info("Stopping BadCliOptionsPlugin");
-    writeStatus("stop");
+    subscriptionId.ifPresent(
+        id ->
+            context
+                .getService(BesuEvents.class)
+                .ifPresent(besuEvents -> besuEvents.removeBlockPropagatedListener(id)));
+    LOG.info("No longer listening with ID#" + subscriptionId);
   }
 
-  @SuppressWarnings("ResultOfMethodCallIgnored")
-  private void writeStatus(final String status) {
+  private void onBlockAnnounce(final PropagatedBlockContext propagatedBlockContext) {
+    final BlockHeader header = propagatedBlockContext.getBlockHeader();
+    final int blockCount = blockCounter.incrementAndGet();
+    LOG.info("I got a new block! (I've seen {}) - {}", blockCount, header);
     try {
-      final File callbackFile = new File(callbackDir, "badCLIOptions." + status);
+      final File callbackFile = new File(callbackDir, "newBlock." + blockCount);
       if (!callbackFile.getParentFile().exists()) {
         callbackFile.getParentFile().mkdirs();
         callbackFile.getParentFile().deleteOnExit();
       }
-      Files.write(callbackFile.toPath(), status.getBytes(UTF_8));
+      Files.write(callbackFile.toPath(), Collections.singletonList(header.toString()));
       callbackFile.deleteOnExit();
-      LOG.info("Write status " + status);
     } catch (final IOException ioe) {
       throw new RuntimeException(ioe);
     }

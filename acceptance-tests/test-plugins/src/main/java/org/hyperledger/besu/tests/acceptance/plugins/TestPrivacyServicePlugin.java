@@ -12,15 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugins;
+package org.hyperledger.besu.tests.acceptance.plugins;
 
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
-import org.hyperledger.besu.plugins.privacy.TestPrivacyGroupGenesisProvider;
-import org.hyperledger.besu.plugins.privacy.TestPrivacyPluginPayloadProvider;
-import org.hyperledger.besu.plugins.privacy.TestSigningPrivateMarkerTransactionFactory;
+import org.hyperledger.besu.tests.acceptance.plugins.privacy.TestPrivacyGroupGenesisProvider;
+import org.hyperledger.besu.tests.acceptance.plugins.privacy.TestPrivacyPluginPayloadProvider;
+import org.hyperledger.besu.tests.acceptance.plugins.privacy.TestSigningPrivateMarkerTransactionFactory;
 
 import com.google.auto.service.AutoService;
 import org.apache.logging.log4j.LogManager;
@@ -43,16 +43,19 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
   public void register(final BesuContext context) {
     this.context = context;
 
-    context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("privacy-service", this);
-    pluginService = context.getService(PrivacyPluginService.class).get();
+    context
+        .getService(PicoCLIOptions.class)
+        .orElseThrow()
+        .addPicoCLIOptions("privacy-service", this);
+    pluginService = context.getService(PrivacyPluginService.class).orElseThrow();
     pluginService.setPrivacyGroupGenesisProvider(privacyGroupGenesisProvider);
 
     LOG.info("Registering Plugins with options " + this);
   }
 
   @Override
-  public void start() {
-    LOG.info("Start Plugins with options " + this);
+  public void beforeExternalServices() {
+    LOG.info("Start Plugins with options {}", this);
 
     TestPrivacyPluginPayloadProvider payloadProvider = new TestPrivacyPluginPayloadProvider();
 
@@ -68,6 +71,9 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
       privateMarkerTransactionFactory.setSigningKeyEnbaled(signingKey);
     }
   }
+
+  @Override
+  public void start() {}
 
   @Override
   public void stop() {}
