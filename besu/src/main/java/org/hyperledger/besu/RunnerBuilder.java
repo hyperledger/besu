@@ -22,6 +22,7 @@ import static org.hyperledger.besu.controller.BesuController.CACHE_PATH;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -386,7 +387,7 @@ public class RunnerBuilder {
     if (discovery) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.getBootNodes() == null) {
-        bootstrap = DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
+        bootstrap = EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET).getBootNodes();
       } else {
         bootstrap = ethNetworkConfig.getBootNodes();
       }
