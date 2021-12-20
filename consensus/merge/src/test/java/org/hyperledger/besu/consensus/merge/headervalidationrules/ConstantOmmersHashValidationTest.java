@@ -16,13 +16,20 @@
 package org.hyperledger.besu.consensus.merge.headervalidationrules;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 
+import java.util.Optional;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -32,6 +39,16 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ConstantOmmersHashValidationTest {
 
   @Mock private ProtocolContext protocolContext;
+  @Mock private MutableBlockchain blockchain;
+  @Mock private MergeContext mergeContext;
+
+  @Before
+  public void setUp() {
+    when(blockchain.getTotalDifficultyByHash(any())).thenReturn(Optional.of(Difficulty.ONE));
+    when(protocolContext.getBlockchain()).thenReturn(blockchain);
+    when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.ONE);
+    when(protocolContext.getConsensusContext(MergeContext.class)).thenReturn(mergeContext);
+  }
 
   @Test
   public void checksAndConfirmsOmmerHashValue() {

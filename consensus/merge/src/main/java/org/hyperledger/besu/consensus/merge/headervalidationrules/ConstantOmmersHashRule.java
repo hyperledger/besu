@@ -15,20 +15,42 @@
 
 package org.hyperledger.besu.consensus.merge.headervalidationrules;
 
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
+
+import java.util.Optional;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ConstantOmmersHashRule implements AttachedBlockHeaderValidationRule {
 
   private static final Hash mergeConstant =
       Hash.fromHexString("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347");
 
+  private static final Logger LOG = LogManager.getLogger(ConstantOmmersHashRule.class);
+
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
-    return header.getOmmersHash().equals(mergeConstant);
+    Optional<Difficulty> totalDifficulty =
+        protocolContext.getBlockchain().getTotalDifficultyByHash(header.getParentHash());
+    if (totalDifficulty.isEmpty()) {
+      LOG.warn("unable to get total difficulty, parent {} not found", header.getParentHash());
+      return false;
+    }
+    if (totalDifficulty
+        .get()
+        .greaterOrEqualThan(
+            protocolContext.getConsensusContext(MergeContext.class).getTerminalTotalDifficulty())) {
+      return header.getOmmersHash().equals(mergeConstant);
+    } else {
+      return true;
+    }
   }
 
   @Override
