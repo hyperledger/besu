@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.util.number.PositiveNumber;
+
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
@@ -21,7 +23,6 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.util.number.PositiveNumber;
 
 public class JsonBftConfigOptions implements BftConfigOptions {
 
