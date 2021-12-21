@@ -128,7 +128,6 @@ public class EngineExecutePayloadTest {
 
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any())).thenReturn(Optional.of(mockHash));
-    when(mergeCoordinator.executeBlock(any())).thenReturn(Boolean.FALSE);
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
