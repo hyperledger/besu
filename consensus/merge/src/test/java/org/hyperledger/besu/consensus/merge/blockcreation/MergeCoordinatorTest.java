@@ -12,97 +12,158 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
-import org.assertj.core.internal.Diff;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.BlockValidator;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.mockito.Mockito.mock;
+
+import org.hyperledger.besu.config.experimental.MergeOptions;
+import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardsSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.junit.Before;
-import org.junit.Test;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.Collections;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.apache.tuweni.bytes.Bytes32;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
-public class MergeCoordinatorTest {
+@RunWith(MockitoJUnitRunner.class)
+public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
-    private MergeCoordinator mc;
-    private final ProtocolContext protocolContext = mock(ProtocolContext.class);
-    private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
-    private final AbstractPendingTransactionsSorter transactionsSorter = mock(AbstractPendingTransactionsSorter.class);
-    private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
-    private final MiningParameters miningParameters = mock(MiningParameters.class);
-    private final BackwardsSyncContext backSync = mock(BackwardsSyncContext.class);
-    //private final BlockValidator blockValidator = mock(BlockValidator.class);
-    private MutableBlockchain blockchain;
-    private final Hash TERMINAL_BLOCK_HASH = Hash.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000000");
-    private final long TERMINAL_BLOCK_NUMBER = 14000000L;
+  @Mock AbstractPendingTransactionsSorter mockSorter;
 
-    @Before
-    public void setUp() {
+  private MergeCoordinator coordinator;
 
-        BlockchainSetupUtil chainUtil = BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
-        this.blockchain = chainUtil.getBlockchain();
-        Block genesisBlock = chainUtil.getGenesisState().getBlock();
+  private final MergeContext mergeContext = PostMergeContext.get();
+  private final ProtocolSchedule mockProtocolSchedule = getMergeProtocolSchedule();
+  private final GenesisState genesisState =
+      GenesisState.fromConfig(getGenesisConfigFile(), mockProtocolSchedule);
 
-        this.blockchain.appendBlock(genesisBlock, Collections.emptyList());
-        when(protocolContext.getBlockchain()).thenReturn(blockchain);
-        BadBlockManager bbm = mock(BadBlockManager.class);
-        when(protocolSpec.getBadBlocksManager()).thenReturn(bbm);
-        when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
+  private final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+  private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
 
-        this.mc = new MergeCoordinator(protocolContext,protocolSchedule,transactionsSorter,miningParameters,backSync);
-        BlockHeader terminalBlockHeader = mock(BlockHeader.class);
-        when(terminalBlockHeader.getHash()).thenReturn(TERMINAL_BLOCK_HASH);
-        when(terminalBlockHeader.getNumber()).thenReturn(TERMINAL_BLOCK_NUMBER);
-        when(terminalBlockHeader.getParentHash()).thenReturn(blockchain.getChainHeadHash());
-        when(terminalBlockHeader.getDifficulty()).thenReturn(Difficulty.MAX_VALUE);
-        Block terminalBlock = new Block(terminalBlockHeader, BlockBody.empty());
-        //terminal block needs a parent leading back to genesis
-        this.blockchain.appendBlock(terminalBlock, Collections.emptyList());
-        //when(blockchain.getBlockHeader(TERMINAL_BLOCK_HASH)).thenReturn(Optional.of(terminalBlockHeader));
+  private final ProtocolContext protocolContext =
+      new ProtocolContext(blockchain, worldStateArchive, mergeContext);
 
+  private final Address suggestedFeeRecipient = Address.ZERO;
+  private final Address coinbase = genesisAllocations().findFirst().get();
+  private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
+  private final BaseFeeMarket feeMarket =
+      new LondonFeeMarket(0, genesisState.getBlock().getHeader().getBaseFee());
 
-    }
+  @Before
+  public void setUp() {
+    var mutable = worldStateArchive.getMutable();
+    genesisState.writeStateTo(mutable);
+    mutable.persist(null);
 
-    @Test
-    public void latestValidAncestorDescendsFromTerminal() {
-        BlockHeader parentHeader = mock(BlockHeader.class);
-        when(parentHeader.getParentHash()).thenReturn(TERMINAL_BLOCK_HASH);
-        when(parentHeader.getBlockHash()).thenReturn(Hash.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001"));
-        when(parentHeader.getNumber()).thenReturn(TERMINAL_BLOCK_NUMBER+1);
-        when(parentHeader.getDifficulty()).thenReturn(Difficulty.ZERO);
-        Block parent = new Block(parentHeader, BlockBody.empty());
-        this.blockchain.appendBlock(parent, Collections.emptyList());
-        //when(blockchain.getBlockHeader(Hash.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001"))).thenReturn(Optional.of(parentHeader));
+    MergeOptions.setMergeEnabled(true);
+    this.coordinator =
+        new MergeCoordinator(
+            protocolContext,
+            mockProtocolSchedule,
+            mockSorter,
+            new MiningParameters.Builder().coinbase(coinbase).build(),
+            mock(BackwardsSyncContext.class));
+  }
 
-        BlockHeader childHeader = mock(BlockHeader.class);
-        when(childHeader.getParentHash()).thenReturn(Hash.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001"));
-        when(childHeader.getBlockHash()).thenReturn(Hash.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000002"));
-        when(childHeader.getNumber()).thenReturn(TERMINAL_BLOCK_NUMBER+2);
-        when(childHeader.getDifficulty()).thenReturn(Difficulty.ZERO);
-        Block child = new Block(childHeader, BlockBody.empty());
-        //when(blockchain.getBlockHeader(Hash.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000002"))).thenReturn(Optional.of(childHeader));
-        this.blockchain.appendBlock(child, Collections.emptyList());
-        assertThat(this.mc.latestValidAncestorDescendsFromTerminal(child)).isTrue();
-    }
+  @Test
+  public void coinbaseShouldMatchSuggestedFeeRecipient() {
+    var payloadId =
+        coordinator.preparePayload(
+            genesisState.getBlock().getHeader(),
+            System.currentTimeMillis() / 1000,
+            Bytes32.ZERO,
+            suggestedFeeRecipient);
+
+    var mockBlock = mergeContext.retrieveBlockById(payloadId);
+    assertThat(mockBlock).isPresent();
+    Block proposed = mockBlock.get();
+    assertThat(proposed.getHeader().getCoinbase()).isEqualTo(suggestedFeeRecipient);
+  }
+
+  @Test
+  public void latestValidAncestorDescendsFromTerminal() {
+    // coordinator.executeBlock(genesisState.getBlock());
+    BlockHeader terminalHeader = terminalPowBlock();
+    coordinator.executeBlock(new Block(terminalHeader, BlockBody.empty()));
+
+    BlockHeader parentHeader =
+        headerGenerator
+            .difficulty(Difficulty.ZERO)
+            .parentHash(terminalHeader.getHash())
+            .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
+            .number(terminalHeader.getNumber() + 1)
+            .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
+            .baseFeePerGas(
+                feeMarket.computeBaseFee(
+                    genesisState.getBlock().getHeader().getNumber() + 1,
+                    terminalHeader.getBaseFee().orElse(Wei.of(0x3b9aca00)),
+                    0,
+                    15000000l))
+            .buildHeader();
+
+    Block parent = new Block(parentHeader, BlockBody.empty());
+    coordinator.executeBlock(parent);
+
+    BlockHeader childHeader =
+        headerGenerator
+            .difficulty(Difficulty.ZERO)
+            .parentHash(parentHeader.getHash())
+            .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
+            .number(parentHeader.getNumber() + 1)
+            .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
+            .baseFeePerGas(
+                feeMarket.computeBaseFee(
+                    genesisState.getBlock().getHeader().getNumber() + 1,
+                    parentHeader.getBaseFee().orElse(Wei.of(0x3b9aca00)),
+                    0,
+                    15000000l))
+            .buildHeader();
+    Block child = new Block(childHeader, BlockBody.empty());
+    coordinator.executeBlock(child);
+    assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child)).isTrue();
+  }
+
+  private BlockHeader terminalPowBlock() {
+
+    BlockHeader terminal =
+        headerGenerator
+            .difficulty(Difficulty.MAX_VALUE)
+            .parentHash(genesisState.getBlock().getHash())
+            .number(genesisState.getBlock().getHeader().getNumber() + 1)
+            .baseFeePerGas(
+                feeMarket.computeBaseFee(
+                    genesisState.getBlock().getHeader().getNumber() + 1,
+                    genesisState.getBlock().getHeader().getBaseFee().orElse(Wei.of(0x3b9aca00)),
+                    0,
+                    15000000l))
+            .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
+            .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
+            .buildHeader();
+    mergeContext.setTerminalPoWBlock(Optional.of(terminal));
+    return terminal;
+  }
 }

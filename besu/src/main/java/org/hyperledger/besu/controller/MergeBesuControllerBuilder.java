@@ -18,11 +18,16 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardsSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -30,6 +35,8 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
@@ -71,6 +78,9 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
 
+    OptionalLong terminalBlockNumber = genesisConfig.getConfigOptions().getTerminalBlockNumber();
+    Optional<Hash> terminalBlockHash = genesisConfig.getConfigOptions().getTerminalBlockHash();
+
     final MergeContext mergeContext =
         PostMergeContext.get()
             .setSyncState(syncState.get())
@@ -80,6 +90,26 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
                     .getTerminalTotalDifficulty()
                     .map(Difficulty::of)
                     .orElse(Difficulty.ZERO));
+
+    if (terminalBlockNumber.isPresent() && terminalBlockHash.isPresent()) {
+      BlockHeader termBlock =
+          BlockHeaderBuilder.create()
+              .number(terminalBlockNumber.getAsLong())
+              .blockHeaderFunctions(
+                  new BlockHeaderFunctions() {
+                    @Override
+                    public Hash hash(final BlockHeader header) {
+                      return terminalBlockHash.get();
+                    }
+
+                    @Override
+                    public ParsedExtraData parseExtraData(final BlockHeader header) {
+                      return null;
+                    }
+                  })
+              .buildBlockHeader();
+      mergeContext.setTerminalPoWBlock(Optional.of(termBlock));
+    }
     blockchain.observeBlockAdded(
         blockAddedEvent ->
             blockchain
