@@ -58,6 +58,8 @@ dependencies {
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-unit'
   implementation 'io.vertx:vertx-web'
+  implementation 'io.vertx:vertx-codegen'
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'org.apache.logging.log4j:log4j-core'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-net'
@@ -83,12 +85,13 @@ dependencies {
   testResourceGeneration project(':besu')
 
   testImplementation 'com.squareup.okhttp3:okhttp'
-  testImplementation 'io.vertx:vertx-codegen'
+
   testImplementation 'io.vertx:vertx-unit'
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
-
+  testImplementation 'io.vertx:vertx-web-client'
+  testImplementation 'io.vertx:vertx-auth-jwt'
   testSupportImplementation 'org.bouncycastle:bcpkix-jdk15on'
 
   integrationTestImplementation project(':config')
@@ -100,6 +103,7 @@ dependencies {
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-core'
+  integrationTestImplementation 'org.testcontainers:testcontainers'
 }
 
 artifacts {
