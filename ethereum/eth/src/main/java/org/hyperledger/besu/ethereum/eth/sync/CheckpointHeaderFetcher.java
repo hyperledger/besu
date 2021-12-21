@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -40,19 +41,27 @@ public class CheckpointHeaderFetcher {
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   // The checkpoint we're aiming to reach at the end of this sync.
-  private final Optional<BlockHeader> finalCheckpointHeader;
+  private final FastSyncState fastSyncState;
   private final MetricsSystem metricsSystem;
 
   public CheckpointHeaderFetcher(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final Optional<BlockHeader> finalCheckpointHeader,
+      final MetricsSystem metricsSystem) {
+    this(syncConfig, protocolSchedule, ethContext, new FastSyncState(), metricsSystem);
+  }
+
+  public CheckpointHeaderFetcher(
+      final SynchronizerConfiguration syncConfig,
+      final ProtocolSchedule protocolSchedule,
+      final EthContext ethContext,
+      final FastSyncState fastSyncState,
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
-    this.finalCheckpointHeader = finalCheckpointHeader;
+    this.fastSyncState = fastSyncState;
     this.metricsSystem = metricsSystem;
   }
 
@@ -63,6 +72,7 @@ public class CheckpointHeaderFetcher {
     final long previousCheckpointNumber = previousCheckpointHeader.getNumber();
 
     final int additionalHeaderCount;
+    final Optional<BlockHeader> finalCheckpointHeader = fastSyncState.getPivotBlockHeader();
     if (finalCheckpointHeader.isPresent()) {
       final BlockHeader targetHeader = finalCheckpointHeader.get();
       final long blocksUntilTarget = targetHeader.getNumber() - previousCheckpointNumber;
@@ -116,6 +126,7 @@ public class CheckpointHeaderFetcher {
 
   public boolean nextCheckpointEndsAtChainHead(
       final EthPeer peer, final BlockHeader previousCheckpointHeader) {
+    final Optional<BlockHeader> finalCheckpointHeader = fastSyncState.getPivotBlockHeader();
     if (finalCheckpointHeader.isPresent()) {
       return false;
     }
