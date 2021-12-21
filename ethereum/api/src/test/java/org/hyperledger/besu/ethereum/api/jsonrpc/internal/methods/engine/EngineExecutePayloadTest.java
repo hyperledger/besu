@@ -143,6 +143,22 @@ public class EngineExecutePayloadTest {
   }
 
   @Test
+  public void shouldReturnInvalidOnMalformedTransactions() {
+    BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
+    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
+    when(mergeCoordinator.getLatestValidAncestor(any())).thenReturn(Optional.of(mockHash));
+
+    var resp = resp(mockPayload(mockHeader, List.of("0xDEAD", "0xBEEF")));
+
+    EngineExecutionResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).isEqualTo(mockHash.toString());
+    assertThat(res.getStatus()).isEqualTo(INVALID.name());
+
+    assertThat(res.getValidationError())
+        .isEqualTo("Failed to decode transactions from block parameter");
+  }
+
+  @Test
   public void shouldRespondWithSyncingDuringForwardSync() {
     when(mergeContext.isSyncing()).thenReturn(Boolean.TRUE);
     var resp = resp(mock(ExecutionPayloadParameter.class));
@@ -166,7 +182,8 @@ public class EngineExecutePayloadTest {
 
   @Test
   public void shouldRespondWithInvalidTerminalPowBlock() {
-    // TODO: https://github.com/hyperledger/besu/issues/3141
+    // TODO: implement this as part of https://github.com/hyperledger/besu/issues/3141
+    assertThat(mergeContext.getTerminalTotalDifficulty()).isNull();
   }
 
   private JsonRpcResponse resp(final ExecutionPayloadParameter payload) {
