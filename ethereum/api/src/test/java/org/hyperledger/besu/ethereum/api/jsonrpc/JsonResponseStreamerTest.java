@@ -38,8 +38,7 @@ public class JsonResponseStreamerTest {
   public void writeSingleChar() throws IOException {
     HttpServerResponse httpResponse = mock(HttpServerResponse.class);
 
-    JsonRpcHttpService.JsonResponseStreamer streamer =
-        new JsonRpcHttpService.JsonResponseStreamer(httpResponse);
+    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse);
     streamer.write('x');
 
     verify(httpResponse).write(argThat(bufferContains("x")));
@@ -49,8 +48,7 @@ public class JsonResponseStreamerTest {
   public void writeString() throws IOException {
     HttpServerResponse httpResponse = mock(HttpServerResponse.class);
 
-    JsonRpcHttpService.JsonResponseStreamer streamer =
-        new JsonRpcHttpService.JsonResponseStreamer(httpResponse);
+    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse);
     streamer.write("xyz".getBytes(StandardCharsets.UTF_8));
 
     verify(httpResponse).write(argThat(bufferContains("xyz")));
@@ -60,8 +58,7 @@ public class JsonResponseStreamerTest {
   public void writeSubString() throws IOException {
     HttpServerResponse httpResponse = mock(HttpServerResponse.class);
 
-    JsonRpcHttpService.JsonResponseStreamer streamer =
-        new JsonRpcHttpService.JsonResponseStreamer(httpResponse);
+    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse);
     streamer.write("abcxyz".getBytes(StandardCharsets.UTF_8), 1, 3);
 
     verify(httpResponse).write(argThat(bufferContains("bcx")));
@@ -71,8 +68,7 @@ public class JsonResponseStreamerTest {
   public void writeTwice() throws IOException {
     HttpServerResponse httpResponse = mock(HttpServerResponse.class);
 
-    JsonRpcHttpService.JsonResponseStreamer streamer =
-        new JsonRpcHttpService.JsonResponseStreamer(httpResponse);
+    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse);
     streamer.write("xyz".getBytes(StandardCharsets.UTF_8));
     streamer.write('\n');
 
@@ -84,8 +80,7 @@ public class JsonResponseStreamerTest {
   public void writeStringAndClose() throws IOException {
     HttpServerResponse httpResponse = mock(HttpServerResponse.class);
 
-    try (JsonRpcHttpService.JsonResponseStreamer streamer =
-        new JsonRpcHttpService.JsonResponseStreamer(httpResponse)) {
+    try (JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse)) {
       streamer.write("xyz".getBytes(StandardCharsets.UTF_8));
     }
 
@@ -100,8 +95,7 @@ public class JsonResponseStreamerTest {
 
     when(httpResponse.drainHandler(any())).then(this::emptyQueueAfterAWhile);
 
-    try (JsonRpcHttpService.JsonResponseStreamer streamer =
-        new JsonRpcHttpService.JsonResponseStreamer(httpResponse)) {
+    try (JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse)) {
       streamer.write("xyz".getBytes(StandardCharsets.UTF_8));
       streamer.write("123".getBytes(StandardCharsets.UTF_8));
     }

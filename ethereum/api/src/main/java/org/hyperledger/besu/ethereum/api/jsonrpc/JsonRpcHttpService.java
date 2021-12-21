@@ -53,7 +53,6 @@ import org.hyperledger.besu.util.ExceptionUtils;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.file.Path;
@@ -62,7 +61,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
@@ -90,7 +88,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpMethod;
@@ -831,53 +828,6 @@ public class JsonRpcHttpService {
       final StringJoiner stringJoiner = new StringJoiner("|");
       config.getCorsAllowedDomains().stream().filter(s -> !s.isEmpty()).forEach(stringJoiner::add);
       return stringJoiner.toString();
-    }
-  }
-
-  static class JsonResponseStreamer extends OutputStream {
-    private final HttpServerResponse response;
-    private final Semaphore paused = new Semaphore(0);
-    private final byte[] singleByteBuf = new byte[1];
-    private boolean chunked = false;
-
-    public JsonResponseStreamer(final HttpServerResponse response) {
-      this.response = response;
-    }
-
-    @Override
-    public void write(final int b) throws IOException {
-      singleByteBuf[0] = (byte) b;
-      write(singleByteBuf, 0, 1);
-    }
-
-    @Override
-    public void write(final byte[] bbuf, final int off, final int len) throws IOException {
-      if (!chunked) {
-        response.setChunked(true);
-        chunked = true;
-      }
-
-      if (response.writeQueueFull()) {
-        LOG.debug("HttpResponse write queue is full pausing streaming");
-        response.drainHandler(e -> paused.release());
-        try {
-          paused.acquire();
-          LOG.debug("HttpResponse write queue is not accepting more data, resuming streaming");
-        } catch (InterruptedException ex) {
-          Thread.currentThread().interrupt();
-          throw new IOException(
-              "Interrupted while waiting for HttpServerResponse to drain the write queue", ex);
-        }
-      }
-
-      Buffer buf = Buffer.buffer(len);
-      buf.appendBytes(bbuf, off, len);
-      response.write(buf);
-    }
-
-    @Override
-    public void close() throws IOException {
-      response.end();
     }
   }
 }

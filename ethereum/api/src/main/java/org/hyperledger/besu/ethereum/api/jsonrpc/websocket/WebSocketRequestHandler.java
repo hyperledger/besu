@@ -33,11 +33,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcR
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Semaphore;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,9 +47,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.ServerWebSocket;
-import io.vertx.core.http.WebSocketFrame;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -63,7 +59,6 @@ import org.apache.logging.log4j.Logger;
 public class WebSocketRequestHandler {
 
   private static final Logger LOG = LogManager.getLogger();
-  private static final Buffer EMPTY_BUFFER = Buffer.buffer();
   private static final ObjectWriter JSON_OBJECT_WRITER =
       new ObjectMapper()
           .registerModule(new Jdk8Module()) // Handle JDK8 Optionals (de)serialization
@@ -253,61 +248,5 @@ public class WebSocketRequestHandler {
 
   private boolean isNonEmptyResponses(final JsonRpcResponse result) {
     return result.getType() != JsonRpcResponseType.NONE;
-  }
-
-  static class JsonResponseStreamer extends OutputStream {
-    private final ServerWebSocket response;
-    private final Semaphore paused = new Semaphore(0);
-    private final byte[] singleByteBuf = new byte[1];
-    private boolean firstFrame = true;
-    private Buffer buffer = EMPTY_BUFFER;
-
-    public JsonResponseStreamer(final ServerWebSocket response) {
-      this.response = response;
-    }
-
-    @Override
-    public void write(final int b) throws IOException {
-      singleByteBuf[0] = (byte) b;
-      write(singleByteBuf, 0, 1);
-    }
-
-    @Override
-    public void write(final byte[] bbuf, final int off, final int len) throws IOException {
-      if (buffer != EMPTY_BUFFER) {
-        writeFrame(buffer, false);
-      }
-
-      Buffer buf = Buffer.buffer(len);
-      buf.appendBytes(bbuf, off, len);
-      buffer = buf;
-    }
-
-    private void writeFrame(final Buffer buf, final boolean isFinal) throws IOException {
-      if (response.writeQueueFull()) {
-        LOG.debug("WebSocketResponse write queue is full pausing streaming");
-        response.drainHandler(e -> paused.release());
-        try {
-          paused.acquire();
-          LOG.debug("WebSocketResponse write queue is not accepting more data, resuming streaming");
-        } catch (InterruptedException ex) {
-          Thread.currentThread().interrupt();
-          throw new IOException(
-              "Interrupted while waiting for HttpServerResponse to drain the write queue", ex);
-        }
-      }
-
-      if (firstFrame) {
-        response.writeFrame(WebSocketFrame.textFrame(buf.toString(), isFinal));
-        firstFrame = false;
-      } else {
-        response.writeFrame(WebSocketFrame.continuationFrame(buf, isFinal));
-      }
-    }
-
-    @Override
-    public void close() throws IOException {
-      writeFrame(buffer, true);
-    }
   }
 }

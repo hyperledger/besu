@@ -4,11 +4,10 @@
 
 ### Additions and Improvements
 - Re-order external services (e.g JsonRpcHttpService) to start before blocks start processing [#3118](https://github.com/hyperledger/besu/pull/3118)
+- Stream JSON RPC responses to avoid creating big JSON string in memory [#3076] (https://github.com/hyperledger/besu/pull/3076)
 
 ### Bug Fixes
-- Update log4j to 2.16.0.
 - Make 'to' field optional in eth_call method according to the spec [#3177] (https://github.com/hyperledger/besu/pull/3177)
-- Update log4j to 2.17.0.
 
 ## 21.10.5
 
@@ -18,7 +17,7 @@
 ### Download Links
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.tar.gz \ SHA256 0d1b6ed8f3e1325ad0d4acabad63c192385e6dcbefe40dc6b647e8ad106445a8
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.zip SHA256 \ a1689a8a65c4c6f633b686983a6a1653e7ac86e742ad2ec6351176482d6e0c57
- 
+
 ## 22.1.0-RC1
 
 ### 22.1.0-RC1 Breaking Changes

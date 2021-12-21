@@ -38,8 +38,7 @@ public class JsonResponseStreamerTest {
   public void writeSingleChar() throws IOException {
     final ServerWebSocket response = mock(ServerWebSocket.class);
 
-    try (WebSocketRequestHandler.JsonResponseStreamer streamer =
-        new WebSocketRequestHandler.JsonResponseStreamer(response)) {
+    try (JsonResponseStreamer streamer = new JsonResponseStreamer(response)) {
       streamer.write('x');
     }
 
@@ -50,8 +49,7 @@ public class JsonResponseStreamerTest {
   public void writeString() throws IOException {
     final ServerWebSocket response = mock(ServerWebSocket.class);
 
-    try (WebSocketRequestHandler.JsonResponseStreamer streamer =
-        new WebSocketRequestHandler.JsonResponseStreamer(response)) {
+    try (JsonResponseStreamer streamer = new JsonResponseStreamer(response)) {
       streamer.write("xyz".getBytes(StandardCharsets.UTF_8), 0, 3);
     }
 
@@ -62,8 +60,7 @@ public class JsonResponseStreamerTest {
   public void writeSubString() throws IOException {
     final ServerWebSocket response = mock(ServerWebSocket.class);
 
-    try (WebSocketRequestHandler.JsonResponseStreamer streamer =
-        new WebSocketRequestHandler.JsonResponseStreamer(response)) {
+    try (JsonResponseStreamer streamer = new JsonResponseStreamer(response)) {
       streamer.write("abcxyz".getBytes(StandardCharsets.UTF_8), 1, 3);
     }
 
@@ -74,8 +71,7 @@ public class JsonResponseStreamerTest {
   public void writeTwice() throws IOException {
     final ServerWebSocket response = mock(ServerWebSocket.class);
 
-    try (WebSocketRequestHandler.JsonResponseStreamer streamer =
-        new WebSocketRequestHandler.JsonResponseStreamer(response)) {
+    try (JsonResponseStreamer streamer = new JsonResponseStreamer(response)) {
       streamer.write("xyz".getBytes(StandardCharsets.UTF_8));
       streamer.write('\n');
     }
@@ -92,8 +88,7 @@ public class JsonResponseStreamerTest {
 
     when(response.drainHandler(any())).then(this::emptyQueueAfterAWhile);
 
-    try (WebSocketRequestHandler.JsonResponseStreamer streamer =
-        new WebSocketRequestHandler.JsonResponseStreamer(response)) {
+    try (JsonResponseStreamer streamer = new JsonResponseStreamer(response)) {
       streamer.write("xyz".getBytes(StandardCharsets.UTF_8));
       streamer.write("123".getBytes(StandardCharsets.UTF_8));
     }
