@@ -174,25 +174,16 @@ public class WebSocketRequestHandler {
                   }
 
                   final JsonObject req = (JsonObject) obj;
-                  final Future<JsonRpcResponse> fut = Future.future();
-                  vertx.executeBlocking(
+                  return vertx.<JsonRpcResponse>executeBlocking(
                       future ->
                           future.complete(
-                              process(authenticationService, id, user, getRequest(req.toString()))),
-                      false,
-                      ar -> {
-                        if (ar.failed()) {
-                          fut.fail(ar.cause());
-                        } else {
-                          fut.complete((JsonRpcResponse) ar.result());
-                        }
-                      });
-                  return fut;
+                              process(
+                                  authenticationService, id, user, getRequest(req.toString()))));
                 })
             .collect(toList());
 
     CompositeFuture.all(responses)
-        .setHandler(
+        .onComplete(
             (res) -> {
               final JsonRpcResponse[] completed =
                   res.result().list().stream()

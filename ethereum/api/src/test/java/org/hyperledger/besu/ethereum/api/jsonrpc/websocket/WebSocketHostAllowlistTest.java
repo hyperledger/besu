@@ -37,7 +37,7 @@ import java.util.Optional;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -179,7 +179,7 @@ public class WebSocketHostAllowlistTest {
   public void httpRequestWithMalformedHostIsRejected(final TestContext context) {
     webSocketConfiguration.setAuthenticationEnabled(false);
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
-    doHttpRequestAndVerify(context, "ally:friend", 403);
+    doHttpRequestAndVerify(context, "ally:friend", 400);
     doHttpRequestAndVerify(context, "ally:123456", 403);
     doHttpRequestAndVerify(context, "ally:friend:1234", 403);
   }
@@ -188,19 +188,22 @@ public class WebSocketHostAllowlistTest {
       final TestContext context, final String hostname, final int expectedResponse) {
     final Async async = context.async();
 
-    final HttpClientRequest request =
-        httpClient.post(
-            websocketPort,
-            webSocketConfiguration.getHost(),
-            "/",
-            response -> {
-              assertThat(response.statusCode()).isEqualTo(expectedResponse);
-              async.complete();
-            });
-
-    request.putHeader("Host", hostname);
-    request.end();
-
+    httpClient.request(
+        HttpMethod.POST,
+        websocketPort,
+        webSocketConfiguration.getHost(),
+        "/",
+        request -> {
+          request.result().putHeader("Host", hostname);
+          request.result().end();
+          request
+              .result()
+              .send(
+                  response -> {
+                    assertThat(response.result().statusCode()).isEqualTo(expectedResponse);
+                    async.complete();
+                  });
+        });
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
 }

@@ -41,7 +41,7 @@ import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.jwt.impl.JWTUser;
+import io.vertx.ext.auth.impl.UserImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,8 +54,8 @@ public class PrivGetPrivateTransactionTest {
   @Mock private PrivacyController privacyController;
 
   private final User user =
-      new JWTUser(
-          new JsonObject().put("privacyPublicKey", VALID_BASE64_ENCLAVE_KEY.toBase64String()), "");
+      new UserImpl(
+          new JsonObject().put("privacyPublicKey", VALID_BASE64_ENCLAVE_KEY.toBase64String()));
   private final PrivacyIdProvider privacyIdProvider =
       (user) -> VALID_BASE64_ENCLAVE_KEY.toBase64String();
 
