@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.util.number.PositiveNumber;
+
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
@@ -290,5 +292,21 @@ public class JsonUtil {
       throw new IllegalArgumentException("Cannot convert value to integer: " + node.toString());
     }
     return true;
+  }
+
+  public static int getPositiveNumber(
+      final ObjectNode node, final String key, final int defaultValue) {
+    final String valueRaw = JsonUtil.getValueAsString(node, key, String.valueOf(defaultValue));
+    try {
+      return PositiveNumber.fromString(valueRaw).getValue();
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+          "Invalid property value in "
+              + node.toString()
+              + ", "
+              + key
+              + " should be a positive integer: "
+              + valueRaw);
+    }
   }
 }

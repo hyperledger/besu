@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.config;
 
-import org.hyperledger.besu.util.number.PositiveNumber;
-
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
@@ -53,16 +51,8 @@ public class JsonBftConfigOptions implements BftConfigOptions {
 
   @Override
   public int getBlockPeriodSeconds() {
-    final String blockPeriodSecondsRaw =
-        JsonUtil.getValueAsString(
-            bftConfigRoot, "blockperiodseconds", String.valueOf(DEFAULT_BLOCK_PERIOD_SECONDS));
-    try {
-      return PositiveNumber.fromString(blockPeriodSecondsRaw).getValue();
-    } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException(
-          "Invalid genesis config property, blockperiodseconds should be a positive integer: "
-              + blockPeriodSecondsRaw);
-    }
+    return JsonUtil.getPositiveNumber(
+        bftConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
   }
 
   @Override
