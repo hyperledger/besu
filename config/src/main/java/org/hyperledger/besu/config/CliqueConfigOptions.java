@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.util.number.PositiveNumber;
+
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -38,7 +40,16 @@ public class CliqueConfigOptions {
   }
 
   public int getBlockPeriodSeconds() {
-    return JsonUtil.getInt(cliqueConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
+    final String blockPeriodSecondsRaw =
+        JsonUtil.getValueAsString(
+            cliqueConfigRoot, "blockperiodseconds", String.valueOf(DEFAULT_BLOCK_PERIOD_SECONDS));
+    try {
+      return PositiveNumber.fromString(blockPeriodSecondsRaw).getValue();
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+          "Invalid genesis config property, blockperiodseconds should be a positive integer: "
+              + blockPeriodSecondsRaw);
+    }
   }
 
   Map<String, Object> asMap() {

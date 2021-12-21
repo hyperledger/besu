@@ -17,6 +17,7 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Map;
 
@@ -62,6 +63,20 @@ public class CliqueConfigOptionsTest {
   public void shouldGetDefaultBlockPeriodFromDefaultConfig() {
     assertThat(CliqueConfigOptions.DEFAULT.getBlockPeriodSeconds())
         .isEqualTo(EXPECTED_DEFAULT_BLOCK_PERIOD);
+  }
+
+  @Test
+  public void shouldThrowOnDecimalBlockPeriod() {
+    final CliqueConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", 1.5));
+    assertThatThrownBy(() -> config.getBlockPeriodSeconds())
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  public void shouldThrowOnNonPositiveBlockPeriod() {
+    final CliqueConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", -1));
+    assertThatThrownBy(() -> config.getBlockPeriodSeconds())
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   private CliqueConfigOptions fromConfigOptions(final Map<String, Object> cliqueConfigOptions) {
