@@ -301,12 +301,7 @@ public class JsonUtil {
       return PositiveNumber.fromString(valueRaw).getValue();
     } catch (IllegalArgumentException e) {
       throw new IllegalArgumentException(
-          "Invalid property value in "
-              + node.toString()
-              + ", "
-              + key
-              + " should be a positive integer: "
-              + valueRaw);
+          "Invalid property value, " + key + " should be a positive integer: " + valueRaw);
     }
   }
 }
