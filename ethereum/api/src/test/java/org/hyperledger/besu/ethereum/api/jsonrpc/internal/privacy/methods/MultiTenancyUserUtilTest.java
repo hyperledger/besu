@@ -22,7 +22,7 @@ import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.jwt.impl.JWTUser;
+import io.vertx.ext.auth.impl.UserImpl;
 import org.junit.Test;
 
 public class MultiTenancyUserUtilTest {
@@ -35,7 +35,7 @@ public class MultiTenancyUserUtilTest {
   @Test
   public void noEnclavePublicKeyWhenUserWithoutEnclavePublicKeyClaimProvided() {
     final JsonObject token = new JsonObject();
-    final Optional<User> user = Optional.of(new JWTUser(token, ""));
+    final Optional<User> user = Optional.of(new UserImpl(token));
 
     assertThat(privacyUserId(user)).isEmpty();
   }
@@ -44,7 +44,7 @@ public class MultiTenancyUserUtilTest {
   public void enclavePublicKeyKeyReturnedForUserWithEnclavePublicKeyClaim() {
     final JsonObject principle = new JsonObject();
     principle.put("privacyPublicKey", "ABC123");
-    final Optional<User> user = Optional.of(new JWTUser(principle, ""));
+    final Optional<User> user = Optional.of(new UserImpl(principle));
 
     assertThat(privacyUserId(user)).contains("ABC123");
   }

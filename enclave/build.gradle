@@ -5,6 +5,7 @@ dependencies {
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
+  implementation 'io.vertx:vertx-web'
   implementation 'org.apache.tuweni:tuweni-net'
   implementation 'org.apache.logging.log4j:log4j-api'
 
@@ -21,8 +22,8 @@ dependencies {
   integrationTestImplementation 'org.bouncycastle:bcpkix-jdk15on'
   integrationTestImplementation 'org.awaitility:awaitility'
   integrationTestImplementation 'org.mockito:mockito-core'
+  integrationTestImplementation 'org.testcontainers:testcontainers'
 
   integrationTestImplementation 'junit:junit'
-  integrationTestImplementation 'net.consensys:orion'
   integrationTestImplementation 'org.assertj:assertj-core'
 }
