@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.json.EncodeException;
 import io.vertx.core.json.Json;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -84,14 +83,14 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
     // we already have this payload
     if (protocolContext.getBlockchain().getBlockByHash(blockParam.getBlockHash()).isPresent()) {
       LOG.debug("block already present");
-      return respondWith(reqId, blockParam.getBlockHash(), VALID, null);
+      return respondWith(
+          reqId,
+          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          VALID,
+          null);
     }
 
-    try {
-      LOG.trace("blockparam: " + Json.encodePrettily(blockParam));
-    } catch (EncodeException e) {
-      throw new RuntimeException(e);
-    }
+    LOG.trace("blockparam: {}", () -> Json.encodePrettily(blockParam));
 
     final List<Transaction> transactions;
     try {
@@ -104,7 +103,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
       LOG.warn("failed to decode transactions from newBlock RPC", e);
       return respondWith(
           reqId,
-          blockParam.getBlockHash(),
+          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
           INVALID,
           "Failed to decode transactions from block parameter");
     }
@@ -131,7 +130,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
 
     final var block =
         new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
-    final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(block);
+    final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(block.getHash());
 
     if (latestValidAncestor.isEmpty()) {
       return respondWith(reqId, null, SYNCING, null);
