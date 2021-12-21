@@ -19,7 +19,7 @@ import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
-import org.hyperledger.besu.ethereum.eth.sync.worldstate.NodeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -90,7 +90,7 @@ public class FastSyncDownloader {
             .thenCompose(fastSyncActions::downloadPivotBlockHeader)
             .thenApply(this::updateMaxTrailingPeers)
             .thenApply(this::storeState)
-            .thenCompose(this::downloadChainAndWorldState),
+            .thenCompose(fss -> downloadChainAndWorldState(fastSyncActions, fss)),
         this::handleFailure);
   }
 
@@ -155,7 +155,7 @@ public class FastSyncDownloader {
   }
 
   private CompletableFuture<FastSyncState> downloadChainAndWorldState(
-      final FastSyncState currentState) {
+      final FastSyncActions fastSyncActions, final FastSyncState currentState) {
     // Synchronized ensures that stop isn't called while we're in the process of starting a
     // world state and chain download. If it did we might wind up starting a new download
     // after the stop method had called cancel.
@@ -165,7 +165,7 @@ public class FastSyncDownloader {
             new CancellationException("FastSyncDownloader stopped"));
       }
       final CompletableFuture<Void> worldStateFuture =
-          worldStateDownloader.run(currentState.getPivotBlockHeader().get());
+          worldStateDownloader.run(fastSyncActions, currentState);
       final ChainDownloader chainDownloader = fastSyncActions.createChainDownloader(currentState);
       final CompletableFuture<Void> chainFuture = chainDownloader.start();
 

@@ -38,6 +38,7 @@ dependencies {
   implementation project(':evm')
   implementation project(':util')
 
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'org.apache.tuweni:tuweni-bytes'

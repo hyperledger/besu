@@ -41,7 +41,7 @@ import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.jwt.impl.JWTUser;
+import io.vertx.ext.auth.impl.UserImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -158,7 +158,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
   }
 
   private User createUser(final String enclavePublicKey) {
-    return new JWTUser(new JsonObject().put("privacyPublicKey", enclavePublicKey), "");
+    return new UserImpl(new JsonObject().put("privacyPublicKey", enclavePublicKey)) {};
   }
 
   private static class TestPrivacyApiGroupJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {

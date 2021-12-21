@@ -18,9 +18,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,6 +31,9 @@ import java.util.Arrays;
 
 import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import org.bouncycastle.util.encoders.Base64;
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemReader;
 import org.junit.Test;
 
 public class JWTAuthOptionsFactoryTest {
@@ -51,10 +57,11 @@ public class JWTAuthOptionsFactoryTest {
     final JWTAuthOptions jwtAuthOptions = jwtAuthOptionsFactory.createWithGeneratedKeyPair();
 
     assertThat(jwtAuthOptions.getPubSecKeys()).isNotNull();
-    assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(1);
+    assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(2);
     assertThat(jwtAuthOptions.getPubSecKeys().get(0).getAlgorithm()).isEqualTo("RS256");
-    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getPublicKey()).isNotEmpty();
-    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getSecretKey()).isNotEmpty();
+    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getBuffer()).isNotNull();
+    assertThat(jwtAuthOptions.getPubSecKeys().get(1).getAlgorithm()).isEqualTo("RS256");
+    assertThat(jwtAuthOptions.getPubSecKeys().get(1).getBuffer()).isNotNull();
   }
 
   @Test
@@ -65,12 +72,11 @@ public class JWTAuthOptionsFactoryTest {
 
     final PubSecKeyOptions pubSecKeyOptions1 = jwtAuthOptions1.getPubSecKeys().get(0);
     final PubSecKeyOptions pubSecKeyOptions2 = jwtAuthOptions2.getPubSecKeys().get(0);
-    assertThat(pubSecKeyOptions1.getPublicKey()).isNotEqualTo(pubSecKeyOptions2.getPublicKey());
-    assertThat(pubSecKeyOptions1.getSecretKey()).isNotEqualTo(pubSecKeyOptions2.getSecretKey());
+    assertThat(pubSecKeyOptions1.getBuffer()).isNotEqualTo(pubSecKeyOptions2.getBuffer());
   }
 
   @Test
-  public void createsOptionsUsingPublicKeyFile() throws URISyntaxException {
+  public void createsOptionsUsingPublicKeyFile() throws URISyntaxException, IOException {
     final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
     final File enclavePublicKeyFile =
         Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_rsa").toURI())
@@ -80,10 +86,16 @@ public class JWTAuthOptionsFactoryTest {
     final JWTAuthOptions jwtAuthOptions =
         jwtAuthOptionsFactory.createForExternalPublicKey(enclavePublicKeyFile);
     assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(1);
-    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getAlgorithm()).isEqualTo("RS256");
-    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getSecretKey()).isNull();
-    assertThat(jwtAuthOptions.getPubSecKeys().get(0).getPublicKey())
-        .isEqualTo(JWT_PUBLIC_KEY_RS256);
+    final PubSecKeyOptions pubSecKeyOptions = jwtAuthOptions.getPubSecKeys().get(0);
+    assertThat(pubSecKeyOptions.getAlgorithm()).isEqualTo("RS256");
+    assertThat(pubSecKeyOptions.getSecretKey()).isNull();
+    PemObject publicKey =
+        new PemReader(
+                new InputStreamReader(
+                    new ByteArrayInputStream(pubSecKeyOptions.getBuffer().getBytes()),
+                    StandardCharsets.UTF_8))
+            .readPemObject();
+    assertThat(publicKey.getContent()).containsExactly(Base64.decode(JWT_PUBLIC_KEY_RS256));
   }
 
   @Test
@@ -99,10 +111,16 @@ public class JWTAuthOptionsFactoryTest {
           jwtAuthOptionsFactory.createForExternalPublicKeyWithAlgorithm(
               enclavePublicKeyFile, "ES256");
       assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(1);
-      assertThat(jwtAuthOptions.getPubSecKeys().get(0).getAlgorithm()).isEqualTo("ES256");
-      assertThat(jwtAuthOptions.getPubSecKeys().get(0).getSecretKey()).isNull();
-      assertThat(jwtAuthOptions.getPubSecKeys().get(0).getPublicKey())
-          .isEqualTo(JWT_PUBLIC_KEY_ES256);
+      final PubSecKeyOptions pubSecKeyOptions = jwtAuthOptions.getPubSecKeys().get(0);
+      assertThat(pubSecKeyOptions.getAlgorithm()).isEqualTo("ES256");
+      assertThat(pubSecKeyOptions.getSecretKey()).isNull();
+      PemObject publicKey =
+          new PemReader(
+                  new InputStreamReader(
+                      new ByteArrayInputStream(pubSecKeyOptions.getBuffer().getBytes()),
+                      StandardCharsets.UTF_8))
+              .readPemObject();
+      assertThat(publicKey.getContent()).containsExactly(Base64.decode(JWT_PUBLIC_KEY_ES256));
     } catch (Exception e) {
       fail("Should not have exceptions thrown" + Arrays.toString(e.getStackTrace()));
     }

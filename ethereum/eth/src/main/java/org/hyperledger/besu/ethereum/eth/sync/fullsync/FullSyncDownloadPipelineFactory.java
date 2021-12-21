@@ -34,8 +34,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
-import java.util.Optional;
-
 public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory {
 
   private final SynchronizerConfiguration syncConfig;
@@ -68,8 +66,7 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
     final CheckpointRangeSource checkpointRangeSource =
         new CheckpointRangeSource(
-            new CheckpointHeaderFetcher(
-                syncConfig, protocolSchedule, ethContext, Optional.empty(), metricsSystem),
+            new CheckpointHeaderFetcher(syncConfig, protocolSchedule, ethContext, metricsSystem),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
