@@ -294,7 +294,7 @@ public class JsonUtil {
     return true;
   }
 
-  public static int getPositiveNumber(
+  public static int getPositiveInt(
       final ObjectNode node, final String key, final int defaultValue) {
     final String valueRaw = JsonUtil.getValueAsString(node, key, String.valueOf(defaultValue));
     try {
