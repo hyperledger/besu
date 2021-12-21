@@ -53,8 +53,10 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     UNINITIALIZED,
     REGISTERING,
     REGISTERED,
-    STARTING,
-    STARTED,
+    BEFORE_EXTERNAL_SERVICES_STARTED,
+    BEFORE_EXTERNAL_SERVICES_FINISHED,
+    BEFORE_MAIN_LOOP_STARTED,
+    BEFORE_MAIN_LOOP_FINISHED,
     STOPPING,
     STOPPED
   }
@@ -126,13 +128,43 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     pluginVersions.add(pluginVersion);
   }
 
-  public void startPlugins() {
+  public void beforeExternalServices() {
     checkState(
         state == Lifecycle.REGISTERED,
         "BesuContext should be in state %s but it was in %s",
         Lifecycle.REGISTERED,
         state);
-    state = Lifecycle.STARTING;
+    state = Lifecycle.BEFORE_EXTERNAL_SERVICES_STARTED;
+    final Iterator<BesuPlugin> pluginsIterator = plugins.iterator();
+
+    while (pluginsIterator.hasNext()) {
+      final BesuPlugin plugin = pluginsIterator.next();
+
+      try {
+        plugin.beforeExternalServices();
+        LOG.debug(
+            "beforeExternalServices called on plugin of type {}.", plugin.getClass().getName());
+      } catch (final Exception e) {
+        LOG.error(
+            "Error calling `beforeExternalServices` on plugin of type "
+                + plugin.getClass().getName()
+                + ", stop will not be called.",
+            e);
+        pluginsIterator.remove();
+      }
+    }
+
+    LOG.debug("Plugin startup complete.");
+    state = Lifecycle.BEFORE_EXTERNAL_SERVICES_FINISHED;
+  }
+
+  public void startPlugins() {
+    checkState(
+        state == Lifecycle.BEFORE_EXTERNAL_SERVICES_FINISHED,
+        "BesuContext should be in state %s but it was in %s",
+        Lifecycle.BEFORE_EXTERNAL_SERVICES_FINISHED,
+        state);
+    state = Lifecycle.BEFORE_MAIN_LOOP_STARTED;
     final Iterator<BesuPlugin> pluginsIterator = plugins.iterator();
 
     while (pluginsIterator.hasNext()) {
@@ -152,14 +184,14 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     }
 
     LOG.debug("Plugin startup complete.");
-    state = Lifecycle.STARTED;
+    state = Lifecycle.BEFORE_MAIN_LOOP_FINISHED;
   }
 
   public void stopPlugins() {
     checkState(
-        state == Lifecycle.STARTED,
+        state == Lifecycle.BEFORE_MAIN_LOOP_FINISHED,
         "BesuContext should be in state %s but it was in %s",
-        Lifecycle.STARTED,
+        Lifecycle.BEFORE_MAIN_LOOP_FINISHED,
         state);
     state = Lifecycle.STOPPING;
 

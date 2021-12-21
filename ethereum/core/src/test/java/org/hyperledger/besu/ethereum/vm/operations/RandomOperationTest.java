@@ -28,6 +28,7 @@ import org.hyperledger.besu.evm.operation.RandomOperation;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class RandomOperationTest {
@@ -38,7 +39,7 @@ public class RandomOperationTest {
     MessageFrame messageFrame = mock(MessageFrame.class);
     BlockValues blockHeader = mock(BlockValues.class);
     Bytes32 rand = Bytes32.fromHexString("0xb0b0face");
-    when(blockHeader.getDifficultyBytes()).thenReturn(Bytes.of(0));
+    when(blockHeader.getDifficultyBytes()).thenReturn(UInt256.ZERO);
     when(blockHeader.getMixHashOrRandom()).thenReturn(rand);
     when(messageFrame.getBlockValues()).thenReturn(blockHeader);
     EVM evm = mock(EVM.class);

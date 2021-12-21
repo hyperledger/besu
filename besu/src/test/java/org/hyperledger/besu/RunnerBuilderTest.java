@@ -145,7 +145,7 @@ public final class RunnerBuilderTest {
             .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
-    runner.start();
+    runner.startEthereumMainLoop();
 
     final EnodeURL expectedEodeURL =
         EnodeURLImpl.builder()
@@ -189,7 +189,7 @@ public final class RunnerBuilderTest {
             .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
-    runner.start();
+    runner.startEthereumMainLoop();
     when(besuController.getProtocolSchedule().streamMilestoneBlocks())
         .thenAnswer(__ -> Stream.of(1L, 2L));
     for (int i = 0; i < 2; ++i) {

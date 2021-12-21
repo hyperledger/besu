@@ -16,7 +16,6 @@ package org.hyperledger.besu;
 
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.cli.config.EthNetworkConfig.DEV_NETWORK_ID;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
@@ -231,8 +230,8 @@ public final class RunnerTest {
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
     try {
-
-      runnerAhead.start();
+      runnerAhead.startExternalServices();
+      runnerAhead.startEthereumMainLoop();
       assertThat(pidPath.toFile().exists()).isTrue();
 
       final SynchronizerConfiguration syncConfigBehind =
@@ -269,7 +268,7 @@ public final class RunnerTest {
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
               EthNetworkConfig.jsonConfig(DEV),
-              DEV_NETWORK_ID,
+              DEV.getNetworkId(),
               Collections.singletonList(enode),
               null);
       runnerBehind =
@@ -285,7 +284,8 @@ public final class RunnerTest {
               .forkIdSupplier(() -> controllerBehind.getProtocolManager().getForkIdAsBytesList())
               .build();
 
-      runnerBehind.start();
+      runnerBehind.startExternalServices();
+      runnerBehind.startEthereumMainLoop();
 
       final int behindJsonRpcPort = runnerBehind.getJsonRpcPort().get();
       final Call.Factory client = new OkHttpClient();
