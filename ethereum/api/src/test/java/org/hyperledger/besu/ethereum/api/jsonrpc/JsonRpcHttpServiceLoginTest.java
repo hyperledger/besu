@@ -223,7 +223,7 @@ public class JsonRpcHttpServiceLoginTest {
       assertThat(token).isNotNull();
 
       jwtAuth.authenticate(
-          new JsonObject().put("jwt", token),
+          new JsonObject().put("token", token),
           (r) -> {
             assertThat(r.succeeded()).isTrue();
             final User user = r.result();
@@ -257,7 +257,7 @@ public class JsonRpcHttpServiceLoginTest {
       assertThat(token).isNotNull();
 
       jwtAuth.authenticate(
-          new JsonObject().put("jwt", token),
+          new JsonObject().put("token", token),
           (r) -> {
             assertThat(r.succeeded()).isTrue();
             final User user = r.result();
@@ -388,7 +388,7 @@ public class JsonRpcHttpServiceLoginTest {
       final JsonRpcMethod web3ClientVersion = new Web3ClientVersion("777");
 
       jwtAuth.authenticate(
-          new JsonObject().put("jwt", token),
+          new JsonObject().put("token", token),
           (r) -> {
             assertThat(r.succeeded()).isTrue();
             final User user = r.result();
@@ -448,7 +448,7 @@ public class JsonRpcHttpServiceLoginTest {
 
       // adminuser has *:* permissions so everything should be allowed
       jwtAuth.authenticate(
-          new JsonObject().put("jwt", token),
+          new JsonObject().put("token", token),
           (r) -> {
             assertThat(r.succeeded()).isTrue();
             final User user = r.result();
