@@ -515,6 +515,69 @@ public class JsonUtilTest {
   }
 
   @Test
+  public void getPositiveInt_validValue() {
+    final ObjectNode node = mapper.createObjectNode();
+    final int validValue = 2;
+    final int defaultValue = 1;
+    node.put("test", validValue);
+    final int result = JsonUtil.getPositiveInt(node, "test", defaultValue);
+    assertThat(result).isEqualTo(validValue);
+  }
+
+  @Test
+  public void getPositiveInt_nonExistentKey() {
+    final ObjectNode node = mapper.createObjectNode();
+    final int defaultValue = 1;
+    final int result = JsonUtil.getPositiveInt(node, "test", defaultValue);
+    assertThat(result).isEqualTo(defaultValue);
+  }
+
+  @Test
+  public void getPositiveInt_decimalValue() {
+    final ObjectNode node = mapper.createObjectNode();
+    final float decimalValue = Float.MAX_VALUE;
+    final int defaultValue = 1;
+    node.put("test", decimalValue);
+    assertThatThrownBy(() -> JsonUtil.getPositiveInt(node, "test", defaultValue))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Invalid property value in "
+                + node
+                + ", test should be a positive integer: "
+                + decimalValue);
+  }
+
+  @Test
+  public void getPositiveInt_nonPositiveValue() {
+    final ObjectNode node = mapper.createObjectNode();
+    final int nonPositiveValue = 0;
+    final int defaultValue = 1;
+    node.put("test", nonPositiveValue);
+    assertThatThrownBy(() -> JsonUtil.getPositiveInt(node, "test", defaultValue))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Invalid property value in "
+                + node
+                + ", test should be a positive integer: "
+                + nonPositiveValue);
+  }
+
+  @Test
+  public void getPositiveInt_negativeValue() {
+    final ObjectNode node = mapper.createObjectNode();
+    final int negativeValue = Integer.MIN_VALUE;
+    final int defaultValue = 1;
+    node.put("test", negativeValue);
+    assertThatThrownBy(() -> JsonUtil.getPositiveInt(node, "test", defaultValue))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Invalid property value in "
+                + node
+                + ", test should be a positive integer: "
+                + negativeValue);
+  }
+
+  @Test
   public void objectNodeFromMap() {
     final Map<String, Object> map = new TreeMap<>();
     map.put("a", 1);
