@@ -126,7 +126,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
 
     final var block =
         new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
-    final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(block.getHash());
+    final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(newBlockHeader);
 
     if (latestValidAncestor.isEmpty()) {
       return respondWith(reqId, null, SYNCING, null);
