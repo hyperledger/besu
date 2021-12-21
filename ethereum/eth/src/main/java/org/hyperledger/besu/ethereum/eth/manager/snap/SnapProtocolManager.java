@@ -1,0 +1,154 @@
+/*
+ * Copyright contributors to Hyperledger Besu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.eth.manager.snap;
+
+import org.hyperledger.besu.ethereum.eth.SnapProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import com.google.common.collect.ImmutableList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class SnapProtocolManager implements ProtocolManager {
+  private static final Logger LOG = LogManager.getLogger();
+
+  private final List<PeerValidator> peerValidators;
+  private final List<Capability> supportedCapabilities;
+  private final EthPeers ethPeers;
+  private final EthMessages snapMessages;
+
+  public SnapProtocolManager(
+      final List<PeerValidator> peerValidators,
+      final EthPeers ethPeers,
+      final EthMessages snapMessages,
+      final WorldStateArchive worldStateArchive) {
+    this.peerValidators = peerValidators;
+    this.ethPeers = ethPeers;
+    this.snapMessages = snapMessages;
+    this.supportedCapabilities = calculateCapabilities();
+    new SnapServer(snapMessages, worldStateArchive);
+  }
+
+  private List<Capability> calculateCapabilities() {
+    final ImmutableList.Builder<Capability> capabilities = ImmutableList.builder();
+    capabilities.add(SnapProtocol.SNAP1);
+
+    return capabilities.build();
+  }
+
+  @Override
+  public String getSupportedProtocol() {
+    return SnapProtocol.NAME;
+  }
+
+  @Override
+  public List<Capability> getSupportedCapabilities() {
+    return supportedCapabilities;
+  }
+
+  @Override
+  public void stop() {}
+
+  @Override
+  public void awaitStop() throws InterruptedException {}
+
+  /**
+   * This function is called by the P2P framework when an "SNAP message has been received.
+   *
+   * @param cap The capability under which the message was transmitted.
+   * @param message The message to be decoded.
+   */
+  @Override
+  public void processMessage(final Capability cap, final Message message) {
+    final MessageData messageData = AbstractSnapMessageData.create(message);
+    final int code = messageData.getCode();
+    LOG.trace("Process snap message {}, {}", cap, code);
+    final EthPeer ethPeer = ethPeers.peer(message.getConnection());
+    if (ethPeer == null) {
+      LOG.debug(
+          "Ignoring message received from unknown peer connection: " + message.getConnection());
+      return;
+    }
+    final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
+    if (!ethPeer.validateReceivedMessage(ethMessage, getSupportedProtocol())) {
+      LOG.debug("Unsolicited message received from, disconnecting: {}", ethPeer);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      return;
+    }
+
+    // This will handle responses
+    ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
+
+    // This will handle requests
+    Optional<MessageData> maybeResponseData = Optional.empty();
+    try {
+      final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
+          ethMessage.getData().unwrapMessageData();
+      maybeResponseData =
+          snapMessages
+              .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()))
+              .map(responseData -> responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
+    } catch (final RLPException e) {
+      LOG.debug(
+          "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+    }
+    maybeResponseData.ifPresent(
+        responseData -> {
+          try {
+            ethPeer.send(responseData, getSupportedProtocol());
+          } catch (final PeerConnection.PeerNotConnected __) {
+            // Peer disconnected before we could respond - nothing to do
+          }
+        });
+  }
+
+  @Override
+  public void handleNewConnection(final PeerConnection connection) {
+    ethPeers.registerConnection(connection, peerValidators);
+  }
+
+  @Override
+  public void handleDisconnect(
+      final PeerConnection connection,
+      final DisconnectReason reason,
+      final boolean initiatedByPeer) {
+    ethPeers.registerDisconnect(connection);
+    LOG.debug(
+        "Disconnect - {} - {} - {} - {} peers left",
+        initiatedByPeer ? "Inbound" : "Outbound",
+        reason,
+        connection.getPeerInfo(),
+        ethPeers.peerCount());
+  }
+}

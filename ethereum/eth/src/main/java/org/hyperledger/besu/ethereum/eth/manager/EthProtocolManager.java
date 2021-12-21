@@ -265,14 +265,14 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
 
-    if (!ethPeer.validateReceivedMessage(ethMessage)) {
+    if (!ethPeer.validateReceivedMessage(ethMessage, getSupportedProtocol())) {
       LOG.debug("Unsolicited message received from, disconnecting: {}", ethPeer);
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
 
     // This will handle responses
-    ethPeers.dispatchMessage(ethPeer, ethMessage);
+    ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
 
     // This will handle requests
     Optional<MessageData> maybeResponseData = Optional.empty();
@@ -283,9 +283,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         maybeResponseData =
             ethMessages
                 .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()))
-                .map(
-                    responseData ->
-                        RequestId.wrapMessageData(requestIdAndEthMessage.getKey(), responseData));
+                .map(responseData -> responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
       } else {
         maybeResponseData = ethMessages.dispatch(ethMessage);
       }
@@ -298,7 +296,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     maybeResponseData.ifPresent(
         responseData -> {
           try {
-            ethPeer.send(responseData);
+            ethPeer.send(responseData, getSupportedProtocol());
           } catch (final PeerNotConnected __) {
             // Peer disconnected before we could respond - nothing to do
           }
@@ -328,7 +326,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             latestForkId);
     try {
       LOG.debug("Sending status message to {}.", peer);
-      peer.send(status);
+      peer.send(status, getSupportedProtocol());
       peer.registerStatusSent();
     } catch (final PeerNotConnected peerNotConnected) {
       // Nothing to do.
