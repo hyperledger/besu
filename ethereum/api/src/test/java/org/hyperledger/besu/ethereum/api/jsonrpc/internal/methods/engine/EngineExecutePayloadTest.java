@@ -86,7 +86,9 @@ public class EngineExecutePayloadTest {
 
   @Test
   public void shouldReturnValid() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
+    BlockHeader mockHeader = new BlockHeaderTestFixture()
+        .baseFeePerGas(Wei.ONE)
+        .buildHeader();
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any())).thenReturn(Optional.of(mockHash));
     when(mergeCoordinator.executeBlock(any())).thenReturn(Boolean.TRUE);
@@ -94,7 +96,7 @@ public class EngineExecutePayloadTest {
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EngineExecutionResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEqualTo(mockHash.toString());
+    assertThat(res.getLatestValidHash()).isEqualTo(mockHeader.getHash().toString());
     assertThat(res.getStatus()).isEqualTo(VALID.name());
     assertThat(res.getValidationError()).isNull();
   }
