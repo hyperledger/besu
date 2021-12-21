@@ -104,7 +104,7 @@ public class BackwardSyncStepTest {
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
 
     final CompletableFuture<Void> future = step.executeStep();
-    peer.respondWhile(responder, () -> !future.isDone());
+    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
     future.get();
   }
 
@@ -139,7 +139,7 @@ public class BackwardSyncStepTest {
 
     final CompletableFuture<BlockHeader> future =
         step.requestHeader(lookingForBlock.getHeader().getHash());
-    peer.respondWhile(responder, () -> !future.isDone());
+    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
 
     final BlockHeader blockHeader = future.get();
     assertThat(blockHeader).isEqualTo(lookingForBlock.getHeader());
@@ -154,7 +154,7 @@ public class BackwardSyncStepTest {
 
     final CompletableFuture<BlockHeader> future =
         step.requestHeader(lookingForBlock.getHeader().getHash());
-    peer.respondWhile(responder, () -> !future.isDone());
+    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
 
     assertThatThrownBy(future::get)
         .getCause()
