@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
+import org.hyperledger.besu.consensus.merge.headervalidationrules.ConstantOmmersHashRule;
 import org.hyperledger.besu.consensus.merge.headervalidationrules.MergeUnfinalizedValidationRule;
+import org.hyperledger.besu.consensus.merge.headervalidationrules.NoDifficultyRule;
+import org.hyperledger.besu.consensus.merge.headervalidationrules.NoNonceRule;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
@@ -53,7 +56,10 @@ public class MergeValidationRulesetFactory {
                       () ->
                           new RuntimeException(
                               "Invalid configuration: missing BaseFeeMarket for merge net")))
-          .addRule(new MergeUnfinalizedValidationRule());
+          .addRule(new MergeUnfinalizedValidationRule())
+          .addRule(new ConstantOmmersHashRule())
+          .addRule(new NoNonceRule())
+          .addRule(new NoDifficultyRule());
     }
   }
 }
