@@ -66,13 +66,6 @@ public class CliqueConfigOptionsTest {
   }
 
   @Test
-  public void shouldThrowOnDecimalBlockPeriod() {
-    final CliqueConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", 1.5));
-    assertThatThrownBy(() -> config.getBlockPeriodSeconds())
-        .isInstanceOf(IllegalArgumentException.class);
-  }
-
-  @Test
   public void shouldThrowOnNonPositiveBlockPeriod() {
     final CliqueConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", -1));
     assertThatThrownBy(() -> config.getBlockPeriodSeconds())
