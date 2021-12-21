@@ -24,7 +24,7 @@ sourceSets.main.solidity.srcDirs = ["$projectDir/contracts"]
 
 solidity {
   resolvePackages = false
-  executable = "/usr/local/bin/solc"
+  executable = "/usr/bin/solc"
   version = "0.8.10"
 }
 
