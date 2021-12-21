@@ -82,7 +82,7 @@ public class AuthenticationUtils {
             .get()
             .getJwtAuthProvider()
             .authenticate(
-                new JsonObject().put("jwt", token),
+                new JsonObject().put("token", token),
                 (r) -> {
                   if (r.succeeded()) {
                     final Optional<User> user = Optional.ofNullable(r.result());
@@ -100,7 +100,7 @@ public class AuthenticationUtils {
   }
 
   private static void validateExpiryExists(final Optional<User> user) {
-    if (!user.map(User::principal).map(p -> p.containsKey("exp")).orElse(false)) {
+    if (!user.map(User::attributes).map(a -> a.containsKey("exp")).orElse(false)) {
       throw new IllegalStateException("Invalid JWT doesn't have expiry");
     }
   }

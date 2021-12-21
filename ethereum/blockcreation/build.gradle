@@ -38,4 +38,5 @@ dependencies {
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'com.fasterxml.jackson.core:jackson-databind'
 }
