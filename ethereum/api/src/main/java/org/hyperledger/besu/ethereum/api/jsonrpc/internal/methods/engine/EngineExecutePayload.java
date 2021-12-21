@@ -83,11 +83,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
     // we already have this payload
     if (protocolContext.getBlockchain().getBlockByHash(blockParam.getBlockHash()).isPresent()) {
       LOG.debug("block already present");
-      return respondWith(
-          reqId,
-          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
-          VALID,
-          null);
+      return respondWith(reqId, blockParam.getBlockHash(), VALID, null);
     }
 
     LOG.trace("blockparam: {}", () -> Json.encodePrettily(blockParam));

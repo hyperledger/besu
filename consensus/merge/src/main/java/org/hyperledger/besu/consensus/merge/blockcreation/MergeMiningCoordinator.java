@@ -37,5 +37,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
   Optional<Hash> getLatestValidAncestor(Hash blockhash);
 
+  Optional<Hash> getLatestValidAncestor(BlockHeader blockheader);
+
   boolean isBackwardSyncing();
 }
