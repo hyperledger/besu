@@ -88,7 +88,10 @@ public class EngineExecutePayloadTest {
   public void shouldReturnValid() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
-    when(mergeCoordinator.getLatestValidAncestor(any())).thenReturn(Optional.of(mockHash));
+    when(mergeCoordinator.getLatestValidAncestor(any(Hash.class)))
+        .thenReturn(Optional.of(mockHash));
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.of(mockHash));
     when(mergeCoordinator.executeBlock(any())).thenReturn(Boolean.TRUE);
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
@@ -127,7 +130,10 @@ public class EngineExecutePayloadTest {
             .buildBlockHeader();
 
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
-    when(mergeCoordinator.getLatestValidAncestor(any())).thenReturn(Optional.of(mockHash));
+    when(mergeCoordinator.getLatestValidAncestor(any(Hash.class)))
+        .thenReturn(Optional.of(mockHash));
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.of(mockHash));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -146,7 +152,10 @@ public class EngineExecutePayloadTest {
   public void shouldReturnInvalidOnMalformedTransactions() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
-    when(mergeCoordinator.getLatestValidAncestor(any())).thenReturn(Optional.of(mockHash));
+    when(mergeCoordinator.getLatestValidAncestor(any(Hash.class)))
+        .thenReturn(Optional.of(mockHash));
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.of(mockHash));
 
     var resp = resp(mockPayload(mockHeader, List.of("0xDEAD", "0xBEEF")));
 
@@ -170,7 +179,9 @@ public class EngineExecutePayloadTest {
 
   @Test
   public void shouldRespondWithSyncingDuringBackwardsSync() {
-    when(mergeCoordinator.getLatestValidAncestor(any())).thenReturn(Optional.empty());
+    when(mergeCoordinator.getLatestValidAncestor(any(Hash.class))).thenReturn(Optional.empty());
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.empty());
     BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
