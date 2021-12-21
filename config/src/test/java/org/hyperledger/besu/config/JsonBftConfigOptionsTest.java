@@ -79,6 +79,13 @@ public class JsonBftConfigOptionsTest {
   }
 
   @Test
+  public void shouldThrowOnNonPositiveBlockPeriod() {
+    final BftConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", -1));
+    assertThatThrownBy(() -> config.getBlockPeriodSeconds())
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   public void shouldGetRequestTimeoutFromConfig() {
     final BftConfigOptions config = fromConfigOptions(singletonMap("RequestTimeoutSeconds", 5));
     assertThat(config.getRequestTimeoutSeconds()).isEqualTo(5);
