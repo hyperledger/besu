@@ -12,8 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
-pragma solidity >=0.4.0 <0.6.0;
+pragma solidity >=0.7.0 <0.9.0;
 
 // compile with:
 // solc EventEmitter.sol --bin --abi --optimize --overwrite -o .
@@ -25,7 +24,7 @@ contract EventEmitter {
     address _sender;
     uint _value;
 
-    constructor() public {
+    constructor() {
         owner = msg.sender;
     }
 
