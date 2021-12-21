@@ -42,14 +42,12 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
-import java.util.Optional;
-
 public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory {
   private final SynchronizerConfiguration syncConfig;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
-  private final BlockHeader pivotBlockHeader;
+  private final FastSyncState fastSyncState;
   private final MetricsSystem metricsSystem;
   private final FastSyncValidationPolicy attachedValidationPolicy;
   private final FastSyncValidationPolicy detachedValidationPolicy;
@@ -60,13 +58,13 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final BlockHeader pivotBlockHeader,
+      final FastSyncState fastSyncState,
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.pivotBlockHeader = pivotBlockHeader;
+    this.fastSyncState = fastSyncState;
     this.metricsSystem = metricsSystem;
     final LabelledMetric<Counter> fastSyncValidationCounter =
         metricsSystem.createLabelledCounter(
@@ -102,11 +100,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final CheckpointRangeSource checkpointRangeSource =
         new CheckpointRangeSource(
             new CheckpointHeaderFetcher(
-                syncConfig,
-                protocolSchedule,
-                ethContext,
-                Optional.of(pivotBlockHeader),
-                metricsSystem),
+                syncConfig, protocolSchedule, ethContext, fastSyncState, metricsSystem),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
@@ -157,6 +151,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
   private boolean shouldContinueDownloadingFromPeer(
       final EthPeer peer, final BlockHeader lastCheckpointHeader) {
+    final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
     return !peer.isDisconnected()
         && lastCheckpointHeader.getNumber() < pivotBlockHeader.getNumber();
   }
