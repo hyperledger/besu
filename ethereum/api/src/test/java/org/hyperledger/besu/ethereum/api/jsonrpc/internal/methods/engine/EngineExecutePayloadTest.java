@@ -86,9 +86,7 @@ public class EngineExecutePayloadTest {
 
   @Test
   public void shouldReturnValid() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture()
-        .baseFeePerGas(Wei.ONE)
-        .buildHeader();
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any())).thenReturn(Optional.of(mockHash));
     when(mergeCoordinator.executeBlock(any())).thenReturn(Boolean.TRUE);
