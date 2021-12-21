@@ -185,7 +185,6 @@ class GenerateBlockchainConfig implements Runnable {
 
       writeKeypair(publicKey, null);
       LOG.info("Public key imported from configuration.({})", publicKey.toString());
-      LOG.info("Public key imported from configuration.({})", publicKey.toString());
     } catch (final IOException e) {
       LOG.error("An error occurred while trying to import node public key.", e);
     }
