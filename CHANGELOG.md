@@ -8,6 +8,7 @@
 ### Bug Fixes
 - Update log4j to 2.16.0.
 - Make 'to' field optional in eth_call method according to the spec [#3177] (https://github.com/hyperledger/besu/pull/3177)
+- Update log4j to 2.17.0.
 
 ## 21.10.5
 
