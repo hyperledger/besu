@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.worldstate;
+package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetNodeDataFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
 import org.hyperledger.besu.util.ExceptionUtils;
@@ -56,7 +57,7 @@ public class RequestDataStep {
   public CompletableFuture<List<Task<NodeDataRequest>>> requestData(
       final List<Task<NodeDataRequest>> requestTasks,
       final BlockHeader blockHeader,
-      final WorldDownloadState downloadState) {
+      final WorldDownloadState<NodeDataRequest> downloadState) {
     final List<Hash> hashes =
         requestTasks.stream()
             .map(Task::getData)
@@ -80,7 +81,7 @@ public class RequestDataStep {
   private CompletableFuture<Map<Hash, Bytes>> sendRequest(
       final BlockHeader blockHeader,
       final List<Hash> hashes,
-      final WorldDownloadState downloadState) {
+      final WorldDownloadState<NodeDataRequest> downloadState) {
     final EthTask<Map<Hash, Bytes>> task =
         getNodeDataTaskFactory.apply(hashes, blockHeader.getNumber());
     downloadState.addOutstandingTask(task);
