@@ -170,16 +170,7 @@ public class BackwardsSyncContextTest {
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
 
-    peer.respondWhile(
-        responder,
-        () -> {
-          try {
-            Thread.sleep(5);
-          } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-          }
-          return !future.isDone();
-        });
+    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
   }
 
   @NotNull

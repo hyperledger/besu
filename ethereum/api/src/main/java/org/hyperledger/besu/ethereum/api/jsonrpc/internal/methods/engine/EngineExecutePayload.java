@@ -52,8 +52,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
 
-  private static final List<BlockHeader> OMMERS_CONSTANT = Collections.emptyList();
-  private static final Hash OMMERS_HASH_CONSTANT = BodyValidation.ommersHash(OMMERS_CONSTANT);
+  private static final Hash OMMERS_HASH_CONSTANT = Hash.EMPTY_LIST_HASH;
   private static final Logger LOG = LogManager.getLogger();
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
   private final MergeMiningCoordinator mergeCoordinator;
@@ -146,7 +145,10 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
       // execute block
       execSuccess = mergeCoordinator.executeBlock(block);
     } else {
-      errorMessage = "Computed block hash does not match block hash parameter";
+      errorMessage =
+          String.format(
+              "Computed block hash %s does not match block hash parameter %s",
+              newBlockHeader.getBlockHash(), blockParam.getBlockHash());
     }
 
     // return result response
