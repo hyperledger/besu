@@ -286,14 +286,22 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @Override
-  public Optional<Hash> getLatestValidAncestor(final Block block) {
+  public Optional<Hash> getLatestValidAncestor(final Hash blockHash) {
     final var chain = protocolContext.getBlockchain();
-    final var self = chain.getBlockHeader(block.getHash());
+    final var chainHeadNum = chain.getChainHeadBlockNumber();
+    return findValidAncestor(
+        chain, blockHash, protocolSchedule.getByBlockNumber(chainHeadNum).getBadBlocksManager());
+  }
+
+  @Override
+  public Optional<Hash> getLatestValidAncestor(final BlockHeader blockHeader) {
+    final var chain = protocolContext.getBlockchain();
+    final var self = chain.getBlockHeader(blockHeader.getHash());
 
     if (self.isEmpty()) {
       final var badBlocks =
-          protocolSchedule.getByBlockNumber(block.getHeader().getNumber()).getBadBlocksManager();
-      return findValidAncestor(chain, block.getHeader().getParentHash(), badBlocks);
+          protocolSchedule.getByBlockNumber(blockHeader.getNumber()).getBadBlocksManager();
+      return findValidAncestor(chain, blockHeader.getParentHash(), badBlocks);
     }
     return self.map(BlockHeader::getHash);
   }

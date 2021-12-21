@@ -130,8 +130,13 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public Optional<Hash> getLatestValidAncestor(final Block block) {
-    return mergeCoordinator.getLatestValidAncestor(block);
+  public Optional<Hash> getLatestValidAncestor(final Hash blockHash) {
+    return mergeCoordinator.getLatestValidAncestor(blockHash);
+  }
+
+  @Override
+  public Optional<Hash> getLatestValidAncestor(final BlockHeader blockHeader) {
+    return mergeCoordinator.getLatestValidAncestor(blockHeader);
   }
 
   @Override
