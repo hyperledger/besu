@@ -319,7 +319,8 @@ public class EthPeer {
       final RequestManager requestManager, final MessageData messageData) throws PeerNotConnected {
     lastRequestTimestamp = clock.millis();
     return requestManager.dispatchRequest(
-        msgData -> connection.sendForProtocol(protocolName, msgData), messageData);
+        msgData -> connection.sendForProtocol(requestManager.getProtocolName(), msgData),
+        messageData);
   }
 
   public boolean validateReceivedMessage(final EthMessage message, final String protocolName) {

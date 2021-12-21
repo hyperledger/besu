@@ -279,7 +279,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     try {
       if (EthProtocol.isEth66Compatible(cap) && EthProtocol.requestIdCompatible(code)) {
         final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
-            RequestId.unwrapMessageData(ethMessage.getData());
+            ethMessage.getData().unwrapMessageData();
         maybeResponseData =
             ethMessages
                 .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()))
