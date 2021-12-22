@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
+import org.hyperledger.besu.consensus.merge.TransitionContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -87,6 +88,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             mockSorter,
             new MiningParameters.Builder().coinbase(coinbase).build(),
             mock(BackwardsSyncContext.class));
+    mergeContext.setTerminalTotalDifficulty(genesisState.getBlock().getHeader().getDifficulty().plus(1L));
+    mergeContext.setIsPostMerge(genesisState.getBlock().getHeader().getDifficulty().plus(2L));
+
   }
 
   @Test
@@ -106,7 +110,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   @Test
   public void latestValidAncestorDescendsFromTerminal() {
-    // coordinator.executeBlock(genesisState.getBlock());
+
     BlockHeader terminalHeader = terminalPowBlock();
     coordinator.executeBlock(new Block(terminalHeader, BlockBody.empty()));
 
@@ -144,7 +148,69 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             .buildHeader();
     Block child = new Block(childHeader, BlockBody.empty());
     coordinator.executeBlock(child);
-    assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child)).isTrue();
+    assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader())).isTrue();
+  }
+
+  @Test
+  public void latestValidAncestorDescendsFromFinalizedBlock() {
+
+    BlockHeader terminalHeader = terminalPowBlock();
+    coordinator.executeBlock(new Block(terminalHeader, BlockBody.empty()));
+
+    BlockHeader grandParentHeader =
+            headerGenerator
+                    .difficulty(Difficulty.ZERO)
+                    .parentHash(terminalHeader.getHash())
+                    .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
+                    .number(terminalHeader.getNumber() + 1)
+                    .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
+                    .baseFeePerGas(
+                            feeMarket.computeBaseFee(
+                                    genesisState.getBlock().getHeader().getNumber() + 1,
+                                    terminalHeader.getBaseFee().orElse(Wei.of(0x3b9aca00)),
+                                    0,
+                                    15000000l))
+                    .buildHeader();
+
+    Block grandParent = new Block(grandParentHeader, BlockBody.empty());
+    coordinator.executeBlock(grandParent);
+    mergeContext.setFinalized(grandParentHeader);
+
+    BlockHeader parentHeader =
+            headerGenerator
+                    .difficulty(Difficulty.ZERO)
+                    .parentHash(grandParentHeader.getHash())
+                    .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
+                    .number(grandParentHeader.getNumber() + 1)
+                    .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
+                    .baseFeePerGas(
+                            feeMarket.computeBaseFee(
+                                    genesisState.getBlock().getHeader().getNumber() + 1,
+                                    grandParentHeader.getBaseFee().orElse(Wei.of(0x3b9aca00)),
+                                    0,
+                                    15000000l))
+                    .buildHeader();
+
+    Block parent = new Block(parentHeader, BlockBody.empty());
+    coordinator.executeBlock(parent);
+
+    BlockHeader childHeader =
+            headerGenerator
+                    .difficulty(Difficulty.ZERO)
+                    .parentHash(parentHeader.getHash())
+                    .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
+                    .number(parentHeader.getNumber() + 1)
+                    .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
+                    .baseFeePerGas(
+                            feeMarket.computeBaseFee(
+                                    genesisState.getBlock().getHeader().getNumber() + 1,
+                                    parentHeader.getBaseFee().orElse(Wei.of(0x3b9aca00)),
+                                    0,
+                                    15000000l))
+                    .buildHeader();
+    Block child = new Block(childHeader, BlockBody.empty());
+    coordinator.executeBlock(child);
+    assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader())).isTrue();
   }
 
   private BlockHeader terminalPowBlock() {
