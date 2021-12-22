@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -72,7 +72,7 @@ public class EthGetFilterLogsTest {
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessage("Missing required json rpc parameter at index 0");
 
-    verifyZeroInteractions(filterManager);
+    verifyNoInteractions(filterManager);
   }
 
   @Test
@@ -84,7 +84,7 @@ public class EthGetFilterLogsTest {
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessage("Missing required json rpc parameter at index 0");
 
-    verifyZeroInteractions(filterManager);
+    verifyNoInteractions(filterManager);
   }
 
   @Test

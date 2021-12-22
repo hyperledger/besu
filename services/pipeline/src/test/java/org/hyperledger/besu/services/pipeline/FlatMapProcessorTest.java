@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.metrics.noop.NoOpMetricsSystem.NO_OP_COUNTER;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.function.Function;
@@ -54,6 +54,6 @@ public class FlatMapProcessorTest {
   public void shouldSkipProcessingWhenInputIsClosed() {
     input.close();
     stage.processNextInput(input, output);
-    verifyZeroInteractions(mapper);
+    verifyNoInteractions(mapper);
   }
 }

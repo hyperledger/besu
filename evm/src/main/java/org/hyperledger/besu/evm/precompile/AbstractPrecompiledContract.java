@@ -22,7 +22,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-/** Skeleton class for @{link PrecompileContract} implementations. */
+/** Skeleton class for {@link PrecompiledContract} implementations. */
 @SuppressWarnings("unused")
 public abstract class AbstractPrecompiledContract implements PrecompiledContract {
 

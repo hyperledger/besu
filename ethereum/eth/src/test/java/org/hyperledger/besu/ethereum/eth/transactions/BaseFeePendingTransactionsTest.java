@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -219,7 +219,7 @@ public class BaseFeePendingTransactionsTest {
 
     transactions.addRemoteTransaction(transaction2);
 
-    verifyZeroInteractions(listener);
+    verifyNoInteractions(listener);
   }
 
   @Test
@@ -279,7 +279,7 @@ public class BaseFeePendingTransactionsTest {
 
     transactions.transactionAddedToBlock(transaction1);
 
-    verifyZeroInteractions(droppedListener);
+    verifyNoInteractions(droppedListener);
   }
 
   @Test
@@ -475,7 +475,7 @@ public class BaseFeePendingTransactionsTest {
     assertTransactionNotPending(transaction1b);
     assertTransactionPending(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
-    verifyZeroInteractions(listener);
+    verifyNoInteractions(listener);
   }
 
   @Test
