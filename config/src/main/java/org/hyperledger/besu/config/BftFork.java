@@ -30,7 +30,7 @@ public class BftFork {
   public static final String FORK_BLOCK_KEY = "block";
   public static final String VALIDATORS_KEY = "validators";
   public static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
-  private static final int DEFAULT_BLOCK_PERIOD_SECONDS = 1;
+  public static final int DEFAULT_BLOCK_PERIOD_SECONDS = 1;
   public static final String BLOCK_REWARD_KEY = "blockreward";
 
   protected final ObjectNode forkConfigRoot;
