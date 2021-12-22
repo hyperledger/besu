@@ -54,8 +54,8 @@ class FileStateChecker extends DefaultTask {
 
 If this is a deliberate change where you have thought through backwards compatibility,
 then update "Expected" for "Calculated" in the appropriate build.gradle as the knownHash for this task.
-Expected   : DhISJBKoARZyoiT387UIA7QfcEwyOcIYm17f/fLsJRM=
-Calculated : pDLQUs2Gl9hFV1ecKSacbbfwovrjMf/IBPiY1zkOZlI=
+Expected   : ${this.knownHash}
+Calculated : ${currentHash}
 """)
     }
   }
@@ -64,7 +64,7 @@ Calculated : pDLQUs2Gl9hFV1ecKSacbbfwovrjMf/IBPiY1zkOZlI=
 tasks.register('checkAPIChanges', FileStateChecker) {
   description = "Checks that the API for the Plugin-API project does not change without deliberate thought"
   files = sourceSets.main.allJava.files
-  knownHash = 'DhISJBKoARZyoiT387UIA7QfcEwyOcIYm17f/fLsJRM='
+  knownHash = 'QPxUj/HJM7DZkbUq538/S2f3MmwPOqaPX/BBTkKznQk='
 }
 check.dependsOn('checkAPIChanges')
 
