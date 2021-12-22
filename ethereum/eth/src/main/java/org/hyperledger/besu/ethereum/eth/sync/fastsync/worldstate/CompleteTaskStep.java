@@ -23,7 +23,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.services.tasks.Task;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.LongSupplier;
 
 import org.apache.logging.log4j.LogManager;
@@ -36,8 +35,6 @@ public class CompleteTaskStep {
   private final RunnableCounter completedRequestsCounter;
   private final Counter retriedRequestsCounter;
   private final LongSupplier worldStatePendingRequestsCurrentSupplier;
-
-  private final AtomicInteger failedCount = new AtomicInteger();
 
   public CompleteTaskStep(
       final WorldStateStorage worldStateStorage,
@@ -71,9 +68,6 @@ public class CompleteTaskStep {
     } else {
       retriedRequestsCounter.inc();
       task.markFailed();
-      if (failedCount.incrementAndGet() >= 100_000) {
-        throw new RuntimeException("Just restart me with a better pivot, please...");
-      }
       // Marking the task as failed will add it back to the queue so make sure any threads
       // waiting to read from the queue are notified.
       downloadState.notifyTaskAvailable();

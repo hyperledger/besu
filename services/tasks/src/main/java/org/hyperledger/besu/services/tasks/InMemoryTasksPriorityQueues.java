@@ -50,7 +50,7 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
   @Override
   public synchronized void add(final T taskData) {
     assertNotClosed();
-    var dequeue = findQueue(taskData.getLevel());
+    var dequeue = findQueue(taskData.getDepth());
     dequeue.add(taskData);
   }
 
@@ -133,7 +133,7 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
   }
 
   public synchronized boolean contains(final T request) {
-    final PriorityQueue<T> queue = findQueue(request.getLevel());
+    final PriorityQueue<T> queue = findQueue(request.getDepth());
     return queue.contains(request)
         || unfinishedOutstandingTasks.stream()
             .map(InMemoryTask::getData)

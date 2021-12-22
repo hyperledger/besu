@@ -41,12 +41,8 @@ public abstract class NodeDataRequest implements TasksPriorityProvider {
   private final Optional<Bytes> location;
   private Optional<NodeDataRequest> possibleParent = Optional.empty();
   private final AtomicInteger pendingChildren = new AtomicInteger(0);
-  private static NodeDataRequest root;
-  private int level = 0;
+  private int depth = 0;
   private long priority;
-
-  private static final AtomicInteger totalPending = new AtomicInteger();
-  private static volatile int max = 0;
 
   protected NodeDataRequest(
       final RequestType requestType, final Hash hash, final Optional<Bytes> location) {
@@ -108,10 +104,6 @@ public abstract class NodeDataRequest implements TasksPriorityProvider {
 
   public final void persist(final WorldStateStorage.Updater updater) {
     if (pendingChildren.get() > 0) {
-      if (totalPending.incrementAndGet() > max + 999) {
-        max = totalPending.get();
-        LOG.warn("Maximum pending nodes just reached {}", max);
-      }
       return; // we do nothing. Our last child will eventually persist us.
     }
     if (requiresPersisting) {
@@ -119,16 +111,12 @@ public abstract class NodeDataRequest implements TasksPriorityProvider {
       doPersist(updater);
     }
     possibleParent.ifPresentOrElse(
-        parent -> parent.saveParent(updater),
-        () -> {
-          LOG.warn("Missing a parent for {}", this.hash);
-        });
+        parent -> parent.saveParent(updater), () -> LOG.warn("Missing a parent for {}", this.hash));
   }
 
   private void saveParent(final WorldStateStorage.Updater updater) {
     if (pendingChildren.decrementAndGet() == 0) {
       persist(updater);
-      totalPending.decrementAndGet();
     }
   }
 
@@ -148,17 +136,8 @@ public abstract class NodeDataRequest implements TasksPriorityProvider {
     if (this.possibleParent.isPresent()) {
       throw new WorldStateDownloaderException("Cannot set parent twice");
     }
-    if (parent.possibleParent.isEmpty()) {
-      if (root != null && root != parent) {
-        LOG.warn(
-            "Root has changed from {} to {}, did we change the pivot?", root.hash, parent.hash);
-      }
-      root = parent;
-      totalPending.set(0);
-      max = 0;
-    }
     this.possibleParent = Optional.of(parent);
-    this.level = parent.level + 1;
+    this.depth = parent.depth + 1;
     this.priority = parent.priority * 16 + parent.incrementChildren();
   }
 
@@ -168,11 +147,7 @@ public abstract class NodeDataRequest implements TasksPriorityProvider {
   }
 
   @Override
-  public int getLevel() {
-    return level;
-  }
-
-  public boolean requirePersisting() {
-    return requiresPersisting;
+  public int getDepth() {
+    return depth;
   }
 }

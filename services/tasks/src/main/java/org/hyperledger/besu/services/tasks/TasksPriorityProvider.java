@@ -20,5 +20,5 @@ package org.hyperledger.besu.services.tasks;
 public interface TasksPriorityProvider {
   long getPriority();
 
-  int getLevel();
+  int getDepth();
 }
