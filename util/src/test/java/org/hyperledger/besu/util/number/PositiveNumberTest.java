@@ -32,7 +32,7 @@ public class PositiveNumberTest {
 
   @Test
   public void shouldThrowOnDecimalValueFromString() {
-    assertThatThrownBy(() -> PositiveNumber.fromString("0.1"))
+    assertThatThrownBy(() -> PositiveNumber.fromString("1.1"))
         .isInstanceOf(IllegalArgumentException.class);
   }
 

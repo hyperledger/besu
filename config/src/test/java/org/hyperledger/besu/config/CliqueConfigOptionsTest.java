@@ -31,7 +31,7 @@ public class CliqueConfigOptionsTest {
 
   @Test
   public void shouldGetEpochLengthFromConfig() {
-    final CliqueConfigOptions config = fromConfigOptions(singletonMap("EpochLength", 10_000));
+    final CliqueConfigOptions config = fromConfigOptions(singletonMap("epochlength", 10_000));
     assertThat(config.getEpochLength()).isEqualTo(10_000);
   }
 
@@ -49,7 +49,7 @@ public class CliqueConfigOptionsTest {
 
   @Test
   public void shouldGetBlockPeriodFromConfig() {
-    final CliqueConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", 5));
+    final CliqueConfigOptions config = fromConfigOptions(singletonMap("blockperiodseconds", 5));
     assertThat(config.getBlockPeriodSeconds()).isEqualTo(5);
   }
 
@@ -67,7 +67,7 @@ public class CliqueConfigOptionsTest {
 
   @Test
   public void shouldThrowOnNonPositiveBlockPeriod() {
-    final CliqueConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", -1));
+    final CliqueConfigOptions config = fromConfigOptions(singletonMap("blockperiodseconds", -1));
     assertThatThrownBy(() -> config.getBlockPeriodSeconds())
         .isInstanceOf(IllegalArgumentException.class);
   }

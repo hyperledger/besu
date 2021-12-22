@@ -143,6 +143,17 @@ public class JsonUtil {
     return getInt(node, key).orElse(defaultValue);
   }
 
+  public static int getPositiveInt(
+      final ObjectNode node, final String key, final int defaultValue) {
+    final String valueRaw = JsonUtil.getValueAsString(node, key, String.valueOf(defaultValue));
+    try {
+      return PositiveNumber.fromString(valueRaw).getValue();
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+          "Invalid property value, " + key + " should be a positive integer: " + valueRaw);
+    }
+  }
+
   public static OptionalLong getLong(final ObjectNode json, final String key) {
     return getValue(json, key)
         .filter(jsonNode -> validateType(jsonNode, JsonNodeType.NUMBER))
@@ -292,16 +303,5 @@ public class JsonUtil {
       throw new IllegalArgumentException("Cannot convert value to integer: " + node.toString());
     }
     return true;
-  }
-
-  public static int getPositiveInt(
-      final ObjectNode node, final String key, final int defaultValue) {
-    final String valueRaw = JsonUtil.getValueAsString(node, key, String.valueOf(defaultValue));
-    try {
-      return PositiveNumber.fromString(valueRaw).getValue();
-    } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException(
-          "Invalid property value, " + key + " should be a positive integer: " + valueRaw);
-    }
   }
 }
