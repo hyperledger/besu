@@ -37,7 +37,7 @@ dependencyManagement {
     dependency 'com.github.ben-manes.caffeine:caffeine:3.0.4'
     dependency 'com.graphql-java:graphql-java:16.2'
 
-    dependency 'com.splunk.logging:splunk-library-javalogging:1.9.0'
+    dependency 'com.splunk.logging:splunk-library-javalogging:1.11.3'
 
     dependency 'com.squareup.okhttp3:okhttp:4.9.1'
 
