@@ -39,13 +39,11 @@ import java.util.Map;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.RequestOptions;
-import io.vertx.core.http.impl.headers.VertxHttpHeaders;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.WebSocketConnectOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
@@ -109,6 +107,7 @@ public class WebSocketServiceLoginTest {
         new HttpClientOptions()
             .setDefaultHost(websocketConfiguration.getHost())
             .setDefaultPort(websocketConfiguration.getPort());
+    ;
 
     httpClient = vertx.createHttpClient(httpClientOptions);
   }
@@ -122,76 +121,91 @@ public class WebSocketServiceLoginTest {
   @Test
   public void loginWithBadCredentials(final TestContext context) {
     final Async async = context.async();
-    final HttpClientRequest request =
-        httpClient.post(
-            websocketConfiguration.getPort(),
-            websocketConfiguration.getHost(),
-            "/login",
-            response -> {
-              assertThat(response.statusCode()).isEqualTo(401);
-              assertThat(response.statusMessage()).isEqualTo("Unauthorized");
-              async.complete();
-            });
-    request.putHeader("Content-Type", "application/json; charset=utf-8");
-    request.end("{\"username\":\"user\",\"password\":\"pass\"}");
+    httpClient.request(
+        HttpMethod.POST,
+        websocketConfiguration.getPort(),
+        websocketConfiguration.getHost(),
+        "/login",
+        request -> {
+          request.result().putHeader("Content-Type", "application/json; charset=utf-8");
+          request.result().end("{\"username\":\"user\",\"password\":\"pass\"}");
+          request
+              .result()
+              .send(
+                  response -> {
+                    assertThat(response.result().statusCode()).isEqualTo(401);
+                    assertThat(response.result().statusMessage()).isEqualTo("Unauthorized");
+                    async.complete();
+                  });
+        });
+
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
 
   @Test
   public void loginWithGoodCredentials(final TestContext context) {
     final Async async = context.async();
-    final HttpClientRequest request =
-        httpClient.post(
-            websocketConfiguration.getPort(),
-            websocketConfiguration.getHost(),
-            "/login",
-            response -> {
-              assertThat(response.statusCode()).isEqualTo(200);
-              assertThat(response.statusMessage()).isEqualTo("OK");
-              assertThat(response.getHeader("Content-Type")).isNotNull();
-              assertThat(response.getHeader("Content-Type")).isEqualTo("application/json");
-              response.bodyHandler(
-                  buffer -> {
-                    final String body = buffer.toString();
-                    assertThat(body).isNotBlank();
+    httpClient.request(
+        HttpMethod.POST,
+        websocketConfiguration.getPort(),
+        websocketConfiguration.getHost(),
+        "/login",
+        request -> {
+          request.result().putHeader("Content-Type", "application/json; charset=utf-8");
+          request.result().end("{\"username\":\"user\",\"password\":\"pegasys\"}");
+          request
+              .result()
+              .send(
+                  response -> {
+                    assertThat(response.result().statusCode()).isEqualTo(200);
+                    assertThat(response.result().statusMessage()).isEqualTo("OK");
+                    assertThat(response.result().getHeader("Content-Type")).isNotNull();
+                    assertThat(response.result().getHeader("Content-Type"))
+                        .isEqualTo("application/json");
+                    response
+                        .result()
+                        .bodyHandler(
+                            buffer -> {
+                              final String body = buffer.toString();
+                              assertThat(body).isNotBlank();
 
-                    final JsonObject respBody = new JsonObject(body);
-                    final String token = respBody.getString("token");
-                    assertThat(token).isNotNull();
+                              final JsonObject respBody = new JsonObject(body);
+                              final String token = respBody.getString("token");
+                              assertThat(token).isNotNull();
+                              assertThat(token).isNotEmpty();
 
-                    websocketService
-                        .authenticationService
-                        .get()
-                        .getJwtAuthProvider()
-                        .authenticate(
-                            new JsonObject().put("jwt", token),
-                            (r) -> {
-                              Assertions.assertThat(r.succeeded()).isTrue();
-                              final User user = r.result();
-                              user.isAuthorized(
-                                  "noauths",
-                                  (authed) -> {
-                                    assertThat(authed.succeeded()).isTrue();
-                                    assertThat(authed.result()).isFalse();
-                                  });
-                              user.isAuthorized(
-                                  "fakePermission",
-                                  (authed) -> {
-                                    assertThat(authed.succeeded()).isTrue();
-                                    assertThat(authed.result()).isTrue();
-                                  });
-                              user.isAuthorized(
-                                  "eth:subscribe",
-                                  (authed) -> {
-                                    assertThat(authed.succeeded()).isTrue();
-                                    assertThat(authed.result()).isTrue();
-                                    async.complete();
-                                  });
+                              websocketService
+                                  .authenticationService
+                                  .get()
+                                  .getJwtAuthProvider()
+                                  .authenticate(
+                                      new JsonObject().put("token", token),
+                                      (r) -> {
+                                        Assertions.assertThat(r.succeeded()).isTrue();
+                                        final User user = r.result();
+                                        user.isAuthorized(
+                                            "noauths",
+                                            (authed) -> {
+                                              assertThat(authed.succeeded()).isTrue();
+                                              assertThat(authed.result()).isFalse();
+                                            });
+                                        user.isAuthorized(
+                                            "fakePermission",
+                                            (authed) -> {
+                                              assertThat(authed.succeeded()).isTrue();
+                                              assertThat(authed.result()).isTrue();
+                                            });
+                                        user.isAuthorized(
+                                            "eth:subscribe",
+                                            (authed) -> {
+                                              assertThat(authed.succeeded()).isTrue();
+                                              assertThat(authed.result()).isTrue();
+                                              async.complete();
+                                            });
+                                      });
                             });
                   });
-            });
-    request.putHeader("Content-Type", "application/json; charset=utf-8");
-    request.end("{\"username\":\"user\",\"password\":\"pegasys\"}");
+        });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
@@ -204,26 +218,26 @@ public class WebSocketServiceLoginTest {
     final String expectedResponse =
         "{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-40100,\"message\":\"Unauthorized\"}}";
 
-    RequestOptions options = new RequestOptions();
+    WebSocketConnectOptions options = new WebSocketConnectOptions();
     options.setURI("/");
     options.setHost(websocketConfiguration.getHost());
     options.setPort(websocketConfiguration.getPort());
-    final MultiMap headers = new VertxHttpHeaders();
     String badtoken = "badtoken";
     if (badtoken != null) {
-      headers.add("Authorization", "Bearer " + badtoken);
+      options.addHeader("Authorization", "Bearer " + badtoken);
     }
-    httpClient.websocket(
+    httpClient.webSocket(
         options,
-        headers,
         webSocket -> {
-          webSocket.writeTextMessage(request);
+          webSocket.result().writeTextMessage(request);
 
-          webSocket.handler(
-              buffer -> {
-                context.assertEquals(expectedResponse, buffer.toString());
-                async.complete();
-              });
+          webSocket
+              .result()
+              .handler(
+                  buffer -> {
+                    context.assertEquals(expectedResponse, buffer.toString());
+                    async.complete();
+                  });
         });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
@@ -234,6 +248,7 @@ public class WebSocketServiceLoginTest {
     final Async async = context.async();
 
     final JWTOptions jwtOptions = new JWTOptions().setExpiresInMinutes(5).setAlgorithm("RS256");
+
     final JsonObject jwtContents =
         new JsonObject().put("permissions", Lists.newArrayList("eth:*")).put("username", "user");
     final String goodToken = jwtAuth.generateToken(jwtContents, jwtOptions);
@@ -242,25 +257,25 @@ public class WebSocketServiceLoginTest {
         "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}";
     final String expectedResponse = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1\"}";
 
-    RequestOptions options = new RequestOptions();
+    WebSocketConnectOptions options = new WebSocketConnectOptions();
     options.setURI("/");
     options.setHost(websocketConfiguration.getHost());
     options.setPort(websocketConfiguration.getPort());
-    final MultiMap headers = new VertxHttpHeaders();
     if (goodToken != null) {
-      headers.add("Authorization", "Bearer " + goodToken);
+      options.addHeader("Authorization", "Bearer " + goodToken);
     }
-    httpClient.websocket(
+    httpClient.webSocket(
         options,
-        headers,
         webSocket -> {
-          webSocket.writeTextMessage(requestSub);
+          webSocket.result().writeTextMessage(requestSub);
 
-          webSocket.handler(
-              buffer -> {
-                context.assertEquals(expectedResponse, buffer.toString());
-                async.complete();
-              });
+          webSocket
+              .result()
+              .handler(
+                  buffer -> {
+                    context.assertEquals(expectedResponse, buffer.toString());
+                    async.complete();
+                  });
         });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
@@ -269,42 +284,52 @@ public class WebSocketServiceLoginTest {
   @Test
   public void loginPopulatesJWTPayloadWithRequiredValues(final TestContext context) {
     final Async async = context.async();
-    final HttpClientRequest request =
-        httpClient.post(
-            websocketConfiguration.getPort(),
-            websocketConfiguration.getHost(),
-            "/login",
-            response -> {
-              response.bodyHandler(
-                  buffer -> {
-                    final String body = buffer.toString();
-                    assertThat(body).isNotBlank();
+    httpClient.request(
+        HttpMethod.POST,
+        websocketConfiguration.getPort(),
+        websocketConfiguration.getHost(),
+        "/login",
+        request -> {
+          request.result().putHeader("Content-Type", "application/json; charset=utf-8");
+          request.result().end("{\"username\":\"user\",\"password\":\"pegasys\"}");
+          request
+              .result()
+              .send(
+                  response -> {
+                    response
+                        .result()
+                        .bodyHandler(
+                            buffer -> {
+                              final String body = buffer.toString();
+                              assertThat(body).isNotBlank();
 
-                    final JsonObject respBody = new JsonObject(body);
-                    final String token = respBody.getString("token");
+                              final JsonObject respBody = new JsonObject(body);
+                              final String token = respBody.getString("token");
 
-                    final JsonObject jwtPayload = decodeJwtPayload(token);
-                    assertThat(jwtPayload.getString("username")).isEqualTo("user");
-                    assertThat(jwtPayload.getJsonArray("permissions"))
-                        .isEqualTo(
-                            new JsonArray(
-                                list(
-                                    "fakePermission",
-                                    "eth:blockNumber",
-                                    "eth:subscribe",
-                                    "web3:*")));
-                    assertThat(jwtPayload.getString("privacyPublicKey"))
-                        .isEqualTo("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
-                    assertThat(jwtPayload.containsKey("iat")).isTrue();
-                    assertThat(jwtPayload.containsKey("exp")).isTrue();
-                    final long tokenExpiry = jwtPayload.getLong("exp") - jwtPayload.getLong("iat");
-                    assertThat(tokenExpiry).isEqualTo(MINUTES.toSeconds(5));
+                              final JsonObject jwtPayload = decodeJwtPayload(token);
+                              assertThat(jwtPayload.getString("username")).isEqualTo("user");
+                              assertThat(jwtPayload.getJsonArray("permissions"))
+                                  .isEqualTo(
+                                      new JsonArray(
+                                          list(
+                                              "fakePermission",
+                                              "eth:blockNumber",
+                                              "eth:subscribe",
+                                              "web3:*")));
 
-                    async.complete();
+                              assertThat(jwtPayload.getString("privacyPublicKey"))
+                                  .isEqualTo("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+
+                              assertThat(jwtPayload.containsKey("iat")).isTrue();
+                              assertThat(jwtPayload.containsKey("exp")).isTrue();
+                              final long tokenExpiry =
+                                  jwtPayload.getLong("exp") - jwtPayload.getLong("iat");
+                              assertThat(tokenExpiry).isEqualTo(MINUTES.toSeconds(5));
+
+                              async.complete();
+                            });
                   });
-            });
-    request.putHeader("Content-Type", "application/json; charset=utf-8");
-    request.end("{\"username\":\"user\",\"password\":\"pegasys\"}");
+        });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }

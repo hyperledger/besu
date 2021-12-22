@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.worldstate;
+package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.StubTask;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -36,7 +37,7 @@ public class CompleteTaskStepTest {
 
   private static final Hash ROOT_HASH = Hash.hash(Bytes.of(1, 2, 3));
   private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
-  private final WorldDownloadState downloadState = mock(WorldDownloadState.class);
+  private final FastWorldDownloadState downloadState = mock(FastWorldDownloadState.class);
   private final BlockHeader blockHeader =
       new BlockHeaderTestFixture().stateRoot(ROOT_HASH).buildHeader();
 

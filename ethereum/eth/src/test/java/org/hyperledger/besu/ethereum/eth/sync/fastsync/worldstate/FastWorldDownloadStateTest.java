@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.worldstate;
+package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -25,6 +25,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -47,7 +49,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class WorldDownloadStateTest {
+public class FastWorldDownloadStateTest {
 
   private static final Bytes ROOT_NODE_DATA = Bytes.of(1, 2, 3, 4);
   private static final Hash ROOT_NODE_HASH = Hash.hash(ROOT_NODE_DATA);
@@ -64,8 +66,8 @@ public class WorldDownloadStateTest {
       mock(WorldStateDownloadProcess.class);
 
   private final TestClock clock = new TestClock();
-  private final WorldDownloadState downloadState =
-      new WorldDownloadState(
+  private final FastWorldDownloadState downloadState =
+      new FastWorldDownloadState(
           pendingRequests, MAX_REQUESTS_WITHOUT_PROGRESS, MIN_MILLIS_BEFORE_STALLING, clock);
 
   private final CompletableFuture<Void> future = downloadState.getDownloadFuture();
@@ -77,7 +79,7 @@ public class WorldDownloadStateTest {
 
   private final DataStorageFormat storageFormat;
 
-  public WorldDownloadStateTest(final DataStorageFormat storageFormat) {
+  public FastWorldDownloadStateTest(final DataStorageFormat storageFormat) {
     this.storageFormat = storageFormat;
   }
 
@@ -218,7 +220,7 @@ public class WorldDownloadStateTest {
     assertThat(pendingRequests.isEmpty()).isTrue();
   }
 
-  private void assertWorldStateStalled(final WorldDownloadState state) {
+  private void assertWorldStateStalled(final FastWorldDownloadState state) {
     final CompletableFuture<Void> future = state.getDownloadFuture();
     assertThat(future).isCompletedExceptionally();
     assertThatThrownBy(future::get)

@@ -198,6 +198,6 @@ public class FastSyncActions {
         ethContext,
         syncState,
         metricsSystem,
-        currentState.getPivotBlockHeader().get());
+        currentState);
   }
 }
