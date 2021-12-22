@@ -39,11 +39,13 @@ public class NoDifficultyRule implements AttachedBlockHeaderValidationRule {
       LOG.warn("unable to get total difficulty, parent {} not found", header.getParentHash());
       return false;
     }
-    if(protocolContext.getConsensusContext(MergeContext.class).isPostMerge()) {
+    if (protocolContext.getConsensusContext(MergeContext.class).isPostMerge()) {
       if (totalDifficulty
-              .get()
-              .greaterOrEqualThan(
-                      protocolContext.getConsensusContext(MergeContext.class).getTerminalTotalDifficulty())) {
+          .get()
+          .greaterOrEqualThan(
+              protocolContext
+                  .getConsensusContext(MergeContext.class)
+                  .getTerminalTotalDifficulty())) {
         return (header.getDifficulty() == null || header.getDifficulty().equals(Difficulty.ZERO));
       } else {
         return true;
