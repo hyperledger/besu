@@ -20,10 +20,12 @@ import java.util.Optional;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.AbstractUser;
 import io.vertx.ext.auth.AuthProvider;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.authorization.Authorization;
+import io.vertx.ext.auth.authorization.Authorizations;
 
-public class TomlUser extends AbstractUser {
+public class TomlUser implements User {
 
   private final String username;
   private final String password;
@@ -48,6 +50,37 @@ public class TomlUser extends AbstractUser {
   }
 
   @Override
+  public JsonObject attributes() {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
+  public boolean expired() {
+    return false;
+  }
+
+  @Override
+  public boolean expired(final int leeway) {
+    return false;
+  }
+
+  @Override
+  public boolean containsKey(final String key) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
+  public Authorizations authorizations() {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
+  public User isAuthorized(
+      final Authorization authority, final Handler<AsyncResult<Boolean>> resultHandler) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
   public JsonObject principal() {
     final JsonObject principle =
         new JsonObject()
@@ -60,13 +93,16 @@ public class TomlUser extends AbstractUser {
     return principle;
   }
 
-  @Override
   public void setAuthProvider(final AuthProvider authProvider) {
     // we only use Toml for authentication
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
+  public User merge(final User other) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
   protected void doIsPermitted(
       final String permission, final Handler<AsyncResult<Boolean>> resultHandler) {
     // we only use Toml for authentication

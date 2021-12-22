@@ -28,7 +28,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.jwt.impl.JWTUser;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.impl.UserImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -44,7 +45,7 @@ public class MultiTenancyRpcMethodDecoratorTest {
   public void delegatesWhenHasValidToken() {
     final JsonObject principle = new JsonObject();
     principle.put("privacyPublicKey", "ABC123");
-    final JWTUser user = new JWTUser(principle, "");
+    final UserImpl user = new UserImpl(principle);
     final JsonRpcRequestContext rpcRequestContext = new JsonRpcRequestContext(rpcRequest, user);
 
     when(jsonRpcMethod.response(rpcRequestContext))
@@ -79,7 +80,7 @@ public class MultiTenancyRpcMethodDecoratorTest {
 
   @Test
   public void failsWhenTokenDoesNotHavePrivacyPublicKey() {
-    final JWTUser user = new JWTUser(new JsonObject(), "");
+    final User user = new UserImpl(new JsonObject());
     final JsonRpcRequestContext rpcRequestContext = new JsonRpcRequestContext(rpcRequest, user);
     final MultiTenancyRpcMethodDecorator tokenRpcDecorator =
         new MultiTenancyRpcMethodDecorator(jsonRpcMethod);

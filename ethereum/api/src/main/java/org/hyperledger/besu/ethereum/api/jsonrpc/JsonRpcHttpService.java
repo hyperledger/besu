@@ -54,7 +54,6 @@ import org.hyperledger.besu.util.NetworkUtility;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +89,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpConnection;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -462,13 +462,15 @@ public class JsonRpcHttpService {
   }
 
   private Throwable getFailureException(final Throwable listenFailure) {
-    if (listenFailure instanceof SocketException) {
-      return new JsonRpcServiceException(
-          String.format(
-              "Failed to bind Ethereum JSON-RPC listener to %s:%s: %s",
-              config.getHost(), config.getPort(), listenFailure.getMessage()));
-    }
-    return listenFailure;
+
+    JsonRpcServiceException servFail =
+        new JsonRpcServiceException(
+            String.format(
+                "Failed to bind Ethereum JSON-RPC listener to %s:%s: %s",
+                config.getHost(), config.getPort(), listenFailure.getMessage()));
+    servFail.initCause(listenFailure);
+
+    return servFail;
   }
 
   private Handler<RoutingContext> checkAllowlistHostHeader() {
@@ -495,7 +497,11 @@ public class JsonRpcHttpService {
   }
 
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
-    final Iterable<String> splitHostHeader = Splitter.on(':').split(event.request().host());
+    String hostname =
+        event.request().getHeader(HttpHeaders.HOST) != null
+            ? event.request().getHeader(HttpHeaders.HOST)
+            : event.request().host();
+    final Iterable<String> splitHostHeader = Splitter.on(':').split(hostname);
     final long hostPieces = stream(splitHostHeader).count();
     if (hostPieces > 1) {
       // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
@@ -666,23 +672,13 @@ public class JsonRpcHttpService {
                   }
 
                   final JsonObject req = (JsonObject) obj;
-                  final Future<JsonRpcResponse> fut = Future.future();
-                  vertx.executeBlocking(
-                      future -> future.complete(process(routingContext, req, user)),
-                      false,
-                      ar -> {
-                        if (ar.failed()) {
-                          fut.fail(ar.cause());
-                        } else {
-                          fut.complete((JsonRpcResponse) ar.result());
-                        }
-                      });
-                  return fut;
+                  return vertx.executeBlocking(
+                      future -> future.complete(process(routingContext, req, user)));
                 })
             .collect(toList());
 
     CompositeFuture.all(responses)
-        .setHandler(
+        .onComplete(
             (res) -> {
               final HttpServerResponse response = routingContext.response();
               if (response.closed() || response.headWritten()) {

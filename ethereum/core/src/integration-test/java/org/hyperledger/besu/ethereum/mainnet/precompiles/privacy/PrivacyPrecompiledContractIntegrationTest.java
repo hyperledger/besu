@@ -50,8 +50,8 @@ import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
-import org.hyperledger.enclave.testutil.OrionTestHarness;
-import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
+import org.hyperledger.enclave.testutil.TesseraTestHarness;
+import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 
 import java.util.Collections;
 import java.util.List;
@@ -88,7 +88,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
   private static Enclave enclave;
   private static MessageFrame messageFrame;
 
-  private static OrionTestHarness testHarness;
+  private static TesseraTestHarness testHarness;
   private static WorldStateArchive worldStateArchive;
   private static PrivateStateStorage privateStateStorage;
   private static final Vertx vertx = Vertx.vertx();
@@ -119,10 +119,11 @@ public class PrivacyPrecompiledContractIntegrationTest {
     folder.create();
 
     testHarness =
-        OrionTestHarnessFactory.create(
+        TesseraTestHarnessFactory.create(
             "enclave",
             folder.newFolder().toPath(),
-            new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_1.key"));
+            new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_1.key"),
+            Optional.empty());
 
     testHarness.start();
 
@@ -217,7 +218,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     final Throwable thrown = catchThrowable(() -> enclave.send(s, publicKeys.get(0), publicKeys));
 
-    assertThat(thrown).hasMessageContaining("EnclaveDecodePublicKey");
+    assertThat(thrown).hasMessageContaining("Index 9 out of bounds for length 9");
   }
 
   @Test
@@ -229,6 +230,6 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     final Throwable thrown = catchThrowable(() -> enclave.send(s, publicKeys.get(0), publicKeys));
 
-    assertThat(thrown).hasMessageContaining("NodeMissingPeerUrl");
+    assertThat(thrown).hasMessageContaining("Recipient not found for key:");
   }
 }
