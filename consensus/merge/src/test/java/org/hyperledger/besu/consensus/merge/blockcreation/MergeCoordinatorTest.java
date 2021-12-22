@@ -18,6 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -48,6 +50,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -176,6 +179,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     coordinator.executeBlock(grandParent);
     mergeContext.setFinalized(grandParentHeader);
 
+    MergeContext spy = spy(this.mergeContext);
     BlockHeader parentHeader =
             headerGenerator
                     .difficulty(Difficulty.ZERO)
@@ -211,6 +215,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     Block child = new Block(childHeader, BlockBody.empty());
     coordinator.executeBlock(child);
     assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader())).isTrue();
+    Mockito.verify(spy, never()).getTerminalPoWBlock();
   }
 
   private BlockHeader terminalPowBlock() {
