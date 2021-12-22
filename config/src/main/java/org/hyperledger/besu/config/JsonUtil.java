@@ -143,14 +143,24 @@ public class JsonUtil {
     return getInt(node, key).orElse(defaultValue);
   }
 
+  public static OptionalInt getPositiveInt(final ObjectNode node, final String key) {
+    return getValueAsString(node, key)
+        .map(v -> OptionalInt.of(parsePositiveInt(key, v)))
+        .orElse(OptionalInt.empty());
+  }
+
   public static int getPositiveInt(
       final ObjectNode node, final String key, final int defaultValue) {
-    final String valueRaw = JsonUtil.getValueAsString(node, key, String.valueOf(defaultValue));
+    final String value = getValueAsString(node, key, String.valueOf(defaultValue));
+    return parsePositiveInt(key, value);
+  }
+
+  private static int parsePositiveInt(final String key, final String value) {
     try {
-      return PositiveNumber.fromString(valueRaw).getValue();
+      return PositiveNumber.fromString(value).getValue();
     } catch (IllegalArgumentException e) {
       throw new IllegalArgumentException(
-          "Invalid property value, " + key + " should be a positive integer: " + valueRaw);
+          "Invalid property value, " + key + " should be a positive integer: " + value);
     }
   }
 

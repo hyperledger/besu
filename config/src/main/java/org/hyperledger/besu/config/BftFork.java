@@ -30,7 +30,6 @@ public class BftFork {
   public static final String FORK_BLOCK_KEY = "block";
   public static final String VALIDATORS_KEY = "validators";
   public static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
-  public static final int DEFAULT_BLOCK_PERIOD_SECONDS = 1;
   public static final String BLOCK_REWARD_KEY = "blockreward";
 
   protected final ObjectNode forkConfigRoot;
@@ -49,9 +48,7 @@ public class BftFork {
   }
 
   public OptionalInt getBlockPeriodSeconds() {
-    return OptionalInt.of(
-        JsonUtil.getPositiveInt(
-            forkConfigRoot, BLOCK_PERIOD_SECONDS_KEY, DEFAULT_BLOCK_PERIOD_SECONDS));
+    return JsonUtil.getPositiveInt(forkConfigRoot, BLOCK_PERIOD_SECONDS_KEY);
   }
 
   public Optional<BigInteger> getBlockRewardWei() {

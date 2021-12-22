@@ -519,12 +519,59 @@ public class JsonUtilTest {
     final ObjectNode node = mapper.createObjectNode();
     final int validValue = 2;
     node.put("test", validValue);
+    final OptionalInt result = JsonUtil.getPositiveInt(node, "test");
+    assertThat(result).hasValue(validValue);
+  }
+
+  @Test
+  public void getPositiveInt_nonExistentKey() {
+    final ObjectNode node = mapper.createObjectNode();
+    final OptionalInt result = JsonUtil.getPositiveInt(node, "test");
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  public void getPositiveInt_decimalValue() {
+    final ObjectNode node = mapper.createObjectNode();
+    final float decimalValue = Float.MAX_VALUE;
+    node.put("test", decimalValue);
+    assertThatThrownBy(() -> JsonUtil.getPositiveInt(node, "test"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid property value, test should be a positive integer: " + decimalValue);
+  }
+
+  @Test
+  public void getPositiveInt_nonPositiveValue() {
+    final ObjectNode node = mapper.createObjectNode();
+    final int nonPositiveValue = 0;
+    node.put("test", nonPositiveValue);
+    assertThatThrownBy(() -> JsonUtil.getPositiveInt(node, "test"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Invalid property value, test should be a positive integer: " + nonPositiveValue);
+  }
+
+  @Test
+  public void getPositiveInt_negativeValue() {
+    final ObjectNode node = mapper.createObjectNode();
+    final int negativeValue = Integer.MIN_VALUE;
+    node.put("test", negativeValue);
+    assertThatThrownBy(() -> JsonUtil.getPositiveInt(node, "test"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid property value, test should be a positive integer: " + negativeValue);
+  }
+
+  @Test
+  public void getPositiveInt_validValue_withDefault() {
+    final ObjectNode node = mapper.createObjectNode();
+    final int validValue = 2;
+    node.put("test", validValue);
     final int result = JsonUtil.getPositiveInt(node, "test", 1);
     assertThat(result).isEqualTo(validValue);
   }
 
   @Test
-  public void getPositiveInt_nonExistentKey() {
+  public void getPositiveInt_nonExistentKey_withDefault() {
     final ObjectNode node = mapper.createObjectNode();
     final int defaultValue = 1;
     final int result = JsonUtil.getPositiveInt(node, "test", defaultValue);
@@ -532,7 +579,7 @@ public class JsonUtilTest {
   }
 
   @Test
-  public void getPositiveInt_decimalValue() {
+  public void getPositiveInt_decimalValue_withDefault() {
     final ObjectNode node = mapper.createObjectNode();
     final float decimalValue = Float.MAX_VALUE;
     node.put("test", decimalValue);
@@ -542,7 +589,7 @@ public class JsonUtilTest {
   }
 
   @Test
-  public void getPositiveInt_nonPositiveValue() {
+  public void getPositiveInt_nonPositiveValue_withDefault() {
     final ObjectNode node = mapper.createObjectNode();
     final int nonPositiveValue = 0;
     node.put("test", nonPositiveValue);
@@ -553,7 +600,7 @@ public class JsonUtilTest {
   }
 
   @Test
-  public void getPositiveInt_negativeValue() {
+  public void getPositiveInt_negativeValue_withDefault() {
     final ObjectNode node = mapper.createObjectNode();
     final int negativeValue = Integer.MIN_VALUE;
     node.put("test", negativeValue);
