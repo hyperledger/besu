@@ -23,9 +23,9 @@ import java.nio.file.Files;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 
 import io.vertx.ext.auth.PubSecKeyOptions;
+import io.vertx.ext.auth.impl.Codec;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
@@ -33,40 +33,32 @@ import org.bouncycastle.util.io.pem.PemReader;
 public class JWTAuthOptionsFactory {
 
   private static final String DEFAULT_ALGORITHM = "RS256";
-  private static final String PERMISSIONS = "permissions";
 
   public JWTAuthOptions createForExternalPublicKey(final File externalPublicKeyFile) {
-    final byte[] externalJwtPublicKey = readPublicKey(externalPublicKeyFile);
-    final String base64EncodedPublicKey = Base64.getEncoder().encodeToString(externalJwtPublicKey);
-    return new JWTAuthOptions()
-        .setPermissionsClaimKey(PERMISSIONS)
-        .addPubSecKey(
-            new PubSecKeyOptions()
-                .setAlgorithm(DEFAULT_ALGORITHM)
-                .setPublicKey(base64EncodedPublicKey));
+    return createForExternalPublicKeyWithAlgorithm(externalPublicKeyFile, DEFAULT_ALGORITHM);
   }
 
   public JWTAuthOptions createForExternalPublicKeyWithAlgorithm(
       final File externalPublicKeyFile, final String algorithm) {
     final byte[] externalJwtPublicKey = readPublicKey(externalPublicKeyFile);
-    final String base64EncodedPublicKey = Base64.getEncoder().encodeToString(externalJwtPublicKey);
-
     return new JWTAuthOptions()
-        .setPermissionsClaimKey(PERMISSIONS)
         .addPubSecKey(
-            new PubSecKeyOptions().setAlgorithm(algorithm).setPublicKey(base64EncodedPublicKey));
+            new PubSecKeyOptions()
+                .setAlgorithm(algorithm)
+                .setBuffer(keyPairToPublicPemString(externalJwtPublicKey)));
   }
 
   public JWTAuthOptions createWithGeneratedKeyPair() {
     final KeyPair keypair = generateJwtKeyPair();
     return new JWTAuthOptions()
-        .setPermissionsClaimKey(PERMISSIONS)
         .addPubSecKey(
             new PubSecKeyOptions()
                 .setAlgorithm(DEFAULT_ALGORITHM)
-                .setPublicKey(Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded()))
-                .setSecretKey(
-                    Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded())));
+                .setBuffer(keyPairToPublicPemString(keypair.getPublic().getEncoded())))
+        .addPubSecKey(
+            new PubSecKeyOptions()
+                .setAlgorithm(DEFAULT_ALGORITHM)
+                .setBuffer(keyPairToPrivatePemString(keypair)));
   }
 
   private byte[] readPublicKey(final File publicKeyFile) {
@@ -92,5 +84,23 @@ public class JWTAuthOptionsFactory {
     }
 
     return keyGenerator.generateKeyPair();
+  }
+
+  private String keyPairToPublicPemString(final byte[] publicKey) {
+    StringBuilder pemBuffer = new StringBuilder();
+    pemBuffer.append("-----BEGIN PUBLIC KEY-----\r\n");
+    pemBuffer.append(Codec.base64MimeEncode(publicKey));
+    pemBuffer.append("\r\n");
+    pemBuffer.append("-----END PUBLIC KEY-----\r\n");
+    return pemBuffer.toString();
+  }
+
+  private String keyPairToPrivatePemString(final KeyPair kp) {
+    StringBuilder pemBuffer = new StringBuilder();
+    pemBuffer.append("-----BEGIN PRIVATE KEY-----\r\n");
+    pemBuffer.append(Codec.base64MimeEncode(kp.getPrivate().getEncoded()));
+    pemBuffer.append("\r\n");
+    pemBuffer.append("-----END PRIVATE KEY-----\r\n");
+    return pemBuffer.toString();
   }
 }

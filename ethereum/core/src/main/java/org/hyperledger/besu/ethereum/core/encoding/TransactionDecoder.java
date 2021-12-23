@@ -77,6 +77,10 @@ public class TransactionDecoder {
     }
   }
 
+  public static Transaction decodeOpaqueBytes(final Bytes input) {
+    return decodeOpaqueBytes(input, GoQuorumOptions.getGoQuorumCompatibilityMode());
+  }
+
   public static Transaction decodeOpaqueBytes(
       final Bytes input, final boolean goQuorumCompatibilityMode) {
     final TransactionType transactionType;
