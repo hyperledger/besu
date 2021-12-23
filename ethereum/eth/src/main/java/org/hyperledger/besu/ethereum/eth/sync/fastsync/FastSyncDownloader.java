@@ -16,13 +16,10 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 import org.hyperledger.besu.util.ExceptionUtils;
 
@@ -39,31 +36,28 @@ import com.google.common.io.RecursiveDeleteOption;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class FastSyncDownloader {
+public class FastSyncDownloader<REQUEST> {
 
   private static final Duration FAST_SYNC_RETRY_DELAY = Duration.ofSeconds(5);
 
   private static final Logger LOG = LogManager.getLogger();
   private final FastSyncActions fastSyncActions;
-  private final WorldStateStorage worldStateStorage;
   private final WorldStateDownloader worldStateDownloader;
-  private final FastSyncStateStorage fastSyncStateStorage;
-  private final TaskCollection<NodeDataRequest> taskCollection;
+  protected final FastSyncStateStorage fastSyncStateStorage;
+  private final TaskCollection<REQUEST> taskCollection;
   private final Path fastSyncDataDirectory;
-  private final FastSyncState initialFastSyncState;
+  protected FastSyncState initialFastSyncState;
   private volatile Optional<TrailingPeerRequirements> trailingPeerRequirements = Optional.empty();
   private final AtomicBoolean running = new AtomicBoolean(false);
 
   public FastSyncDownloader(
       final FastSyncActions fastSyncActions,
-      final WorldStateStorage worldStateStorage,
       final WorldStateDownloader worldStateDownloader,
       final FastSyncStateStorage fastSyncStateStorage,
-      final TaskCollection<NodeDataRequest> taskCollection,
+      final TaskCollection<REQUEST> taskCollection,
       final Path fastSyncDataDirectory,
       final FastSyncState initialFastSyncState) {
     this.fastSyncActions = fastSyncActions;
-    this.worldStateStorage = worldStateStorage;
     this.worldStateDownloader = worldStateDownloader;
     this.fastSyncStateStorage = fastSyncStateStorage;
     this.taskCollection = taskCollection;
@@ -80,9 +74,6 @@ public class FastSyncDownloader {
 
   private CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
     LOG.info("Starting fast sync.");
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      worldStateStorage.clear();
-    }
     return exceptionallyCompose(
         fastSyncActions
             .waitForSuitablePeers(fastSyncState)
@@ -149,7 +140,7 @@ public class FastSyncDownloader {
     return state;
   }
 
-  private FastSyncState storeState(final FastSyncState state) {
+  protected FastSyncState storeState(final FastSyncState state) {
     fastSyncStateStorage.storeState(state);
     return state;
   }

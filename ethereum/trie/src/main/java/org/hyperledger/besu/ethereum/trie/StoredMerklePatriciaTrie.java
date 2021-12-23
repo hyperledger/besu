@@ -79,6 +79,21 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
             : new StoredNode<>(nodeFactory, Bytes.EMPTY, rootHash);
   }
 
+  /**
+   * Create a trie.
+   *
+   * @param nodeFactory The {@link StoredNodeFactory} to retrieve node.
+   * @param rootHash The initial root has for the trie, which should be already present in {@code
+   *     storage}.
+   */
+  public StoredMerklePatriciaTrie(final StoredNodeFactory<V> nodeFactory, final Bytes32 rootHash) {
+    this.nodeFactory = nodeFactory;
+    this.root =
+        rootHash.equals(EMPTY_TRIE_NODE_HASH)
+            ? NullNode.instance()
+            : new StoredNode<>(nodeFactory, Bytes.EMPTY, rootHash);
+  }
+
   @Override
   public Optional<V> get(final K key) {
     checkNotNull(key);
@@ -106,6 +121,12 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   public void remove(final K key) {
     checkNotNull(key);
     this.root = root.accept(removeVisitor, bytesToPath(key));
+  }
+
+  @Override
+  public void removePath(final K path, final RemoveVisitor<V> removeVisitor) {
+    checkNotNull(path);
+    this.root = root.accept(removeVisitor, path);
   }
 
   @Override

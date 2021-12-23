@@ -78,6 +78,10 @@ public class FastSyncActions {
         pivotBlockGauge::get);
   }
 
+  public SyncState getSyncState() {
+    return syncState;
+  }
+
   public CompletableFuture<FastSyncState> waitForSuitablePeers(final FastSyncState fastSyncState) {
     if (fastSyncState.hasPivotBlockHeader()) {
       return waitForAnyPeer().thenApply(ignore -> fastSyncState);

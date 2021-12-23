@@ -158,7 +158,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
     }
   }
 
-  private Node<V> decodeExtension(
+  protected Node<V> decodeExtension(
       final Bytes location,
       final Bytes path,
       final RLPInput valueRlp,
@@ -178,7 +178,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   }
 
   @SuppressWarnings("unchecked")
-  private BranchNode<V> decodeBranch(
+  protected BranchNode<V> decodeBranch(
       final Bytes location, final RLPInput nodeRLPs, final Supplier<String> errMessage) {
     final ArrayList<Node<V>> children = new ArrayList<>(BranchNode.RADIX);
     for (int i = 0; i < BranchNode.RADIX; ++i) {
@@ -213,7 +213,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
     return new BranchNode<>(location, children, value, this, valueSerializer);
   }
 
-  private LeafNode<V> decodeLeaf(
+  protected LeafNode<V> decodeLeaf(
       final Bytes location,
       final Bytes path,
       final RLPInput valueRlp,
@@ -226,7 +226,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   }
 
   @SuppressWarnings("unchecked")
-  private NullNode<V> decodeNull(final RLPInput nodeRLPs, final Supplier<String> errMessage) {
+  protected NullNode<V> decodeNull(final RLPInput nodeRLPs, final Supplier<String> errMessage) {
     if (!nodeRLPs.nextIsNull()) {
       throw new MerkleTrieException(errMessage.get() + ": list size 1 but not null");
     }

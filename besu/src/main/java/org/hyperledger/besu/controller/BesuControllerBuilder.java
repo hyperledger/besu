@@ -490,7 +490,8 @@ public abstract class BesuControllerBuilder {
       final EthMessages snapMessages,
       final WorldStateArchive worldStateArchive) {
     // TODO implement method when flag will be available
-    return Optional.empty();
+    return Optional.of(
+        new SnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive));
   }
 
   private WorldStateArchive createWorldStateArchive(

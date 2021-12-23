@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,37 +14,35 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-/**
- * This exception is thrown when there is an issue retrieving or decoding values from {@link
- * MerkleStorage}.
- */
-public class MerkleTrieException extends RuntimeException {
+public class MissingNode<V> extends NullNode<V> {
 
-  private Bytes32 hash;
-  private Bytes location;
+  private final Bytes32 hash;
+  private final Bytes location;
+  private final Bytes path;
 
-  public MerkleTrieException(final String message) {
-    super(message);
-  }
-
-  public MerkleTrieException(final String message, final Bytes32 hash, final Bytes location) {
-    super(message);
+  public MissingNode(final Bytes32 hash, final Bytes location) {
     this.hash = hash;
     this.location = location;
+    this.path = (location == Bytes.EMPTY) ? Bytes.EMPTY : location.slice(0, location.size() - 1);
   }
 
-  public MerkleTrieException(final String message, final Exception cause) {
-    super(message, cause);
-  }
-
+  @Override
   public Bytes32 getHash() {
     return hash;
   }
 
-  public Bytes getLocation() {
-    return location;
+  @Override
+  public Bytes getPath() {
+    return path;
+  }
+
+  @Override
+  public Optional<Bytes> getLocation() {
+    return Optional.ofNullable(location);
   }
 }

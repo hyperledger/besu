@@ -165,13 +165,18 @@ class BranchNode<V> implements Node<V> {
   }
 
   public Node<V> replaceChild(final byte index, final Node<V> updatedChild) {
+    return replaceChild(index, updatedChild, true);
+  }
+
+  public Node<V> replaceChild(
+      final byte index, final Node<V> updatedChild, final boolean allowFlatten) {
     final ArrayList<Node<V>> newChildren = new ArrayList<>(children);
     newChildren.set(index, updatedChild);
 
     if (updatedChild == NULL_NODE) {
       if (value.isPresent() && !hasChildren()) {
         return nodeFactory.createLeaf(Bytes.of(index), value.get());
-      } else if (value.isEmpty()) {
+      } else if (value.isEmpty() && allowFlatten) {
         final Optional<Node<V>> flattened = maybeFlatten(newChildren);
         if (flattened.isPresent()) {
           return flattened.get();
