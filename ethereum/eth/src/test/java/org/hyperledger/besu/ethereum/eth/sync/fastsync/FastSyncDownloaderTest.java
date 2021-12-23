@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldState
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.nio.file.Path;
@@ -54,8 +53,6 @@ public class FastSyncDownloaderTest {
 
   @SuppressWarnings("unchecked")
   private final FastSyncActions fastSyncActions = mock(FastSyncActions.class);
-
-  private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
 
   private final WorldStateDownloader worldStateDownloader = mock(FastWorldStateDownloader.class);
   private final FastSyncStateStorage storage = mock(FastSyncStateStorage.class);
