@@ -137,33 +137,35 @@ public class EthPeer {
     final boolean supportsRequestId =
         getAgreedCapabilities().stream().anyMatch(EthProtocol::isEth66Compatible);
     // eth protocol
-    final Map<Integer, RequestManager> ethRequestManagers = new HashMap<>();
-    ethRequestManagers.put(
-        EthPV62.GET_BLOCK_HEADERS, new RequestManager(this, supportsRequestId, EthProtocol.NAME));
-    ethRequestManagers.put(
-        EthPV62.GET_BLOCK_BODIES, new RequestManager(this, supportsRequestId, EthProtocol.NAME));
-    ethRequestManagers.put(
-        EthPV63.GET_RECEIPTS, new RequestManager(this, supportsRequestId, EthProtocol.NAME));
-    ethRequestManagers.put(
-        EthPV63.GET_NODE_DATA, new RequestManager(this, supportsRequestId, EthProtocol.NAME));
-    ethRequestManagers.put(
-        EthPV65.GET_POOLED_TRANSACTIONS,
-        new RequestManager(this, supportsRequestId, EthProtocol.NAME));
-    requestManagers.put(EthProtocol.NAME, ethRequestManagers);
+    requestManagers.put(
+        EthProtocol.NAME,
+        Map.ofEntries(
+            Map.entry(
+                EthPV62.GET_BLOCK_HEADERS,
+                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+            Map.entry(
+                EthPV62.GET_BLOCK_BODIES,
+                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+            Map.entry(
+                EthPV63.GET_RECEIPTS,
+                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+            Map.entry(
+                EthPV63.GET_NODE_DATA,
+                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+            Map.entry(
+                EthPV65.GET_POOLED_TRANSACTIONS,
+                new RequestManager(this, supportsRequestId, EthProtocol.NAME))));
   }
 
   private void initSnapRequestManagers() {
     // snap protocol
-    final Map<Integer, RequestManager> snapRequestManagers = new HashMap<>();
-    snapRequestManagers.put(
-        SnapV1.GET_ACCOUNT_RANGE, new RequestManager(this, true, SnapProtocol.NAME));
-    snapRequestManagers.put(
-        SnapV1.GET_STORAGE_RANGE, new RequestManager(this, true, SnapProtocol.NAME));
-    snapRequestManagers.put(
-        SnapV1.GET_BYTECODES, new RequestManager(this, true, SnapProtocol.NAME));
-    snapRequestManagers.put(
-        SnapV1.GET_TRIE_NODES, new RequestManager(this, true, SnapProtocol.NAME));
-    requestManagers.put(SnapProtocol.NAME, snapRequestManagers);
+    requestManagers.put(
+        SnapProtocol.NAME,
+        Map.ofEntries(
+            Map.entry(SnapV1.GET_ACCOUNT_RANGE, new RequestManager(this, true, SnapProtocol.NAME)),
+            Map.entry(SnapV1.GET_STORAGE_RANGE, new RequestManager(this, true, SnapProtocol.NAME)),
+            Map.entry(SnapV1.GET_BYTECODES, new RequestManager(this, true, SnapProtocol.NAME)),
+            Map.entry(SnapV1.GET_TRIE_NODES, new RequestManager(this, true, SnapProtocol.NAME))));
   }
 
   public void markValidated(final PeerValidator validator) {

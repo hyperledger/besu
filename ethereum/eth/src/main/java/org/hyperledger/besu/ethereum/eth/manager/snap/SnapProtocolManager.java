@@ -127,8 +127,10 @@ public class SnapProtocolManager implements ProtocolManager {
         responseData -> {
           try {
             ethPeer.send(responseData, getSupportedProtocol());
-          } catch (final PeerConnection.PeerNotConnected __) {
+          } catch (final PeerConnection.PeerNotConnected error) {
             // Peer disconnected before we could respond - nothing to do
+            LOG.trace(
+                "Peer disconnected before we could respond - nothing to do " + error.getMessage());
           }
         });
   }
