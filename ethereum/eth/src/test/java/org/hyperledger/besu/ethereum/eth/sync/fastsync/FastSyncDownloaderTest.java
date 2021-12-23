@@ -67,10 +67,9 @@ public class FastSyncDownloaderTest {
 
   private final Path fastSyncDataDirectory = null;
 
-  private final FastSyncDownloader downloader =
-      new FastSyncDownloader(
+  private final FastSyncDownloader<NodeDataRequest> downloader =
+      new FastSyncDownloader<>(
           fastSyncActions,
-          worldStateStorage,
           worldStateDownloader,
           storage,
           taskCollection,
@@ -122,10 +121,9 @@ public class FastSyncDownloaderTest {
             any(FastSyncActions.class), eq(new FastSyncState(pivotBlockHeader))))
         .thenReturn(completedFuture(null));
 
-    final FastSyncDownloader resumedDownloader =
-        new FastSyncDownloader(
+    final FastSyncDownloader<NodeDataRequest> resumedDownloader =
+        new FastSyncDownloader<>(
             fastSyncActions,
-            worldStateStorage,
             worldStateDownloader,
             storage,
             taskCollection,
