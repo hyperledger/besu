@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
@@ -190,7 +190,7 @@ public class WebSocketRequestHandlerTest {
         .handler(
             msg -> {
               context.assertEquals(Json.encode(expectedResponse), msg.body());
-              verifyZeroInteractions(jsonRpcMethodMock);
+              verifyNoInteractions(jsonRpcMethodMock);
               async.complete();
             })
         .completionHandler(v -> handler.handle(websocketId, ""));
@@ -213,7 +213,7 @@ public class WebSocketRequestHandlerTest {
         .handler(
             msg -> {
               context.assertEquals(Json.encode(expectedResponse), msg.body());
-              verifyZeroInteractions(jsonRpcMethodMock);
+              verifyNoInteractions(jsonRpcMethodMock);
               async.complete();
             })
         .completionHandler(v -> handler.handle(websocketId, "{}"));

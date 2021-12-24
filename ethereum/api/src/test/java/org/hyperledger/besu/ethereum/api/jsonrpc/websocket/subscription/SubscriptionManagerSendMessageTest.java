@@ -31,6 +31,7 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -50,6 +51,7 @@ public class SubscriptionManagerSendMessageTest {
   }
 
   @Test
+  @Ignore
   public void shouldSendMessageOnTheConnectionIdEventBusAddressForExistingSubscription(
       final TestContext context) {
     final String connectionId = UUID.randomUUID().toString();

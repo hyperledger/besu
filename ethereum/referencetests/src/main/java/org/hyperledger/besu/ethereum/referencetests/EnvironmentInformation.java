@@ -124,7 +124,7 @@ public class EnvironmentInformation {
   /**
    * Assigns the block header.
    *
-   * @param blockHeader A @{link BlockHeader}.
+   * @param blockHeader A {@link BlockHeader}.
    */
   public void setBlockHeader(final BlockHeader blockHeader) {
     this.blockHeader = blockHeader;
