@@ -242,7 +242,7 @@ public class GasPricePendingTransactionsTest {
 
     transactions.addRemoteTransaction(transaction2);
 
-    verifyNoInteractions(listener);
+    verifyNoMoreInteractions(listener);
   }
 
   @Test

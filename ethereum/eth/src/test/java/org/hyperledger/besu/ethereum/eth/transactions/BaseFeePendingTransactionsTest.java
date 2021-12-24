@@ -219,7 +219,7 @@ public class BaseFeePendingTransactionsTest {
 
     transactions.addRemoteTransaction(transaction2);
 
-    verifyNoInteractions(listener);
+    verifyNoMoreInteractions(listener);
   }
 
   @Test
