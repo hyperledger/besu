@@ -30,9 +30,12 @@ import com.google.errorprone.VisitorState;
 import com.google.errorprone.bugpatterns.BugChecker;
 import com.google.errorprone.bugpatterns.BugChecker.VariableTreeMatcher;
 import com.google.errorprone.matchers.Description;
+import com.google.errorprone.suppliers.Supplier;
+import com.google.errorprone.suppliers.Suppliers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Type;
 
 @AutoService(BugChecker.class)
 @BugPattern(
@@ -41,6 +44,9 @@ import com.sun.tools.javac.code.Symbol;
     severity = WARNING,
     linkType = BugPattern.LinkType.NONE)
 public class PrivateStaticFinalLoggers extends BugChecker implements VariableTreeMatcher {
+
+  static final Supplier<Type> ORG_APACHE_LOGGING_LOG4J_LOGGER =
+      Suppliers.typeFromString("org.apache.logging.log4j.Logger");
 
   @Override
   public Description matchVariable(final VariableTree tree, final VisitorState state) {
@@ -52,8 +58,7 @@ public class PrivateStaticFinalLoggers extends BugChecker implements VariableTre
         .containsAll(List.of(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL))) {
       return NO_MATCH;
     }
-    if (!isSubtype(
-        getType(tree), state.getTypeFromString("org.apache.logging.log4j.Logger"), state)) {
+    if (!isSubtype(getType(tree), ORG_APACHE_LOGGING_LOG4J_LOGGER.get(state), state)) {
       return NO_MATCH;
     }
     return buildDescription(tree)

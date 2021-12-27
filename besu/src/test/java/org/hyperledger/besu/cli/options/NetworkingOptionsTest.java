@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
@@ -32,8 +33,8 @@ public class NetworkingOptionsTest
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
     assertThat(networkingConfig.getCheckMaintainedConnectionsFrequencySec()).isEqualTo(2);
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -44,8 +45,8 @@ public class NetworkingOptionsTest
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
     assertThat(networkingConfig.getCheckMaintainedConnectionsFrequencySec()).isEqualTo(60);
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -56,8 +57,8 @@ public class NetworkingOptionsTest
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
     assertThat(networkingConfig.getInitiateConnectionsFrequencySec()).isEqualTo(2);
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -68,8 +69,8 @@ public class NetworkingOptionsTest
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
     assertThat(networkingConfig.getInitiateConnectionsFrequencySec()).isEqualTo(30);
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -81,8 +82,8 @@ public class NetworkingOptionsTest
     assertThat(networkingConfig.getDnsDiscoveryServerOverride()).isPresent();
     assertThat(networkingConfig.getDnsDiscoveryServerOverride().get()).isEqualTo("localhost");
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -93,8 +94,8 @@ public class NetworkingOptionsTest
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
     assertThat(networkingConfig.getDnsDiscoveryServerOverride()).isEmpty();
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Override

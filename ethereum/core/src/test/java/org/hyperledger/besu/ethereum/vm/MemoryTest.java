@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.evm.frame.Memory;
 
-import com.google.common.base.Strings;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
@@ -149,7 +148,7 @@ public class MemoryTest {
   }
 
   private static Bytes32 fillBytes32(final long value) {
-    return Bytes32.fromHexString(Strings.repeat(Long.toString(value), 64));
+    return Bytes32.fromHexString(Long.toString(value).repeat(64));
   }
 
   @Test

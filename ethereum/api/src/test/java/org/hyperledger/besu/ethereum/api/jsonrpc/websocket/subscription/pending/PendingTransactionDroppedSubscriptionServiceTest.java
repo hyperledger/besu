@@ -19,8 +19,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -67,8 +67,8 @@ public class PendingTransactionDroppedSubscriptionServiceTest {
 
     service.onTransactionDropped(pending);
 
-    verifyZeroInteractions(block);
-    verifyZeroInteractions(blockchain);
+    verifyNoInteractions(block);
+    verifyNoInteractions(blockchain);
     verifySubscriptionMangerInteractions(messages(TX_ONE, subscriptionIds));
   }
 
