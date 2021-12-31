@@ -46,7 +46,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import io.vertx.core.Vertx;
 
@@ -90,8 +90,7 @@ public class BesuNodeFactory {
   }
 
   public BesuNode createMinerNode(
-      final String name,
-      final Function<BesuNodeConfigurationBuilder, BesuNodeConfigurationBuilder> configModifier)
+      final String name, final UnaryOperator<BesuNodeConfigurationBuilder> configModifier)
       throws IOException {
     BesuNodeConfigurationBuilder builder =
         new BesuNodeConfigurationBuilder()
@@ -106,7 +105,7 @@ public class BesuNodeFactory {
   }
 
   public BesuNode createMinerNode(final String name) throws IOException {
-    return createMinerNode(name, Function.identity());
+    return createMinerNode(name, UnaryOperator.identity());
   }
 
   public BesuNode createMinerNodeWithRevertReasonEnabled(final String name) throws IOException {
@@ -114,12 +113,11 @@ public class BesuNodeFactory {
   }
 
   public BesuNode createArchiveNode(final String name) throws IOException {
-    return createArchiveNode(name, Function.identity());
+    return createArchiveNode(name, UnaryOperator.identity());
   }
 
   public BesuNode createArchiveNode(
-      final String name,
-      final Function<BesuNodeConfigurationBuilder, BesuNodeConfigurationBuilder> configModifier)
+      final String name, final UnaryOperator<BesuNodeConfigurationBuilder> configModifier)
       throws IOException {
     BesuNodeConfigurationBuilder builder =
         new BesuNodeConfigurationBuilder()
@@ -134,8 +132,7 @@ public class BesuNodeFactory {
   }
 
   public BesuNode createNode(
-      final String name,
-      final Function<BesuNodeConfigurationBuilder, BesuNodeConfigurationBuilder> configModifier)
+      final String name, final UnaryOperator<BesuNodeConfigurationBuilder> configModifier)
       throws IOException {
     final BesuNodeConfigurationBuilder configBuilder =
         configModifier.apply(new BesuNodeConfigurationBuilder().name(name));

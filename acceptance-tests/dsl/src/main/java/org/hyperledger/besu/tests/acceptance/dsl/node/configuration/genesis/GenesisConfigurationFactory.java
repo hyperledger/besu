@@ -40,6 +40,10 @@ import com.google.common.io.Resources;
 
 public class GenesisConfigurationFactory {
 
+  private GenesisConfigurationFactory() {
+    throw new IllegalStateException("Utility class");
+  }
+
   public static Optional<String> createCliqueGenesisConfig(
       final Collection<? extends RunnableNode> validators) {
     final String template = readGenesisFile("/clique/clique.json");

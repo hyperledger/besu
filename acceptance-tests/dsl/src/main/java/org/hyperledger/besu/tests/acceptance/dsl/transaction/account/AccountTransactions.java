@@ -25,7 +25,7 @@ import java.util.List;
 
 public class AccountTransactions {
 
-  private static final Amount DEFAULT_GAS_PRICE = Amount.wei(new BigInteger("10000000000"));
+  private static final Amount DEFAULT_GAS_PRICE = Amount.wei(BigInteger.valueOf(10000000000L));
   private final Accounts accounts;
 
   public AccountTransactions(final Accounts accounts) {
