@@ -116,7 +116,14 @@ public class GenesisConfigurationFactory {
     }
   }
 
-  private Optional<String> updateGenesisExtraData(
+  public static Optional<String> createDevLondonGenesisConfig(
+      final Collection<? extends RunnableNode> validators) {
+    final String template = readGenesisFile("/dev/dev_london.json");
+    return updateGenesisExtraData(
+        validators, template, CliqueExtraData::createGenesisExtraDataString);
+  }
+
+  private static Optional<String> updateGenesisExtraData(
       final Collection<? extends RunnableNode> validators,
       final String genesisTemplate,
       final Function<List<Address>, String> extraDataCreator) {
