@@ -22,7 +22,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.Gene
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTransaction;
 
 import java.math.BigInteger;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -111,7 +111,7 @@ public class EthSendRawTransactionTest extends AcceptanceTestBase {
     }
   }
 
-  private Function<BesuNodeConfigurationBuilder, BesuNodeConfigurationBuilder> configureNode(
+  private UnaryOperator<BesuNodeConfigurationBuilder> configureNode(
       final boolean enableStrictReplayProtection) {
     return b ->
         b.genesisConfigProvider(GenesisConfigurationFactory::createDevLondonGenesisConfig)
