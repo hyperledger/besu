@@ -21,7 +21,7 @@ import java.util.Optional;
 
 @FunctionalInterface
 public interface TransactionPriceCalculator {
-  Wei price(Transaction transaction, Optional<Long> baseFee);
+  Wei price(Transaction transaction, Optional<Wei> baseFee);
 
   static TransactionPriceCalculator frontier() {
     return (transaction, baseFee) -> transaction.getGasPrice().orElse(Wei.ZERO);
@@ -29,7 +29,7 @@ public interface TransactionPriceCalculator {
 
   static TransactionPriceCalculator eip1559() {
     return (transaction, maybeBaseFee) -> {
-      final Wei baseFee = Wei.of(maybeBaseFee.orElseThrow());
+      final Wei baseFee = maybeBaseFee.orElseThrow();
       if (!transaction.getType().supports1559FeeMarket()) {
         return transaction.getGasPrice().orElse(Wei.ZERO);
       }

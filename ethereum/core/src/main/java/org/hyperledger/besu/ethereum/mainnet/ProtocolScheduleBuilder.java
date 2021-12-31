@@ -235,6 +235,9 @@ public class ProtocolScheduleBuilder {
                 create(
                     config.getArrowGlacierBlockNumber(),
                     specFactory.arrowGlacierDefinition(config)),
+                create(
+                    config.getPreMergeForkBlockNumber(),
+                    specFactory.preMergeForkDefinition(config)),
                 // Classic Milestones
                 create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
                 create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),

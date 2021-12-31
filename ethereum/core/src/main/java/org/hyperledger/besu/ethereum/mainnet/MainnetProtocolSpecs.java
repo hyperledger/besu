@@ -72,7 +72,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonArray;
 
-/** Provides the various @{link ProtocolSpec}s on mainnet hard forks. */
+/** Provides the various {@link ProtocolSpec}s on mainnet hard forks. */
 public abstract class MainnetProtocolSpecs {
 
   public static final int FRONTIER_CONTRACT_SIZE_LIMIT = Integer.MAX_VALUE;
@@ -587,6 +587,30 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration)
         .difficultyCalculator(MainnetDifficultyCalculators.ARROW_GLACIER)
         .name("ArrowGlacier");
+  }
+
+  static ProtocolSpecBuilder preMergeForkDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+
+    return arrowGlacierDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.preMergeFork(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .name("PreMergeFork");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

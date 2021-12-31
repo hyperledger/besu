@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
@@ -45,23 +46,23 @@ public class ValidateConfigSubCommandTest extends CommandTestAbstract {
   public void validateConfigSubCommandExists() {
     CommandSpec spec = parseCommand().getSpec();
     assertThat(spec.subcommands()).containsKeys(VALIDATE_CONFIG_SUBCOMMAND_NAME);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingValidateConfigSubCommandHelpMustDisplayUsage() {
     parseCommand(VALIDATE_CONFIG_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString()).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingValidateConfigSubCommandWithNonExistentMustDisplayError() {
     parseCommand(VALIDATE_CONFIG_SUBCOMMAND_NAME, "--config-file", "/non/existent/file");
-    assertThat(commandOutput.toString())
+    assertThat(commandOutput.toString(UTF_8))
         .contains("Unable to read TOML configuration, file not found.");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -71,8 +72,8 @@ public class ValidateConfigSubCommandTest extends CommandTestAbstract {
     invalidToml.toFile().deleteOnExit();
 
     parseCommand(VALIDATE_CONFIG_SUBCOMMAND_NAME, "--config-file", invalidToml.toString());
-    assertThat(commandOutput.toString()).contains("Invalid TOML configuration");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).contains("Invalid TOML configuration");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -84,7 +85,7 @@ public class ValidateConfigSubCommandTest extends CommandTestAbstract {
     validToml.toFile().deleteOnExit();
 
     parseCommand(VALIDATE_CONFIG_SUBCOMMAND_NAME, "--config-file", validToml.toString());
-    assertThat(commandOutput.toString()).startsWith("TOML config file is valid");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith("TOML config file is valid");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 }

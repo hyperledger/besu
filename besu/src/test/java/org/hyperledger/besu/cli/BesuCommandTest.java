@@ -31,12 +31,12 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_DISCOVERY_URL;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_DISCOVERY_URL;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_DISCOVERY_URL;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_DISCOVERY_URL;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.RINKEBY_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.mockito.ArgumentMatchers.any;
@@ -177,22 +177,22 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void callingHelpSubCommandMustDisplayUsage() {
     parseCommand("--help");
     final String expectedOutputStart = String.format("Usage:%n%nbesu [OPTIONS] [COMMAND]");
-    assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingHelpDisplaysDefaultRpcApisCorrectly() {
     parseCommand("--help");
-    assertThat(commandOutput.toString()).contains("default: [ETH, NET, WEB3]");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).contains("default: [ETH, NET, WEB3]");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingVersionDisplayBesuInfoVersion() {
     parseCommand("--version");
-    assertThat(commandOutput.toString()).isEqualToIgnoringWhitespace(BesuInfo.version());
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   // Testing default values
@@ -207,7 +207,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         .ethNetworkConfig(
             new EthNetworkConfig(
                 EthNetworkConfig.jsonConfig(MAINNET),
-                EthNetworkConfig.MAINNET_NETWORK_ID,
+                MAINNET.getNetworkId(),
                 MAINNET_BOOTSTRAP_NODES,
                 MAINNET_DISCOVERY_URL));
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
@@ -235,7 +235,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(storageProviderArgumentCaptor.getValue()).isNotNull();
     assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
     assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.EMPTY);
@@ -250,8 +250,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final String expectedOutputStart =
         "Missing required parameter for option '--config-file' (<FILE>)";
-    assertThat(commandErrorOutput.toString()).startsWith(expectedOutputStart);
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -261,8 +261,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final String expectedOutputStart =
         "Unable to read TOML configuration file " + tempConfigFilePath;
-    assertThat(commandErrorOutput.toString()).startsWith(expectedOutputStart);
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -270,8 +270,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", "./an-invalid-file-name-sdsd87sjhqoi34io23.toml");
 
     final String expectedOutputStart = "Unable to read TOML configuration, file not found.";
-    assertThat(commandErrorOutput.toString()).startsWith(expectedOutputStart);
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -285,8 +285,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String expectedOutputStart =
         "Invalid TOML configuration: org.apache.tuweni.toml.TomlParseError: Unexpected '.', expected a-z, A-Z, 0-9, ', \", a table key, "
             + "a newline, or end-of-input (line 1, column 1)";
-    assertThat(commandErrorOutput.toString()).startsWith(expectedOutputStart);
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -299,8 +299,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
     assertThat(ethNetworkConfigArgumentCaptor.getValue().getBootNodes()).isEmpty();
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -313,8 +313,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String expectedOutputStart =
         "Invalid TOML configuration: org.apache.tuweni.toml.TomlParseError: Unexpected '=', expected ', \", ''', \"\"\", a number, "
             + "a boolean, a date/time, an array, or a table (line 1, column 8)";
-    assertThat(commandErrorOutput.toString()).startsWith(expectedOutputStart);
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -389,30 +389,30 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FAST);
     assertThat(syncConfigurationCaptor.getValue().getFastSyncMinimumPeerCount()).isEqualTo(13);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void nodePermissionsSmartContractWithoutOptionMustError() {
     parseCommand("--permissions-nodes-contract-address");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("Missing required parameter for option '--permissions-nodes-contract-address'");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void nodePermissionsEnabledWithoutContractAddressMustError() {
     parseCommand("--permissions-nodes-contract-enabled");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("No node permissioning contract address specified");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -422,10 +422,10 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--permissions-nodes-contract-address",
         "invalid-smart-contract-address");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandErrorOutput.toString()).contains("Invalid value");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("Invalid value");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -433,10 +433,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--permissions-nodes-contract-enabled", "--permissions-nodes-contract-address", "0x1234");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandErrorOutput.toString()).contains("Invalid value");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("Invalid value");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -464,8 +464,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         .usingRecursiveComparison()
         .isEqualTo(smartContractPermissioningConfiguration);
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -492,8 +492,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         .usingRecursiveComparison()
         .isEqualTo(expectedConfig);
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -522,31 +522,31 @@ public class BesuCommandTest extends CommandTestAbstract {
         .usingRecursiveComparison()
         .isEqualTo(expectedConfig);
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void accountPermissionsSmartContractWithoutOptionMustError() {
     parseCommand("--permissions-accounts-contract-address");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith(
             "Missing required parameter for option '--permissions-accounts-contract-address'");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void accountPermissionsEnabledWithoutContractAddressMustError() {
     parseCommand("--permissions-accounts-contract-enabled");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("No account permissioning contract address specified");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -556,10 +556,10 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--permissions-accounts-contract-address",
         "invalid-smart-contract-address");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandErrorOutput.toString()).contains("Invalid value");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("Invalid value");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -569,10 +569,10 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--permissions-accounts-contract-address",
         "0x1234");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandErrorOutput.toString()).contains("Invalid value");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("Invalid value");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -601,30 +601,30 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(effectiveSmartContractConfig.getAccountSmartContractAddress())
         .isEqualTo(Address.fromHexString(smartContractAddress));
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void nodePermissioningTomlPathWithoutOptionMustDisplayUsage() {
     parseCommand("--permissions-nodes-config-file");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("Missing required parameter for option '--permissions-nodes-config-file'");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void accountPermissioningTomlPathWithoutOptionMustDisplayUsage() {
     parseCommand("--permissions-accounts-config-file");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("Missing required parameter for option '--permissions-accounts-config-file'");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -634,10 +634,10 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--permissions-nodes-config-file",
         "file-does-not-exist");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandErrorOutput.toString()).contains("Configuration file does not exist");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("Configuration file does not exist");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -647,10 +647,10 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--permissions-accounts-config-file",
         "file-does-not-exist");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandErrorOutput.toString()).contains("Configuration file does not exist");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("Configuration file does not exist");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -662,8 +662,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder).build();
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -676,8 +676,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder).build();
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -686,8 +686,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder).build();
 
-    assertThat(commandErrorOutput.toString()).doesNotContain("no permissions enabled");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).doesNotContain("no permissions enabled");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -725,8 +725,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         .usingRecursiveComparison()
         .isEqualTo(localPermissioningConfiguration);
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -757,8 +757,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(effectiveLocalPermissioningConfig.getAccountPermissioningConfigFilePath())
         .isEqualTo(permToml.toString());
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -829,7 +829,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         .ethNetworkConfig(
             new EthNetworkConfig(
                 EthNetworkConfig.jsonConfig(MAINNET),
-                EthNetworkConfig.MAINNET_NETWORK_ID,
+                MAINNET.getNetworkId(),
                 MAINNET_BOOTSTRAP_NODES,
                 MAINNET_DISCOVERY_URL));
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
@@ -849,10 +849,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
     assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(5);
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -899,8 +899,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).nodeKey(isNotNull());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -915,8 +915,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(path.toAbsolutePath());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -933,8 +933,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(networkArg.getValue().getGenesisConfig())
         .isEqualTo(encodeJsonGenesis(GENESIS_VALID_JSON));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1009,10 +1009,10 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand("--genesis-file", genesisFile.toString(), "--network", "rinkeby");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("--network option and --genesis-file option can't be used at the same time.");
   }
 
@@ -1021,11 +1021,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String nonExistentGenesis = "non-existent-genesis.json";
     parseCommand("--genesis-file", nonExistentGenesis);
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith("Unable to load genesis file");
-    assertThat(commandErrorOutput.toString()).contains(nonExistentGenesis);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith("Unable to load genesis file");
+    assertThat(commandErrorOutput.toString(UTF_8)).contains(nonExistentGenesis);
   }
 
   @Test
@@ -1083,8 +1083,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(networkArg.getValue().getBootNodes()).isEmpty();
     assertThat(networkArg.getValue().getNetworkId()).isEqualTo(GENESIS_CONFIG_TEST_CHAINID);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1105,8 +1105,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     //    assertThat(networkArg.getValue().getNetworkId())
     //        .isEqualTo(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1129,8 +1129,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder.identityString(eq(Optional.of("test")))).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1139,8 +1139,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder.p2pEnabled(eq(true))).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1149,8 +1149,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder.p2pEnabled(eq(false))).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1183,8 +1183,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--banned-node-ids",
         "--remote-connections-max-percentage");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1193,8 +1193,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder.discovery(eq(true))).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1203,8 +1203,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder.discovery(eq(false))).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1224,7 +1224,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.getBootNodes())
         .extracting(bootnode -> bootnode.toURI().toString())
         .containsExactly(VALID_ENODE_STRINGS);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1242,7 +1242,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(discoveryDnsUrlCliArg);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1262,7 +1262,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getBootNodes()).extracting(EnodeURL::toURI).containsExactly(bootnode);
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1274,8 +1274,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(ethNetworkConfigArgumentCaptor.getValue().getBootNodes()).isEmpty();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1283,8 +1283,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--bootnodes",
         "enode://d2567893371ea5a6fa6371d483891ed0d129e79a8fc74d6df95a00a6545444cd4a6960bbffe0b4e2edcf35135271de57ee559c0909236bbc2074346ef2b5b47c@127.0.0.1:30304");
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1294,20 +1294,20 @@ public class BesuCommandTest extends CommandTestAbstract {
         "enode://d2567893371ea5a6fa6371d483891ed0d129e79a8fc74d6df95a00a6545444cd4a6960bbffe0b4e2edcf35135271de57ee559c0909236bbc2074346ef2b5b47c@127.0.0.1:30304",
         "--discovery-enabled",
         "false");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
     verify(mockRunnerBuilder).build();
     verify(mockLogger, atLeast(1)).warn("Discovery disabled: bootnodes will be ignored.");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingWithInvalidBootnodeMustDisplayError() {
     parseCommand("--bootnodes", "invalid_enode_url");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
     final String expectedErrorOutputStart =
-        "Invalid enode URL syntax. Enode URL should have the following format "
+        "Invalid enode URL syntax 'invalid_enode_url'. Enode URL should have the following format "
             + "'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.";
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
   }
 
   @Test
@@ -1318,21 +1318,21 @@ public class BesuCommandTest extends CommandTestAbstract {
         "enode://02567893371ea5a6fa6371d483891ed0d129e79a8fc74d6df95a00a6545444cd4a6960bbffe0b4e2edcf35135271de57ee559c0909236bbc2074346ef2b5b47c@127.0.0.1:30303?discport=0";
     final String bootnodesValue = validBootnode + "," + invalidBootnode;
     parseCommand("--bootnodes", bootnodesValue);
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
     final String expectedErrorOutputStart =
         "Bootnodes must have discovery enabled. Invalid bootnodes: " + invalidBootnode + ".";
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
   }
 
   // This test ensures non regression on https://pegasys1.atlassian.net/browse/PAN-2387
   @Test
   public void callingWithInvalidBootnodeAndEqualSignMustDisplayError() {
     parseCommand("--bootnodes=invalid_enode_url");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
     final String expectedErrorOutputStart =
-        "Invalid enode URL syntax. Enode URL should have the following format "
+        "Invalid enode URL syntax 'invalid_enode_url'. Enode URL should have the following format "
             + "'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.";
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
   }
 
   @Test
@@ -1348,8 +1348,8 @@ public class BesuCommandTest extends CommandTestAbstract {
                 .map(EnodeURLImpl::fromString)
                 .collect(Collectors.toList()));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1372,26 +1372,26 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(bytesCollectionCollector.getValue().toArray()).isEqualTo(nodes);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingWithBannedNodeidsOptionButNoValueMustDisplayError() {
     parseCommand("--banned-node-ids");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
     final String expectedErrorOutputStart =
         "Missing required parameter for option '--banned-node-ids' at index 0 (<NODEID>)";
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
   }
 
   @Test
   public void callingWithBannedNodeidsOptionWithInvalidValuesMustDisplayError() {
     parseCommand("--banned-node-ids", "0x10,20,30");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
     final String expectedErrorOutputStart =
         "Invalid ids supplied to '--banned-node-ids'. Expected 64 bytes in 0x10";
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
   }
 
   @Test
@@ -1408,8 +1408,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
     assertThat(intArgumentCaptor.getValue()).isEqualTo(port);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1418,8 +1418,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String ip = "1.2.3.4";
     parseCommand("--p2p-interface", ip);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     verify(mockRunnerBuilder).p2pListenInterface(stringArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
@@ -1438,8 +1438,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1453,8 +1453,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1468,8 +1468,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1488,8 +1488,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         .isEqualTo(
             Fraction.fromPercentage(Percentage.fromInt(remoteConnectionsPercentage)).getValue());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1497,9 +1497,9 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand(
         "--remote-connections-limit-enabled", "--remote-connections-max-percentage", "invalid");
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Invalid value for option '--remote-connections-max-percentage'",
             "should be a number between 0 and 100 inclusive");
@@ -1510,9 +1510,9 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand(
         "--remote-connections-limit-enabled", "--remote-connections-max-percentage", "150");
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Invalid value for option '--remote-connections-max-percentage'",
             "should be a number between 0 and 100 inclusive");
@@ -1522,16 +1522,16 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void enableRandomConnectionPrioritization() {
     parseCommand("--random-peer-priority-enabled");
     verify(mockRunnerBuilder).randomPeerPriority(eq(true));
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void randomConnectionPrioritizationDisabledByDefault() {
     parseCommand();
     verify(mockRunnerBuilder).randomPeerPriority(eq(false));
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1542,8 +1542,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1554,8 +1554,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FULL);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1566,20 +1566,20 @@ public class BesuCommandTest extends CommandTestAbstract {
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FULL);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void helpShouldDisplayFastSyncOptions() {
     parseCommand("--help");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).contains("--fast-sync-min-peers");
+    assertThat(commandOutput.toString(UTF_8)).contains("--fast-sync-min-peers");
     // whitelist is now a hidden option
-    assertThat(commandOutput.toString()).doesNotContain("whitelist");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).doesNotContain("whitelist");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1590,17 +1590,17 @@ public class BesuCommandTest extends CommandTestAbstract {
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
     assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void parsesInvalidFastSyncMinPeersOptionWrongFormatShouldFail() {
 
     parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "ten");
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Invalid value for option '--fast-sync-min-peers': 'ten' is not an int");
   }
 
@@ -1622,17 +1622,17 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--nat-method", "KUBERNETES");
     verify(mockRunnerBuilder).natMethod(eq(NatMethod.KUBERNETES));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void parsesInvalidNatMethodOptionsShouldFail() {
 
     parseCommand("--nat-method", "invalid");
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Invalid value for option '--nat-method': expected one of [UPNP, DOCKER, KUBERNETES, AUTO, NONE] (case-insensitive) but was 'invalid'");
   }
@@ -1654,9 +1654,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void ethStatsContactOptionCannotBeUsedWithoutEthStatsServerProvided() {
     parseCommand("--ethstats-contact", "besu-updated");
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove --ethstats-contact or provide a URL (via --ethstats=nodename:secret@host:port)");
   }
@@ -1665,8 +1665,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void privacyOnchainGroupsEnabledCannotBeUsedWithPrivacyFlexibleGroupsEnabled() {
     parseCommand("--privacy-onchain-groups-enabled", "--privacy-flexible-groups-enabled");
     Mockito.verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "The `--privacy-onchain-groups-enabled` option is deprecated and you should only use `--privacy-flexible-groups-enabled`");
   }
@@ -1681,8 +1681,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
     assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad()).isEqualTo(11);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1691,9 +1691,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--Xdata-storage-format", "BONSAI", "--Xbonsai-maximum-back-layers-to-load", "ten");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Invalid value for option '--Xbonsai-maximum-back-layers-to-load': 'ten' is not a long");
   }
@@ -1735,9 +1735,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void dnsUpdateEnabledOptionCannotBeUsedWithoutDnsEnabled() {
     parseCommand("--Xdns-update-enabled", "true");
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled or specify dns is enabled (--Xdns-enabled)");
   }
@@ -1746,10 +1746,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void helpShouldDisplayNatMethodInfo() {
     parseCommand("--help");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).contains("--nat-method");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).contains("--nat-method");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1758,8 +1758,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1768,8 +1768,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder).natManagerServiceName(eq(DEFAULT_BESU_SERVICE_NAME_FILTER));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1779,16 +1779,16 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder).natManagerServiceName(eq(podName));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void natManagerPodNameCannotBeUsedWithNatDockerMethod() {
     parseCommand("--nat-method", "DOCKER", "--Xnat-kube-service-name", "besu-updated");
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
   }
@@ -1796,9 +1796,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void natManagerPodNameCannotBeUsedWithNatNoneMethod() {
     parseCommand("--nat-method", "NONE", "--Xnat-kube-service-name", "besu-updated");
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "The `--Xnat-kube-service-name` parameter is only used in kubernetes mode. Either remove --Xnat-kube-service-name or select the KUBERNETES mode (via --nat--method=KUBERNETES)");
   }
@@ -1811,8 +1811,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--nat-method", "KUBERNETES", "--Xnat-method-fallback-enabled", "true");
     verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(true));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1823,8 +1823,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--nat-method", "DOCKER", "--Xnat-method-fallback-enabled", "true");
     verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(true));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1835,16 +1835,16 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--nat-method", "UPNP", "--Xnat-method-fallback-enabled", "true");
     verify(mockRunnerBuilder).natMethodFallbackEnabled(eq(true));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void natMethodFallbackEnabledCannotBeUsedWithAutoMethod() {
     parseCommand("--nat-method", "AUTO", "--Xnat-method-fallback-enabled", "false");
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "The `--Xnat-method-fallback-enabled` parameter cannot be used in AUTO mode. Either remove --Xnat-method-fallback-enabled or select another mode (via --nat--method=XXXX)");
   }
@@ -1858,8 +1858,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().isEnabled()).isFalse();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1871,8 +1871,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().isEnabled()).isTrue();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1884,8 +1884,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(graphQLConfigArgumentCaptor.getValue().isEnabled()).isFalse();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1897,8 +1897,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(graphQLConfigArgumentCaptor.getValue().isEnabled()).isTrue();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1913,8 +1913,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
         .containsExactlyInAnyOrder(ETH.name(), NET.name(), PERM.name());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1927,8 +1927,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
         .containsExactlyInAnyOrder(ETH.name(), NET.name());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1953,8 +1953,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-http-api",
         "--rpc-http-max-active-connections");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1979,8 +1979,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verifyOptionsConstraintLoggerCall("--privacy-tls-enabled", "--privacy-tls-keystore-file");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1989,8 +1989,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verifyOptionsConstraintLoggerCall("--privacy-enabled", "--privacy-tls-enabled");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1999,19 +1999,19 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verifyOptionsConstraintLoggerCall("--sync-mode", "--fast-sync-min-peers");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void rpcApisPropertyWithInvalidEntryMustDisplayError() {
     parseCommand("--rpc-http-api", "BOB");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
     // PicoCLI uses longest option name for message when option has multiple names, so here plural.
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Invalid value for option '--rpc-http-apis'");
   }
 
@@ -2029,8 +2029,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
         .containsExactlyInAnyOrder("BOB");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2047,8 +2047,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2062,8 +2062,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2077,8 +2077,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2092,8 +2092,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getMaxActiveConnections())
         .isEqualTo(maxConnections);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2107,8 +2107,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(wsRpcConfigArgumentCaptor.getValue().getMaxActiveConnections())
         .isEqualTo(maxConnections);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2117,16 +2117,16 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verifyOptionsConstraintLoggerCall("--rpc-http-enabled", "--rpc-http-tls-enabled");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void rpcHttpTlsWithoutKeystoreReportsError() {
     parseCommand("--rpc-http-enabled", "--rpc-http-tls-enabled");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Keystore file is required when TLS is enabled for JSON-RPC HTTP endpoint");
   }
 
@@ -2138,8 +2138,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-http-tls-keystore-file",
         "/tmp/test.p12");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "File containing password to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint");
   }
@@ -2150,6 +2150,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final int port = 1234;
     final String keystoreFile = "/tmp/test.p12";
     final String keystorePasswordFile = "/tmp/test.txt";
+
     parseCommand(
         "--rpc-http-enabled",
         "--rpc-http-host",
@@ -2173,8 +2174,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
     assertThat(tlsConfiguration.get().getClientAuthConfiguration().isEmpty()).isTrue();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2196,8 +2197,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         keystorePasswordFile,
         "--rpc-http-tls-client-auth-enabled");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Known-clients file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
   }
@@ -2240,8 +2241,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(tlsConfiguration.get().getClientAuthConfiguration().get().isCaClientsEnabled())
         .isFalse();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2285,8 +2286,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(tlsConfiguration.get().getClientAuthConfiguration().get().isCaClientsEnabled())
         .isTrue();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2328,8 +2329,170 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(tlsConfiguration.get().getClientAuthConfiguration().get().isCaClientsEnabled())
         .isTrue();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpTlsCheckDefaultProtocolsAndCipherSuites() {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    final String keystoreFile = "/tmp/test.p12";
+    final String keystorePasswordFile = "/tmp/test.txt";
+
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        host,
+        "--rpc-http-port",
+        String.valueOf(port),
+        "--rpc-http-tls-enabled",
+        "--rpc-http-tls-keystore-file",
+        keystoreFile,
+        "--rpc-http-tls-keystore-password-file",
+        keystorePasswordFile);
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
+    final Optional<TlsConfiguration> tlsConfiguration =
+        jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
+    assertThat(tlsConfiguration).isPresent();
+    assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration()).isEmpty();
+    assertThat(tlsConfiguration.get().getCipherSuites().get()).isEmpty();
+    assertThat(tlsConfiguration.get().getSecureTransportProtocols().get())
+        .containsExactly("TLSv1.3", "TLSv1.2");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpTlsCheckInvalidProtocols() {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    final String keystoreFile = "/tmp/test.p12";
+    final String keystorePasswordFile = "/tmp/test.txt";
+    final String protocol = "TLsv1.4";
+
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        host,
+        "--rpc-http-port",
+        String.valueOf(port),
+        "--rpc-http-tls-enabled",
+        "--rpc-http-tls-keystore-file",
+        keystoreFile,
+        "--rpc-http-tls-keystore-password-file",
+        keystorePasswordFile,
+        "--rpc-http-tls-protocols",
+        protocol);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("No valid TLS protocols specified");
+  }
+
+  @Test
+  public void rpcHttpTlsCheckInvalidCipherSuites() {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    final String keystoreFile = "/tmp/test.p12";
+    final String keystorePasswordFile = "/tmp/test.txt";
+    final String cipherSuites = "Invalid";
+
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        host,
+        "--rpc-http-port",
+        String.valueOf(port),
+        "--rpc-http-tls-enabled",
+        "--rpc-http-tls-keystore-file",
+        keystoreFile,
+        "--rpc-http-tls-keystore-password-file",
+        keystorePasswordFile,
+        "--rpc-http-tls-cipher-suites",
+        cipherSuites);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Invalid TLS cipher suite specified " + cipherSuites);
+  }
+
+  @Test
+  public void rpcHttpTlsCheckValidProtocolsAndCipherSuites() {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    final String keystoreFile = "/tmp/test.p12";
+    final String keystorePasswordFile = "/tmp/test.txt";
+    final String protocols = "TLSv1.3,TLSv1.2";
+    final String cipherSuites =
+        "TLS_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256";
+
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        host,
+        "--rpc-http-port",
+        String.valueOf(port),
+        "--rpc-http-tls-enabled",
+        "--rpc-http-tls-keystore-file",
+        keystoreFile,
+        "--rpc-http-tls-keystore-password-file",
+        keystorePasswordFile,
+        "--rpc-http-tls-protocols",
+        protocols,
+        "--rpc-http-tls-cipher-suites",
+        cipherSuites);
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
+    final Optional<TlsConfiguration> tlsConfiguration =
+        jsonRpcConfigArgumentCaptor.getValue().getTlsConfiguration();
+    assertThat(tlsConfiguration).isPresent();
+    assertThat(tlsConfiguration.get().getKeyStorePath()).isEqualTo(Path.of(keystoreFile));
+    assertThat(tlsConfiguration.get().getClientAuthConfiguration()).isEmpty();
+    assertThat(tlsConfiguration.get().getCipherSuites().get())
+        .containsExactlyInAnyOrder(
+            "TLS_AES_256_GCM_SHA384",
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256");
+    assertThat(tlsConfiguration.get().getSecureTransportProtocols().get())
+        .containsExactlyInAnyOrder("TLSv1.2", "TLSv1.3");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpTlsWarnIfCipherSuitesSpecifiedWithoutTls() {
+    final String host = "1.2.3.4";
+    final int port = 1234;
+    final String cipherSuites = "Invalid";
+
+    parseCommand(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        host,
+        "--rpc-http-port",
+        String.valueOf(port),
+        "--rpc-http-tls-cipher-suite",
+        cipherSuites);
+    verify(mockLogger)
+        .warn(
+            "{} has been ignored because {} was not defined on the command line.",
+            "--rpc-http-tls-cipher-suite",
+            "--rpc-http-tls-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2350,8 +2513,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(graphQLConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
     assertThat(graphQLConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2365,8 +2528,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(graphQLConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2380,8 +2543,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(graphQLConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2395,8 +2558,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getCorsAllowedDomains().toArray())
         .isEqualTo(origins);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2410,8 +2573,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getCorsAllowedDomains().toArray())
         .isEqualTo(origins);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2425,8 +2588,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getCorsAllowedDomains().toArray())
         .isEqualTo(origins);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2438,8 +2601,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getCorsAllowedDomains()).containsExactly("*");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2452,8 +2615,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getCorsAllowedDomains()).isEmpty();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2461,10 +2624,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String[] origins = {"http://domain1.com", "none"};
     parseCommand("--rpc-http-cors-origins", String.join(",", origins));
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Value 'none' can't be used with other domains");
   }
 
@@ -2473,10 +2636,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String[] origins = {"none", "http://domain1.com"};
     parseCommand("--rpc-http-cors-origins", String.join(",", origins));
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Value 'none' can't be used with other domains");
   }
 
@@ -2484,10 +2647,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void rpcHttpCorsOriginsAllWithAnotherDomainMustFail() {
     parseCommand("--rpc-http-cors-origins=http://domain1.com,all");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Values '*' or 'all' can't be used with other domains");
   }
 
@@ -2495,10 +2658,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void rpcHttpCorsOriginsAllWithAnotherDomainMustFailAsFlags() {
     parseCommand("--rpc-http-cors-origins=http://domain1.com", "--rpc-http-cors-origins=all");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Values '*' or 'all' can't be used with other domains");
   }
 
@@ -2506,10 +2669,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void rpcHttpCorsOriginsWildcardWithAnotherDomainMustFail() {
     parseCommand("--rpc-http-cors-origins=http://domain1.com,*");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Values '*' or 'all' can't be used with other domains");
   }
 
@@ -2517,10 +2680,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void rpcHttpCorsOriginsWildcardWithAnotherDomainMustFailAsFlags() {
     parseCommand("--rpc-http-cors-origins=http://domain1.com", "--rpc-http-cors-origins=*");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Values '*' or 'all' can't be used with other domains");
   }
 
@@ -2529,10 +2692,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String[] origins = {"**"};
     parseCommand("--rpc-http-cors-origins", String.join(",", origins));
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Domain values result in invalid regex pattern");
   }
 
@@ -2540,10 +2703,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void rpcHttpCorsOriginsEmptyValueFails() {
     parseCommand("--rpc-http-cors-origins=");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Domain cannot be empty string or null string.");
   }
 
@@ -2561,8 +2724,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
         .doesNotContain("localhost");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2577,8 +2740,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
         .doesNotContain("localhost");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2593,8 +2756,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
         .doesNotContain("*", "localhost");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2609,8 +2772,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
         .doesNotContain("*", "localhost");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Deprecated
@@ -2626,8 +2789,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
         .doesNotContain("*", "localhost");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2642,8 +2805,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist())
         .doesNotContain("*", "localhost");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2651,10 +2814,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String[] origins = {"friend", "*"};
     parseCommand("--host-allowlist", String.join(",", origins));
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Values '*' or 'all' can't be used with other hostnames");
   }
 
@@ -2663,10 +2826,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String[] origins = {"*", "friend"};
     parseCommand("--host-allowlist", String.join(",", origins));
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Values '*' or 'all' can't be used with other hostnames");
   }
 
@@ -2675,10 +2838,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String[] origins = {"friend", "all"};
     parseCommand("--host-allowlist", String.join(",", origins));
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Values '*' or 'all' can't be used with other hostnames");
   }
 
@@ -2692,8 +2855,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHostsAllowlist()).isEmpty();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2701,10 +2864,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String[] origins = {"http://domain1.com", "none"};
     parseCommand("--host-allowlist", String.join(",", origins));
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Value 'none' can't be used with other hostnames");
   }
 
@@ -2713,10 +2876,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String[] origins = {"none", "http://domain1.com"};
     parseCommand("--host-allowlist", String.join(",", origins));
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Value 'none' can't be used with other hostnames");
   }
 
@@ -2724,10 +2887,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void rpcHttpHostAllowlistEmptyValueFails() {
     parseCommand("--host-allowlist=");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Hostname cannot be empty string or null string.");
   }
 
@@ -2740,8 +2903,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(wsRpcConfigArgumentCaptor.getValue().isEnabled()).isFalse();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2753,8 +2916,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(wsRpcConfigArgumentCaptor.getValue().isEnabled()).isTrue();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2776,8 +2939,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-ws-api",
         "--rpc-ws-max-active-connections");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2790,8 +2953,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(wsRpcConfigArgumentCaptor.getValue().getRpcApis())
         .containsExactlyInAnyOrder(ETH.name(), NET.name());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2806,8 +2969,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(wsRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
     assertThat(wsRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2820,8 +2983,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(wsRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2834,8 +2997,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(wsRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2847,8 +3010,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(metricsConfigArgumentCaptor.getValue().isEnabled()).isFalse();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2860,8 +3023,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(metricsConfigArgumentCaptor.getValue().isEnabled()).isTrue();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2883,8 +3046,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--metrics-push-interval",
         "--metrics-push-prometheus-job");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2893,8 +3056,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verifyOptionsConstraintLoggerCall("--metrics-enabled", "--metrics-host", "--metrics-port");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2910,8 +3073,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(metricsConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
     assertThat(metricsConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2924,8 +3087,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(metricsConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2938,8 +3101,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(metricsConfigArgumentCaptor.getValue().getHost()).isEqualTo(host);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2952,8 +3115,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(metricsConfigArgumentCaptor.getValue().getMetricCategories())
         .containsExactly(StandardMetricCategory.JVM);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2965,8 +3128,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(metricsConfigArgumentCaptor.getValue().isPushEnabled()).isTrue();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -2986,8 +3149,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(metricsConfigArgumentCaptor.getValue().getPushHost()).isEqualTo(host);
     assertThat(metricsConfigArgumentCaptor.getValue().getPushPort()).isEqualTo(port);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3000,8 +3163,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(metricsConfigArgumentCaptor.getValue().getPushHost()).isEqualTo(host);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3013,8 +3176,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(metricsConfigArgumentCaptor.getValue().getPushInterval()).isEqualTo(42);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3027,18 +3190,18 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(metricsConfigArgumentCaptor.getValue().getPrometheusJob())
         .isEqualTo("besu-command-test");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void metricsAndMetricsPushMustNotBeUsedTogether() {
     parseCommand("--metrics-enabled", "--metrics-push-enabled");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("--metrics-enabled option and --metrics-push-enabled option can't be used");
   }
 
@@ -3046,7 +3209,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void besuDoesNotStartInMiningModeIfCoinbaseNotSet() {
     parseCommand("--miner-enabled");
 
-    Mockito.verifyZeroInteractions(mockControllerBuilder);
+    Mockito.verifyNoInteractions(mockControllerBuilder);
   }
 
   @Test
@@ -3060,8 +3223,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(miningArg.getValue().isMiningEnabled()).isTrue();
     assertThat(miningArg.getValue().getCoinbase())
         .isEqualTo(Optional.of(Address.fromHexString(coinbaseStr)));
@@ -3078,8 +3241,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(miningArg.getValue().isMiningEnabled()).isTrue();
     assertThat(miningArg.getValue().getCoinbase())
         .isEqualTo(Optional.of(Address.fromHexString(coinbaseStr)));
@@ -3102,8 +3265,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verifyOptionsConstraintLoggerCall(
         "--miner-enabled", "--miner-coinbase", "--miner-extra-data", "--miner-stratum-enabled");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith(
             "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
   }
@@ -3114,8 +3277,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3135,8 +3298,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).miningParameters(miningArg.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.of(requestedCoinbase));
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(15));
     assertThat(miningArg.getValue().getExtraData()).isEqualTo(Bytes.fromHexString(extraDataString));
@@ -3159,8 +3322,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).isPruningEnabled(true);
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Ignore
@@ -3170,8 +3333,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).isPruningEnabled(false);
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3181,8 +3344,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).isPruningEnabled(true);
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Ignore
@@ -3192,8 +3355,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).isPruningEnabled(false);
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3202,8 +3365,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilder).isPruningEnabled(false);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3217,8 +3380,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).pruningConfiguration(pruningArg.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(pruningArg.getValue().getBlocksRetained()).isEqualTo(15);
     assertThat(pruningArg.getValue().getBlockConfirmations()).isEqualTo(4);
   }
@@ -3235,8 +3398,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(DEV));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3251,8 +3414,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(RINKEBY));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3267,8 +3430,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(ROPSTEN));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3283,8 +3446,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(GOERLI));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3299,8 +3462,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(CLASSIC));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3315,8 +3478,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(KOTTI));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3331,8 +3494,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(MORDOR));
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3392,20 +3555,20 @@ public class BesuCommandTest extends CommandTestAbstract {
                 .collect(Collectors.toList()));
     assertThat(networkArg.getValue().getNetworkId()).isEqualTo(1234567);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void fullCLIOptionsShown() {
     parseCommand("--help");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).contains("--config-file");
-    assertThat(commandOutput.toString()).contains("--data-path");
-    assertThat(commandOutput.toString()).contains("--genesis-file");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).contains("--config-file");
+    assertThat(commandOutput.toString(UTF_8)).contains("--data-path");
+    assertThat(commandOutput.toString(UTF_8)).contains("--genesis-file");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3431,8 +3594,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(enclaveArg.getValue().getEnclaveUri()).isEqualTo(URI.create(ENCLAVE_URI));
     assertThat(enclaveArg.getValue().getPrivacyUserId()).isEqualTo(ENCLAVE_PUBLIC_KEY);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3446,15 +3609,15 @@ public class BesuCommandTest extends CommandTestAbstract {
     verifyMultiOptionsConstraintLoggerCall(
         "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled or isQuorum (in genesis file) was defined.");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void privacyWithoutPrivacyPublicKeyFails() {
     parseCommand("--privacy-enabled", "--privacy-url", ENCLAVE_URI);
 
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("Please specify Enclave public key file path to enable privacy");
   }
 
@@ -3468,8 +3631,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).privacyParameters(enclaveArg.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(enclaveArg.getValue().isEnabled()).isEqualTo(false);
   }
 
@@ -3501,7 +3664,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-http-authentication-jwt-public-key-file",
         "/non/existent/file");
 
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith(
             "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
   }
@@ -3517,7 +3680,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-public-key-file",
         ENCLAVE_PUBLIC_KEY_PATH);
 
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("Privacy multi-tenancy and privacy public key cannot be used together");
   }
 
@@ -3536,8 +3699,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
     assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(false);
@@ -3559,8 +3722,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
     assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(true);
@@ -3599,8 +3762,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
     assertThat(privacyParameters.isFlexiblePrivacyGroupsEnabled()).isEqualTo(true);
@@ -3615,7 +3778,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--min-gas-price",
         "1");
 
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith(
             "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified");
   }
@@ -3634,8 +3797,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--min-gas-price",
         "1");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3656,16 +3819,16 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-marker-transaction-signing-key-file",
         toml.toString());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void mustProvidePayloadWhenPrivacyPluginEnabled() {
     parseCommand("--privacy-enabled", "--Xprivacy-plugin-enabled", "--min-gas-price", "0");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith(
             "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
   }
@@ -3679,8 +3842,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         "0",
         "--privacy-flexible-groups-enabled");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith(
             "No Payload Provider has been provided. You must register one when enabling privacy plugin!");
   }
@@ -3755,16 +3918,18 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void privacyWithFastSyncMustError() {
     parseCommand("--sync-mode=FAST", "--privacy-enabled");
 
-    assertThat(commandErrorOutput.toString()).contains("Fast sync cannot be enabled with privacy.");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Fast sync cannot be enabled with privacy.");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void privacyWithPruningMustError() {
     parseCommand("--pruning-enabled", "--privacy-enabled");
 
-    assertThat(commandErrorOutput.toString()).contains("Pruning cannot be enabled with privacy.");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Pruning cannot be enabled with privacy.");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3774,9 +3939,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--privacy-enabled", "--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
 
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("GoQuorum mode cannot be enabled with privacy.");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
@@ -3816,7 +3981,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--bootnodes",
         "--permissions-nodes-config-file-enabled=true",
         "--permissions-nodes-config-file=" + permissioningConfig.getPath());
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(staticNodeURI.toString(), "not in nodes-allowlist");
   }
 
@@ -3828,8 +3993,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
     assertThat(transactionPoolConfigCaptor.getValue().getPendingTxRetentionPeriod())
         .isEqualTo(pendingTxRetentionHours);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -3839,14 +4004,14 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
     assertThat(transactionPoolConfigCaptor.getValue().getPriceBump()).isEqualTo(priceBump);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void invalidTansactionPoolPriceBumpShouldFail() {
     parseCommand("--tx-pool-price-bump", "101");
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Invalid value for option '--tx-pool-price-bump'",
             "should be a number between 0 and 100 inclusive");
@@ -3859,14 +4024,14 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
     assertThat(transactionPoolConfigCaptor.getValue().getTxFeeCap()).isEqualTo(txFeeCap);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void invalidTansactionPoolTxFeeCapShouldFail() {
     parseCommand("--rpc-tx-feecap", "abcd");
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Invalid value for option '--rpc-tx-feecap'", "cannot convert 'abcd' to Wei");
   }
 
@@ -3874,10 +4039,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void txMessageKeepAliveSecondsWithInvalidInputShouldFail() {
     parseCommand("--Xincoming-tx-messages-keep-alive-seconds", "acbd");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Invalid value for option '--Xincoming-tx-messages-keep-alive-seconds': 'acbd' is not an int");
   }
@@ -3886,10 +4051,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void eth65TrxAnnouncedBufferingPeriodWithInvalidInputShouldFail() {
     parseCommand("--Xeth65-tx-announced-buffering-period-milliseconds", "acbd");
 
-    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Invalid value for option '--Xeth65-tx-announced-buffering-period-milliseconds': 'acbd' is not a long");
   }
@@ -3913,7 +4078,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     // Parse it.
     parseCommand("--config-file", toml.toString());
 
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Unknown options in TOML configuration file: invalid_option, invalid_option2");
   }
 
@@ -3928,8 +4093,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).miningParameters(miningParametersArgumentCaptor.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     assertThat(miningParametersArgumentCaptor.getValue().getTargetGasLimit().get().longValue())
         .isEqualTo(10_000_000L);
@@ -3946,8 +4111,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).gasLimitCalculator(gasLimitCalculatorArgumentCaptor.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     assertThat(gasLimitCalculatorArgumentCaptor.getValue())
         .isEqualTo(GasLimitCalculator.constant());
@@ -3966,8 +4131,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).requiredBlocks(requiredBlocksArg.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     assertThat(requiredBlocksArg.getValue()).containsOnlyKeys(blockNumber);
     assertThat(requiredBlocksArg.getValue())
@@ -3984,8 +4149,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).requiredBlocks(requiredBlocksArg.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     assertThat(requiredBlocksArg.getValue()).isEmpty();
   }
@@ -4005,8 +4170,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).requiredBlocks(requiredBlocksArg.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     assertThat(requiredBlocksArg.getValue()).containsOnlyKeys(block1, block2);
     assertThat(requiredBlocksArg.getValue())
@@ -4031,8 +4196,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).requiredBlocks(requiredBlocksArg.capture());
     verify(mockControllerBuilder).build();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     assertThat(requiredBlocksArg.getValue()).containsOnlyKeys(block1, block2);
     assertThat(requiredBlocksArg.getValue())
@@ -4058,8 +4223,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--rpc-http-enabled", "--rpc-http-authentication-enabled");
 
     verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
   }
@@ -4081,8 +4246,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--rpc-ws-enabled", "--rpc-ws-authentication-enabled");
 
     verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
   }
@@ -4095,8 +4260,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockLogger)
         .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4107,8 +4272,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockLogger)
         .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4119,8 +4284,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockLogger)
         .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4131,17 +4296,18 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockLogger)
         .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void privEnclaveKeyFileDoesNotExist() {
     parseCommand("--privacy-enabled=true", "--privacy-public-key-file", "/non/existent/file");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith("Problem with privacy-public-key-file");
-    assertThat(commandErrorOutput.toString()).contains("No such file");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith("Problem with privacy-public-key-file");
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("No such file");
   }
 
   @Test
@@ -4149,10 +4315,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path file = createTempFile("privacy.key", "lkjashdfiluhwelrk");
     parseCommand("--privacy-enabled=true", "--privacy-public-key-file", file.toString());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("Contents of privacy-public-key-file invalid");
-    assertThat(commandErrorOutput.toString()).contains("needs to be 44 characters long");
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("needs to be 44 characters long");
   }
 
   @Test
@@ -4160,10 +4326,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path file = createTempFile("privacy.key", "l*jashdfillk9ashdfillkjashdfillkjashdfilrtg=");
     parseCommand("--privacy-enabled=true", "--privacy-public-key-file", file.toString());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("Contents of privacy-public-key-file invalid");
-    assertThat(commandErrorOutput.toString()).contains("Illegal base64 character");
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("Illegal base64 character");
   }
 
   @Test
@@ -4183,7 +4349,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void assertThatDefaultHttpTimeoutSecondsWorks() {
     parseCommand();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHttpTimeoutSec())
@@ -4193,7 +4359,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void assertThatHttpTimeoutSecondsWorks() {
     parseCommand("--Xhttp-timeout-seconds=513");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHttpTimeoutSec()).isEqualTo(513);
@@ -4202,14 +4368,14 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void assertThatInvalidHttpTimeoutSecondsFails() {
     parseCommand("--Xhttp-timeout-seconds=abc");
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Invalid value for option", "--Xhttp-timeout-seconds", "abc", "is not a long");
   }
 
   @Test
   public void assertThatDefaultWsTimeoutSecondsWorks() {
     parseCommand();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
     assertThat(wsRpcConfigArgumentCaptor.getValue().getTimeoutSec())
@@ -4219,7 +4385,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void assertThatWsTimeoutSecondsWorks() {
     parseCommand("--Xws-timeout-seconds=11112018");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
     assertThat(wsRpcConfigArgumentCaptor.getValue().getTimeoutSec()).isEqualTo(11112018);
@@ -4228,7 +4394,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void assertThatInvalidWsTimeoutSecondsFails() {
     parseCommand("--Xws-timeout-seconds=abc");
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Invalid value for option", "--Xws-timeout-seconds", "abc", "is not a long");
   }
 
@@ -4240,20 +4406,20 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-http-port=10",
         "--rpc-ws-port=10",
         "--rpc-ws-enabled");
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Port number '10' has been specified multiple times.");
   }
 
   @Test
   public void assertThatDuplicatePortZeroSucceeds() {
     parseCommand("--p2p-port=0", "--rpc-http-port=0", "--rpc-ws-port=0");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void assertThatNoPortsSpecifiedSucceeds() {
     parseCommand();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4266,7 +4432,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--metrics-port=13",
         "--metrics-push-port=14",
         "--miner-stratum-port=15");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4276,8 +4442,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
     assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
         .isTrue();
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4287,8 +4453,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
     assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
         .isFalse();
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4298,25 +4464,25 @@ public class BesuCommandTest extends CommandTestAbstract {
         .ethProtocolConfiguration(ethProtocolConfigurationArgumentCaptor.capture());
     assertThat(ethProtocolConfigurationArgumentCaptor.getValue().isLegacyEth64ForkIdEnabled())
         .isFalse();
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void assertThatCompatibilityEth64ForkIdIsPresentInHelpMessage() {
     parseCommand("--help");
-    assertThat(commandOutput.toString())
+    assertThat(commandOutput.toString(UTF_8))
         .contains(
             "--compatibility-eth64-forkid-enabled",
             "Enable the legacy Eth/64 fork id. (default: false)");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void quorumInteropNotDefinedInGenesisDoesNotEnforceZeroGasPrice() throws IOException {
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
     parseCommand("--genesis-file", genesisFile.toString());
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4324,7 +4490,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path genesisFile =
         createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
     parseCommand("--genesis-file", genesisFile.toString());
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
   }
@@ -4334,7 +4500,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path genesisFile =
         createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
     parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "1");
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
   }
@@ -4350,7 +4516,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "0",
         "--privacy-public-key-file",
         ENCLAVE_PUBLIC_KEY_PATH);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4364,7 +4530,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "0",
         "--privacy-public-key-file",
         "ThisFileDoesNotExist");
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("--privacy-public-key-file must be set if isQuorum is set in the genesis file.");
   }
 
@@ -4373,7 +4539,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path genesisFile =
         createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
     parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("--privacy-public-key-file must be set if isQuorum is set in the genesis file.");
   }
 
@@ -4381,7 +4547,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void quorumInteropEnabledFailsWithMainnetDefaultNetwork() throws IOException {
     final Path genesisFile = createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET);
     parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-    assertThat(commandErrorOutput.toString()).contains("isQuorum mode cannot be used on Mainnet.");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("isQuorum mode cannot be used on Mainnet.");
   }
 
   @Test
@@ -4389,7 +4556,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path genesisFile =
         createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET.put("chainId", "1"));
     parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-    assertThat(commandErrorOutput.toString()).contains("isQuorum mode cannot be used on Mainnet.");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("isQuorum mode cannot be used on Mainnet.");
   }
 
   @Test
@@ -4400,8 +4568,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4409,8 +4577,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     // use WS port for HTTP
     final int port = 8546;
     parseCommand("--rpc-http-enabled", "--rpc-http-port", String.valueOf(port), "--rpc-ws-enabled");
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Port number '8546' has been specified multiple times. Please review the supplied configuration.");
   }
@@ -4418,7 +4586,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void staticNodesFileOptionValueAbsentMessage() {
     parseCommand("--static-nodes-file");
-    assertThat(commandErrorOutput.toString()).startsWith("Missing required parameter for option");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith("Missing required parameter for option");
   }
 
   @Test
@@ -4430,13 +4599,14 @@ public class BesuCommandTest extends CommandTestAbstract {
                 + "3a08f21f7750b5d5e17f311091f732c9f917b02e1ae6d39f076903779fd1e7"
                 + "e7e6cd2fcef6@192.168.1.25:30303\"\n]");
     parseCommand("--static-nodes-file", tempfile.toString());
-    assertThat(commandErrorOutput.toString()).startsWith("Failed to decode:Cannot deserialize ");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith("Failed to decode:Cannot deserialize ");
   }
 
   @Test
   public void staticNodesFileOptionFileDoesNotExistMessage() {
     parseCommand("--static-nodes-file", "this-file-does-not-exist-at-all.json");
-    assertThat(commandErrorOutput.toString()).contains("Static nodes file", "does not exist");
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("Static nodes file", "does not exist");
   }
 
   @Test
@@ -4449,8 +4619,8 @@ public class BesuCommandTest extends CommandTestAbstract {
                 + "3a08f21f7750b5d5e17f311091f732c9f917b02e1ae6d39f076903779fd1e7"
                 + "e7e6cd2fcef6@192.168.1.25:30303\"\n]");
     parseCommand("--static-nodes-file", staticNodeTempFile.toString());
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4459,8 +4629,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path genesisFile = createFakeGenesisFile(INVALID_GENESIS_EC_CURVE);
 
     parseCommand("--genesis-file", genesisFile.toString());
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Invalid genesis file configuration for ecCurve. "
                 + "abcd is not in the list of valid elliptic curves [secp256k1, secp256r1]");
@@ -4472,7 +4642,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path genesisFile = createFakeGenesisFile(VALID_GENESIS_EC_CURVE);
 
     parseCommand("--genesis-file", genesisFile.toString());
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4521,7 +4691,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--Xpki-block-creation-keystore-password-file",
         "/tmp/pwd");
 
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("KeyStore file is required when PKI Block Creation is enabled");
   }
 
@@ -4530,7 +4700,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--Xpki-block-creation-enabled", "--Xpki-block-creation-keystore-file", "/tmp/keystore");
 
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "File containing password to unlock keystore is required when PKI Block Creation is enabled");
   }

@@ -59,9 +59,9 @@ public class BaseFeeBlockBodyValidator extends MainnetBlockBodyValidator {
             .getTransactionPriceCalculator();
 
     for (final Transaction transaction : transactions) {
-      final Optional<Long> baseFee = block.getHeader().getBaseFee();
+      final Optional<Wei> baseFee = block.getHeader().getBaseFee();
       final Wei price = transactionPriceCalculator.price(transaction, baseFee);
-      if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
+      if (price.compareTo(baseFee.orElseThrow()) < 0) {
         LOG.warn(
             "Invalid block: transaction gas price {} must be greater than base fee {}",
             price.toString(),

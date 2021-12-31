@@ -21,7 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.EpochManager;
@@ -60,10 +60,10 @@ public class VoteTallyCacheTest extends VoteTallyCacheTestBase {
     // Requesting the vote tally to the parent block should not invoke the voteTallyUpdater as the
     // vote tally was cached from previous operation.
     cache.getVoteTallyAfterBlock(block_1.getHeader());
-    verifyZeroInteractions(tallyUpdater);
+    verifyNoInteractions(tallyUpdater);
 
     cache.getVoteTallyAfterBlock(block_2.getHeader());
-    verifyZeroInteractions(tallyUpdater);
+    verifyNoInteractions(tallyUpdater);
   }
 
   @Test

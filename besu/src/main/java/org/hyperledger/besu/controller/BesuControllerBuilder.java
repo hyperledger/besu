@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
+import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -262,17 +263,22 @@ public abstract class BesuControllerBuilder {
 
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
-            genesisState.getBlock(), blockchainStorage, metricsSystem, reorgLoggingThreshold);
+            genesisState.getBlock(),
+            blockchainStorage,
+            metricsSystem,
+            reorgLoggingThreshold,
+            dataDirectory.toString());
 
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(worldStateStorage, blockchain);
+
+    if (blockchain.getChainHeadBlockNumber() < 1) {
+      genesisState.writeStateTo(worldStateArchive.getMutable());
+    }
+
     final ProtocolContext protocolContext =
-        ProtocolContext.init(
-            blockchain,
-            worldStateArchive,
-            genesisState,
-            protocolSchedule,
-            this::createConsensusContext);
+        createProtocolContext(
+            blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
     validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
@@ -449,6 +455,15 @@ public abstract class BesuControllerBuilder {
         fastSyncEnabled,
         scheduler,
         genesisConfig.getForks());
+  }
+
+  protected ProtocolContext createProtocolContext(
+      final MutableBlockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule,
+      final ConsensusContextFactory consensusContextFactory) {
+    return ProtocolContext.init(
+        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
   }
 
   private WorldStateArchive createWorldStateArchive(

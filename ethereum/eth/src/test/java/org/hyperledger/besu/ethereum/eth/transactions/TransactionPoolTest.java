@@ -33,8 +33,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -425,7 +425,7 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction));
 
     assertTransactionNotPending(transaction);
-    verifyZeroInteractions(transactionValidator); // Reject before validation
+    verifyNoInteractions(transactionValidator); // Reject before validation
   }
 
   @Test
@@ -561,7 +561,7 @@ public class TransactionPoolTest {
 
     verify(pendingTransactions).containsTransaction(transaction1.getHash());
     verify(pendingTransactions).tryEvictTransactionHash(transaction1.getHash());
-    verifyZeroInteractions(transactionValidator);
+    verifyNoInteractions(transactionValidator);
     verifyNoMoreInteractions(pendingTransactions);
   }
 
@@ -627,7 +627,7 @@ public class TransactionPoolTest {
         .isEqualTo(ValidationResult.invalid(EXCEEDS_BLOCK_GAS_LIMIT));
 
     assertTransactionNotPending(transaction1);
-    verifyZeroInteractions(batchAddedListener);
+    verifyNoInteractions(batchAddedListener);
   }
 
   @Test
@@ -641,13 +641,13 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(singleton(transaction1));
 
     assertTransactionNotPending(transaction1);
-    verifyZeroInteractions(batchAddedListener);
+    verifyNoInteractions(batchAddedListener);
   }
 
   @Test
   public void shouldNotNotifyBatchListenerIfNoTransactionsAreAdded() {
     transactionPool.addRemoteTransactions(emptyList());
-    verifyZeroInteractions(batchAddedListener);
+    verifyNoInteractions(batchAddedListener);
   }
 
   @Test
@@ -704,7 +704,7 @@ public class TransactionPoolTest {
     assertTransactionNotPending(transaction1);
     assertTransactionNotPending(transaction2);
     assertTransactionNotPending(transaction3);
-    verifyZeroInteractions(batchAddedListener);
+    verifyNoInteractions(batchAddedListener);
   }
 
   @Test

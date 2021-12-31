@@ -28,6 +28,8 @@ jar {
 }
 
 dependencies {
+  implementation project(':datatypes')
+
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'

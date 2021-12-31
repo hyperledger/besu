@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -58,7 +59,7 @@ public class BlockHeader extends SealableBlockHeader
       final long gasUsed,
       final long timestamp,
       final Bytes extraData,
-      final Long baseFee,
+      final Wei baseFee,
       final Bytes32 mixHashOrRandom,
       final long nonce,
       final BlockHeaderFunctions blockHeaderFunctions,
@@ -99,7 +100,7 @@ public class BlockHeader extends SealableBlockHeader
       final long gasUsed,
       final long timestamp,
       final Bytes extraData,
-      final Long baseFee,
+      final Wei baseFee,
       final Bytes32 mixHashOrRandom,
       final long nonce,
       final BlockHeaderFunctions blockHeaderFunctions) {
@@ -133,6 +134,11 @@ public class BlockHeader extends SealableBlockHeader
   @Override
   public Hash getMixHash() {
     return Hash.wrap(mixHashOrRandom);
+  }
+
+  @Override
+  public Bytes32 getMixHashOrRandom() {
+    return mixHashOrRandom;
   }
 
   /**
@@ -217,7 +223,7 @@ public class BlockHeader extends SealableBlockHeader
     out.writeBytes(mixHashOrRandom);
     out.writeLong(nonce);
     if (baseFee != null) {
-      out.writeLongScalar(baseFee);
+      out.writeUInt256Scalar(baseFee);
     }
     out.endList();
   }
@@ -240,7 +246,7 @@ public class BlockHeader extends SealableBlockHeader
     final Bytes extraData = input.readBytes();
     final Bytes32 mixHashOrRandom = input.readBytes32();
     final long nonce = input.readLong();
-    final Long baseFee = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
+    final Wei baseFee = !input.isEndOfCurrentList() ? Wei.of(input.readUInt256Scalar()) : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -320,7 +326,7 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getGasUsed(),
         pluginBlockHeader.getTimestamp(),
         pluginBlockHeader.getExtraData(),
-        pluginBlockHeader.getBaseFee().orElse(null),
+        pluginBlockHeader.getBaseFee().map(Wei::fromQuantity).orElse(null),
         pluginBlockHeader.getRandom().orElse(null),
         pluginBlockHeader.getNonce(),
         blockHeaderFunctions);

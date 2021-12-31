@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
@@ -63,8 +64,8 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
 
     assertThat(optionsFromCommand).usingRecursiveComparison().isEqualTo(options);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test

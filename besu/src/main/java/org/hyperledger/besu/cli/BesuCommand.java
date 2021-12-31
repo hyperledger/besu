@@ -187,6 +187,8 @@ import java.net.SocketException;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -205,6 +207,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -450,9 +454,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--network"},
       paramLabel = MANDATORY_NETWORK_FORMAT_HELP,
+      defaultValue = "MAINNET",
       description =
           "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
-              + " (default: MAINNET)")
+              + " (default: ${DEFAULT-VALUE})")
   private final NetworkName network = null;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
@@ -638,6 +643,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Enable to accept clients certificate signed by a valid CA for client authentication (default: ${DEFAULT-VALUE})")
   private final Boolean isRpcHttpTlsCAClientsEnabled = false;
+
+  @Option(
+      names = {"--rpc-http-tls-protocol", "--rpc-http-tls-protocols"},
+      description = "Comma separated list of TLS protocols to support (default: ${DEFAULT-VALUE})",
+      split = ",",
+      arity = "1..*")
+  private final List<String> rpcHttpTlsProtocols = new ArrayList<>(DEFAULT_TLS_PROTOCOLS);
+
+  @Option(
+      names = {"--rpc-http-tls-cipher-suite", "--rpc-http-tls-cipher-suites"},
+      description = "Comma separated list of TLS cipher suites to support",
+      split = ",",
+      arity = "1..*")
+  private final List<String> rpcHttpTlsCipherSuites = new ArrayList<>();
 
   @Option(
       names = {"--rpc-ws-enabled"},
@@ -1249,10 +1268,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       validateOptions();
       configure();
       initController();
+
+      besuPluginContext.beforeExternalServices();
+
+      var runner = buildRunner();
+      runner.startExternalServices();
+
       startPlugins();
       validatePluginOptions();
       preSynchronization();
-      startSynchronization();
+
+      runner.startEthereumMainLoop();
+      runner.awaitStop();
 
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
@@ -1413,8 +1440,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     preSynchronizationTaskRunner.runTasks(besuController);
   }
 
-  private void startSynchronization() {
-    synchronize(
+  private Runner buildRunner() {
+    return synchronize(
         besuController,
         p2pEnabled,
         p2pTLSConfiguration,
@@ -1694,7 +1721,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     ? SyncMode.FAST
                     : SyncMode.FULL);
 
-    ethNetworkConfig = updateNetworkConfig(getNetwork());
+    ethNetworkConfig = updateNetworkConfig(network);
 
     checkGoQuorumCompatibilityConfig(ethNetworkConfig);
 
@@ -1771,12 +1798,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return key;
   }
 
-  private NetworkName getNetwork() {
-    // noinspection ConstantConditions network is not always null but injected by
-    // PicoCLI if used
-    return network == null ? MAINNET : network;
-  }
-
   private void ensureAllNodesAreInAllowlist(
       final Collection<EnodeURL> enodeAddresses,
       final LocalPermissioningConfiguration permissioningConfiguration) {
@@ -1803,7 +1824,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public BesuControllerBuilder getControllerBuilder() {
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
     return controllerBuilderFactory
-        .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
+        .fromEthNetworkConfig(updateNetworkConfig(network), genesisConfigOverrides)
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .dataDirectory(dataDir())
@@ -1928,7 +1949,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-tls-client-auth-enabled",
             "--rpc-http-tls-known-clients-file",
             "--rpc-http-tls-ca-clients-enabled",
-            "--rpc-http-authentication-jwt-algorithm"));
+            "--rpc-http-authentication-jwt-algorithm",
+            "--rpc-http-tls-protocols",
+            "--rpc-http-tls-cipher-suite",
+            "--rpc-http-tls-cipher-suites"));
   }
 
   private void checkRpcTlsOptionsDependencies() {
@@ -1942,7 +1966,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-tls-keystore-password-file",
             "--rpc-http-tls-client-auth-enabled",
             "--rpc-http-tls-known-clients-file",
-            "--rpc-http-tls-ca-clients-enabled"));
+            "--rpc-http-tls-ca-clients-enabled",
+            "--rpc-http-tls-protocols",
+            "--rpc-http-tls-cipher-suite",
+            "--rpc-http-tls-cipher-suites"));
   }
 
   private void checkRpcTlsClientAuthOptionsDependencies() {
@@ -1990,12 +2017,32 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Known-clients file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
     }
 
+    rpcHttpTlsProtocols.retainAll(getJDKEnabledProtocols());
+    if (rpcHttpTlsProtocols.isEmpty()) {
+      throw new ParameterException(
+          commandLine,
+          "No valid TLS protocols specified (the following protocols are enabled: "
+              + getJDKEnabledProtocols()
+              + ")");
+    }
+
+    for (String cipherSuite : rpcHttpTlsCipherSuites) {
+      if (!getJDKEnabledCypherSuites().contains(cipherSuite)) {
+        throw new ParameterException(
+            commandLine, "Invalid TLS cipher suite specified " + cipherSuite);
+      }
+    }
+
+    rpcHttpTlsCipherSuites.retainAll(getJDKEnabledCypherSuites());
+
     return Optional.of(
         TlsConfiguration.Builder.aTlsConfiguration()
             .withKeyStorePath(rpcHttpTlsKeyStoreFile)
             .withKeyStorePasswordSupplier(
                 new FileBasedPasswordProvider(rpcHttpTlsKeyStorePasswordFile))
             .withClientAuthConfiguration(rpcHttpTlsClientAuthConfiguration())
+            .withSecureTransportProtocols(rpcHttpTlsProtocols)
+            .withCipherSuites(rpcHttpTlsCipherSuites)
             .build());
   }
 
@@ -2414,7 +2461,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   // Blockchain synchronization from peers.
-  private void synchronize(
+  private Runner synchronize(
       final BesuController controller,
       final boolean p2pEnabled,
       final Optional<TLSConfiguration> p2pTLSConfiguration,
@@ -2480,8 +2527,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .build();
 
     addShutdownHook(runner);
-    runner.start();
-    runner.awaitStop();
+
+    return runner;
   }
 
   protected Vertx createVertx(final VertxOptions vertxOptions) {
@@ -2532,7 +2579,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       // noinspection ConstantConditions network is not always null but injected by
       // PicoCLI if used
-      if (this.network != null) {
+      if (commandLine.getParseResult().hasMatchedOption("network")) {
         // We check if network option was really provided by user and not only looking
         // at the
         // default value.
@@ -2789,10 +2836,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private static boolean ensureGoQuorumCompatibilityModeNotUsedOnMainnet(
       final GenesisConfigOptions genesisConfigOptions, final EthNetworkConfig ethNetworkConfig) {
-    return ethNetworkConfig.getNetworkId().equals(EthNetworkConfig.MAINNET_NETWORK_ID)
+    return ethNetworkConfig.getNetworkId().equals(MAINNET.getNetworkId())
         || genesisConfigOptions
             .getChainId()
-            .map(chainId -> chainId.equals(EthNetworkConfig.MAINNET_NETWORK_ID))
+            .map(chainId -> chainId.equals(MAINNET.getNetworkId()))
             .orElse(false);
   }
 
@@ -2856,5 +2903,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // this static flag is read by the RLP decoder
     GoQuorumOptions.setGoQuorumCompatibilityMode(true);
     isGoQuorumCompatibilityMode = true;
+  }
+
+  public static List<String> getJDKEnabledCypherSuites() {
+    try {
+      SSLContext context = SSLContext.getInstance("TLS");
+      context.init(null, null, null);
+      SSLEngine engine = context.createSSLEngine();
+      return Arrays.asList(engine.getEnabledCipherSuites());
+    } catch (KeyManagementException | NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static List<String> getJDKEnabledProtocols() {
+    try {
+      SSLContext context = SSLContext.getInstance("TLS");
+      context.init(null, null, null);
+      SSLEngine engine = context.createSSLEngine();
+      return Arrays.asList(engine.getEnabledProtocols());
+    } catch (KeyManagementException | NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

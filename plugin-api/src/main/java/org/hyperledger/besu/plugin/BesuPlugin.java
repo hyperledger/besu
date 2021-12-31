@@ -51,9 +51,15 @@ public interface BesuPlugin {
   void register(BesuContext context);
 
   /**
-   * Called once Besu has loaded configuration and is starting up. The plugin should begin
-   * operation, including registering any event listener with Besu services and starting any
-   * background threads the plugin requires.
+   * Called once when besu has loaded configuration but before external services have been started
+   * e.g metrics and http
+   */
+  default void beforeExternalServices() {}
+
+  /**
+   * Called once Besu has loaded configuration and has started external services but before the main
+   * loop is up. The plugin should begin operation, including registering any event listener with
+   * Besu services and starting any background threads the plugin requires.
    */
   void start();
 

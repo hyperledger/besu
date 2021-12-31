@@ -21,7 +21,7 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -275,7 +275,7 @@ public class MainnetTransactionValidatorTest {
             .signAndBuild(new SECP256K1().generateKeyPair());
 
     final ValidationResult<TransactionInvalidReason> validationResult =
-        validator.validate(transaction, Optional.of(1L), transactionValidationParams);
+        validator.validate(transaction, Optional.of(Wei.ONE), transactionValidationParams);
     assertThat(validationResult)
         .isEqualTo(ValidationResult.invalid(MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS));
     assertThat(validationResult.getErrorMessage())
@@ -329,7 +329,7 @@ public class MainnetTransactionValidatorTest {
     assertThat(validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams))
         .isEqualTo(ValidationResult.valid());
 
-    verifyZeroInteractions(transactionFilter);
+    verifyNoInteractions(transactionFilter);
   }
 
   @Test
@@ -367,7 +367,9 @@ public class MainnetTransactionValidatorTest {
 
     when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(Gas.of(0));
 
-    assertThat(eip1559Validator.validate(transaction, Optional.of(1L), transactionValidationParams))
+    assertThat(
+            eip1559Validator.validate(
+                transaction, Optional.of(Wei.ONE), transactionValidationParams))
         .isEqualTo(ValidationResult.valid());
   }
 
@@ -388,7 +390,7 @@ public class MainnetTransactionValidatorTest {
             .maxFeePerGas(Optional.of(Wei.of(1)))
             .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
-    final Optional<Long> basefee = Optional.of(150000L);
+    final Optional<Wei> basefee = Optional.of(Wei.of(150000L));
     assertThat(validator.validate(transaction, basefee, transactionValidationParams))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
   }
@@ -410,7 +412,7 @@ public class MainnetTransactionValidatorTest {
             .type(TransactionType.EIP1559)
             .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
-    final Optional<Long> basefee = Optional.of(150000L);
+    final Optional<Wei> basefee = Optional.of(Wei.of(150000L));
     when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(Gas.of(50));
 
     assertThat(validator.validate(transaction, basefee, transactionValidationParams))
@@ -438,7 +440,7 @@ public class MainnetTransactionValidatorTest {
 
     assertThat(
             validator.validate(
-                transaction, Optional.of(1L), TransactionValidationParams.transactionPool()))
+                transaction, Optional.of(Wei.ONE), TransactionValidationParams.transactionPool()))
         .isEqualTo(ValidationResult.valid());
   }
 
