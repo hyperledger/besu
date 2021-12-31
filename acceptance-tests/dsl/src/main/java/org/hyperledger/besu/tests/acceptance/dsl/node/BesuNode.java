@@ -360,10 +360,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
         websocketService = Optional.of((WebSocketService) web3jService);
       } else {
-        web3jService =
-            jsonRpcBaseUrl()
-                .map(HttpService::new)
-                .orElse(new HttpService("http://" + LOCALHOST + ":" + 8545));
+        final String url = jsonRpcBaseUrl().orElse("http://" + LOCALHOST + ":" + 8545);
+        web3jService = new HttpService(url);
         if (token != null) {
           ((HttpService) web3jService).addHeader("Authorization", "Bearer " + token);
         }
