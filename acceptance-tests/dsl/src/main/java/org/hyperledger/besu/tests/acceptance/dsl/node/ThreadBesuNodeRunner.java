@@ -19,6 +19,7 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -137,8 +138,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         node.getConfiguration().getBootnodes().stream()
             .map(EnodeURLImpl::fromURI)
             .collect(Collectors.toList());
+    final NetworkName network = node.getNetwork() == null ? NetworkName.DEV : node.getNetwork();
     final EthNetworkConfig.Builder networkConfigBuilder =
-        new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(node.getNetwork()))
+        new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network))
             .setBootNodes(bootnodes);
     node.getConfiguration().getGenesisConfig().ifPresent(networkConfigBuilder::setGenesisConfig);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
