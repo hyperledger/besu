@@ -256,9 +256,7 @@ public class TransactionPool implements BlockAddedObserver {
     }
 
     if (isLocal
-        && configuration.getStrictTransactionReplayProtectionEnabled()
-        && protocolSchedule.getChainId().isPresent()
-        && transactionReplaySupportedAtBlock(chainHeadBlockHeader)
+        && strictReplayProtectionShouldBeEnforceLocally(chainHeadBlockHeader)
         && transaction.getChainId().isEmpty()) {
       // Strict replay protection is enabled but the tx is not replay-protected
       return ValidationResult.invalid(TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURE_REQUIRED);
@@ -290,6 +288,13 @@ public class TransactionPool implements BlockAddedObserver {
                       transaction, senderAccount, TransactionValidationParams.transactionPool());
             })
         .orElseGet(() -> ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
+  }
+
+  private boolean strictReplayProtectionShouldBeEnforceLocally(
+      final BlockHeader chainHeadBlockHeader) {
+    return configuration.getStrictTransactionReplayProtectionEnabled()
+        && protocolSchedule.getChainId().isPresent()
+        && transactionReplaySupportedAtBlock(chainHeadBlockHeader);
   }
 
   private boolean transactionReplaySupportedAtBlock(final BlockHeader block) {
