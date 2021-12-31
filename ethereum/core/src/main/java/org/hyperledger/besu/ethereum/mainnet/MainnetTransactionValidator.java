@@ -230,11 +230,11 @@ public class MainnetTransactionValidator {
       final Transaction transaction) {
     if (chainId.isPresent()
         && (transaction.getChainId().isPresent() && !transaction.getChainId().equals(chainId))) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.WRONG_CHAIN_ID,
+      final String message =
           String.format(
               "transaction was meant for chain id %s and not this chain id %s",
-              transaction.getChainId().get(), chainId.get()));
+              transaction.getChainId().get(), chainId.get());
+      return ValidationResult.invalid(TransactionInvalidReason.WRONG_CHAIN_ID, message);
     }
 
     if (!transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)
