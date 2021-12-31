@@ -58,7 +58,6 @@ public class EthSendRawTransactionTest extends AcceptanceTestBase {
     LOG.info("Send tx with hash: {}", txHash);
 
     lenientNode.verify(eth.expectSuccessfulEthRawTransaction(rawTx));
-    cluster.verify(net.awaitPeerCount(2));
     // Tx should be included on-chain
     miningNode.verify(eth.expectSuccessfulTransactionReceipt(txHash));
   }
@@ -78,7 +77,6 @@ public class EthSendRawTransactionTest extends AcceptanceTestBase {
     final String txHash = tx.transactionHash();
 
     lenientNode.verify(eth.expectSuccessfulEthRawTransaction(rawTx));
-    cluster.verify(net.awaitPeerCount(2));
     // Tx should be included on-chain
     miningNode.verify(eth.expectSuccessfulTransactionReceipt(txHash));
   }
@@ -90,7 +88,6 @@ public class EthSendRawTransactionTest extends AcceptanceTestBase {
     final String txHash = tx.transactionHash();
 
     strictNode.verify(eth.expectSuccessfulEthRawTransaction(rawTx));
-    cluster.verify(net.awaitPeerCount(2));
     // Tx should be included on-chain
     miningNode.verify(eth.expectSuccessfulTransactionReceipt(txHash));
   }
