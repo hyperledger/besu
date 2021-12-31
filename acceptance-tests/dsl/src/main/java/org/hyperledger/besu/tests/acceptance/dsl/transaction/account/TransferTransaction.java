@@ -83,6 +83,10 @@ public class TransferTransaction implements Transaction<Hash> {
     return Numeric.toHexString(createSignedTransactionData());
   }
 
+  public String transactionHash() {
+    final byte[] signedTx = createSignedTransactionData();
+    final byte[] txHash = org.web3j.crypto.Hash.sha3(signedTx);
+    return Numeric.toHexString(txHash);
   }
 
   private byte[] createSignedTransactionData() {
