@@ -37,8 +37,8 @@ public class TransactionPoolOptionsTest
     final TransactionPoolConfiguration config = options.toDomainObject().build();
     assertThat(config.getStrictTransactionReplayProtectionEnabled()).isTrue();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -49,8 +49,8 @@ public class TransactionPoolOptionsTest
     final TransactionPoolConfiguration config = options.toDomainObject().build();
     assertThat(config.getStrictTransactionReplayProtectionEnabled()).isTrue();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -61,8 +61,8 @@ public class TransactionPoolOptionsTest
     final TransactionPoolConfiguration config = options.toDomainObject().build();
     assertThat(config.getStrictTransactionReplayProtectionEnabled()).isFalse();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -73,8 +73,8 @@ public class TransactionPoolOptionsTest
     final TransactionPoolConfiguration config = options.toDomainObject().build();
     assertThat(config.getStrictTransactionReplayProtectionEnabled()).isFalse();
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
