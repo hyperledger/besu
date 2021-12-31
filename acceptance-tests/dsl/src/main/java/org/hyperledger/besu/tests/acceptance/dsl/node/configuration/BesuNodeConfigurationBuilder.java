@@ -70,7 +70,7 @@ public class BesuNodeConfigurationBuilder {
   private boolean discoveryEnabled = true;
   private boolean bootnodeEligible = true;
   private boolean revertReasonEnabled = false;
-  private NetworkName network = null;
+  private NetworkName network = NetworkName.DEV;
   private boolean secp256K1Native = true;
   private boolean altbn128Native = true;
   private final List<String> plugins = new ArrayList<>();
