@@ -21,7 +21,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.SignUtil;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.TransactionWithSignatureAlgorithm;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -29,15 +28,12 @@ import java.math.BigInteger;
 import java.util.Optional;
 
 import org.web3j.crypto.RawTransaction;
-import org.web3j.crypto.TransactionEncoder;
-import org.web3j.crypto.TransactionUtils;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.utils.Convert;
 import org.web3j.utils.Convert.Unit;
 import org.web3j.utils.Numeric;
 
-public class TransferTransaction
-    implements Transaction<Hash>, TransactionWithSignatureAlgorithm<Hash> {
+public class TransferTransaction implements Transaction<Hash> {
 
   /** Price for each for each GAS units in this transaction (wei). */
   private static final BigInteger MINIMUM_GAS_PRICE = BigInteger.valueOf(1000);
@@ -52,6 +48,8 @@ public class TransferTransaction
   private final BigInteger gasPrice;
   private final BigInteger nonce;
   private final Optional<BigInteger> chainId;
+  private final SignatureAlgorithm signatureAlgorithm;
+  private byte[] signedTxData = null;
 
   public TransferTransaction(
       final Account sender,
@@ -59,7 +57,8 @@ public class TransferTransaction
       final Amount transferAmount,
       final Amount gasPrice,
       final BigInteger nonce,
-      final Optional<BigInteger> chainId) {
+      final Optional<BigInteger> chainId,
+      final SignatureAlgorithm signatureAlgorithm) {
     this.sender = sender;
     this.recipient = recipient;
     this.transferAmount = transferAmount.getValue();
@@ -67,6 +66,7 @@ public class TransferTransaction
     this.gasPrice = gasPrice == null ? MINIMUM_GAS_PRICE : convertGasPriceToWei(gasPrice);
     this.nonce = nonce;
     this.chainId = chainId;
+    this.signatureAlgorithm = signatureAlgorithm;
   }
 
   @Override
@@ -75,27 +75,22 @@ public class TransferTransaction
     return sendRawTransaction(node, signedTransactionData);
   }
 
-  @Override
-  public Hash execute(final NodeRequests node, final SignatureAlgorithm signatureAlgorithm) {
-    final String signedTransactionData =
-        signedTransactionDataWithSignatureAlgorithm(signatureAlgorithm);
-    return sendRawTransaction(node, signedTransactionData);
-  }
-
   public Amount executionCost() {
     return Amount.wei(INTRINSIC_GAS.multiply(gasPrice));
   }
 
   public String signedTransactionData() {
-    final RawTransaction transaction = createRawTransaction();
-
-    return Numeric.toHexString(
-        TransactionEncoder.signMessage(transaction, sender.web3jCredentialsOrThrow()));
+    return Numeric.toHexString(createSignedTransactionData());
   }
 
-  private String signedTransactionDataWithSignatureAlgorithm(
-      final SignatureAlgorithm signatureAlgorithm) {
-    return SignUtil.signTransaction(createRawTransaction(), sender, signatureAlgorithm);
+  }
+
+  private byte[] createSignedTransactionData() {
+    if (signedTxData == null) {
+      signedTxData =
+          SignUtil.signTransaction(createRawTransaction(), sender, signatureAlgorithm, chainId);
+    }
+    return signedTxData;
   }
 
   private Hash sendRawTransaction(final NodeRequests node, final String signedTransactionData) {

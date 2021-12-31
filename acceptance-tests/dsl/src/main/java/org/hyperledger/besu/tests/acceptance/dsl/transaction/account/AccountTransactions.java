@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.transaction.account;
 
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
@@ -32,6 +33,13 @@ public class AccountTransactions {
 
   public TransferTransaction createTransfer(final Account recipient, final int amount) {
     return createTransfer(accounts.getPrimaryBenefactor(), recipient, amount);
+  }
+
+  public TransferTransaction createTransfer(
+      final Account recipient, final int amount, final SignatureAlgorithm signatureAlgorithm) {
+    return createBuilder(accounts.getPrimaryBenefactor(), recipient, Amount.ether(amount))
+        .setSignatureAlgorithm(signatureAlgorithm)
+        .build();
   }
 
   public TransferTransaction createTransfer(
