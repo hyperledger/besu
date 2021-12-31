@@ -89,35 +89,48 @@ public class BesuNodeFactory {
         config.isStrictTxReplayProtectionEnabled());
   }
 
-  public BesuNode createMinerNode(final String name) throws IOException {
-    return create(
+  public BesuNode createMinerNode(
+      final String name,
+      final Function<BesuNodeConfigurationBuilder, BesuNodeConfigurationBuilder> configModifier)
+      throws IOException {
+    BesuNodeConfigurationBuilder builder =
         new BesuNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
             .jsonRpcEnabled()
-            .webSocketEnabled()
-            .build());
+            .webSocketEnabled();
+    builder = configModifier.apply(builder);
+    final BesuNodeConfiguration config = builder.build();
+
+    return create(config);
+  }
+
+  public BesuNode createMinerNode(final String name) throws IOException {
+    return createMinerNode(name, Function.identity());
   }
 
   public BesuNode createMinerNodeWithRevertReasonEnabled(final String name) throws IOException {
-    return create(
-        new BesuNodeConfigurationBuilder()
-            .name(name)
-            .miningEnabled()
-            .jsonRpcEnabled()
-            .webSocketEnabled()
-            .revertReasonEnabled()
-            .build());
+    return createMinerNode(name, BesuNodeConfigurationBuilder::revertReasonEnabled);
   }
 
   public BesuNode createArchiveNode(final String name) throws IOException {
-    return create(
+    return createArchiveNode(name, Function.identity());
+  }
+
+  public BesuNode createArchiveNode(
+      final String name,
+      final Function<BesuNodeConfigurationBuilder, BesuNodeConfigurationBuilder> configModifier)
+      throws IOException {
+    BesuNodeConfigurationBuilder builder =
         new BesuNodeConfigurationBuilder()
             .name(name)
             .jsonRpcEnabled()
             .jsonRpcTxPool()
-            .webSocketEnabled()
-            .build());
+            .webSocketEnabled();
+
+    builder = configModifier.apply(builder);
+
+    return create(builder.build());
   }
 
   public BesuNode createNode(
