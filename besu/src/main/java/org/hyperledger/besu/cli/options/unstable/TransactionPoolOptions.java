@@ -38,6 +38,7 @@ public class TransactionPoolOptions
 
   @CommandLine.Option(
       names = {STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG},
+      paramLabel = "<Boolean>",
       description =
           "Require transactions submitted via JSON-RPC to use replay protection in accordance with EIP-155 (default: ${DEFAULT-VALUE})",
       fallbackValue = "true",
