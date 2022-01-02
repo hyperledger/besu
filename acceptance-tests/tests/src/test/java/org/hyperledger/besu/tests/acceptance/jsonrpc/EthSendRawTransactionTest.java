@@ -24,14 +24,10 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTra
 import java.math.BigInteger;
 import java.util.function.UnaryOperator;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
 public class EthSendRawTransactionTest extends AcceptanceTestBase {
-  private static final Logger LOG = LogManager.getLogger();
-
   private static final long CHAIN_ID = 20211;
 
   private Account sender;
