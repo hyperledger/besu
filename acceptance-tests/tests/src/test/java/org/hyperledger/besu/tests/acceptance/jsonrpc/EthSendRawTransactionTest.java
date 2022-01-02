@@ -55,7 +55,6 @@ public class EthSendRawTransactionTest extends AcceptanceTestBase {
     final TransferTransaction tx = createTransactionWithoutChainId();
     final String rawTx = tx.signedTransactionData();
     final String txHash = tx.transactionHash();
-    LOG.info("Send tx with hash: {}", txHash);
 
     lenientNode.verify(eth.expectSuccessfulEthRawTransaction(rawTx));
     // Tx should be included on-chain
