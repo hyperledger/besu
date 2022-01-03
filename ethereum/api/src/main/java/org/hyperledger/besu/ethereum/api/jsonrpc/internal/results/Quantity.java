@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 import java.math.BigInteger;
 import java.util.Objects;
 
-import com.google.common.base.Strings;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -73,7 +72,7 @@ public class Quantity {
    */
   public static String longToPaddedHex(final long val, final int byteLength) {
     final String formatted = Long.toHexString(val);
-    final String zeroPadding = Strings.repeat("0", byteLength * 2 - formatted.length());
+    final String zeroPadding = "0".repeat(byteLength * 2 - formatted.length());
     return String.format("%s%s%s", HEX_PREFIX, zeroPadding, formatted);
   }
 

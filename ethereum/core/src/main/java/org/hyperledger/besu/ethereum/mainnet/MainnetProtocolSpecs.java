@@ -72,7 +72,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonArray;
 
-/** Provides the various @{link ProtocolSpec}s on mainnet hard forks. */
+/** Provides the various {@link ProtocolSpec}s on mainnet hard forks. */
 public abstract class MainnetProtocolSpecs {
 
   public static final int FRONTIER_CONTRACT_SIZE_LIMIT = Integer.MAX_VALUE;

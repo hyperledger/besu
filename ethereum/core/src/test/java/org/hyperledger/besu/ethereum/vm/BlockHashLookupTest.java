@@ -18,8 +18,8 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -96,7 +96,7 @@ public class BlockHashLookupTest {
   @Test
   public void shouldGetParentHashFromCurrentBlock() {
     assertHashForBlockNumber(CURRENT_BLOCK_NUMBER - 1);
-    verifyZeroInteractions(blockchain);
+    verifyNoInteractions(blockchain);
   }
 
   @Test

@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -73,7 +73,7 @@ public class EthGetFilterChangesTest {
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessage("Missing required json rpc parameter at index 0");
 
-    verifyZeroInteractions(filterManager);
+    verifyNoInteractions(filterManager);
   }
 
   @Test
@@ -85,7 +85,7 @@ public class EthGetFilterChangesTest {
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessage("Missing required json rpc parameter at index 0");
 
-    verifyZeroInteractions(filterManager);
+    verifyNoInteractions(filterManager);
   }
 
   @Test
