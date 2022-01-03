@@ -501,7 +501,7 @@ public class EthPeer {
 
   @Override
   public String toString() {
-    return String.format("Peer %s...", nodeId().toString().substring(0, 20));
+    return "Peer " + nodeId().toString().substring(0, 20) + "...";
   }
 
   @FunctionalInterface

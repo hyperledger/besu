@@ -103,7 +103,11 @@ public final class NewBlockHashesMessage extends AbstractMessageData {
 
     @Override
     public String toString() {
-      return String.format("New Block Hash [%d: %s]", number, hash);
+      return "New Block Hash [" + number + ": " + hash + "]";
+    }
+
+    public String toLogString() {
+      return number() + " (" + hash() + ")";
     }
 
     @Override

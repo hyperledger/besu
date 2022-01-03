@@ -34,8 +34,11 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
-public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory {
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory {
+  private static final Logger LOG = LogManager.getLogger();
   private final SynchronizerConfiguration syncConfig;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -113,8 +116,16 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
       final EthPeer peer, final BlockHeader lastCheckpointHeader) {
     final boolean caughtUpToPeer =
         peer.chainState().getEstimatedHeight() <= lastCheckpointHeader.getNumber();
-    return !peer.isDisconnected()
-        && !caughtUpToPeer
-        && !betterSyncTargetEvaluator.shouldSwitchSyncTarget(peer);
+    final boolean isDisconnected = peer.isDisconnected();
+    final boolean shouldSwitchSyncTarget = betterSyncTargetEvaluator.shouldSwitchSyncTarget(peer);
+
+    LOG.debug(
+        "shouldContinueDownloadingFromPeer? {} disconnected {} caughtUp {} shouldSwitchSyncTarget {}",
+        peer,
+        isDisconnected,
+        caughtUpToPeer,
+        shouldSwitchSyncTarget);
+
+    return !isDisconnected && !caughtUpToPeer && !shouldSwitchSyncTarget;
   }
 }

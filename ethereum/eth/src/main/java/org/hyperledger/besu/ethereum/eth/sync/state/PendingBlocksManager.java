@@ -110,7 +110,7 @@ public class PendingBlocksManager {
 
   public List<Block> childrenOf(final Hash parentBlock) {
     final Set<Hash> blocksByParent = pendingBlocksByParentHash.get(parentBlock);
-    if (blocksByParent == null || blocksByParent.size() == 0) {
+    if (blocksByParent == null || blocksByParent.isEmpty()) {
       return Collections.emptyList();
     }
     return blocksByParent.stream()
@@ -125,5 +125,18 @@ public class PendingBlocksManager {
         .map(ImmutablePendingBlock::block)
         .map(Block::getHeader)
         .min(Comparator.comparing(BlockHeader::getNumber));
+  }
+
+  @Override
+  public String toString() {
+    return "PendingBlocksManager{"
+        + "pendingBlocks ["
+        + pendingBlocks.values().stream()
+            .map(ImmutablePendingBlock::block)
+            .map(b -> b.getHeader().getNumber() + " (" + b.getHash() + ")")
+            .collect(Collectors.joining(", "))
+        + "], pendingBlocksByParentHash="
+        + pendingBlocksByParentHash
+        + '}';
   }
 }
