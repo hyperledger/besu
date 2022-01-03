@@ -222,8 +222,8 @@ public class MergeCoordinator implements MergeMiningCoordinator {
           result.worldState.persist(block.getHeader());
           chain.appendBlock(block, result.receipts);
           final Optional<Difficulty> td = chain.getTotalDifficultyByHash(block.getHash());
-          if(td.isPresent()){
-            //mergeContext.setTerminalTotalDifficulty(td.get());
+          if (td.isPresent()) {
+            // mergeContext.setTerminalTotalDifficulty(td.get());
             mergeContext.setIsPostMerge(td.get());
           }
         });

@@ -45,7 +45,7 @@ public class NoDifficultyValidationTest {
   public void setUp() {
     when(blockchain.getTotalDifficultyByHash(any())).thenReturn(Optional.of(Difficulty.ONE));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
-    when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.ONE);
+    when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.ZERO);
     when(mergeContext.isPostMerge()).thenReturn(true);
     when(protocolContext.getConsensusContext(MergeContext.class)).thenReturn(mergeContext);
   }

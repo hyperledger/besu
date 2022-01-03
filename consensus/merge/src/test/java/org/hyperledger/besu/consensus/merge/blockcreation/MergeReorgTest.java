@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,8 +92,9 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
     mergeContext.setIsPostMerge(genesisState.getBlock().getHeader().getDifficulty());
   }
 
-  /* as long as a post-merge PoS block has not been finalized,
-  then yuo can and should be able to re-org to a different pre-TTD block
+  /* Validation scenario as described over Discord:
+  as long as a post-merge PoS block has not been finalized,
+  then you can and should be able to re-org to a different pre-TTD block
   say there is viable TTD block A and B, then we can have a PoS chain build on A for a while
       and then see another PoS chain build on B that has a higher fork choice weight and causes a re-org
   once any post-merge PoS chain is finalied though, you'd never re-org any PoW blocks in the tree ever again */
@@ -106,15 +106,34 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
     endOfWork.stream().forEach(coordinator::executeBlock);
     assertThat(blockchain.getChainHead().getHeight()).isEqualTo(10L);
     BlockHeader tddPenultimate = this.blockchain.getChainHeadHeader();
-    // Add TDD block A to chain as child of N.
-    Block tddA = new Block(terminalPowBlock(tddPenultimate), BlockBody.empty());
-    boolean worked = coordinator.executeBlock(tddA);
+    // Add TTD block A to chain as child of N.
+    Block ttdA = new Block(terminalPowBlock(tddPenultimate, Difficulty.ONE), BlockBody.empty());
+    boolean worked = coordinator.executeBlock(ttdA);
     assertThat(worked).isTrue();
     assertThat(blockchain.getChainHead().getHeight()).isEqualTo(11L);
-    assertThat(blockchain.getTotalDifficultyByHash(tddA.getHash())).isPresent();
-    Difficulty tdd = blockchain.getTotalDifficultyByHash(tddA.getHash()).get();
-    assertThat(tdd.getAsBigInteger()).isGreaterThan(BigInteger.valueOf(1000));
+    assertThat(blockchain.getTotalDifficultyByHash(ttdA.getHash())).isPresent();
+    Difficulty tdd = blockchain.getTotalDifficultyByHash(ttdA.getHash()).get();
+    assertThat(tdd.getAsBigInteger())
+        .isGreaterThan(
+            getGenesisConfigFile()
+                .getConfigOptions()
+                .getTerminalTotalDifficulty()
+                .get()
+                .toBigInteger());
     assertThat(mergeContext.isPostMerge()).isTrue();
+    List<Block> builtOnTTDA = subChain(ttdA.getHeader(), 5, Difficulty.of(0L));
+    builtOnTTDA.stream().forEach(coordinator::executeBlock);
+    assertThat(blockchain.getChainHead().getHeight()).isEqualTo(16);
+    assertThat(blockchain.getChainHead().getHash())
+        .isEqualTo(builtOnTTDA.get(builtOnTTDA.size() - 1).getHash());
+
+    Block ttdB = new Block(terminalPowBlock(tddPenultimate, Difficulty.of(2L)), BlockBody.empty());
+    coordinator.executeBlock(ttdB);
+    List<Block> builtOnTTDB = subChain(ttdB.getHeader(), 10, Difficulty.of(0L));
+    builtOnTTDB.stream().forEach(coordinator::executeBlock);
+    assertThat(blockchain.getChainHead().getHeight()).isEqualTo(21);
+    assertThat(blockchain.getChainHead().getHash())
+        .isEqualTo(builtOnTTDB.get(builtOnTTDB.size() - 1).getHash());
     // don't finalize
     // Create a new chain back to A which has
 
@@ -125,31 +144,32 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
     BlockHeader newParent = parentHeader;
     List<Block> retval = new ArrayList<>();
     for (int i = 1; i <= length; i++) {
-      BlockHeader h =
-          headerGenerator
-              .difficulty(each)
-              .parentHash(newParent.getHash())
-              .number(newParent.getNumber() + 1)
-              .baseFeePerGas(
-                  feeMarket.computeBaseFee(
-                      genesisState.getBlock().getHeader().getNumber() + 1,
-                      newParent.getBaseFee().orElse(Wei.of(0x3b9aca00)),
-                      0,
-                      15000000))
-              .gasLimit(newParent.getGasLimit())
-              .stateRoot(newParent.getStateRoot())
-              .buildHeader();
+      headerGenerator
+          .parentHash(newParent.getHash())
+          .number(newParent.getNumber() + 1)
+          .baseFeePerGas(
+              feeMarket.computeBaseFee(
+                  genesisState.getBlock().getHeader().getNumber() + 1,
+                  newParent.getBaseFee().orElse(Wei.of(0x3b9aca00)),
+                  0,
+                  15000000))
+          .gasLimit(newParent.getGasLimit())
+          .stateRoot(newParent.getStateRoot());
+      if (each.greaterOrEqualThan(Difficulty.ZERO)) {
+        headerGenerator.difficulty(each);
+      }
+      BlockHeader h = headerGenerator.buildHeader();
       retval.add(new Block(h, BlockBody.empty()));
       newParent = h;
     }
     return retval;
   }
 
-  private BlockHeader terminalPowBlock(final BlockHeader parent) {
+  private BlockHeader terminalPowBlock(final BlockHeader parent, final Difficulty diff) {
 
     BlockHeader terminal =
         headerGenerator
-            .difficulty(Difficulty.of(10000))
+            .difficulty(diff)
             .parentHash(parent.getHash())
             .number(parent.getNumber() + 1)
             .baseFeePerGas(
