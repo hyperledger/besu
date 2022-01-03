@@ -19,6 +19,7 @@ import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -42,6 +43,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,6 +62,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
 
   private MergeCoordinator coordinator;
 
+  private static final long DIFFICULTY_LEFT = 1000;
   private final MergeContext mergeContext = PostMergeContext.get();
   private final ProtocolSchedule mockProtocolSchedule = getMergeProtocolSchedule();
   private final GenesisState genesisState =
@@ -69,7 +74,6 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   private final ProtocolContext protocolContext =
       new ProtocolContext(blockchain, worldStateArchive, mergeContext);
 
-  private final Address suggestedFeeRecipient = Address.ZERO;
   private final Address coinbase = genesisAllocations().findFirst().get();
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
   private final BaseFeeMarket feeMarket =
@@ -90,8 +94,8 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
             new MiningParameters.Builder().coinbase(coinbase).build(),
             mock(BackwardsSyncContext.class));
     mergeContext.setTerminalTotalDifficulty(
-        genesisState.getBlock().getHeader().getDifficulty().plus(1L));
-    mergeContext.setIsPostMerge(genesisState.getBlock().getHeader().getDifficulty().plus(2L));
+        genesisState.getBlock().getHeader().getDifficulty().plus(DIFFICULTY_LEFT));
+    mergeContext.setIsPostMerge(genesisState.getBlock().getHeader().getDifficulty());
   }
 
   /* as long as a post-merge PoS block has not been finalized,
@@ -100,23 +104,65 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
       and then see another PoS chain build on B that has a higher fork choice weight and causes a re-org
   once any post-merge PoS chain is finalied though, you'd never re-org any PoW blocks in the tree ever again */
 
-  private BlockHeader terminalPowBlock() {
+
+  @Test
+  public void reorgsAcrossTDDToDifferentTargetsWhenNotFinal() {
+    //Add N blocks to chain from genesis, where total diff is < TTD
+    List<Block> endOfWork = subChain(genesisState.getBlock().getHeader(), 10, Difficulty.of(100L));
+    endOfWork.stream().forEach(coordinator::executeBlock);
+    assertThat(blockchain.getChainHead().getHeight()).isEqualTo(10L);
+    BlockHeader tddPenultimate = this.blockchain.getChainHeadHeader();
+    //Add TDD block A to chain as child of N.
+    Block tddA = new Block(terminalPowBlock(tddPenultimate), BlockBody.empty());
+    boolean worked = coordinator.executeBlock(tddA);
+    assertThat(worked).isTrue();
+    assertThat(blockchain.getChainHead().getHeight()).isEqualTo(11L);
+    assertThat(mergeContext.isPostMerge()).isTrue();
+    //don't finalize
+    //Create a new chain back to A which has
+
+  }
+
+
+  private List<Block> subChain(final BlockHeader parentHeader, final long length, final Difficulty each) {
+    BlockHeader newParent = parentHeader;
+    List<Block> retval = new ArrayList<>();
+    for(int i=1; i<=length; i++) {
+      BlockHeader h = headerGenerator.difficulty(each)
+              .parentHash(newParent.getHash())
+              .number(newParent.getNumber()+1)
+              .baseFeePerGas(
+                      feeMarket.computeBaseFee(
+                              genesisState.getBlock().getHeader().getNumber() + 1,
+                              newParent.getBaseFee().orElse(Wei.of(0x3b9aca00)),
+                      0, 15000000)
+              )
+              .gasLimit(newParent.getGasLimit())
+              .stateRoot(newParent.getStateRoot())
+              .buildHeader();
+      retval.add(new Block(h, BlockBody.empty()));
+      newParent = h;
+    }
+    return retval;
+  }
+
+  private BlockHeader terminalPowBlock(final BlockHeader parent) {
 
     BlockHeader terminal =
         headerGenerator
-            .difficulty(Difficulty.MAX_VALUE)
-            .parentHash(genesisState.getBlock().getHash())
-            .number(genesisState.getBlock().getHeader().getNumber() + 1)
+            .difficulty(Difficulty.of(10000))
+            .parentHash(parent.getHash())
+            .number(parent.getNumber() + 1)
             .baseFeePerGas(
                 feeMarket.computeBaseFee(
                     genesisState.getBlock().getHeader().getNumber() + 1,
-                    genesisState.getBlock().getHeader().getBaseFee().orElse(Wei.of(0x3b9aca00)),
+                    parent.getBaseFee().orElse(Wei.of(0x3b9aca00)),
                     0,
                     15000000l))
-            .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
-            .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
+            .gasLimit(parent.getGasLimit())
+            .stateRoot(parent.getStateRoot())
             .buildHeader();
-    mergeContext.setTerminalPoWBlock(Optional.of(terminal));
+    //mergeContext.setTerminalPoWBlock(Optional.of(terminal));
     return terminal;
   }
 }
