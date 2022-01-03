@@ -165,7 +165,13 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
         final PersistBlockTask task = tasks.next();
         future =
             future
-                .handle((r, t) -> r)
+                .handle(
+                    (r, t) -> {
+                      if (t != null) {
+                        LOG.error("Error importing block", t);
+                      }
+                      return r;
+                    })
                 .thenCompose(
                     r -> {
                       if (r != null) {

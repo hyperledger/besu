@@ -150,6 +150,9 @@ public class BlockPropagationManager {
                 if (r != null) {
                   LOG.info("Imported {} pending blocks", r.size());
                 }
+                if (t != null) {
+                  LOG.error("Error importing pending blocks", t);
+                }
               });
     } else {
 
