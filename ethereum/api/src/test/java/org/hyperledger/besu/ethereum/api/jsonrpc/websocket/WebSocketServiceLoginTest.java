@@ -107,7 +107,6 @@ public class WebSocketServiceLoginTest {
         new HttpClientOptions()
             .setDefaultHost(websocketConfiguration.getHost())
             .setDefaultPort(websocketConfiguration.getPort());
-    ;
 
     httpClient = vertx.createHttpClient(httpClientOptions);
   }
@@ -223,9 +222,7 @@ public class WebSocketServiceLoginTest {
     options.setHost(websocketConfiguration.getHost());
     options.setPort(websocketConfiguration.getPort());
     String badtoken = "badtoken";
-    if (badtoken != null) {
-      options.addHeader("Authorization", "Bearer " + badtoken);
-    }
+    options.addHeader("Authorization", "Bearer " + badtoken);
     httpClient.webSocket(
         options,
         webSocket -> {
