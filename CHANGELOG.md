@@ -8,6 +8,7 @@
 
 ### Bug Fixes
 - Make 'to' field optional in eth_call method according to the spec [#3177] (https://github.com/hyperledger/besu/pull/3177)
+- Updated to log4j 2.17.1. Resolves two potential vulnerabilities which are only exploitable when using custom log4j configurations that are either writable by untrusted users or log data from the ThreadContext.
 
 ## 21.10.5
 
