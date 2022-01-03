@@ -41,7 +41,7 @@ public class NoNonceRule implements AttachedBlockHeaderValidationRule {
     }
     if (totalDifficulty
         .get()
-        .greaterOrEqualThan(
+        .greaterThan(
             protocolContext
                 .getConsensusContext(MergeContext.class)
                 .getTerminalTotalDifficulty())) { // past TDD, invalid if has nonce

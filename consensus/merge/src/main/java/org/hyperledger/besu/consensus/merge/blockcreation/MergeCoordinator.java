@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardsSyncContext;
@@ -220,6 +221,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         result -> {
           result.worldState.persist(block.getHeader());
           chain.appendBlock(block, result.receipts);
+          final Optional<Difficulty> td = chain.getTotalDifficultyByHash(block.getHash());
+          if(td.isPresent()){
+            //mergeContext.setTerminalTotalDifficulty(td.get());
+            mergeContext.setIsPostMerge(td.get());
+          }
         });
 
     if (!optResult.isPresent()) {

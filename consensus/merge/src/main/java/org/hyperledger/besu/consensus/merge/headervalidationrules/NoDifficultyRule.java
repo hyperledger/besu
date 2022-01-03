@@ -42,7 +42,7 @@ public class NoDifficultyRule implements AttachedBlockHeaderValidationRule {
     if (protocolContext.getConsensusContext(MergeContext.class).isPostMerge()) {
       if (totalDifficulty
           .get()
-          .greaterOrEqualThan(
+          .greaterThan(
               protocolContext
                   .getConsensusContext(MergeContext.class)
                   .getTerminalTotalDifficulty())) {
