@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -37,6 +38,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.http.WebSocketFrame;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -47,7 +50,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 
 @RunWith(VertxUnitRunner.class)
 public class WebSocketRequestHandlerTest {
@@ -57,6 +62,7 @@ public class WebSocketRequestHandlerTest {
   private Vertx vertx;
   private WebSocketRequestHandler handler;
   private JsonRpcMethod jsonRpcMethodMock;
+  private ServerWebSocket websocketMock;
   private final Map<String, JsonRpcMethod> methods = new HashMap<>();
 
   @Before
@@ -64,6 +70,9 @@ public class WebSocketRequestHandlerTest {
     vertx = Vertx.vertx();
 
     jsonRpcMethodMock = mock(JsonRpcMethod.class);
+    websocketMock = mock(ServerWebSocket.class);
+
+    when(websocketMock.textHandlerID()).thenReturn(UUID.randomUUID().toString());
 
     methods.put("eth_x", jsonRpcMethodMock);
     handler =
@@ -77,6 +86,7 @@ public class WebSocketRequestHandlerTest {
   @After
   public void after(final TestContext context) {
     Mockito.reset(jsonRpcMethodMock);
+    Mockito.reset(websocketMock);
     vertx.close(context.asyncAssertSuccess());
   }
 
@@ -93,20 +103,15 @@ public class WebSocketRequestHandlerTest {
 
     when(jsonRpcMethodMock.response(eq(expectedRequest))).thenReturn(expectedResponse);
 
-    final String websocketId = UUID.randomUUID().toString();
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    vertx
-        .eventBus()
-        .consumer(websocketId)
-        .handler(
-            msg -> {
-              context.assertEquals(Json.encode(expectedResponse), msg.body());
-              async.complete();
-            })
-        .completionHandler(v -> handler.handle(websocketId, requestJson.toString()));
+    handler.handle(websocketMock, requestJson.toString());
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+
     // can verify only after async not before
+    verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
+    verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
     verify(jsonRpcMethodMock).response(eq(expectedRequest));
   }
 
@@ -126,20 +131,14 @@ public class WebSocketRequestHandlerTest {
 
     when(jsonRpcMethodMock.response(eq(expectedRequest))).thenReturn(expectedSingleResponse);
 
-    final String websocketId = UUID.randomUUID().toString();
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    vertx
-        .eventBus()
-        .consumer(websocketId)
-        .handler(
-            msg -> {
-              context.assertEquals(Json.encode(expectedBatchResponse), msg.body());
-              async.complete();
-            })
-        .completionHandler(v -> handler.handle(websocketId, arrayJson.toString()));
+    handler.handle(websocketMock, arrayJson.toString());
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
     // can verify only after async not before
+    verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedBatchResponse))));
+    verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
     verify(jsonRpcMethodMock, Mockito.times(2)).response(eq(expectedRequest));
   }
 
@@ -160,19 +159,15 @@ public class WebSocketRequestHandlerTest {
     final JsonArray expectedBatchResponse =
         new JsonArray(List.of(expectedErrorResponse1, expectedErrorResponse2));
 
-    final String websocketId = UUID.randomUUID().toString();
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    vertx
-        .eventBus()
-        .consumer(websocketId)
-        .handler(
-            msg -> {
-              context.assertEquals(Json.encode(expectedBatchResponse), msg.body());
-              async.complete();
-            })
-        .completionHandler(v -> handler.handle(websocketId, arrayJson.toString()));
+    handler.handle(websocketMock, arrayJson.toString());
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+
+    // can verify only after async not before
+    verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedBatchResponse))));
+    verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
   }
 
   @Test
@@ -182,20 +177,16 @@ public class WebSocketRequestHandlerTest {
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST);
 
-    final String websocketId = UUID.randomUUID().toString();
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    vertx
-        .eventBus()
-        .consumer(websocketId)
-        .handler(
-            msg -> {
-              context.assertEquals(Json.encode(expectedResponse), msg.body());
-              verifyNoInteractions(jsonRpcMethodMock);
-              async.complete();
-            })
-        .completionHandler(v -> handler.handle(websocketId, ""));
+    handler.handle(websocketMock, "");
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+
+    // can verify only after async not before
+    verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
+    verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
+    verifyNoInteractions(jsonRpcMethodMock);
   }
 
   @Test
@@ -205,20 +196,16 @@ public class WebSocketRequestHandlerTest {
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST);
 
-    final String websocketId = UUID.randomUUID().toString();
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    vertx
-        .eventBus()
-        .consumer(websocketId)
-        .handler(
-            msg -> {
-              context.assertEquals(Json.encode(expectedResponse), msg.body());
-              verifyNoInteractions(jsonRpcMethodMock);
-              async.complete();
-            })
-        .completionHandler(v -> handler.handle(websocketId, "{}"));
+    handler.handle(websocketMock, "{}");
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+
+    // can verify only after async not before
+    verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
+    verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
+    verifyNoInteractions(jsonRpcMethodMock);
   }
 
   @Test
@@ -230,19 +217,14 @@ public class WebSocketRequestHandlerTest {
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(1, JsonRpcError.METHOD_NOT_FOUND);
 
-    final String websocketId = UUID.randomUUID().toString();
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    vertx
-        .eventBus()
-        .consumer(websocketId)
-        .handler(
-            msg -> {
-              context.assertEquals(Json.encode(expectedResponse), msg.body());
-              async.complete();
-            })
-        .completionHandler(v -> handler.handle(websocketId, requestJson.toString()));
+    handler.handle(websocketMock, requestJson.toString());
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+
+    verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
+    verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
   }
 
   @Test
@@ -258,19 +240,15 @@ public class WebSocketRequestHandlerTest {
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(1, JsonRpcError.INVALID_PARAMS);
 
-    final String websocketId = UUID.randomUUID().toString();
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    vertx
-        .eventBus()
-        .consumer(websocketId)
-        .handler(
-            msg -> {
-              context.assertEquals(Json.encode(expectedResponse), msg.body());
-              async.complete();
-            })
-        .completionHandler(v -> handler.handle(websocketId, requestJson.toString()));
+    handler.handle(websocketMock, requestJson.toString());
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+
+    // can verify only after async not before
+    verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
+    verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
   }
 
   @Test
@@ -284,18 +262,29 @@ public class WebSocketRequestHandlerTest {
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(1, JsonRpcError.INTERNAL_ERROR);
 
-    final String websocketId = UUID.randomUUID().toString();
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    vertx
-        .eventBus()
-        .consumer(websocketId)
-        .handler(
-            msg -> {
-              context.assertEquals(Json.encode(expectedResponse), msg.body());
-              async.complete();
-            })
-        .completionHandler(v -> handler.handle(websocketId, requestJson.toString()));
+    handler.handle(websocketMock, requestJson.toString());
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+
+    // can verify only after async not before
+    verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
+    verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
+  }
+
+  private ArgumentMatcher<WebSocketFrame> isFrameWithText(final String text) {
+    return f -> f.isText() && f.textData().equals(text);
+  }
+
+  private boolean isFinalFrame(final WebSocketFrame frame) {
+    return frame.isFinal();
+  }
+
+  private Answer<ServerWebSocket> completeOnLastFrame(final Async async) {
+    return invocation -> {
+      async.complete();
+      return websocketMock;
+    };
   }
 }
