@@ -29,7 +29,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
 
 /** Downloads a block from a peer. Will complete exceptionally if block cannot be downloaded. */
 public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
@@ -64,7 +63,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
 
   @Override
   protected void executeTask() {
-    final String blockIdentifier = hash.map(Bytes::toHexString).orElse(Long.toString(blockNumber));
+    final String blockIdentifier = blockNumber + " (" + hash + ")";
     LOG.debug(
         "Downloading block {} from peer {}.",
         blockIdentifier,
