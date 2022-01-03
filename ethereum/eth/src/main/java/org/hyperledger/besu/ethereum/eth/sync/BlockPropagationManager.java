@@ -128,12 +128,14 @@ public class BlockPropagationManager {
       readyForImport = pendingBlocksManager.childrenOf(newBlock.getHash());
     }
 
-    LOG.trace(
-        "Ready for import blocks found {} for {}",
-        readyForImport,
-        newBlock.getHeader().getNumber());
-
     if (!readyForImport.isEmpty()) {
+      LOG.trace(
+          "Ready for import blocks found {} for {}",
+          readyForImport.stream()
+              .map(b -> b.getHeader().getNumber() + " with hash " + b.getHash())
+              .collect(Collectors.joining(", ", "[", "]")),
+          newBlock.getHeader().getNumber());
+
       final Supplier<CompletableFuture<List<Block>>> importBlocksTask =
           PersistBlockTask.forUnorderedBlocks(
               protocolSchedule,
