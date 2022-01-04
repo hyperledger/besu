@@ -37,11 +37,13 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
@@ -310,13 +312,15 @@ public abstract class BesuControllerBuilder {
         new EthPeers(getSupportedProtocol(), clock, metricsSystem, messagePermissioningProviders);
 
     final EthMessages ethMessages = new EthMessages();
+    final EthMessages snapMessages = new EthMessages();
+
     final EthScheduler scheduler =
         new EthScheduler(
             syncConfig.getDownloaderParallelism(),
             syncConfig.getTransactionsParallelism(),
             syncConfig.getComputationParallelism(),
             metricsSystem);
-    final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
+    final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
     final SyncState syncState = new SyncState(blockchain, ethPeers);
     final boolean fastSyncEnabled = SyncMode.FAST.equals(syncConfig.getSyncMode());
 
@@ -331,6 +335,8 @@ public abstract class BesuControllerBuilder {
             miningParameters.getMinTransactionGasPrice(),
             transactionPoolConfiguration);
 
+    final List<PeerValidator> peerValidators = createPeerValidators(protocolSchedule);
+
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
             protocolContext,
@@ -341,7 +347,10 @@ public abstract class BesuControllerBuilder {
             ethContext,
             ethMessages,
             scheduler,
-            createPeerValidators(protocolSchedule));
+            peerValidators);
+
+    final Optional<SnapProtocolManager> maybeSnapProtocolManager =
+        createSnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive);
 
     final Synchronizer synchronizer =
         new DefaultSynchronizer(
@@ -370,7 +379,8 @@ public abstract class BesuControllerBuilder {
         createAdditionalPluginServices(blockchain, protocolContext);
 
     final SubProtocolConfiguration subProtocolConfiguration =
-        createSubProtocolConfiguration(ethProtocolManager);
+        createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
+    ;
 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);
@@ -407,8 +417,15 @@ public abstract class BesuControllerBuilder {
   }
 
   protected SubProtocolConfiguration createSubProtocolConfiguration(
-      final EthProtocolManager ethProtocolManager) {
-    return new SubProtocolConfiguration().withSubProtocol(EthProtocol.get(), ethProtocolManager);
+      final EthProtocolManager ethProtocolManager,
+      final Optional<SnapProtocolManager> maybeSnapProtocolManager) {
+    final SubProtocolConfiguration subProtocolConfiguration =
+        new SubProtocolConfiguration().withSubProtocol(EthProtocol.get(), ethProtocolManager);
+    maybeSnapProtocolManager.ifPresent(
+        snapProtocolManager -> {
+          subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager);
+        });
+    return subProtocolConfiguration;
   }
 
   protected abstract MiningCoordinator createMiningCoordinator(
@@ -464,6 +481,16 @@ public abstract class BesuControllerBuilder {
       final ConsensusContextFactory consensusContextFactory) {
     return ProtocolContext.init(
         blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
+  }
+
+  @SuppressWarnings("unused")
+  private Optional<SnapProtocolManager> createSnapProtocolManager(
+      final List<PeerValidator> peerValidators,
+      final EthPeers ethPeers,
+      final EthMessages snapMessages,
+      final WorldStateArchive worldStateArchive) {
+    // TODO implement method when flag will be available
+    return Optional.empty();
   }
 
   private WorldStateArchive createWorldStateArchive(
