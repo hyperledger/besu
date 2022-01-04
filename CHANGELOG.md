@@ -2,6 +2,9 @@
 
 ## 22.1.0-RC2
 
+### 22.1.0-RC2 Breaking Changes
+- Removed deprecated hash variable `protected volatile Hash hash;` which was used for private transactions [#3110](https://github.com/hyperledger/besu/pull/3110)
+
 ### Additions and Improvements
 - Re-order external services (e.g JsonRpcHttpService) to start before blocks start processing [#3118](https://github.com/hyperledger/besu/pull/3118)
 - Stream JSON RPC responses to avoid creating big JSON strings in memory [#3076] (https://github.com/hyperledger/besu/pull/3076)
