@@ -2583,6 +2583,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setGenesisConfig(genesisConfig());
 
       if (networkId == null) {
+        // If no chain id is found in the genesis, use mainnet network id
         try {
           builder.setNetworkId(
               getGenesisConfigFile()
