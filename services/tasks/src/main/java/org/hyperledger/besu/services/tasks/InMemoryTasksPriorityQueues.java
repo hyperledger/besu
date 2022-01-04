@@ -86,13 +86,11 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
 
   @Override
   public synchronized long size() {
-    assertNotClosed();
     return internalQueues.stream().mapToInt(Queue::size).sum();
   }
 
   @Override
   public synchronized boolean isEmpty() {
-    assertNotClosed();
     return findLastNonEmptyQueue().isEmpty();
   }
 
@@ -106,7 +104,6 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
 
   @Override
   public synchronized boolean allTasksCompleted() {
-    assertNotClosed();
     return isEmpty() && unfinishedOutstandingTasks.isEmpty();
   }
 
