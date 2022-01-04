@@ -1,5 +1,10 @@
 # Changelog
 
+## 21.10.6
+
+### Bug Fixes
+- Update to log4j 2.17.1. Resolves potential vulnerability only exploitable when using custom log4j configurations that are writable by untrusted users.
+
 ## 21.10.5
 
 ### Bug Fixes
