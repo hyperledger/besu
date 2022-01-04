@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyFloat;
@@ -320,8 +321,8 @@ public abstract class CommandTestAbstract {
   // Display outputs for debug purpose
   @After
   public void displayOutput() throws IOException {
-    TEST_LOGGER.info("Standard output {}", commandOutput.toString());
-    TEST_LOGGER.info("Standard error {}", commandErrorOutput.toString());
+    TEST_LOGGER.info("Standard output {}", commandOutput.toString(UTF_8));
+    TEST_LOGGER.info("Standard error {}", commandErrorOutput.toString(UTF_8));
 
     outPrintStream.close();
     commandOutput.close();

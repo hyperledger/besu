@@ -19,7 +19,7 @@ import static java.time.Duration.ofMinutes;
 import static java.time.Instant.now;
 import static java.util.Arrays.asList;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -78,7 +78,7 @@ public class TransactionsMessageProcessorTest {
         TransactionsMessage.create(asList(transaction1, transaction2, transaction3)),
         now().minus(ofMinutes(1)),
         ofMillis(1));
-    verifyZeroInteractions(transactionTracker);
+    verifyNoInteractions(transactionTracker);
     verify(totalSkippedTransactionsMessageCounter).inc(1);
   }
 
@@ -89,7 +89,7 @@ public class TransactionsMessageProcessorTest {
         TransactionsMessage.create(asList(transaction1, transaction2, transaction3)),
         now().minus(ofMinutes(1)),
         ofMillis(1));
-    verifyZeroInteractions(transactionPool);
+    verifyNoInteractions(transactionPool);
     verify(totalSkippedTransactionsMessageCounter).inc(1);
   }
 }
