@@ -34,16 +34,23 @@ public class RequestManager {
   private final Map<BigInteger, ResponseStream> responseStreams = new ConcurrentHashMap<>();
   private final EthPeer peer;
   private final boolean supportsRequestId;
+  private final String protocolName;
 
   private final AtomicInteger outstandingRequests = new AtomicInteger(0);
 
-  public RequestManager(final EthPeer peer, final boolean supportsRequestId) {
+  public RequestManager(
+      final EthPeer peer, final boolean supportsRequestId, final String protocolName) {
     this.peer = peer;
     this.supportsRequestId = supportsRequestId;
+    this.protocolName = protocolName;
   }
 
   public int outstandingRequests() {
     return outstandingRequests.get();
+  }
+
+  public String getProtocolName() {
+    return protocolName;
   }
 
   public ResponseStream dispatchRequest(final RequestSender sender, final MessageData messageData)
@@ -51,8 +58,7 @@ public class RequestManager {
     outstandingRequests.incrementAndGet();
     final BigInteger requestId = BigInteger.valueOf(requestIdCounter.getAndIncrement());
     final ResponseStream stream = createStream(requestId);
-    sender.send(
-        supportsRequestId ? RequestId.wrapMessageData(requestId, messageData) : messageData);
+    sender.send(supportsRequestId ? messageData.wrapMessageData(requestId) : messageData);
     return stream;
   }
 
@@ -62,7 +68,7 @@ public class RequestManager {
     if (supportsRequestId) {
       // If there's a requestId, find the specific stream it belongs to
       final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
-          RequestId.unwrapMessageData(ethMessage.getData());
+          ethMessage.getData().unwrapMessageData();
       Optional.ofNullable(responseStreams.get(requestIdAndEthMessage.getKey()))
           .ifPresentOrElse(
               responseStream -> responseStream.processMessage(requestIdAndEthMessage.getValue()),
