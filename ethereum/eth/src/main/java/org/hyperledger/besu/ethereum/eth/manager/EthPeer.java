@@ -473,12 +473,10 @@ public class EthPeer {
   }
 
   public int outstandingRequests() {
-    final AtomicInteger count = new AtomicInteger(0);
-    requestManagers.forEach(
-        (protocolName, map) ->
-            map.forEach(
-                (code, requestManager) -> count.getAndAdd(requestManager.outstandingRequests())));
-    return count.get();
+    return requestManagers.values().stream()
+        .flatMap(m -> m.values().stream())
+        .mapToInt(RequestManager::outstandingRequests)
+        .sum();
   }
 
   public long getLastRequestTimestamp() {
