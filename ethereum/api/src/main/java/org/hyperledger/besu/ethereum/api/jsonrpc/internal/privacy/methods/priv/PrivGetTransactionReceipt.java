@@ -125,7 +125,6 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
         privateTransaction.getBlockNumber(),
         privateTransaction.getPmtIndex(),
         privateTransaction.getPmtHash(),
-        privateTransaction.getHash(),
         privateTransaction.getPrivateFrom(),
         privateTransaction.getPrivateFor().orElse(null),
         privateTransaction.getPrivacyGroupId().orElse(null),
