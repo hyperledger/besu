@@ -22,10 +22,8 @@ import org.hyperledger.besu.services.pipeline.Pipe;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.tuweni.bytes.Bytes;
 
 public class LoadLocalDataStep {
@@ -43,33 +41,17 @@ public class LoadLocalDataStep {
             "Total number of node data requests completed using existing data");
   }
 
-  private final AtomicInteger present = new AtomicInteger();
-  private final AtomicInteger missing = new AtomicInteger();
-
   public Stream<Task<NodeDataRequest>> loadLocalData(
       final Task<NodeDataRequest> task, final Pipe<Task<NodeDataRequest>> completedTasks) {
     final NodeDataRequest request = task.getData();
     final Optional<Bytes> existingData = request.getExistingData(worldStateStorage);
     if (existingData.isPresent()) {
-      if (present.incrementAndGet() % 100000 == 0) {
-        System.out.println("already present " + present.get());
-      }
       existingNodeCounter.inc();
       request.setData(existingData.get());
       request.setRequiresPersisting(false);
       completedTasks.put(task);
       return Stream.empty();
     }
-    if (missing.incrementAndGet() % 10000 == 0) {
-      System.out.println("not already present counter" + missing.get());
-    }
-    if (task.getData().getRequestType().equals(RequestType.ACCOUNT_TRIE_NODE))
-      LogManager.getLogger()
-          .info(
-              "Heal Not found account "
-                  + task.getData().getLocation()
-                  + " "
-                  + task.getData().getHash());
     return Stream.of(task);
   }
 }

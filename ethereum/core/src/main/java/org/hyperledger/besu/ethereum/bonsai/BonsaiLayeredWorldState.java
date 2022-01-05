@@ -152,7 +152,8 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
       } else if (currentLayer.getNextWorldView().get() instanceof BonsaiLayeredWorldState) {
         currentLayer = (BonsaiLayeredWorldState) currentLayer.getNextWorldView().get();
       } else {
-        return currentLayer.getNextWorldView().get().getStorageValueBySlotHash(address, slotHash);
+        return ((BonsaiPersistedWorldState) currentLayer.getNextWorldView().get())
+            .getStorageValueBySlotHash(address, slotHash, false);
       }
     }
     return Optional.empty();
@@ -230,7 +231,8 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
       } else if (currentLayer.getNextWorldView().get() instanceof BonsaiLayeredWorldState) {
         currentLayer = (BonsaiLayeredWorldState) currentLayer.getNextWorldView().get();
       } else {
-        return currentLayer.getNextWorldView().get().get(address);
+        return ((BonsaiPersistedWorldState) currentLayer.getNextWorldView().get())
+            .get(address, false);
       }
     }
     return null;

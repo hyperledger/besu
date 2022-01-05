@@ -483,13 +483,11 @@ public abstract class BesuControllerBuilder {
         blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
   }
 
-  @SuppressWarnings("unused")
   private Optional<SnapProtocolManager> createSnapProtocolManager(
       final List<PeerValidator> peerValidators,
       final EthPeers ethPeers,
       final EthMessages snapMessages,
       final WorldStateArchive worldStateArchive) {
-    // TODO implement method when flag will be available
     return Optional.of(
         new SnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive));
   }

@@ -353,8 +353,12 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public Account get(final Address address) {
+    return get(address, true);
+  }
+
+  public Account get(final Address address, final boolean lazyMode) {
     return worldStateStorage
-        .getAccount(Hash.hash(address))
+        .getAccount(Hash.hash(address), lazyMode)
         .map(bytes -> fromRLP(updater, address, bytes, true))
         .orElse(null);
   }
@@ -394,8 +398,13 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public Optional<UInt256> getStorageValueBySlotHash(final Address address, final Hash slotHash) {
+    return getStorageValueBySlotHash(address, slotHash, true);
+  }
+
+  public Optional<UInt256> getStorageValueBySlotHash(
+      final Address address, final Hash slotHash, final boolean lazyMode) {
     return worldStateStorage
-        .getStorageValueBySlotHash(Hash.hash(address), slotHash)
+        .getStorageValueBySlotHash(Hash.hash(address), slotHash, lazyMode)
         .map(UInt256::fromBytes);
   }
 
