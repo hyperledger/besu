@@ -1,5 +1,10 @@
 # Changelog
 
+## Next RC
+
+### Additions and Improvements
+- Genesis file parameter `blockperiodseconds` is validated as a positive integer on startup to prevent unexpected runtime behaviour [#3186](https://github.com/hyperledger/besu/pull/3186)
+
 ## 22.1.0-RC2
 
 ### 22.1.0-RC2 Breaking Changes
@@ -7,10 +12,10 @@
 
 ### Additions and Improvements
 - Re-order external services (e.g JsonRpcHttpService) to start before blocks start processing [#3118](https://github.com/hyperledger/besu/pull/3118)
-- Stream JSON RPC responses to avoid creating big JSON strings in memory [#3076] (https://github.com/hyperledger/besu/pull/3076)
+- Stream JSON RPC responses to avoid creating big JSON strings in memory [#3076](https://github.com/hyperledger/besu/pull/3076)
 
 ### Bug Fixes
-- Make 'to' field optional in eth_call method according to the spec [#3177] (https://github.com/hyperledger/besu/pull/3177)
+- Make 'to' field optional in eth_call method according to the spec [#3177](https://github.com/hyperledger/besu/pull/3177)
 - Update to log4j 2.17.1. Resolves potential vulnerability only exploitable when using custom log4j configurations that are writable by untrusted users.
 
 ## 21.10.6
