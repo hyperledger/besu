@@ -26,7 +26,6 @@ public abstract class PrivateTransactionResult {
   private final String from;
   private final String gas;
   private final String gasPrice;
-  private final String hash;
   private final String input;
   private final String nonce;
   private final String to;
@@ -41,7 +40,6 @@ public abstract class PrivateTransactionResult {
     this.from = tx.getSender().toString();
     this.gas = Quantity.create(tx.getGasLimit());
     this.gasPrice = Quantity.create(tx.getGasPrice());
-    this.hash = tx.getHash().toString();
     this.input = tx.getPayload().toString();
     this.nonce = Quantity.create(tx.getNonce());
     this.to = tx.getTo().map(Address::toHexString).orElse(null);
@@ -66,11 +64,6 @@ public abstract class PrivateTransactionResult {
   @JsonGetter(value = "gasPrice")
   public String getGasPrice() {
     return gasPrice;
-  }
-
-  @JsonGetter(value = "hash")
-  public String getHash() {
-    return hash;
   }
 
   @JsonGetter(value = "input")

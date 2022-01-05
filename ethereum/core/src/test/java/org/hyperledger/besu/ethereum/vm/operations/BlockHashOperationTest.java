@@ -29,7 +29,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 
-import com.google.common.base.Strings;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -50,7 +49,7 @@ public class BlockHashOperationTest {
 
   @Test
   public void shouldReturnZeroWhenArgIsBiggerThanALong() {
-    assertBlockHash(Bytes32.fromHexString(Strings.repeat("F", 64)), Bytes32.ZERO, 100);
+    assertBlockHash(Bytes32.fromHexString("F".repeat(64)), Bytes32.ZERO, 100);
   }
 
   @Test

@@ -51,7 +51,8 @@ public class JsonBftConfigOptions implements BftConfigOptions {
 
   @Override
   public int getBlockPeriodSeconds() {
-    return JsonUtil.getInt(bftConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
+    return JsonUtil.getPositiveInt(
+        bftConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
   }
 
   @Override

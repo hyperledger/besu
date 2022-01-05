@@ -38,7 +38,8 @@ public class CliqueConfigOptions {
   }
 
   public int getBlockPeriodSeconds() {
-    return JsonUtil.getInt(cliqueConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
+    return JsonUtil.getPositiveInt(
+        cliqueConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
   }
 
   Map<String, Object> asMap() {
