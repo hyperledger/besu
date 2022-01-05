@@ -126,6 +126,10 @@ public abstract class NodeDataRequest {
     return location;
   }
 
+  public boolean isRequiresPersisting() {
+    return requiresPersisting;
+  }
+
   public NodeDataRequest setRequiresPersisting(final boolean requiresPersisting) {
     this.requiresPersisting = requiresPersisting;
     return this;

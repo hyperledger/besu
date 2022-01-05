@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.tuweni.bytes.Bytes;
 
 public class LoadLocalDataStep {
@@ -62,6 +63,13 @@ public class LoadLocalDataStep {
     if (missing.incrementAndGet() % 10000 == 0) {
       System.out.println("not already present counter" + missing.get());
     }
+    if (task.getData().getRequestType().equals(RequestType.ACCOUNT_TRIE_NODE))
+      LogManager.getLogger()
+          .info(
+              "Heal Not found account "
+                  + task.getData().getLocation()
+                  + " "
+                  + task.getData().getHash());
     return Stream.of(task);
   }
 }

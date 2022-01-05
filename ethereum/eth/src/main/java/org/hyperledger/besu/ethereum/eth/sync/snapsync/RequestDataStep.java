@@ -97,7 +97,6 @@ public class RequestDataStep {
                         ethContext.getEthPeers(),
                         worldStateProofProvider)) {
                       req.setData(Optional.empty()); // invalid response mark Failed
-                      System.out.println("failed received");
                       downloadState.requestComplete(false, 0);
                     } else {
                       downloadState.requestComplete(true);

@@ -18,16 +18,22 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
@@ -73,7 +79,20 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    return accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    if (response.isEmpty()) {
+      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+      if (worldStateRootHash.isPresent()) {
+        response =
+            new StoredMerklePatriciaTrie<>(
+                    new StoredNodeFactory<>(
+                        this::getAccountStateTrieNode, Function.identity(), Function.identity()),
+                    Bytes32.wrap(worldStateRootHash.get()))
+                .get(accountHash);
+        response.ifPresent(bytes -> updater().putAccountInfoState(accountHash, bytes).commit());
+      }
+    }
+    return response;
   }
 
   @Override
@@ -87,10 +106,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return trieBranchStorage
-          .get(location.toArrayUnsafe())
-          .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).compareTo(nodeHash) == 0);
+      return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
     }
   }
 
@@ -102,9 +118,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     } else {
       return trieBranchStorage
           .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
-          .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).compareTo(nodeHash) == 0);
+          .map(Bytes::wrap);
     }
+  }
+
+  @Override
+  public Optional<Bytes> getTrieNode(final Bytes location) {
+    return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   public Optional<byte[]> getTrieLog(final Hash blockHash) {
@@ -124,9 +144,31 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
-    return storageStorage
-        .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
-        .map(Bytes::wrap);
+    Optional<Bytes> response =
+        storageStorage
+            .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
+            .map(Bytes::wrap);
+    if (response.isEmpty()) {
+      final Optional<Bytes> account = getAccount(accountHash);
+      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+      if (account.isPresent() && worldStateRootHash.isPresent()) {
+        final StateTrieAccountValue accountValue =
+            StateTrieAccountValue.readFrom(
+                org.hyperledger.besu.ethereum.rlp.RLP.input(account.get()));
+        response =
+            new StoredMerklePatriciaTrie<>(
+                    new StoredNodeFactory<>(
+                        (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+                        Function.identity(),
+                        Function.identity()),
+                    accountValue.getStorageRoot())
+                .get(slotHash)
+                .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
+        response.ifPresent(
+            bytes -> updater().putStorageValueBySlotHash(accountHash, slotHash, bytes).commit());
+      }
+    }
+    return response;
   }
 
   @Override
@@ -233,6 +275,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     public WorldStateStorage.Updater saveWorldState(
         final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
       trieBranchStorageTransaction.put(Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
+      trieBranchStorageTransaction.put(WORLD_ROOT_HASH_KEY, nodeHash.toArrayUnsafe());
+      trieBranchStorageTransaction.put(WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
       return this;
     }
 
@@ -243,6 +287,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         // Don't save empty nodes
         return this;
       }
+      // LogManager.getLogger().info("PutAccountStateTrieNode node "+location+" "+nodeHash+"
+      // "+node);
       trieBranchStorageTransaction.put(location.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
@@ -260,6 +306,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         // Don't save empty nodes
         return this;
       }
+      // LogManager.getLogger().info("PutAccountStorageTrie node "+accountHash+" "+location+"
+      // "+nodeHash+" "+node);
       trieBranchStorageTransaction.put(
           Bytes.concatenate(accountHash, location).toArrayUnsafe(), node.toArrayUnsafe());
       return this;
@@ -269,6 +317,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
       storageStorageTransaction.put(
           Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(), storage.toArrayUnsafe());
+      return this;
+    }
+
+    public Updater removeStorageValues(final List<byte[]> keys) {
+      for (byte[] key : keys) {
+        storageStorageTransaction.remove(key);
+      }
       return this;
     }
 

@@ -24,6 +24,7 @@ import org.hyperledger.besu.services.tasks.Task;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.time.Clock;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,6 +48,13 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     this.fastSyncActions = fastSyncActions;
     this.snapSyncState = snapSyncState;
     this.healProcess = healProcess;
+  }
+
+  @Override
+  protected synchronized void markAsStalled(final int maxNodeRequestRetries) {
+    if (!snapSyncState.isResettingPivotBlock()) {
+      super.markAsStalled(maxNodeRequestRetries);
+    }
   }
 
   @Override
@@ -99,8 +107,10 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
                                     newPivotBlockHeader.getStateRoot());
                                 snapSyncState.setCurrentHeader(newPivotBlockHeader);
                               }
+                              requestComplete(true);
                               snapSyncState.unlockResettingPivotBlock();
                             }))
+            .orTimeout(10, TimeUnit.MINUTES)
             .whenComplete(
                 (unused, throwable) -> {
                   snapSyncState.unlockResettingPivotBlock();

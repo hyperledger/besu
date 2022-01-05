@@ -189,9 +189,9 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   "batchPersistData", task -> persistDataStep.persist(task, healNodeCollection))
               .thenProcess(
                   "checkNewPivotBlock",
-                  tasks -> {
+                  task -> {
                     downloadState.checkNewPivotBlock(snapSyncState);
-                    return tasks;
+                    return task;
                   })
               .andFinishWith("batchDataDownloaded", requestsToComplete::put);
 

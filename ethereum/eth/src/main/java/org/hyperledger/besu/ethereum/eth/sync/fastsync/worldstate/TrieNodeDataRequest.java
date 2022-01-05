@@ -35,7 +35,7 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
 
   @Override
   public Stream<NodeDataRequest> getChildRequests(final WorldStateStorage worldStateStorage) {
-    if (getData() == null) {
+    if (getData() == null || !isRequiresPersisting()) {
       // If this node hasn't been downloaded yet, we can't return any child data
       return Stream.empty();
     }

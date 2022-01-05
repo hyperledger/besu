@@ -60,6 +60,8 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-concurrent'
   implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'org.apache.tuweni:tuweni-rlp'
+
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
 

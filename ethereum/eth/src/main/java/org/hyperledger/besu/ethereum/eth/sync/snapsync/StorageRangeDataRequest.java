@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findN
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetStorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
@@ -49,7 +48,6 @@ import kotlin.collections.ArrayDeque;
 import org.apache.logging.log4j.LogManager;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.rlp.RLP;
 
 /** Returns a list of storages and the merkle proofs of an entire range */
 public class StorageRangeDataRequest extends SnapDataRequest {
@@ -123,19 +121,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
         for (Map.Entry<Bytes32, Bytes> slot : slotRangeData.slots().get(i).entrySet()) {
           trie.put(slot.getKey(), slot.getValue());
-          if (updater instanceof BonsaiWorldStateKeyValueStorage.Updater) {
-            ((BonsaiWorldStateKeyValueStorage.Updater) updater)
-                .putStorageValueBySlotHash(
-                    accountHash,
-                    Hash.wrap(slot.getKey()),
-                    Bytes32.leftPad(RLP.decodeValue(slot.getValue())));
-          }
         }
 
         trie.commit(
             (location, nodeHash, value) -> {
               updater.putAccountStorageTrieNode(accountHash, location, nodeHash, value);
-              ;
             });
       }
     }
@@ -153,7 +143,6 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     isTaskCompleted = true;
 
     if (responseData.slots().isEmpty() && responseData.proofs().isEmpty()) {
-      System.out.println("failed 1");
       isTaskCompleted = false;
     }
 

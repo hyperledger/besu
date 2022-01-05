@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.ACCOUN
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.StorageRangeDataRequest.createStorageRangeDataRequest;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
@@ -97,13 +96,14 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
     for (Map.Entry<Bytes32, Bytes> account : responseData.accounts().entrySet()) {
       trie.put(account.getKey(), account.getValue());
-      if (updater instanceof BonsaiWorldStateKeyValueStorage.Updater) {
-        ((BonsaiWorldStateKeyValueStorage.Updater) updater)
-            .putAccountInfoState(Hash.wrap(account.getKey()), account.getValue());
-      }
     }
 
-    trie.commit(updater::putAccountStateTrieNode);
+    trie.commit(
+        (location, hash, value) -> {
+          if (worldStateStorage.getTrieNode(location).isEmpty()) {
+            updater.putAccountStateTrieNode(location, hash, value);
+          }
+        });
   }
 
   @Override
