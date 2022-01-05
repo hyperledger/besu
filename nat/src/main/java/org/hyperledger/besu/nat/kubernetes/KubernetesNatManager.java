@@ -78,7 +78,7 @@ public class KubernetesNatManager extends AbstractNatManager {
       // invokes the CoreV1Api client
       final V1Service service =
           api
-              .listServiceForAllNamespaces(null, null, null, null, null, null, null, null, null)
+              .listServiceForAllNamespaces(null, null, null, null, null, null, null, null)
               .getItems()
               .stream()
               .filter(
