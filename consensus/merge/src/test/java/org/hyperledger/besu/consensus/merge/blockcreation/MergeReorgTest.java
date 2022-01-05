@@ -90,6 +90,11 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
     mergeContext.setTerminalTotalDifficulty(
         genesisState.getBlock().getHeader().getDifficulty().plus(DIFFICULTY_LEFT));
     mergeContext.setIsPostMerge(genesisState.getBlock().getHeader().getDifficulty());
+    blockchain.observeBlockAdded(
+        blockAddedEvent ->
+            blockchain
+                .getTotalDifficultyByHash(blockAddedEvent.getBlock().getHeader().getHash())
+                .ifPresent(mergeContext::setIsPostMerge));
   }
 
   /* Validation scenario as described over Discord:
@@ -181,7 +186,6 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
             .gasLimit(parent.getGasLimit())
             .stateRoot(parent.getStateRoot())
             .buildHeader();
-    // mergeContext.setTerminalPoWBlock(Optional.of(terminal));
     return terminal;
   }
 }
