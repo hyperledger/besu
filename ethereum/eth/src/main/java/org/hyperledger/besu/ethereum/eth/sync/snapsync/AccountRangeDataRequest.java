@@ -202,16 +202,13 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       }
 
       if (!missingStorageRoots.isEmpty()) {
-        RangeManager.generateAllRanges(16)
-            .forEach(
-                (key, value) ->
-                    childRequests.add(
-                        createStorageRangeDataRequest(
-                            getOriginalRootHash(),
-                            accountsStorageToComplete,
-                            missingStorageRoots,
-                            key,
-                            value)));
+        childRequests.add(
+            createStorageRangeDataRequest(
+                getOriginalRootHash(),
+                accountsStorageToComplete,
+                missingStorageRoots,
+                RangeManager.MIN_RANGE,
+                RangeManager.MAX_RANGE));
       }
 
       if (!missingBytecodes.isEmpty()) {
