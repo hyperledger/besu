@@ -111,14 +111,8 @@ public class MergeBesuControllerBuilderTest {
     when(genesisConfigOptions.getTerminalTotalDifficulty())
         .thenReturn((Optional.of(UInt256.valueOf(100L))));
     when(genesisConfigOptions.getThanosBlockNumber()).thenReturn(OptionalLong.empty());
-    // when(genesisConfigOptions.getEthashConfigOptions()).thenReturn(ethashConfigOptions);
     when(genesisConfigOptions.getTerminalBlockHash()).thenReturn(Optional.of(Hash.ZERO));
     when(genesisConfigOptions.getTerminalBlockNumber()).thenReturn(OptionalLong.of(1L));
-    // when(ethashConfigOptions.getFixedDifficulty()).thenReturn(OptionalLong.empty());
-    // when(genesisConfigOptions.getKeccak256ConfigOptions()).thenReturn(keccak256ConfigOptions);
-    // when(keccak256ConfigOptions.getFixedDifficulty()).thenReturn(OptionalLong.empty());
-    // when(storageProvider.getStorageBySegmentIdentifier(any()))
-    //   .thenReturn(new InMemoryKeyValueStorage());
     when(storageProvider.createBlockchainStorage(any()))
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
@@ -136,7 +130,6 @@ public class MergeBesuControllerBuilderTest {
     when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST))
         .thenReturn(worldStateStorage);
     when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);
-    // when(storageProvider.isWorldStateIterable()).thenReturn(true);
 
     when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
     when(worldStatePreimageStorage.updater())
