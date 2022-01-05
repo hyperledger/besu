@@ -2,12 +2,25 @@
 
 ## 22.1.0-RC2
 
+### 22.1.0-RC2 Breaking Changes
+- Removed deprecated hash variable `protected volatile Hash hash;` which was used for private transactions [#3110](https://github.com/hyperledger/besu/pull/3110)
+
 ### Additions and Improvements
 - Re-order external services (e.g JsonRpcHttpService) to start before blocks start processing [#3118](https://github.com/hyperledger/besu/pull/3118)
 - Stream JSON RPC responses to avoid creating big JSON strings in memory [#3076] (https://github.com/hyperledger/besu/pull/3076)
 
 ### Bug Fixes
 - Make 'to' field optional in eth_call method according to the spec [#3177] (https://github.com/hyperledger/besu/pull/3177)
+- Update to log4j 2.17.1. Resolves potential vulnerability only exploitable when using custom log4j configurations that are writable by untrusted users.
+
+## 21.10.6
+
+### Bug Fixes
+- Update log4j to 2.17.1
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.6/besu-21.10.6.tar.gz \ SHA256 ef579490031dd4eb3704b4041e352cfb2e7e787fcff7506b69ef88843d4e1220
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.6/besu-21.10.6.zip \ SHA256 0fdda65bc993905daa14824840724d0b74e3f16f771f5726f5307f6d9575a719
 
 ## 21.10.5
 
@@ -16,7 +29,7 @@
 
 ### Download Links
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.tar.gz \ SHA256 0d1b6ed8f3e1325ad0d4acabad63c192385e6dcbefe40dc6b647e8ad106445a8
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.zip SHA256 \ a1689a8a65c4c6f633b686983a6a1653e7ac86e742ad2ec6351176482d6e0c57
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.zip \ SHA256 a1689a8a65c4c6f633b686983a6a1653e7ac86e742ad2ec6351176482d6e0c57
 
 ## 22.1.0-RC1
 

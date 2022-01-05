@@ -56,7 +56,6 @@ public class PrivateTransactionReceiptResult {
   private final String from;
   private final List<TransactionReceiptLogResult> logs;
   private final String to;
-  private final String transactionHash;
   private final String transactionIndex;
   private final String revertReason;
   private final String output;
@@ -77,7 +76,6 @@ public class PrivateTransactionReceiptResult {
       final long blockNumber,
       final int txIndex,
       final Hash commitmentHash,
-      final Hash transactionHash,
       final Bytes privateFrom,
       final List<Bytes> privateFor,
       final Bytes privacyGroupId,
@@ -88,7 +86,6 @@ public class PrivateTransactionReceiptResult {
     this.to = to;
     this.output = output.toString();
     this.commitmentHash = commitmentHash.toString();
-    this.transactionHash = transactionHash.toString();
     this.privateFrom = privateFrom != null ? privateFrom.toBase64String() : null;
     this.privateFor =
         privateFor != null
@@ -137,11 +134,6 @@ public class PrivateTransactionReceiptResult {
   @JsonGetter("commitmentHash")
   public String getCommitmentHash() {
     return commitmentHash;
-  }
-
-  @JsonGetter("transactionHash")
-  public String getTransactionHash() {
-    return transactionHash;
   }
 
   @JsonGetter("privateFrom")

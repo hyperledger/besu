@@ -14,6 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
+
+import java.math.BigInteger;
+import java.util.AbstractMap;
+import java.util.Map;
+
 import org.apache.tuweni.bytes.Bytes;
 
 /** A P2P Network Message's Data. */
@@ -39,4 +47,22 @@ public interface MessageData {
    * @return the serialized representation of this message
    */
   Bytes getData();
+
+  default MessageData wrapMessageData(final BigInteger requestId) {
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    rlpOutput.startList();
+    rlpOutput.writeBigIntegerScalar(requestId);
+    rlpOutput.writeRaw(getData());
+    rlpOutput.endList();
+    return new RawMessage(getCode(), rlpOutput.encoded());
+  }
+
+  default Map.Entry<BigInteger, MessageData> unwrapMessageData() {
+    final RLPInput messageDataRLP = RLP.input(getData());
+    messageDataRLP.enterList();
+    final BigInteger requestId = messageDataRLP.readBigIntegerScalar();
+    final Bytes message = messageDataRLP.readAsRlp().raw();
+    messageDataRLP.leaveList();
+    return new AbstractMap.SimpleImmutableEntry<>(requestId, new RawMessage(getCode(), message));
+  }
 }
