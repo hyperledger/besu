@@ -33,6 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public abstract class NodeDataRequest implements TasksPriorityProvider {
   private static final Logger LOG = getLogger();
+  public static final int MAX_CHILDREN = 16;
 
   private final RequestType requestType;
   private final Hash hash;
@@ -138,7 +139,7 @@ public abstract class NodeDataRequest implements TasksPriorityProvider {
     }
     this.possibleParent = Optional.of(parent);
     this.depth = parent.depth + 1;
-    this.priority = parent.priority * 16 + parent.incrementChildren();
+    this.priority = parent.priority * MAX_CHILDREN + parent.incrementChildren();
   }
 
   @Override

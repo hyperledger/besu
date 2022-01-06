@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     implements TaskCollection<T> {
-  private final List<PriorityQueue<T>> internalQueues = new ArrayList<>(17);
+  private final List<PriorityQueue<T>> internalQueues = new ArrayList<>(16);
   private final Set<InMemoryTask<T>> unfinishedOutstandingTasks = new HashSet<>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
@@ -109,8 +109,10 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
 
   @Override
   public synchronized void close() {
-    closed.set(true);
-    internalQueues.clear();
+    if (closed.compareAndSet(false, true)) {
+      internalQueues.clear();
+      unfinishedOutstandingTasks.clear();
+    }
   }
 
   private void assertNotClosed() {
@@ -134,7 +136,7 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     return queue.contains(request)
         || unfinishedOutstandingTasks.stream()
             .map(InMemoryTask::getData)
-            .anyMatch(data -> data == request);
+            .anyMatch(data -> data.equals(request));
   }
 
   private static class InMemoryTask<T extends TasksPriorityProvider> implements Task<T> {
