@@ -16,21 +16,15 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.metrics.RunnableCounter;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.function.LongSupplier;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class CompleteTaskStep {
-  private static final Logger LOG = LogManager.getLogger();
-  private static final int DISPLAY_PROGRESS_STEP = 100000;
   private final WorldStateStorage worldStateStorage;
-  private final RunnableCounter completedRequestsCounter;
+  private final Counter completedRequestsCounter;
   private final Counter retriedRequestsCounter;
   private final LongSupplier worldStatePendingRequestsCurrentSupplier;
 
@@ -41,18 +35,15 @@ public class CompleteTaskStep {
     this.worldStateStorage = worldStateStorage;
     this.worldStatePendingRequestsCurrentSupplier = worldStatePendingRequestsCurrentSupplier;
     completedRequestsCounter =
-        new RunnableCounter(
-            metricsSystem.createCounter(
-                BesuMetricCategory.SYNCHRONIZER,
-                "snap_world_state_completed_requests_total",
-                "Total number of node data requests completed as part of fast sync world state download"),
-            this::displayWorldStateSyncProgress,
-            DISPLAY_PROGRESS_STEP);
+        metricsSystem.createCounter(
+            BesuMetricCategory.SYNCHRONIZER,
+            "snap_world_state_completed_requests_total",
+            "Total number of node data requests completed as part of snap sync world state download");
     retriedRequestsCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.SYNCHRONIZER,
             "snap_world_state_retried_requests_total",
-            "Total number of node data requests repeated as part of fast sync world state download");
+            "Total number of node data requests repeated as part of snap sync world state download");
   }
 
   public void markAsCompleteOrFailed(
@@ -72,17 +63,6 @@ public class CompleteTaskStep {
       // waiting to read from the queue are notified.
       downloadState.notifyTaskAvailable();
     }
-  }
-
-  private void displayWorldStateSyncProgress() {
-    LOG.info(
-        "Downloaded {} world state nodes. At least {} nodes remaining.",
-        getCompletedRequests(),
-        worldStatePendingRequestsCurrentSupplier.getAsLong());
-  }
-
-  public long getCompletedRequests() {
-    return completedRequestsCounter.get();
   }
 
   public long getPendingRequests() {

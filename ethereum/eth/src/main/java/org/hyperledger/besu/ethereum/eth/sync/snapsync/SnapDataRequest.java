@@ -68,14 +68,14 @@ public abstract class SnapDataRequest {
     return this;
   }
 
-  public void persist(
+  public int persist(
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
       final HealNodeCollection healNodeCollection) {
-    doPersist(worldStateStorage, updater, healNodeCollection);
+    return doPersist(worldStateStorage, updater, healNodeCollection);
   }
 
-  protected abstract void doPersist(
+  protected abstract int doPersist(
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
       final HealNodeCollection healNodeCollection);

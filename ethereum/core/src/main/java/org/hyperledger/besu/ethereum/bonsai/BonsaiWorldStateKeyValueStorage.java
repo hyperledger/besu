@@ -26,7 +26,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -87,8 +86,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       // When accessing a trie leaf we store it in accountStorage to accelerate the next time we
-      // want to read
-      // it so no need to check the trie (lazy mode)
+      // want to read it so no need to check the trie (lazy mode)
       final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
       if (worldStateRootHash.isPresent()) {
         response =
@@ -166,8 +164,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       // When accessing a trie leaf we store it in storageStorage to accelerate the next time we
-      // want to read
-      // it so no need to check the trie (lazy mode)
+      // want to read it so no need to check the trie (lazy mode)
       final Optional<Bytes> account = getAccount(accountHash);
       final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
       if (account.isPresent() && worldStateRootHash.isPresent()) {
@@ -308,8 +305,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         // Don't save empty nodes
         return this;
       }
-      // LogManager.getLogger().info("PutAccountStateTrieNode node "+location+" "+nodeHash+"
-      // "+node);
       trieBranchStorageTransaction.put(location.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
@@ -327,8 +322,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         // Don't save empty nodes
         return this;
       }
-      // LogManager.getLogger().info("PutAccountStorageTrie node "+accountHash+" "+location+"
-      // "+nodeHash+" "+node);
       trieBranchStorageTransaction.put(
           Bytes.concatenate(accountHash, location).toArrayUnsafe(), node.toArrayUnsafe());
       return this;
@@ -338,13 +331,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
       storageStorageTransaction.put(
           Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(), storage.toArrayUnsafe());
-      return this;
-    }
-
-    public Updater removeStorageValues(final List<byte[]> keys) {
-      for (byte[] key : keys) {
-        storageStorageTransaction.remove(key);
-      }
       return this;
     }
 

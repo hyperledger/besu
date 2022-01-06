@@ -159,6 +159,11 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
+  public Map<Bytes32, V> entriesFrom(final Function<Node<V>, Map<Bytes32, V>> handler) {
+    return handler.apply(root);
+  }
+
+  @Override
   public void visitAll(final Consumer<Node<V>> nodeConsumer) {
     root.accept(new AllNodesVisitor<>(nodeConsumer));
   }

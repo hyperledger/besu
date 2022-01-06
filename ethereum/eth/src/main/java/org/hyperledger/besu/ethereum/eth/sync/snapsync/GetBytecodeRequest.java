@@ -29,15 +29,20 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import kotlin.collections.ArrayDeque;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** Returns a list of bytecodes */
 public class GetBytecodeRequest extends SnapDataRequest {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private final GetByteCodesMessage request;
   private GetByteCodesMessage.CodeHashes codeHashes;
@@ -47,6 +52,10 @@ public class GetBytecodeRequest extends SnapDataRequest {
       final Hash rootHash,
       final ArrayDeque<Bytes32> accountHashes,
       final ArrayDeque<Bytes32> codeHashes) {
+    LOG.trace(
+        "create get bytecode data request for {} accounts with root hash={}",
+        accountHashes.size(),
+        rootHash);
     return new GetBytecodeRequest(rootHash, accountHashes, codeHashes);
   }
 
@@ -61,7 +70,7 @@ public class GetBytecodeRequest extends SnapDataRequest {
   }
 
   @Override
-  protected void doPersist(
+  protected int doPersist(
       final WorldStateStorage worldStateStorage,
       final Updater updater,
       final HealNodeCollection healNodeCollection) {
@@ -69,10 +78,16 @@ public class GetBytecodeRequest extends SnapDataRequest {
     final ByteCodesMessage.ByteCodes byteCodes = getResponse();
 
     final ArrayDeque<Bytes32> accounts = getByteCodesMessage().getAccountHashes().orElseThrow();
+
+    final AtomicInteger nbNodesSaved = new AtomicInteger();
+
     for (int i = 0; i < byteCodes.codes().size(); i++) {
       final Bytes code = byteCodes.codes().get(i);
       updater.putCode(Hash.wrap(accounts.get(i)), Hash.hash(code), code);
+      nbNodesSaved.getAndIncrement();
     }
+
+    return nbNodesSaved.get();
   }
 
   @Override

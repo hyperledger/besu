@@ -152,7 +152,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               .hashCountPerRequest(hashCountPerRequest)
               .maxOutstandingRequests(maxOutstandingRequests)
               .requestDataStep(new RequestDataStep(ethContext, worldStateStorage, metricsSystem))
-              .persistDataStep(new PersistDataStep(worldStateStorage))
+              .persistDataStep(new PersistDataStep(worldStateStorage, metricsSystem))
               .completeTaskStep(maybeCompleteTask.get())
               .downloadState(newDownloadState)
               .fastSyncState(snapSyncState)
@@ -190,11 +190,11 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
   @Override
   public Optional<Long> getPulledStates() {
-    return maybeCompleteTask.map(CompleteTaskStep::getCompletedRequests);
+    return Optional.empty();
   }
 
   @Override
   public Optional<Long> getKnownStates() {
-    return maybeCompleteTask.map(task -> task.getCompletedRequests() + task.getPendingRequests());
+    return Optional.empty();
   }
 }

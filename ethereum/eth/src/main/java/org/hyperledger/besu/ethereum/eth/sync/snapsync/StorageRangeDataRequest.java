@@ -40,17 +40,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import kotlin.collections.ArrayDeque;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** Returns a list of storages and the merkle proofs of an entire range */
 public class StorageRangeDataRequest extends SnapDataRequest {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private final GetStorageRangeMessage request;
   private GetStorageRangeMessage.StorageRange range;
@@ -63,6 +67,12 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final ArrayDeque<Bytes32> storageRoots,
       final Bytes32 startKeyHash,
       final Bytes32 endKeyHash) {
+    LOG.trace(
+        "create get storage range data request for {} accounts with root hash={} from {} to {}",
+        accountsHashes.size(),
+        rootHash,
+        startKeyHash,
+        endKeyHash);
     return new StorageRangeDataRequest(
         rootHash, accountsHashes, storageRoots, startKeyHash, endKeyHash);
   }
@@ -85,10 +95,13 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   }
 
   @Override
-  protected void doPersist(
+  protected int doPersist(
       final WorldStateStorage worldStateStorage,
       final Updater updater,
       final HealNodeCollection healNodeCollection) {
+
+    final AtomicInteger nbNodesSaved = new AtomicInteger();
+
     if (getData().isPresent()) {
       final StorageRangeMessage.SlotRangeData slotRangeData = getResponse();
 
@@ -126,9 +139,12 @@ public class StorageRangeDataRequest extends SnapDataRequest {
         trie.commit(
             (location, nodeHash, value) -> {
               updater.putAccountStorageTrieNode(accountHash, location, nodeHash, value);
+              nbNodesSaved.getAndIncrement();
             });
       }
     }
+
+    return nbNodesSaved.get();
   }
 
   @Override
@@ -169,14 +185,9 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     if (!isTaskCompleted
         && getOriginalRootHash().compareTo(requestData.worldStateRootHash()) != 0) {
-      LogManager.getLogger()
-          .info(
-              "create new request "
-                  + requestData.worldStateRootHash()
-                  + " "
-                  + requestData.hashes().first()
-                  + " "
-                  + requestData.hashes().last());
+      LOG.trace(
+          "Invalidated root hash detected {} during get storage range data request",
+          getOriginalRootHash());
       downloadState.enqueueRequest(
           createAccountRangeDataRequest(
               requestData.worldStateRootHash(),
@@ -223,21 +234,12 @@ public class StorageRangeDataRequest extends SnapDataRequest {
         final Hash endKeyHash = isLastRange ? requestData.endKeyHash() : MAX_RANGE;
         final Bytes32 lastSlotRootHash =
             getStorageRangeMessage().getStorageRoots().orElseThrow().get(lastSlotIndex - 1);
-        // new request if there are some missing storage slots
 
+        // new request if there are some missing storage slots for the last account sent
         findNewBeginElementInRange(
                 lastSlotRootHash, responseData.proofs(), responseData.slots().last(), endKeyHash)
-            .ifPresentOrElse(
+            .ifPresent(
                 missingRightElement -> {
-                  System.out.println(
-                      "find storage missing element "
-                          + missingRightElement
-                          + " "
-                          + requestData.endKeyHash()
-                          + " "
-                          + responseData.slots().last().size()
-                          + " "
-                          + requestData.hashes().get(lastSlotIndex - 1));
                   childRequests.add(
                       createStorageRangeDataRequest(
                           getOriginalRootHash(),
@@ -245,11 +247,9 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                           new ArrayDeque<>(List.of(lastSlotRootHash)),
                           missingRightElement,
                           endKeyHash));
-                },
-                () ->
-                    System.out.println(
-                        "Account filled " + requestData.hashes().get(lastSlotIndex - 1)));
+                });
 
+        // new request if we are missing accounts in the response
         if (requestData.hashes().size() > lastSlotIndex) {
           final ArrayDeque<Bytes32> missingAccounts =
               new ArrayDeque<>(
@@ -277,17 +277,5 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   public void clear() {
     range = null;
     response = null;
-  }
-
-  @Override
-  public String toString() {
-    return "StorageRangeDataRequest{"
-        + "request="
-        + request
-        + ", range="
-        + range
-        + ", response="
-        + response
-        + '}';
   }
 }

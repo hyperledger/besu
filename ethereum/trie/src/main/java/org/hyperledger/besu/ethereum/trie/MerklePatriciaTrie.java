@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -96,6 +97,14 @@ public interface MerklePatriciaTrie<K, V> {
    * @return the requested storage entries as a map of key hash to value.
    */
   Map<Bytes32, V> entriesFrom(Bytes32 startKeyHash, int limit);
+
+  /**
+   * Retrieve entries using a custom collector
+   *
+   * @param handler a custom trie collector.
+   * @return the requested storage entries as a map of key hash to value.
+   */
+  Map<Bytes32, V> entriesFrom(final Function<Node<V>, Map<Bytes32, V>> handler);
 
   void visitAll(Consumer<Node<V>> nodeConsumer);
 

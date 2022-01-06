@@ -43,15 +43,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import kotlin.collections.ArrayDeque;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** Returns a list of accounts and the merkle proofs of an entire range */
 public class AccountRangeDataRequest extends SnapDataRequest {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private final GetAccountRangeMessage request;
   private GetAccountRangeMessage.Range range;
@@ -60,14 +65,18 @@ public class AccountRangeDataRequest extends SnapDataRequest {
   protected AccountRangeDataRequest(
       final Hash originalRootHash, final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
     super(ACCOUNT_RANGE, originalRootHash);
-    System.out.println("create AccountRangeDataRequest " + startKeyHash + " " + endKeyHash);
+    LOG.trace(
+        "create get account range data request with root hash={} from {} to {}",
+        originalRootHash,
+        startKeyHash,
+        endKeyHash);
     request =
         GetAccountRangeMessage.create(
             originalRootHash, startKeyHash, endKeyHash, BigInteger.valueOf(524288));
   }
 
   @Override
-  protected void doPersist(
+  protected int doPersist(
       final WorldStateStorage worldStateStorage,
       final Updater updater,
       final HealNodeCollection healNodeCollection) {
@@ -98,12 +107,17 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       trie.put(account.getKey(), account.getValue());
     }
 
+    final AtomicInteger nbNodesSaved = new AtomicInteger();
+
     trie.commit(
         (location, hash, value) -> {
           if (worldStateStorage.getTrieNode(location).isEmpty()) {
             updater.putAccountStateTrieNode(location, hash, value);
+            nbNodesSaved.getAndIncrement();
           }
         });
+
+    return nbNodesSaved.get();
   }
 
   @Override
@@ -171,15 +185,6 @@ public class AccountRangeDataRequest extends SnapDataRequest {
               requestData.endKeyHash())
           .ifPresent(
               missingRightElement -> {
-                System.out.println(
-                    "find missing element "
-                        + missingRightElement
-                        + " "
-                        + requestData.endKeyHash()
-                        + " "
-                        + responseData.accounts().lastKey()
-                        + " "
-                        + requestData.worldStateRootHash());
                 childRequests.add(
                     createAccountRangeDataRequest(
                         requestData.worldStateRootHash(),
@@ -220,18 +225,6 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       }
       return childRequests.stream();
     }
-  }
-
-  @Override
-  public String toString() {
-    return "AccountRangeDataRequest{"
-        + "request="
-        + request
-        + ", range="
-        + range
-        + ", response="
-        + response
-        + '}';
   }
 
   @Override

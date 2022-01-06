@@ -96,6 +96,7 @@ public class RequestDataStep {
                         fastSyncState,
                         ethContext.getEthPeers(),
                         worldStateProofProvider)) {
+                      LOG.trace("Invalid response received retry later");
                       req.setData(Optional.empty()); // invalid response mark Failed
                       downloadState.requestComplete(false, 0);
                     } else {
@@ -122,9 +123,7 @@ public class RequestDataStep {
                 if (!(rootCause instanceof TimeoutException
                     || rootCause instanceof InterruptedException
                     || rootCause instanceof CancellationException
-                    || rootCause instanceof EthTaskException)) {
-                  LOG.debug("Send request failed", error);
-                }
+                    || rootCause instanceof EthTaskException)) {}
                 return Optional.empty();
               }
               return Optional.of(

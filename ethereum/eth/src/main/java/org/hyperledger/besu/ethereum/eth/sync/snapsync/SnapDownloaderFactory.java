@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -83,15 +82,9 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
           "Fast sync was requested, but cannot be enabled because the local blockchain is not empty.");
       return Optional.empty();
     }
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      worldStateStorage.clear();
-    }
 
     final CachingTaskCollection<SnapDataRequest> snapTaskCollection =
-        createSnapWorldStateDownloaderTaskCollection(
-            getStateQueueDirectory(dataDirectory),
-            metricsSystem,
-            syncConfig.getWorldStateTaskCacheSize());
+        createSnapWorldStateDownloaderTaskCollection(metricsSystem);
     final CachingTaskCollection<NodeDataRequest> fastTaskCollection =
         createWorldStateDownloaderTaskCollection(
             getStateQueueDirectory(dataDirectory),
@@ -127,19 +120,15 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     return Optional.of(fastSyncDownloader);
   }
 
-  @SuppressWarnings("unused")
   private static CachingTaskCollection<SnapDataRequest>
-      createSnapWorldStateDownloaderTaskCollection(
-          final Path dataDirectory,
-          final MetricsSystem metricsSystem,
-          final int worldStateTaskCacheSize) {
+      createSnapWorldStateDownloaderTaskCollection(final MetricsSystem metricsSystem) {
     final CachingTaskCollection<SnapDataRequest> taskCollection =
         new CachingTaskCollection<>(new InMemoryTaskQueue<>());
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_pending_requests_current",
-        "Number of pending requests for fast sync world state download",
+        "Number of pending requests for snap sync world state download",
         taskCollection::size);
     return taskCollection;
   }

@@ -87,7 +87,21 @@ public class WorldStateProofProvider {
     return storageProofs;
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
+  public List<Bytes> getAccountProofRelatedNodes(
+      final Hash worldStateRoot, final Bytes accountHash) {
+    final Proof<Bytes> accountProof =
+        newAccountStateTrie(worldStateRoot).getValueWithProof(accountHash);
+    return accountProof.getProofRelatedNodes();
+  }
+
+  public List<Bytes> getStorageProofRelatedNodes(
+      final Hash worldStateRoot, final Hash accountHash, final Hash slotHash) {
+    final Proof<Bytes> storageProof =
+        newAccountStorageTrie(accountHash, worldStateRoot).getValueWithProof(slotHash);
+    return storageProof.getProofRelatedNodes();
+  }
+
+  private MerklePatriciaTrie<Bytes, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode, rootHash, b -> b, b -> b);
   }
@@ -157,7 +171,7 @@ public class WorldStateProofProvider {
       return true;
     }
 
-    // search inner nodes in the range create by the proofs and remove
+    // search inner nodes in the range created by the proofs and remove
     final InnerNodeDiscoveryManager<Bytes> snapStoredNodeFactory =
         new InnerNodeDiscoveryManager<>(
             (location, hash) -> Optional.ofNullable(proofsEntries.get(hash)),
@@ -180,6 +194,7 @@ public class WorldStateProofProvider {
     for (Map.Entry<Bytes32, Bytes> account : keys.entrySet()) {
       trie.put(account.getKey(), account.getValue());
     }
+
     // check if the generated root hash is valid
     return rootHash.equals(trie.getRootHash());
   }

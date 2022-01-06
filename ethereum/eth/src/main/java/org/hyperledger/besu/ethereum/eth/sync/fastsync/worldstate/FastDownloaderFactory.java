@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -83,9 +82,7 @@ public class FastDownloaderFactory {
           "Fast sync was requested, but cannot be enabled because the local blockchain is not empty.");
       return Optional.empty();
     }
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      worldStateStorage.clear();
-    }
+
     final CachingTaskCollection<NodeDataRequest> taskCollection =
         createWorldStateDownloaderTaskCollection(
             getStateQueueDirectory(dataDirectory),
