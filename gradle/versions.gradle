@@ -47,9 +47,9 @@ dependencyManagement {
 
     dependency 'com.splunk.logging:splunk-library-javalogging:1.11.3'
 
-    dependency 'com.squareup.okhttp3:okhttp:4.9.1'
+    dependency 'com.squareup.okhttp3:okhttp:4.9.3'
 
-    dependency 'commons-codec:commons-codec:1.13'
+    dependency 'commons-codec:commons-codec:1.15'
 
     dependency 'commons-io:commons-io:2.11.0'
 
@@ -65,7 +65,7 @@ dependencyManagement {
 
     dependency 'io.jaegertracing:jaeger-client:1.6.0'
 
-    dependency 'io.kubernetes:client-java:5.0.0'
+    dependency 'io.kubernetes:client-java:6.0.1'
 
     dependency 'io.netty:netty-all:4.1.72.Final'
     dependency 'io.netty:netty-tcnative-boringssl-static:2.0.46.Final'
@@ -140,7 +140,6 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
 
-    // Not updating bls12-381 because of https://github.com/hyperledger/besu/issues/2668
     dependency 'org.hyperledger.besu:bls12-381:0.4.2'
     dependency 'org.hyperledger.besu:secp256k1:0.4.2'
     dependency 'org.hyperledger.besu:secp256r1:0.4.2'
