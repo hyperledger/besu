@@ -2,7 +2,7 @@
 
 ## 22.1.0
 
-### 22.1.0-RC2 Breaking Changes
+### 22.1.0 Breaking Changes
 
 ### Additions and Improvements
 - Genesis file parameter `blockperiodseconds` is validated as a positive integer on startup to prevent unexpected runtime behaviour [#3186](https://github.com/hyperledger/besu/pull/3186)
