@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StubTask;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -53,7 +54,7 @@ public class CompleteTaskStepTest {
     final StubTask task =
         new StubTask(NodeDataRequest.createAccountDataRequest(ROOT_HASH, Optional.empty()));
 
-    completeTaskStep.markAsCompleteOrFailed(blockHeader, downloadState, syncMode, task);
+    completeTaskStep.markAsCompleteOrFailed(blockHeader, downloadState, SyncMode.FAST, task);
 
     assertThat(task.isCompleted()).isFalse();
     assertThat(task.isFailed()).isTrue();
@@ -65,7 +66,7 @@ public class CompleteTaskStepTest {
   public void shouldEnqueueChildrenAndMarkCompleteWhenTaskHasData() {
     // Use an arbitrary but actually valid trie node to get children from.
     final StubTask task = validTask();
-    completeTaskStep.markAsCompleteOrFailed(blockHeader, downloadState, syncMode, task);
+    completeTaskStep.markAsCompleteOrFailed(blockHeader, downloadState, SyncMode.FAST, task);
 
     assertThat(task.isCompleted()).isTrue();
     assertThat(task.isFailed()).isFalse();
@@ -74,7 +75,7 @@ public class CompleteTaskStepTest {
     assertThat(streamCaptor.getValue())
         .usingRecursiveFieldByFieldElementComparator()
         .containsExactlyInAnyOrderElementsOf(
-            () -> task.getData().getChildRequests(syncMode, worldStateStorage).iterator());
+            () -> task.getData().getChildRequests(SyncMode.FAST, worldStateStorage).iterator());
 
     verify(downloadState).checkCompletion(worldStateStorage, blockHeader);
   }
