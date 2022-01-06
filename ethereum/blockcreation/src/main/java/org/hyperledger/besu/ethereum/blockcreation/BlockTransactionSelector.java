@@ -173,7 +173,7 @@ public class BlockTransactionSelector {
     }
 
     if (transactionTooLargeForBlock(transaction)) {
-      LOG.trace("{} too large to select for block creation", transaction);
+      LOG.info("{} too large to select for block creation", transaction);
       if (blockOccupancyAboveThreshold()) {
         return TransactionSelectionResult.COMPLETE_OPERATION;
       } else {
