@@ -168,12 +168,12 @@ dependencyManagement {
 
     dependency 'org.testcontainers:testcontainers:1.16.2'
 
-    dependency 'org.web3j:abi:4.8.9'
+    dependency 'org.web3j:abi:5.0.0'
     dependency 'org.web3j:besu:4.8.9'
-    dependency('org.web3j:core:4.8.9') {
+    dependency('org.web3j:core:5.0.0') {
       exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
     }
-    dependency 'org.web3j:crypto:4.8.9'
+    dependency 'org.web3j:crypto:5.0.0'
     dependency 'org.web3j:quorum:4.8.4'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.8.4'
