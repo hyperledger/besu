@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
@@ -39,7 +40,7 @@ public class BlockHeaderTestFixture {
   private long number = 0;
 
   private long gasLimit = 0;
-  private Optional<Long> baseFee = Optional.empty();
+  private Optional<Wei> baseFee = Optional.empty();
   private Optional<Bytes32> random = Optional.empty();
   private long gasUsed = 0;
   private long timestamp = 0;
@@ -128,8 +129,8 @@ public class BlockHeaderTestFixture {
     return this;
   }
 
-  public BlockHeaderTestFixture baseFeePerGas(final long baseFee) {
-    this.baseFee = Optional.ofNullable(baseFee);
+  public BlockHeaderTestFixture baseFeePerGas(final Wei baseFee) {
+    this.baseFee = Optional.of(baseFee);
     return this;
   }
 

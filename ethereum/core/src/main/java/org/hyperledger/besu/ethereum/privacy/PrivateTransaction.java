@@ -100,11 +100,6 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
   // Caches the transaction sender.
   protected volatile Address sender;
 
-  // Caches the hash used to uniquely identify the transaction.
-  // This field will be removed in 1.5.0
-  @Deprecated(since = "1.4.3")
-  protected volatile Hash hash;
-
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
@@ -506,23 +501,6 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
       v = recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(chainId.get()));
     }
     return v;
-  }
-
-  /**
-   * Returns the transaction hash.
-   *
-   * @deprecated All private transactions should be identified by their corresponding PMT hash.
-   * @return the transaction hash
-   */
-  // This field will be removed in 1.5.0
-  @Deprecated(since = "1.4.3")
-  @Override
-  public Hash getHash() {
-    if (hash == null) {
-      final Bytes rlp = serialize(this).encoded();
-      hash = Hash.hash(rlp);
-    }
-    return hash;
   }
 
   /**

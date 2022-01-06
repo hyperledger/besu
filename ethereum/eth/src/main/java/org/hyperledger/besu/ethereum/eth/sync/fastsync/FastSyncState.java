@@ -20,15 +20,18 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 
-import com.google.common.base.MoreObjects;
-
 public class FastSyncState {
 
   public static FastSyncState EMPTY_SYNC_STATE =
       new FastSyncState(OptionalLong.empty(), Optional.empty());
 
-  private final OptionalLong pivotBlockNumber;
-  private final Optional<BlockHeader> pivotBlockHeader;
+  private OptionalLong pivotBlockNumber;
+  private Optional<BlockHeader> pivotBlockHeader;
+
+  public FastSyncState() {
+    pivotBlockNumber = OptionalLong.empty();
+    pivotBlockHeader = Optional.empty();
+  }
 
   public FastSyncState(final long pivotBlockNumber) {
     this(OptionalLong.of(pivotBlockNumber), Optional.empty());
@@ -38,7 +41,7 @@ public class FastSyncState {
     this(OptionalLong.of(pivotBlockHeader.getNumber()), Optional.of(pivotBlockHeader));
   }
 
-  private FastSyncState(
+  protected FastSyncState(
       final OptionalLong pivotBlockNumber, final Optional<BlockHeader> pivotBlockHeader) {
     this.pivotBlockNumber = pivotBlockNumber;
     this.pivotBlockHeader = pivotBlockHeader;
@@ -56,15 +59,16 @@ public class FastSyncState {
     return pivotBlockHeader.isPresent();
   }
 
+  public void setCurrentHeader(final BlockHeader header) {
+    pivotBlockNumber = OptionalLong.of(header.getNumber());
+    pivotBlockHeader = Optional.of(header);
+  }
+
   @Override
   public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    final FastSyncState that = (FastSyncState) o;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    FastSyncState that = (FastSyncState) o;
     return Objects.equals(pivotBlockNumber, that.pivotBlockNumber)
         && Objects.equals(pivotBlockHeader, that.pivotBlockHeader);
   }
@@ -76,9 +80,11 @@ public class FastSyncState {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("pivotBlockNumber", pivotBlockNumber)
-        .add("pivotBlockHeader", pivotBlockHeader)
-        .toString();
+    return "FastSyncState{"
+        + "pivotBlockNumber="
+        + pivotBlockNumber
+        + ", pivotBlockHeader="
+        + pivotBlockHeader
+        + '}';
   }
 }

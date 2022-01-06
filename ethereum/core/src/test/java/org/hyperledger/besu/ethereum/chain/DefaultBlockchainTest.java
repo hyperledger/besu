@@ -89,11 +89,12 @@ public class DefaultBlockchainTest {
     createMutableBlockchain(kvStore, genesisBlock);
 
     // Initialize a new blockchain store with same kvStore, but different genesis block
-    assertThatThrownBy(() -> createMutableBlockchain(kvStore, gen.genesisBlock()))
+    assertThatThrownBy(() -> createMutableBlockchain(kvStore, gen.genesisBlock(), "/test/path"))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
-            "Supplied genesis block does not match stored chain data.\n"
-                + "Please specify a different data directory with --data-path or specify the original genesis file with --genesis-file.");
+            "Supplied genesis block does not match chain data stored in /test/path.\n"
+                + "Please specify a different data directory with --data-path, specify the original genesis file with "
+                + "--genesis-file or supply a testnet/mainnet option with --network.");
   }
 
   @Test
@@ -950,6 +951,13 @@ public class DefaultBlockchainTest {
     return (DefaultBlockchain)
         DefaultBlockchain.createMutable(
             genesisBlock, createStorage(kvStore), new NoOpMetricsSystem(), 0);
+  }
+
+  private DefaultBlockchain createMutableBlockchain(
+      final KeyValueStorage kvStore, final Block genesisBlock, final String dataDirectory) {
+    return (DefaultBlockchain)
+        DefaultBlockchain.createMutable(
+            genesisBlock, createStorage(kvStore), new NoOpMetricsSystem(), 0, dataDirectory);
   }
 
   private Blockchain createBlockchain(final KeyValueStorage kvStore) {

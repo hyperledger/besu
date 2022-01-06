@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ExecutionBlockResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResult;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -84,8 +84,8 @@ public class EngineGetPayloadTest {
         .map(JsonRpcSuccessResponse.class::cast)
         .ifPresent(
             r -> {
-              assertThat(r.getResult()).isInstanceOf(ExecutionBlockResult.class);
-              ExecutionBlockResult res = (ExecutionBlockResult) r.getResult();
+              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResult.class);
+              EngineGetPayloadResult res = (EngineGetPayloadResult) r.getResult();
               assertThat(res.getHash()).isEqualTo(mockHeader.getHash().toString());
               assertThat(res.getRandom())
                   .isEqualTo(mockHeader.getRandom().map(Bytes32::toString).orElse(""));

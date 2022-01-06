@@ -63,7 +63,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -74,6 +76,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -109,13 +112,20 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected SubProtocolConfiguration createSubProtocolConfiguration(
-      final EthProtocolManager ethProtocolManager) {
-    return new SubProtocolConfiguration()
-        .withSubProtocol(EthProtocol.get(), ethProtocolManager)
-        .withSubProtocol(
-            IbftSubProtocol.get(),
-            new BftProtocolManager(
-                bftEventQueue, peers, IbftSubProtocol.IBFV1, IbftSubProtocol.get().getName()));
+      final EthProtocolManager ethProtocolManager,
+      final Optional<SnapProtocolManager> maybeSnapProtocolManager) {
+    final SubProtocolConfiguration subProtocolConfiguration =
+        new SubProtocolConfiguration()
+            .withSubProtocol(EthProtocol.get(), ethProtocolManager)
+            .withSubProtocol(
+                IbftSubProtocol.get(),
+                new BftProtocolManager(
+                    bftEventQueue, peers, IbftSubProtocol.IBFV1, IbftSubProtocol.get().getName()));
+    maybeSnapProtocolManager.ifPresent(
+        snapProtocolManager -> {
+          subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager);
+        });
+    return subProtocolConfiguration;
   }
 
   @Override

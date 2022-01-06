@@ -15,6 +15,7 @@
  */
 package org.hyperledger.besu.evm.toy;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.BlockValues;
 
 import java.util.Optional;
@@ -30,7 +31,7 @@ public class ToyBlockValues implements BlockValues {
   }
 
   @Override
-  public Optional<Long> getBaseFee() {
+  public Optional<Wei> getBaseFee() {
     return Optional.empty();
   }
 

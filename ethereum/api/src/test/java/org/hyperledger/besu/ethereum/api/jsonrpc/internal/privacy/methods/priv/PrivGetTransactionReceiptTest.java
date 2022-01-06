@@ -46,7 +46,7 @@ import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.jwt.impl.JWTUser;
+import io.vertx.ext.auth.impl.UserImpl;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
@@ -66,8 +66,8 @@ public class PrivGetTransactionReceiptTest {
   private PrivGetTransactionReceipt privGetTransactionReceipt;
 
   private final User user =
-      new JWTUser(
-          new JsonObject().put("privacyPublicKey", VALID_BASE64_ENCLAVE_KEY.toBase64String()), "");
+      new UserImpl(
+          new JsonObject().put("privacyPublicKey", VALID_BASE64_ENCLAVE_KEY.toBase64String()));
   private final PrivacyIdProvider privacyIdProvider =
       (user) -> VALID_BASE64_ENCLAVE_KEY.toBase64String();
 
@@ -210,7 +210,6 @@ public class PrivGetTransactionReceiptTest {
         0,
         0,
         markerTransaction.getHash(),
-        privateTransaction.getHash(),
         privateTransaction.getPrivateFrom(),
         privateTransaction.getPrivateFor().isPresent()
             ? privateTransaction.getPrivateFor().get()

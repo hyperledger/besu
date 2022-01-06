@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeersTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersTask;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage.NewBlockHash;
@@ -261,7 +262,7 @@ public class BlockPropagationManager {
         if (!peers.contains(message.getPeer())) {
           peers.add(message.getPeer());
         }
-        processAnnouncedBlock(peers, newBlock)
+        processAnnouncedBlock(newBlock)
             .whenComplete((r, t) -> requestedBlocks.remove(newBlock.hash()));
       }
     } catch (final RLPException e) {
@@ -285,13 +286,11 @@ public class BlockPropagationManager {
         .thenCompose((r) -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()));
   }
 
-  private CompletableFuture<Block> processAnnouncedBlock(
-      final List<EthPeer> peers, final NewBlockHash newBlock) {
-    final GetBlockFromPeersTask getBlockTask =
-        GetBlockFromPeersTask.create(
-            peers,
-            protocolSchedule,
+  private CompletableFuture<Block> processAnnouncedBlock(final NewBlockHash newBlock) {
+    final RetryingGetBlockFromPeersTask getBlockTask =
+        RetryingGetBlockFromPeersTask.create(
             ethContext,
+            protocolSchedule,
             Optional.of(newBlock.hash()),
             newBlock.number(),
             metricsSystem);
