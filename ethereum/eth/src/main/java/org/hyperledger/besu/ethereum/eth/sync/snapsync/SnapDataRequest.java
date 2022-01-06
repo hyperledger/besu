@@ -69,16 +69,12 @@ public abstract class SnapDataRequest {
   }
 
   public int persist(
-      final WorldStateStorage worldStateStorage,
-      final WorldStateStorage.Updater updater,
-      final HealNodeCollection healNodeCollection) {
-    return doPersist(worldStateStorage, updater, healNodeCollection);
+      final WorldStateStorage worldStateStorage, final WorldStateStorage.Updater updater) {
+    return doPersist(worldStateStorage, updater);
   }
 
   protected abstract int doPersist(
-      final WorldStateStorage worldStateStorage,
-      final WorldStateStorage.Updater updater,
-      final HealNodeCollection healNodeCollection);
+      final WorldStateStorage worldStateStorage, final WorldStateStorage.Updater updater);
 
   protected abstract boolean isTaskCompleted(
       WorldDownloadState<SnapDataRequest> downloadState,

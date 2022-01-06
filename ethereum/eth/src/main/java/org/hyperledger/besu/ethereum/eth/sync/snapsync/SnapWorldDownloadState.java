@@ -88,10 +88,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     final long currentPivotBlockNumber = currentPivotBlock.getPivotBlockNumber().orElseThrow();
     final long distance =
         fastSyncActions.getSyncState().bestChainHeight() - currentPivotBlockNumber;
-    System.out.println("checkNewPivotBlock " + distance);
     if (distance > 126) {
       if (snapSyncState.lockResettingPivotBlock()) {
-        System.out.println("checkNewPivotBlock entered");
         fastSyncActions
             .selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE)
             .thenCompose(fastSyncActions::downloadPivotBlockHeader)

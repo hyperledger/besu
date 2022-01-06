@@ -76,10 +76,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
   }
 
   @Override
-  protected int doPersist(
-      final WorldStateStorage worldStateStorage,
-      final Updater updater,
-      final HealNodeCollection healNodeCollection) {
+  protected int doPersist(final WorldStateStorage worldStateStorage, final Updater updater) {
     final GetAccountRangeMessage.Range requestData = getRange();
     final AccountRangeMessage.AccountRangeData responseData = getResponse();
 

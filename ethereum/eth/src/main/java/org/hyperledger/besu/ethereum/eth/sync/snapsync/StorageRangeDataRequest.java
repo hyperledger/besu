@@ -95,10 +95,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   }
 
   @Override
-  protected int doPersist(
-      final WorldStateStorage worldStateStorage,
-      final Updater updater,
-      final HealNodeCollection healNodeCollection) {
+  protected int doPersist(final WorldStateStorage worldStateStorage, final Updater updater) {
 
     final AtomicInteger nbNodesSaved = new AtomicInteger();
 

@@ -45,13 +45,11 @@ public class InMemoryTaskQueue<T> implements TaskCollection<T> {
 
   @Override
   public synchronized long size() {
-    assertNotClosed();
     return internalQueue.size();
   }
 
   @Override
   public synchronized boolean isEmpty() {
-    assertNotClosed();
     return size() == 0;
   }
 
@@ -65,7 +63,6 @@ public class InMemoryTaskQueue<T> implements TaskCollection<T> {
 
   @Override
   public synchronized boolean allTasksCompleted() {
-    assertNotClosed();
     return isEmpty() && unfinishedOutstandingTasks.size() == 0;
   }
 
@@ -76,9 +73,9 @@ public class InMemoryTaskQueue<T> implements TaskCollection<T> {
   }
 
   private void assertNotClosed() {
-    /*if (closed.get()) {
+    if (closed.get()) {
       throw new IllegalStateException("Attempt to access closed " + getClass().getSimpleName());
-    }*/
+    }
   }
 
   private synchronized void handleFailedTask(final InMemoryTask<T> task) {

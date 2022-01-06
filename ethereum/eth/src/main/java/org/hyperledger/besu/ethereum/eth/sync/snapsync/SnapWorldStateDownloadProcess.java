@@ -169,8 +169,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   task ->
                       completeTaskStep.markAsCompleteOrFailed(snapSyncState, downloadState, task));
 
-      final HealNodeCollection healNodeCollection = new HealNodeCollection();
-
       final Pipe<Task<SnapDataRequest>> requestsToComplete = completionPipeline.getInputPipe();
       final Pipeline<Task<SnapDataRequest>> fetchDataPipeline =
           createPipelineFrom(
@@ -185,8 +183,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   requestTask ->
                       requestDataStep.requestData(requestTask, snapSyncState, downloadState),
                   maxOutstandingRequests)
-              .thenProcess(
-                  "batchPersistData", task -> persistDataStep.persist(task, healNodeCollection))
+              .thenProcess("batchPersistData", task -> persistDataStep.persist(task))
               .thenProcess(
                   "checkNewPivotBlock",
                   task -> {

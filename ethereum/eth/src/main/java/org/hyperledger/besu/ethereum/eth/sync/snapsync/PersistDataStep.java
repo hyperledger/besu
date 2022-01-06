@@ -31,7 +31,7 @@ public class PersistDataStep {
 
   private final WorldStateStorage worldStateStorage;
 
-  private RunnableCounter completedNodes;
+  private final RunnableCounter completedNodes;
 
   public PersistDataStep(
       final WorldStateStorage worldStateStorage, final MetricsSystem metricsSystem) {
@@ -47,12 +47,10 @@ public class PersistDataStep {
             DISPLAY_PROGRESS_STEP);
   }
 
-  public Task<SnapDataRequest> persist(
-      final Task<SnapDataRequest> task, final HealNodeCollection healNodeCollection) {
+  public Task<SnapDataRequest> persist(final Task<SnapDataRequest> task) {
     final WorldStateStorage.Updater updater = worldStateStorage.updater();
     if (task.getData().getData().isPresent()) {
-      final int persistedNodes =
-          task.getData().persist(worldStateStorage, updater, healNodeCollection);
+      final int persistedNodes = task.getData().persist(worldStateStorage, updater);
       completedNodes.inc(persistedNodes);
     }
     updater.commit();
