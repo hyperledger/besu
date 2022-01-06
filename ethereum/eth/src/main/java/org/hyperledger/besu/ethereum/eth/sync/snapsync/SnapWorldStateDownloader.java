@@ -180,7 +180,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
         ethContext,
         worldStateStorage,
         fastTaskCollection,
-        hashCountPerRequest,
+            hashCountPerRequest,
         maxOutstandingRequests,
         maxNodeRequestsWithoutProgress,
         minMillisBeforeStalling,

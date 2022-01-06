@@ -47,7 +47,7 @@ public class FastDownloaderFactory {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  public static Optional<FastSyncDownloader<NodeDataRequest>> create(
+  public static Optional<FastSyncDownloader<?>> create(
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
       final ProtocolSchedule protocolSchedule,
@@ -93,7 +93,7 @@ public class FastDownloaderFactory {
             ethContext,
             worldStateStorage,
             taskCollection,
-            syncConfig.getWorldStateHashCountPerRequest(),
+                syncConfig.getWorldStateHashCountPerRequest(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             syncConfig.getWorldStateMinMillisBeforeStalling(),

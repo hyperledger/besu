@@ -45,7 +45,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  public static Optional<FastSyncDownloader<SnapDataRequest>> createSnapDownloader(
+  public static Optional<FastSyncDownloader<?>> createSnapDownloader(
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
       final ProtocolSchedule protocolSchedule,
@@ -60,10 +60,10 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     final FastSyncStateStorage fastSyncStateStorage =
         new FastSyncStateStorage(fastSyncDataDirectory);
 
-    if (syncConfig.getSyncMode() != SyncMode.FAST) {
+    if (syncConfig.getSyncMode() != SyncMode.X_SNAP) {
       if (fastSyncStateStorage.isFastSyncInProgress()) {
         throw new IllegalStateException(
-            "Unable to change the sync mode when fast sync is incomplete, please restart with fast sync mode");
+            "Unable to change the sync mode when snap sync is incomplete, please restart with snap sync mode");
       } else {
         return Optional.empty();
       }

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -76,6 +77,10 @@ public class FastSyncActions {
         "fast_sync_pivot_block_current",
         "The current fast sync pivot block",
         pivotBlockGauge::get);
+  }
+
+  public SyncMode getSyncMode() {
+    return syncConfig.getSyncMode();
   }
 
   public SyncState getSyncState() {

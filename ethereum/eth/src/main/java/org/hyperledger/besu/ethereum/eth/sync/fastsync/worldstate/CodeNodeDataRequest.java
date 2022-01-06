@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
@@ -39,7 +40,7 @@ class CodeNodeDataRequest extends NodeDataRequest {
   }
 
   @Override
-  public Stream<NodeDataRequest> getChildRequests(final WorldStateStorage worldStateStorage) {
+  public Stream<NodeDataRequest> getChildRequests(final SyncMode syncMode, final WorldStateStorage worldStateStorage) {
     // Code nodes have nothing further to download
     return Stream.empty();
   }

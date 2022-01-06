@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncException;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -52,7 +52,7 @@ public class DefaultSynchronizer implements Synchronizer {
   private final SyncState syncState;
   private final AtomicBoolean running = new AtomicBoolean(false);
   private final BlockPropagationManager blockPropagationManager;
-  private final Optional<FastSyncDownloader<SnapDataRequest>> fastSyncDownloader;
+  private final Optional<FastSyncDownloader<?>> fastSyncDownloader;
   private final FullSyncDownloader fullSyncDownloader;
   private final ProtocolContext protocolContext;
 
@@ -93,17 +93,32 @@ public class DefaultSynchronizer implements Synchronizer {
     this.fullSyncDownloader =
         new FullSyncDownloader(
             syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
-    this.fastSyncDownloader =
-        SnapDownloaderFactory.createSnapDownloader(
-            syncConfig,
-            dataDirectory,
-            protocolSchedule,
-            protocolContext,
-            metricsSystem,
-            ethContext,
-            worldStateStorage,
-            syncState,
-            clock);
+
+    if (syncConfig.getSyncMode().equals(SyncMode.X_SNAP)) {
+      this.fastSyncDownloader =
+          SnapDownloaderFactory.createSnapDownloader(
+              syncConfig,
+              dataDirectory,
+              protocolSchedule,
+              protocolContext,
+              metricsSystem,
+              ethContext,
+              worldStateStorage,
+              syncState,
+              clock);
+    } else {
+      this.fastSyncDownloader =
+          FastDownloaderFactory.create(
+              syncConfig,
+              dataDirectory,
+              protocolSchedule,
+              protocolContext,
+              metricsSystem,
+              ethContext,
+              worldStateStorage,
+              syncState,
+              clock);
+    }
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.ETHEREUM,

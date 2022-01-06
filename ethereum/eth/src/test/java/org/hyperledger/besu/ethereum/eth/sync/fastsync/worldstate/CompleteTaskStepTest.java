@@ -53,7 +53,7 @@ public class CompleteTaskStepTest {
     final StubTask task =
         new StubTask(NodeDataRequest.createAccountDataRequest(ROOT_HASH, Optional.empty()));
 
-    completeTaskStep.markAsCompleteOrFailed(blockHeader, downloadState, task);
+    completeTaskStep.markAsCompleteOrFailed(blockHeader, downloadState, syncMode, task);
 
     assertThat(task.isCompleted()).isFalse();
     assertThat(task.isFailed()).isTrue();
@@ -65,7 +65,7 @@ public class CompleteTaskStepTest {
   public void shouldEnqueueChildrenAndMarkCompleteWhenTaskHasData() {
     // Use an arbitrary but actually valid trie node to get children from.
     final StubTask task = validTask();
-    completeTaskStep.markAsCompleteOrFailed(blockHeader, downloadState, task);
+    completeTaskStep.markAsCompleteOrFailed(blockHeader, downloadState, syncMode, task);
 
     assertThat(task.isCompleted()).isTrue();
     assertThat(task.isFailed()).isFalse();
@@ -74,7 +74,7 @@ public class CompleteTaskStepTest {
     assertThat(streamCaptor.getValue())
         .usingRecursiveFieldByFieldElementComparator()
         .containsExactlyInAnyOrderElementsOf(
-            () -> task.getData().getChildRequests(worldStateStorage).iterator());
+            () -> task.getData().getChildRequests(syncMode, worldStateStorage).iterator());
 
     verify(downloadState).checkCompletion(worldStateStorage, blockHeader);
   }

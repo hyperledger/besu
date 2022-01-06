@@ -19,6 +19,7 @@ import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipel
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.TaskQueueIterator;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -94,6 +95,7 @@ public class FastWorldStateDownloadProcess implements WorldStateDownloadProcess 
 
   public static class Builder {
 
+    private SyncMode syncMode;
     private int hashCountPerRequest;
     private int maxOutstandingRequests;
     private LoadLocalDataStep loadLocalDataStep;
@@ -103,6 +105,11 @@ public class FastWorldStateDownloadProcess implements WorldStateDownloadProcess 
     private BlockHeader pivotBlockHeader;
     private PersistDataStep persistDataStep;
     private CompleteTaskStep completeTaskStep;
+
+    public Builder syncMode(final SyncMode syncMode) {
+      this.syncMode = syncMode;
+      return this;
+    }
 
     public Builder hashCountPerRequest(final int hashCountPerRequest) {
       this.hashCountPerRequest = hashCountPerRequest;
@@ -150,6 +157,7 @@ public class FastWorldStateDownloadProcess implements WorldStateDownloadProcess 
     }
 
     public FastWorldStateDownloadProcess build() {
+      checkNotNull(syncMode);
       checkNotNull(loadLocalDataStep);
       checkNotNull(requestDataStep);
       checkNotNull(persistDataStep);
@@ -175,7 +183,7 @@ public class FastWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   "requestCompleteTask",
                   task ->
                       completeTaskStep.markAsCompleteOrFailed(
-                          pivotBlockHeader, downloadState, task));
+                          pivotBlockHeader, downloadState,syncMode, task));
 
       final Pipe<Task<NodeDataRequest>> requestsToComplete = completionPipeline.getInputPipe();
       final Pipeline<Task<NodeDataRequest>> fetchDataPipeline =

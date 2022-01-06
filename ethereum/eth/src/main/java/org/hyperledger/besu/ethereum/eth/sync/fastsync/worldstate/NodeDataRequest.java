@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -146,7 +147,7 @@ public abstract class NodeDataRequest {
 
   protected abstract void doPersist(final WorldStateStorage.Updater updater);
 
-  public abstract Stream<NodeDataRequest> getChildRequests(WorldStateStorage worldStateStorage);
+  public abstract Stream<NodeDataRequest> getChildRequests(SyncMode syncMode, WorldStateStorage worldStateStorage);
 
   public abstract Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage);
 }

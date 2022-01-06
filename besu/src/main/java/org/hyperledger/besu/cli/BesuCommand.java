@@ -132,6 +132,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueSto
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -1692,8 +1693,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--sync-mode",
-        !SyncMode.FAST.equals(syncMode),
+        !SyncMode.FAST.equals(syncMode) && !SyncMode.X_SNAP.equals(syncMode),
         singletonList("--fast-sync-min-peers"));
+
+    // Xsnap only available with Bonsai
+    if (syncMode.equals(SyncMode.X_SNAP)) {
+      logger.warn("Snapsync is an experimental feature ! Use it at your own risk");
+      if (unstableDataStorageOptions
+          .toDomainObject()
+          .getDataStorageFormat()
+          .equals(DataStorageFormat.FOREST)) {
+        throw new ParameterException(
+            this.commandLine,
+            "Snapsync is only available with Bonsai '--Xdata-storage-format=BONSAI'");
+      }
+    }
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
         && nodePrivateKeyFileOption.getNodePrivateKeyFile() != null) {

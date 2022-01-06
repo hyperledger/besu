@@ -27,7 +27,7 @@ public class PersistDataStep {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final int DISPLAY_PROGRESS_STEP = 100_000;
+  private static final int DISPLAY_PROGRESS_STEP = 10;
 
   private final WorldStateStorage worldStateStorage;
 
@@ -58,7 +58,6 @@ public class PersistDataStep {
   }
 
   private void displayWorldStateSyncProgress() {
-    LOG.warn("Snapsync is an experimental feature you can use it at your own risk");
     LOG.info("Generated {} world state nodes from snapsync", completedNodes.get());
   }
 }
