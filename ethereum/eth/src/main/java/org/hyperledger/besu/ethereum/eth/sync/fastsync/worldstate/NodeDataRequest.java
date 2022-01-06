@@ -147,7 +147,8 @@ public abstract class NodeDataRequest {
 
   protected abstract void doPersist(final WorldStateStorage.Updater updater);
 
-  public abstract Stream<NodeDataRequest> getChildRequests(SyncMode syncMode, WorldStateStorage worldStateStorage);
+  public abstract Stream<NodeDataRequest> getChildRequests(
+      SyncMode syncMode, WorldStateStorage worldStateStorage);
 
   public abstract Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage);
 }

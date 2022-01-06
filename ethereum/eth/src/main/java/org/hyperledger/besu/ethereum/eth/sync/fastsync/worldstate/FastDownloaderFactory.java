@@ -93,7 +93,7 @@ public class FastDownloaderFactory {
             ethContext,
             worldStateStorage,
             taskCollection,
-                syncConfig.getWorldStateHashCountPerRequest(),
+            syncConfig.getWorldStateHashCountPerRequest(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             syncConfig.getWorldStateMinMillisBeforeStalling(),

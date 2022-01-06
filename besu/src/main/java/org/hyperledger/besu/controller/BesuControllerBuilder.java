@@ -322,7 +322,9 @@ public abstract class BesuControllerBuilder {
             metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
     final SyncState syncState = new SyncState(blockchain, ethPeers);
-    final boolean fastSyncEnabled = SyncMode.FAST.equals(syncConfig.getSyncMode()) || SyncMode.X_SNAP.equals(syncConfig.getSyncMode());
+    final boolean fastSyncEnabled =
+        SyncMode.FAST.equals(syncConfig.getSyncMode())
+            || SyncMode.X_SNAP.equals(syncConfig.getSyncMode());
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(

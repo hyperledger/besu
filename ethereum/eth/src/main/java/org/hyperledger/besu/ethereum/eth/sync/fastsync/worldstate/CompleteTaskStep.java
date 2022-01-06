@@ -59,10 +59,10 @@ public class CompleteTaskStep {
   }
 
   public void markAsCompleteOrFailed(
-          final BlockHeader header,
-          final WorldDownloadState<NodeDataRequest> downloadState,
-          final SyncMode syncMode,
-          final Task<NodeDataRequest> task) {
+      final BlockHeader header,
+      final WorldDownloadState<NodeDataRequest> downloadState,
+      final SyncMode syncMode,
+      final Task<NodeDataRequest> task) {
     if (task.getData().getData() != null) {
       enqueueChildren(task, header, downloadState, syncMode);
       completedRequestsCounter.inc();
@@ -93,9 +93,10 @@ public class CompleteTaskStep {
   }
 
   private void enqueueChildren(
-          final Task<NodeDataRequest> task,
-          final BlockHeader blockHeader,
-          final WorldDownloadState<NodeDataRequest> downloadState, final SyncMode syncMode) {
+      final Task<NodeDataRequest> task,
+      final BlockHeader blockHeader,
+      final WorldDownloadState<NodeDataRequest> downloadState,
+      final SyncMode syncMode) {
     final NodeDataRequest request = task.getData();
     // Only queue rootnode children if we started from scratch
     if (!downloadState.downloadWasResumed() || !isRootState(blockHeader, request)) {

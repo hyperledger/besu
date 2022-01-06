@@ -55,15 +55,15 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
   private Optional<CompleteTaskStep> maybeCompleteTask = Optional.empty();
 
   public FastWorldStateDownloader(
-          final EthContext ethContext,
-          final WorldStateStorage worldStateStorage,
-          final CachingTaskCollection<NodeDataRequest> taskCollection,
-          final int hashCountPerRequest,
-          final int maxOutstandingRequests,
-          final int maxNodeRequestsWithoutProgress,
-          final long minMillisBeforeStalling,
-          final Clock clock,
-          final MetricsSystem metricsSystem) {
+      final EthContext ethContext,
+      final WorldStateStorage worldStateStorage,
+      final CachingTaskCollection<NodeDataRequest> taskCollection,
+      final int hashCountPerRequest,
+      final int maxOutstandingRequests,
+      final int maxNodeRequestsWithoutProgress,
+      final long minMillisBeforeStalling,
+      final Clock clock,
+      final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.worldStateStorage = worldStateStorage;
     this.taskCollection = taskCollection;
