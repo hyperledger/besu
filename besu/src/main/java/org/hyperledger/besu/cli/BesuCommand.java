@@ -1697,7 +1697,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         singletonList("--fast-sync-min-peers"));
 
     // Xsnap only available with Bonsai
-    if (syncMode.equals(SyncMode.X_SNAP)) {
+    if (SyncMode.X_SNAP.equals(syncMode)) {
       logger.warn("Snapsync is an experimental feature ! Use it at your own risk");
       if (unstableDataStorageOptions
           .toDomainObject()
