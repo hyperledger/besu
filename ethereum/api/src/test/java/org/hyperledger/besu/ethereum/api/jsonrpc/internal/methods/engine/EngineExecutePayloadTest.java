@@ -103,7 +103,7 @@ public class EngineExecutePayloadTest {
 
   @Test
   public void shouldReturnSuccessOnAlreadyPresent() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     Block mockBlock =
         new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
 
@@ -128,7 +128,6 @@ public class EngineExecutePayloadTest {
             .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
             .buildBlockHeader();
 
-    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
 
@@ -151,8 +150,6 @@ public class EngineExecutePayloadTest {
     BlockHeader paramHeader = spy(realHeader);
     when(paramHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
 
-    when(blockchain.getBlockByHash(any()))
-        .thenReturn(Optional.of(new Block(realHeader, BlockBody.empty())));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
 
@@ -172,7 +169,6 @@ public class EngineExecutePayloadTest {
   @Test
   public void shouldReturnInvalidOnMalformedTransactions() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
-    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any(Hash.class)))
         .thenReturn(Optional.of(mockHash));
 
