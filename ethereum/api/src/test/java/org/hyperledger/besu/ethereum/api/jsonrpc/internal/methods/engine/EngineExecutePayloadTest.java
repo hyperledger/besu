@@ -147,14 +147,12 @@ public class EngineExecutePayloadTest {
 
   @Test
   public void shouldCheckBlockValidityBeforeCheckingByHashForExisting() {
-    BlockHeader realHeader = new BlockHeaderTestFixture()
-        .baseFeePerGas(Wei.ONE)
-        .buildHeader();
+    BlockHeader realHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     BlockHeader paramHeader = spy(realHeader);
     when(paramHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
 
-    when(blockchain.getBlockByHash(any())).thenReturn(
-        Optional.of(new Block(realHeader, BlockBody.empty())));
+    when(blockchain.getBlockByHash(any()))
+        .thenReturn(Optional.of(new Block(realHeader, BlockBody.empty())));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
 

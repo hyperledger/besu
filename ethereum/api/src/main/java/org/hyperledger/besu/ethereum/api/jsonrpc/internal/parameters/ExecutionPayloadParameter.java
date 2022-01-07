@@ -17,10 +17,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

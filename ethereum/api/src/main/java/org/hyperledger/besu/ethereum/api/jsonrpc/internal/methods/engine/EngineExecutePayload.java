@@ -128,7 +128,9 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
               newBlockHeader.getBlockHash(), blockParam.getBlockHash());
     } else {
       // do we already have this payload
-      if (protocolContext.getBlockchain().getBlockByHash(newBlockHeader.getBlockHash())
+      if (protocolContext
+          .getBlockchain()
+          .getBlockByHash(newBlockHeader.getBlockHash())
           .isPresent()) {
         LOG.debug("block already present");
         return respondWith(reqId, blockParam.getBlockHash(), VALID, null);
