@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -204,8 +205,11 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   protected SubProtocolConfiguration createSubProtocolConfiguration(
-      final EthProtocolManager ethProtocolManager) {
-    return besuControllerBuilderSchedule.get(0L).createSubProtocolConfiguration(ethProtocolManager);
+      final EthProtocolManager ethProtocolManager,
+      final Optional<SnapProtocolManager> maybeSnapProtocolManager) {
+    return besuControllerBuilderSchedule
+        .get(0L)
+        .createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
   }
 
   @Override

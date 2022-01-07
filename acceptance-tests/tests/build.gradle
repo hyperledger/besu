@@ -12,7 +12,7 @@
  */
 
 plugins {
-  id 'org.web3j' version '4.8.8'
+  id 'org.web3j' version '4.8.9'
   id 'org.web3j.solidity' version '0.3.2'
 }
 

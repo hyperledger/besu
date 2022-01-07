@@ -23,8 +23,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
@@ -408,7 +408,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     // won't add duplicate node
     controller.addNodes(Lists.newArrayList(enode1));
 
-    verifyZeroInteractions(consumer);
+    verifyNoInteractions(consumer);
   }
 
   @Test
@@ -437,7 +437,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     // won't remove absent node
     controller.removeNodes(Lists.newArrayList(enode1));
 
-    verifyZeroInteractions(consumer);
+    verifyNoInteractions(consumer);
   }
 
   @Test
@@ -501,7 +501,7 @@ public class NodeLocalConfigPermissioningControllerTest {
 
     controller.reload();
 
-    verifyZeroInteractions(consumer);
+    verifyNoInteractions(consumer);
   }
 
   @Test

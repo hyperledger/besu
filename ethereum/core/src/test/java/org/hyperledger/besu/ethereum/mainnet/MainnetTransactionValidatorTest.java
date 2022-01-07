@@ -21,7 +21,7 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -329,7 +329,7 @@ public class MainnetTransactionValidatorTest {
     assertThat(validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams))
         .isEqualTo(ValidationResult.valid());
 
-    verifyZeroInteractions(transactionFilter);
+    verifyNoInteractions(transactionFilter);
   }
 
   @Test

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.contentOf;
 
@@ -121,30 +122,30 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
     assertThat(spec.subcommands().get(PUBLIC_KEY_SUBCOMMAND_NAME).getSubcommands())
         .containsKeys(PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME)
         .containsKeys(PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingPublicKeySubCommandWithoutSubSubcommandMustDisplayUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME);
-    assertThat(commandOutput.toString()).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingPublicKeySubCommandHelpMustDisplayUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString()).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   // Export public key sub-sub-command
   @Test
   public void callingPublicKeyExportSubCommandHelpMustDisplayUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString()).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_USAGE);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -154,8 +155,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME);
 
     final String expectedOutputStart = nodeKey.getPublicKey().toString();
-    assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -173,8 +174,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
         .startsWith(nodeKey.getPublicKey().toString())
         .endsWith(nodeKey.getPublicKey().toString());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -197,8 +198,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
         privateKeyFile.toString());
 
     final String expectedOutputStart = keyPair.getPublicKey().toString();
-    assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -208,8 +209,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
         PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME,
         "--node-private-key-file",
         "/non/existent/file");
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith("Private key file doesn't exist");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith("Private key file doesn't exist");
   }
 
   @Test
@@ -222,16 +223,17 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
         PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME,
         "--node-private-key-file",
         privateKeyFile.toString());
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith("Private key cannot be loaded from file");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith("Private key cannot be loaded from file");
   }
 
   // Export address sub-sub-command
   @Test
   public void callingPublicKeyExportAddressSubCommandHelpMustDisplayUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString()).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_ADDRESS_USAGE);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_ADDRESS_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -241,8 +243,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME);
 
     final String expectedOutputStart = Util.publicKeyToAddress(nodeKey.getPublicKey()).toString();
-    assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -263,8 +265,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
         .startsWith(Util.publicKeyToAddress(nodeKey.getPublicKey()).toString())
         .endsWith(Util.publicKeyToAddress(nodeKey.getPublicKey()).toString());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -288,8 +290,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
         privateKeyFile.toString());
 
     final String expectedOutputStart = Util.publicKeyToAddress(keyPair.getPublicKey()).toString();
-    assertThat(commandOutput.toString()).startsWith(expectedOutputStart);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(expectedOutputStart);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -299,8 +301,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
         PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME,
         "--node-private-key-file",
         "/non/existent/file");
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith("Private key file doesn't exist");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith("Private key file doesn't exist");
   }
 
   @Test
@@ -314,7 +316,8 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
         PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME,
         "--node-private-key-file",
         privateKeyFile.toString());
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith("Private key cannot be loaded from file");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith("Private key cannot be loaded from file");
   }
 }

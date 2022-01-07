@@ -21,7 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -1033,7 +1033,7 @@ public final class EthProtocolManagerTest {
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, transactionMessage));
 
       // Verify the regular message executor and scheduled executor got nothing to execute.
-      verifyZeroInteractions(worker, scheduled);
+      verifyNoInteractions(worker, scheduled);
       // Verify our transactions executor got something to execute.
       verify(transactions).execute(any());
     }
