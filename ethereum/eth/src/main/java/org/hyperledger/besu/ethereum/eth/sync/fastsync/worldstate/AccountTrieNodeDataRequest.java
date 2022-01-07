@@ -12,12 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.worldstate;
+package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
@@ -26,34 +29,27 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.rlp.RLP;
 
-class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
+class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
-  final Optional<Hash> accountHash;
-
-  StorageTrieNodeDataRequest(
-      final Hash hash, final Optional<Hash> accountHash, final Optional<Bytes> location) {
-    super(RequestType.STORAGE_TRIE_NODE, hash, location);
-    this.accountHash = accountHash;
+  AccountTrieNodeDataRequest(final Hash hash, final Optional<Bytes> location) {
+    super(RequestType.ACCOUNT_TRIE_NODE, hash, location);
   }
 
   @Override
   protected void doPersist(final Updater updater) {
-    updater.putAccountStorageTrieNode(
-        accountHash.orElse(Hash.EMPTY), getLocation().orElse(Bytes.EMPTY), getHash(), getData());
+    updater.putAccountStateTrieNode(getLocation().orElse(Bytes.EMPTY), getHash(), getData());
   }
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getAccountStorageTrieNode(
-        getAccountHash().orElse(Hash.EMPTY), getLocation().orElse(Hash.EMPTY), getHash());
+    return worldStateStorage.getAccountTrieNodeData(getLocation().orElse(Bytes.EMPTY), getHash());
   }
 
   @Override
   protected NodeDataRequest createChildNodeDataRequest(
       final Hash childHash, final Optional<Bytes> location) {
-    return NodeDataRequest.createStorageDataRequest(childHash, getAccountHash(), location);
+    return createAccountDataRequest(childHash, location);
   }
 
   @Override
@@ -62,20 +58,34 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
       final Optional<Bytes> location,
       final Bytes path,
       final Bytes value) {
+    final Stream.Builder<NodeDataRequest> builder = Stream.builder();
+    final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
+    // Add code, if appropriate
+
+    final Optional<Hash> accountHash =
+        Optional.of(
+            Hash.wrap(
+                Bytes32.wrap(
+                    CompactEncoding.pathToBytes(
+                        Bytes.concatenate(getLocation().orElse(Bytes.EMPTY), path)))));
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
-          .putStorageValueBySlotHash(
-              accountHash.get(),
-              getSlotHash(location, path),
-              Bytes32.leftPad(RLP.decodeValue(value)))
+          .putAccountInfoState(accountHash.get(), value)
           .commit();
     }
 
-    return Stream.empty();
-  }
+    if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
+      builder.add(createCodeRequest(accountValue.getCodeHash(), accountHash));
+    }
+    // Add storage, if appropriate
+    if (!accountValue.getStorageRoot().equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
+      // If storage is non-empty queue download
 
-  public Optional<Hash> getAccountHash() {
-    return accountHash;
+      final NodeDataRequest storageNode =
+          createStorageDataRequest(accountValue.getStorageRoot(), accountHash, Optional.empty());
+      builder.add(storageNode);
+    }
+    return builder.build();
   }
 
   @Override
@@ -83,14 +93,7 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
     out.startList();
     out.writeByte(getRequestType().getValue());
     out.writeBytes(getHash());
-    getAccountHash().ifPresent(out::writeBytes);
     getLocation().ifPresent(out::writeBytes);
     out.endList();
-  }
-
-  private Hash getSlotHash(final Optional<Bytes> location, final Bytes path) {
-    return Hash.wrap(
-        Bytes32.wrap(
-            CompactEncoding.pathToBytes(Bytes.concatenate(location.orElse(Bytes.EMPTY), path))));
   }
 }

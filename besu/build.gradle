@@ -94,4 +94,5 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'commons-io:commons-io'
+  testImplementation 'org.testcontainers:testcontainers'
 }

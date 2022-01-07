@@ -12,9 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.worldstate;
+package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.RunnableCounter;
@@ -58,7 +59,7 @@ public class CompleteTaskStep {
 
   public void markAsCompleteOrFailed(
       final BlockHeader header,
-      final WorldDownloadState downloadState,
+      final WorldDownloadState<NodeDataRequest> downloadState,
       final Task<NodeDataRequest> task) {
     if (task.getData().getData() != null) {
       enqueueChildren(task, header, downloadState);
@@ -92,7 +93,7 @@ public class CompleteTaskStep {
   private void enqueueChildren(
       final Task<NodeDataRequest> task,
       final BlockHeader blockHeader,
-      final WorldDownloadState downloadState) {
+      final WorldDownloadState<NodeDataRequest> downloadState) {
     final NodeDataRequest request = task.getData();
     // Only queue rootnode children if we started from scratch
     if (!downloadState.downloadWasResumed() || !isRootState(blockHeader, request)) {

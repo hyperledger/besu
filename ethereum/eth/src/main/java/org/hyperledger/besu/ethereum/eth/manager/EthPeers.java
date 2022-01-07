@@ -76,7 +76,7 @@ public class EthPeers {
         pendingRequests::size);
   }
 
-  void registerConnection(
+  public void registerConnection(
       final PeerConnection peerConnection, final List<PeerValidator> peerValidators) {
     final EthPeer peer =
         new EthPeer(
@@ -89,7 +89,7 @@ public class EthPeers {
     connections.putIfAbsent(peerConnection, peer);
   }
 
-  void registerDisconnect(final PeerConnection connection) {
+  public void registerDisconnect(final PeerConnection connection) {
     final EthPeer peer = connections.remove(connection);
     if (peer != null) {
       disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
@@ -127,11 +127,16 @@ public class EthPeers {
     return pendingPeerRequest;
   }
 
-  public void dispatchMessage(final EthPeer peer, final EthMessage ethMessage) {
-    peer.dispatch(ethMessage);
+  public void dispatchMessage(
+      final EthPeer peer, final EthMessage ethMessage, final String protocolName) {
+    peer.dispatch(ethMessage, protocolName);
     if (peer.hasAvailableRequestCapacity()) {
       reattemptPendingPeerRequests();
     }
+  }
+
+  public void dispatchMessage(final EthPeer peer, final EthMessage ethMessage) {
+    dispatchMessage(peer, ethMessage, protocolName);
   }
 
   private void reattemptPendingPeerRequests() {

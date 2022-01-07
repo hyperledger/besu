@@ -12,9 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.worldstate;
+package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 import org.hyperledger.besu.services.tasks.Task;
@@ -31,7 +32,7 @@ public class PersistDataStep {
   public List<Task<NodeDataRequest>> persist(
       final List<Task<NodeDataRequest>> tasks,
       final BlockHeader blockHeader,
-      final WorldDownloadState downloadState) {
+      final WorldDownloadState<NodeDataRequest> downloadState) {
     final Updater updater = worldStateStorage.updater();
     tasks.stream()
         .map(Task::getData)

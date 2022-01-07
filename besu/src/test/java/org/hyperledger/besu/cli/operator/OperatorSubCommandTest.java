@@ -90,22 +90,22 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
     assertThat(spec.subcommands()).containsKeys(OperatorSubCommand.COMMAND_NAME);
     assertThat(spec.subcommands().get(OperatorSubCommand.COMMAND_NAME).getSubcommands())
         .containsKeys(OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingOperatorSubCommandWithoutSubSubcommandMustDisplayUsage() {
     parseCommand(OperatorSubCommand.COMMAND_NAME);
-    assertThat(commandOutput.toString()).startsWith(EXPECTED_OPERATOR_USAGE);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_OPERATOR_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingOperatorCommandHelpMustDisplayUsage() {
     parseCommand(OperatorSubCommand.COMMAND_NAME, "--help");
-    assertThat(commandOutput.toString()).startsWith(EXPECTED_OPERATOR_USAGE);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_OPERATOR_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -367,7 +367,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
                 outputDirectoryPath.toString())
             .args(cmd.argsArray())
             .argsArray());
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     final Path outputGenesisExpectedPath = outputDirectoryPath.resolve(genesisFileName);
     final File outputGenesisFile = new File(outputGenesisExpectedPath.toUri());

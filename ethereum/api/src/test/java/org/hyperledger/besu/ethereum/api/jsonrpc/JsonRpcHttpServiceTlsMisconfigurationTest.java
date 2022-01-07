@@ -135,6 +135,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
 
   @Test
   public void exceptionRaisedWhenNonExistentKeystoreFileIsSpecified() throws IOException {
+    Assertions.setMaxStackTraceElementsDisplayed(60);
     service =
         createJsonRpcHttpService(
             rpcMethods, createJsonRpcConfig(invalidKeystorePathTlsConfiguration()));
@@ -159,7 +160,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
               Assertions.fail("service.start should have failed");
             })
         .withCauseInstanceOf(JsonRpcServiceException.class)
-        .withMessageContaining("failed to decrypt safe contents entry");
+        .withMessageContaining("keystore password was incorrect");
   }
 
   @Test
