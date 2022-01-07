@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -35,7 +36,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
 public abstract class BaseBftProtocolSchedule {
@@ -62,7 +62,6 @@ public abstract class BaseBftProtocolSchedule {
                             forkSpec.getValue(),
                             builder,
                             config.isQuorum(),
-                            createBlockHeaderRuleset(forkSpec.getValue()),
                             bftExtraDataCodec,
                             Optional.of(forkSpec.getValue().getBlockRewardWei()))));
 
@@ -79,14 +78,13 @@ public abstract class BaseBftProtocolSchedule {
         .createProtocolSchedule();
   }
 
-  protected abstract Supplier<BlockHeaderValidator.Builder> createBlockHeaderRuleset(
-      final BftConfigOptions config);
+  protected abstract BlockHeaderValidator.Builder createBlockHeaderRuleset(
+      final BftConfigOptions config, FeeMarket feeMarket);
 
   private ProtocolSpecBuilder applyBftChanges(
       final BftConfigOptions configOptions,
       final ProtocolSpecBuilder builder,
       final boolean goQuorumMode,
-      final Supplier<BlockHeaderValidator.Builder> blockHeaderRuleset,
       final BftExtraDataCodec bftExtraDataCodec,
       final Optional<BigInteger> blockReward) {
 
@@ -99,8 +97,10 @@ public abstract class BaseBftProtocolSchedule {
     }
 
     builder
-        .blockHeaderValidatorBuilder(feeMarket -> blockHeaderRuleset.get())
-        .ommerHeaderValidatorBuilder(feeMarket -> blockHeaderRuleset.get())
+        .blockHeaderValidatorBuilder(
+            feeMarket -> createBlockHeaderRuleset(configOptions, feeMarket))
+        .ommerHeaderValidatorBuilder(
+            feeMarket -> createBlockHeaderRuleset(configOptions, feeMarket))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)
