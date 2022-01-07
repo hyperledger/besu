@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -142,6 +143,32 @@ public class EngineExecutePayloadTest {
             String.format(
                 "Computed block hash %s does not match block hash parameter %s",
                 realHeader.getBlockHash(), mockHeader.getBlockHash()));
+  }
+
+  @Test
+  public void shouldCheckBlockValidityBeforeCheckingByHashForExisting() {
+    BlockHeader realHeader = new BlockHeaderTestFixture()
+        .baseFeePerGas(Wei.ONE)
+        .buildHeader();
+    BlockHeader paramHeader = spy(realHeader);
+    when(paramHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
+
+    when(blockchain.getBlockByHash(any())).thenReturn(
+        Optional.of(new Block(realHeader, BlockBody.empty())));
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.of(mockHash));
+
+    var resp = resp(mockPayload(paramHeader, Collections.emptyList()));
+
+    EngineExecutionResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).isEqualTo(mockHash.toString());
+    assertThat(res.getStatus()).isEqualTo(INVALID.name());
+
+    assertThat(res.getValidationError())
+        .isEqualTo(
+            String.format(
+                "Computed block hash %s does not match block hash parameter %s",
+                realHeader.getBlockHash(), paramHeader.getHash()));
   }
 
   @Test
