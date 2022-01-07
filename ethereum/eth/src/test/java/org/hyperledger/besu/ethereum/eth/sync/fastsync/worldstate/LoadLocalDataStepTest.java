@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.metrics.noop.NoOpMetricsSystem.NO_OP_COUNTER;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -71,6 +71,6 @@ public class LoadLocalDataStepTest {
 
     // Should not require persisting.
     request.persist(updater);
-    verifyZeroInteractions(updater);
+    verifyNoInteractions(updater);
   }
 }

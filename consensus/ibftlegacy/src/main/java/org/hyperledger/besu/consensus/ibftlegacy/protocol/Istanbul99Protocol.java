@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class Istanbul99Protocol implements SubProtocol {
 
-  private static final String NAME = "istanbul";
+  public static final String NAME = "istanbul";
   private static final int VERSION = 99;
 
   static final Capability ISTANBUL99 = Capability.create(NAME, 99);

@@ -19,7 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
@@ -54,7 +54,7 @@ public class UniqueMessageMulticasterTest {
     when(messageTracker.hasSeenMessage(messageSent)).thenReturn(true);
     uniqueMessageMulticaster.send(messageSent);
     uniqueMessageMulticaster.send(messageSent, emptyList());
-    verifyZeroInteractions(multicaster);
+    verifyNoInteractions(multicaster);
   }
 
   @Test
@@ -67,7 +67,7 @@ public class UniqueMessageMulticasterTest {
     when(messageTracker.hasSeenMessage(messageSent)).thenReturn(true);
     uniqueMessageMulticaster.send(messageSent, emptyList());
     uniqueMessageMulticaster.send(messageSent);
-    verifyZeroInteractions(multicaster);
+    verifyNoInteractions(multicaster);
   }
 
   @Test

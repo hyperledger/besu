@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
@@ -26,24 +27,25 @@ public class PasswordSubCommandTest extends CommandTestAbstract {
     final CommandSpec spec = parseCommand().getSpec();
     assertThat(spec.subcommands()).containsKeys("password");
     assertThat(spec.subcommands().get("password").getSubcommands()).containsKeys("hash");
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void passwordSubCommandExists() {
     parseCommand("password");
 
-    assertThat(commandOutput.toString()).contains("This command provides password related actions");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8))
+        .contains("This command provides password related actions");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void passwordHashSubCommandExists() {
     parseCommand("password", "hash");
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Missing required option: '--password=<password>'");
   }
 
@@ -51,9 +53,9 @@ public class PasswordSubCommandTest extends CommandTestAbstract {
   public void passwordHashSubCommandHelpDisplaysHelp() {
     parseCommand("password", "hash", "--help");
 
-    assertThat(commandOutput.toString())
+    assertThat(commandOutput.toString(UTF_8))
         .contains("Usage: besu password hash [-hV] --password=<password>");
-    assertThat(commandOutput.toString())
+    assertThat(commandOutput.toString(UTF_8))
         .contains("This command generates the hash of a given password");
   }
 
@@ -62,7 +64,7 @@ public class PasswordSubCommandTest extends CommandTestAbstract {
     parseCommand("password", "hash", "--password", "foo");
 
     // we can't predict the final value so we are only checking if it starts with the hash marker
-    assertThat(commandOutput.toString()).startsWith("$2");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith("$2");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 }

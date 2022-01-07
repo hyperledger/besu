@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -156,7 +156,7 @@ public class EthPeersTest {
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 10, Optional.empty());
 
-    verifyZeroInteractions(peerRequest);
+    verifyNoInteractions(peerRequest);
     assertRequestFailure(pendingRequest, NoAvailablePeersException.class);
   }
 
@@ -166,7 +166,7 @@ public class EthPeersTest {
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 200, Optional.empty());
 
-    verifyZeroInteractions(peerRequest);
+    verifyNoInteractions(peerRequest);
     assertRequestFailure(pendingRequest, NoAvailablePeersException.class);
   }
 
@@ -180,7 +180,7 @@ public class EthPeersTest {
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 200, Optional.empty());
 
-    verifyZeroInteractions(peerRequest);
+    verifyNoInteractions(peerRequest);
     assertNotDone(pendingRequest);
 
     suitablePeer.disconnect(DisconnectReason.TOO_MANY_PEERS);
@@ -204,7 +204,7 @@ public class EthPeersTest {
 
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 100, Optional.empty());
-    verifyZeroInteractions(peerRequest);
+    verifyNoInteractions(peerRequest);
 
     freeUpCapacity(peer.getEthPeer());
 
@@ -222,7 +222,7 @@ public class EthPeersTest {
 
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 100, Optional.empty());
-    verifyZeroInteractions(peerRequest);
+    verifyNoInteractions(peerRequest);
 
     freeUpCapacity(peer.getEthPeer());
 
@@ -237,13 +237,13 @@ public class EthPeersTest {
 
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 100, Optional.empty());
-    verifyZeroInteractions(peerRequest);
+    verifyNoInteractions(peerRequest);
 
     pendingRequest.abort();
 
     freeUpCapacity(peer.getEthPeer());
 
-    verifyZeroInteractions(peerRequest);
+    verifyNoInteractions(peerRequest);
     assertRequestFailure(pendingRequest, CancellationException.class);
   }
 
@@ -301,7 +301,7 @@ public class EthPeersTest {
     final Consumer<Throwable> onError = mock(Consumer.class);
     pendingRequest.then(onSuccess, onError);
 
-    verifyZeroInteractions(onSuccess);
-    verifyZeroInteractions(onError);
+    verifyNoInteractions(onSuccess);
+    verifyNoInteractions(onError);
   }
 }
