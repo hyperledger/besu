@@ -90,9 +90,11 @@ public class RangeManager {
    * Helps to create a new range according to the last data obtained. This happens when a peer
    * doesn't return all of the data in a range.
    *
+   * @param worldstateRootHash the root hash
+   * @param proofs proof received
    * @param endKeyHash the end of the range initially wanted
    * @param receivedKeys the last key received
-   * @return the start of the new range
+   * @return begin of the new range
    */
   public static Optional<Bytes32> findNewBeginElementInRange(
       final Bytes32 worldstateRootHash,
