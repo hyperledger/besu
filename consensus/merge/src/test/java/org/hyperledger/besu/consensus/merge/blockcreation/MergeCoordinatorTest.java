@@ -62,7 +62,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private final MergeContext mergeContext = PostMergeContext.get();
   private final ProtocolSchedule mockProtocolSchedule = getMergeProtocolSchedule();
   private final GenesisState genesisState =
-      GenesisState.fromConfig(getGenesisConfigFile(), mockProtocolSchedule);
+      GenesisState.fromConfig(getPosGenesisConfigFile(), mockProtocolSchedule);
 
   private final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
@@ -71,7 +71,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
       new ProtocolContext(blockchain, worldStateArchive, mergeContext);
 
   private final Address suggestedFeeRecipient = Address.ZERO;
-  private final Address coinbase = genesisAllocations().findFirst().get();
+  private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
   private final BaseFeeMarket feeMarket =
       new LondonFeeMarket(0, genesisState.getBlock().getHeader().getBaseFee());

@@ -480,7 +480,7 @@ public abstract class BesuControllerBuilder {
     }
   }
 
-  private List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
+  protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
     final List<PeerValidator> validators = new ArrayList<>();
 
     final OptionalLong daoBlock =
@@ -503,21 +503,6 @@ public abstract class BesuControllerBuilder {
       validators.add(
           new RequiredBlocksPeerValidator(
               protocolSchedule, metricsSystem, requiredBlock.getKey(), requiredBlock.getValue()));
-    }
-
-    final OptionalLong powTerminalBlockNumber =
-        genesisConfig.getConfigOptions(genesisConfigOverrides).getTerminalBlockNumber();
-    final Optional<Hash> powTerminalBlockHash =
-        genesisConfig.getConfigOptions(genesisConfigOverrides).getTerminalBlockHash();
-    if (powTerminalBlockHash.isPresent() && powTerminalBlockNumber.isPresent()) {
-      validators.add(
-          new RequiredBlocksPeerValidator(
-              protocolSchedule,
-              metricsSystem,
-              powTerminalBlockNumber.getAsLong(),
-              powTerminalBlockHash.get()));
-    } else {
-      LOG.debug("unable to validate peers with terminal difficulty blocks");
     }
 
     return validators;

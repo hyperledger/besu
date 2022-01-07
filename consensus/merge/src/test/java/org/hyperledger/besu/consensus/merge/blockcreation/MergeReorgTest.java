@@ -56,11 +56,10 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
 
   private MergeCoordinator coordinator;
 
-  private static final long DIFFICULTY_LEFT = 1000;
   private final MergeContext mergeContext = PostMergeContext.get();
   private final ProtocolSchedule mockProtocolSchedule = getMergeProtocolSchedule();
   private final GenesisState genesisState =
-      GenesisState.fromConfig(getGenesisConfigFile(), mockProtocolSchedule);
+      GenesisState.fromConfig(getPowGenesisConfigFile(), mockProtocolSchedule);
 
   private final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
@@ -68,7 +67,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   private final ProtocolContext protocolContext =
       new ProtocolContext(blockchain, worldStateArchive, mergeContext);
 
-  private final Address coinbase = genesisAllocations().findFirst().get();
+  private final Address coinbase = genesisAllocations(getPowGenesisConfigFile()).findFirst().get();
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
   private final BaseFeeMarket feeMarket =
       new LondonFeeMarket(0, genesisState.getBlock().getHeader().getBaseFee());
@@ -78,7 +77,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
-
+    mergeContext.setTerminalTotalDifficulty(Difficulty.of(1000));
     MergeOptions.setMergeEnabled(true);
     this.coordinator =
         new MergeCoordinator(
@@ -87,8 +86,6 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
             mockSorter,
             new MiningParameters.Builder().coinbase(coinbase).build(),
             mock(BackwardsSyncContext.class));
-    mergeContext.setTerminalTotalDifficulty(
-        genesisState.getBlock().getHeader().getDifficulty().plus(DIFFICULTY_LEFT));
     mergeContext.setIsPostMerge(genesisState.getBlock().getHeader().getDifficulty());
     blockchain.observeBlockAdded(
         blockAddedEvent ->
@@ -120,7 +117,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
     Difficulty tdd = blockchain.getTotalDifficultyByHash(ttdA.getHash()).get();
     assertThat(tdd.getAsBigInteger())
         .isGreaterThan(
-            getGenesisConfigFile()
+            getPosGenesisConfigFile()
                 .getConfigOptions()
                 .getTerminalTotalDifficulty()
                 .get()
