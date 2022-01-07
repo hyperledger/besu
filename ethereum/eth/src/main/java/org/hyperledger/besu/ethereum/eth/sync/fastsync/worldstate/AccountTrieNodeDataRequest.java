@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
@@ -70,6 +71,11 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
                 Bytes32.wrap(
                     CompactEncoding.pathToBytes(
                         Bytes.concatenate(getLocation().orElse(Bytes.EMPTY), path)))));
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
+          .putAccountInfoState(accountHash.get(), value)
+          .commit();
+    }
 
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
       builder.add(createCodeRequest(accountValue.getCodeHash(), accountHash));

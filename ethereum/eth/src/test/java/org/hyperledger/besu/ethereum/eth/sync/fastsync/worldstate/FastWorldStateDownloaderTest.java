@@ -999,6 +999,7 @@ public class FastWorldStateDownloaderTest {
         context,
         storage,
         taskCollection,
+        config.getSyncMode(),
         config.getWorldStateHashCountPerRequest(),
         config.getWorldStateRequestParallelism(),
         config.getWorldStateMaxRequestsWithoutProgress(),

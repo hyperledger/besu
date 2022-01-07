@@ -15,7 +15,9 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
@@ -23,6 +25,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 
 class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
@@ -60,6 +64,14 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
       final Optional<Bytes> location,
       final Bytes path,
       final Bytes value) {
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
+          .putStorageValueBySlotHash(
+              accountHash.get(),
+              getSlotHash(location, path),
+              Bytes32.leftPad(RLP.decodeValue(value)))
+          .commit();
+    }
     return Stream.empty();
   }
 
@@ -75,5 +87,11 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
     getAccountHash().ifPresent(out::writeBytes);
     getLocation().ifPresent(out::writeBytes);
     out.endList();
+  }
+
+  private Hash getSlotHash(final Optional<Bytes> location, final Bytes path) {
+    return Hash.wrap(
+        Bytes32.wrap(
+            CompactEncoding.pathToBytes(Bytes.concatenate(location.orElse(Bytes.EMPTY), path))));
   }
 }

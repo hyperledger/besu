@@ -15,8 +15,10 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
@@ -45,6 +47,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
 
   private final EthContext ethContext;
   private final CachingTaskCollection<NodeDataRequest> taskCollection;
+  final SyncMode syncMode;
   private final int hashCountPerRequest;
   private final int maxOutstandingRequests;
   private final int maxNodeRequestsWithoutProgress;
@@ -58,6 +61,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
       final CachingTaskCollection<NodeDataRequest> taskCollection,
+      final SyncMode syncMode,
       final int hashCountPerRequest,
       final int maxOutstandingRequests,
       final int maxNodeRequestsWithoutProgress,
@@ -67,6 +71,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
     this.ethContext = ethContext;
     this.worldStateStorage = worldStateStorage;
     this.taskCollection = taskCollection;
+    this.syncMode = syncMode;
     this.hashCountPerRequest = hashCountPerRequest;
     this.maxOutstandingRequests = maxOutstandingRequests;
     this.maxNodeRequestsWithoutProgress = maxNodeRequestsWithoutProgress;
@@ -117,6 +122,12 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
             stateRoot);
         return CompletableFuture.completedFuture(null);
       }
+
+      if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+        ((BonsaiWorldStateKeyValueStorage) worldStateStorage).clearReadAccessDatabase();
+        LOG.info("Clean read access database");
+      }
+
       LOG.info(
           "Begin downloading world state from peers for block {} ({}). State root {}",
           header.getNumber(),
@@ -138,6 +149,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
           Optional.of(new CompleteTaskStep(worldStateStorage, metricsSystem, taskCollection::size));
       final FastWorldStateDownloadProcess downloadProcess =
           FastWorldStateDownloadProcess.builder()
+              .syncMode(syncMode)
               .hashCountPerRequest(hashCountPerRequest)
               .maxOutstandingRequests(maxOutstandingRequests)
               .loadLocalDataStep(new LoadLocalDataStep(worldStateStorage, metricsSystem))

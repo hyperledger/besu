@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldStateDownloader;
@@ -180,6 +181,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
         ethContext,
         worldStateStorage,
         fastTaskCollection,
+        SyncMode.X_SNAP,
         hashCountPerRequest,
         maxOutstandingRequests,
         maxNodeRequestsWithoutProgress,

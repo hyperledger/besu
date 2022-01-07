@@ -120,6 +120,7 @@ public class WorldStateDownloaderBenchmark {
             ethContext,
             worldStateStorage,
             pendingRequests,
+            syncConfig.getSyncMode(),
             syncConfig.getWorldStateHashCountPerRequest(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
