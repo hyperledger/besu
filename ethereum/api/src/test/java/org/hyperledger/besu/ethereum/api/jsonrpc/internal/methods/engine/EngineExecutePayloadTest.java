@@ -149,7 +149,6 @@ public class EngineExecutePayloadTest {
     BlockHeader realHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     BlockHeader paramHeader = spy(realHeader);
     when(paramHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
-
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
 
@@ -224,11 +223,11 @@ public class EngineExecutePayloadTest {
         header.getParentHash(),
         header.getCoinbase(),
         header.getStateRoot(),
-        asUnsingedLongParameter(header.getNumber()),
+        new UnsignedLongParameter(header.getNumber()),
         header.getBaseFee().map(w -> w.toHexString()).orElse("0x0"),
-        asUnsingedLongParameter(header.getGasLimit()),
-        asUnsingedLongParameter(header.getGasUsed()),
-        asUnsingedLongParameter(header.getTimestamp()),
+        new UnsignedLongParameter(header.getGasLimit()),
+        new UnsignedLongParameter(header.getGasUsed()),
+        new UnsignedLongParameter(header.getTimestamp()),
         header.getExtraData().toHexString(),
         header.getReceiptsRoot(),
         header.getLogsBloom(),
@@ -236,9 +235,6 @@ public class EngineExecutePayloadTest {
         txs);
   }
 
-  private UnsignedLongParameter asUnsingedLongParameter(final long val) {
-    return new UnsignedLongParameter(Long.toHexString(val));
-  }
 
   private EngineExecutionResult fromSuccessResp(final JsonRpcResponse resp) {
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
