@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.controller;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
@@ -41,9 +39,12 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   private final AtomicReference<SyncState> syncState = new AtomicReference<>();
-  private final Logger LOG = LogManager.getLogger(BesuControllerBuilder.class);
+  private static final Logger LOG = LogManager.getLogger(BesuControllerBuilder.class);
 
   @Override
   protected MiningCoordinator createMiningCoordinator(
@@ -117,16 +118,16 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
     List<PeerValidator> retval = super.createPeerValidators(protocolSchedule);
     final OptionalLong powTerminalBlockNumber =
-            genesisConfig.getConfigOptions(genesisConfigOverrides).getTerminalBlockNumber();
+        genesisConfig.getConfigOptions(genesisConfigOverrides).getTerminalBlockNumber();
     final Optional<Hash> powTerminalBlockHash =
-            genesisConfig.getConfigOptions(genesisConfigOverrides).getTerminalBlockHash();
+        genesisConfig.getConfigOptions(genesisConfigOverrides).getTerminalBlockHash();
     if (powTerminalBlockHash.isPresent() && powTerminalBlockNumber.isPresent()) {
       retval.add(
-              new RequiredBlocksPeerValidator(
-                      protocolSchedule,
-                      metricsSystem,
-                      powTerminalBlockNumber.getAsLong(),
-                      powTerminalBlockHash.get()));
+          new RequiredBlocksPeerValidator(
+              protocolSchedule,
+              metricsSystem,
+              powTerminalBlockNumber.getAsLong(),
+              powTerminalBlockHash.get()));
     } else {
       LOG.debug("unable to validate peers with terminal difficulty blocks");
     }
