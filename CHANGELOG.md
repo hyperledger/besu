@@ -1,5 +1,10 @@
 # Changelog
 
+## 21.10.8
+
+### Additions and Improvements
+- Ethereum Classic Mystique Hard Fork [#3256](https://github.com/hyperledger/besu/pull/3256)
+
 ## 21.10.7
 
 ### Bug Fixes
