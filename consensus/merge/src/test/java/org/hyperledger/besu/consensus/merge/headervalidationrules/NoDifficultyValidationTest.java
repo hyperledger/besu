@@ -45,8 +45,7 @@ public class NoDifficultyValidationTest {
   public void setUp() {
     when(blockchain.getTotalDifficultyByHash(any())).thenReturn(Optional.of(Difficulty.ONE));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
-    when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.ZERO);
-    when(mergeContext.isPostMerge()).thenReturn(true);
+    when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.ONE);
     when(protocolContext.getConsensusContext(MergeContext.class)).thenReturn(mergeContext);
   }
 
@@ -56,7 +55,7 @@ public class NoDifficultyValidationTest {
     final BlockHeader parentHeader = mock(BlockHeader.class);
 
     final BlockHeader invalidHeader = mock(BlockHeader.class);
-    when(invalidHeader.getDifficulty()).thenReturn(Difficulty.MAX_VALUE);
+    when(invalidHeader.getDifficulty()).thenReturn(Difficulty.of(10));
     assertThat(rule.validate(invalidHeader, parentHeader, protocolContext)).isFalse();
 
     final BlockHeader validHeader = mock(BlockHeader.class);

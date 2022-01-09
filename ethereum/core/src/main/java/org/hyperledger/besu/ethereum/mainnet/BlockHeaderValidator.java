@@ -87,7 +87,12 @@ public class BlockHeaderValidator {
       final Predicate<Rule> filter) {
     return rules.stream()
         .filter(filter)
-        .allMatch(rule -> rule.validate(header, parent, protocolContext));
+        .allMatch(
+            rule -> {
+              boolean worked = rule.validate(header, parent, protocolContext);
+              if (!worked) LOG.debug(rule.innerRuleClass().getCanonicalName() + " failed");
+              return worked;
+            });
   }
 
   private Optional<BlockHeader> getParent(final BlockHeader header, final ProtocolContext context) {
@@ -124,6 +129,10 @@ public class BlockHeaderValidator {
 
     boolean includeInLightValidation() {
       return includeInLightValidation;
+    }
+
+    public Class<? extends AttachedBlockHeaderValidationRule> innerRuleClass() {
+      return rule.getClass();
     }
   }
 

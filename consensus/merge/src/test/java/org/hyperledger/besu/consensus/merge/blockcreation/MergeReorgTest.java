@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardsSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
@@ -43,6 +44,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,7 +80,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
-    mergeContext.setTerminalTotalDifficulty(Difficulty.of(1000));
+    mergeContext.setTerminalTotalDifficulty(Difficulty.of(1001));
     MergeOptions.setMergeEnabled(true);
     this.coordinator =
         new MergeCoordinator(
@@ -104,6 +107,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   @Test
   public void reorgsAcrossTDDToDifferentTargetsWhenNotFinal() {
     // Add N blocks to chain from genesis, where total diff is < TTD
+    Configurator.setLevel(BlockHeaderValidator.class.getName(), Level.DEBUG);
     List<Block> endOfWork = subChain(genesisState.getBlock().getHeader(), 10, Difficulty.of(100L));
     endOfWork.stream().forEach(coordinator::executeBlock);
     assertThat(blockchain.getChainHead().getHeight()).isEqualTo(10L);
@@ -130,7 +134,8 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
         .isEqualTo(builtOnTTDA.get(builtOnTTDA.size() - 1).getHash());
 
     Block ttdB = new Block(terminalPowBlock(tddPenultimate, Difficulty.of(2L)), BlockBody.empty());
-    coordinator.executeBlock(ttdB);
+    worked = coordinator.executeBlock(ttdB);
+    assertThat(worked).isTrue();
     List<Block> builtOnTTDB = subChain(ttdB.getHeader(), 10, Difficulty.of(0L));
     builtOnTTDB.stream().forEach(coordinator::executeBlock);
     assertThat(blockchain.getChainHead().getHeight()).isEqualTo(21);

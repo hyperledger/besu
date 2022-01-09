@@ -52,5 +52,6 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
+  implementation 'org.apache.logging.log4j:log4j-core'
   testImplementation project(':ethereum:core')
 }
