@@ -127,7 +127,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
               protocolSchedule,
               metricsSystem,
               powTerminalBlockNumber.getAsLong(),
-              powTerminalBlockHash.get()));
+              powTerminalBlockHash.get(),
+              0));
     } else {
       LOG.debug("unable to validate peers with terminal difficulty blocks");
     }
