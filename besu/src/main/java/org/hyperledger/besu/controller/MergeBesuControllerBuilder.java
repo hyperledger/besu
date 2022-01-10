@@ -44,7 +44,7 @@ import org.apache.logging.log4j.Logger;
 
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   private final AtomicReference<SyncState> syncState = new AtomicReference<>();
-  private static final Logger LOG = LogManager.getLogger(BesuControllerBuilder.class);
+  private static final Logger LOG = LogManager.getLogger(MergeBesuControllerBuilder.class);
 
   @Override
   protected MiningCoordinator createMiningCoordinator(

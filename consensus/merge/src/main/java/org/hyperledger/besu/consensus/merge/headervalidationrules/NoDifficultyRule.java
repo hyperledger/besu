@@ -45,8 +45,4 @@ public class NoDifficultyRule extends ProofOfStakeRule {
     }
   }
 
-  @Override
-  public boolean includeInLightValidation() {
-    return super.includeInLightValidation();
-  }
 }

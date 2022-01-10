@@ -45,9 +45,4 @@ public class NoNonceRule extends ProofOfStakeRule {
       return true;
     }
   }
-
-  @Override
-  public boolean includeInLightValidation() {
-    return super.includeInLightValidation();
-  }
 }

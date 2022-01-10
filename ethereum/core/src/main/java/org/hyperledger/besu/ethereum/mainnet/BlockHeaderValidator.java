@@ -90,7 +90,7 @@ public class BlockHeaderValidator {
         .allMatch(
             rule -> {
               boolean worked = rule.validate(header, parent, protocolContext);
-              if (!worked) LOG.debug(rule.innerRuleClass().getCanonicalName() + " failed");
+              if (!worked) LOG.debug("{} rule failed", rule.innerRuleClass().getCanonicalName());
               return worked;
             });
   }
@@ -106,15 +106,15 @@ public class BlockHeaderValidator {
 
   private static class Rule {
     private final boolean detachedSupported;
-    private final AttachedBlockHeaderValidationRule rule;
+    private final AttachedBlockHeaderValidationRule wrappedRule;
     private final boolean includeInLightValidation;
 
     private Rule(
         final boolean detachedSupported,
-        final AttachedBlockHeaderValidationRule rule,
+        final AttachedBlockHeaderValidationRule toWrap,
         final boolean includeInLightValidation) {
       this.detachedSupported = detachedSupported;
-      this.rule = rule;
+      this.wrappedRule = toWrap;
       this.includeInLightValidation = includeInLightValidation;
     }
 
@@ -124,7 +124,7 @@ public class BlockHeaderValidator {
 
     public boolean validate(
         final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
-      return this.rule.validate(header, parent, protocolContext);
+      return this.wrappedRule.validate(header, parent, protocolContext);
     }
 
     boolean includeInLightValidation() {
@@ -132,7 +132,7 @@ public class BlockHeaderValidator {
     }
 
     public Class<? extends AttachedBlockHeaderValidationRule> innerRuleClass() {
-      return rule.getClass();
+      return wrappedRule.getClass();
     }
   }
 
@@ -143,8 +143,8 @@ public class BlockHeaderValidator {
     public Builder addRule(
         final Function<DifficultyCalculator, AttachedBlockHeaderValidationRule> ruleBuilder) {
       this.rulesBuilder.add(
-          difficultyCalculator -> {
-            final AttachedBlockHeaderValidationRule rule = ruleBuilder.apply(difficultyCalculator);
+          applyMe -> {
+            final AttachedBlockHeaderValidationRule rule = ruleBuilder.apply(applyMe);
             return new Rule(false, rule, rule.includeInLightValidation());
           });
       return this;
@@ -157,12 +157,12 @@ public class BlockHeaderValidator {
 
     public Builder addRule(final DetachedBlockHeaderValidationRule rule) {
       this.rulesBuilder.add(
-          ignored -> {
-            return new Rule(
+          ignored ->
+             new Rule(
                 true,
                 (header, parent, protocolContext) -> rule.validate(header, parent),
-                rule.includeInLightValidation());
-          });
+                rule.includeInLightValidation())
+          );
       return this;
     }
 
