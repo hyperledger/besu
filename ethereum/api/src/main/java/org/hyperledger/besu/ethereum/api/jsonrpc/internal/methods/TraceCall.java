@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType.VM_TRACE;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
@@ -45,9 +46,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Suppliers;
-
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType.VM_TRACE;
 
 public class TraceCall implements JsonRpcMethod {
   private final Supplier<BlockchainQueries> blockchainQueries;
@@ -82,8 +82,7 @@ public class TraceCall implements JsonRpcMethod {
     }
 
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
-    final DebugOperationTracer tracer =
-        new DebugOperationTracer(buildTraceOptions(traceTypes));
+    final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
         transactionSimulator.process(
             JsonCallParameterUtil.validateAndGetCallParams(requestContext),
@@ -100,15 +99,13 @@ public class TraceCall implements JsonRpcMethod {
 
     resultNode.put("output", maybeSimulatorResult.get().getOutput().toString());
 
-    final TransactionTrace transactionTrace = new TransactionTrace(
-        maybeSimulatorResult.get().getTransaction(),
-        maybeSimulatorResult.get().getResult(),
-        tracer.getTraceFrames());
+    final TransactionTrace transactionTrace =
+        new TransactionTrace(
+            maybeSimulatorResult.get().getTransaction(),
+            maybeSimulatorResult.get().getResult(),
+            tracer.getTraceFrames());
 
-    final Block block = blockchainQueries
-        .get()
-        .getBlockchain()
-        .getChainHeadBlock();
+    final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
 
     setNullNodesIfNotPresent(resultNode, "stateDiff");
 
