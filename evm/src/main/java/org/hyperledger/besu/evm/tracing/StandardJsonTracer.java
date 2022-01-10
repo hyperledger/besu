@@ -23,9 +23,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,10 +34,10 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class StandardJsonTracer implements OperationTracer {
 
-  private final OutputStream out;
+  private final PrintStream out;
   private final boolean showMemory;
 
-  public StandardJsonTracer(final OutputStream out, final boolean showMemory) {
+  public StandardJsonTracer(final PrintStream out, final boolean showMemory) {
     this.out = out;
     this.showMemory = showMemory;
   }
@@ -100,13 +98,8 @@ public class StandardJsonTracer implements OperationTracer {
                 .map(ExceptionalHaltReason::getDescription)
                 .orElse(
                     messageFrame.getRevertReason().map(StandardJsonTracer::quoteEscape).orElse("")))
-        .append("\"}\n");
-
-    try {
-      out.write(sb.toString().getBytes(Charset.defaultCharset()));
-    } catch (IOException e) {
-      throw new RuntimeException(e.getMessage());
-    }
+        .append("\"}");
+    out.println(sb);
   }
 
   static String quoteEscape(final Bytes bytes) {
