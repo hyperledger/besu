@@ -47,8 +47,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStora
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
-import org.hyperledger.besu.services.tasks.CachingTaskCollection;
-import org.hyperledger.besu.services.tasks.FlatFileTaskCollection;
+import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.nio.file.Path;
 import java.time.Clock;
@@ -80,7 +79,7 @@ public class WorldStateDownloaderBenchmark {
   private WorldStateStorage worldStateStorage;
   private RespondingEthPeer peer;
   private Responder responder;
-  private CachingTaskCollection<NodeDataRequest> pendingRequests;
+  private InMemoryTasksPriorityQueues<NodeDataRequest> pendingRequests;
   private StorageProvider storageProvider;
   private EthProtocolManager ethProtocolManager;
 
@@ -108,13 +107,7 @@ public class WorldStateDownloaderBenchmark {
         createKeyValueStorageProvider(tempDir, tempDir.resolve("database"));
     worldStateStorage = storageProvider.createWorldStateStorage(DataStorageFormat.FOREST);
 
-    pendingRequests =
-        new CachingTaskCollection<>(
-            new FlatFileTaskCollection<>(
-                tempDir.resolve("fastsync"),
-                NodeDataRequest::serialize,
-                NodeDataRequest::deserialize),
-            0);
+    pendingRequests = new InMemoryTasksPriorityQueues<>();
     worldStateDownloader =
         new FastWorldStateDownloader(
             ethContext,
