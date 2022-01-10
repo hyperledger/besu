@@ -49,6 +49,10 @@ public class LoadLocalDataStep {
       existingNodeCounter.inc();
       request.setData(existingData.get());
       request.setRequiresPersisting(false);
+      final WorldStateStorage.Updater updater = worldStateStorage.updater();
+      request.persist(updater);
+      updater.commit();
+
       completedTasks.put(task);
       return Stream.empty();
     }

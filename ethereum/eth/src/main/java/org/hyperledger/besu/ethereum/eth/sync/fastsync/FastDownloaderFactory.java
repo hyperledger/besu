@@ -29,8 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.services.tasks.CachingTaskCollection;
-import org.hyperledger.besu.services.tasks.FlatFileTaskCollection;
+import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -84,11 +83,9 @@ public class FastDownloaderFactory {
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       worldStateStorage.clear();
     }
-    final CachingTaskCollection<NodeDataRequest> taskCollection =
+    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
         createWorldStateDownloaderTaskCollection(
-            getStateQueueDirectory(dataDirectory),
-            metricsSystem,
-            syncConfig.getWorldStateTaskCacheSize());
+            metricsSystem, syncConfig.getWorldStateTaskCacheSize());
     final WorldStateDownloader worldStateDownloader =
         new FastWorldStateDownloader(
             ethContext,
@@ -119,33 +116,17 @@ public class FastDownloaderFactory {
     return Optional.of(fastSyncDownloader);
   }
 
-  private static Path getStateQueueDirectory(final Path dataDirectory) {
-    final Path queueDataDir = getFastSyncDataDirectory(dataDirectory).resolve("statequeue");
-    ensureDirectoryExists(queueDataDir.toFile());
-    return queueDataDir;
-  }
-
-  private static Path getFastSyncDataDirectory(final Path dataDirectory) {
-    final Path fastSyncDataDir = dataDirectory.resolve(FAST_SYNC_FOLDER);
-    ensureDirectoryExists(fastSyncDataDir.toFile());
-    return fastSyncDataDir;
-  }
-
   private static void ensureDirectoryExists(final File dir) {
     if (!dir.mkdirs() && !dir.isDirectory()) {
       throw new IllegalStateException("Unable to create directory: " + dir.getAbsolutePath());
     }
   }
 
-  private static CachingTaskCollection<NodeDataRequest> createWorldStateDownloaderTaskCollection(
-      final Path dataDirectory,
-      final MetricsSystem metricsSystem,
-      final int worldStateTaskCacheSize) {
-    final CachingTaskCollection<NodeDataRequest> taskCollection =
-        new CachingTaskCollection<>(
-            new FlatFileTaskCollection<>(
-                dataDirectory, NodeDataRequest::serialize, NodeDataRequest::deserialize),
-            worldStateTaskCacheSize);
+  private static InMemoryTasksPriorityQueues<NodeDataRequest>
+      createWorldStateDownloaderTaskCollection(
+          final MetricsSystem metricsSystem, final int worldStateTaskCacheSize) {
+    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
+        new InMemoryTasksPriorityQueues<>();
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
@@ -157,7 +138,7 @@ public class FastDownloaderFactory {
         BesuMetricCategory.SYNCHRONIZER,
         "world_state_pending_requests_cache_size",
         "Pending request cache size for fast sync world state download",
-        taskCollection::cacheSize);
+        () -> worldStateTaskCacheSize);
 
     return taskCollection;
   }
