@@ -44,5 +44,4 @@ public class NoDifficultyRule extends ProofOfStakeRule {
       return true;
     }
   }
-
 }

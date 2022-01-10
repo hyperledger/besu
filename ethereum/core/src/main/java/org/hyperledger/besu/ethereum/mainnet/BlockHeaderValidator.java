@@ -158,11 +158,10 @@ public class BlockHeaderValidator {
     public Builder addRule(final DetachedBlockHeaderValidationRule rule) {
       this.rulesBuilder.add(
           ignored ->
-             new Rule(
-                true,
-                (header, parent, protocolContext) -> rule.validate(header, parent),
-                rule.includeInLightValidation())
-          );
+              new Rule(
+                  true,
+                  (header, parent, protocolContext) -> rule.validate(header, parent),
+                  rule.includeInLightValidation()));
       return this;
     }
 
