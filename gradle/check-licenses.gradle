@@ -116,6 +116,7 @@ downloadLicenses {
       'CDDL 1.0',
       'CDDL 1.1',
       'Common Development and Distribution License (CDDL) v1.0',
+      'CDDL + GPLv2 with classpath exception',
     ],
     (epl1) : [
       'Eclipse Public License - Version 1.0',
