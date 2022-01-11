@@ -188,7 +188,7 @@ public class BlockTransactionSelector {
             .getTransactionPriceCalculator()
             .price(transaction, processableBlockHeader.getBaseFee());
     if (minTransactionGasPrice.compareTo(actualMinTransactionGasPriceInBlock) > 0) {
-      LOG.trace(
+      LOG.warn(
           "Gas fee of {} lower than configured minimum {}, deleting",
           transaction,
           minTransactionGasPrice);
