@@ -15,8 +15,8 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
-    dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.12.4'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.1'
+    dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.13.1'
 
     dependency 'com.github.tomakehurst:wiremock-jre8-standalone:2.29.1'
     dependency 'com.github.tomakehurst:wiremock-jre8:2.29.1'
@@ -49,17 +49,17 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.6.1'
 
-    dependency 'io.grpc:grpc-core:1.39.0'
-    dependency 'io.grpc:grpc-netty:1.39.0'
-    dependency 'io.grpc:grpc-stub:1.39.0'
+    dependency 'io.grpc:grpc-core:1.37.1'
+    dependency 'io.grpc:grpc-netty:1.37.1'
+    dependency 'io.grpc:grpc-stub:1.37.1'
 
     dependency 'io.jaegertracing:jaeger-client:1.6.0'
 
     dependency 'io.kubernetes:client-java:14.0.0'
 
-    dependency 'io.netty:netty-all:4.1.66.Final'
-    dependency 'io.netty:netty-tcnative-boringssl-static:2.0.40.Final'
-    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.66.Final', classifier: 'linux-x86_64'
+    dependency 'io.netty:netty-all:4.1.72.Final'
+    dependency 'io.netty:netty-tcnative-boringssl-static:2.0.46.Final'
+    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.72.Final', classifier: 'linux-x86_64'
 
     dependency 'io.opentelemetry:opentelemetry-api:1.5.0'
     dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.5.0-alpha'
