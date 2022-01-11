@@ -1,5 +1,10 @@
 # Changelog
 
+## 21.10.7
+
+### Bug Fixes
+- Update dependencies (including kubernetes client-java, okhttp, commons-codec) 
+
 ## 21.10.6
 
 ### Bug Fixes
