@@ -5,7 +5,7 @@
 ### Bug Fixes
 - Update dependencies (including kubernetes client-java, okhttp, commons-codec) 
 
-### Early Access Features
+### Additions and Improvements
 - Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
 
 ## 21.10.6
