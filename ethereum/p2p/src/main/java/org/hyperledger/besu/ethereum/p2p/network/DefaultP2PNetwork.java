@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
@@ -67,6 +68,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -236,15 +238,17 @@ public class DefaultP2PNetwork implements P2PNetwork {
                     : configuredDiscoveryPort)
             .join();
 
-    natService.ifNatEnvironment(
-        NatMethod.UPNP,
+    final Consumer<? super NatManager> natAction =
         natManager -> {
           UpnpNatManager upnpNatManager = (UpnpNatManager) natManager;
           upnpNatManager.requestPortForward(
               discoveryPort, NetworkProtocol.UDP, NatServiceType.DISCOVERY);
           upnpNatManager.requestPortForward(
               listeningPort, NetworkProtocol.TCP, NatServiceType.RLPX);
-        });
+        };
+
+    natService.ifNatEnvironment(NatMethod.UPNP, natAction);
+    natService.ifNatEnvironment(NatMethod.UPNPP2PONLY, natAction);
 
     setLocalNode(address, listeningPort, discoveryPort);
 
