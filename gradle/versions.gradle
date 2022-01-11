@@ -117,7 +117,7 @@ dependencyManagement {
     dependency 'org.apache.tuweni:tuweni-toml:2.0.0'
     dependency 'org.apache.tuweni:tuweni-units:2.0.0'
 
-    dependency 'org.assertj:assertj-core:3.20.2'
+    dependency 'org.assertj:assertj-core:3.22.0'
 
     dependency 'org.awaitility:awaitility:4.1.0'
 
