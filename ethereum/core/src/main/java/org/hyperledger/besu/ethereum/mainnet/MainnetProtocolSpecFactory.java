@@ -257,6 +257,17 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
+  public ProtocolSpecBuilder mystiqueDefinition() {
+    return ClassicProtocolSpecs.mystiqueDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        ecip1017EraRounds,
+        quorumCompatibilityMode,
+        evmConfiguration);
+  }
+
   public ProtocolSpecBuilder ecip1049Definition() {
     return ClassicProtocolSpecs.ecip1049Definition(
         chainId,
