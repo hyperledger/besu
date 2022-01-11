@@ -7,6 +7,7 @@
 
 ### Additions and Improvements
 - Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
+- Remove Orion ATs
 
 ## 21.10.6
 
