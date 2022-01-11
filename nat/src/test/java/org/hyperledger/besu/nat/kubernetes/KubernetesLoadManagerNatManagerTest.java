@@ -29,8 +29,8 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 import io.kubernetes.client.custom.IntOrString;
-import io.kubernetes.client.openapi.models.V1LoadBalancerIngressBuilder;
-import io.kubernetes.client.openapi.models.V1LoadBalancerStatusBuilder;
+import io.kubernetes.client.openapi.models.V1LoadBalancerIngress;
+import io.kubernetes.client.openapi.models.V1LoadBalancerStatus;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Service;
 import io.kubernetes.client.openapi.models.V1ServicePort;
@@ -59,10 +59,8 @@ public final class KubernetesLoadManagerNatManagerTest {
     final V1ServiceStatus v1ServiceStatus =
         new V1ServiceStatus()
             .loadBalancer(
-                new V1LoadBalancerStatusBuilder()
-                    .addToIngress(
-                        new V1LoadBalancerIngressBuilder().withIp(detectedAdvertisedHost).build())
-                    .build());
+                new V1LoadBalancerStatus()
+                    .addIngressItem(new V1LoadBalancerIngress().ip(detectedAdvertisedHost)));
     when(v1Service.getStatus()).thenReturn(v1ServiceStatus);
     when(v1Service.getSpec())
         .thenReturn(
