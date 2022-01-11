@@ -17,9 +17,9 @@ package org.hyperledger.besu.nat.kubernetes;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.mockito.Mockito.when;
 
-import io.kubernetes.client.models.V1ObjectMeta;
-import io.kubernetes.client.models.V1Service;
-import io.kubernetes.client.models.V1ServiceSpec;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1Service;
+import io.kubernetes.client.openapi.models.V1ServiceSpec;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
