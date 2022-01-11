@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockExcep
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
@@ -51,6 +52,7 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
 
   @Override
   public void accept(final List<BlockWithReceipts> blocksWithReceipts) {
+    final long startTime = System.nanoTime();
     for (final BlockWithReceipts blockWithReceipts : blocksWithReceipts) {
       if (!importBlock(blockWithReceipts)) {
         throw new InvalidBlockException(
@@ -65,8 +67,14 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
     if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
       peerCount = ethContext.getEthPeers().peerCount();
     }
+    final long endTime = System.nanoTime();
     LOG.info(
-        "Completed importing chain segment {} to {}, Peers: {}", firstBlock, lastBlock, peerCount);
+        "Completed importing chain segment {} to {} ({} blocks in {}ms), Peers: {}",
+        firstBlock,
+        lastBlock,
+        blocksWithReceipts.size(),
+        TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS),
+        peerCount);
   }
 
   private boolean importBlock(final BlockWithReceipts blockWithReceipts) {

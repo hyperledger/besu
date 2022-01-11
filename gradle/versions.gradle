@@ -140,7 +140,6 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
 
-    // Not updating bls12-381 because of https://github.com/hyperledger/besu/issues/2668
     dependency 'org.hyperledger.besu:bls12-381:0.4.2'
     dependency 'org.hyperledger.besu:secp256k1:0.4.2'
     dependency 'org.hyperledger.besu:secp256r1:0.4.2'
