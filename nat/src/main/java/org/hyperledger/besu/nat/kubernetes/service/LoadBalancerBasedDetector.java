@@ -20,8 +20,8 @@ import org.hyperledger.besu.nat.core.exception.NatInitializationException;
 import java.net.InetAddress;
 import java.util.Optional;
 
-import io.kubernetes.client.models.V1LoadBalancerIngress;
-import io.kubernetes.client.models.V1Service;
+import io.kubernetes.client.openapi.models.V1LoadBalancerIngress;
+import io.kubernetes.client.openapi.models.V1Service;
 
 public class LoadBalancerBasedDetector implements IpDetector {
 
