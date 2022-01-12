@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 
 import java.io.File;
@@ -43,6 +44,7 @@ public class JsonRpcConfiguration {
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
+  private JwtAlgorithm authenticationAlgorithm = JwtAlgorithm.RS256;
   private File authenticationPublicKeyFile;
   private Optional<TlsConfiguration> tlsConfiguration = Optional.empty();
   private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
@@ -138,6 +140,14 @@ public class JsonRpcConfiguration {
 
   public void setAuthenticationPublicKeyFile(final File authenticationPublicKeyFile) {
     this.authenticationPublicKeyFile = authenticationPublicKeyFile;
+  }
+
+  public JwtAlgorithm getAuthenticationAlgorithm() {
+    return authenticationAlgorithm;
+  }
+
+  public void setAuthenticationAlgorithm(final JwtAlgorithm authenticationAlgorithm) {
+    this.authenticationAlgorithm = authenticationAlgorithm;
   }
 
   public Optional<TlsConfiguration> getTlsConfiguration() {

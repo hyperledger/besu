@@ -36,10 +36,9 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.WebSocket;
-import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.http.WebSocketFrame;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
@@ -205,7 +204,13 @@ public class WebSocketServiceTest {
               context.assertNotNull(m.body());
               async.complete();
             })
-        .completionHandler(v -> httpClient.websocket("/", WebSocketBase::close));
+        .completionHandler(
+            v ->
+                httpClient.webSocket(
+                    "/",
+                    websocket -> {
+                      websocket.result().close();
+                    }));
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
@@ -237,38 +242,50 @@ public class WebSocketServiceTest {
   public void websocketServiceMustReturnErrorOnHttpRequest(final TestContext context) {
     final Async async = context.async();
 
-    httpClient
-        .post(
-            websocketConfiguration.getPort(),
-            websocketConfiguration.getHost(),
-            "/",
-            response ->
-                response.bodyHandler(
-                    b -> {
-                      context
-                          .assertEquals(400, response.statusCode())
-                          .assertEquals(
-                              "Websocket endpoint can't handle HTTP requests", b.toString());
-                      async.complete();
-                    }))
-        .end();
-
+    httpClient.request(
+        HttpMethod.POST,
+        websocketConfiguration.getPort(),
+        websocketConfiguration.getHost(),
+        "/",
+        request -> {
+          request
+              .result()
+              .send(
+                  response ->
+                      response
+                          .result()
+                          .bodyHandler(
+                              b -> {
+                                context
+                                    .assertEquals(400, response.result().statusCode())
+                                    .assertEquals(
+                                        "Websocket endpoint can't handle HTTP requests",
+                                        b.toString());
+                                async.complete();
+                              }));
+        });
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
 
   @Test
   public void handleLoginRequestWithAuthDisabled() {
-    final HttpClientRequest request =
-        httpClient.post(
-            websocketConfiguration.getPort(),
-            websocketConfiguration.getHost(),
-            "/login",
-            response -> {
-              assertThat(response.statusCode()).isEqualTo(400);
-              assertThat(response.statusMessage()).isEqualTo("Authentication not enabled");
-            });
-    request.putHeader("Content-Type", "application/json; charset=utf-8");
-    request.end("{\"username\":\"user\",\"password\":\"pass\"}");
+    httpClient.request(
+        HttpMethod.POST,
+        websocketConfiguration.getPort(),
+        websocketConfiguration.getHost(),
+        "/login",
+        request -> {
+          request.result().putHeader("Content-Type", "application/json; charset=utf-8");
+          request.result().end("{\"username\":\"user\",\"password\":\"pass\"}");
+          request
+              .result()
+              .send(
+                  response -> {
+                    assertThat(response.result().statusCode()).isEqualTo(400);
+                    assertThat(response.result().statusMessage())
+                        .isEqualTo("Authentication not enabled");
+                  });
+        });
   }
 
   @Test

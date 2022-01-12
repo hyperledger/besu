@@ -15,8 +15,8 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
-    dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.12.4'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.1'
+    dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.13.1'
 
     dependency 'com.github.tomakehurst:wiremock-jre8-standalone:2.29.1'
     dependency 'com.github.tomakehurst:wiremock-jre8:2.29.1'
@@ -39,9 +39,9 @@ dependencyManagement {
 
     dependency 'com.splunk.logging:splunk-library-javalogging:1.9.0'
 
-    dependency 'com.squareup.okhttp3:okhttp:4.9.1'
+    dependency 'com.squareup.okhttp3:okhttp:4.9.3'
 
-    dependency 'commons-codec:commons-codec:1.13'
+    dependency 'commons-codec:commons-codec:1.15'
 
     dependency 'commons-io:commons-io:2.11.0'
 
@@ -55,11 +55,11 @@ dependencyManagement {
 
     dependency 'io.jaegertracing:jaeger-client:1.6.0'
 
-    dependency 'io.kubernetes:client-java:5.0.0'
+    dependency 'io.kubernetes:client-java:14.0.0'
 
-    dependency 'io.netty:netty-all:4.1.66.Final'
-    dependency 'io.netty:netty-tcnative-boringssl-static:2.0.40.Final'
-    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.66.Final', classifier: 'linux-x86_64'
+    dependency 'io.netty:netty-all:4.1.72.Final'
+    dependency 'io.netty:netty-tcnative-boringssl-static:2.0.46.Final'
+    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.72.Final', classifier: 'linux-x86_64'
 
     dependency 'io.opentelemetry:opentelemetry-api:1.5.0'
     dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.5.0-alpha'
@@ -83,11 +83,13 @@ dependencyManagement {
 
     dependency 'io.reactivex.rxjava2:rxjava:2.2.21'
 
-    dependency 'io.vertx:vertx-auth-jwt:3.9.8'
-    dependency 'io.vertx:vertx-codegen:3.9.8'
-    dependency 'io.vertx:vertx-core:3.9.8'
-    dependency 'io.vertx:vertx-unit:3.9.8'
-    dependency 'io.vertx:vertx-web:3.9.8'
+    dependency 'io.vertx:vertx-auth-jwt:4.2.1'
+    dependency 'io.vertx:vertx-codegen:4.2.1'
+    dependency 'io.vertx:vertx-core:4.2.1'
+    dependency 'io.vertx:vertx-unit:4.2.1'
+    dependency 'io.vertx:vertx-web:4.2.1'
+    dependency 'io.vertx:vertx-web-client:4.2.1'
+    dependency 'io.vertx:vertx-auth-jwt:4.2.1'
 
     dependency 'junit:junit:4.13.2'
 
@@ -117,7 +119,7 @@ dependencyManagement {
     dependency 'org.apache.tuweni:tuweni-toml:2.0.0'
     dependency 'org.apache.tuweni:tuweni-units:2.0.0'
 
-    dependency 'org.assertj:assertj-core:3.20.2'
+    dependency 'org.assertj:assertj-core:3.22.0'
 
     dependency 'org.awaitility:awaitility:4.1.0'
 
@@ -167,12 +169,5 @@ dependencyManagement {
     dependency 'org.yaml:snakeyaml:1.26'
 
     dependency 'tech.pegasys.discovery:discovery:21.10.0'
-
-    dependency 'tech.pegasys.ethsigner.internal:ethsigner-core:21.3.2'
-    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.17') {
-      entry 'signing-secp256k1-api'
-      entry 'signing-secp256k1-impl'
-    }
-
   }
 }

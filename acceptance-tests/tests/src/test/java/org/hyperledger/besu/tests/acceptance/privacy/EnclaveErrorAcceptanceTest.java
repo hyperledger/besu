@@ -25,11 +25,9 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.crypto.sodium.Box;
 import org.assertj.core.api.Condition;
@@ -51,9 +49,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   @Parameters(name = "{0}")
   public static Collection<EnclaveType> enclaveTypes() {
-    return Arrays.stream(EnclaveType.values())
-        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
-        .collect(Collectors.toList());
+    return EnclaveType.valuesForTests();
   }
 
   public EnclaveErrorAcceptanceTest(final EnclaveType enclaveType) throws IOException {
@@ -117,11 +113,9 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
                         alice.getEnclaveKey(),
                         wrongPublicKey)));
 
-    final String orionMessage = JsonRpcError.NODE_MISSING_PEER_URL.getMessage();
     final String tesseraMessage = JsonRpcError.TESSERA_NODE_MISSING_PEER_URL.getMessage();
 
-    assertThat(throwable.getMessage())
-        .has(matchOrionOrTesseraMessage(orionMessage, tesseraMessage));
+    assertThat(throwable.getMessage()).has(matchTesseraEnclaveMessage(tesseraMessage));
   }
 
   @Test
@@ -201,17 +195,14 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
   public void createPrivacyGroupReturnsCorrectError() {
     final Throwable throwable =
         catchThrowable(() -> alice.execute(privacyTransactions.createPrivacyGroup(null, null)));
-    final String orionMessage = JsonRpcError.CREATE_GROUP_INCLUDE_SELF.getMessage();
     final String tesseraMessage = JsonRpcError.TESSERA_CREATE_GROUP_INCLUDE_SELF.getMessage();
 
-    assertThat(throwable.getMessage())
-        .has(matchOrionOrTesseraMessage(orionMessage, tesseraMessage));
+    assertThat(throwable.getMessage()).has(matchTesseraEnclaveMessage(tesseraMessage));
   }
 
-  private Condition<String> matchOrionOrTesseraMessage(
-      final String orionMessage, final String tesseraMessage) {
+  private Condition<String> matchTesseraEnclaveMessage(final String enclaveMessage) {
     return new Condition<>(
-        message -> message.contains(orionMessage) || message.contains(tesseraMessage),
-        "Message did not match either Orion or Tessera expected output");
+        message -> message.contains(enclaveMessage),
+        "Message did not match Tessera expected output");
   }
 }

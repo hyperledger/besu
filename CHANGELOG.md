@@ -1,5 +1,14 @@
 # Changelog
 
+## 21.10.7
+
+### Bug Fixes
+- Update dependencies (including kubernetes client-java, okhttp, commons-codec) 
+
+### Additions and Improvements
+- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
+- Remove Orion ATs
+
 ## 21.10.6
 
 ### Bug Fixes
@@ -30,9 +39,6 @@ SHA256 ef730e42bc47605f5f863c7f700e3dc1e513a53e29ab5e52ffbd31174a112375
 ### Download Link
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.3/besu-21.10.3.zip \
 SHA256: 78eb3ee9174e2c4594f4845670ad66d44479de6f470b2b950d056102f57d839e
-
-### Early Access Features
-- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
 
 ## 21.10.2
 

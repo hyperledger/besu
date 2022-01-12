@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,22 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.ethsigner.testutil;
+package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
-import java.net.URI;
-import java.util.Properties;
+public enum JwtAlgorithm {
+  RS256,
+  RS384,
+  RS512,
+  ES256,
+  ES384,
+  ES512;
 
-public class EthSignerTestHarness {
-  private final EthSignerConfig config;
-  private final Properties portsProperties;
-
-  public EthSignerTestHarness(final EthSignerConfig config, final Properties properties) {
-    this.config = config;
-    this.portsProperties = properties;
-  }
-
-  public URI getHttpListeningUrl() {
-    return URI.create(
-        "http://" + config.getHttpListenHost() + ":" + portsProperties.getProperty("http-jsonrpc"));
+  public static JwtAlgorithm fromString(final String str) {
+    for (final JwtAlgorithm alg : JwtAlgorithm.values()) {
+      if (alg.name().equalsIgnoreCase(str)) {
+        return alg;
+      }
+    }
+    return null;
   }
 }
