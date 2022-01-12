@@ -56,7 +56,8 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
                                 worldStateStorage, node.getLocation(), node.getPath(), value))
                     .orElseGet(Stream::empty);
               }
-            });
+            })
+        .peek(request -> request.registerParent(this));
   }
 
   private boolean nodeIsHashReferencedDescendant(final Node<Bytes> node) {
