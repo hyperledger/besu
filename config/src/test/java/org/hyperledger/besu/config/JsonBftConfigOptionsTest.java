@@ -17,6 +17,7 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Map;
 
@@ -36,7 +37,7 @@ public class JsonBftConfigOptionsTest {
 
   @Test
   public void shouldGetEpochLengthFromConfig() {
-    final BftConfigOptions config = fromConfigOptions(singletonMap("EpochLength", 10_000));
+    final BftConfigOptions config = fromConfigOptions(singletonMap("epochlength", 10_000));
     assertThat(config.getEpochLength()).isEqualTo(10_000);
   }
 
@@ -54,7 +55,7 @@ public class JsonBftConfigOptionsTest {
 
   @Test
   public void shouldGetBlockPeriodFromConfig() {
-    final BftConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", 5));
+    final BftConfigOptions config = fromConfigOptions(singletonMap("blockperiodseconds", 5));
     assertThat(config.getBlockPeriodSeconds()).isEqualTo(5);
   }
 
@@ -71,8 +72,15 @@ public class JsonBftConfigOptionsTest {
   }
 
   @Test
+  public void shouldThrowOnNonPositiveBlockPeriod() {
+    final BftConfigOptions config = fromConfigOptions(singletonMap("blockperiodseconds", -1));
+    assertThatThrownBy(() -> config.getBlockPeriodSeconds())
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   public void shouldGetRequestTimeoutFromConfig() {
-    final BftConfigOptions config = fromConfigOptions(singletonMap("RequestTimeoutSeconds", 5));
+    final BftConfigOptions config = fromConfigOptions(singletonMap("requesttimeoutseconds", 5));
     assertThat(config.getRequestTimeoutSeconds()).isEqualTo(5);
   }
 
@@ -90,7 +98,7 @@ public class JsonBftConfigOptionsTest {
 
   @Test
   public void shouldGetGossipedHistoryLimitFromConfig() {
-    final BftConfigOptions config = fromConfigOptions(singletonMap("GossipedHistoryLimit", 100));
+    final BftConfigOptions config = fromConfigOptions(singletonMap("gossipedhistorylimit", 100));
     assertThat(config.getGossipedHistoryLimit()).isEqualTo(100);
   }
 
@@ -108,7 +116,7 @@ public class JsonBftConfigOptionsTest {
 
   @Test
   public void shouldGetMessageQueueLimitFromConfig() {
-    final BftConfigOptions config = fromConfigOptions(singletonMap("MessageQueueLimit", 100));
+    final BftConfigOptions config = fromConfigOptions(singletonMap("messagequeuelimit", 100));
     assertThat(config.getMessageQueueLimit()).isEqualTo(100);
   }
 
@@ -126,7 +134,7 @@ public class JsonBftConfigOptionsTest {
 
   @Test
   public void shouldGetDuplicateMessageLimitFromConfig() {
-    final BftConfigOptions config = fromConfigOptions(singletonMap("DuplicateMessageLimit", 50));
+    final BftConfigOptions config = fromConfigOptions(singletonMap("duplicatemessagelimit", 50));
     assertThat(config.getDuplicateMessageLimit()).isEqualTo(50);
   }
 
@@ -145,7 +153,7 @@ public class JsonBftConfigOptionsTest {
 
   @Test
   public void shouldGetFutureMessagesLimitFromConfig() {
-    final BftConfigOptions config = fromConfigOptions(singletonMap("FutureMessagesLimit", 50));
+    final BftConfigOptions config = fromConfigOptions(singletonMap("futuremessageslimit", 50));
     assertThat(config.getFutureMessagesLimit()).isEqualTo(50);
   }
 
@@ -164,7 +172,7 @@ public class JsonBftConfigOptionsTest {
   @Test
   public void shouldGetFutureMessagesMaxDistanceFromConfig() {
     final BftConfigOptions config =
-        fromConfigOptions(singletonMap("FutureMessagesMaxDistance", 50));
+        fromConfigOptions(singletonMap("futuremessagesmaxdistance", 50));
     assertThat(config.getFutureMessagesMaxDistance()).isEqualTo(50);
   }
 

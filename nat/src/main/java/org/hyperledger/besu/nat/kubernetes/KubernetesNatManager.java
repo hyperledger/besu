@@ -32,10 +32,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.Configuration;
-import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.models.V1Service;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.Configuration;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1Service;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.kubernetes.client.util.authenticators.GCPAuthenticator;
@@ -78,7 +78,8 @@ public class KubernetesNatManager extends AbstractNatManager {
       // invokes the CoreV1Api client
       final V1Service service =
           api
-              .listServiceForAllNamespaces(null, null, null, null, null, null, null, null, null)
+              .listServiceForAllNamespaces(
+                  null, null, null, null, null, null, null, null, null, null)
               .getItems()
               .stream()
               .filter(

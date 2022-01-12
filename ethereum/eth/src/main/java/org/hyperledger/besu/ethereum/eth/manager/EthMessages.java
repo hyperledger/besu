@@ -27,7 +27,7 @@ public class EthMessages {
   private final Map<Integer, MessageResponseConstructor> messageResponseConstructorsByCode =
       new ConcurrentHashMap<>();
 
-  Optional<MessageData> dispatch(final EthMessage ethMessage) {
+  public Optional<MessageData> dispatch(final EthMessage ethMessage) {
     final int code = ethMessage.getData().getCode();
 
     // trigger arbitrary side-effecting listeners

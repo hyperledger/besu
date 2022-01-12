@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
@@ -38,7 +37,6 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.ServerWebSocket;
-import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -91,10 +89,6 @@ public class WebSocketService {
     LOG.info(
         "Starting Websocket service on {}:{}", configuration.getHost(), configuration.getPort());
 
-    // Handle JDK8 Optionals (de)serialization
-    DatabindCodec.mapper().registerModule(new Jdk8Module());
-    DatabindCodec.prettyMapper().registerModule(new Jdk8Module());
-
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
 
     httpServer =
@@ -141,7 +135,7 @@ public class WebSocketService {
                 token,
                 user ->
                     websocketRequestHandler.handle(
-                        authenticationService, connectionId, buffer.toString(), user));
+                        authenticationService, websocket, buffer.toString(), user));
           });
 
       websocket.textMessageHandler(
@@ -156,7 +150,7 @@ public class WebSocketService {
                 token,
                 user ->
                     websocketRequestHandler.handle(
-                        authenticationService, connectionId, payload, user));
+                        authenticationService, websocket, payload, user));
           });
 
       websocket.closeHandler(
