@@ -161,7 +161,8 @@ downloadLicenses {
 
     // io.netty:netty-tcnative-boringssl-static license markings are not machine readable.
     // Explicitly state Apache 2 License for license scanning.
-    'io.netty:netty-tcnative-boringssl-static:2.0.40.Final' : apache,
+    'io.netty:netty-tcnative-boringssl-static:2.0.46.Final' : apache,
+    'io.netty:netty-tcnative-classes:2.0.46.Final' : apache,
   ]
 }
 
