@@ -49,9 +49,9 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.6.1'
 
-    dependency 'io.grpc:grpc-core:1.37.1'
-    dependency 'io.grpc:grpc-netty:1.37.1'
-    dependency 'io.grpc:grpc-stub:1.37.1'
+    dependency 'io.grpc:grpc-core:1.39.0'
+    dependency 'io.grpc:grpc-netty:1.39.0'
+    dependency 'io.grpc:grpc-stub:1.39.0'
 
     dependency 'io.jaegertracing:jaeger-client:1.6.0'
 
