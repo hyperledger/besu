@@ -37,7 +37,7 @@ public class NoNonceRule extends MergConsensusRule {
       LOG.warn("unable to get total difficulty, parent {} not found", header.getParentHash());
       return false;
     }
-    if (super.isProofOfStakeBlock(header, protocolContext)
+    if (super.shouldUsePostMergeRules(header, protocolContext)
         && !super.isTerminalProofOfWorkBlock(
             header, protocolContext)) { // past TDD, invalid if has nonce
       return header.getNonce() == 0L;

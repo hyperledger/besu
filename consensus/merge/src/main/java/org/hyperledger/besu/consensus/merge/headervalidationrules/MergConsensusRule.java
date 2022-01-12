@@ -28,8 +28,12 @@ import org.apache.logging.log4j.Logger;
 public abstract class MergConsensusRule implements AttachedBlockHeaderValidationRule {
   private static final Logger LOG = LogManager.getLogger(MergConsensusRule.class);
 
-  protected boolean isProofOfStakeBlock(final BlockHeader header, final ProtocolContext context) {
-
+  protected boolean shouldUsePostMergeRules(
+      final BlockHeader header, final ProtocolContext context) {
+    if (context.getConsensusContext(MergeContext.class).getFinalized().isPresent()) {
+      // if anything has been finalized, we are now using PoS block validation rules forevermore
+      return true;
+    }
     Optional<Difficulty> currentChainTotalDifficulty =
         context.getBlockchain().getTotalDifficultyByHash(header.getParentHash());
     Difficulty configuredTotalTerminalDifficulty =
