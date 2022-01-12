@@ -25,8 +25,8 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public abstract class ProofOfStakeRule implements AttachedBlockHeaderValidationRule {
-  private static final Logger LOG = LogManager.getLogger(ProofOfStakeRule.class);
+public abstract class MergConsensusRule implements AttachedBlockHeaderValidationRule {
+  private static final Logger LOG = LogManager.getLogger(MergConsensusRule.class);
 
   protected boolean isProofOfStakeBlock(final BlockHeader header, final ProtocolContext context) {
 

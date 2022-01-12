@@ -24,7 +24,7 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class NoNonceRule extends ProofOfStakeRule {
+public class NoNonceRule extends MergConsensusRule {
 
   private static final Logger LOG = LogManager.getLogger(NoNonceRule.class);
 
