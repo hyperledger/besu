@@ -235,7 +235,6 @@ public class EngineExecutePayloadTest {
         txs);
   }
 
-
   private EngineExecutionResult fromSuccessResp(final JsonRpcResponse resp) {
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     return Optional.of(resp)
