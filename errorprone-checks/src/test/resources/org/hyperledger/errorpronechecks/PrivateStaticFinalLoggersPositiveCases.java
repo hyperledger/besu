@@ -15,11 +15,11 @@
 
 package org.hyperledger.errorpronechecks;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivateStaticFinalLoggersPositiveCases {
 
   // BUG: Diagnostic contains:  Logger classes should be private, static, and final.
-  private final Logger LOG = LogManager.getLogger();
+  private final Logger LOG = LoggerFactory.getLogger(PrivateStaticFinalLoggersPositiveCases.class);
 }

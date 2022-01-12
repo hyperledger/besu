@@ -40,13 +40,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Requests bodies from a peer by header, matches up headers to bodies, and returns blocks. */
 public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(GetBodiesFromPeerTask.class);
 
   private final ProtocolSchedule protocolSchedule;
   private final List<BlockHeader> headers;

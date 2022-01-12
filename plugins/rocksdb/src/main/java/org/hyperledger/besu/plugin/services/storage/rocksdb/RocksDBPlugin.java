@@ -28,12 +28,12 @@ import java.util.Optional;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RocksDBPlugin implements BesuPlugin {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RocksDBPlugin.class);
   private static final String NAME = "rocksdb";
 
   private final RocksDBCLIOptions options;

@@ -20,12 +20,12 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivateTransactionValidator {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivateTransactionValidator.class);
 
   private final Optional<BigInteger> chainId;
 

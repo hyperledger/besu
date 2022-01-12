@@ -28,8 +28,9 @@ import java.nio.file.Path;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -40,7 +41,7 @@ import picocli.CommandLine.Option;
 @SuppressWarnings("unused")
 public class RetestethSubCommand implements Runnable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RetestethSubCommand.class);
 
   public static final String COMMAND_NAME = "retesteth";
 

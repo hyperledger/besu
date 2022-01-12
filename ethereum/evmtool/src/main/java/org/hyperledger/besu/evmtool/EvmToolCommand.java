@@ -51,10 +51,10 @@ import java.util.Optional;
 import com.google.common.base.Stopwatch;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -75,7 +75,7 @@ import picocli.CommandLine.Option;
     subcommands = {StateTestSubCommand.class})
 public class EvmToolCommand implements Runnable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(EvmToolCommand.class);
 
   @Option(
       names = {"--code"},
@@ -313,7 +313,7 @@ public class EvmToolCommand implements Runnable {
       } while (repeat-- > 0);
 
     } catch (final IOException e) {
-      LOG.fatal(e);
+      LOG.error("Unable to create Genesis module", e);
     }
   }
 }

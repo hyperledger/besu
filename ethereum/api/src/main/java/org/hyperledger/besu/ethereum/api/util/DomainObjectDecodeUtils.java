@@ -20,12 +20,12 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DomainObjectDecodeUtils {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(DomainObjectDecodeUtils.class);
 
   public static Transaction decodeRawTransaction(final String rawTransaction)
       throws InvalidJsonRpcRequestException {
@@ -34,7 +34,7 @@ public class DomainObjectDecodeUtils {
       final boolean isGoQuorumCompatibilityMode = GoQuorumOptions.getGoQuorumCompatibilityMode();
       return TransactionDecoder.decodeOpaqueBytes(txnBytes, isGoQuorumCompatibilityMode);
     } catch (final IllegalArgumentException | RLPException e) {
-      LOG.debug(e);
+      LOG.debug("Unable to decode raw transaction", e);
       throw new InvalidJsonRpcRequestException("Invalid raw transaction hex", e);
     }
   }

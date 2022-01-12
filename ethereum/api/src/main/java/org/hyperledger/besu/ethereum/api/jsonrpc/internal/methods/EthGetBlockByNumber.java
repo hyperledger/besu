@@ -28,14 +28,14 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
 
   private final BlockResultFactory blockResult;
   private final boolean includeCoinbase;
-  private static final Logger LOGGER = LogManager.getLogger();
+  private static final Logger LOGGER = LoggerFactory.getLogger(EthGetBlockByNumber.class);
   private final Synchronizer synchronizer;
 
   public EthGetBlockByNumber(

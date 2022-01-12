@@ -27,15 +27,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Takes a public storage factory and enables creating independently versioned privacy storage
  * objects which have the same features as the supported public storage factory
  */
 public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStorageFactory {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(RocksDBKeyValuePrivacyStorageFactory.class);
   private static final int DEFAULT_VERSION = 1;
   private static final Set<Integer> SUPPORTED_VERSIONS = Set.of(0, 1);
 

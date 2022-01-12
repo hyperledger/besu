@@ -28,7 +28,7 @@ jar {
 }
 
 dependencies {
-  api 'org.apache.logging.log4j:log4j-api'
+  api 'org.slf4j:slf4j-api'
 
   implementation project(':plugin-api')
 
@@ -37,8 +37,6 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.xerial.snappy:snappy-java'
-
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'

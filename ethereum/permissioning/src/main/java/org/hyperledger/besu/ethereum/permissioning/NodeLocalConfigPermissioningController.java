@@ -36,13 +36,14 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NodeLocalConfigPermissioningController implements NodeConnectionPermissioningProvider {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(NodeLocalConfigPermissioningController.class);
 
   private LocalPermissioningConfiguration configuration;
   private final List<EnodeURL> fixedNodes;

@@ -34,13 +34,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends AbstractBlockCreator>> {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractMinerExecutor.class);
 
   private final ExecutorService executorService = Executors.newCachedThreadPool();
   protected final ProtocolContext protocolContext;

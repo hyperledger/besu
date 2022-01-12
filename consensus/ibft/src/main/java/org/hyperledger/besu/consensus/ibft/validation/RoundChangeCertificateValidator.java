@@ -30,12 +30,12 @@ import org.hyperledger.besu.ethereum.core.Block;
 import java.util.Collection;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RoundChangeCertificateValidator {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RoundChangeCertificateValidator.class);
 
   private final Collection<Address> validators;
   private final MessageValidatorForHeightFactory messageValidatorFactory;

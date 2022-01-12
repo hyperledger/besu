@@ -31,11 +31,11 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractPeerRequestTask.class);
   private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
 
   private Duration timeout = DEFAULT_TIMEOUT;

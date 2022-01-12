@@ -28,8 +28,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProtocolScheduleBuilder {
 
@@ -61,7 +61,7 @@ public class ProtocolScheduleBuilder {
     }
   }
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ProtocolScheduleBuilder.class);
   private final GenesisConfigOptions config;
   private final ProtocolSpecAdapters protocolSpecAdapters;
   private final Optional<BigInteger> defaultChainId;

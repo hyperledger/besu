@@ -26,13 +26,13 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AdminChangeLogLevel implements JsonRpcMethod {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AdminChangeLogLevel.class);
 
   @Override
   public String getName() {
@@ -57,7 +57,7 @@ public class AdminChangeLogLevel implements JsonRpcMethod {
   }
 
   private void setLogLevel(final String logFilter, final Level logLevel) {
-    LOG.log(Level.OFF, "Setting {} logging level to {} ", logFilter, logLevel.name());
+    LOG.debug("Setting {} logging level to {} ", logFilter, logLevel.name());
     Configurator.setAllLevels(logFilter, logLevel);
   }
 }

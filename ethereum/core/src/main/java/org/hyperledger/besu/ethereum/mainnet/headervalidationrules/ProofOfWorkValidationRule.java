@@ -28,13 +28,13 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ProofOfWorkValidationRule.class);
 
   private static final BigInteger ETHASH_TARGET_UPPER_BOUND = BigInteger.valueOf(2).pow(256);
 

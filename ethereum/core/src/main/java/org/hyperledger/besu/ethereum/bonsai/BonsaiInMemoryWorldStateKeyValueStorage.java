@@ -18,13 +18,14 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage
     implements WorldStateStorage {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(BonsaiInMemoryWorldStateKeyValueStorage.class);
 
   public BonsaiInMemoryWorldStateKeyValueStorage(
       final KeyValueStorage accountStorage,

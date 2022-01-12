@@ -31,14 +31,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Retrieves a sequence of headers from a peer. */
 public abstract class AbstractGetHeadersFromPeerTask
     extends AbstractPeerRequestTask<List<BlockHeader>> {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractGetHeadersFromPeerTask.class);
 
   private final ProtocolSchedule protocolSchedule;
   protected final int count;

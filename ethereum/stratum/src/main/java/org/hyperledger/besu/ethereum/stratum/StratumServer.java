@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.stratum;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.mainnet.EthHash;
@@ -38,8 +36,9 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.NetSocket;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * TCP server allowing miners to connect to the client over persistent TCP connections, using the
@@ -47,7 +46,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public class StratumServer implements PoWObserver {
 
-  private static final Logger logger = getLogger();
+  private static final Logger logger = LoggerFactory.getLogger(StratumServer.class);
 
   private final Vertx vertx;
   private final int port;

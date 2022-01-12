@@ -37,14 +37,14 @@ import javax.inject.Singleton;
 import com.google.common.base.Suppliers;
 import dagger.Module;
 import dagger.Provides;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"CloseableProvides"})
 @Module(includes = GenesisFileModule.class)
 public class DataStoreModule {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(DataStoreModule.class);
   private final Supplier<RocksDBKeyValueStorageFactory> rocksDBFactory =
       Suppliers.memoize(
           () ->

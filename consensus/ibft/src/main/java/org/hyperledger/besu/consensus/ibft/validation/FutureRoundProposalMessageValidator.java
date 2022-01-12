@@ -17,15 +17,16 @@ package org.hyperledger.besu.consensus.ibft.validation;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /* One of these will be created by the IbftBlockHeightManager and will exist for the life of the
 chainheight, and used to ensure supplied Proposals are suitable for starting a new round.
  */
 public class FutureRoundProposalMessageValidator {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(FutureRoundProposalMessageValidator.class);
 
   private final MessageValidatorFactory messageValidatorFactory;
   private final long chainHeight;

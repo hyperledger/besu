@@ -51,10 +51,10 @@ import org.hyperledger.besu.plugin.data.Hash;
 
 import java.util.Base64;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private final Enclave enclave;
@@ -63,7 +63,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
   PrivateTransactionProcessor privateTransactionProcessor;
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivacyPrecompiledContract.class);
 
   public PrivacyPrecompiledContract(
       final GasCalculator gasCalculator,

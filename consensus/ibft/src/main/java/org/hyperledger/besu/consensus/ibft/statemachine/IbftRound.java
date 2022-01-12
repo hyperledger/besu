@@ -44,13 +44,12 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class IbftRound {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(IbftRound.class);
 
   private final Subscribers<MinedBlockObserver> observers;
   private final RoundState roundState;
@@ -249,11 +248,17 @@ public class IbftRound {
 
     final long blockNumber = blockToImport.getHeader().getNumber();
     final BftExtraData extraData = bftExtraDataCodec.decode(blockToImport.getHeader());
-    LOG.log(
-        getRoundIdentifier().getRoundNumber() > 0 ? Level.INFO : Level.DEBUG,
-        "Importing block to chain. round={}, hash={}",
-        getRoundIdentifier(),
-        blockToImport.getHash());
+    if (getRoundIdentifier().getRoundNumber() > 0) {
+      LOG.info(
+          "Importing block to chain. round={}, hash={}",
+          getRoundIdentifier(),
+          blockToImport.getHash());
+    } else {
+      LOG.debug(
+          "Importing block to chain. round={}, hash={}",
+          getRoundIdentifier(),
+          blockToImport.getHash());
+    }
     LOG.trace("Importing block with extraData={}", extraData);
     final boolean result =
         blockImporter.importBlock(protocolContext, blockToImport, HeaderValidationMode.FULL);

@@ -59,10 +59,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -74,7 +74,7 @@ import picocli.CommandLine.ParentCommand;
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class StateTestSubCommand implements Runnable {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(StateTestSubCommand.class);
 
   public static final String COMMAND_NAME = "state-test";
 
@@ -138,7 +138,7 @@ public class StateTestSubCommand implements Runnable {
         }
       }
     } catch (final IOException e) {
-      LOG.fatal(e);
+      LOG.error("Unable to read state file", e);
     }
   }
 

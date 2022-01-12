@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
@@ -40,12 +39,14 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.math.BigInteger;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GoQuorumSendRawPrivateTransaction implements JsonRpcMethod {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(GoQuorumSendRawPrivateTransaction.class);
   final TransactionPool transactionPool;
   private final PrivacyIdProvider privacyIdProvider;
   private final GoQuorumEnclave enclave;
@@ -102,10 +103,10 @@ public class GoQuorumSendRawPrivateTransaction implements JsonRpcMethod {
     } catch (final JsonRpcErrorResponseException e) {
       return new JsonRpcErrorResponse(id, e.getJsonRpcError());
     } catch (final IllegalArgumentException | RLPException e) {
-      LOG.error(e);
+      LOG.error("Unable to decode private transaction for send", e);
       return new JsonRpcErrorResponse(id, DECODE_ERROR);
     } catch (final Exception e) {
-      LOG.error(e);
+      LOG.error("Unexpected error", e);
       return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(e.getMessage()));
     }
   }

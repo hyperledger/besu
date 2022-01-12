@@ -32,11 +32,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CheckpointRangeSource implements Iterator<CheckpointRange> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(CheckpointRangeSource.class);
   private static final Duration RETRY_DELAY_DURATION = Duration.ofSeconds(2);
 
   private final CheckpointHeaderFetcher checkpointFetcher;

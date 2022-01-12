@@ -30,12 +30,12 @@ import java.util.stream.Collectors;
 
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class StaticNodesParser {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(StaticNodesParser.class);
 
   public static Set<EnodeURL> fromPath(
       final Path path, final EnodeDnsConfiguration enodeDnsConfiguration)

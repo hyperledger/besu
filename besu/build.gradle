@@ -28,6 +28,8 @@ jar {
 }
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   implementation project(':config')
   implementation project(':pki')
   implementation project(':consensus:clique')
@@ -64,7 +66,6 @@ dependencies {
   implementation 'info.picocli:picocli'
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
-  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.logging.log4j:log4j-core'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-config'
@@ -74,7 +75,6 @@ dependencies {
   implementation 'org.xerial.snappy:snappy-java'
   implementation 'net.consensys.services:quorum-mainnet-launcher'
 
-  runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
   runtimeOnly 'org.apache.logging.log4j:log4j-jul'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
   runtimeOnly 'org.fusesource.jansi:jansi' // for color logging in windows

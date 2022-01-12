@@ -23,12 +23,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.function.Consumer;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ValidatorModeTransitionLogger {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ValidatorModeTransitionLogger.class);
 
   private final ForksSchedule<QbftConfigOptions> forksSchedule;
   private final Consumer<String> msgConsumer;

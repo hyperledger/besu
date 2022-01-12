@@ -27,11 +27,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import io.prometheus.client.exporter.PushGateway;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MetricsPushGatewayService implements MetricsService {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsPushGatewayService.class);
 
   private PushGateway pushGateway;
   private ScheduledExecutorService scheduledExecutorService;
@@ -92,7 +92,7 @@ public class MetricsPushGatewayService implements MetricsService {
       }
       resultFuture.complete(null);
     } catch (final InterruptedException e) {
-      LOG.error(e);
+      LOG.error("Unable to shutdown push metrics service gracefully", e);
       resultFuture.completeExceptionally(e);
     }
     return resultFuture;

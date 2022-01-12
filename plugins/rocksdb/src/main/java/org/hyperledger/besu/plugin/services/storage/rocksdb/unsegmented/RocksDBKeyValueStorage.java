@@ -34,8 +34,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.LRUCache;
 import org.rocksdb.OptimisticTransactionDB;
@@ -45,6 +43,8 @@ import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
 import org.rocksdb.Status;
 import org.rocksdb.WriteOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RocksDBKeyValueStorage implements KeyValueStorage {
 
@@ -52,7 +52,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
     RocksDbUtil.loadNativeLibrary();
   }
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RocksDBKeyValueStorage.class);
 
   private final Options options;
   private final OptimisticTransactionDB db;

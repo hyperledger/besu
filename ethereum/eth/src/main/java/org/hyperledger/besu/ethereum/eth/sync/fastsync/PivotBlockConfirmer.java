@@ -36,9 +36,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This task will query {@code numberOfPeersToQuery} peers for a particular block number. If any
@@ -47,7 +47,7 @@ import org.apache.tuweni.bytes.Bytes;
  * distinct peers all return matching block headers for the specified block number.
  */
 class PivotBlockConfirmer {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PivotBlockConfirmer.class);
 
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;

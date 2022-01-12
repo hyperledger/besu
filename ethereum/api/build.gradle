@@ -32,6 +32,8 @@ configurations {
 }
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   implementation project(':config')
   implementation project(':consensus:merge')
   implementation project(':crypto')

@@ -33,13 +33,14 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AccountPermissioningControllerFactory {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(AccountPermissioningControllerFactory.class);
 
   public static Optional<AccountPermissioningController> create(
       final PermissioningConfiguration permissioningConfiguration,

@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -25,15 +23,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.concurrent.ExpiringMap;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PoWSolver {
 
   private final int maxOmmerDepth;
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PoWSolver.class);
   private final long powJobTimeToLive;
 
   public static class PoWSolverJob {

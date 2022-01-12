@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins.privacy;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.datatypes.Address.extract;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -31,13 +30,15 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestSigningPrivateMarkerTransactionFactory implements PrivateMarkerTransactionFactory {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(TestSigningPrivateMarkerTransactionFactory.class);
 
   KeyPair aliceFixedSigningKey;
   Address sender;

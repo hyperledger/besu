@@ -46,15 +46,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ProcessBesuNodeRunner.class);
   private static final Logger PROCESS_LOG =
-      LogManager.getLogger("org.hyperledger.besu.SubProcessLog");
+      LoggerFactory.getLogger("org.hyperledger.besu.SubProcessLog");
 
   private final Map<String, Process> besuProcesses = new HashMap<>();
   private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();
@@ -410,7 +410,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       waitForFile(dataDir, "besu.ports");
       waitForFile(dataDir, "besu.networks");
     }
-    ThreadContext.remove("node");
+    MDC.remove("node");
   }
 
   private boolean isNotAliveOrphan(final String name) {
@@ -422,7 +422,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     try (final BufferedReader in =
         new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8))) {
 
-      ThreadContext.put("node", node.getName());
+      MDC.put("node", node.getName());
 
       String line = in.readLine();
       while (line != null) {
