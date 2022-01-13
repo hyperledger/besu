@@ -14,17 +14,12 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.TransactionWithSignatureAlgorithm;
 
 public interface Node {
 
   <T> T execute(Transaction<T> transaction);
-
-  <T> T execute(
-      TransactionWithSignatureAlgorithm<T> transaction, SignatureAlgorithm signatureAlgorithm);
 
   void verify(final Condition expected);
 }

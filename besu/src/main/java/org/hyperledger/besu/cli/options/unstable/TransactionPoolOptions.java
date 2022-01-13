@@ -33,6 +33,18 @@ public class TransactionPoolOptions
   private static final String ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG =
       "--Xeth65-tx-announced-buffering-period-milliseconds";
 
+  private static final String STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG =
+      "--strict-tx-replay-protection-enabled";
+
+  @CommandLine.Option(
+      names = {STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG},
+      paramLabel = "<Boolean>",
+      description =
+          "Require transactions submitted via JSON-RPC to use replay protection in accordance with EIP-155 (default: ${DEFAULT-VALUE})",
+      fallbackValue = "true",
+      arity = "0..1")
+  private Boolean strictTxReplayProtectionEnabled = false;
+
   @CommandLine.Option(
       names = {TX_MESSAGE_KEEP_ALIVE_SEC_FLAG},
       paramLabel = "<INTEGER>",
@@ -64,12 +76,14 @@ public class TransactionPoolOptions
     options.txMessageKeepAliveSeconds = config.getTxMessageKeepAliveSeconds();
     options.eth65TrxAnnouncedBufferingPeriod =
         config.getEth65TrxAnnouncedBufferingPeriod().toMillis();
+    options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
     return options;
   }
 
   @Override
   public ImmutableTransactionPoolConfiguration.Builder toDomainObject() {
     return ImmutableTransactionPoolConfiguration.builder()
+        .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
         .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
         .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod));
   }
@@ -77,6 +91,7 @@ public class TransactionPoolOptions
   @Override
   public List<String> getCLIOptions() {
     return Arrays.asList(
+        STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG + "=" + strictTxReplayProtectionEnabled,
         TX_MESSAGE_KEEP_ALIVE_SEC_FLAG,
         OptionParser.format(txMessageKeepAliveSeconds),
         ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG,

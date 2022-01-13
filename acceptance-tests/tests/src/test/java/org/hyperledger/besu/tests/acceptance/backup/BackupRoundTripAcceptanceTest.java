@@ -36,7 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jetbrains.annotations.NotNull;
@@ -186,8 +186,8 @@ public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
   }
 
   @NotNull
-  private Function<BesuNodeConfigurationBuilder, BesuNodeConfigurationBuilder>
-      configureNodeCommands(final Path dataPath, final String... commands) {
+  private UnaryOperator<BesuNodeConfigurationBuilder> configureNodeCommands(
+      final Path dataPath, final String... commands) {
     return nodeBuilder -> super.configureNode(nodeBuilder).dataPath(dataPath).run(commands);
   }
 }
