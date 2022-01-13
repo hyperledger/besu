@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.p2p.rlpx;
 
 public class RlpxFrameConstants {
 
+  private RlpxFrameConstants() {}
+
   public static final int LENGTH_MAX_MESSAGE_FRAME = 0xFFFFFF;
   public static final int LENGTH_FRAME_SIZE = 3;
 }
