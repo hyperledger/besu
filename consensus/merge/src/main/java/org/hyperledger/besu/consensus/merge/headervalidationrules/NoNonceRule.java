@@ -15,18 +15,16 @@
 
 package org.hyperledger.besu.consensus.merge.headervalidationrules;
 
-import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class NoNonceRule implements AttachedBlockHeaderValidationRule {
+public class NoNonceRule extends MergConsensusRule {
 
   private static final Logger LOG = LogManager.getLogger(NoNonceRule.class);
 
@@ -39,20 +37,12 @@ public class NoNonceRule implements AttachedBlockHeaderValidationRule {
       LOG.warn("unable to get total difficulty, parent {} not found", header.getParentHash());
       return false;
     }
-    if (totalDifficulty
-        .get()
-        .greaterOrEqualThan(
-            protocolContext
-                .getConsensusContext(MergeContext.class)
-                .getTerminalTotalDifficulty())) { // past TDD, invalid if has nonce
+    if (super.shouldUsePostMergeRules(header, protocolContext)
+        && !super.isTerminalProofOfWorkBlock(
+            header, protocolContext)) { // past TDD, invalid if has nonce
       return header.getNonce() == 0L;
-    } else { // still PoWing
+    } else {
       return true;
     }
-  }
-
-  @Override
-  public boolean includeInLightValidation() {
-    return AttachedBlockHeaderValidationRule.super.includeInLightValidation();
   }
 }

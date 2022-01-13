@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.math.BigInteger;
@@ -88,6 +89,10 @@ public interface GenesisConfigOptions {
   Optional<Wei> getBaseFeePerGas();
 
   Optional<UInt256> getTerminalTotalDifficulty();
+
+  OptionalLong getTerminalBlockNumber();
+
+  Optional<Hash> getTerminalBlockHash();
 
   List<Long> getForks();
 

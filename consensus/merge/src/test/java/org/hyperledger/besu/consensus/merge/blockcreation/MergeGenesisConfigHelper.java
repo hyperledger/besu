@@ -31,23 +31,32 @@ import com.google.common.io.Resources;
 
 public interface MergeGenesisConfigHelper {
 
-  default GenesisConfigFile getGenesisConfigFile() {
+  default GenesisConfigFile getPosGenesisConfigFile() {
     try {
-      final URI uri = MergeGenesisConfigHelper.class.getResource("/mergeAtGenesis.json").toURI();
+      final URI uri = MergeGenesisConfigHelper.class.getResource("/posAtGenesis.json").toURI();
       return GenesisConfigFile.fromConfig(Resources.toString(uri.toURL(), UTF_8));
     } catch (final URISyntaxException | IOException e) {
       throw new IllegalStateException(e);
     }
   }
 
-  default Stream<Address> genesisAllocations() {
-    return getGenesisConfigFile()
+  default GenesisConfigFile getPowGenesisConfigFile() {
+    try {
+      final URI uri = MergeGenesisConfigHelper.class.getResource("/powAtGenesis.json").toURI();
+      return GenesisConfigFile.fromConfig(Resources.toString(uri.toURL(), UTF_8));
+    } catch (final URISyntaxException | IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  default Stream<Address> genesisAllocations(final GenesisConfigFile configFile) {
+    return configFile
         .streamAllocations()
         .map(GenesisAllocation::getAddress)
         .map(Address::fromHexString);
   }
 
   default ProtocolSchedule getMergeProtocolSchedule() {
-    return MergeProtocolSchedule.create(getGenesisConfigFile().getConfigOptions(), false);
+    return MergeProtocolSchedule.create(getPosGenesisConfigFile().getConfigOptions(), false);
   }
 }

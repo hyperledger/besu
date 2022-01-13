@@ -13,6 +13,8 @@
     "londonBlock": 11,
     "arrowGlacierBlock": 12,
     "preMergeForkBlock": 13,
+    "terminalBlockNumber": 14,
+    "terminalBlockHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
     "ecip1015Block": 102,
     "dieHardBlock": 103,
     "gothamBlock": 104,

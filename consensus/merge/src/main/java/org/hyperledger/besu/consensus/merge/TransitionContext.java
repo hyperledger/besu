@@ -87,6 +87,16 @@ public class TransitionContext implements MergeContext {
   }
 
   @Override
+  public Optional<BlockHeader> getTerminalPoWBlock() {
+    return this.postMergeContext.getTerminalPoWBlock();
+  }
+
+  @Override
+  public void setTerminalPoWBlock(final Optional<BlockHeader> hashAndNumber) {
+    this.postMergeContext.setTerminalPoWBlock(hashAndNumber);
+  }
+
+  @Override
   public boolean validateCandidateHead(final BlockHeader candidateHeader) {
     return postMergeContext.validateCandidateHead(candidateHeader);
   }
