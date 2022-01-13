@@ -40,6 +40,8 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.WRONG_CHAIN_ID;
       case REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED:
         return JsonRpcError.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED;
+      case REPLAY_PROTECTED_SIGNATURE_REQUIRED:
+        return JsonRpcError.REPLAY_PROTECTED_SIGNATURE_REQUIRED;
       case TX_SENDER_NOT_AUTHORIZED:
         return JsonRpcError.TX_SENDER_NOT_AUTHORIZED;
         // Private Transaction Invalid Reasons

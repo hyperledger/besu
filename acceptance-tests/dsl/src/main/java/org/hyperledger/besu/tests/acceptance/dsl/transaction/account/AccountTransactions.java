@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.transaction.account;
 
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
@@ -24,6 +25,7 @@ import java.util.List;
 
 public class AccountTransactions {
 
+  private static final Amount DEFAULT_GAS_PRICE = Amount.wei(BigInteger.valueOf(10000000000L));
   private final Accounts accounts;
 
   public AccountTransactions(final Accounts accounts) {
@@ -34,51 +36,58 @@ public class AccountTransactions {
     return createTransfer(accounts.getPrimaryBenefactor(), recipient, amount);
   }
 
+  public TransferTransaction createTransfer(
+      final Account recipient, final int amount, final SignatureAlgorithm signatureAlgorithm) {
+    return createBuilder(accounts.getPrimaryBenefactor(), recipient, Amount.ether(amount))
+        .setSignatureAlgorithm(signatureAlgorithm)
+        .build();
+  }
+
+  public TransferTransaction createTransfer(
+      final Account recipient, final int amount, final long chainId) {
+    return createBuilder(accounts.getPrimaryBenefactor(), recipient, Amount.ether(amount))
+        .chainId(chainId)
+        .build();
+  }
+
   public TransferTransaction createTransfer(final Account recipient, final Amount amount) {
     return createTransfer(accounts.getPrimaryBenefactor(), recipient, amount);
   }
 
   public TransferTransaction createTransfer(
       final Account sender, final Account recipient, final int amount) {
-    return new TransferTransactionBuilder()
-        .sender(sender)
-        .recipient(recipient)
-        .amount(Amount.ether(amount))
-        .build();
+    return createBuilder(sender, recipient, Amount.ether(amount)).build();
   }
 
   public TransferTransaction createTransfer(
       final Account sender, final Account recipient, final Amount amount) {
-    return new TransferTransactionBuilder()
-        .sender(sender)
-        .recipient(recipient)
-        .amount(amount)
-        .build();
+    return createBuilder(sender, recipient, amount).build();
   }
 
   public TransferTransaction createTransfer(
       final Account sender, final Account recipient, final int amount, final BigInteger nonce) {
-    return new TransferTransactionBuilder()
-        .sender(sender)
-        .recipient(recipient)
-        .amount(Amount.ether(amount))
-        .nonce(nonce)
-        .build();
+    return createBuilder(sender, recipient, Amount.ether(amount)).nonce(nonce).build();
   }
 
   public TransferTransactionSet createIncrementalTransfers(
       final Account sender, final Account recipient, final int etherAmount) {
     final List<TransferTransaction> transfers = new ArrayList<>();
     final TransferTransactionBuilder transferOneEther =
-        new TransferTransactionBuilder()
-            .sender(sender)
-            .recipient(recipient)
-            .amount(Amount.ether(1));
+        createBuilder(sender, recipient, Amount.ether(1));
 
     for (int i = 1; i <= etherAmount; i++) {
       transfers.add(transferOneEther.build());
     }
 
     return new TransferTransactionSet(transfers);
+  }
+
+  private TransferTransactionBuilder createBuilder(
+      final Account sender, final Account recipient, final Amount amount) {
+    return new TransferTransactionBuilder()
+        .sender(sender)
+        .recipient(recipient)
+        .amount(amount)
+        .gasPrice(DEFAULT_GAS_PRICE);
   }
 }
