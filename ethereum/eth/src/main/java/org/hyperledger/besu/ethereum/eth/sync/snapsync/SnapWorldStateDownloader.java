@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -37,6 +38,7 @@ import java.util.function.IntSupplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 public class SnapWorldStateDownloader implements WorldStateDownloader {
   private static final Logger LOG = LogManager.getLogger();
@@ -46,8 +48,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final MetricsSystem metricsSystem;
 
   private final EthContext ethContext;
-  private final CachingTaskCollection<SnapDataRequest> snapTaskCollection;
-  private final CachingTaskCollection<NodeDataRequest> fastTaskCollection;
+  private final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection;
+  private final InMemoryTasksPriorityQueues<NodeDataRequest> fastTaskCollection;
   private final int hashCountPerRequest;
   private final int maxOutstandingRequests;
   private final int maxNodeRequestsWithoutProgress;
@@ -61,8 +63,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   public SnapWorldStateDownloader(
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
-      final CachingTaskCollection<SnapDataRequest> snapTaskCollection,
-      final CachingTaskCollection<NodeDataRequest> fastTaskCollection,
+      final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection,
+      final InMemoryTasksPriorityQueues<NodeDataRequest> fastTaskCollection,
       final int hashCountPerRequest,
       final int maxOutstandingRequests,
       final int maxNodeRequestsWithoutProgress,
@@ -136,7 +138,10 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               healProcess,
               clock);
 
-      if (!newDownloadState.downloadWasResumed()) {
+      //snapsync already done, switch to fastsync
+      if(worldStateStorage.getTrieNode(Bytes.EMPTY).isPresent()){
+        healProcess.run(fastSyncActions, fastSyncState);
+      }else {
         RangeManager.generateAllRanges(256)
             .forEach(
                 (key, value) ->
@@ -189,6 +194,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
         clock,
         metricsSystem);
   }
+
 
   @Override
   public Optional<Long> getPulledStates() {

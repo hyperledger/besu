@@ -6,6 +6,7 @@
     "aghartaBlock": 1705549,
     "phoenixBlock": 2200013,
     "magnetoBlock": 4368634,
+    "mystiqueBlock": 5578000,
     "clique":{
       "blockperiodseconds":15,
       "epochlength":30000

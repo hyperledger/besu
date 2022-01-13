@@ -146,4 +146,14 @@ public class GetBytecodeRequest extends SnapDataRequest {
     codeHashes = null;
     response = null;
   }
+
+  @Override
+  public long getPriority() {
+    return 2;
+  }
+
+  @Override
+  public int getDepth() {
+    return 2;
+  }
 }

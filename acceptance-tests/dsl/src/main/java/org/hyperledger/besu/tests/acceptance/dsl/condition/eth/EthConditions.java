@@ -51,10 +51,15 @@ public class EthConditions {
         transactions.getTransactionReceipt(transactionHash));
   }
 
-  public Condition sendRawTransactionExceptional(
+  public Condition expectEthSendRawTransactionException(
       final String transactionData, final String expectedMessage) {
     return new ExpectEthSendRawTransactionException(
         transactions.sendRawTransaction(transactionData), expectedMessage);
+  }
+
+  public Condition expectSuccessfulEthRawTransaction(final String transactionData) {
+    return new ExpectSuccessfulEthSendRawTransaction(
+        transactions.sendRawTransaction(transactionData));
   }
 
   public Condition expectSuccessfulTransactionReceiptWithReason(

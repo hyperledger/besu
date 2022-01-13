@@ -25,9 +25,10 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 import org.immutables.value.Value;
 
-public abstract class SnapDataRequest {
+public abstract class SnapDataRequest implements TasksPriorityProvider {
 
   private final RequestType requestType;
 

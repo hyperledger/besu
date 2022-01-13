@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -38,33 +37,31 @@ public class CompleteTaskStep {
   private final LongSupplier worldStatePendingRequestsCurrentSupplier;
 
   public CompleteTaskStep(
-      final WorldStateStorage worldStateStorage,
-      final MetricsSystem metricsSystem,
-      final LongSupplier worldStatePendingRequestsCurrentSupplier) {
+          final WorldStateStorage worldStateStorage,
+          final MetricsSystem metricsSystem,
+          final LongSupplier worldStatePendingRequestsCurrentSupplier) {
     this.worldStateStorage = worldStateStorage;
     this.worldStatePendingRequestsCurrentSupplier = worldStatePendingRequestsCurrentSupplier;
     completedRequestsCounter =
-        new RunnableCounter(
-            metricsSystem.createCounter(
-                BesuMetricCategory.SYNCHRONIZER,
-                "world_state_completed_requests_total",
-                "Total number of node data requests completed as part of fast sync world state download"),
-            this::displayWorldStateSyncProgress,
-            DISPLAY_PROGRESS_STEP);
+            new RunnableCounter(
+                    metricsSystem.createCounter(
+                            BesuMetricCategory.SYNCHRONIZER,
+                            "world_state_completed_requests_total",
+                            "Total number of node data requests completed as part of fast sync world state download"),
+                    this::displayWorldStateSyncProgress,
+                    DISPLAY_PROGRESS_STEP);
     retriedRequestsCounter =
-        metricsSystem.createCounter(
-            BesuMetricCategory.SYNCHRONIZER,
-            "world_state_retried_requests_total",
-            "Total number of node data requests repeated as part of fast sync world state download");
+            metricsSystem.createCounter(
+                    BesuMetricCategory.SYNCHRONIZER,
+                    "world_state_retried_requests_total",
+                    "Total number of node data requests repeated as part of fast sync world state download");
   }
 
   public void markAsCompleteOrFailed(
-      final BlockHeader header,
-      final WorldDownloadState<NodeDataRequest> downloadState,
-      final SyncMode syncMode,
-      final Task<NodeDataRequest> task) {
+          final BlockHeader header,
+          final WorldDownloadState<NodeDataRequest> downloadState,
+          final Task<NodeDataRequest> task) {
     if (task.getData().getData() != null) {
-      enqueueChildren(task, header, downloadState, syncMode);
       completedRequestsCounter.inc();
       task.markCompleted();
       downloadState.checkCompletion(worldStateStorage, header);
@@ -79,9 +76,9 @@ public class CompleteTaskStep {
 
   private void displayWorldStateSyncProgress() {
     LOG.info(
-        "Downloaded {} world state nodes. At least {} nodes remaining.",
-        getCompletedRequests(),
-        worldStatePendingRequestsCurrentSupplier.getAsLong());
+            "Downloaded {} world state nodes. At least {} nodes remaining.",
+            getCompletedRequests(),
+            worldStatePendingRequestsCurrentSupplier.getAsLong());
   }
 
   long getCompletedRequests() {
@@ -90,21 +87,5 @@ public class CompleteTaskStep {
 
   long getPendingRequests() {
     return worldStatePendingRequestsCurrentSupplier.getAsLong();
-  }
-
-  private void enqueueChildren(
-      final Task<NodeDataRequest> task,
-      final BlockHeader blockHeader,
-      final WorldDownloadState<NodeDataRequest> downloadState,
-      final SyncMode syncMode) {
-    final NodeDataRequest request = task.getData();
-    // Only queue rootnode children if we started from scratch
-    if (!downloadState.downloadWasResumed() || !isRootState(blockHeader, request)) {
-      downloadState.enqueueRequests(request.getChildRequests(syncMode, worldStateStorage));
-    }
-  }
-
-  private boolean isRootState(final BlockHeader blockHeader, final NodeDataRequest request) {
-    return request.getHash().equals(blockHeader.getStateRoot());
   }
 }

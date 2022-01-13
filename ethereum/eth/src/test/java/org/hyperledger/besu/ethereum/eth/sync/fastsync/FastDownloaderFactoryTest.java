@@ -33,9 +33,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.io.File;
-import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.nio.file.spi.FileSystemProvider;
 import java.time.Clock;
 import java.util.Optional;
 
@@ -120,23 +118,15 @@ public class FastDownloaderFactoryTest {
     verify(mutableBlockchain).getChainHeadBlockNumber();
   }
 
-  private void initDataDirectory(final boolean isPivotBlockHeaderFileExist)
-      throws NoSuchFieldException {
+  private void initDataDirectory(final boolean isPivotBlockHeaderFileExist) {
     final File pivotBlockHeaderFile = mock(File.class);
     when(pivotBlockHeaderFile.isFile()).thenReturn(isPivotBlockHeaderFileExist);
-    when(pivotBlockHeaderFile.isDirectory()).thenReturn(true);
 
     final File fastSyncDirFile = mock(File.class);
     when(fastSyncDirFile.isDirectory()).thenReturn(true);
 
-    final Path storagePath = mock(Path.class);
-    final FileSystem fileSystem = mock(FileSystem.class);
-    when(storagePath.getFileSystem()).thenReturn(fileSystem);
-    when(fileSystem.provider()).thenReturn(mock(FileSystemProvider.class));
-
     final Path pivotBlockHeaderPath = mock(Path.class);
     when(pivotBlockHeaderPath.toFile()).thenReturn(pivotBlockHeaderFile);
-    when(pivotBlockHeaderPath.resolve(anyString())).thenReturn(storagePath);
 
     final Path fastSyncDir = mock(Path.class);
     when(fastSyncDir.resolve(any(String.class))).thenReturn(pivotBlockHeaderPath);

@@ -229,4 +229,14 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     range = null;
     response = null;
   }
+
+  @Override
+  public long getPriority() {
+    return 0;
+  }
+
+  @Override
+  public int getDepth() {
+    return 0;
+  }
 }

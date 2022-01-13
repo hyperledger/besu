@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldStateDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.services.tasks.Task;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 
@@ -39,7 +40,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   public SnapWorldDownloadState(
       final FastSyncActions fastSyncActions,
       final SnapSyncState snapSyncState,
-      final TaskCollection<SnapDataRequest> pendingRequests,
+      final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final FastWorldStateDownloader healProcess,

@@ -114,7 +114,7 @@ public class AccountLocalAndOnchainPermissioningAcceptanceTest
     final TransferTransaction transfer =
         accountTransactions.createTransfer(sender, beneficiary, 1, nonce);
     node.verify(
-        eth.sendRawTransactionExceptional(
+        eth.expectEthSendRawTransactionException(
             transfer.signedTransactionData(),
             "Sender account not authorized to send transactions"));
   }

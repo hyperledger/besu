@@ -275,4 +275,14 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     range = null;
     response = null;
   }
+
+  @Override
+  public long getPriority() {
+    return 1;
+  }
+
+  @Override
+  public int getDepth() {
+    return 1;
+  }
 }

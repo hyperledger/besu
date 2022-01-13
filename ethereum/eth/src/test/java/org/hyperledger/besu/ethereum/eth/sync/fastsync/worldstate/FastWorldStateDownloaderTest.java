@@ -66,8 +66,7 @@ import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.hyperledger.besu.services.tasks.CachingTaskCollection;
-import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
+import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.testutil.MockExecutorService;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -172,8 +171,8 @@ public class FastWorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    final CachingTaskCollection<NodeDataRequest> taskCollection =
-        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
+    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
+        new InMemoryTasksPriorityQueues<>();
     final WorldStateStorage localStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateDownloader downloader =
@@ -208,8 +207,8 @@ public class FastWorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    final CachingTaskCollection<NodeDataRequest> taskCollection =
-        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
+    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
+        new InMemoryTasksPriorityQueues<>();
     final WorldStateDownloader downloader =
         createDownloader(
             ethProtocolManager.ethContext(),
@@ -255,8 +254,8 @@ public class FastWorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    final CachingTaskCollection<NodeDataRequest> taskCollection =
-        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
+    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
+        new InMemoryTasksPriorityQueues<>();
     final WorldStateStorage localStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateDownloader downloader =
@@ -307,8 +306,8 @@ public class FastWorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    final CachingTaskCollection<NodeDataRequest> taskCollection =
-        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
+    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
+        new InMemoryTasksPriorityQueues<>();
     final WorldStateStorage localStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
@@ -389,8 +388,8 @@ public class FastWorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    final CachingTaskCollection<NodeDataRequest> taskCollection =
-        spy(new CachingTaskCollection<>(new InMemoryTaskQueue<>()));
+    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
+        new InMemoryTasksPriorityQueues<>();
     final WorldStateStorage localStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
@@ -464,8 +463,8 @@ public class FastWorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    final CachingTaskCollection<NodeDataRequest> taskCollection =
-        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
+    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
+        new InMemoryTasksPriorityQueues<>();
     final WorldStateStorage localStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
@@ -547,8 +546,8 @@ public class FastWorldStateDownloaderTest {
             .limit(5)
             .collect(Collectors.toList());
 
-    final CachingTaskCollection<NodeDataRequest> taskCollection =
-        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
+    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
+        new InMemoryTasksPriorityQueues<>();
     final WorldStateStorage localStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
@@ -644,8 +643,8 @@ public class FastWorldStateDownloaderTest {
     final BlockHeader header =
         dataGen.block(BlockOptions.create().setStateRoot(stateRoot).setBlockNumber(10)).getHeader();
 
-    final CachingTaskCollection<NodeDataRequest> taskCollection =
-        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
+    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
+        new InMemoryTasksPriorityQueues<>();
     final WorldStateStorage localStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final SynchronizerConfiguration syncConfig =
@@ -705,8 +704,8 @@ public class FastWorldStateDownloaderTest {
         dataGen.block(BlockOptions.create().setStateRoot(stateRoot).setBlockNumber(10)).getHeader();
 
     // Add some nodes to the taskCollection
-    final CachingTaskCollection<NodeDataRequest> taskCollection =
-        spy(new CachingTaskCollection<>(new InMemoryTaskQueue<>()));
+    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
+        spy(new InMemoryTasksPriorityQueues<>());
     List<Bytes32> queuedHashes = getFirstSetOfChildNodeRequests(remoteStorage, stateRoot);
     assertThat(queuedHashes.size()).isGreaterThan(0); // Sanity check
     for (Bytes32 bytes32 : queuedHashes) {
@@ -851,8 +850,8 @@ public class FastWorldStateDownloaderTest {
             .getHeader();
     assertThat(otherStateRoot).isNotEqualTo(stateRoot); // Sanity check
 
-    final CachingTaskCollection<NodeDataRequest> taskCollection =
-        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
+    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
+        new InMemoryTasksPriorityQueues<>();
     final WorldStateStorage localStorage =
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     final WorldStateArchive localWorldStateArchive =
@@ -985,7 +984,7 @@ public class FastWorldStateDownloaderTest {
   private WorldStateDownloader createDownloader(
       final EthContext context,
       final WorldStateStorage storage,
-      final CachingTaskCollection<NodeDataRequest> taskCollection) {
+      final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection) {
     return createDownloader(
         SynchronizerConfiguration.builder().build(), context, storage, taskCollection);
   }
@@ -994,7 +993,7 @@ public class FastWorldStateDownloaderTest {
       final SynchronizerConfiguration config,
       final EthContext context,
       final WorldStateStorage storage,
-      final CachingTaskCollection<NodeDataRequest> taskCollection) {
+      final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection) {
     return new FastWorldStateDownloader(
         context,
         storage,

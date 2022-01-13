@@ -35,15 +35,9 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
   }
 
   @Override
-  public Stream<NodeDataRequest> getChildRequests(
-      final SyncMode syncMode, final WorldStateStorage worldStateStorage) {
+  public Stream<NodeDataRequest> getChildRequests(final WorldStateStorage worldStateStorage) {
     if (getData() == null) {
       // If this node hasn't been downloaded yet, we can't return any child data
-      return Stream.empty();
-    }
-
-    if ((syncMode.equals(SyncMode.X_SNAP) && !isRequiresPersisting())) {
-      // we will not check the child if it is already in a database with snapsync
       return Stream.empty();
     }
 
@@ -63,7 +57,8 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
                                 worldStateStorage, node.getLocation(), node.getPath(), value))
                     .orElseGet(Stream::empty);
               }
-            });
+            })
+        .peek(request -> request.registerParent(this));
   }
 
   private boolean nodeIsHashReferencedDescendant(final Node<Bytes> node) {

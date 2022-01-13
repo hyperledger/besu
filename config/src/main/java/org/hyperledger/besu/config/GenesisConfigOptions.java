@@ -206,6 +206,15 @@ public interface GenesisConfigOptions {
   OptionalLong getMagnetoBlockNumber();
 
   /**
+   * Block number to activate Mystique on Classic networks.
+   *
+   * @return block number of Mystique fork on Classic networks
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1104">https://ecips.ethereumclassic.org/ECIPs/ecip-1104</a>
+   */
+  OptionalLong getMystiqueBlockNumber();
+
+  /**
    * Block number to activate ECIP-1049 on Classic networks. Changes the hashing algorithm to
    * keccak-256.
    *

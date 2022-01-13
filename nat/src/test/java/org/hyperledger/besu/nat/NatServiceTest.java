@@ -116,6 +116,24 @@ public class NatServiceTest {
   }
 
   @Test
+  public void assertQueryExternalIpWorksProperlyWithUpNpP2pOnly() {
+    final String fallbackExternalIp = "127.0.0.1";
+    final String externalIp = "127.0.0.3";
+    final NatManager natManager = mock(NatManager.class);
+    when(natManager.queryExternalIPAddress())
+        .thenReturn(CompletableFuture.completedFuture(externalIp));
+    when(natManager.getNatMethod()).thenReturn(NatMethod.UPNPP2PONLY);
+
+    final NatService natService = new NatService(Optional.of(natManager), true);
+
+    final String resultIp = natService.queryExternalIPAddress(fallbackExternalIp);
+
+    verify(natManager).queryExternalIPAddress();
+
+    assertThat(resultIp).isEqualTo(externalIp);
+  }
+
+  @Test
   public void assertThatQueryExternalIpWorksProperlyWithoutNat() {
 
     final String fallbackExternalIp = "127.0.0.1";

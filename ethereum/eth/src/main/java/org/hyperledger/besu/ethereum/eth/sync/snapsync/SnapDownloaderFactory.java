@@ -40,6 +40,7 @@ import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 public class SnapDownloaderFactory extends FastDownloaderFactory {
 
@@ -83,11 +84,10 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       return Optional.empty();
     }
 
-    final CachingTaskCollection<SnapDataRequest> snapTaskCollection =
+    final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
         createSnapWorldStateDownloaderTaskCollection(metricsSystem);
-    final CachingTaskCollection<NodeDataRequest> fastTaskCollection =
+    final InMemoryTasksPriorityQueues<NodeDataRequest> fastTaskCollection =
         createWorldStateDownloaderTaskCollection(
-            getStateQueueDirectory(dataDirectory),
             metricsSystem,
             syncConfig.getWorldStateTaskCacheSize());
     final WorldStateDownloader snapWorldStateDownloader =
@@ -120,10 +120,10 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     return Optional.of(fastSyncDownloader);
   }
 
-  private static CachingTaskCollection<SnapDataRequest>
+  private static InMemoryTasksPriorityQueues<SnapDataRequest>
       createSnapWorldStateDownloaderTaskCollection(final MetricsSystem metricsSystem) {
-    final CachingTaskCollection<SnapDataRequest> taskCollection =
-        new CachingTaskCollection<>(new InMemoryTaskQueue<>());
+    final InMemoryTasksPriorityQueues<SnapDataRequest> taskCollection =
+            new InMemoryTasksPriorityQueues<>();
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,

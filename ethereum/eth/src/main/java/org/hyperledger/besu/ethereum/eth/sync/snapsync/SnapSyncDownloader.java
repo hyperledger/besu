@@ -41,6 +41,7 @@ public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
         initialFastSyncState);
   }
 
+
   @Override
   protected FastSyncState storeState(final FastSyncState state) {
     initialFastSyncState = state;

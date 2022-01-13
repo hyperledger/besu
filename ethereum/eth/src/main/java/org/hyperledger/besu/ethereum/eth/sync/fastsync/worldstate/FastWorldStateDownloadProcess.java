@@ -183,7 +183,7 @@ public class FastWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   "requestCompleteTask",
                   task ->
                       completeTaskStep.markAsCompleteOrFailed(
-                          pivotBlockHeader, downloadState, syncMode, task));
+                          pivotBlockHeader, downloadState, task));
 
       final Pipe<Task<NodeDataRequest>> requestsToComplete = completionPipeline.getInputPipe();
       final Pipeline<Task<NodeDataRequest>> fetchDataPipeline =
