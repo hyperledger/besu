@@ -58,6 +58,7 @@ dependencies {
   implementation project(':plugin-api')
   implementation project(':plugins:rocksdb')
   implementation project(':services:kvstore')
+  implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'

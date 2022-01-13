@@ -33,6 +33,7 @@ configurations {
 
 dependencies {
   api 'org.slf4j:slf4j-api'
+  api 'org.apache.logging.log4j:log4j-api'
 
   implementation project(':config')
   implementation project(':consensus:merge')
@@ -63,7 +64,6 @@ dependencies {
   implementation 'io.vertx:vertx-web'
   implementation 'io.vertx:vertx-codegen'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'org.apache.logging.log4j:log4j-core'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-net'
   implementation 'org.apache.tuweni:tuweni-toml'
@@ -91,6 +91,7 @@ dependencies {
 
   testImplementation 'io.vertx:vertx-unit'
   testImplementation 'junit:junit'
+  testImplementation 'org.apache.logging.log4j:log4j-core'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'io.vertx:vertx-web-client'

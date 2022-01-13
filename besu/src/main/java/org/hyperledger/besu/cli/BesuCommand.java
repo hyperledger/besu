@@ -172,6 +172,7 @@ import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
+import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.PermissioningConfigurationValidator;
 import org.hyperledger.besu.util.number.Fraction;
@@ -225,8 +226,6 @@ import net.consensys.quorum.mainnet.launcher.config.ImmutableLauncherConfig;
 import net.consensys.quorum.mainnet.launcher.exception.LauncherException;
 import net.consensys.quorum.mainnet.launcher.util.ParseArgsHelper;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -1519,13 +1518,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public void configureLogging(final boolean announce) {
     // To change the configuration if color was enabled/disabled
-    Configurator.reconfigure();
+    Log4j2ConfiguratorUtil.reconfigure();
     // set log level per CLI flags
     if (logLevel != null) {
       if (announce) {
         System.out.println("Setting logging level to " + logLevel.name());
       }
-      Configurator.setAllLevels("", logLevel);
+      Log4j2ConfiguratorUtil.setAllLevels("", logLevel);
     }
   }
 
@@ -2551,7 +2550,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                   try {
                     besuPluginContext.stopPlugins();
                     runner.close();
-                    LogManager.shutdown();
+                    Log4j2ConfiguratorUtil.shutdown();
                   } catch (final Exception e) {
                     logger.error("Failed to stop Besu");
                   }

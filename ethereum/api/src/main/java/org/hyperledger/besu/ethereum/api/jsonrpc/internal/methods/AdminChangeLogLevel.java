@@ -21,12 +21,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
 import java.util.Arrays;
 import java.util.Optional;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +58,6 @@ public class AdminChangeLogLevel implements JsonRpcMethod {
 
   private void setLogLevel(final String logFilter, final Level logLevel) {
     LOG.debug("Setting {} logging level to {} ", logFilter, logLevel.name());
-    Configurator.setAllLevels(logFilter, logLevel);
+    Log4j2ConfiguratorUtil.setAllLevels(logFilter, logLevel);
   }
 }
