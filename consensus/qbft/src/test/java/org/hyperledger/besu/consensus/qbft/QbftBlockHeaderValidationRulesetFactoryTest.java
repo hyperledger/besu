@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.Collection;
@@ -89,10 +88,9 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
                 2, proposerNodeKey, validators, parentHeader, Optional.of(Wei.ONE))
             .buildHeader();
 
-    final BaseFeeMarket baseFeeMarket = FeeMarket.london(1, Optional.of(Wei.ONE));
     final BlockHeaderValidator validator =
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-                5, false, Optional.of(baseFeeMarket))
+                5, false, Optional.of(FeeMarket.london(1)))
             .build();
 
     assertThat(
