@@ -436,8 +436,8 @@ public class EthPeerTest {
       final List<NodeMessagePermissioningProvider> permissioningProviders) {
     final PeerConnection peerConnection = mock(PeerConnection.class);
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
-    // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as istanbul
-    // that extend the sub-protocol
+    // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
+    // that extend the sub-protocol work correctly
     return new EthPeer(
         peerConnection, "foo", onPeerReady, peerValidators, clock, permissioningProviders);
   }
