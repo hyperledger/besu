@@ -147,11 +147,9 @@ public class EthPeer {
                 EthPV62.GET_BLOCK_BODIES,
                 new RequestManager(this, supportsRequestId, protocolName)),
             Map.entry(
-                EthPV63.GET_RECEIPTS,
-                new RequestManager(this, supportsRequestId, protocolName)),
+                EthPV63.GET_RECEIPTS, new RequestManager(this, supportsRequestId, protocolName)),
             Map.entry(
-                EthPV63.GET_NODE_DATA,
-                new RequestManager(this, supportsRequestId, protocolName)),
+                EthPV63.GET_NODE_DATA, new RequestManager(this, supportsRequestId, protocolName)),
             Map.entry(
                 EthPV65.GET_POOLED_TRANSACTIONS,
                 new RequestManager(this, supportsRequestId, protocolName))));
@@ -265,15 +263,13 @@ public class EthPeer {
       throws PeerNotConnected {
     final GetBlockHeadersMessage message =
         GetBlockHeadersMessage.create(blockNumber, maxHeaders, skip, reverse);
-    return sendRequest(
-        requestManagers.get(protocolName).get(EthPV62.GET_BLOCK_HEADERS), message);
+    return sendRequest(requestManagers.get(protocolName).get(EthPV62.GET_BLOCK_HEADERS), message);
   }
 
   public RequestManager.ResponseStream getBodies(final List<Hash> blockHashes)
       throws PeerNotConnected {
     final GetBlockBodiesMessage message = GetBlockBodiesMessage.create(blockHashes);
-    return sendRequest(
-        requestManagers.get(protocolName).get(EthPV62.GET_BLOCK_BODIES), message);
+    return sendRequest(requestManagers.get(protocolName).get(EthPV62.GET_BLOCK_BODIES), message);
   }
 
   public RequestManager.ResponseStream getReceipts(final List<Hash> blockHashes)
