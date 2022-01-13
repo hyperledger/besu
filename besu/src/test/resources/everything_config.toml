@@ -159,6 +159,7 @@ tx-pool-max-size=1234
 tx-pool-hashes-max-size=10000
 Xincoming-tx-messages-keep-alive-seconds=60
 rpc-tx-feecap=2000000000000000000
+strict-tx-replay-protection-enabled=true
 
 # Revert Reason
 revert-reason-enabled=false
