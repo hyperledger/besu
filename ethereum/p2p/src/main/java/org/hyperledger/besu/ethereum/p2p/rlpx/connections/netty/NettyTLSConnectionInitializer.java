@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 import static org.hyperledger.besu.ethereum.p2p.rlpx.RlpxFrameConstants.LENGTH_FRAME_SIZE;
 import static org.hyperledger.besu.ethereum.p2p.rlpx.RlpxFrameConstants.LENGTH_MAX_MESSAGE_FRAME;
 
+import io.netty.handler.codec.compression.SnappyFrameDecoder;
+import io.netty.handler.codec.compression.SnappyFrameEncoder;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
@@ -59,6 +61,8 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
       SslContext sslContext =
           TLSContextFactory.buildFrom(p2pTLSConfiguration.get()).createNettyClientSslContext();
       ch.pipeline().addLast("ssl", sslContext.newHandler(ch.alloc()));
+      ch.pipeline().addLast(new SnappyFrameDecoder());
+      ch.pipeline().addLast(new SnappyFrameEncoder());
       ch.pipeline()
           .addLast(
               new LengthFieldBasedFrameDecoder(
@@ -74,6 +78,8 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
       SslContext sslContext =
           TLSContextFactory.buildFrom(p2pTLSConfiguration.get()).createNettyServerSslContext();
       ch.pipeline().addLast("ssl", sslContext.newHandler(ch.alloc()));
+      ch.pipeline().addLast(new SnappyFrameDecoder());
+      ch.pipeline().addLast(new SnappyFrameEncoder());
       ch.pipeline()
           .addLast(
               new LengthFieldBasedFrameDecoder(
