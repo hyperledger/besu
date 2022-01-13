@@ -19,26 +19,38 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.Sign;
 import org.web3j.crypto.TransactionEncoder;
+import org.web3j.crypto.transaction.type.TransactionType;
 import org.web3j.rlp.RlpEncoder;
 import org.web3j.rlp.RlpList;
+import org.web3j.rlp.RlpString;
 import org.web3j.rlp.RlpType;
+import org.web3j.utils.Bytes;
 import org.web3j.utils.Numeric;
 
 public class SignUtil {
+  private static final int CHAIN_ID_INC = 35;
+  // In Ethereum transaction 27 is added to recId (v)
+  // See https://ethereum.github.io/yellowpaper/paper.pdf
+  //     Appendix F. Signing Transactions (281)
+  private static final int LOWER_REAL_V = 27;
 
   private SignUtil() {}
 
-  public static String signTransaction(
+  public static byte[] signTransaction(
       final RawTransaction transaction,
       final Account sender,
-      final SignatureAlgorithm signatureAlgorithm) {
+      final SignatureAlgorithm signatureAlgorithm,
+      final Optional<BigInteger> chainId) {
     byte[] encodedTransaction = TransactionEncoder.encode(transaction);
 
     Credentials credentials = sender.web3jCredentialsOrThrow();
@@ -53,16 +65,53 @@ public class SignUtil {
 
     Sign.SignatureData signature =
         new Sign.SignatureData(
-            // In Ethereum transaction 27 is added to recId (v)
-            // See https://ethereum.github.io/yellowpaper/paper.pdf
-            //     Appendix F. Signing Transactions (281)
-            (byte) (secpSignature.getRecId() + 27),
+            calculateV(secpSignature, chainId),
             secpSignature.getR().toByteArray(),
             secpSignature.getS().toByteArray());
-    List<RlpType> values = TransactionEncoder.asRlpValues(transaction, signature);
+    List<RlpType> values = getTxRlpValues(transaction, signature, secpSignature);
     RlpList rlpList = new RlpList(values);
-    final byte[] encodedSignedTransaction = RlpEncoder.encode(rlpList);
+    byte[] encoded = RlpEncoder.encode(rlpList);
 
-    return Numeric.toHexString(encodedSignedTransaction);
+    if (transaction.getType().equals(TransactionType.LEGACY)) {
+      return encoded;
+    }
+    return ByteBuffer.allocate(encoded.length + 1)
+        .put(transaction.getType().getRlpType())
+        .put(encoded)
+        .array();
+  }
+
+  private static List<RlpType> getTxRlpValues(
+      final RawTransaction transaction,
+      final Sign.SignatureData signature,
+      final SECPSignature secpSignature) {
+    final List<RlpType> values = TransactionEncoder.asRlpValues(transaction, signature);
+    if (!transaction.getType().equals(TransactionType.EIP1559)) {
+      return values;
+    }
+
+    // Fix yParityField for eip1559 txs
+    // See outstanding fix: https://github.com/web3j/web3j/pull/1587
+    final int yParityFieldIndex = values.size() - 3;
+    byte recId = secpSignature.getRecId();
+    final byte[] yParityFieldValue =
+        recId == 0 ? new byte[] {} : new byte[] {secpSignature.getRecId()};
+    final RlpType yParityRlpString = RlpString.create(Bytes.trimLeadingZeroes(yParityFieldValue));
+    values.set(yParityFieldIndex, yParityRlpString);
+    return values;
+  }
+
+  private static byte[] calculateV(
+      final SECPSignature secpSignature, final Optional<BigInteger> maybeChainId) {
+    byte recId = secpSignature.getRecId();
+    return maybeChainId
+        .map(
+            chainId -> {
+              BigInteger v = Numeric.toBigInt(new byte[] {recId});
+              v = v.add(chainId.multiply(BigInteger.valueOf(2)));
+              v = v.add(BigInteger.valueOf(CHAIN_ID_INC));
+              return v.toByteArray();
+            })
+        .orElseGet(() -> new byte[] {(byte) (recId + LOWER_REAL_V)});
   }
 }

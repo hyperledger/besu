@@ -61,6 +61,7 @@ public class BesuNodeConfiguration {
   private final NetworkName network;
   private final Optional<KeyPair> keyPair;
   private final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration;
+  private final boolean strictTxReplayProtectionEnabled;
 
   BesuNodeConfiguration(
       final String name,
@@ -90,7 +91,8 @@ public class BesuNodeConfiguration {
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
-      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration) {
+      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
+      final boolean strictTxReplayProtectionEnabled) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -119,6 +121,7 @@ public class BesuNodeConfiguration {
     this.runCommand = runCommand;
     this.keyPair = keyPair;
     this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
+    this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
   }
 
   public String getName() {
@@ -231,5 +234,9 @@ public class BesuNodeConfiguration {
 
   public Optional<PkiKeyStoreConfiguration> getPkiKeyStoreConfiguration() {
     return pkiKeyStoreConfiguration;
+  }
+
+  public boolean isStrictTxReplayProtectionEnabled() {
+    return strictTxReplayProtectionEnabled;
   }
 }
