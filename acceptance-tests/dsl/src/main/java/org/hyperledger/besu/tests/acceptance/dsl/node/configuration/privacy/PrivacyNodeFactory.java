@@ -33,7 +33,6 @@ import org.testcontainers.containers.Network;
 
 public class PrivacyNodeFactory {
 
-  private final GenesisConfigurationFactory genesis = new GenesisConfigurationFactory();
   private final NodeConfigurationFactory node = new NodeConfigurationFactory();
   private final Vertx vertx;
 
@@ -160,7 +159,7 @@ public class PrivacyNodeFactory {
                 .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig(minerEnabled))
                 .webSocketConfiguration(node.createWebSocketEnabledConfig())
                 .devMode(false)
-                .genesisConfigProvider(genesis::createPrivacyIbft2GenesisConfig)
+                .genesisConfigProvider(GenesisConfigurationFactory::createPrivacyIbft2GenesisConfig)
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .enablePrivateTransactions()
                 .plugins(Collections.singletonList("testPlugins"))
@@ -195,7 +194,7 @@ public class PrivacyNodeFactory {
                 .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig(minerEnabled))
                 .webSocketConfiguration(node.createWebSocketEnabledConfig())
                 .devMode(false)
-                .genesisConfigProvider(genesis::createPrivacyIbft2GenesisConfig)
+                .genesisConfigProvider(GenesisConfigurationFactory::createPrivacyIbft2GenesisConfig)
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .enablePrivateTransactions()
                 .plugins(Collections.singletonList("testPlugins"))
@@ -231,7 +230,7 @@ public class PrivacyNodeFactory {
                 .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
                 .webSocketConfiguration(node.createWebSocketEnabledConfig())
                 .devMode(false)
-                .genesisConfigProvider(genesis::createQbftGenesisConfig)
+                .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig)
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .enablePrivateTransactions()
                 .plugins(Collections.singletonList("testPlugins"))
