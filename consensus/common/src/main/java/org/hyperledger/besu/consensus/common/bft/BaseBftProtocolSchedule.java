@@ -79,7 +79,7 @@ public abstract class BaseBftProtocolSchedule {
   }
 
   protected abstract BlockHeaderValidator.Builder createBlockHeaderRuleset(
-      final BftConfigOptions config, FeeMarket feeMarket);
+      final BftConfigOptions config, final FeeMarket feeMarket);
 
   private ProtocolSpecBuilder applyBftChanges(
       final BftConfigOptions configOptions,

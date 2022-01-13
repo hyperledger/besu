@@ -65,7 +65,7 @@ public class IbftProtocolSchedule extends BaseBftProtocolSchedule {
   @Override
   protected BlockHeaderValidator.Builder createBlockHeaderRuleset(
       final BftConfigOptions config, final FeeMarket feeMarket) {
-    Optional<BaseFeeMarket> baseFeeMarket =
+    final Optional<BaseFeeMarket> baseFeeMarket =
         Optional.of(feeMarket).filter(FeeMarket::implementsBaseFee).map(BaseFeeMarket.class::cast);
 
     return IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(

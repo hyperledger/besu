@@ -85,7 +85,7 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
     checkArgument(
         config instanceof QbftConfigOptions, "QbftProtocolSchedule must use QbftConfigOptions");
     final QbftConfigOptions qbftConfigOptions = (QbftConfigOptions) config;
-    Optional<BaseFeeMarket> baseFeeMarket =
+    final Optional<BaseFeeMarket> baseFeeMarket =
         Optional.of(feeMarket).filter(FeeMarket::implementsBaseFee).map(BaseFeeMarket.class::cast);
 
     return QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
