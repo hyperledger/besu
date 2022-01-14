@@ -61,22 +61,6 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   private StorageRangeMessage.SlotRangeData response;
   private boolean isTaskCompleted = true;
 
-  public static StorageRangeDataRequest createStorageRangeDataRequest(
-      final Hash rootHash,
-      final ArrayDeque<Bytes32> accountsHashes,
-      final ArrayDeque<Bytes32> storageRoots,
-      final Bytes32 startKeyHash,
-      final Bytes32 endKeyHash) {
-    LOG.trace(
-        "create get storage range data request for {} accounts with root hash={} from {} to {}",
-        accountsHashes.size(),
-        rootHash,
-        startKeyHash,
-        endKeyHash);
-    return new StorageRangeDataRequest(
-        rootHash, accountsHashes, storageRoots, startKeyHash, endKeyHash);
-  }
-
   protected StorageRangeDataRequest(
       final Hash rootHash,
       final ArrayDeque<Bytes32> accountsHashes,
@@ -84,6 +68,13 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final Bytes32 startKeyHash,
       final Bytes32 endKeyHash) {
     super(STORAGE_RANGE, rootHash);
+    LOG.trace(
+        "create get storage range data request for {} accounts {} with root hash={} from {} to {}",
+        accountsHashes.size(),
+        (accountsHashes.size() == 1) ? accountsHashes.get(0) : "...",
+        rootHash,
+        startKeyHash,
+        endKeyHash);
     request =
         GetStorageRangeMessage.create(
             rootHash,
@@ -183,13 +174,18 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     if (!isTaskCompleted
         && getOriginalRootHash().compareTo(requestData.worldStateRootHash()) != 0) {
       LOG.trace(
-          "Invalidated root hash detected {} during get storage range data request",
-          getOriginalRootHash());
-      downloadState.enqueueRequest(
-          createAccountRangeDataRequest(
-              requestData.worldStateRootHash(),
-              requestData.hashes().first(),
-              requestData.hashes().last()));
+          "Invalidated root hash detected {} during get storage range data request {} {} {}",
+          getOriginalRootHash(),
+          requestData.hashes().first(),
+          requestData.hashes().last());
+      if (requestData.hashes().size() > 1) {
+        // split this range in order to fill more account quickly
+        RangeManager.generateRanges(requestData.hashes().first(), requestData.hashes().last(), 16)
+            .forEach(
+                (min, max) ->
+                    downloadState.enqueueRequest(
+                        createAccountRangeDataRequest(requestData.worldStateRootHash(), min, max)));
+      }
       return true;
     }
 
@@ -233,13 +229,13 @@ public class StorageRangeDataRequest extends SnapDataRequest {
             getStorageRangeMessage().getStorageRoots().orElseThrow().get(lastSlotIndex - 1);
 
         // new request if there are some missing storage slots for the last account sent
+        // create a specific request for this big storage
         findNewBeginElementInRange(
                 lastSlotRootHash, responseData.proofs(), responseData.slots().last(), endKeyHash)
             .ifPresent(
                 missingRightElement -> {
                   childRequests.add(
                       createStorageRangeDataRequest(
-                          getOriginalRootHash(),
                           new ArrayDeque<>(List.of(requestData.hashes().get(lastSlotIndex - 1))),
                           new ArrayDeque<>(List.of(lastSlotRootHash)),
                           missingRightElement,
@@ -259,7 +255,6 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
           childRequests.add(
               createStorageRangeDataRequest(
-                  getOriginalRootHash(),
                   missingAccounts,
                   missingStorageRoots,
                   requestData.startKeyHash(),
@@ -278,11 +273,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
   @Override
   public long getPriority() {
-    return 1;
+    return 2;
   }
 
   @Override
   public int getDepth() {
-    return 1;
+    return 0;
   }
 }

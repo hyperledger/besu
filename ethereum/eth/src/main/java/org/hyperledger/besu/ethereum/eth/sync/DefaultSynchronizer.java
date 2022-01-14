@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -66,6 +67,7 @@ public class DefaultSynchronizer implements Synchronizer {
       final EthContext ethContext,
       final SyncState syncState,
       final Path dataDirectory,
+      final StorageProvider storageProvider,
       final Clock clock,
       final MetricsSystem metricsSystem) {
     this.maybePruner = maybePruner;

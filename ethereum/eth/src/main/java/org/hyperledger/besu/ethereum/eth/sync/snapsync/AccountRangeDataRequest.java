@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.GetBytecodeRequest.createBytecodeRequest;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MAX_RANGE;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.ACCOUNT_RANGE;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.StorageRangeDataRequest.createStorageRangeDataRequest;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
@@ -47,6 +48,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import com.google.common.collect.Lists;
 import kotlin.collections.ArrayDeque;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,6 +59,8 @@ import org.apache.tuweni.bytes.Bytes32;
 public class AccountRangeDataRequest extends SnapDataRequest {
 
   private static final Logger LOG = LogManager.getLogger();
+
+  private static final int MAX_ACCOUNT_PER_REQUEST = 85;
 
   private final GetAccountRangeMessage request;
   private GetAccountRangeMessage.Range range;
@@ -113,7 +117,6 @@ public class AccountRangeDataRequest extends SnapDataRequest {
             nbNodesSaved.getAndIncrement();
           }
         });
-
     return nbNodesSaved.get();
   }
 
@@ -163,11 +166,11 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     final GetAccountRangeMessage.Range requestData = getRange();
     final AccountRangeMessage.AccountRangeData responseData = getResponse();
 
-    final ArrayDeque<Bytes32> accountsBytecodesToComplete = new ArrayDeque<>();
-    final ArrayDeque<Bytes32> missingBytecodes = new ArrayDeque<>();
+    final List<Bytes32> accountsBytecodesToComplete = new ArrayList<>();
+    final List<Bytes32> missingBytecodes = new ArrayList<>();
 
-    final ArrayDeque<Bytes32> accountsStorageToComplete = new ArrayDeque<>();
-    final ArrayDeque<Bytes32> missingStorageRoots = new ArrayDeque<>();
+    final List<Bytes32> accountsStorageToComplete = new ArrayList<>();
+    final List<Bytes32> missingStorageRoots = new ArrayList<>();
 
     if (responseData.accounts().isEmpty()) {
       return Stream.empty();
@@ -181,13 +184,12 @@ public class AccountRangeDataRequest extends SnapDataRequest {
               responseData.accounts(),
               requestData.endKeyHash())
           .ifPresent(
-              missingRightElement -> {
-                childRequests.add(
-                    createAccountRangeDataRequest(
-                        requestData.worldStateRootHash(),
-                        missingRightElement,
-                        requestData.endKeyHash()));
-              });
+              missingRightElement ->
+                  childRequests.add(
+                      createAccountRangeDataRequest(
+                          requestData.worldStateRootHash(),
+                          missingRightElement,
+                          requestData.endKeyHash())));
 
       // find missing storages and code
       for (Map.Entry<Bytes32, Bytes> account : responseData.accounts().entrySet()) {
@@ -198,28 +200,47 @@ public class AccountRangeDataRequest extends SnapDataRequest {
           missingStorageRoots.add(accountValue.getStorageRoot());
         }
         if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
-          accountsBytecodesToComplete.add(account.getKey());
-          missingBytecodes.add(accountValue.getCodeHash());
+          final Optional<Bytes> code = worldStateStorage.getCode(accountValue.getCodeHash(), null);
+          if (code.isEmpty()) {
+            accountsBytecodesToComplete.add(account.getKey());
+            missingBytecodes.add(accountValue.getCodeHash());
+          } else {
+            if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+              final Updater updater = worldStateStorage.updater();
+              ((BonsaiWorldStateKeyValueStorage.Updater) updater)
+                  .getCodeStorageTransaction()
+                  .put(
+                      account.getKey().toArrayUnsafe(), accountValue.getCodeHash().toArrayUnsafe());
+              updater.commit();
+            }
+          }
         }
       }
 
-      if (!missingStorageRoots.isEmpty()) {
+      final List<List<Bytes32>> storageRootsPartition =
+          Lists.partition(missingStorageRoots, MAX_ACCOUNT_PER_REQUEST);
+      final List<List<Bytes32>> accountsStoragePartition =
+          Lists.partition(accountsStorageToComplete, MAX_ACCOUNT_PER_REQUEST);
+      for (int i = 0; i < storageRootsPartition.size(); i++) {
         childRequests.add(
             createStorageRangeDataRequest(
-                getOriginalRootHash(),
-                accountsStorageToComplete,
-                missingStorageRoots,
-                RangeManager.MIN_RANGE,
-                RangeManager.MAX_RANGE));
+                new ArrayDeque<>(accountsStoragePartition.get(i)),
+                new ArrayDeque<>(storageRootsPartition.get(i)),
+                MIN_RANGE,
+                MAX_RANGE));
       }
 
-      if (!missingBytecodes.isEmpty()) {
+      final List<List<Bytes32>> bytesCodesPartition =
+          Lists.partition(missingBytecodes, MAX_ACCOUNT_PER_REQUEST);
+      final List<List<Bytes32>> accountsBytecodePartition =
+          Lists.partition(accountsBytecodesToComplete, MAX_ACCOUNT_PER_REQUEST);
+      for (int i = 0; i < bytesCodesPartition.size(); i++) {
         childRequests.add(
             createBytecodeRequest(
-                getOriginalRootHash(),
-                new ArrayDeque<>(accountsBytecodesToComplete),
-                missingBytecodes));
+                new ArrayDeque<>(accountsBytecodePartition.get(i)),
+                new ArrayDeque<>(bytesCodesPartition.get(i))));
       }
+
       return childRequests.stream();
     }
   }
@@ -232,7 +253,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
   @Override
   public long getPriority() {
-    return 0;
+    return 1;
   }
 
   @Override

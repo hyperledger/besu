@@ -142,6 +142,7 @@ public class FastSyncDownloader<REQUEST> {
 
   protected FastSyncState storeState(final FastSyncState state) {
     fastSyncStateStorage.storeState(state);
+    fastSyncStateStorage.notifyFastSyncStarted();
     return state;
   }
 

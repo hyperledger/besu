@@ -37,30 +37,30 @@ public class CompleteTaskStep {
   private final LongSupplier worldStatePendingRequestsCurrentSupplier;
 
   public CompleteTaskStep(
-          final WorldStateStorage worldStateStorage,
-          final MetricsSystem metricsSystem,
-          final LongSupplier worldStatePendingRequestsCurrentSupplier) {
+      final WorldStateStorage worldStateStorage,
+      final MetricsSystem metricsSystem,
+      final LongSupplier worldStatePendingRequestsCurrentSupplier) {
     this.worldStateStorage = worldStateStorage;
     this.worldStatePendingRequestsCurrentSupplier = worldStatePendingRequestsCurrentSupplier;
     completedRequestsCounter =
-            new RunnableCounter(
-                    metricsSystem.createCounter(
-                            BesuMetricCategory.SYNCHRONIZER,
-                            "world_state_completed_requests_total",
-                            "Total number of node data requests completed as part of fast sync world state download"),
-                    this::displayWorldStateSyncProgress,
-                    DISPLAY_PROGRESS_STEP);
-    retriedRequestsCounter =
+        new RunnableCounter(
             metricsSystem.createCounter(
-                    BesuMetricCategory.SYNCHRONIZER,
-                    "world_state_retried_requests_total",
-                    "Total number of node data requests repeated as part of fast sync world state download");
+                BesuMetricCategory.SYNCHRONIZER,
+                "world_state_completed_requests_total",
+                "Total number of node data requests completed as part of fast sync world state download"),
+            this::displayWorldStateSyncProgress,
+            DISPLAY_PROGRESS_STEP);
+    retriedRequestsCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.SYNCHRONIZER,
+            "world_state_retried_requests_total",
+            "Total number of node data requests repeated as part of fast sync world state download");
   }
 
   public void markAsCompleteOrFailed(
-          final BlockHeader header,
-          final WorldDownloadState<NodeDataRequest> downloadState,
-          final Task<NodeDataRequest> task) {
+      final BlockHeader header,
+      final WorldDownloadState<NodeDataRequest> downloadState,
+      final Task<NodeDataRequest> task) {
     if (task.getData().getData() != null) {
       completedRequestsCounter.inc();
       task.markCompleted();
@@ -76,9 +76,9 @@ public class CompleteTaskStep {
 
   private void displayWorldStateSyncProgress() {
     LOG.info(
-            "Downloaded {} world state nodes. At least {} nodes remaining.",
-            getCompletedRequests(),
-            worldStatePendingRequestsCurrentSupplier.getAsLong());
+        "Downloaded {} world state nodes. At least {} nodes remaining.",
+        getCompletedRequests(),
+        worldStatePendingRequestsCurrentSupplier.getAsLong());
   }
 
   long getCompletedRequests() {

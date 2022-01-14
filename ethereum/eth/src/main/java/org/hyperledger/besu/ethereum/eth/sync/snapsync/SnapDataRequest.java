@@ -19,13 +19,14 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 import org.immutables.value.Value;
 
 public abstract class SnapDataRequest implements TasksPriorityProvider {
@@ -45,6 +46,21 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   public static AccountRangeDataRequest createAccountRangeDataRequest(
       final Hash rootHash, final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
     return new AccountRangeDataRequest(rootHash, startKeyHash, endKeyHash);
+  }
+
+  public StorageRangeDataRequest createStorageRangeDataRequest(
+      final ArrayDeque<Bytes32> accountsHashes,
+      final ArrayDeque<Bytes32> storageRoots,
+      final Bytes32 startKeyHash,
+      final Bytes32 endKeyHash) {
+    return new StorageRangeDataRequest(
+        getOriginalRootHash(), accountsHashes, storageRoots, startKeyHash, endKeyHash);
+  }
+
+  public GetBytecodeRequest createBytecodeRequest(
+      final ArrayDeque<Bytes32> accountHashes, final ArrayDeque<Bytes32> codeHashes) {
+
+    return new GetBytecodeRequest(getOriginalRootHash(), accountHashes, codeHashes);
   }
 
   public RequestType getRequestType() {

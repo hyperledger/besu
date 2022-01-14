@@ -44,6 +44,7 @@ public class LoadLocalDataStep {
   public Stream<Task<NodeDataRequest>> loadLocalData(
       final Task<NodeDataRequest> task, final Pipe<Task<NodeDataRequest>> completedTasks) {
     final NodeDataRequest request = task.getData();
+    // check if node already stored in the worldstate
     final Optional<Bytes> existingData = request.getExistingData(worldStateStorage);
     if (existingData.isPresent()) {
       existingNodeCounter.inc();

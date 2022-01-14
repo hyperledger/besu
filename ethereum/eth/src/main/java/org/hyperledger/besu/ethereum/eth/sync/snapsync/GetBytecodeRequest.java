@@ -48,22 +48,15 @@ public class GetBytecodeRequest extends SnapDataRequest {
   private GetByteCodesMessage.CodeHashes codeHashes;
   private ByteCodesMessage.ByteCodes response;
 
-  public static GetBytecodeRequest createBytecodeRequest(
-      final Hash rootHash,
-      final ArrayDeque<Bytes32> accountHashes,
-      final ArrayDeque<Bytes32> codeHashes) {
-    LOG.trace(
-        "create get bytecode data request for {} accounts with root hash={}",
-        accountHashes.size(),
-        rootHash);
-    return new GetBytecodeRequest(rootHash, accountHashes, codeHashes);
-  }
-
   protected GetBytecodeRequest(
       final Hash rootHash,
       final ArrayDeque<Bytes32> accountHashes,
       final ArrayDeque<Bytes32> codeHashes) {
     super(BYTECODES, rootHash);
+    LOG.trace(
+        "create get bytecode data request for {} accounts with root hash={}",
+        accountHashes.size(),
+        rootHash);
     request =
         GetByteCodesMessage.create(
             Optional.of(accountHashes), codeHashes, BigInteger.valueOf(524288));
@@ -134,8 +127,7 @@ public class GetBytecodeRequest extends SnapDataRequest {
           new ArrayDeque<>(
               requestData.hashes().stream().skip(lastAccountIndex).collect(Collectors.toList()));
 
-      childRequests.add(
-          createBytecodeRequest(getOriginalRootHash(), missingAccounts, missingCodes));
+      childRequests.add(createBytecodeRequest(missingAccounts, missingCodes));
     }
 
     return childRequests.stream();
@@ -149,11 +141,11 @@ public class GetBytecodeRequest extends SnapDataRequest {
 
   @Override
   public long getPriority() {
-    return 2;
+    return 0;
   }
 
   @Override
   public int getDepth() {
-    return 2;
+    return 0;
   }
 }

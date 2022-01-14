@@ -195,7 +195,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       if (updatedCode == null || updatedCode.size() == 0) {
         stateUpdater.removeCode(accountHash);
       } else {
-        stateUpdater.putCode(accountHash, null, updatedCode);
+        stateUpdater.putCode(accountHash, Hash.hash(updatedCode), updatedCode);
       }
     }
 

@@ -39,10 +39,14 @@ import org.apache.tuweni.bytes.Bytes;
 public class FastSyncStateStorage {
   private static final Logger LOG = LogManager.getLogger();
   private static final String PIVOT_BLOCK_HEADER_FILENAME = "pivotBlockHeader.rlp";
+  private static final String FAST_SYNC_STATUS_FILENAME = "fast-sync-status";
+
   private final File pivotBlockHeaderFile;
+  private final File fastSyncStatusFile;
 
   public FastSyncStateStorage(final Path fastSyncDataDir) {
     pivotBlockHeaderFile = fastSyncDataDir.resolve(PIVOT_BLOCK_HEADER_FILENAME).toFile();
+    fastSyncStatusFile = fastSyncDataDir.resolve(FAST_SYNC_STATUS_FILENAME).toFile();
   }
 
   public boolean isFastSyncInProgress() {
@@ -79,5 +83,17 @@ public class FastSyncStateStorage {
       throw new IllegalStateException(
           "Unable to store fast sync status file: " + pivotBlockHeaderFile.getAbsolutePath());
     }
+  }
+
+  public void notifyFastSyncStarted() {
+    try {
+      fastSyncStatusFile.createNewFile();
+    } catch (IOException e) {
+      throw new IllegalStateException("Unable to create heal status file");
+    }
+  }
+
+  public boolean isFastSyncStarted() {
+    return fastSyncStatusFile.isFile();
   }
 }

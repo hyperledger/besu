@@ -14,20 +14,20 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldStateDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.services.tasks.CachingTaskCollection;
+import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
 import java.util.Optional;
@@ -38,7 +38,6 @@ import java.util.function.IntSupplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 public class SnapWorldStateDownloader implements WorldStateDownloader {
   private static final Logger LOG = LogManager.getLogger();
@@ -48,6 +47,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final MetricsSystem metricsSystem;
 
   private final EthContext ethContext;
+  private final FastSyncStateStorage fastSyncStateStorage;
   private final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection;
   private final InMemoryTasksPriorityQueues<NodeDataRequest> fastTaskCollection;
   private final int hashCountPerRequest;
@@ -59,9 +59,11 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final AtomicReference<SnapWorldDownloadState> downloadState = new AtomicReference<>();
 
   private Optional<CompleteTaskStep> maybeCompleteTask = Optional.empty();
+  private FastWorldStateDownloader fastWorldStateDownloader;
 
   public SnapWorldStateDownloader(
       final EthContext ethContext,
+      final FastSyncStateStorage fastSyncStateStorage,
       final WorldStateStorage worldStateStorage,
       final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection,
       final InMemoryTasksPriorityQueues<NodeDataRequest> fastTaskCollection,
@@ -72,6 +74,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final Clock clock,
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
+    this.fastSyncStateStorage = fastSyncStateStorage;
     this.worldStateStorage = worldStateStorage;
     this.snapTaskCollection = snapTaskCollection;
     this.fastTaskCollection = fastTaskCollection;
@@ -138,11 +141,11 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               healProcess,
               clock);
 
-      //snapsync already done, switch to fastsync
-      if(worldStateStorage.getTrieNode(Bytes.EMPTY).isPresent()){
+      // snapsync already done, switch to fastsync
+      if (fastSyncStateStorage.isFastSyncStarted()) {
         healProcess.run(fastSyncActions, fastSyncState);
-      }else {
-        RangeManager.generateAllRanges(256)
+      } else {
+        RangeManager.generateAllRanges(16)
             .forEach(
                 (key, value) ->
                     newDownloadState.enqueueRequest(
@@ -182,19 +185,22 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   }
 
   public FastWorldStateDownloader getHealProcess() {
-    return new FastWorldStateDownloader(
-        ethContext,
-        worldStateStorage,
-        fastTaskCollection,
-        SyncMode.X_SNAP,
-        hashCountPerRequest,
-        maxOutstandingRequests,
-        maxNodeRequestsWithoutProgress,
-        minMillisBeforeStalling,
-        clock,
-        metricsSystem);
+    if (fastWorldStateDownloader == null) {
+      fastWorldStateDownloader =
+          new FastWorldStateDownloader(
+              ethContext,
+              worldStateStorage,
+              fastTaskCollection,
+              SyncMode.X_SNAP,
+              hashCountPerRequest,
+              maxOutstandingRequests,
+              maxNodeRequestsWithoutProgress,
+              minMillisBeforeStalling,
+              clock,
+              metricsSystem);
+    }
+    return fastWorldStateDownloader;
   }
-
 
   @Override
   public Optional<Long> getPulledStates() {

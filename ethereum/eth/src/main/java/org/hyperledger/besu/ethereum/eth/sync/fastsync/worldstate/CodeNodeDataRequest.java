@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
@@ -47,7 +46,9 @@ class CodeNodeDataRequest extends NodeDataRequest {
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getCode(getHash(), accountHash.orElse(Hash.EMPTY));
+    return worldStateStorage
+        .getCode(getHash(), accountHash.orElse(Hash.EMPTY))
+        .filter(bytes -> Hash.hash(bytes).compareTo(getHash()) == 0);
   }
 
   public Optional<Hash> getAccountHash() {

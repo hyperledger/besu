@@ -21,8 +21,6 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldState
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
-import org.hyperledger.besu.services.tasks.Task;
-import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.time.Clock;
 import java.util.concurrent.TimeUnit;
@@ -116,22 +114,5 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
                 });
       }
     }
-  }
-
-  @Override
-  public synchronized Task<SnapDataRequest> dequeueRequestBlocking() {
-    while (!internalFuture.isDone()) {
-      final Task<SnapDataRequest> task = pendingRequests.remove();
-      if (task != null) {
-        return task;
-      }
-      try {
-        wait();
-      } catch (final InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return null;
-      }
-    }
-    return null;
   }
 }

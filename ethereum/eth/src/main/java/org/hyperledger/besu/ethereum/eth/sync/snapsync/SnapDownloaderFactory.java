@@ -31,8 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.services.tasks.CachingTaskCollection;
-import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
+import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.nio.file.Path;
 import java.time.Clock;
@@ -40,7 +39,6 @@ import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 public class SnapDownloaderFactory extends FastDownloaderFactory {
 
@@ -88,11 +86,11 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
         createSnapWorldStateDownloaderTaskCollection(metricsSystem);
     final InMemoryTasksPriorityQueues<NodeDataRequest> fastTaskCollection =
         createWorldStateDownloaderTaskCollection(
-            metricsSystem,
-            syncConfig.getWorldStateTaskCacheSize());
+            metricsSystem, syncConfig.getWorldStateTaskCacheSize());
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(
             ethContext,
+            fastSyncStateStorage,
             worldStateStorage,
             snapTaskCollection,
             fastTaskCollection,
@@ -123,7 +121,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
   private static InMemoryTasksPriorityQueues<SnapDataRequest>
       createSnapWorldStateDownloaderTaskCollection(final MetricsSystem metricsSystem) {
     final InMemoryTasksPriorityQueues<SnapDataRequest> taskCollection =
-            new InMemoryTasksPriorityQueues<>();
+        new InMemoryTasksPriorityQueues<>();
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,

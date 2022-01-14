@@ -24,8 +24,6 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldStateDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -45,105 +43,105 @@ import org.apache.logging.log4j.Logger;
 
 public class FastDownloaderFactory {
 
-    protected static final String FAST_SYNC_FOLDER = "fastsync";
+  protected static final String FAST_SYNC_FOLDER = "fastsync";
 
-    private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
-    public static Optional<FastSyncDownloader<?>> create(
-            final SynchronizerConfiguration syncConfig,
-            final Path dataDirectory,
-            final ProtocolSchedule protocolSchedule,
-            final ProtocolContext protocolContext,
-            final MetricsSystem metricsSystem,
-            final EthContext ethContext,
-            final WorldStateStorage worldStateStorage,
-            final SyncState syncState,
-            final Clock clock) {
+  public static Optional<FastSyncDownloader<?>> create(
+      final SynchronizerConfiguration syncConfig,
+      final Path dataDirectory,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final MetricsSystem metricsSystem,
+      final EthContext ethContext,
+      final WorldStateStorage worldStateStorage,
+      final SyncState syncState,
+      final Clock clock) {
 
-        final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
-        final FastSyncStateStorage fastSyncStateStorage =
-                new FastSyncStateStorage(fastSyncDataDirectory);
+    final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
+    final FastSyncStateStorage fastSyncStateStorage =
+        new FastSyncStateStorage(fastSyncDataDirectory);
 
-        if (syncConfig.getSyncMode() != SyncMode.FAST) {
-            if (fastSyncStateStorage.isFastSyncInProgress()) {
-                throw new IllegalStateException(
-                        "Unable to change the sync mode when fast sync is incomplete, please restart with fast sync mode");
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        ensureDirectoryExists(fastSyncDataDirectory.toFile());
-
-        final FastSyncState fastSyncState =
-                fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
-        if (fastSyncState.getPivotBlockHeader().isEmpty()
-                && protocolContext.getBlockchain().getChainHeadBlockNumber()
-                != BlockHeader.GENESIS_BLOCK_NUMBER) {
-            LOG.info(
-                    "Fast sync was requested, but cannot be enabled because the local blockchain is not empty.");
-            return Optional.empty();
-        }
-        if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-            worldStateStorage.clear();
-        }
-        final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
-                createWorldStateDownloaderTaskCollection(
-                        metricsSystem, syncConfig.getWorldStateTaskCacheSize());
-        final WorldStateDownloader worldStateDownloader =
-                new FastWorldStateDownloader(
-                        ethContext,
-                        worldStateStorage,
-                        taskCollection,
-                        syncConfig.getSyncMode(),
-                        syncConfig.getWorldStateHashCountPerRequest(),
-                        syncConfig.getWorldStateRequestParallelism(),
-                        syncConfig.getWorldStateMaxRequestsWithoutProgress(),
-                        syncConfig.getWorldStateMinMillisBeforeStalling(),
-                        clock,
-                        metricsSystem);
-        final FastSyncDownloader<NodeDataRequest> fastSyncDownloader =
-                new FastSyncDownloader<>(
-                        new FastSyncActions(
-                                syncConfig,
-                                protocolSchedule,
-                                protocolContext,
-                                ethContext,
-                                syncState,
-                                metricsSystem),
-                        worldStateDownloader,
-                        fastSyncStateStorage,
-                        taskCollection,
-                        fastSyncDataDirectory,
-                        fastSyncState);
-        syncState.setWorldStateDownloadStatus(worldStateDownloader);
-        return Optional.of(fastSyncDownloader);
+    if (syncConfig.getSyncMode() != SyncMode.FAST) {
+      if (fastSyncStateStorage.isFastSyncInProgress()) {
+        throw new IllegalStateException(
+            "Unable to change the sync mode when fast sync is incomplete, please restart with fast sync mode");
+      } else {
+        return Optional.empty();
+      }
     }
 
-    protected static void ensureDirectoryExists(final File dir) {
-        if (!dir.mkdirs() && !dir.isDirectory()) {
-            throw new IllegalStateException("Unable to create directory: " + dir.getAbsolutePath());
-        }
+    ensureDirectoryExists(fastSyncDataDirectory.toFile());
+
+    final FastSyncState fastSyncState =
+        fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
+    if (fastSyncState.getPivotBlockHeader().isEmpty()
+        && protocolContext.getBlockchain().getChainHeadBlockNumber()
+            != BlockHeader.GENESIS_BLOCK_NUMBER) {
+      LOG.info(
+          "Fast sync was requested, but cannot be enabled because the local blockchain is not empty.");
+      return Optional.empty();
     }
-
-    protected static InMemoryTasksPriorityQueues<NodeDataRequest>
-    createWorldStateDownloaderTaskCollection(
-            final MetricsSystem metricsSystem, final int worldStateTaskCacheSize) {
-        final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
-                new InMemoryTasksPriorityQueues<>();
-
-        metricsSystem.createLongGauge(
-                BesuMetricCategory.SYNCHRONIZER,
-                "world_state_pending_requests_current",
-                "Number of pending requests for fast sync world state download",
-                taskCollection::size);
-
-        metricsSystem.createIntegerGauge(
-                BesuMetricCategory.SYNCHRONIZER,
-                "world_state_pending_requests_cache_size",
-                "Pending request cache size for fast sync world state download",
-                () -> worldStateTaskCacheSize);
-
-        return taskCollection;
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      worldStateStorage.clear();
     }
+    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
+        createWorldStateDownloaderTaskCollection(
+            metricsSystem, syncConfig.getWorldStateTaskCacheSize());
+    final WorldStateDownloader worldStateDownloader =
+        new FastWorldStateDownloader(
+            ethContext,
+            worldStateStorage,
+            taskCollection,
+            syncConfig.getSyncMode(),
+            syncConfig.getWorldStateHashCountPerRequest(),
+            syncConfig.getWorldStateRequestParallelism(),
+            syncConfig.getWorldStateMaxRequestsWithoutProgress(),
+            syncConfig.getWorldStateMinMillisBeforeStalling(),
+            clock,
+            metricsSystem);
+    final FastSyncDownloader<NodeDataRequest> fastSyncDownloader =
+        new FastSyncDownloader<>(
+            new FastSyncActions(
+                syncConfig,
+                protocolSchedule,
+                protocolContext,
+                ethContext,
+                syncState,
+                metricsSystem),
+            worldStateDownloader,
+            fastSyncStateStorage,
+            taskCollection,
+            fastSyncDataDirectory,
+            fastSyncState);
+    syncState.setWorldStateDownloadStatus(worldStateDownloader);
+    return Optional.of(fastSyncDownloader);
+  }
+
+  protected static void ensureDirectoryExists(final File dir) {
+    if (!dir.mkdirs() && !dir.isDirectory()) {
+      throw new IllegalStateException("Unable to create directory: " + dir.getAbsolutePath());
+    }
+  }
+
+  protected static InMemoryTasksPriorityQueues<NodeDataRequest>
+      createWorldStateDownloaderTaskCollection(
+          final MetricsSystem metricsSystem, final int worldStateTaskCacheSize) {
+    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
+        new InMemoryTasksPriorityQueues<>();
+
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "world_state_pending_requests_current",
+        "Number of pending requests for fast sync world state download",
+        taskCollection::size);
+
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "world_state_pending_requests_cache_size",
+        "Pending request cache size for fast sync world state download",
+        () -> worldStateTaskCacheSize);
+
+    return taskCollection;
+  }
 }
