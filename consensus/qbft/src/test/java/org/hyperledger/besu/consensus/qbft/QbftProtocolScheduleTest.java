@@ -74,11 +74,11 @@ public class QbftProtocolScheduleTest {
 
     final BlockHeader parentHeader =
         QbftBlockHeaderUtils.createPresetHeaderBuilderForContractMode(
-                1, proposerNodeKey, null, null)
+                1, proposerNodeKey, null, null, Optional.empty())
             .buildHeader();
     final BlockHeader blockHeader =
         QbftBlockHeaderUtils.createPresetHeaderBuilderForContractMode(
-                2, proposerNodeKey, parentHeader, null)
+                2, proposerNodeKey, parentHeader, null, Optional.empty())
             .buildHeader();
 
     final ProtocolSchedule schedule =
@@ -101,10 +101,12 @@ public class QbftProtocolScheduleTest {
     arbitraryTransition.setBlockRewardWei(BigInteger.ONE);
 
     final BlockHeader parentHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                1, proposerNodeKey, validators, null, Optional.empty())
             .buildHeader();
     final BlockHeader blockHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                2, proposerNodeKey, validators, parentHeader, Optional.empty())
             .buildHeader();
 
     final ProtocolSchedule schedule =
