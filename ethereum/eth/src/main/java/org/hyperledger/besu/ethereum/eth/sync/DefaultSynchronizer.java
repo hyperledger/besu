@@ -94,7 +94,7 @@ public class DefaultSynchronizer implements Synchronizer {
         new FullSyncDownloader(
             syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
 
-    if (syncConfig.getSyncMode().equals(SyncMode.X_SNAP)) {
+    if (SyncMode.X_SNAP.equals(syncConfig.getSyncMode())) {
       this.fastSyncDownloader =
           SnapDownloaderFactory.createSnapDownloader(
               syncConfig,
