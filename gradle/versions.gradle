@@ -15,10 +15,8 @@
 
 dependencyManagement {
   dependencies {
-    dependencySet(group: 'com.fasterxml.jackson.core', version: '2.13.1') {
-      entry 'jackson-databind'
-      entry 'jackson-datatype-jdk8'
-    }
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.1'
+    dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.13.1'
 
     dependency 'com.github.ben-manes.caffeine:caffeine:3.0.5'
 
@@ -102,8 +100,6 @@ dependencyManagement {
     dependency 'io.vertx:vertx-auth-jwt:4.2.1'
 
     dependency 'junit:junit:4.13.2'
-
-    dependency 'net.consensys:orion:21.1.1'
 
     dependency 'net.consensys.services:quorum-mainnet-launcher:1.0.1'
 

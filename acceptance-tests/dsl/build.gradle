@@ -33,7 +33,6 @@ dependencies {
   implementation 'io.reactivex.rxjava2:rxjava'
   implementation 'io.vertx:vertx-core'
   implementation 'junit:junit'
-  implementation 'net.consensys:orion'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.logging.log4j:log4j-core'
   implementation 'org.apache.logging.log4j:log4j-slf4j-impl'
