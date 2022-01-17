@@ -52,6 +52,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong phoenixBlockNumber = OptionalLong.empty();
   private OptionalLong thanosBlockNumber = OptionalLong.empty();
   private OptionalLong magnetoBlockNumber = OptionalLong.empty();
+  private OptionalLong mystiqueBlockNumber = OptionalLong.empty();
   private OptionalLong ecip1049BlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
@@ -254,6 +255,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getMystiqueBlockNumber() {
+    return mystiqueBlockNumber;
+  }
+
+  @Override
   public OptionalLong getEcip1049BlockNumber() {
     return ecip1049BlockNumber;
   }
@@ -315,6 +321,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getPhoenixBlockNumber().ifPresent(l -> builder.put("phoenixBlock", l));
     getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
     getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
+    getMystiqueBlockNumber().ifPresent(l -> builder.put("mystiqueBlock", l));
     getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
@@ -487,6 +494,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions magneto(final long blockNumber) {
     magnetoBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions mystique(final long blockNumber) {
+    mystiqueBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
