@@ -147,7 +147,7 @@ public class FastDownloaderFactory {
     }
   }
 
-  private static void ensureDirectoryExists(final File dir) {
+  protected static void ensureDirectoryExists(final File dir) {
     if (!dir.mkdirs() && !dir.isDirectory()) {
       throw new IllegalStateException("Unable to create directory: " + dir.getAbsolutePath());
     }
