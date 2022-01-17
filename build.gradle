@@ -29,6 +29,7 @@ plugins {
   id 'net.ltgt.errorprone' version '2.0.2'
   id 'maven-publish'
   id 'org.sonarqube' version '3.3'
+  id 'org.owasp.dependencycheck' version '6.5.2.1'
 }
 
 sonarqube {
