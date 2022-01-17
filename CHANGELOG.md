@@ -8,7 +8,7 @@
 ## 21.10.7
 
 ### Bug Fixes
-- Update dependencies (including kubernetes client-java, okhttp, commons-codec) 
+- Update dependencies (including vert.x, kubernetes client-java, okhttp, commons-codec) 
 
 ### Additions and Improvements
 - Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
