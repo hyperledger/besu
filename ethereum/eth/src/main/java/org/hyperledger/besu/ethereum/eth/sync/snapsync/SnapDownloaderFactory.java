@@ -82,6 +82,10 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       return Optional.empty();
     }
 
+    if (fastSyncStateStorage.getFastSyncStep().equals(SyncMode.FAST)) {
+      snapSyncState.setSnapHealInProgress(true);
+    }
+
     final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
         createSnapWorldStateDownloaderTaskCollection(metricsSystem);
     final InMemoryTasksPriorityQueues<NodeDataRequest> fastTaskCollection =

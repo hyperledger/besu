@@ -19,7 +19,6 @@ import org.apache.tuweni.bytes.Bytes;
 public class RemoveVisitor<V> implements PathNodeVisitor<V> {
   private final Node<V> NULL_NODE_RESULT = NullNode.instance();
 
-  @SuppressWarnings("unused")
   private final boolean allowFlatten;
 
   public RemoveVisitor() {

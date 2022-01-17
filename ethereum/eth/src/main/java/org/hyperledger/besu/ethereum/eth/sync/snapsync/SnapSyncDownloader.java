@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
+
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
@@ -22,8 +25,14 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   public SnapSyncDownloader(
       final FastSyncActions fastSyncActions,
@@ -42,9 +51,30 @@ public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
   }
 
   @Override
-  protected FastSyncState storeState(final FastSyncState state) {
-    initialFastSyncState = state;
-    fastSyncStateStorage.storeState(state);
-    return new SnapSyncState(state);
+  protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
+    if (fastSyncState instanceof SnapSyncState
+        && !((SnapSyncState) fastSyncState).isHealInProgress()) {
+      LOG.info("Starting snap sync.");
+      fastSyncStateStorage.notifyFastSyncStepChanged(SyncMode.X_SNAP);
+    } else {
+      LOG.info("Starting heal sync.");
+      fastSyncStateStorage.notifyFastSyncStepChanged(SyncMode.FAST);
+    }
+    return exceptionallyCompose(
+        fastSyncActions
+            .waitForSuitablePeers(fastSyncState)
+            .thenCompose(fastSyncActions::selectPivotBlock)
+            .thenCompose(fastSyncActions::downloadPivotBlockHeader)
+            .thenApply(this::updateMaxTrailingPeers)
+            .thenApply(this::storeState)
+            .thenCompose(fss -> downloadChainAndWorldState(fastSyncActions, fss)),
+        this::handleFailure);
+  }
+
+  @Override
+  protected FastSyncState storeState(final FastSyncState fastSyncState) {
+    initialFastSyncState = fastSyncState;
+    fastSyncStateStorage.storeState(fastSyncState);
+    return new SnapSyncState(fastSyncState);
   }
 }

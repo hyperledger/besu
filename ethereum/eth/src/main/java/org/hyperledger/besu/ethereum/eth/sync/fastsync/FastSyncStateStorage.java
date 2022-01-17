@@ -16,11 +16,13 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 import com.google.common.io.Files;
@@ -39,14 +41,14 @@ import org.apache.tuweni.bytes.Bytes;
 public class FastSyncStateStorage {
   private static final Logger LOG = LogManager.getLogger();
   private static final String PIVOT_BLOCK_HEADER_FILENAME = "pivotBlockHeader.rlp";
-  private static final String FAST_SYNC_STATUS_FILENAME = "fast-sync-status";
+  private static final String SYNC_STEP_FILENAME = "syncStep.txt";
 
   private final File pivotBlockHeaderFile;
-  private final File fastSyncStatusFile;
+  private final File fastSyncStepFile;
 
   public FastSyncStateStorage(final Path fastSyncDataDir) {
     pivotBlockHeaderFile = fastSyncDataDir.resolve(PIVOT_BLOCK_HEADER_FILENAME).toFile();
-    fastSyncStatusFile = fastSyncDataDir.resolve(FAST_SYNC_STATUS_FILENAME).toFile();
+    fastSyncStepFile = fastSyncDataDir.resolve(SYNC_STEP_FILENAME).toFile();
   }
 
   public boolean isFastSyncInProgress() {
@@ -85,15 +87,21 @@ public class FastSyncStateStorage {
     }
   }
 
-  public void notifyFastSyncStarted() {
+  public void notifyFastSyncStepChanged(final SyncMode syncMode) {
     try {
-      fastSyncStatusFile.createNewFile();
+      Files.write(syncMode.name().getBytes(StandardCharsets.UTF_8), fastSyncStepFile);
     } catch (IOException e) {
-      throw new IllegalStateException("Unable to create heal status file");
+      throw new IllegalStateException(
+          "Unable to store step fast sync" + " file: " + fastSyncStepFile.getAbsolutePath());
     }
   }
 
-  public boolean isFastSyncStarted() {
-    return fastSyncStatusFile.isFile();
+  public SyncMode getFastSyncStep() {
+    try {
+      return SyncMode.fromString(
+          new String(Files.toByteArray(fastSyncStepFile), StandardCharsets.UTF_8));
+    } catch (final IOException e) {
+      return SyncMode.X_SNAP;
+    }
   }
 }

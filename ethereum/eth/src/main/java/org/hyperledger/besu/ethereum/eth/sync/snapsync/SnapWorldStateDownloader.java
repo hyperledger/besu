@@ -142,14 +142,14 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               clock);
 
       // snapsync already done, switch to fastsync
-      if (fastSyncStateStorage.isFastSyncStarted()) {
-        healProcess.run(fastSyncActions, fastSyncState);
-      } else {
+      if (fastSyncStateStorage.getFastSyncStep().equals(SyncMode.X_SNAP)) {
         RangeManager.generateAllRanges(16)
             .forEach(
                 (key, value) ->
                     newDownloadState.enqueueRequest(
                         SnapDataRequest.createAccountRangeDataRequest(stateRoot, key, value)));
+      } else {
+        return healProcess.run(fastSyncActions, fastSyncState);
       }
 
       maybeCompleteTask =

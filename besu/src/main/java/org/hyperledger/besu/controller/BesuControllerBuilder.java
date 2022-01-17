@@ -365,7 +365,6 @@ public abstract class BesuControllerBuilder {
             ethProtocolManager.ethContext(),
             syncState,
             dataDirectory,
-            storageProvider,
             clock,
             metricsSystem);
 

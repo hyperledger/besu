@@ -174,10 +174,8 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     if (!isTaskCompleted
         && getOriginalRootHash().compareTo(requestData.worldStateRootHash()) != 0) {
       LOG.trace(
-          "Invalidated root hash detected {} during get storage range data request {} {} {}",
-          getOriginalRootHash(),
-          requestData.hashes().first(),
-          requestData.hashes().last());
+          "Invalidated root hash detected {} during get storage range data request {}",
+          getOriginalRootHash());
       if (requestData.hashes().size() > 1) {
         // split this range in order to fill more account quickly
         RangeManager.generateRanges(requestData.hashes().first(), requestData.hashes().last(), 16)

@@ -41,7 +41,7 @@ public class FastSyncDownloader<REQUEST> {
   private static final Duration FAST_SYNC_RETRY_DELAY = Duration.ofSeconds(5);
 
   private static final Logger LOG = LogManager.getLogger();
-  private final FastSyncActions fastSyncActions;
+  protected final FastSyncActions fastSyncActions;
   private final WorldStateDownloader worldStateDownloader;
   protected final FastSyncStateStorage fastSyncStateStorage;
   private final TaskCollection<REQUEST> taskCollection;
@@ -72,7 +72,7 @@ public class FastSyncDownloader<REQUEST> {
     return start(initialFastSyncState);
   }
 
-  private CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
+  protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
     LOG.info("Starting fast sync.");
     return exceptionallyCompose(
         fastSyncActions
@@ -85,7 +85,7 @@ public class FastSyncDownloader<REQUEST> {
         this::handleFailure);
   }
 
-  private CompletableFuture<FastSyncState> handleFailure(final Throwable error) {
+  protected CompletableFuture<FastSyncState> handleFailure(final Throwable error) {
     trailingPeerRequirements = Optional.empty();
     Throwable rootCause = ExceptionUtils.rootCause(error);
     if (rootCause instanceof FastSyncException) {
@@ -130,7 +130,7 @@ public class FastSyncDownloader<REQUEST> {
     }
   }
 
-  private FastSyncState updateMaxTrailingPeers(final FastSyncState state) {
+  protected FastSyncState updateMaxTrailingPeers(final FastSyncState state) {
     if (state.getPivotBlockNumber().isPresent()) {
       trailingPeerRequirements =
           Optional.of(new TrailingPeerRequirements(state.getPivotBlockNumber().getAsLong(), 0));
@@ -142,11 +142,10 @@ public class FastSyncDownloader<REQUEST> {
 
   protected FastSyncState storeState(final FastSyncState state) {
     fastSyncStateStorage.storeState(state);
-    fastSyncStateStorage.notifyFastSyncStarted();
     return state;
   }
 
-  private CompletableFuture<FastSyncState> downloadChainAndWorldState(
+  protected CompletableFuture<FastSyncState> downloadChainAndWorldState(
       final FastSyncActions fastSyncActions, final FastSyncState currentState) {
     // Synchronized ensures that stop isn't called while we're in the process of starting a
     // world state and chain download. If it did we might wind up starting a new download
