@@ -132,7 +132,7 @@ public class TransactionPool implements BlockAddedObserver {
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
       final Transaction transaction) {
     final ValidationResult<TransactionInvalidReason> validationResult =
-        validateTransaction(transaction);
+        validateLocalTransaction(transaction);
     if (validationResult.isValid()) {
       if (!configuration.getTxFeeCap().isZero()
           && minTransactionGasPrice(transaction).compareTo(configuration.getTxFeeCap()) > 0) {
@@ -169,7 +169,7 @@ public class TransactionPool implements BlockAddedObserver {
         continue;
       }
       final ValidationResult<TransactionInvalidReason> validationResult =
-          validateTransaction(transaction);
+          validateRemoteTransaction(transaction);
       if (validationResult.isValid()) {
         final boolean added = pendingTransactions.addRemoteTransaction(transaction);
         if (added) {
@@ -222,8 +222,18 @@ public class TransactionPool implements BlockAddedObserver {
     return pendingTransactions;
   }
 
-  private ValidationResult<TransactionInvalidReason> validateTransaction(
+  private ValidationResult<TransactionInvalidReason> validateLocalTransaction(
       final Transaction transaction) {
+    return validateTransaction(transaction, true);
+  }
+
+  private ValidationResult<TransactionInvalidReason> validateRemoteTransaction(
+      final Transaction transaction) {
+    return validateTransaction(transaction, false);
+  }
+
+  private ValidationResult<TransactionInvalidReason> validateTransaction(
+      final Transaction transaction, final boolean isLocal) {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
 
     // Check whether it's a GoQuorum transaction
@@ -245,6 +255,12 @@ public class TransactionPool implements BlockAddedObserver {
       return basicValidationResult;
     }
 
+    if (isLocal
+        && strictReplayProtectionShouldBeEnforceLocally(chainHeadBlockHeader)
+        && transaction.getChainId().isEmpty()) {
+      // Strict replay protection is enabled but the tx is not replay-protected
+      return ValidationResult.invalid(TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURE_REQUIRED);
+    }
     if (transaction.getGasLimit() > chainHeadBlockHeader.getGasLimit()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT,
@@ -272,6 +288,17 @@ public class TransactionPool implements BlockAddedObserver {
                       transaction, senderAccount, TransactionValidationParams.transactionPool());
             })
         .orElseGet(() -> ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
+  }
+
+  private boolean strictReplayProtectionShouldBeEnforceLocally(
+      final BlockHeader chainHeadBlockHeader) {
+    return configuration.getStrictTransactionReplayProtectionEnabled()
+        && protocolSchedule.getChainId().isPresent()
+        && transactionReplaySupportedAtBlock(chainHeadBlockHeader);
+  }
+
+  private boolean transactionReplaySupportedAtBlock(final BlockHeader block) {
+    return protocolSchedule.getByBlockNumber(block.getNumber()).isReplayProtectionSupported();
   }
 
   public Optional<Transaction> getTransactionByHash(final Hash hash) {

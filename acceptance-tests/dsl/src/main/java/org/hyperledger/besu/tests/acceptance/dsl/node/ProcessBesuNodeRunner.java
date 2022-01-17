@@ -362,6 +362,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add("--auto-log-bloom-caching-enabled");
     params.add("false");
 
+    params.add("--strict-tx-replay-protection-enabled");
+    params.add(Boolean.toString(node.isStrictTxReplayProtectionEnabled()));
+
     final String level = System.getProperty("root.log.level");
     if (level != null) {
       params.add("--logging=" + level);

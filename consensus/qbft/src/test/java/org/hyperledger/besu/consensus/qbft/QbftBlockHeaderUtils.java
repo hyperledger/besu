@@ -24,6 +24,7 @@ import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -49,19 +50,21 @@ public class QbftBlockHeaderUtils {
       final long number,
       final NodeKey proposerNodeKey,
       final List<Address> validators,
-      final BlockHeader parent) {
-    return createPresetHeaderBuilder(number, proposerNodeKey, validators, parent, null);
+      final BlockHeader parent,
+      final Optional<Wei> baseFee) {
+    return createPresetHeaderBuilder(number, proposerNodeKey, validators, parent, null, baseFee);
   }
 
   public static BlockHeaderTestFixture createPresetHeaderBuilderForContractMode(
       final long number,
       final NodeKey proposerNodeKey,
       final BlockHeader parent,
-      final HeaderModifier modifier) {
+      final HeaderModifier modifier,
+      final Optional<Wei> baseFee) {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
     final QbftExtraDataCodec qbftExtraDataEncoder = new QbftExtraDataCodec();
     populateDefaultBlockHeader(
-        number, proposerNodeKey, parent, modifier, builder, qbftExtraDataEncoder);
+        number, proposerNodeKey, parent, modifier, builder, qbftExtraDataEncoder, baseFee);
 
     final BftExtraData bftExtraData =
         BftExtraDataFixture.createExtraData(
@@ -82,11 +85,12 @@ public class QbftBlockHeaderUtils {
       final NodeKey proposerNodeKey,
       final List<Address> validators,
       final BlockHeader parent,
-      final HeaderModifier modifier) {
+      final HeaderModifier modifier,
+      final Optional<Wei> baseFee) {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
     final QbftExtraDataCodec qbftExtraDataEncoder = new QbftExtraDataCodec();
     populateDefaultBlockHeader(
-        number, proposerNodeKey, parent, modifier, builder, qbftExtraDataEncoder);
+        number, proposerNodeKey, parent, modifier, builder, qbftExtraDataEncoder, baseFee);
 
     final BftExtraData bftExtraData =
         BftExtraDataFixture.createExtraData(
@@ -108,7 +112,8 @@ public class QbftBlockHeaderUtils {
       final BlockHeader parent,
       final HeaderModifier modifier,
       final BlockHeaderTestFixture builder,
-      final QbftExtraDataCodec qbftExtraDataEncoder) {
+      final QbftExtraDataCodec qbftExtraDataEncoder,
+      final Optional<Wei> baseFee) {
     if (parent != null) {
       builder.parentHash(parent.getHash());
     }
@@ -120,6 +125,7 @@ public class QbftBlockHeaderUtils {
     builder.difficulty(Difficulty.ONE);
     builder.coinbase(Util.publicKeyToAddress(proposerNodeKey.getPublicKey()));
     builder.blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(qbftExtraDataEncoder));
+    baseFee.ifPresent(fee -> builder.baseFeePerGas(fee));
 
     if (modifier != null) {
       modifier.update(builder);
