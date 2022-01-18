@@ -94,12 +94,12 @@ dependencyManagement {
 
     dependencySet(group: 'io.vertx', version: '4.2.3') {
       entry 'vertx-auth-jwt'
-      entry 'vertx-auth-codegen'
-      entry 'vertx-auth-core'
-      entry 'vertx-auth-unit'
-      entry 'vertx-auth-web'
-      entry 'vertx-auth-web-client'
-      entry 'vertx-auth-auth-jwt'
+      entry 'vertx-codegen'
+      entry 'vertx-core'
+      entry 'vertx-unit'
+      entry 'vertx-web'
+      entry 'vertx-web-client'
+      entry 'vertx-auth-jwt'
     }
 
     dependency 'junit:junit:4.13.2'
