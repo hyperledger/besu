@@ -1342,45 +1342,6 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
   }
 
   @Test
-  public void invalidJson() throws Exception {
-    final RequestBody body = RequestBody.create(JSON, "{bla");
-
-    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
-      final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.PARSE_ERROR;
-      testHelper.assertValidJsonRpcError(
-          json, null, expectedError.getCode(), expectedError.getMessage());
-    }
-  }
-
-  @Test
-  public void wrongJsonType() throws Exception {
-    final RequestBody body = RequestBody.create(JSON, "\"a string\"");
-
-    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
-      final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.PARSE_ERROR;
-      testHelper.assertValidJsonRpcError(
-          json, null, expectedError.getCode(), expectedError.getMessage());
-    }
-  }
-
-  @Test
-  public void emptyJson_shouldHandleNPE() throws Exception {
-    final RequestBody body = RequestBody.create(JSON, "");
-
-    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
-      final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.PARSE_ERROR;
-      testHelper.assertValidJsonRpcError(
-          json, null, expectedError.getCode(), expectedError.getMessage());
-    }
-  }
-
-  @Test
   public void requestWithWrongVersionShouldSucceed() throws Exception {
     final String id = "234";
     final RequestBody body =
