@@ -589,6 +589,8 @@ public class JsonRpcHttpService {
               token,
               user -> handleJsonBatchRequest(routingContext, array, user));
         }
+      } catch (final NullPointerException ex) {
+        handleJsonRpcError(routingContext, null, JsonRpcError.PARSE_ERROR);
       } catch (final DecodeException ex) {
         handleJsonRpcError(routingContext, null, JsonRpcError.PARSE_ERROR);
       }
