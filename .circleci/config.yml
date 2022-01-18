@@ -86,6 +86,14 @@ commands:
       - store_artifacts:
           path: acceptance-tests/tests/build/jvmErrorLogs
 
+  notify:
+    description: "Notify Slack"
+    steps:
+      - slack/status:
+          mentions: "pegasys-devwatch"
+          fail_only: true
+          only_for_branches: 'main'
+
 jobs:
   assemble:
     executor: besu_executor_xl
