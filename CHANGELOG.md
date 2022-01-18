@@ -1,5 +1,10 @@
 # Changelog
 
+## 21.10.9
+
+### Bug Fixes
+- Fix regression on cors-origin star value
+
 ## 21.10.8
 
 ### Additions and Improvements
