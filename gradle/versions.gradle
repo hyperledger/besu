@@ -91,13 +91,16 @@ dependencyManagement {
 
     dependency 'io.reactivex.rxjava2:rxjava:2.2.21'
 
-    dependency 'io.vertx:vertx-auth-jwt:4.2.1'
-    dependency 'io.vertx:vertx-codegen:4.2.1'
-    dependency 'io.vertx:vertx-core:4.2.1'
-    dependency 'io.vertx:vertx-unit:4.2.1'
-    dependency 'io.vertx:vertx-web:4.2.1'
-    dependency 'io.vertx:vertx-web-client:4.2.1'
-    dependency 'io.vertx:vertx-auth-jwt:4.2.1'
+
+    dependencySet(group: 'io.vertx', version: '4.2.3') {
+      entry 'vertx-auth-jwt'
+      entry 'vertx-auth-codegen'
+      entry 'vertx-auth-core'
+      entry 'vertx-auth-unit'
+      entry 'vertx-auth-web'
+      entry 'vertx-auth-web-client'
+      entry 'vertx-auth-auth-jwt'
+    }
 
     dependency 'junit:junit:4.13.2'
 
