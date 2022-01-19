@@ -76,6 +76,8 @@ public class EthFeeHistoryTest {
     feeHistoryRequest(1, "latest");
     // should pass because both required params and optional param given
     feeHistoryRequest(1, "latest", new double[] {1, 20.4});
+    // should pass because both required params and optional param given
+    feeHistoryRequest("0x1", "latest", new double[] {1, 20.4});
   }
 
   @Test
