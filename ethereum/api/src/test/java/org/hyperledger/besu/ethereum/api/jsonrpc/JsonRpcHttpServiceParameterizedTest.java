@@ -52,7 +52,7 @@ public class JsonRpcHttpServiceParameterizedTest extends JsonRpcHttpServiceTestB
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][] {{"a string"}, {"{bla"}, {""}});
+    return Arrays.asList(new Object[][] {{"\"a string\""}, {"a string"}, {"{bla"}, {""}});
   }
 
   @Test
