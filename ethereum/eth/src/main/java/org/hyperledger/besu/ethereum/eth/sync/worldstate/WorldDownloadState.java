@@ -18,8 +18,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.services.tasks.Task;
-import org.hyperledger.besu.services.tasks.TaskCollection;
+import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.time.Clock;
@@ -34,11 +35,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public abstract class WorldDownloadState<REQUEST> {
+public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> {
   private static final Logger LOG = LogManager.getLogger();
 
   private boolean downloadWasResumed;
-  protected final TaskCollection<REQUEST> pendingRequests;
+  protected final InMemoryTasksPriorityQueues<REQUEST> pendingRequests;
 
   protected final int maxRequestsWithoutProgress;
   private final Clock clock;
@@ -54,7 +55,7 @@ public abstract class WorldDownloadState<REQUEST> {
   protected WorldStateDownloadProcess worldStateDownloadProcess;
 
   public WorldDownloadState(
-      final TaskCollection<REQUEST> pendingRequests,
+      final InMemoryTasksPriorityQueues<REQUEST> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final Clock clock) {

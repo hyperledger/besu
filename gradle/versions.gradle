@@ -15,10 +15,8 @@
 
 dependencyManagement {
   dependencies {
-    dependencySet(group: 'com.fasterxml.jackson.core', version: '2.13.1') {
-      entry 'jackson-databind'
-      entry 'jackson-datatype-jdk8'
-    }
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.1'
+    dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.13.1'
 
     dependency 'com.github.ben-manes.caffeine:caffeine:3.0.5'
 
@@ -47,9 +45,9 @@ dependencyManagement {
 
     dependency 'com.splunk.logging:splunk-library-javalogging:1.11.3'
 
-    dependency 'com.squareup.okhttp3:okhttp:4.9.1'
+    dependency 'com.squareup.okhttp3:okhttp:4.9.3'
 
-    dependency 'commons-codec:commons-codec:1.13'
+    dependency 'commons-codec:commons-codec:1.15'
 
     dependency 'commons-io:commons-io:2.11.0'
 
@@ -65,7 +63,7 @@ dependencyManagement {
 
     dependency 'io.jaegertracing:jaeger-client:1.6.0'
 
-    dependency 'io.kubernetes:client-java:5.0.0'
+    dependency 'io.kubernetes:client-java:14.0.0'
 
     dependency 'io.netty:netty-all:4.1.72.Final'
     dependency 'io.netty:netty-tcnative-boringssl-static:2.0.46.Final'
@@ -93,17 +91,18 @@ dependencyManagement {
 
     dependency 'io.reactivex.rxjava2:rxjava:2.2.21'
 
-    dependency 'io.vertx:vertx-auth-jwt:4.2.1'
-    dependency 'io.vertx:vertx-codegen:4.2.1'
-    dependency 'io.vertx:vertx-core:4.2.1'
-    dependency 'io.vertx:vertx-unit:4.2.1'
-    dependency 'io.vertx:vertx-web:4.2.1'
-    dependency 'io.vertx:vertx-web-client:4.2.1'
-    dependency 'io.vertx:vertx-auth-jwt:4.2.1'
+
+    dependencySet(group: 'io.vertx', version: '4.2.3') {
+      entry 'vertx-auth-jwt'
+      entry 'vertx-codegen'
+      entry 'vertx-core'
+      entry 'vertx-unit'
+      entry 'vertx-web'
+      entry 'vertx-web-client'
+      entry 'vertx-auth-jwt'
+    }
 
     dependency 'junit:junit:4.13.2'
-
-    dependency 'net.consensys:orion:21.1.1'
 
     dependency 'net.consensys.services:quorum-mainnet-launcher:1.0.1'
 
@@ -129,7 +128,7 @@ dependencyManagement {
     dependency 'org.apache.tuweni:tuweni-toml:2.0.0'
     dependency 'org.apache.tuweni:tuweni-units:2.0.0'
 
-    dependency 'org.assertj:assertj-core:3.20.2'
+    dependency 'org.assertj:assertj-core:3.22.0'
 
     dependency 'org.awaitility:awaitility:4.1.1'
 
@@ -140,7 +139,6 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
 
-    // Not updating bls12-381 because of https://github.com/hyperledger/besu/issues/2668
     dependency 'org.hyperledger.besu:bls12-381:0.4.2'
     dependency 'org.hyperledger.besu:secp256k1:0.4.2'
     dependency 'org.hyperledger.besu:secp256r1:0.4.2'

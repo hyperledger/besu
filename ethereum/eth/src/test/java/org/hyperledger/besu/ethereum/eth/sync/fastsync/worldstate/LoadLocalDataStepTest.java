@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.metrics.noop.NoOpMetricsSystem.NO_OP_COUNTER;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -32,6 +33,7 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class LoadLocalDataStepTest {
 
@@ -61,6 +63,7 @@ public class LoadLocalDataStepTest {
   @Test
   public void shouldReturnEmptyStreamAndSendTaskToCompletedPipeWhenDataIsPresent() {
     when(worldStateStorage.getCode(HASH, Hash.EMPTY)).thenReturn(Optional.of(DATA));
+    when(worldStateStorage.updater()).thenReturn(updater);
 
     final Stream<Task<NodeDataRequest>> output =
         loadLocalDataStep.loadLocalData(task, completedTasks);
@@ -68,6 +71,9 @@ public class LoadLocalDataStepTest {
     assertThat(completedTasks.poll()).isSameAs(task);
     assertThat(request.getData()).isEqualTo(DATA);
     assertThat(output).isEmpty();
+
+    verify(updater).commit();
+    Mockito.reset(updater);
 
     // Should not require persisting.
     request.persist(updater);

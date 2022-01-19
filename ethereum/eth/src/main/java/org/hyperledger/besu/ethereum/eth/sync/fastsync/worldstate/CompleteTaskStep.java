@@ -62,7 +62,6 @@ public class CompleteTaskStep {
       final WorldDownloadState<NodeDataRequest> downloadState,
       final Task<NodeDataRequest> task) {
     if (task.getData().getData() != null) {
-      enqueueChildren(task, header, downloadState);
       completedRequestsCounter.inc();
       task.markCompleted();
       downloadState.checkCompletion(worldStateStorage, header);
@@ -88,20 +87,5 @@ public class CompleteTaskStep {
 
   long getPendingRequests() {
     return worldStatePendingRequestsCurrentSupplier.getAsLong();
-  }
-
-  private void enqueueChildren(
-      final Task<NodeDataRequest> task,
-      final BlockHeader blockHeader,
-      final WorldDownloadState<NodeDataRequest> downloadState) {
-    final NodeDataRequest request = task.getData();
-    // Only queue rootnode children if we started from scratch
-    if (!downloadState.downloadWasResumed() || !isRootState(blockHeader, request)) {
-      downloadState.enqueueRequests(request.getChildRequests(worldStateStorage));
-    }
-  }
-
-  private boolean isRootState(final BlockHeader blockHeader, final NodeDataRequest request) {
-    return request.getHash().equals(blockHeader.getStateRoot());
   }
 }

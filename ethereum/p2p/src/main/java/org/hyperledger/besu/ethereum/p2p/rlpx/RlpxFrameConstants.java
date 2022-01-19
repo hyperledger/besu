@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,13 +11,13 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-package org.hyperledger.besu.tests.acceptance.dsl.transaction;
+package org.hyperledger.besu.ethereum.p2p.rlpx;
 
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
+public class RlpxFrameConstants {
 
-@FunctionalInterface
-public interface TransactionWithSignatureAlgorithm<T> {
-  T execute(final NodeRequests node, final SignatureAlgorithm signatureAlgorithm);
+  private RlpxFrameConstants() {}
+
+  public static final int LENGTH_MAX_MESSAGE_FRAME = 0xFFFFFF;
+  public static final int LENGTH_FRAME_SIZE = 3;
 }

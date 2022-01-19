@@ -32,12 +32,13 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.io.File;
-import java.nio.file.FileSystem;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.spi.FileSystemProvider;
 import java.time.Clock;
 import java.util.Optional;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -119,23 +120,74 @@ public class FastDownloaderFactoryTest {
     verify(mutableBlockchain).getChainHeadBlockNumber();
   }
 
-  private void initDataDirectory(final boolean isPivotBlockHeaderFileExist)
-      throws NoSuchFieldException {
+  @Test
+  public void shouldClearWorldStateDuringFastSyncWhenStateQueDirectoryExists() throws IOException {
+    when(syncConfig.getSyncMode()).thenReturn(SyncMode.FAST);
+    final MutableBlockchain mutableBlockchain = mock(MutableBlockchain.class);
+    when(mutableBlockchain.getChainHeadBlockNumber()).thenReturn(0L);
+    when(protocolContext.getBlockchain()).thenReturn(mutableBlockchain);
+
+    final Path dataDirectory = Files.createTempDirectory("fast-sync");
+    final Path stateQueueDir = dataDirectory.resolve("fastsync").resolve("statequeue");
+    final boolean mkdirs = stateQueueDir.toFile().mkdirs();
+    Files.createFile(stateQueueDir.resolve("taskToDelete"));
+    assertThat(mkdirs).isTrue();
+
+    assertThat(Files.exists(stateQueueDir)).isTrue();
+
+    FastDownloaderFactory.create(
+        syncConfig,
+        dataDirectory,
+        protocolSchedule,
+        protocolContext,
+        metricsSystem,
+        ethContext,
+        worldStateStorage,
+        syncState,
+        clock);
+
+    verify(worldStateStorage).clear();
+    assertThat(Files.exists(stateQueueDir)).isFalse();
+  }
+
+  @Test
+  public void shouldCrashWhenStateQueueIsNotDirectory() throws IOException {
+    when(syncConfig.getSyncMode()).thenReturn(SyncMode.FAST);
+    final MutableBlockchain mutableBlockchain = mock(MutableBlockchain.class);
+    when(mutableBlockchain.getChainHeadBlockNumber()).thenReturn(0L);
+    when(protocolContext.getBlockchain()).thenReturn(mutableBlockchain);
+
+    final Path dataDirectory = Files.createTempDirectory("fast-sync");
+    final Path stateQueueDir = dataDirectory.resolve("fastsync").resolve("statequeue");
+    final boolean mkdirs = dataDirectory.resolve("fastsync").toFile().mkdirs();
+    Files.createFile(stateQueueDir);
+    assertThat(mkdirs).isTrue();
+
+    assertThat(Files.exists(stateQueueDir)).isTrue();
+    Assertions.assertThatThrownBy(
+            () ->
+                FastDownloaderFactory.create(
+                    syncConfig,
+                    dataDirectory,
+                    protocolSchedule,
+                    protocolContext,
+                    metricsSystem,
+                    ethContext,
+                    worldStateStorage,
+                    syncState,
+                    clock))
+        .isInstanceOf(IllegalStateException.class);
+  }
+
+  private void initDataDirectory(final boolean isPivotBlockHeaderFileExist) {
     final File pivotBlockHeaderFile = mock(File.class);
     when(pivotBlockHeaderFile.isFile()).thenReturn(isPivotBlockHeaderFileExist);
-    when(pivotBlockHeaderFile.isDirectory()).thenReturn(true);
 
     final File fastSyncDirFile = mock(File.class);
     when(fastSyncDirFile.isDirectory()).thenReturn(true);
 
-    final Path storagePath = mock(Path.class);
-    final FileSystem fileSystem = mock(FileSystem.class);
-    when(storagePath.getFileSystem()).thenReturn(fileSystem);
-    when(fileSystem.provider()).thenReturn(mock(FileSystemProvider.class));
-
     final Path pivotBlockHeaderPath = mock(Path.class);
     when(pivotBlockHeaderPath.toFile()).thenReturn(pivotBlockHeaderFile);
-    when(pivotBlockHeaderPath.resolve(anyString())).thenReturn(storagePath);
 
     final Path fastSyncDir = mock(Path.class);
     when(fastSyncDir.resolve(any(String.class))).thenReturn(pivotBlockHeaderPath);

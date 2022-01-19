@@ -23,15 +23,18 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.Test;
 
@@ -53,14 +56,42 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final List<Address> validators = singletonList(proposerAddress);
 
     final BlockHeader parentHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                1, proposerNodeKey, validators, null, Optional.empty())
             .buildHeader();
     final BlockHeader blockHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                2, proposerNodeKey, validators, parentHeader, Optional.empty())
+            .buildHeader();
+
+    final BlockHeaderValidator validator = getBlockHeaderValidator();
+
+    assertThat(
+            validator.validateHeader(
+                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+        .isTrue();
+  }
+
+  @Test
+  public void bftValidateHeaderPassesWithBaseFee() {
+    final NodeKey proposerNodeKey = NodeKeyUtils.generate();
+    final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
+
+    final List<Address> validators = singletonList(proposerAddress);
+
+    final BlockHeader parentHeader =
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                1, proposerNodeKey, validators, null, Optional.of(Wei.ONE))
+            .buildHeader();
+    final BlockHeader blockHeader =
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                2, proposerNodeKey, validators, parentHeader, Optional.of(Wei.ONE))
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5, false).build();
+        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
+                5, false, Optional.of(FeeMarket.london(1)))
+            .build();
 
     assertThat(
             validator.validateHeader(
@@ -76,15 +107,15 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final List<Address> validators = singletonList(proposerAddress);
 
     final BlockHeader parentHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                1, proposerNodeKey, validators, null, Optional.empty())
             .buildHeader();
     final BlockHeader blockHeader =
         QbftBlockHeaderUtils.createPresetHeaderBuilder(
-                2, proposerNodeKey, emptyList(), parentHeader)
+                2, proposerNodeKey, emptyList(), parentHeader, Optional.empty())
             .buildHeader();
 
-    final BlockHeaderValidator validator =
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5, false).build();
+    final BlockHeaderValidator validator = getBlockHeaderValidator();
 
     assertThat(
             validator.validateHeader(
@@ -103,15 +134,16 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final List<Address> validators = singletonList(proposerAddress);
 
     final BlockHeader parentHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                1, proposerNodeKey, validators, null, Optional.empty())
             .buildHeader();
     final BlockHeader blockHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                2, proposerNodeKey, validators, parentHeader, Optional.empty())
             .coinbase(nonProposerAddress)
             .buildHeader();
 
-    final BlockHeaderValidator validator =
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5, false).build();
+    final BlockHeaderValidator validator = getBlockHeaderValidator();
 
     assertThat(
             validator.validateHeader(
@@ -127,15 +159,20 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final List<Address> validators = singletonList(proposerAddress);
 
     final BlockHeader parentHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                1, proposerNodeKey, validators, null, Optional.empty())
             .buildHeader();
     final BlockHeader blockHeader =
         QbftBlockHeaderUtils.createPresetHeaderBuilder(
-                2, proposerNodeKey, validators, parentHeader, builder -> builder.nonce(3))
+                2,
+                proposerNodeKey,
+                validators,
+                parentHeader,
+                builder -> builder.nonce(3),
+                Optional.empty())
             .buildHeader();
 
-    final BlockHeaderValidator validator =
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5, false).build();
+    final BlockHeaderValidator validator = getBlockHeaderValidator();
 
     assertThat(
             validator.validateHeader(
@@ -151,15 +188,16 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final List<Address> validators = singletonList(proposerAddress);
 
     final BlockHeader parentHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                1, proposerNodeKey, validators, null, Optional.empty())
             .buildHeader();
     final BlockHeader blockHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                2, proposerNodeKey, validators, parentHeader, Optional.empty())
             .timestamp(100)
             .buildHeader();
 
-    final BlockHeaderValidator validator =
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5, false).build();
+    final BlockHeaderValidator validator = getBlockHeaderValidator();
 
     assertThat(
             validator.validateHeader(
@@ -175,7 +213,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final List<Address> validators = singletonList(proposerAddress);
 
     final BlockHeader parentHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                1, proposerNodeKey, validators, null, Optional.empty())
             .buildHeader();
     final BlockHeader blockHeader =
         QbftBlockHeaderUtils.createPresetHeaderBuilder(
@@ -183,11 +222,11 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
                 proposerNodeKey,
                 validators,
                 parentHeader,
-                builder -> builder.mixHash(Hash.EMPTY_TRIE_HASH))
+                builder -> builder.mixHash(Hash.EMPTY_TRIE_HASH),
+                Optional.empty())
             .buildHeader();
 
-    final BlockHeaderValidator validator =
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5, false).build();
+    final BlockHeaderValidator validator = getBlockHeaderValidator();
 
     assertThat(
             validator.validateHeader(
@@ -203,7 +242,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final List<Address> validators = singletonList(proposerAddress);
 
     final BlockHeader parentHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                1, proposerNodeKey, validators, null, Optional.empty())
             .buildHeader();
     final BlockHeader blockHeader =
         QbftBlockHeaderUtils.createPresetHeaderBuilder(
@@ -211,11 +251,11 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
                 proposerNodeKey,
                 validators,
                 parentHeader,
-                builder -> builder.ommersHash(Hash.EMPTY_TRIE_HASH))
+                builder -> builder.ommersHash(Hash.EMPTY_TRIE_HASH),
+                Optional.empty())
             .buildHeader();
 
-    final BlockHeaderValidator validator =
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5, false).build();
+    final BlockHeaderValidator validator = getBlockHeaderValidator();
 
     assertThat(
             validator.validateHeader(
@@ -231,15 +271,16 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final List<Address> validators = singletonList(proposerAddress);
 
     final BlockHeader parentHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                1, proposerNodeKey, validators, null, Optional.empty())
             .buildHeader();
     final BlockHeader blockHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                2, proposerNodeKey, validators, parentHeader, Optional.empty())
             .difficulty(Difficulty.of(5))
             .buildHeader();
 
-    final BlockHeaderValidator validator =
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5, false).build();
+    final BlockHeaderValidator validator = getBlockHeaderValidator();
 
     assertThat(
             validator.validateHeader(
@@ -255,14 +296,15 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final List<Address> validators = singletonList(proposerAddress);
 
     final BlockHeader parentHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                1, proposerNodeKey, validators, null, Optional.empty())
             .buildHeader();
     final BlockHeader blockHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(2, proposerNodeKey, validators, null)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                2, proposerNodeKey, validators, null, Optional.empty())
             .buildHeader();
 
-    final BlockHeaderValidator validator =
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5, false).build();
+    final BlockHeaderValidator validator = getBlockHeaderValidator();
 
     assertThat(
             validator.validateHeader(
@@ -278,16 +320,17 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final List<Address> validators = singletonList(proposerAddress);
 
     final BlockHeader parentHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                1, proposerNodeKey, validators, null, Optional.empty())
             .buildHeader();
     final BlockHeader blockHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                2, proposerNodeKey, validators, parentHeader, Optional.empty())
             .gasLimit(5_000)
             .gasUsed(6_000)
             .buildHeader();
 
-    final BlockHeaderValidator validator =
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5, false).build();
+    final BlockHeaderValidator validator = getBlockHeaderValidator();
 
     assertThat(
             validator.validateHeader(
@@ -303,19 +346,25 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final List<Address> validators = singletonList(proposerAddress);
 
     final BlockHeader parentHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                1, proposerNodeKey, validators, null, Optional.empty())
             .buildHeader();
     final BlockHeader blockHeader =
-        QbftBlockHeaderUtils.createPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader)
+        QbftBlockHeaderUtils.createPresetHeaderBuilder(
+                2, proposerNodeKey, validators, parentHeader, Optional.empty())
             .gasLimit(4999)
             .buildHeader();
 
-    final BlockHeaderValidator validator =
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5, false).build();
+    final BlockHeaderValidator validator = getBlockHeaderValidator();
 
     assertThat(
             validator.validateHeader(
                 blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
+  }
+
+  public BlockHeaderValidator getBlockHeaderValidator() {
+    return QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5, false, Optional.empty())
+        .build();
   }
 }

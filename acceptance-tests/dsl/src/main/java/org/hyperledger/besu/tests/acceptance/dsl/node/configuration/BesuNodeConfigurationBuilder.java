@@ -81,6 +81,7 @@ public class BesuNodeConfigurationBuilder {
   private List<String> runCommand = new ArrayList<>();
   private Optional<KeyPair> keyPair = Optional.empty();
   private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
+  private Boolean strictTxReplayProtectionEnabled = false;
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -418,6 +419,12 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder strictTxReplayProtectionEnabled(
+      final Boolean strictTxReplayProtectionEnabled) {
+    this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
+    return this;
+  }
+
   public BesuNodeConfiguration build() {
     return new BesuNodeConfiguration(
         name,
@@ -447,6 +454,7 @@ public class BesuNodeConfigurationBuilder {
         privacyParameters,
         runCommand,
         keyPair,
-        pkiKeyStoreConfiguration);
+        pkiKeyStoreConfiguration,
+        strictTxReplayProtectionEnabled);
   }
 }

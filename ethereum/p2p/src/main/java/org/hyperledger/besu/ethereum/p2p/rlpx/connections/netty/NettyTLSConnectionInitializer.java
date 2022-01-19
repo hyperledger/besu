@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
+import static org.hyperledger.besu.ethereum.p2p.rlpx.RlpxFrameConstants.LENGTH_FRAME_SIZE;
+import static org.hyperledger.besu.ethereum.p2p.rlpx.RlpxFrameConstants.LENGTH_MAX_MESSAGE_FRAME;
+
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
@@ -30,6 +33,10 @@ import java.security.GeneralSecurityException;
 import java.util.Optional;
 
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.handler.codec.compression.SnappyFrameDecoder;
+import io.netty.handler.codec.compression.SnappyFrameEncoder;
 import io.netty.handler.ssl.SslContext;
 
 public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
@@ -54,6 +61,13 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
       SslContext sslContext =
           TLSContextFactory.buildFrom(p2pTLSConfiguration.get()).createNettyClientSslContext();
       ch.pipeline().addLast("ssl", sslContext.newHandler(ch.alloc()));
+      ch.pipeline().addLast(new SnappyFrameDecoder());
+      ch.pipeline().addLast(new SnappyFrameEncoder());
+      ch.pipeline()
+          .addLast(
+              new LengthFieldBasedFrameDecoder(
+                  LENGTH_MAX_MESSAGE_FRAME, 0, LENGTH_FRAME_SIZE, 0, LENGTH_FRAME_SIZE));
+      ch.pipeline().addLast(new LengthFieldPrepender(LENGTH_FRAME_SIZE));
     }
   }
 
@@ -64,6 +78,13 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
       SslContext sslContext =
           TLSContextFactory.buildFrom(p2pTLSConfiguration.get()).createNettyServerSslContext();
       ch.pipeline().addLast("ssl", sslContext.newHandler(ch.alloc()));
+      ch.pipeline().addLast(new SnappyFrameDecoder());
+      ch.pipeline().addLast(new SnappyFrameEncoder());
+      ch.pipeline()
+          .addLast(
+              new LengthFieldBasedFrameDecoder(
+                  LENGTH_MAX_MESSAGE_FRAME, 0, LENGTH_FRAME_SIZE, 0, LENGTH_FRAME_SIZE));
+      ch.pipeline().addLast(new LengthFieldPrepender(LENGTH_FRAME_SIZE));
     }
   }
 

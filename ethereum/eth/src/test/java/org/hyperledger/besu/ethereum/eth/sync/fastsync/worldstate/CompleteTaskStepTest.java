@@ -27,11 +27,9 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 
 public class CompleteTaskStepTest {
 
@@ -43,10 +41,6 @@ public class CompleteTaskStepTest {
 
   private final CompleteTaskStep completeTaskStep =
       new CompleteTaskStep(worldStateStorage, new NoOpMetricsSystem(), () -> 3);
-
-  @SuppressWarnings("unchecked")
-  private final ArgumentCaptor<Stream<NodeDataRequest>> streamCaptor =
-      ArgumentCaptor.forClass(Stream.class);
 
   @Test
   public void shouldMarkTaskAsFailedIfItDoesNotHaveData() {
@@ -62,19 +56,13 @@ public class CompleteTaskStepTest {
   }
 
   @Test
-  public void shouldEnqueueChildrenAndMarkCompleteWhenTaskHasData() {
+  public void shouldMarkCompleteWhenTaskHasData() {
     // Use an arbitrary but actually valid trie node to get children from.
     final StubTask task = validTask();
     completeTaskStep.markAsCompleteOrFailed(blockHeader, downloadState, task);
 
     assertThat(task.isCompleted()).isTrue();
     assertThat(task.isFailed()).isFalse();
-
-    verify(downloadState).enqueueRequests(streamCaptor.capture());
-    assertThat(streamCaptor.getValue())
-        .usingRecursiveFieldByFieldElementComparator()
-        .containsExactlyInAnyOrderElementsOf(
-            () -> task.getData().getChildRequests(worldStateStorage).iterator());
 
     verify(downloadState).checkCompletion(worldStateStorage, blockHeader);
   }

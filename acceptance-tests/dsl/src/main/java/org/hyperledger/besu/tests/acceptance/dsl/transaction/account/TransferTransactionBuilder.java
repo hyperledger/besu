@@ -14,10 +14,15 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.transaction.account;
 
+import static org.testcontainers.shaded.com.google.common.base.Preconditions.checkNotNull;
+
+import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
 public class TransferTransactionBuilder {
 
@@ -26,6 +31,8 @@ public class TransferTransactionBuilder {
   private Amount transferAmount;
   private Amount gasPrice;
   private BigInteger nonce;
+  private Optional<BigInteger> chainId = Optional.empty();
+  private SignatureAlgorithm signatureAlgorithm = new SECP256K1();
 
   public TransferTransactionBuilder sender(final Account sender) {
     this.sender = sender;
@@ -54,10 +61,28 @@ public class TransferTransactionBuilder {
     return this;
   }
 
+  public TransferTransactionBuilder setSignatureAlgorithm(
+      final SignatureAlgorithm signatureAlgorithm) {
+    checkNotNull(signatureAlgorithm);
+    this.signatureAlgorithm = signatureAlgorithm;
+    return this;
+  }
+
   public TransferTransaction build() {
     validateSender();
     validateTransferAmount();
-    return new TransferTransaction(sender, recipient, transferAmount, gasPrice, nonce);
+    return new TransferTransaction(
+        sender, recipient, transferAmount, gasPrice, nonce, chainId, signatureAlgorithm);
+  }
+
+  public TransferTransactionBuilder chainId(final BigInteger chainId) {
+    this.chainId = Optional.ofNullable(chainId);
+    return this;
+  }
+
+  public TransferTransactionBuilder chainId(final Long chainId) {
+    checkNotNull(chainId);
+    return chainId(BigInteger.valueOf(chainId));
   }
 
   private void validateSender() {
