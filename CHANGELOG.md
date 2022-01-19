@@ -10,6 +10,7 @@
 - Update to block header validation for IBFT and QBFT to support London fork EIP-1559 [#3251](https://github.com/hyperledger/besu/pull/3251)
 
 ### Bug Fixes
+- Fix regression on cors-origin star value
 
 ## 22.1.0-RC2
 

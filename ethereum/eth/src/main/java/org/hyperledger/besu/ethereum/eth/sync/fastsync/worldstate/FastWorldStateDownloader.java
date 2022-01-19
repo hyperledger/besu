@@ -112,6 +112,15 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
         return failed;
       }
 
+      Optional<BlockHeader> checkNull =
+          Optional.ofNullable(fastSyncState.getPivotBlockHeader().get());
+      if (checkNull.isEmpty()) {
+        LOG.error("Pivot Block not present");
+        final CompletableFuture<Void> failed = new CompletableFuture<>();
+        failed.completeExceptionally(new NullPointerException("Pivot Block not present"));
+        return failed;
+      }
+
       final BlockHeader header = fastSyncState.getPivotBlockHeader().get();
       final Hash stateRoot = header.getStateRoot();
       if (worldStateStorage.isWorldStateAvailable(stateRoot, header.getHash())) {
