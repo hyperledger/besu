@@ -32,6 +32,7 @@ import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
@@ -143,11 +144,13 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       // snapsync already done, switch to fastsync
       if (fastSyncStateStorage.getFastSyncStep().equals(SyncMode.X_SNAP)) {
+        AtomicLong counter = new AtomicLong(0);
         RangeManager.generateAllRanges(16)
             .forEach(
                 (key, value) ->
                     newDownloadState.enqueueRequest(
-                        SnapDataRequest.createAccountRangeDataRequest(stateRoot, key, value)));
+                        SnapDataRequest.createAccountRangeDataRequest(
+                            stateRoot, key, value, 0, counter.getAndIncrement())));
       } else {
         return healProcess.run(fastSyncActions, fastSyncState);
       }

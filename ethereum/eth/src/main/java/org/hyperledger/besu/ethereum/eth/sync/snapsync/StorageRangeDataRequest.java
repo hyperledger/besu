@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -60,14 +61,20 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   private GetStorageRangeMessage.StorageRange range;
   private StorageRangeMessage.SlotRangeData response;
   private boolean isTaskCompleted = true;
+  private final int depth;
+  private final long priority;
 
   protected StorageRangeDataRequest(
       final Hash rootHash,
       final ArrayDeque<Bytes32> accountsHashes,
       final ArrayDeque<Bytes32> storageRoots,
       final Bytes32 startKeyHash,
-      final Bytes32 endKeyHash) {
+      final Bytes32 endKeyHash,
+      final int depth,
+      final long priority) {
     super(STORAGE_RANGE, rootHash);
+    this.depth = depth;
+    this.priority = priority;
     LOG.trace(
         "create get storage range data request for {} accounts {} with root hash={} from {} to {}",
         accountsHashes.size(),
@@ -178,11 +185,17 @@ public class StorageRangeDataRequest extends SnapDataRequest {
           getOriginalRootHash());
       if (requestData.hashes().size() > 1) {
         // split this range in order to fill more account quickly
+        AtomicLong counter = new AtomicLong(getPriority() * 16);
         RangeManager.generateRanges(requestData.hashes().first(), requestData.hashes().last(), 16)
             .forEach(
                 (min, max) ->
                     downloadState.enqueueRequest(
-                        createAccountRangeDataRequest(requestData.worldStateRootHash(), min, max)));
+                        createAccountRangeDataRequest(
+                            requestData.worldStateRootHash(),
+                            min,
+                            max,
+                            getDepth() + 1,
+                            counter.incrementAndGet())));
       }
       return true;
     }
@@ -237,7 +250,9 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                           new ArrayDeque<>(List.of(requestData.hashes().get(lastSlotIndex - 1))),
                           new ArrayDeque<>(List.of(lastSlotRootHash)),
                           missingRightElement,
-                          endKeyHash));
+                          endKeyHash,
+                          depth,
+                          priority));
                 });
 
         // new request if we are missing accounts in the response
@@ -256,7 +271,9 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                   missingAccounts,
                   missingStorageRoots,
                   requestData.startKeyHash(),
-                  requestData.endKeyHash()));
+                  requestData.endKeyHash(),
+                  depth,
+                  priority));
         }
       }
     }
@@ -271,11 +288,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
   @Override
   public long getPriority() {
-    return 2;
+    return priority;
   }
 
   @Override
   public int getDepth() {
-    return 0;
+    return depth;
   }
 }

@@ -64,10 +64,18 @@ public class AccountRangeDataRequest extends SnapDataRequest {
   private final GetAccountRangeMessage request;
   private GetAccountRangeMessage.Range range;
   private AccountRangeMessage.AccountRangeData response;
+  private final int depth;
+  private final long priority;
 
   protected AccountRangeDataRequest(
-      final Hash originalRootHash, final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
+      final Hash originalRootHash,
+      final Bytes32 startKeyHash,
+      final Bytes32 endKeyHash,
+      final int depth,
+      final long priority) {
     super(ACCOUNT_RANGE, originalRootHash);
+    this.depth = depth;
+    this.priority = priority;
     LOG.trace(
         "create get account range data request with root hash={} from {} to {}",
         originalRootHash,
@@ -76,6 +84,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     request =
         GetAccountRangeMessage.create(
             originalRootHash, startKeyHash, endKeyHash, BigInteger.valueOf(524288));
+    new BigInteger(1, startKeyHash.toArray());
   }
 
   @Override
@@ -188,7 +197,9 @@ public class AccountRangeDataRequest extends SnapDataRequest {
                       createAccountRangeDataRequest(
                           requestData.worldStateRootHash(),
                           missingRightElement,
-                          requestData.endKeyHash())));
+                          requestData.endKeyHash(),
+                          depth,
+                          priority)));
 
       // find missing storages and code
       for (Map.Entry<Bytes32, Bytes> account : responseData.accounts().entrySet()) {
@@ -214,7 +225,9 @@ public class AccountRangeDataRequest extends SnapDataRequest {
                 new ArrayDeque<>(accountsStoragePartition.get(i)),
                 new ArrayDeque<>(storageRootsPartition.get(i)),
                 MIN_RANGE,
-                MAX_RANGE));
+                MAX_RANGE,
+                depth + 1,
+                priority * 16 + i));
       }
 
       final List<List<Bytes32>> bytesCodesPartition =
@@ -225,7 +238,9 @@ public class AccountRangeDataRequest extends SnapDataRequest {
         childRequests.add(
             createBytecodeRequest(
                 new ArrayDeque<>(accountsBytecodePartition.get(i)),
-                new ArrayDeque<>(bytesCodesPartition.get(i))));
+                new ArrayDeque<>(bytesCodesPartition.get(i)),
+                depth + 1,
+                priority * 16 + i));
       }
 
       return childRequests.stream();
@@ -240,11 +255,11 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
   @Override
   public long getPriority() {
-    return 1;
+    return priority;
   }
 
   @Override
   public int getDepth() {
-    return 0;
+    return depth;
   }
 }
