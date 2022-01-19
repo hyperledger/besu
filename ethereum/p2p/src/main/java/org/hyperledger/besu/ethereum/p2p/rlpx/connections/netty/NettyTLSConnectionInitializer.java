@@ -28,11 +28,12 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Optional;
+import java.util.function.Supplier;
 
-import io.netty.channel.socket.SocketChannel;
+import com.google.common.annotations.VisibleForTesting;
+import io.netty.channel.Channel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.compression.SnappyFrameDecoder;
@@ -41,7 +42,7 @@ import io.netty.handler.ssl.SslContext;
 
 public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
 
-  private final Optional<TLSConfiguration> p2pTLSConfiguration;
+  private final Optional<Supplier<TLSContextFactory>> tlsContextFactorySupplier;
 
   public NettyTLSConnectionInitializer(
       final NodeKey nodeKey,
@@ -50,16 +51,32 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
       final PeerConnectionEventDispatcher eventDispatcher,
       final MetricsSystem metricsSystem,
       final Optional<TLSConfiguration> p2pTLSConfiguration) {
+    this(
+        nodeKey,
+        config,
+        localNode,
+        eventDispatcher,
+        metricsSystem,
+        defaultTlsContextFactorySupplier(p2pTLSConfiguration));
+  }
+
+  @VisibleForTesting
+  NettyTLSConnectionInitializer(
+      final NodeKey nodeKey,
+      final RlpxConfiguration config,
+      final LocalNode localNode,
+      final PeerConnectionEventDispatcher eventDispatcher,
+      final MetricsSystem metricsSystem,
+      final Supplier<TLSContextFactory> tlsContextFactorySupplier) {
     super(nodeKey, config, localNode, eventDispatcher, metricsSystem);
-    this.p2pTLSConfiguration = p2pTLSConfiguration;
+    this.tlsContextFactorySupplier = Optional.ofNullable(tlsContextFactorySupplier);
   }
 
   @Override
-  protected void addAdditionalOutboundHandlers(final SocketChannel ch)
-      throws GeneralSecurityException, IOException {
-    if (p2pTLSConfiguration.isPresent()) {
-      SslContext sslContext =
-          TLSContextFactory.buildFrom(p2pTLSConfiguration.get()).createNettyClientSslContext();
+  protected void addAdditionalOutboundHandlers(final Channel ch) throws GeneralSecurityException {
+    if (tlsContextFactorySupplier.isPresent()) {
+      final SslContext sslContext =
+          tlsContextFactorySupplier.get().get().createNettyClientSslContext();
       ch.pipeline().addLast("ssl", sslContext.newHandler(ch.alloc()));
       ch.pipeline().addLast(new SnappyFrameDecoder());
       ch.pipeline().addLast(new SnappyFrameEncoder());
@@ -72,11 +89,10 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
   }
 
   @Override
-  protected void addAdditionalInboundHandlers(final SocketChannel ch)
-      throws GeneralSecurityException, IOException {
-    if (p2pTLSConfiguration.isPresent()) {
-      SslContext sslContext =
-          TLSContextFactory.buildFrom(p2pTLSConfiguration.get()).createNettyServerSslContext();
+  protected void addAdditionalInboundHandlers(final Channel ch) throws GeneralSecurityException {
+    if (tlsContextFactorySupplier.isPresent()) {
+      final SslContext sslContext =
+          tlsContextFactorySupplier.get().get().createNettyServerSslContext();
       ch.pipeline().addLast("ssl", sslContext.newHandler(ch.alloc()));
       ch.pipeline().addLast(new SnappyFrameDecoder());
       ch.pipeline().addLast(new SnappyFrameEncoder());
@@ -96,5 +112,20 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
   @Override
   public Framer buildFramer(final HandshakeSecrets secrets) {
     return new PlainFramer();
+  }
+
+  private static Supplier<TLSContextFactory> defaultTlsContextFactorySupplier(
+      final Optional<TLSConfiguration> tlsConfiguration) {
+    if (tlsConfiguration.isEmpty()) {
+      throw new IllegalStateException("TLSConfiguration cannot be empty when using TLS");
+    }
+
+    return () -> {
+      try {
+        return TLSContextFactory.buildFrom(tlsConfiguration.get());
+      } catch (final Exception e) {
+        throw new RuntimeException("Error creating TLSContextFactory", e);
+      }
+    };
   }
 }
