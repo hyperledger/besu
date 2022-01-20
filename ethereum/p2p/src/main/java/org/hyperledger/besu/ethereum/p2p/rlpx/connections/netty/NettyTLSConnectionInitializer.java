@@ -114,7 +114,8 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
     return new PlainFramer();
   }
 
-  private static Supplier<TLSContextFactory> defaultTlsContextFactorySupplier(
+  @VisibleForTesting
+  static Supplier<TLSContextFactory> defaultTlsContextFactorySupplier(
       final Optional<TLSConfiguration> tlsConfiguration) {
     if (tlsConfiguration.isEmpty()) {
       throw new IllegalStateException("TLSConfiguration cannot be empty when using TLS");

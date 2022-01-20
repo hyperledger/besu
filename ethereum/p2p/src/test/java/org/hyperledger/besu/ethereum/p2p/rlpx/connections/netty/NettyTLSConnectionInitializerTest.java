@@ -16,7 +16,9 @@
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.NodeKey;
@@ -24,6 +26,8 @@ import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+
+import java.util.Optional;
 
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
@@ -101,5 +105,27 @@ public class NettyTLSConnectionInitializerTest {
     // Message Framing
     assertThat(embeddedChannel.pipeline().get(LengthFieldBasedFrameDecoder.class)).isNotNull();
     assertThat(embeddedChannel.pipeline().get(LengthFieldPrepender.class)).isNotNull();
+  }
+
+  @Test
+  public void defaultTlsContextFactorySupplierThrowsErrorWithEmptyTLSConfiguration() {
+    assertThatThrownBy(
+            () -> NettyTLSConnectionInitializer.defaultTlsContextFactorySupplier(Optional.empty()))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("TLSConfiguration cannot be empty when using TLS");
+  }
+
+  @Test
+  public void defaultTlsContextFactorySupplierCapturesInternalError() {
+    final TLSConfiguration tlsConfiguration = mock(TLSConfiguration.class);
+    when(tlsConfiguration.getKeyStoreType()).thenThrow(new RuntimeException());
+
+    assertThatThrownBy(
+            () ->
+                NettyTLSConnectionInitializer.defaultTlsContextFactorySupplier(
+                        Optional.of(tlsConfiguration))
+                    .get())
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("Error creating TLSContextFactory");
   }
 }
