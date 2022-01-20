@@ -33,7 +33,6 @@ import java.util.function.Predicate;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
-import org.bouncycastle.util.Arrays;
 
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
@@ -41,8 +40,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
-
-  public static final byte[] CODE_HASH_HEY = "codeHash".getBytes(StandardCharsets.UTF_8);
 
   protected final KeyValueStorage accountStorage;
   protected final KeyValueStorage codeStorage;
@@ -77,19 +74,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
-    if (codeHash != null && !codeHash.isEmpty()) {
-      return getCodeByCodeHash(codeHash);
-    }
-    return codeStorage
-        .get(accountHash.toArrayUnsafe())
-        .map(Bytes::wrap)
-        .flatMap(this::getCodeByCodeHash);
-  }
-
-  public Optional<Bytes> getCodeByCodeHash(final Bytes codeHash) {
-    return codeStorage
-        .get(Arrays.concatenate(CODE_HASH_HEY, codeHash.toArrayUnsafe()))
-        .map(Bytes::wrap);
+    return codeStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
@@ -292,9 +277,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         // Don't save empty values
         return this;
       }
-      codeStorageTransaction.put(accountHash.toArrayUnsafe(), codeHash.toArrayUnsafe());
-      codeStorageTransaction.put(
-          Arrays.concatenate(CODE_HASH_HEY, codeHash.toArrayUnsafe()), code.toArrayUnsafe());
+      codeStorageTransaction.put(accountHash.toArrayUnsafe(), code.toArrayUnsafe());
       return this;
     }
 
@@ -367,10 +350,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
     public KeyValueStorageTransaction getTrieLogStorageTransaction() {
       return trieLogStorageTransaction;
-    }
-
-    public KeyValueStorageTransaction getCodeStorageTransaction() {
-      return codeStorageTransaction;
     }
 
     @Override

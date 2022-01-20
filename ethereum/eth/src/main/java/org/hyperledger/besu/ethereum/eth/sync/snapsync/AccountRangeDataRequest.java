@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findN
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.ACCOUNT_RANGE;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
@@ -200,20 +199,8 @@ public class AccountRangeDataRequest extends SnapDataRequest {
           missingStorageRoots.add(accountValue.getStorageRoot());
         }
         if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
-          final Optional<Bytes> code = worldStateStorage.getCode(accountValue.getCodeHash(), null);
-          if (code.isEmpty()) {
-            accountsBytecodesToComplete.add(account.getKey());
-            missingBytecodes.add(accountValue.getCodeHash());
-          } else {
-            if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-              final Updater updater = worldStateStorage.updater();
-              ((BonsaiWorldStateKeyValueStorage.Updater) updater)
-                  .getCodeStorageTransaction()
-                  .put(
-                      account.getKey().toArrayUnsafe(), accountValue.getCodeHash().toArrayUnsafe());
-              updater.commit();
-            }
-          }
+          accountsBytecodesToComplete.add(account.getKey());
+          missingBytecodes.add(accountValue.getCodeHash());
         }
       }
 
