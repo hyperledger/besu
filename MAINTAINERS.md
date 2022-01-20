@@ -117,7 +117,7 @@ This can occur in the following situations:
 - Violation of the Code of Conduct warranting removal.
 - Inactivity.
   - A general measure of inactivity will be no commits or code review comments
-    for one reporting quarter, although this will not be strictly enforced if
+    for two reporting quarters, although this will not be strictly enforced if
     the maintainer expresses a reasonable intent to continue contributing.
   - Reasonable exceptions to inactivity will be granted for known long term
     leave such as parental leave and medical leave.
@@ -149,7 +149,7 @@ Here are [their past contributions on Besu project](https://github.com/hyperledg
 
 - [list significant actions]
 
-Voting ends two weeks from today at [[insert date and time]]([link to coundtown created with some tool like https://www.timeanddate.com/countdown/create])
+Voting ends two weeks from today.
 
 For more information on this process see the Becoming a Maintainer section in the MAINTAINERS.md file.
 ```
