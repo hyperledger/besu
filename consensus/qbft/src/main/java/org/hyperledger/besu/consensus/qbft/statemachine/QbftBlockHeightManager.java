@@ -105,10 +105,10 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   @Override
   public void handleBlockTimerExpiry(final ConsensusRoundIdentifier roundIdentifier) {
     if (currentRound.isPresent()) {
-      LOG.warn(
-          "Block timer expired for round ({}) after round has already started on round ({})",
-          roundIdentifier,
-          currentRound.get().getRoundIdentifier());
+      // It is possible for the block timer to take longer than it should due to the precision of
+      // the timer in Java and the OS. This means occasionally the proposal can arrive before the
+      // block timer expiry and hence the round has already been set. There is no negative impact
+      // on the protocol in this case.
       return;
     }
 
