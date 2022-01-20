@@ -27,8 +27,11 @@ import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.google.common.collect.ImmutableList;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
@@ -87,6 +90,8 @@ public class NettyTLSConnectionInitializerTest {
     // Message Framing
     assertThat(embeddedChannel.pipeline().get(LengthFieldBasedFrameDecoder.class)).isNotNull();
     assertThat(embeddedChannel.pipeline().get(LengthFieldPrepender.class)).isNotNull();
+
+    assertHandlersOrderInPipeline(embeddedChannel.pipeline());
   }
 
   @Test
@@ -105,14 +110,31 @@ public class NettyTLSConnectionInitializerTest {
     // Message Framing
     assertThat(embeddedChannel.pipeline().get(LengthFieldBasedFrameDecoder.class)).isNotNull();
     assertThat(embeddedChannel.pipeline().get(LengthFieldPrepender.class)).isNotNull();
+
+    assertHandlersOrderInPipeline(embeddedChannel.pipeline());
+  }
+
+  private void assertHandlersOrderInPipeline(final ChannelPipeline pipeline) {
+    // Appending '#0' because Netty adds it to the handler's names
+    final ArrayList<String> expectedHandlerNamesInOrder =
+        new ArrayList<>(
+            ImmutableList.of(
+                "SslHandler#0",
+                "SnappyFrameDecoder#0",
+                "SnappyFrameEncoder#0",
+                "LengthFieldBasedFrameDecoder#0",
+                "LengthFieldPrepender#0",
+                "DefaultChannelPipeline$TailContext#0")); // This final handler is Netty's default
+
+    final List<String> actualHandlerNamesInOrder = pipeline.names();
+    assertThat(actualHandlerNamesInOrder).isEqualTo(expectedHandlerNamesInOrder);
   }
 
   @Test
-  public void defaultTlsContextFactorySupplierThrowsErrorWithEmptyTLSConfiguration() {
-    assertThatThrownBy(
-            () -> NettyTLSConnectionInitializer.defaultTlsContextFactorySupplier(Optional.empty()))
+  public void defaultTlsContextFactorySupplierThrowsErrorWithNullTLSConfiguration() {
+    assertThatThrownBy(() -> NettyTLSConnectionInitializer.defaultTlsContextFactorySupplier(null))
         .isInstanceOf(IllegalStateException.class)
-        .hasMessage("TLSConfiguration cannot be empty when using TLS");
+        .hasMessage("TLSConfiguration cannot be null when using TLS");
   }
 
   @Test
@@ -122,10 +144,9 @@ public class NettyTLSConnectionInitializerTest {
 
     assertThatThrownBy(
             () ->
-                NettyTLSConnectionInitializer.defaultTlsContextFactorySupplier(
-                        Optional.of(tlsConfiguration))
+                NettyTLSConnectionInitializer.defaultTlsContextFactorySupplier(tlsConfiguration)
                     .get())
-        .isInstanceOf(RuntimeException.class)
+        .isInstanceOf(IllegalStateException.class)
         .hasMessage("Error creating TLSContextFactory");
   }
 }

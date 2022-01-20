@@ -573,7 +573,12 @@ public class RlpxAgent {
           LOG.debug("TLS Configuration found using NettyTLSConnectionInitializer");
           connectionInitializer =
               new NettyTLSConnectionInitializer(
-                  nodeKey, config, localNode, connectionEvents, metricsSystem, p2pTLSConfiguration);
+                  nodeKey,
+                  config,
+                  localNode,
+                  connectionEvents,
+                  metricsSystem,
+                  p2pTLSConfiguration.get());
         } else {
           LOG.debug("Using default NettyConnectionInitializer");
           connectionInitializer =
