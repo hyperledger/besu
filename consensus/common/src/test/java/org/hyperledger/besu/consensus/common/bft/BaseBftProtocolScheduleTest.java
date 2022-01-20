@@ -32,12 +32,12 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.junit.Test;
 
@@ -183,9 +183,9 @@ public class BaseBftProtocolScheduleTest {
     final BaseBftProtocolSchedule bftProtocolSchedule =
         new BaseBftProtocolSchedule() {
           @Override
-          protected Supplier<BlockHeaderValidator.Builder> createBlockHeaderRuleset(
-              final BftConfigOptions config) {
-            return BlockHeaderValidator.Builder::new;
+          protected BlockHeaderValidator.Builder createBlockHeaderRuleset(
+              final BftConfigOptions config, final FeeMarket feeMarket) {
+            return new BlockHeaderValidator.Builder();
           }
         };
     return bftProtocolSchedule.createProtocolSchedule(

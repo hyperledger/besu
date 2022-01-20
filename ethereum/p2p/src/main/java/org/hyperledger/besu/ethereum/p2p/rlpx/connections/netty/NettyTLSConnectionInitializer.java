@@ -35,6 +35,8 @@ import java.util.Optional;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.handler.codec.compression.SnappyFrameDecoder;
+import io.netty.handler.codec.compression.SnappyFrameEncoder;
 import io.netty.handler.ssl.SslContext;
 
 public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
@@ -59,6 +61,8 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
       SslContext sslContext =
           TLSContextFactory.buildFrom(p2pTLSConfiguration.get()).createNettyClientSslContext();
       ch.pipeline().addLast("ssl", sslContext.newHandler(ch.alloc()));
+      ch.pipeline().addLast(new SnappyFrameDecoder());
+      ch.pipeline().addLast(new SnappyFrameEncoder());
       ch.pipeline()
           .addLast(
               new LengthFieldBasedFrameDecoder(
@@ -74,6 +78,8 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
       SslContext sslContext =
           TLSContextFactory.buildFrom(p2pTLSConfiguration.get()).createNettyServerSslContext();
       ch.pipeline().addLast("ssl", sslContext.newHandler(ch.alloc()));
+      ch.pipeline().addLast(new SnappyFrameDecoder());
+      ch.pipeline().addLast(new SnappyFrameEncoder());
       ch.pipeline()
           .addLast(
               new LengthFieldBasedFrameDecoder(

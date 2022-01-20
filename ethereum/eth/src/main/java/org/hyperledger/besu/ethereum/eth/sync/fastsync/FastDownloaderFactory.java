@@ -32,9 +32,12 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -82,6 +85,13 @@ public class FastDownloaderFactory {
     }
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       worldStateStorage.clear();
+    } else {
+      final Path queueDataDir = fastSyncDataDirectory.resolve("statequeue");
+      if (queueDataDir.toFile().exists()) {
+        LOG.warn(
+            "Fast sync is picking up after old fast sync version. Pruning the world state and starting from scratch.");
+        clearOldFastSyncWorldStateData(worldStateStorage, queueDataDir);
+      }
     }
     final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
         createWorldStateDownloaderTaskCollection(
@@ -114,6 +124,25 @@ public class FastDownloaderFactory {
             fastSyncState);
     syncState.setWorldStateDownloadStatus(worldStateDownloader);
     return Optional.of(fastSyncDownloader);
+  }
+
+  private static void clearOldFastSyncWorldStateData(
+      final WorldStateStorage worldStateStorage, final Path queueDataDir) {
+    worldStateStorage.clear();
+    try (final Stream<Path> stream = Files.list(queueDataDir); ) {
+      stream.forEach(FastDownloaderFactory::deleteFile);
+      deleteFile(queueDataDir);
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  private static void deleteFile(final Path f) {
+    try {
+      Files.delete(f);
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   private static void ensureDirectoryExists(final File dir) {
