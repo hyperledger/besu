@@ -44,6 +44,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(Parameterized.class)
 public class ForkIdsTest {
