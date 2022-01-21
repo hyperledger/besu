@@ -32,7 +32,10 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class PrivateMetadataUpdaterTest {
 
   private PrivateMetadataUpdater updater;
