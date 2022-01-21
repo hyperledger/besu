@@ -28,6 +28,7 @@ public interface TransactionPoolConfiguration {
   int MAX_PENDING_TRANSACTIONS = 4096;
   int MAX_PENDING_TRANSACTIONS_HASHES = 4096;
   int DEFAULT_TX_RETENTION_HOURS = 13;
+  boolean DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED = false;
   Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
   Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
@@ -67,5 +68,10 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default Wei getTxFeeCap() {
     return DEFAULT_RPC_TX_FEE_CAP;
+  }
+
+  @Value.Default
+  default Boolean getStrictTransactionReplayProtectionEnabled() {
+    return DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED;
   }
 }

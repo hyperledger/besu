@@ -138,23 +138,21 @@ public class EthPeer {
         getAgreedCapabilities().stream().anyMatch(EthProtocol::isEth66Compatible);
     // eth protocol
     requestManagers.put(
-        EthProtocol.NAME,
+        protocolName,
         Map.ofEntries(
             Map.entry(
                 EthPV62.GET_BLOCK_HEADERS,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+                new RequestManager(this, supportsRequestId, protocolName)),
             Map.entry(
                 EthPV62.GET_BLOCK_BODIES,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+                new RequestManager(this, supportsRequestId, protocolName)),
             Map.entry(
-                EthPV63.GET_RECEIPTS,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+                EthPV63.GET_RECEIPTS, new RequestManager(this, supportsRequestId, protocolName)),
             Map.entry(
-                EthPV63.GET_NODE_DATA,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME)),
+                EthPV63.GET_NODE_DATA, new RequestManager(this, supportsRequestId, protocolName)),
             Map.entry(
                 EthPV65.GET_POOLED_TRANSACTIONS,
-                new RequestManager(this, supportsRequestId, EthProtocol.NAME))));
+                new RequestManager(this, supportsRequestId, protocolName))));
   }
 
   private void initSnapRequestManagers() {
@@ -256,7 +254,7 @@ public class EthPeer {
     final GetBlockHeadersMessage message =
         GetBlockHeadersMessage.create(hash, maxHeaders, skip, reverse);
     final RequestManager requestManager =
-        requestManagers.get(EthProtocol.NAME).get(EthPV62.GET_BLOCK_HEADERS);
+        requestManagers.get(protocolName).get(EthPV62.GET_BLOCK_HEADERS);
     return sendRequest(requestManager, message);
   }
 
@@ -265,34 +263,32 @@ public class EthPeer {
       throws PeerNotConnected {
     final GetBlockHeadersMessage message =
         GetBlockHeadersMessage.create(blockNumber, maxHeaders, skip, reverse);
-    return sendRequest(
-        requestManagers.get(EthProtocol.NAME).get(EthPV62.GET_BLOCK_HEADERS), message);
+    return sendRequest(requestManagers.get(protocolName).get(EthPV62.GET_BLOCK_HEADERS), message);
   }
 
   public RequestManager.ResponseStream getBodies(final List<Hash> blockHashes)
       throws PeerNotConnected {
     final GetBlockBodiesMessage message = GetBlockBodiesMessage.create(blockHashes);
-    return sendRequest(
-        requestManagers.get(EthProtocol.NAME).get(EthPV62.GET_BLOCK_BODIES), message);
+    return sendRequest(requestManagers.get(protocolName).get(EthPV62.GET_BLOCK_BODIES), message);
   }
 
   public RequestManager.ResponseStream getReceipts(final List<Hash> blockHashes)
       throws PeerNotConnected {
     final GetReceiptsMessage message = GetReceiptsMessage.create(blockHashes);
-    return sendRequest(requestManagers.get(EthProtocol.NAME).get(EthPV63.GET_RECEIPTS), message);
+    return sendRequest(requestManagers.get(protocolName).get(EthPV63.GET_RECEIPTS), message);
   }
 
   public RequestManager.ResponseStream getNodeData(final Iterable<Hash> nodeHashes)
       throws PeerNotConnected {
     final GetNodeDataMessage message = GetNodeDataMessage.create(nodeHashes);
-    return sendRequest(requestManagers.get(EthProtocol.NAME).get(EthPV63.GET_NODE_DATA), message);
+    return sendRequest(requestManagers.get(protocolName).get(EthPV63.GET_NODE_DATA), message);
   }
 
   public RequestManager.ResponseStream getPooledTransactions(final List<Hash> hashes)
       throws PeerNotConnected {
     final GetPooledTransactionsMessage message = GetPooledTransactionsMessage.create(hashes);
     return sendRequest(
-        requestManagers.get(EthProtocol.NAME).get(EthPV65.GET_POOLED_TRANSACTIONS), message);
+        requestManagers.get(protocolName).get(EthPV65.GET_POOLED_TRANSACTIONS), message);
   }
 
   public RequestManager.ResponseStream getSnapAccountRange(final GetAccountRangeMessage message)

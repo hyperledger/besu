@@ -1,14 +1,79 @@
 # Changelog
 
+## 22.1.0
+- Changing the order in which we traverse the word state tree during fast sync. This should improve fast sync during subsequent pivot changes.
+
+### 22.1.0 Breaking Changes
+- Removed deprecated hash variable `protected volatile Hash hash;` which was used for private transactions [#3110](https://github.com/hyperledger/besu/pull/3110)
+
+### Additions and Improvements
+- Genesis file parameter `blockperiodseconds` is validated as a positive integer on startup to prevent unexpected runtime behaviour [#3186](https://github.com/hyperledger/besu/pull/3186)
+- Add option to require replay protection for locally submitted transactions [\#1975](https://github.com/hyperledger/besu/issues/1975)
+- Update to block header validation for IBFT and QBFT to support London fork EIP-1559 [#3251](https://github.com/hyperledger/besu/pull/3251)
+
+### Bug Fixes
+- Fix regression on cors-origin star value
+- Fix for ethFeeHistory accepting hex values for blockCount
+
 ## 22.1.0-RC2
+
+### 22.1.0-RC2 Breaking Changes
+- Removed deprecated hash variable `protected volatile Hash hash;` which was used for private transactions [#3110](https://github.com/hyperledger/besu/pull/3110)
 
 ### Additions and Improvements
 - Re-order external services (e.g JsonRpcHttpService) to start before blocks start processing [#3118](https://github.com/hyperledger/besu/pull/3118)
-- Stream JSON RPC responses to avoid creating big JSON strings in memory [#3076] (https://github.com/hyperledger/besu/pull/3076)
+- Stream JSON RPC responses to avoid creating big JSON strings in memory [#3076](https://github.com/hyperledger/besu/pull/3076)
+- Ethereum Classic Mystique Hard Fork [#3256](https://github.com/hyperledger/besu/pull/3256)
 
 ### Bug Fixes
-- Make 'to' field optional in eth_call method according to the spec [#3177] (https://github.com/hyperledger/besu/pull/3177)
+- Make 'to' field optional in eth_call method according to the spec [#3177](https://github.com/hyperledger/besu/pull/3177)
 - Update to log4j 2.17.1. Resolves potential vulnerability only exploitable when using custom log4j configurations that are writable by untrusted users.
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC2/besu-22.1.0-RC2.zip \ SHA256: 86c97c935d70857d210016eb73f518fddd5dcef0c7928c5ede4622bf62c69d17
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC2/besu-22.1.0-RC2.tar.gz \ SHA256 327c14e1829d39e65f822478b166519e781ac4714f54da39ba26d21ba5729a1e
+
+## 21.10.9
+
+### Bug Fixes
+- Fix regression on cors-origin star value
+- Fix for ethFeeHistory accepting hex values for blockCount
+
+ **Full Changelog**: https://github.com/hyperledger/besu/compare/21.10.8...21.10.9
+
+[besu-21.10.9.tar.gz](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.9/besu-21.10.9.tar.gz) b5ef15ede50e19ad9fbb79876d8d68aeb8e3811f8905e973874523df2ed179b4
+[besu-21.10.9.zip](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.9/besu-21.10.9.zip) 26489881d852eefdda2cf0203cb30f7b2045ecfb299da8c744e9579cbe2934e2
+
+## 21.10.8
+
+### Additions and Improvements
+- Ethereum Classic Mystique Hard Fork [#3256](https://github.com/hyperledger/besu/pull/3256)
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.8/besu-21.10.8.tar.gz \ SHA256 d325e2e36bc38a707a9eebf92068f5021606a8c6b6464bb4b4d59008ef8014fc
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.8/besu-21.10.8.zip \ SHA256 a91da1e82fb378e16437327bba56dd299aafdb0614ba528167a1dae85440c5af
+
+## 21.10.7
+
+### Bug Fixes
+- Update dependencies (including vert.x, kubernetes client-java, okhttp, commons-codec)
+
+### Additions and Improvements
+- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
+- Remove Orion ATs
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.7/besu-21.10.7.tar.gz \ SHA256 94cee804fcaea366c9575380ef0e30ed04bf2fc7451190a94887f14c07f301ff
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.7/besu-21.10.7.zip \ SHA256 faf1ebfb20aa6171aa6ea98d7653339272567c318711d11e350471b5bba62c00
+
+## 21.10.6
+
+### Bug Fixes
+- Update log4j to 2.17.1
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.6/besu-21.10.6.tar.gz \ SHA256 ef579490031dd4eb3704b4041e352cfb2e7e787fcff7506b69ef88843d4e1220
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.6/besu-21.10.6.zip \ SHA256 0fdda65bc993905daa14824840724d0b74e3f16f771f5726f5307f6d9575a719
 
 ## 21.10.5
 
@@ -17,7 +82,7 @@
 
 ### Download Links
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.tar.gz \ SHA256 0d1b6ed8f3e1325ad0d4acabad63c192385e6dcbefe40dc6b647e8ad106445a8
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.zip SHA256 \ a1689a8a65c4c6f633b686983a6a1653e7ac86e742ad2ec6351176482d6e0c57
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.zip \ SHA256 a1689a8a65c4c6f633b686983a6a1653e7ac86e742ad2ec6351176482d6e0c57
 
 ## 22.1.0-RC1
 
@@ -25,6 +90,7 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5
 - Plugin API: BlockHeader.getBaseFee() method now returns an optional Wei instead of an optional Long [#3065](https://github.com/hyperledger/besu/issues/3065)
 
 ### Additions and Improvements
+- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
 - Represent baseFee as Wei instead of long accordingly to the spec [#2785](https://github.com/hyperledger/besu/issues/2785)
 - Implements [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) to repurpose DIFFICULTY opcode after the merge as a source of entropy from the Beacon chain. [#3081](https://github.com/hyperledger/besu/issues/3081)
 
@@ -58,9 +124,6 @@ This release is not recommended for production use.
 
 ### Bug Fixes
 - Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
-
-### Early Access Features
-- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
 
 ### Download Link
 This release is not recommended for production use.

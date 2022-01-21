@@ -35,6 +35,11 @@ public class PersistDataStep {
       final WorldDownloadState<NodeDataRequest> downloadState) {
     final Updater updater = worldStateStorage.updater();
     tasks.stream()
+        .map(
+            task -> {
+              enqueueChildren(task, downloadState);
+              return task;
+            })
         .map(Task::getData)
         .filter(request -> request.getData() != null)
         .forEach(
@@ -51,5 +56,11 @@ public class PersistDataStep {
 
   private boolean isRootState(final BlockHeader blockHeader, final NodeDataRequest request) {
     return request.getHash().equals(blockHeader.getStateRoot());
+  }
+
+  private void enqueueChildren(
+      final Task<NodeDataRequest> task, final WorldDownloadState<NodeDataRequest> downloadState) {
+    final NodeDataRequest request = task.getData();
+    downloadState.enqueueRequests(request.getChildRequests(worldStateStorage));
   }
 }

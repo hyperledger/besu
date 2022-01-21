@@ -61,6 +61,7 @@ public enum JsonRpcError {
   GAS_PRICE_TOO_LOW(-32009, "Gas price below configured minimum gas price"),
   WRONG_CHAIN_ID(-32000, "Wrong chainId"),
   REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED(-32000, "ChainId not supported"),
+  REPLAY_PROTECTED_SIGNATURE_REQUIRED(-32000, "ChainId is required"),
   TX_FEECAP_EXCEEDED(-32000, "Transaction fee cap exceeded"),
   REVERT_ERROR(-32000, "Execution reverted"),
   GAS_PRICE_MUST_BE_ZERO(-3200, "gasPrice must be set to zero on a GoQuorum compatible network"),

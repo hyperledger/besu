@@ -29,10 +29,10 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 import io.kubernetes.client.custom.IntOrString;
-import io.kubernetes.client.models.V1ObjectMeta;
-import io.kubernetes.client.models.V1Service;
-import io.kubernetes.client.models.V1ServicePort;
-import io.kubernetes.client.models.V1ServiceSpec;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1Service;
+import io.kubernetes.client.openapi.models.V1ServicePort;
+import io.kubernetes.client.openapi.models.V1ServiceSpec;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -32,10 +32,11 @@ dependencies {
   implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.13.1'
   implementation 'com.google.guava:guava'
   implementation 'com.squareup.okhttp3:okhttp'
+  implementation 'io.vertx:vertx-core'
   implementation 'junit:junit'
-  implementation 'net.consensys:orion'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-io'
   implementation 'org.apache.tuweni:tuweni-toml'

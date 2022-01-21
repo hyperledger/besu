@@ -25,10 +25,13 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StubTask;
+import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.Task;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,7 +51,7 @@ public class PersistDataStepTest {
   private final PersistDataStep persistDataStep = new PersistDataStep(worldStateStorage);
 
   @Test
-  public void shouldPersistDataWhenPresent() {
+  public void shouldPersistDataWhenPresentWithoutChildren() {
     final List<Task<NodeDataRequest>> tasks =
         asList(
             createTaskWithData(1, 2, 3),
@@ -95,7 +98,11 @@ public class PersistDataStepTest {
 
   private Task<NodeDataRequest> createTaskWithData(final Bytes data) {
     final StubTask task = createTaskWithoutData(data);
-    task.getData().setData(data);
+    MerklePatriciaTrie<Bytes, String> trie =
+        new SimpleMerklePatriciaTrie<>(
+            value -> (value != null) ? Bytes.wrap(value.getBytes(StandardCharsets.UTF_8)) : null);
+    trie.put(data, "01");
+    task.getData().setData(trie.getValueWithProof(data).getProofRelatedNodes().get(0));
     return task;
   }
 

@@ -24,12 +24,15 @@ import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftValida
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
+
+import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -40,14 +43,17 @@ public class IbftBlockHeaderValidationRulesetFactory {
    * part of the BlockChain (i.e. not proposed blocks, which do not contain commit seals)
    *
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
+   * @param baseFeeMarket an {@link Optional} wrapping {@link BaseFeeMarket} class if appropriate.
    * @return BlockHeaderValidator configured for assessing bft block headers
    */
-  public static BlockHeaderValidator.Builder blockHeaderValidator(final long secondsBetweenBlocks) {
+  public static BlockHeaderValidator.Builder blockHeaderValidator(
+      final long secondsBetweenBlocks, final Optional<BaseFeeMarket> baseFeeMarket) {
     return new BlockHeaderValidator.Builder()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
         .addRule(
-            new GasLimitRangeAndDeltaValidationRule(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT))
+            new GasLimitRangeAndDeltaValidationRule(
+                DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, baseFeeMarket))
         .addRule(new TimestampBoundedByFutureParameter(1))
         .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
         .addRule(

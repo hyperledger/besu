@@ -128,6 +128,7 @@ public class EngineExecutePayloadTest {
             .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
             .buildBlockHeader();
 
+    //    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
 
@@ -168,6 +169,7 @@ public class EngineExecutePayloadTest {
   @Test
   public void shouldReturnInvalidOnMalformedTransactions() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
+    //    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any(Hash.class)))
         .thenReturn(Optional.of(mockHash));
 
