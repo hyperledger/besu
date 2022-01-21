@@ -34,6 +34,7 @@ dependencies {
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
   implementation project(':consensus:ibftlegacy')
+  implementation project(':consensus:merge')
   implementation project(':consensus:qbft')
   implementation project(':crypto')
   implementation project(':datatypes')
@@ -93,4 +94,5 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'commons-io:commons-io'
+  testImplementation 'org.testcontainers:testcontainers'
 }

@@ -220,7 +220,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         .or(() -> preimageStorage.getAccountTrieKeyPreimage(trieKey));
   }
   // An immutable class that represents an individual account as stored in
-  // in the world state's underlying merkle patricia trie.
+  // the world state's underlying merkle patricia trie.
   protected class WorldStateAccount implements Account {
 
     private final Address address;

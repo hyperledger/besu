@@ -16,12 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -29,10 +25,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivUninstallFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
-import io.vertx.ext.auth.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +37,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class PrivUninstallFilterTest {
 
   private final String FILTER_ID = "0xdbdb02abb65a2ba57a1cc0336c17ef75";
-  private final String ENCLAVE_KEY = "enclave_key";
   private final String PRIVACY_GROUP_ID = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
 
   @Mock private FilterManager filterManager;
@@ -88,33 +81,9 @@ public class PrivUninstallFilterTest {
     verify(filterManager).uninstallFilter(eq(FILTER_ID));
   }
 
-  @Test
-  public void multiTenancyCheckFailure() {
-    final User user = mock(User.class);
-
-    when(privacyIdProvider.getPrivacyUserId(any())).thenReturn(ENCLAVE_KEY);
-    doThrow(new MultiTenancyValidationException("msg"))
-        .when(privacyController)
-        .verifyPrivacyGroupContainsPrivacyUserId(eq(PRIVACY_GROUP_ID), eq(ENCLAVE_KEY));
-
-    final JsonRpcRequestContext request =
-        privUninstallFilterRequestWithUser(PRIVACY_GROUP_ID, FILTER_ID, user);
-
-    assertThatThrownBy(() -> method.response(request))
-        .isInstanceOf(MultiTenancyValidationException.class)
-        .hasMessageContaining("msg");
-  }
-
   private JsonRpcRequestContext privUninstallFilterRequest(
       final String privacyGroupId, final String filterId) {
     return new JsonRpcRequestContext(
         new JsonRpcRequest("2.0", "priv_uninstallFilter", new Object[] {privacyGroupId, filterId}));
-  }
-
-  private JsonRpcRequestContext privUninstallFilterRequestWithUser(
-      final String privacyGroupId, final String filterId, final User user) {
-    return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", "priv_uninstallFilter", new Object[] {privacyGroupId, filterId}),
-        user);
   }
 }

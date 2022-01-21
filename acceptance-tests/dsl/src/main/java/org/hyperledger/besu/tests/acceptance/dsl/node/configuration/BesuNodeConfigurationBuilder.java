@@ -22,6 +22,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -34,19 +35,16 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
+import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.pki.PKCS11Utils;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
-import com.google.common.base.Charsets;
 
 public class BesuNodeConfigurationBuilder {
 
@@ -66,6 +64,7 @@ public class BesuNodeConfigurationBuilder {
   private boolean devMode = true;
   private GenesisConfigurationProvider genesisConfigProvider = ignore -> Optional.empty();
   private Boolean p2pEnabled = true;
+  private int p2pPort = 0;
   private Optional<TLSConfiguration> tlsConfiguration = Optional.empty();
   private final NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private boolean discoveryEnabled = true;
@@ -82,6 +81,7 @@ public class BesuNodeConfigurationBuilder {
   private List<String> runCommand = new ArrayList<>();
   private Optional<KeyPair> keyPair = Optional.empty();
   private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
+  private Boolean strictTxReplayProtectionEnabled = false;
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -107,13 +107,13 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder miningEnabled(final boolean enabled) {
     this.miningParameters =
         new MiningParameters.Builder().enabled(enabled).coinbase(AddressHelpers.ofValue(1)).build();
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER.name());
     return this;
   }
 
   public BesuNodeConfigurationBuilder miningConfiguration(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER.name());
     return this;
   }
 
@@ -143,18 +143,18 @@ public class BesuNodeConfigurationBuilder {
   }
 
   public BesuNodeConfigurationBuilder enablePrivateTransactions() {
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.EEA);
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.PRIV);
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.EEA.name());
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.PRIV.name());
     return this;
   }
 
   public BesuNodeConfigurationBuilder jsonRpcTxPool() {
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.TX_POOL);
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.TXPOOL.name());
     return this;
   }
 
   public BesuNodeConfigurationBuilder jsonRpcAdmin() {
-    this.jsonRpcConfiguration.addRpcApi(RpcApis.ADMIN);
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.ADMIN.name());
     return this;
   }
 
@@ -169,15 +169,27 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder jsonRpcAuthenticationUsingPublicKeyEnabled()
-      throws URISyntaxException {
+  public BesuNodeConfigurationBuilder jsonRpcAuthenticationUsingRSA() throws URISyntaxException {
     final File jwtPublicKey =
-        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_rsa").toURI())
             .toAbsolutePath()
             .toFile();
 
     this.jsonRpcConfiguration.setAuthenticationEnabled(true);
     this.jsonRpcConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
+
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder jsonRpcAuthenticationUsingECDSA() throws URISyntaxException {
+    final File jwtPublicKey =
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_ecdsa").toURI())
+            .toAbsolutePath()
+            .toFile();
+
+    this.jsonRpcConfiguration.setAuthenticationEnabled(true);
+    this.jsonRpcConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
+    this.jsonRpcConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.ES256);
 
     return this;
   }
@@ -226,15 +238,29 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder webSocketAuthenticationUsingPublicKeyEnabled()
+  public BesuNodeConfigurationBuilder webSocketAuthenticationUsingRsaPublicKeyEnabled()
       throws URISyntaxException {
     final File jwtPublicKey =
-        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key").toURI())
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_rsa").toURI())
             .toAbsolutePath()
             .toFile();
 
     this.webSocketConfiguration.setAuthenticationEnabled(true);
     this.webSocketConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
+
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder webSocketAuthenticationUsingEcdsaPublicKeyEnabled()
+      throws URISyntaxException {
+    final File jwtPublicKey =
+        Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_ecdsa").toURI())
+            .toAbsolutePath()
+            .toFile();
+
+    this.webSocketConfiguration.setAuthenticationEnabled(true);
+    this.webSocketConfiguration.setAuthenticationPublicKeyFile(jwtPublicKey);
+    this.webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.ES256);
 
     return this;
   }
@@ -266,6 +292,11 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder p2pPort(final int p2pPort) {
+    this.p2pPort = p2pPort;
+    return this;
+  }
+
   private static Path toPath(final String path) throws Exception {
     return Path.of(BesuNodeConfigurationBuilder.class.getResource(path).toURI());
   }
@@ -273,14 +304,14 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder p2pTLSEnabled(final String name, final String type) {
     final TLSConfiguration.Builder builder = TLSConfiguration.Builder.tlsConfiguration();
     try {
-      final String nsspin = "/p2p-tls/%s/nsspin.txt";
-      final String truststore = "/p2p-tls/%s/truststore.jks";
-      final String crl = "/p2p-tls/%s/crl.pem";
+      final String nsspin = "/pki-certs/%s/nsspin.txt";
+      final String truststore = "/pki-certs/%s/truststore.jks";
+      final String crl = "/pki-certs/%s/crl.pem";
       switch (type) {
         case KeyStoreWrapper.KEYSTORE_TYPE_JKS:
           builder
               .withKeyStoreType(type)
-              .withKeyStorePath(toPath(String.format("/p2p-tls/%s/keystore.jks", name)))
+              .withKeyStorePath(toPath(String.format("/pki-certs/%s/keystore.jks", name)))
               .withKeyStorePasswordSupplier(
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
               .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
@@ -294,7 +325,7 @@ public class BesuNodeConfigurationBuilder {
         case KeyStoreWrapper.KEYSTORE_TYPE_PKCS12:
           builder
               .withKeyStoreType(type)
-              .withKeyStorePath(toPath(String.format("/p2p-tls/%s/keys.p12", name)))
+              .withKeyStorePath(toPath(String.format("/pki-certs/%s/keys.p12", name)))
               .withKeyStorePasswordSupplier(
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
               .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
@@ -309,7 +340,8 @@ public class BesuNodeConfigurationBuilder {
           builder
               .withKeyStoreType(type)
               .withKeyStorePath(
-                  initNSSConfigFile(toPath(String.format("/p2p-tls/%s/nss.cfg", name))))
+                  PKCS11Utils.initNSSConfigFile(
+                      toPath(String.format("/pki-certs/%s/nss.cfg", name))))
               .withKeyStorePasswordSupplier(
                   new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
               .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
@@ -321,34 +353,6 @@ public class BesuNodeConfigurationBuilder {
     }
     this.tlsConfiguration = Optional.of(builder.build());
     return this;
-  }
-
-  private Path initNSSConfigFile(final Path srcFilePath) {
-    Path ret = null;
-    try {
-      final String content = Files.readString(srcFilePath);
-      final String updated =
-          content.replaceAll(
-              "(nssSecmodDirectory\\W*)(\\.\\/.*)",
-              "$1".concat(srcFilePath.toAbsolutePath().toString().replace("nss.cfg", "nssdb")));
-      final Path targetFilePath = createTemporaryFile("nsscfg");
-      Files.write(targetFilePath, updated.getBytes(Charsets.UTF_8));
-      ret = targetFilePath;
-    } catch (IOException e) {
-      throw new RuntimeException("Error populating nss config file", e);
-    }
-    return ret;
-  }
-
-  private Path createTemporaryFile(final String suffix) {
-    final File tempFile;
-    try {
-      tempFile = File.createTempFile("temp", suffix);
-      tempFile.deleteOnExit();
-    } catch (IOException e) {
-      throw new RuntimeException("Error creating temporary file", e);
-    }
-    return tempFile.toPath();
   }
 
   public BesuNodeConfigurationBuilder pkiBlockCreationEnabled(
@@ -415,6 +419,12 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder strictTxReplayProtectionEnabled(
+      final Boolean strictTxReplayProtectionEnabled) {
+    this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
+    return this;
+  }
+
   public BesuNodeConfiguration build() {
     return new BesuNodeConfiguration(
         name,
@@ -429,6 +439,7 @@ public class BesuNodeConfigurationBuilder {
         network,
         genesisConfigProvider,
         p2pEnabled,
+        p2pPort,
         tlsConfiguration,
         networkingConfiguration,
         discoveryEnabled,
@@ -443,6 +454,7 @@ public class BesuNodeConfigurationBuilder {
         privacyParameters,
         runCommand,
         keyPair,
-        pkiKeyStoreConfiguration);
+        pkiKeyStoreConfiguration,
+        strictTxReplayProtectionEnabled);
   }
 }

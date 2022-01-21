@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVACY_NOT_ENABLED;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -33,8 +32,8 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Map;
@@ -42,7 +41,7 @@ import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.jwt.impl.JWTUser;
+import io.vertx.ext.auth.impl.UserImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -155,11 +154,11 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
     privacyApiGroupJsonRpcMethods.create();
     final PrivacyController privacyController = privacyApiGroupJsonRpcMethods.privacyController;
 
-    assertThat(privacyController).isInstanceOf(RestrictedMultiTenancyPrivacyController.class);
+    assertThat(privacyController).isInstanceOf(MultiTenancyPrivacyController.class);
   }
 
   private User createUser(final String enclavePublicKey) {
-    return new JWTUser(new JsonObject().put("privacyPublicKey", enclavePublicKey), "");
+    return new UserImpl(new JsonObject().put("privacyPublicKey", enclavePublicKey)) {};
   }
 
   private static class TestPrivacyApiGroupJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
@@ -189,8 +188,8 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
     }
 
     @Override
-    protected RpcApi getApiGroup() {
-      return RpcApis.PRIV;
+    protected String getApiGroup() {
+      return RpcApis.PRIV.name();
     }
   }
 }

@@ -44,6 +44,7 @@ public class BesuNodeConfiguration {
   private final boolean devMode;
   private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean p2pEnabled;
+  private final int p2pPort;
   private final Optional<TLSConfiguration> tlsConfiguration;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean discoveryEnabled;
@@ -60,6 +61,7 @@ public class BesuNodeConfiguration {
   private final NetworkName network;
   private final Optional<KeyPair> keyPair;
   private final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration;
+  private final boolean strictTxReplayProtectionEnabled;
 
   BesuNodeConfiguration(
       final String name,
@@ -74,6 +76,7 @@ public class BesuNodeConfiguration {
       final NetworkName network,
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
+      final int p2pPort,
       final Optional<TLSConfiguration> tlsConfiguration,
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
@@ -88,7 +91,8 @@ public class BesuNodeConfiguration {
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
-      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration) {
+      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
+      final boolean strictTxReplayProtectionEnabled) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -101,6 +105,7 @@ public class BesuNodeConfiguration {
     this.network = network;
     this.genesisConfigProvider = genesisConfigProvider;
     this.p2pEnabled = p2pEnabled;
+    this.p2pPort = p2pPort;
     this.tlsConfiguration = tlsConfiguration;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
@@ -116,6 +121,7 @@ public class BesuNodeConfiguration {
     this.runCommand = runCommand;
     this.keyPair = keyPair;
     this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
+    this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
   }
 
   public String getName() {
@@ -164,6 +170,10 @@ public class BesuNodeConfiguration {
 
   public boolean isP2pEnabled() {
     return p2pEnabled;
+  }
+
+  public int getP2pPort() {
+    return p2pPort;
   }
 
   public Optional<TLSConfiguration> getTLSConfiguration() {
@@ -224,5 +234,9 @@ public class BesuNodeConfiguration {
 
   public Optional<PkiKeyStoreConfiguration> getPkiKeyStoreConfiguration() {
     return pkiKeyStoreConfiguration;
+  }
+
+  public boolean isStrictTxReplayProtectionEnabled() {
+    return strictTxReplayProtectionEnabled;
   }
 }

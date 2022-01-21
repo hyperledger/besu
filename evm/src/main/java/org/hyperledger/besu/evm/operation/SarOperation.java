@@ -29,7 +29,7 @@ public class SarOperation extends AbstractFixedCostOperation {
   private static final UInt256 ALL_BITS = UInt256.MAX_VALUE;
 
   public SarOperation(final GasCalculator gasCalculator) {
-    super(0x1d, "SAR", 2, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x1d, "SAR", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
@@ -44,7 +44,7 @@ public class SarOperation extends AbstractFixedCostOperation {
     } else {
       final int shiftAmountInt = shiftAmount.toInt();
 
-      if (shiftAmountInt >= 256) {
+      if (shiftAmountInt >= 256 || shiftAmountInt < 0) {
         frame.pushStackItem(negativeNumber ? ALL_BITS : UInt256.ZERO);
       } else {
         // first perform standard shift right.

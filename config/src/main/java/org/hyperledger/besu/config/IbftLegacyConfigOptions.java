@@ -40,7 +40,8 @@ public class IbftLegacyConfigOptions {
   }
 
   public int getBlockPeriodSeconds() {
-    return JsonUtil.getInt(ibftConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
+    return JsonUtil.getPositiveInt(
+        ibftConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
   }
 
   public int getRequestTimeoutSeconds() {

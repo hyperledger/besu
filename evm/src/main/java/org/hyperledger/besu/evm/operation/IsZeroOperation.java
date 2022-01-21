@@ -23,7 +23,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class IsZeroOperation extends AbstractFixedCostOperation {
 
   public IsZeroOperation(final GasCalculator gasCalculator) {
-    super(0x15, "ISZERO", 1, 1, false, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x15, "ISZERO", 1, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

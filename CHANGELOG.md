@@ -1,23 +1,228 @@
 # Changelog
 
-## 21.10.0-RC2
+## 22.1.0
+- Changing the order in which we traverse the word state tree during fast sync. This should improve fast sync during subsequent pivot changes.
+
+### 22.1.0 Breaking Changes
+- Removed deprecated hash variable `protected volatile Hash hash;` which was used for private transactions [#3110](https://github.com/hyperledger/besu/pull/3110)
+
+### Additions and Improvements
+- Genesis file parameter `blockperiodseconds` is validated as a positive integer on startup to prevent unexpected runtime behaviour [#3186](https://github.com/hyperledger/besu/pull/3186)
+- Add option to require replay protection for locally submitted transactions [\#1975](https://github.com/hyperledger/besu/issues/1975)
+- Update to block header validation for IBFT and QBFT to support London fork EIP-1559 [#3251](https://github.com/hyperledger/besu/pull/3251)
+
+### Bug Fixes
+- Fix regression on cors-origin star value
+- Fix for ethFeeHistory accepting hex values for blockCount
+
+## 22.1.0-RC2
+
+### 22.1.0-RC2 Breaking Changes
+- Removed deprecated hash variable `protected volatile Hash hash;` which was used for private transactions [#3110](https://github.com/hyperledger/besu/pull/3110)
+
+### Additions and Improvements
+- Re-order external services (e.g JsonRpcHttpService) to start before blocks start processing [#3118](https://github.com/hyperledger/besu/pull/3118)
+- Stream JSON RPC responses to avoid creating big JSON strings in memory [#3076](https://github.com/hyperledger/besu/pull/3076)
+- Ethereum Classic Mystique Hard Fork [#3256](https://github.com/hyperledger/besu/pull/3256)
+
+### Bug Fixes
+- Make 'to' field optional in eth_call method according to the spec [#3177](https://github.com/hyperledger/besu/pull/3177)
+- Update to log4j 2.17.1. Resolves potential vulnerability only exploitable when using custom log4j configurations that are writable by untrusted users.
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC2/besu-22.1.0-RC2.zip \ SHA256: 86c97c935d70857d210016eb73f518fddd5dcef0c7928c5ede4622bf62c69d17
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC2/besu-22.1.0-RC2.tar.gz \ SHA256 327c14e1829d39e65f822478b166519e781ac4714f54da39ba26d21ba5729a1e
+
+## 21.10.9
+
+### Bug Fixes
+- Fix regression on cors-origin star value
+- Fix for ethFeeHistory accepting hex values for blockCount
+
+ **Full Changelog**: https://github.com/hyperledger/besu/compare/21.10.8...21.10.9
+
+[besu-21.10.9.tar.gz](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.9/besu-21.10.9.tar.gz) b5ef15ede50e19ad9fbb79876d8d68aeb8e3811f8905e973874523df2ed179b4
+[besu-21.10.9.zip](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.9/besu-21.10.9.zip) 26489881d852eefdda2cf0203cb30f7b2045ecfb299da8c744e9579cbe2934e2
+
+## 21.10.8
+
+### Additions and Improvements
+- Ethereum Classic Mystique Hard Fork [#3256](https://github.com/hyperledger/besu/pull/3256)
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.8/besu-21.10.8.tar.gz \ SHA256 d325e2e36bc38a707a9eebf92068f5021606a8c6b6464bb4b4d59008ef8014fc
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.8/besu-21.10.8.zip \ SHA256 a91da1e82fb378e16437327bba56dd299aafdb0614ba528167a1dae85440c5af
+
+## 21.10.7
+
+### Bug Fixes
+- Update dependencies (including vert.x, kubernetes client-java, okhttp, commons-codec)
+
+### Additions and Improvements
+- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
+- Remove Orion ATs
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.7/besu-21.10.7.tar.gz \ SHA256 94cee804fcaea366c9575380ef0e30ed04bf2fc7451190a94887f14c07f301ff
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.7/besu-21.10.7.zip \ SHA256 faf1ebfb20aa6171aa6ea98d7653339272567c318711d11e350471b5bba62c00
+
+## 21.10.6
+
+### Bug Fixes
+- Update log4j to 2.17.1
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.6/besu-21.10.6.tar.gz \ SHA256 ef579490031dd4eb3704b4041e352cfb2e7e787fcff7506b69ef88843d4e1220
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.6/besu-21.10.6.zip \ SHA256 0fdda65bc993905daa14824840724d0b74e3f16f771f5726f5307f6d9575a719
+
+## 21.10.5
+
+### Bug Fixes
+- Update log4j to 2.17.0
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.tar.gz \ SHA256 0d1b6ed8f3e1325ad0d4acabad63c192385e6dcbefe40dc6b647e8ad106445a8
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.zip \ SHA256 a1689a8a65c4c6f633b686983a6a1653e7ac86e742ad2ec6351176482d6e0c57
+
+## 22.1.0-RC1
+
+### 22.1.0-RC1 Breaking Changes
+- Plugin API: BlockHeader.getBaseFee() method now returns an optional Wei instead of an optional Long [#3065](https://github.com/hyperledger/besu/issues/3065)
+
+### Additions and Improvements
+- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
+- Represent baseFee as Wei instead of long accordingly to the spec [#2785](https://github.com/hyperledger/besu/issues/2785)
+- Implements [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) to repurpose DIFFICULTY opcode after the merge as a source of entropy from the Beacon chain. [#3081](https://github.com/hyperledger/besu/issues/3081)
+
+### Bug Fixes
+- Update log4j to 2.16.0.
+- Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC1/besu-22.1.0-RC1.zip \ SHA256: 8f471a30a7d22a6830c5f7ed87d1f2110bdaeb6751007ffa0fb44783a7c80850
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC1/besu-22.1.0-RC1.tar.gz \ SHA256 302ead51c85bf282047104974968ce88ce626df609082700e6e187b26180e0fd
+
+## 21.10.4
+
+### Bug Fixes
+- Update log4j to 2.16.0.
+- Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
+
+### Download links
+This release is not recommended for production use.
+
+## 21.10.3
+
+### Additions and Improvements
+- Updated log4j to 2.15.0 and disabled JNDI message format lookups to improve security.
+- Represent baseFee as Wei instead of long accordingly to the spec [#2785](https://github.com/hyperledger/besu/issues/2785)
+- Adding support of the NO_COLOR environment variable as described in the [NO_COLOR](https://no-color.org/) standard [#3085](https://github.com/hyperledger/besu/pull/3085)
+- Add `privx_findFlexiblePrivacyGroup` RPC Method, `privx_findOnchainPrivacyGroup` will be removed in a future release [#3075](https://github.com/hyperledger/besu/pull/3075)
+- The invalid value is now shown when `--bootnodes` cannot parse an item to make it easier to identify which option is invalid.
+- Adding two new options to be able to specify desired TLS protocol version and Java cipher suites [#3105](https://github.com/hyperledger/besu/pull/3105)
+- Implements [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) to repurpose DIFFICULTY opcode after the merge as a source of entropy from the Beacon chain. [#3081](https://github.com/hyperledger/besu/issues/3081)
+
+### Bug Fixes
+- Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
+
+### Download Link
+This release is not recommended for production use.
+
+## 21.10.2
+
+### Additions and Improvements
+- Add discovery options to genesis file [#2944](https://github.com/hyperledger/besu/pull/2944)
+- Add validate-config subcommand to perform basic syntax validation of TOML config [#2994](https://github.com/hyperledger/besu/pull/2994)
+- Updated Sepolia Nodes [#3034](https://github.com/hyperledger/besu/pull/3034) [#3035](https://github.com/hyperledger/besu/pull/3035)
+
+### Bug Fixes
+- Reduce shift calculations to shifts that may have an actual result. [#3039](https://github.com/hyperledger/besu/pull/3039)
+- DNS Discovery daemon wasn't started [#3033](https://github.com/hyperledger/besu/pull/3033)
+
+### Download Link
+This release is not recommended for production use.
+
+## 21.10.1
 
 ### Additions and Improvements
 - Add CLI autocomplete scripts. [#2854](https://github.com/hyperledger/besu/pull/2854)
+- Add support for PKCS11 keystore on PKI Block Creation. [#2865](https://github.com/hyperledger/besu/pull/2865)
+- Optimize EVM Memory for MLOAD Operations [#2917](https://github.com/hyperledger/besu/pull/2917)
+- Upgrade CircleCI OpenJDK docker image to version 11.0.12. [#2928](https://github.com/hyperledger/besu/pull/2928)
+- Update JDK 11 to latest version in Besu Docker images. [#2925](https://github.com/hyperledger/besu/pull/2925)
+- Add Sepolia proof-of-work testnet configurations [#2920](https://github.com/hyperledger/besu/pull/2920)
+- Allow block period to be configured for IBFT2 and QBFT using transitions [#2902](https://github.com/hyperledger/besu/pull/2902)
+- Add support for binary messages (0x02) for websocket. [#2980](https://github.com/hyperledger/besu/pull/2980)
 
 ### Bug Fixes
+- Do not change the sender balance, but set gas fee to zero, when simulating a transaction without enforcing balance checks. [#2454](https://github.com/hyperledger/besu/pull/2454)
+- Ensure genesis block has the default base fee if london is at block 0 [#2920](https://github.com/hyperledger/besu/pull/2920)
+- Fixes the exit condition for loading a BonsaiPersistedWorldState for a sibling block of the last one persisted [#2967](https://github.com/hyperledger/besu/pull/2967)
 
 ### Early Access Features
+- Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
 
+### Download Link
+This release is not recommended for production use.
 
-## 21.10.0-RC1
+## 21.10.0
+
 ### Additions and Improvements
 - The EVM has been factored out into a standalone module, suitable for inclusion as a library. [#2790](https://github.com/hyperledger/besu/pull/2790)
 - Low level performance improvements changes to cut worst-case EVM performance in half. [#2796](https://github.com/hyperledger/besu/pull/2796)
 - Migrate `ExceptionalHaltReason` from an enum to an interface to allow downstream users of the EVM to add new exceptional halt reasons. [#2810](https://github.com/hyperledger/besu/pull/2810)
 - reduces need for JUMPDEST analysis via caching [#2607](https://github.com/hyperledger/besu/pull/2821)
 - Add support for custom private key file for public-key export and public-key export-address commands [#2801](https://github.com/hyperledger/besu/pull/2801)
+- Add CLI autocomplete scripts. [#2854](https://github.com/hyperledger/besu/pull/2854)
+- Added support for PKCS11 keystore on PKI Block Creation. [#2865](https://github.com/hyperledger/besu/pull/2865)
+- add support for ArrowGlacier hardfork [#2943](https://github.com/hyperledger/besu/issues/2943)
 
+### Bug Fixes
+- Allow BESU_CONFIG_FILE environment to specify TOML file [#2455](https://github.com/hyperledger/besu/issues/2455)
+- Fix bug with private contracts not able to call public contracts that call public contracts [#2816](https://github.com/hyperledger/besu/pull/2816)
+- Fixes the exit condition for loading a BonsaiPersistedWorldState for a sibling block of the last one persisted [#2967](https://github.com/hyperledger/besu/pull/2967)
+- Fixes bonsai getMutable regression affecting fast-sync [#2934](https://github.com/hyperledger/besu/pull/2934)
+- Regression in RC1 involving LogOperation and frame memory overwrites [#2908](https://github.com/hyperledger/besu/pull/2908)
+- Allow `eth_call` and `eth_estimateGas` to accept contract address as sender. [#2891](https://github.com/hyperledger/besu/pull/2891)
+
+### Early Access Features
+- Enable plugins to expose custom JSON-RPC / WebSocket methods [#1317](https://github.com/hyperledger/besu/issues/1317)
+
+### Download Link
+This release is not recommended for production use. \
+SHA256: 71374454753c2ee595f4f34dc6913f731818d50150accbc98088aace313c6935
+
+## 21.10.0-RC4
+
+### Additions and Improvements
+
+### Bug Fixes
+- Fixes the exit condition for loading a BonsaiPersistedWorldState for a sibling block of the last one persisted [#2967](https://github.com/hyperledger/besu/pull/2967)
+- Fixes bonsai getMutable regression affecting fast-sync [#2934](https://github.com/hyperledger/besu/pull/2934)
+
+### Early Access Features
+### Download Link
+This release is not recommended for production use. \
+SHA256: b16e15764b8bc06c5c3f9f19bc8b99fa48e7894aa5a6ccdad65da49bbf564793
+
+## 21.10.0-RC3
+
+### Bug Fixes
+- Regression in RC1 involving LogOperation and frame memory overwrites [#2908](https://github.com/hyperledger/besu/pull/2908)
+- Allow `eth_call` and `eth_estimateGas` to accept contract address as sender. [#2891](https://github.com/hyperledger/besu/pull/2891)
+- Fix Concurrency issues in Ethpeers. [#2896](https://github.com/hyperledger/besu/pull/2896)
+
+### Download
+This release is not recommended for production use. \
+SHA256: 3d4857589336717bf5e4e5ef711b9a7f3bc46b49e1cf5b3b6574a00ccc6eda94
+
+## 21.10.0-RC1/RC2
+### Additions and Improvements
+- The EVM has been factored out into a standalone module, suitable for inclusion as a library. [#2790](https://github.com/hyperledger/besu/pull/2790)
+- Low level performance improvements changes to cut worst-case EVM performance in half. [#2796](https://github.com/hyperledger/besu/pull/2796)
+- Migrate `ExceptionalHaltReason` from an enum to an interface to allow downstream users of the EVM to add new exceptional halt reasons. [#2810](https://github.com/hyperledger/besu/pull/2810)
+- reduces need for JUMPDEST analysis via caching [#2607](https://github.com/hyperledger/besu/pull/2821)
+- Add support for custom private key file for public-key export and public-key export-address commands [#2801](https://github.com/hyperledger/besu/pull/2801)
 
 ### Bug Fixes
 - Allow BESU_CONFIG_FILE environment to specify TOML file [#2455](https://github.com/hyperledger/besu/issues/2455)
@@ -26,13 +231,13 @@
 ### Early Access Features
 
 ### Download
-https://hyperledger.jfrog.io/native/besu-binaries/besu/21.10.0-RC1/besu-21.10.0-RC1.zip \
+This release is not recommended for production use. \
 SHA256: 536612e5e4d7a5e7a582f729f01ba591ba68cc389e8379fea3571ed85322ff51
 
 
 ## 21.7.4
 ### Additions and Improvements
-- Upgrade Gradle to 7.2, which supports building with Java 17 [#2761](https://github.com/hyperledger/besu/pull/2376) 
+- Upgrade Gradle to 7.2, which supports building with Java 17 [#2761](https://github.com/hyperledger/besu/pull/2376)
 
 ### Bug Fixes
 - Set an idle timeout for metrics connections, to clean up ports when no longer used [\#2748](https://github.com/hyperledger/besu/pull/2748)
@@ -98,14 +303,14 @@ sha256sum 83fc44e39a710a95d8b6cbbbf04010dea76122bafcc633a993cd15304905a402
 ## 21.7.0
 
 ### Additions and Improvements
-This release contains the activation blocks for London across all supported testnets. They are: 
+This release contains the activation blocks for London across all supported testnets. They are:
   * Ropsten 10_499_401 (24 Jun 2021)
   * Goerli 5_062_605 (30 Jun 2021)
   * Rinkeby 8_897_988 (7 Jul 2021)
   * Mainnet 12_965_000 (4 Aug 2021)
 - eip-1559 changes: accept transactions which have maxFeePerGas below current baseFee [\#2374](https://github.com/hyperledger/besu/pull/2374)
-- Introduced transitions for IBFT2 block rewards [\#1977](https://github.com/hyperledger/besu/pull/1977) 
-- Change Ethstats's status from experimental feature to stable. [\#2405](https://github.com/hyperledger/besu/pull/2405) 
+- Introduced transitions for IBFT2 block rewards [\#1977](https://github.com/hyperledger/besu/pull/1977)
+- Change Ethstats's status from experimental feature to stable. [\#2405](https://github.com/hyperledger/besu/pull/2405)
 - Fixed disabling of native libraries for secp256k1 and altBn128. [\#2163](https://github.com/hyperledger/besu/pull/2163)
 - eth_feeHistory API for wallet providers [\#2466](https://github.com/hyperledger/besu/pull/2466)
 
@@ -141,8 +346,8 @@ sha256sum 7bc97c359386cad84d449f786dc0a8ed8728616b6704ce473c63f1d94af3a9ef
 
 ### Additions and Improvements
 - eip-1559 changes: accept transactions which have maxFeePerGas below current baseFee [\#2374](https://github.com/hyperledger/besu/pull/2374)
-- Introduced transitions for IBFT2 block rewards [\#1977](https://github.com/hyperledger/besu/pull/1977) 
-- Change Ethstats's status from experimental feature to stable. [\#2405](https://github.com/hyperledger/besu/pull/2405) 
+- Introduced transitions for IBFT2 block rewards [\#1977](https://github.com/hyperledger/besu/pull/1977)
+- Change Ethstats's status from experimental feature to stable. [\#2405](https://github.com/hyperledger/besu/pull/2405)
 - Fixed disabling of native libraries for secp256k1 and altBn128. [\#2163](https://github.com/hyperledger/besu/pull/2163)
 
 
@@ -151,7 +356,7 @@ sha256sum 7bc97c359386cad84d449f786dc0a8ed8728616b6704ce473c63f1d94af3a9ef
 - Updated `eth_sendRawTransaction` to return an error when maxPriorityFeePerGas exceeds maxFeePerGas [\#2424](https://github.com/hyperledger/besu/pull/2424)
 
 ### Early Access Features
-This release contains the activation blocks for London across all supported testnets. They are: 
+This release contains the activation blocks for London across all supported testnets. They are:
   * Ropsten 10_499_401 (24 Jun 2021)
   * Goerli 5_062_605 (30 Jun 2021)
   * Rinkeby 8_897_988 (7 Jul 2021)
@@ -212,7 +417,7 @@ sha256: f415c9b67d26819caeb9940324b2b1b9ce6e872c9181052739438545e84e2531
 
 - Added ACCESS_LIST transactions to the list of transactions using legacy gas pricing for 1559 [\#2239](https://github.com/hyperledger/besu/pull/2239)
 - Reduced logging level of public key decoding failure of malformed packets. [\#2143](https://github.com/hyperledger/besu/pull/2143)
-- Add 1559 parameters to json-rpc responses.  [\#2222](https://github.com/hyperledger/besu/pull/2222) 
+- Add 1559 parameters to json-rpc responses.  [\#2222](https://github.com/hyperledger/besu/pull/2222)
 
 ### Early Access Features
 
@@ -298,7 +503,7 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.1.3/besu-21.1.3.z
 
 ### Important note: the 21.1.1 release contains an outdated version of the Berlin network upgrade. If you are using Besu on public Ethereum networks, you must upgrade to 21.1.2.
 
-This release contains the activation blocks for Berlin across all supported testnets and the Ethereum mainnet. They are: 
+This release contains the activation blocks for Berlin across all supported testnets and the Ethereum mainnet. They are:
   * Ropsten 9_812_189 (10 Mar 2021)
   * Goerli 4_460_644 (17 Mar 2021)
   * Rinkeby 8_290_928 (24 Mar 2021)
@@ -306,7 +511,7 @@ This release contains the activation blocks for Berlin across all supported test
 
 
 ### Additions and Improvements
-- Added option to set a limit for JSON-RPC connections 
+- Added option to set a limit for JSON-RPC connections
   * HTTP connections `--rpc-http-max-active-connections` [\#1996](https://github.com/hyperledger/besu/pull/1996)
   * WS connections `--rpc-ws-max-active-connections` [\#2006](https://github.com/hyperledger/besu/pull/2006)
 - Added ASTOR testnet ETC support [\#2017](https://github.com/hyperledger/besu/pull/2017)
@@ -328,7 +533,7 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.1.2/besu-21.1.2.z
 
 ### Important note: this release contains an outdated version of the Berlin network upgrade. If you are using Besu on public Ethereum networks, you must upgrade to 21.1.2.
 
-This release contains the activation blocks for Berlin across all supported testnets and the Ethereum mainnet. They are: 
+This release contains the activation blocks for Berlin across all supported testnets and the Ethereum mainnet. They are:
   * Ropsten 9_812_189 (10 Mar 2021)
   * Goerli 4_460_644 (17 Mar 2021)
   * Rinkeby 8_290_928 (24 Mar 2021)
@@ -362,14 +567,14 @@ sha256: `c22a80a54e9fed864734b9fbd69a0a46840fd27ca5211648a3eaf8a955417218 `
 ## 21.1.0 Features
 
 Features added between 20.10.0 to 21.1.0 include:
-* Berlin Network Upgrade: this release contains the activation blocks for Berlin across all supported testnets and the Ethereum mainnet. They are: 
+* Berlin Network Upgrade: this release contains the activation blocks for Berlin across all supported testnets and the Ethereum mainnet. They are:
   * Ropsten 9_812_189 (10 Mar 2021)
   * Goerli 4_460_644 (17 Mar 2021)
   * Rinkeby 8_290_928 (24 Mar 2021)
   * Ethereum 12_244_000 (14 Apr 2021)
 * Besu Launcher: Besu now has support for the [Quorum Mainnet Launcher](https://github.com/ConsenSys/quorum-mainnet-launcher) which makes it easy for users to configure and launch Besu on the Ethereum mainnet.
 * Bonsai Tries: A new database format which reduces storage requirements and improves performance for access to recent state. _Note: only full sync is currently supported._
-* Miner Data JSON-RPC: The `eth_getMinerDataByBlockHash` and `eth_getMinerDataByBlockNumber` endpoints return miner rewards and coinbase address for a given block. 
+* Miner Data JSON-RPC: The `eth_getMinerDataByBlockHash` and `eth_getMinerDataByBlockNumber` endpoints return miner rewards and coinbase address for a given block.
 * EIP-1898 support: [The EIP](https://eips.ethereum.org/EIPS/eip-1898) adds `blockHash` to JSON-RPC methods which accept a default block parameter.
 
 ### Early Access Features
@@ -428,7 +633,7 @@ sha256: `e4c8fe4007e3e5f7f2528cbf1eeb5457caf06536c974a6ff4305035ff5724476`
 
 ### Download link
 
-Link removed because this release contains an outdated version of the Berlin network upgrade, which was changed on March 5, 2021 ([link](https://github.com/ethereum/pm/issues/263#issuecomment-791473406)). If you are using Besu on public Ethereum networks, you must upgrade to 21.1.1. sha256 hash left for reference. 
+Link removed because this release contains an outdated version of the Berlin network upgrade, which was changed on March 5, 2021 ([link](https://github.com/ethereum/pm/issues/263#issuecomment-791473406)). If you are using Besu on public Ethereum networks, you must upgrade to 21.1.1. sha256 hash left for reference.
 
 sha256: `b0fe3942052b8fd43fc3025a298a6c701f9edae2e100f0c563a1c5a4ceef71f1`
 
@@ -560,7 +765,7 @@ Prior versions of Besu would set the HTTP Status 400 Bad Request for JSON-RPC re
 
 In Besu version 20.10, properly formatted requests that have valid parameters (count and content) will return a HTTP Status 200 OK, with an error field if an error occurred. For example, requesting an account that does not exist in the chain, or a block by hash that Besu does not have, will now return HTTP 200 OK responses. Unparsable requests, improperly formatted requests, or requests with invalid parameters will continue to return HTTP 400 Bad Request.
 
-Users of Web3J should note that many calls will now return a result with the error field containing the message whereas before a call would throw an exception with the error message as the exception message.   
+Users of Web3J should note that many calls will now return a result with the error field containing the message whereas before a call would throw an exception with the error message as the exception message.
 
 ## 20.10.0 Additions and Improvements
 
@@ -570,7 +775,7 @@ Users of Web3J should note that many calls will now return a result with the err
 * Added support for the upcoming YOLOv2 ephemeral testnet and removed the flag for the deprecated YOLOv1 ephemeral testnet. [#1386](https://github.com/hyperledger/besu/pull/1386)
 * Added `debug_standardTraceBlockToFile` JSON-RPC API. This API accepts a block hash and will replay the block. It returns a list of files containing the result of the trace (one file per transaction). [\#1392](https://github.com/hyperledger/besu/pull/1392)
 * Added `debug_standardTraceBadBlockToFile` JSON-RPC API. This API is similar to `debug_standardTraceBlockToFile`, but can be used to obtain info about a block which has been rejected as invalid. [\#1403](https://github.com/hyperledger/besu/pull/1403)
-* Added support for EIP-2929 to YOLOv2. [#1387](https://github.com/hyperledger/besu/pull/1387)     
+* Added support for EIP-2929 to YOLOv2. [#1387](https://github.com/hyperledger/besu/pull/1387)
 * Added `--start-block` and `--end-block` to the `blocks import` subcommand [\#1399](https://github.com/hyperledger/besu/pull/1399)
 * Added support for multi-tenancy when using the early access feature of [onchain privacy group management](https://besu.hyperledger.org/en/stable/Concepts/Privacy/Onchain-PrivacyGroups/)
 * \[Reverted\] Fixed memory leak in eth/65 subprotocol behavior. It is now enabled by default. [\#1420](https://github.com/hyperledger/besu/pull/1420), [#1348](https://github.com/hyperledger/besu/pull/1348), [#1321](https://github.com/hyperledger/besu/pull/1321)
@@ -678,7 +883,7 @@ To enhance control over permissions on the privacy group management contract:
   the privacy group. In the default onchain privacy group management contract implementation, only the
   owner can add and remove participants, and upgrade the management contract.
 
-The onchain privacy support in the current version of the web3js-eea library (v0.9) will not be compatible with Besu v1.5.3.  We are actively working on an upgrade to webj3-eea that will support these changes.   
+The onchain privacy support in the current version of the web3js-eea library (v0.9) will not be compatible with Besu v1.5.3.  We are actively working on an upgrade to webj3-eea that will support these changes.
 
 ### Download link
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/1.5.3/besu-1.5.3.zip
@@ -699,7 +904,7 @@ sha256sum: `735cd511e1dae1590f2829d9535cb383aa8c526f059b3451859e5fcfccc48985`
 
 * New docker images are being generated to use the latest version of OpenJDK (currently 14.0.1) with the tag suffix of `-openjdk-latest`, for example `1.5.2-openjdk-latest`.
 * New docker images are being generated to use [GraalVM](https://www.graalvm.org/) with the tag suffix of `-graalvm`, for example `1.5.2-graalvm`.
-* The existing images based on Java 11 are also being tagged with the suffix `-openjdk-11`, for example `1.5.2-openjdk-11`, as well as `1.5.2`.  
+* The existing images based on Java 11 are also being tagged with the suffix `-openjdk-11`, for example `1.5.2-openjdk-11`, as well as `1.5.2`.
 
 The intent is that the major Java VM version or Java VM type shipped with the default docker images (`latest`, `1.5.x`, etc.) may be changed during future quarterly releases but will remain consistent within quarterly releases.
 
@@ -947,7 +1152,7 @@ Workaround - Limit the number of blocks queried by each `eth_getLogs` call.
 a fix is completed for the [eth/65 known issue](KNOWN_ISSUES.md). [\#741](https://github.com/hyperledger/besu/pull/741)
 - Resolve crashing NAT detectors on GKE. [\#731](https://github.com/hyperledger/besu/pull/731) fixes [\#507](https://github.com/hyperledger/besu/issues/507).
 [Besu-Kubernetes Readme](https://github.com/PegaSysEng/besu-kubernetes/blob/master/README.md#network-topology-and-high-availability-requirements)
-updated to reflect changes.  
+updated to reflect changes.
 - Deal with quick service start failures [\#714](https://github.com/hyperledger/besu/pull/714) fixes [\#662](https://github.com/hyperledger/besu/issues/662)
 
 ### Known Issues
@@ -976,7 +1181,7 @@ The `eth/65` change is not [backwards compatible](https://github.com/hyperledger
 This has the following impact:
 * In a private network, nodes using the 1.4.3 client cannot interact with nodes using 1.4.2 or earlier
 clients.
-* On mainnet, synchronizing eventually stalls.   
+* On mainnet, synchronizing eventually stalls.
 
 Workaround -> revert to v1.4.2.
 
@@ -1001,7 +1206,7 @@ in 1.5.0 release. [\#639](https://github.com/hyperledger/besu/pull/639)
 
 ### Known Issues
 
-#### Fast sync when running Besu on cloud providers  
+#### Fast sync when running Besu on cloud providers
 
 A known [RocksDB issue](https://github.com/facebook/rocksdb/issues/6435) causes fast sync to fail
 when running Besu on certain cloud providers. The following error is displayed repeatedly:
@@ -1180,7 +1385,7 @@ If you have existing private transactions, see [migration details](docs/Private-
 * Added [`priv_call`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#priv_call) which invokes
 a private contract function locally and does not change the private state.
 
-* Besu has moved from an internal Bytes library to the [Apache Tuweni](https://tuweni.apache.org/) Bytes library.  
+* Besu has moved from an internal Bytes library to the [Apache Tuweni](https://tuweni.apache.org/) Bytes library.
 This includes using the library in the Plugins API interfaces. [#295](https://github.com/hyperledger/besu/pull/295) and [#215](https://github.com/hyperledger/besu/pull/215)
 
 ### Early Access Features
@@ -1512,7 +1717,7 @@ For compatibility with ETC Agharta upgrade, use 1.3.7 or later.
 - Add `--target-gas-limit` command line option. [\#24](https://github.com/hyperledger/besu/pull/24)(thanks to new contributor [cfelde](https://github.com/cfelde))
 - Allow private contracts to access public state. [\#9](https://github.com/hyperledger/besu/pull/9)
 - Documentation updates include:
-  - Added [sample load balancer configurations](https://besu.hyperledger.org/en/latest/HowTo/Configure/Configure-HA/Sample-Configuration/)  
+  - Added [sample load balancer configurations](https://besu.hyperledger.org/en/latest/HowTo/Configure/Configure-HA/Sample-Configuration/)
   - Added [`retesteth`](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Subcommands/#retesteth) subcommand
   - Added [`debug_accountRange`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#debug_accountrange) JSON-RPC API method
   - Clarified purpose of [static nodes](https://besu.hyperledger.org/en/latest/HowTo/Find-and-Connect/Managing-Peers/#static-nodes)
@@ -1596,7 +1801,7 @@ For compatibility with ETC Agharta upgrade, use 1.3.7 or later.
   - [Added Responsible Disclosure policy](https://docs.pantheon.pegasys.tech/en/latest/Reference/Responsible-Disclosure/)
   - [Added `blocks export` subcommand](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Subcommands/#export)
 
-### Technical Improvements  
+### Technical Improvements
 - Update the `pantheon blocks export` command usage [\#1887](https://github.com/PegaSysEng/pantheon/pull/1887) (thanks to [matkt](https://github.com/matkt))
 - Stop Returning null for 'pending' RPC calls [\#1883](https://github.com/PegaSysEng/pantheon/pull/1883)
 - Blake validation errors are hard errors [\#1882](https://github.com/PegaSysEng/pantheon/pull/1882)
@@ -1786,7 +1991,7 @@ For compatibility with ETC Agharta upgrade, use 1.3.7 or later.
   - Added content on [creating and managing privacy groups](https://besu.hyperledger.org/en/latest/Reference/web3js-eea-Methods/#createprivacygroup)
   - Added content on [accessing private and privacy marker transactions](https://besu.hyperledger.org/en/latest/HowTo/Use-Privacy/Access-Private-Transactions/)
   - Added content on [system requirements](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/System-Requirements/)
-  - Added reference to [Besu role on Galaxy to deploy using Ansible](https://besu.hyperledger.org/en/latest/HowTo/Deploy/Ansible/).  
+  - Added reference to [Besu role on Galaxy to deploy using Ansible](https://besu.hyperledger.org/en/latest/HowTo/Deploy/Ansible/).
 
 ### Technical Improvements
 
@@ -2011,11 +2216,11 @@ Documentation updates include:
 - Added Genesis file support for specifying the maximum stack size. [\#1431](https://github.com/PegaSysEng/pantheon/pull/1431)
 - Included transaction details when subscribed to Pending transactions [\#1410](https://github.com/PegaSysEng/pantheon/pull/1410)
 - Documentation updates include:
-  - [Added configuration items specified in the genesis file](https://besu.hyperledger.org/en/latest/Reference/Config-Items/#configuration-items)  
+  - [Added configuration items specified in the genesis file](https://besu.hyperledger.org/en/latest/Reference/Config-Items/#configuration-items)
   - [Added pending transaction details subscription](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/RPC-PubSub/#pending-transactionss)
   - [Added Troubleshooting content](https://besu.hyperledger.org/en/latest/HowTo/Troubleshoot/Troubleshooting/)
-  - [Added Privacy Quickstart](https://besu.hyperledger.org/en/latest/Tutorials/Quickstarts/Privacy-Quickstart/)  
-  - [Added privacy roadmap](https://github.com/hyperledger/besu/blob/master/ROADMAP.md)  
+  - [Added Privacy Quickstart](https://besu.hyperledger.org/en/latest/Tutorials/Quickstarts/Privacy-Quickstart/)
+  - [Added privacy roadmap](https://github.com/hyperledger/besu/blob/master/ROADMAP.md)
 
 
 ### Technical Improvements
@@ -2184,15 +2389,15 @@ Documentation updates include:
 - Notify of dropped messages [\#1156](https://github.com/PegaSysEng/pantheon/pull/1156)
 - Documentation updates include:
     - Added [Permissioning Overview](https://besu.hyperledger.org/en/latest/Concepts/Permissioning/Permissioning-Overview/)
-    - Added content on [Network vs Node Configuration](https://besu.hyperledger.org/en/latest/HowTo/Configure/Using-Configuration-File/)   
-    - Updated [RAM requirements](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/System-Requirements/#ram)  
+    - Added content on [Network vs Node Configuration](https://besu.hyperledger.org/en/latest/HowTo/Configure/Using-Configuration-File/)
+    - Updated [RAM requirements](https://besu.hyperledger.org/en/latest/HowTo/Get-Started/System-Requirements/#ram)
     - Added [Privacy Overview](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Privacy-Overview/) and [Processing Private Transactions](https://besu.hyperledger.org/en/latest/Concepts/Privacy/Private-Transaction-Processing/)
     - Renaming of Ethstats Lite Explorer to [Ethereum Lite Explorer](https://besu.hyperledger.org/en/latest/HowTo/Deploy/Lite-Block-Explorer/#lite-block-explorer-documentation) (thanks to [tzapu](https://github.com/tzapu))
     - Added content on using [Truffle with Besu](https://besu.hyperledger.org/en/latest/HowTo/Develop-Dapps/Truffle/)
     - Added [`droppedPendingTransactions` RPC Pub/Sub subscription](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/RPC-PubSub/#dropped-transactions)
-    - Added [`eea_*` JSON-RPC API methods](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#eea-methods)  
+    - Added [`eea_*` JSON-RPC API methods](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#eea-methods)
     - Added [architecture diagram](https://besu.hyperledger.org/en/latest/Concepts/ArchitectureOverview/)
-    - Updated [permissioning CLI options](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#permissions-accounts-config-file-enabled) and [permissioned network tutorial](https://besu.hyperledger.org/en/stable/)  
+    - Updated [permissioning CLI options](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#permissions-accounts-config-file-enabled) and [permissioned network tutorial](https://besu.hyperledger.org/en/stable/)
 
 ### Technical Improvements
 
@@ -2259,18 +2464,18 @@ Documentation updates include:
    - Added [Azure quickstart tutorial](https://besu.hyperledger.org/en/latest/Tutorials/Quickstarts/Azure-Private-Network-Quickstart/)
    - Enabled copy button in code blocks
    - Added [IBFT 1.0](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/QuorumIBFT/)
-   - Added section on using [Geth attach with Besu](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Using-JSON-RPC-API/#geth-console)    
+   - Added section on using [Geth attach with Besu](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Using-JSON-RPC-API/#geth-console)
    - Enabled the edit link doc site to ease external doc contributions
    - Added [EthStats docs](https://besu.hyperledger.org/HowTo/Deploy/Lite-Network-Monitor/) (thanks to [baxy](https://github.com/baxy))
-   - Updated [Postman collection](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Authentication/#postman)  
+   - Updated [Postman collection](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Authentication/#postman)
    - Added [`metrics-category` CLI option](https://besu.hyperledger.org/en/latest/Reference/CLI/CLI-Syntax/#metrics-category)
    - Added information on [block time and timeout settings](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/IBFT/#block-time) for IBFT 2.0
    - Added [`admin_nodeInfo`](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#admin_nodeinfo)
    - Added [permissions images](https://besu.hyperledger.org/en/latest/Concepts/Permissioning/Permissioning-Overview/)
    - Added permissioning blog to [Resources](https://besu.hyperledger.org/en/latest/Reference/Resources/)
    - Updated [Create Permissioned Network](https://besu.hyperledger.org/en/latest/Tutorials/Permissioning/Create-Permissioned-Network/) tutorial to use `export-address`
-   - Updated [Clique](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/Clique/) and [IBFT 2.0](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/IBFT/) docs to include complete genesis file  
-   - Updated [Clique tutorial](https://besu.hyperledger.org/en/latest/Tutorials/Private-Network/Create-Private-Clique-Network/) to use `export-address` subcommand  
+   - Updated [Clique](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/Clique/) and [IBFT 2.0](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/IBFT/) docs to include complete genesis file
+   - Updated [Clique tutorial](https://besu.hyperledger.org/en/latest/Tutorials/Private-Network/Create-Private-Clique-Network/) to use `export-address` subcommand
    - Added IBFT 2.0 [future message configuration options](https://besu.hyperledger.org/en/latest/HowTo/Configure/Consensus-Protocols/IBFT/#optional-configuration-options)
 
 ### Technical Improvements
@@ -2430,9 +2635,9 @@ Public key address export subcommand was missing in 1.0 release.
 - Added rebind mitigation for Websockets. [\#905](https://github.com/PegaSysEng/pantheon/pull/905)
 - Support genesis contract code [\#749](https://github.com/PegaSysEng/pantheon/pull/749) (thanks to [kziemianek](https://github.com/kziemianek)).
 - Documentation updates include:
-  - Added details on [port configuration](https://besu.hyperledger.org/en/latest/HowTo/Find-and-Connect/Configuring-Ports/)    
+  - Added details on [port configuration](https://besu.hyperledger.org/en/latest/HowTo/Find-and-Connect/Configuring-Ports/)
   - Added [Resources page](https://besu.hyperledger.org/en/latest/Reference/Resources/) linking to Besu blog posts and webinars
-  - Added [JSON-RPC Authentication](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Authentication/)  
+  - Added [JSON-RPC Authentication](https://besu.hyperledger.org/en/latest/HowTo/Interact/APIs/Authentication/)
   - Added [tutorial to create permissioned network](https://besu.hyperledger.org/en/latest/Tutorials/Permissioning/Create-Permissioned-Network/)
   - Added [Permissioning](https://besu.hyperledger.org/en/latest/Concepts/Permissioning/Permissioning-Overview/) content
   - Added [Permissioning API methods](https://besu.hyperledger.org/en/latest/Reference/API-Methods/#permissioning-methods)
@@ -2761,12 +2966,12 @@ To recover the node key and data directory from the Docker container:
 Where `container` is the name or ID of the Docker container containing the Besu node.
 
 The container can be running or stopped when you copy the key and data directory. If your node was
-fully synchronized to MainNet, the data directory will be ~2TB.  
+fully synchronized to MainNet, the data directory will be ~2TB.
 
 When restarting your node with the v0.8.4 Docker image:
 
 * Save the node key in the [`key` file](https://besu.hyperledger.org/en/latest/Concepts/Node-Keys/#node-private-key) in the data
-    directory or specify the location using the [`--node-private-key` option](https://besu.hyperledger.org/en/stable/).  
+    directory or specify the location using the [`--node-private-key` option](https://besu.hyperledger.org/en/stable/).
 * Specify the `<destination_directory` as a [volume for the data directory](https://besu.hyperledger.org/en/stable/).
 
 ### Bug Fixes
@@ -2787,7 +2992,7 @@ When restarting your node with the v0.8.4 Docker image:
 - Added configurable refresh delay for SyncingSubscriptionService on start up [\#383](https://github.com/PegaSysEng/pantheon/pull/383)
 - Added the Command Line Style Guide  [\#530](https://github.com/PegaSysEng/pantheon/pull/530)
 - Documentation updates include:
-  * Migrated to new [documentation site](https://docs.pantheon.pegasys.tech/en/latest/)  
+  * Migrated to new [documentation site](https://docs.pantheon.pegasys.tech/en/latest/)
   * Added [configuration file content](https://besu.hyperledger.org/en/stable/)
   * Added [tutorial to create private network](https://besu.hyperledger.org/en/latest/Tutorials/Private-Network/Create-Private-Network/)
   * Added content on [enabling non-default APIs](https://besu.hyperledger.org/en/latest/Reference/API-Methods/)
@@ -2843,7 +3048,7 @@ From v0.8.3, incoming HTTP requests are only accepted from hostnames specified u
 
 If using the URL `http://127.0.0.1` to make JSON-RPC calls, use `--host-whitelist` to specify the hostname `127.0.0.1` or update the hostname to `localhost`.
 
-If your application publishes RPC ports, specify the hostnames when starting Besu. For example:  
+If your application publishes RPC ports, specify the hostnames when starting Besu. For example:
 
 ```bash
 pantheon --host-whitelist=example.com

@@ -22,13 +22,26 @@ import java.text.SimpleDateFormat
 plugins {
   id 'com.diffplug.spotless' version '5.16.0'
   id 'com.github.ben-manes.versions' version '0.39.0'
-  id 'com.github.hierynomus.license' version '0.16.1'
-  id 'com.jfrog.artifactory' version '4.24.14'
+  id 'com.github.hierynomus.license' version '0.16.1-fix'
+  id 'com.jfrog.artifactory' version '4.25.3'
   id 'io.spring.dependency-management' version '1.0.11.RELEASE'
   id 'me.champeau.jmh' version '0.6.6' apply false
   id 'net.ltgt.errorprone' version '2.0.2'
   id 'maven-publish'
+  id 'org.sonarqube' version '3.3'
 }
+
+sonarqube {
+  properties {
+    property "sonar.projectKey", "hyperledger_besu"
+    property "sonar.organization", "hyperledger"
+    property "sonar.host.url", "https://sonarcloud.io"
+    property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
+    property "sonar.coverage.exclusions", "acceptance-tests/**/*"
+  }
+}
+
+project.tasks["sonarqube"].dependsOn "jacocoRootReport"
 
 if (!JavaVersion.current().java11Compatible) {
   throw new GradleException("Java 11 or later is required to build Besu.\n" +
@@ -83,7 +96,7 @@ allprojects {
   version = rootProject.version
 
   jacoco {
-    toolVersion = '0.8.6'
+    toolVersion = '0.8.7'
     if (project.tasks.findByName('referenceTests')) {
       applyTo referenceTests
     }
@@ -459,6 +472,8 @@ applicationDefaultJvmArgs = [
   // We shutdown log4j ourselves, as otherwise this shutdown hook runs before our own and whatever
   // happens during shutdown is not logged.
   '-Dlog4j.shutdownHookEnabled=false',
+  // Disable JNI lookups in log4j messages to improve security
+  '-Dlog4j2.formatMsgNoLookups=true',
   // Redirect java.util.logging loggers to use log4j2.
   '-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager',
   // Suppress Java JPMS warnings.  Document the reason for each suppression.
@@ -601,6 +616,7 @@ artifactoryPublish {
 
 def dockerVariants = [
   "openjdk-11",
+  "openjdk-11-debug",
   "graalvm",
   "openjdk-latest"
 ]
@@ -781,10 +797,13 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
   sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
-  classDirectories.from files(subprojects.sourceSets.main.output)
+  classDirectories.from files(subprojects.sourceSets.main.output).asFileTree.matching {
+    exclude 'org/hyperledger/besu/tests/acceptance/**'
+  }
   executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
   reports {
     xml.required = true
+    xml.enabled = true
     csv.required = true
     html.destination file("build/reports/jacocoHtml")
   }

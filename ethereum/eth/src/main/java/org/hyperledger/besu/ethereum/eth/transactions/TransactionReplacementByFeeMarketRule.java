@@ -23,8 +23,6 @@ import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.Optional;
 
-import org.apache.tuweni.units.bigints.UInt256;
-
 public class TransactionReplacementByFeeMarketRule implements TransactionPoolReplacementRule {
 
   private static final TransactionPriceCalculator FRONTIER_CALCULATOR =
@@ -41,7 +39,7 @@ public class TransactionReplacementByFeeMarketRule implements TransactionPoolRep
   public boolean shouldReplace(
       final TransactionInfo existingTransactionInfo,
       final TransactionInfo newTransactionInfo,
-      final Optional<Long> baseFee) {
+      final Optional<Wei> baseFee) {
 
     // bail early if basefee is absent or neither transaction supports 1559 fee market
     if (baseFee.isEmpty()
@@ -50,32 +48,30 @@ public class TransactionReplacementByFeeMarketRule implements TransactionPoolRep
     }
 
     Wei newEffPrice = priceOf(newTransactionInfo.getTransaction(), baseFee);
-    Long newEffPriority =
-        newTransactionInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee);
+    Wei newEffPriority = newTransactionInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee);
 
-    // bail early if price is or priority is not strictly positive
-    if (!(newEffPrice.toLong() > 0L)) {
+    // bail early if price is not strictly positive
+    if (newEffPrice.equals(Wei.ZERO)) {
       return false;
     }
 
     Wei curEffPrice = priceOf(existingTransactionInfo.getTransaction(), baseFee);
-    Long curEffPriority =
+    Wei curEffPriority =
         existingTransactionInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee);
 
-    if (isBumpedBy(curEffPrice.toUInt256(), newEffPrice.toUInt256(), priceBump)) {
+    if (isBumpedBy(curEffPrice, newEffPrice, priceBump)) {
       // if effective price is bumped by percent:
       // replace if new effective priority is >= current effective priority
-      return newEffPriority >= curEffPriority;
+      return newEffPriority.compareTo(curEffPriority) >= 0;
     } else if (curEffPrice.equals(newEffPrice)) {
       // elsif new effective price is equal to current effective price:
       // replace if the new effective priority is bumped by priceBump relative to current priority
-      return isBumpedBy(
-          UInt256.valueOf(curEffPriority), UInt256.valueOf(newEffPriority), priceBump);
+      return isBumpedBy(curEffPriority, newEffPriority, priceBump);
     }
     return false;
   }
 
-  private Wei priceOf(final Transaction transaction, final Optional<Long> baseFee) {
+  private Wei priceOf(final Transaction transaction, final Optional<Wei> baseFee) {
     final TransactionPriceCalculator transactionPriceCalculator =
         transaction.getType().equals(TransactionType.EIP1559)
             ? EIP1559_CALCULATOR
@@ -83,7 +79,7 @@ public class TransactionReplacementByFeeMarketRule implements TransactionPoolRep
     return transactionPriceCalculator.price(transaction, baseFee);
   }
 
-  private boolean isBumpedBy(final UInt256 val, final UInt256 bumpVal, final Percentage percent) {
+  private boolean isBumpedBy(final Wei val, final Wei bumpVal, final Percentage percent) {
     return val.multiply(percent.getValue() + 100L).compareTo(bumpVal.multiply(100L)) < 0;
   }
 }

@@ -16,13 +16,17 @@ package org.hyperledger.besu.consensus.qbft.blockcreation;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.JsonQbftConfigOptions;
+import org.hyperledger.besu.config.QbftConfigOptions;
+import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
-import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorConfig;
-import org.hyperledger.besu.consensus.qbft.validator.ValidatorSelectorForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -30,7 +34,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
-import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -41,15 +45,17 @@ public class QbftBlockCreatorFactoryTest {
   private QbftBlockCreatorFactory qbftBlockCreatorFactory;
 
   @Before
+  @SuppressWarnings("unchecked")
   public void setUp() throws Exception {
     final MiningParameters miningParams = mock(MiningParameters.class);
     when(miningParams.getExtraData()).thenReturn(Bytes.wrap("Qbft tests".getBytes(UTF_8)));
 
-    final ValidatorSelectorConfig genesisFork = ValidatorSelectorConfig.createBlockConfig(0);
-    final ValidatorSelectorConfig contractFork =
-        ValidatorSelectorConfig.createContractConfig(2, "");
-    final ValidatorSelectorForksSchedule qbftForksSchedule =
-        new ValidatorSelectorForksSchedule(genesisFork, List.of(contractFork));
+    final MutableQbftConfigOptions qbftConfigOptions =
+        new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+    qbftConfigOptions.setValidatorContractAddress(Optional.of("1"));
+    final ForkSpec<QbftConfigOptions> spec = new ForkSpec<>(0, qbftConfigOptions);
+    final ForksSchedule<QbftConfigOptions> forksSchedule = mock(ForksSchedule.class);
+    when(forksSchedule.getFork(anyLong())).thenReturn(spec);
 
     qbftBlockCreatorFactory =
         new QbftBlockCreatorFactory(
@@ -60,7 +66,7 @@ public class QbftBlockCreatorFactoryTest {
             mock(Address.class),
             mock(Address.class),
             extraDataCodec,
-            qbftForksSchedule);
+            forksSchedule);
   }
 
   @Test

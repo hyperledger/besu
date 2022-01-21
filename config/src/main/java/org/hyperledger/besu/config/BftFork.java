@@ -48,7 +48,7 @@ public class BftFork {
   }
 
   public OptionalInt getBlockPeriodSeconds() {
-    return JsonUtil.getInt(forkConfigRoot, BLOCK_PERIOD_SECONDS_KEY);
+    return JsonUtil.getPositiveInt(forkConfigRoot, BLOCK_PERIOD_SECONDS_KEY);
   }
 
   public Optional<BigInteger> getBlockRewardWei() {
@@ -58,7 +58,7 @@ public class BftFork {
       return Optional.empty();
     }
     final String weiStr = configFileContent.get();
-    if (weiStr.startsWith("0x")) {
+    if (weiStr.toLowerCase().startsWith("0x")) {
       return Optional.of(new BigInteger(1, Bytes.fromHexStringLenient(weiStr).toArrayUnsafe()));
     }
     return Optional.of(new BigInteger(weiStr));

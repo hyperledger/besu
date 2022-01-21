@@ -90,6 +90,7 @@ downloadLicenses {
     (bsd) : [
       'BSD',
       'BSD-2-Clause',
+      'BSD licence',
       'The BSD License',
     ],
     (bsd3Clause) : [
@@ -115,6 +116,7 @@ downloadLicenses {
       'CDDL 1.0',
       'CDDL 1.1',
       'Common Development and Distribution License (CDDL) v1.0',
+      'CDDL + GPLv2 with classpath exception',
     ],
     (epl1) : [
       'Eclipse Public License - Version 1.0',
@@ -148,19 +150,27 @@ downloadLicenses {
     // Explicitly declare that we are using the EPL v1.0 license
     (group('ch.qos.logback')) : epl1,
 
-    // JavaMail, JAXB and Java Servlet is dual licensed under CDDL 1.1 or GPL 2 w/ Classpath Exception
+    // JavaMail, JAXB, Glassfish and Java Servlet are dual licensed under CDDL 1.1 or GPL 2 w/ Classpath Exception
     // Explicitly declare that we are using the CDDL 1.1 license
     (group('com.sun.mail')) : cddl,
     (group('javax.servlet')) : cddl,
     (group('javax.xml.bind')) : cddl,
+    (group('org.glassfish')) : cddl,
 
     // javax.persistence is dual licensed under EPL 1.0 and EDL 1.0.
     // Explicitly declare that we are using the EPL 1.0 license
     (group('javax.persistence')) : epl1,
 
     // io.netty:netty-tcnative-boringssl-static license markings are not machine readable.
+    // io.netty:netty-tcnative-classes license markings are not machine readable.
     // Explicitly state Apache 2 License for license scanning.
-    'io.netty:netty-tcnative-boringssl-static:2.0.40.Final' : apache,
+    'io.netty:netty-tcnative-boringssl-static:2.0.46.Final' : apache,
+    'io.netty:netty-tcnative-classes:2.0.46.Final' : apache,
+
+    // ANTLR license markings are not all machine readable.
+    // Explicitly state BSD License for license scanning.
+    'org.antlr:antlr-runtime:3.5.2': bsd,
+    'org.antlr:ST4:4.3': bsd,
   ]
 }
 

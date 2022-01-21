@@ -30,10 +30,15 @@ public interface FeeMarket {
   TransactionPriceCalculator getTransactionPriceCalculator();
 
   Wei minTransactionPriceInNextBlock(
-      Transaction transaction, Supplier<Optional<Long>> baseFeeSupplier);
+      Transaction transaction, Supplier<Optional<Wei>> baseFeeSupplier);
 
   static BaseFeeMarket london(final long londonForkBlockNumber) {
-    return new LondonFeeMarket(londonForkBlockNumber);
+    return london(londonForkBlockNumber, Optional.empty());
+  }
+
+  static BaseFeeMarket london(
+      final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
+    return new LondonFeeMarket(londonForkBlockNumber, baseFeePerGasOverride);
   }
 
   static FeeMarket legacy() {

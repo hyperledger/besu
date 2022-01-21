@@ -1,0 +1,27 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_filter",
+    "params": [
+      {
+        "fromBlock": "0x1",
+        "toBlock": "0x1",
+        "after": 2,
+        "count": 2,
+        "fromAddress": [
+          "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"
+        ],
+        "toAddress": [
+          "0x0000000000000000000000000000000000000999"
+        ]
+      }
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [],
+    "id": 415
+  },
+  "statusCode": 200
+}

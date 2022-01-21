@@ -62,7 +62,7 @@ public class PendingMultiTypesTransactionsTest {
           MAX_TRANSACTION_HASHES,
           TestClock.fixed(),
           metricsSystem,
-          () -> mockBlockHeader(7),
+          () -> mockBlockHeader(Wei.of(7L)),
           TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
   @Test
@@ -96,7 +96,7 @@ public class PendingMultiTypesTransactionsTest {
     transactions.addLocalTransaction(localTransaction3);
     transactions.addLocalTransaction(localTransaction4);
 
-    transactions.updateBaseFee(300L);
+    transactions.updateBaseFee(Wei.of(300L));
 
     transactions.addLocalTransaction(localTransaction5);
     assertThat(transactions.size()).isEqualTo(5);
@@ -198,7 +198,7 @@ public class PendingMultiTypesTransactionsTest {
     assertThat(iterationOrder)
         .containsExactly(localTransaction1, localTransaction2, localTransaction0);
 
-    transactions.updateBaseFee(110L);
+    transactions.updateBaseFee(Wei.of(110L));
 
     final List<Transaction> iterationOrderAfterBaseIncreased = new ArrayList<>();
     transactions.selectTransactions(
@@ -217,7 +217,7 @@ public class PendingMultiTypesTransactionsTest {
     final Transaction localTransaction1 = create1559Transaction(1, 100, 20, KEYS2);
     final Transaction localTransaction2 = create1559Transaction(2, 100, 19, KEYS2);
 
-    transactions.updateBaseFee(110L);
+    transactions.updateBaseFee(Wei.of(110L));
 
     transactions.addLocalTransaction(localTransaction0);
     transactions.addLocalTransaction(localTransaction1);
@@ -233,7 +233,7 @@ public class PendingMultiTypesTransactionsTest {
     assertThat(iterationOrder)
         .containsExactly(localTransaction0, localTransaction1, localTransaction2);
 
-    transactions.updateBaseFee(50L);
+    transactions.updateBaseFee(Wei.of(50L));
 
     final List<Transaction> iterationOrderAfterBaseIncreased = new ArrayList<>();
     transactions.selectTransactions(
@@ -369,7 +369,7 @@ public class PendingMultiTypesTransactionsTest {
         .createTransaction(keyPair);
   }
 
-  private BlockHeader mockBlockHeader(final long baseFee) {
+  private BlockHeader mockBlockHeader(final Wei baseFee) {
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(baseFee));
     return blockHeader;
   }

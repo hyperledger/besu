@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.jwt.impl.JWTUser;
+import io.vertx.ext.auth.impl.UserImpl;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,13 +50,13 @@ public class PrivGetTransactionCountTest {
       Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57");
   private final long NONCE = 5;
   private final User user =
-      new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
+      new UserImpl(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY)) {};
   private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   @Before
   public void before() {
     when(privacyParameters.isEnabled()).thenReturn(true);
-    when(privacyController.determineBesuNonce(senderAddress, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
+    when(privacyController.determineNonce(senderAddress, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
         .thenReturn(NONCE);
   }
 
@@ -74,8 +74,7 @@ public class PrivGetTransactionCountTest {
         (JsonRpcSuccessResponse) privGetTransactionCount.response(request);
 
     assertThat(response.getResult()).isEqualTo(String.format("0x%X", NONCE));
-    verify(privacyController)
-        .determineBesuNonce(senderAddress, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY);
+    verify(privacyController).determineNonce(senderAddress, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY);
   }
 
   @Test
@@ -83,7 +82,7 @@ public class PrivGetTransactionCountTest {
     final PrivGetTransactionCount privGetTransactionCount =
         new PrivGetTransactionCount(privacyController, privacyIdProvider);
 
-    when(privacyController.determineBesuNonce(senderAddress, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
+    when(privacyController.determineNonce(senderAddress, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
         .thenThrow(EnclaveClientException.class);
 
     final Object[] params = new Object[] {senderAddress, PRIVACY_GROUP_ID};
@@ -103,7 +102,7 @@ public class PrivGetTransactionCountTest {
     final PrivGetTransactionCount privGetTransactionCount =
         new PrivGetTransactionCount(privacyController, privacyIdProvider);
 
-    when(privacyController.determineBesuNonce(senderAddress, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
+    when(privacyController.determineNonce(senderAddress, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
 
     final Object[] params = new Object[] {senderAddress, PRIVACY_GROUP_ID};

@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.privx.PrivxFindFlexiblePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.privx.PrivxFindOnchainPrivacyGroup;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -39,8 +39,8 @@ public class PrivxJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return RpcApis.PRIV;
+  protected String getApiGroup() {
+    return RpcApis.PRIV.name();
   }
 
   @Override
@@ -48,8 +48,10 @@ public class PrivxJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final PrivacyController privacyController,
       final PrivacyIdProvider privacyIdProvider,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
-    if (getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
-      return mapOf(new PrivxFindOnchainPrivacyGroup(privacyController, privacyIdProvider));
+    if (getPrivacyParameters().isFlexiblePrivacyGroupsEnabled()) {
+      return mapOf(
+          new PrivxFindFlexiblePrivacyGroup(privacyController, privacyIdProvider),
+          new PrivxFindOnchainPrivacyGroup(privacyController, privacyIdProvider));
     } else {
       return Map.of();
     }

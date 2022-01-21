@@ -16,11 +16,13 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.BlockValues;
 
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** A block header capable of being processed. */
 public class ProcessableBlockHeader implements BlockValues {
@@ -38,7 +40,9 @@ public class ProcessableBlockHeader implements BlockValues {
   // The block creation timestamp (seconds since the unix epoch)
   protected final long timestamp;
   // base fee is included for post EIP-1559 blocks
-  protected final Long baseFee;
+  protected final Wei baseFee;
+  // random is included for post-merge blocks
+  protected final Bytes32 mixHashOrRandom;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -47,7 +51,8 @@ public class ProcessableBlockHeader implements BlockValues {
       final long number,
       final long gasLimit,
       final long timestamp,
-      final Long baseFee) {
+      final Wei baseFee,
+      final Bytes32 mixHashOrRandom) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
@@ -55,6 +60,7 @@ public class ProcessableBlockHeader implements BlockValues {
     this.gasLimit = gasLimit;
     this.timestamp = timestamp;
     this.baseFee = baseFee;
+    this.mixHashOrRandom = mixHashOrRandom;
   }
 
   /**
@@ -127,10 +133,19 @@ public class ProcessableBlockHeader implements BlockValues {
   /**
    * Returns the basefee of the block.
    *
-   * @return the raw bytes of the extra data field
+   * @return the optional long value for base fee
    */
   @Override
-  public Optional<Long> getBaseFee() {
+  public Optional<Wei> getBaseFee() {
     return Optional.ofNullable(baseFee);
+  }
+
+  /**
+   * Returns the random of the block.
+   *
+   * @return the raw bytes of the random field
+   */
+  public Optional<Bytes32> getRandom() {
+    return Optional.ofNullable(mixHashOrRandom);
   }
 }

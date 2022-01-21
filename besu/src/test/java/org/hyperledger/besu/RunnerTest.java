@@ -16,7 +16,6 @@ package org.hyperledger.besu;
 
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.cli.config.EthNetworkConfig.DEV_NETWORK_ID;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
@@ -60,6 +59,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
+import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
@@ -75,11 +75,11 @@ import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -211,7 +211,8 @@ public final class RunnerTest {
             .permissioningService(new PermissioningServiceImpl())
             .staticNodes(emptySet())
             .storageProvider(new InMemoryKeyValueStorageProvider())
-            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY));
+            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
+            .rpcEndpointService(new RpcEndpointServiceImpl());
 
     Runner runnerBehind = null;
     final Runner runnerAhead =
@@ -226,10 +227,11 @@ public final class RunnerTest {
             .pidPath(pidPath)
             .besuPluginContext(new BesuPluginContextImpl())
             .forkIdSupplier(() -> controllerAhead.getProtocolManager().getForkIdAsBytesList())
+            .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
     try {
-
-      runnerAhead.start();
+      runnerAhead.startExternalServices();
+      runnerAhead.startEthereumMainLoop();
       assertThat(pidPath.toFile().exists()).isTrue();
 
       final SynchronizerConfiguration syncConfigBehind =
@@ -266,7 +268,7 @@ public final class RunnerTest {
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
               EthNetworkConfig.jsonConfig(DEV),
-              DEV_NETWORK_ID,
+              DEV.getNetworkId(),
               Collections.singletonList(enode),
               null);
       runnerBehind =
@@ -282,10 +284,11 @@ public final class RunnerTest {
               .forkIdSupplier(() -> controllerBehind.getProtocolManager().getForkIdAsBytesList())
               .build();
 
-      runnerBehind.start();
+      runnerBehind.startExternalServices();
+      runnerBehind.startEthereumMainLoop();
 
       final int behindJsonRpcPort = runnerBehind.getJsonRpcPort().get();
-      final Call.Factory client = new OkHttpClient();
+      final OkHttpClient client = new OkHttpClient();
       Awaitility.await()
           .ignoreExceptions()
           .atMost(5L, TimeUnit.MINUTES)
@@ -345,27 +348,29 @@ public final class RunnerTest {
                   syncingResp.close();
                 }
               });
-
-      final Future<Void> future = Future.future();
+      final Promise<String> promise = Promise.promise();
       final HttpClient httpClient = vertx.createHttpClient();
-      httpClient.websocket(
+      httpClient.webSocket(
           runnerBehind.getWebsocketPort().get(),
           WebSocketConfiguration.DEFAULT_WEBSOCKET_HOST,
           "/",
           ws -> {
-            ws.writeTextMessage(
-                "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}");
-            ws.textMessageHandler(
-                payload -> {
-                  final boolean matches =
-                      payload.equals("{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":\"0x0\"}");
-                  if (matches) {
-                    future.complete();
-                  } else {
-                    future.fail("Unexpected result");
-                  }
-                });
+            ws.result()
+                .writeTextMessage(
+                    "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}");
+            ws.result()
+                .textMessageHandler(
+                    payload -> {
+                      final boolean matches =
+                          payload.equals("{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":\"0x0\"}");
+                      if (matches) {
+                        promise.complete(payload);
+                      } else {
+                        promise.fail("Unexpected result: " + payload);
+                      }
+                    });
           });
+      final Future<String> future = promise.future();
       Awaitility.await()
           .catchUncaughtExceptions()
           .atMost(5L, TimeUnit.MINUTES)
@@ -375,8 +380,6 @@ public final class RunnerTest {
         runnerBehind.close();
         runnerBehind.awaitStop();
       }
-      runnerAhead.close();
-      runnerAhead.awaitStop();
     }
   }
 

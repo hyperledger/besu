@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.framing;
 import static io.netty.buffer.ByteBufUtil.hexDump;
 import static io.netty.buffer.Unpooled.wrappedBuffer;
 import static org.bouncycastle.pqc.math.linearalgebra.ByteUtils.xor;
+import static org.hyperledger.besu.ethereum.p2p.rlpx.RlpxFrameConstants.LENGTH_FRAME_SIZE;
+import static org.hyperledger.besu.ethereum.p2p.rlpx.RlpxFrameConstants.LENGTH_MAX_MESSAGE_FRAME;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
@@ -60,9 +62,7 @@ public class Framer {
   private static final int LENGTH_HEADER_DATA = 16;
   private static final int LENGTH_MAC = 16;
   private static final int LENGTH_FULL_HEADER = LENGTH_HEADER_DATA + LENGTH_MAC;
-  private static final int LENGTH_FRAME_SIZE = 3;
   private static final int LENGTH_MESSAGE_ID = 1;
-  private static final int LENGTH_MAX_MESSAGE_FRAME = 0xFFFFFF;
 
   private static final byte[] IV = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   private static final byte[] PROTOCOL_HEADER =
@@ -85,6 +85,13 @@ public class Framer {
   private boolean compressionEnabled = false;
   // have we ever successfully uncompressed a packet?
   private boolean compressionSuccessful = false;
+
+  protected Framer() {
+    this.secrets = null;
+    this.encryptor = null;
+    this.decryptor = null;
+    this.macEncryptor = null;
+  }
 
   /**
    * Creates a new framer out of the handshake secrets derived during the cryptographic handshake.

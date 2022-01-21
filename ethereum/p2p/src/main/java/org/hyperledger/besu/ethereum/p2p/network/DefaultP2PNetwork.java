@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
@@ -55,6 +56,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -66,6 +68,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -77,6 +80,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.devp2p.EthereumNodeRecord;
 import org.apache.tuweni.discovery.DNSDaemon;
+import org.apache.tuweni.discovery.DNSDaemonListener;
 
 /**
  * The peer network service (defunct PeerNetworkingService) is the entrypoint to the peer-to-peer
@@ -143,9 +147,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch shutdownLatch = new CountDownLatch(2);
   private final Duration shutdownTimeout = Duration.ofMinutes(1);
-
-  private final AtomicReference<List<DiscoveryPeer>> dnsPeers = new AtomicReference<>();
   private DNSDaemon dnsDaemon;
+
+  @VisibleForTesting final AtomicReference<List<DiscoveryPeer>> dnsPeers = new AtomicReference<>();
 
   /**
    * Creates a peer networking service for production purposes.
@@ -203,28 +207,27 @@ public class DefaultP2PNetwork implements P2PNetwork {
     final String address = config.getDiscovery().getAdvertisedHost();
     final int configuredDiscoveryPort = config.getDiscovery().getBindPort();
     final int configuredRlpxPort = config.getRlpx().getBindPort();
-    if (config.getDiscovery().getDNSDiscoveryURL() != null) {
-      LOG.info("Starting DNS discovery with URL {}", config.getDiscovery().getDNSDiscoveryURL());
-      dnsDaemon =
-          new DNSDaemon(
-              config.getDiscovery().getDNSDiscoveryURL(),
-              (seq, records) -> {
-                List<DiscoveryPeer> peers = new ArrayList<>();
-                for (EthereumNodeRecord enr : records) {
-                  EnodeURL enodeURL =
-                      EnodeURLImpl.builder()
-                          .ipAddress(enr.ip())
-                          .nodeId(enr.publicKey().bytes())
-                          .discoveryPort(Optional.ofNullable(enr.udp()))
-                          .listeningPort(Optional.ofNullable(enr.tcp()))
-                          .build();
-                  DiscoveryPeer peer = DiscoveryPeer.fromEnode(enodeURL);
-                  peers.add(peer);
-                  rlpxAgent.connect(peer);
-                }
-                dnsPeers.set(peers);
-              });
-    }
+
+    Optional.ofNullable(config.getDiscovery().getDNSDiscoveryURL())
+        .ifPresent(
+            disco -> {
+              LOG.info("Starting DNS discovery with URL {}", disco);
+              config
+                  .getDnsDiscoveryServerOverride()
+                  .ifPresent(
+                      dnsServer ->
+                          LOG.info(
+                              "Starting DNS discovery with DNS Server override {}", dnsServer));
+
+              dnsDaemon =
+                  new DNSDaemon(
+                      disco,
+                      createDaemonListener(),
+                      0L,
+                      60000L,
+                      config.getDnsDiscoveryServerOverride().orElse(null));
+              dnsDaemon.start();
+            });
 
     final int listeningPort = rlpxAgent.start().join();
     final int discoveryPort =
@@ -235,15 +238,17 @@ public class DefaultP2PNetwork implements P2PNetwork {
                     : configuredDiscoveryPort)
             .join();
 
-    natService.ifNatEnvironment(
-        NatMethod.UPNP,
+    final Consumer<? super NatManager> natAction =
         natManager -> {
           UpnpNatManager upnpNatManager = (UpnpNatManager) natManager;
           upnpNatManager.requestPortForward(
               discoveryPort, NetworkProtocol.UDP, NatServiceType.DISCOVERY);
           upnpNatManager.requestPortForward(
               listeningPort, NetworkProtocol.TCP, NatServiceType.RLPX);
-        });
+        };
+
+    natService.ifNatEnvironment(NatMethod.UPNP, natAction);
+    natService.ifNatEnvironment(NatMethod.UPNPP2PONLY, natAction);
 
     setLocalNode(address, listeningPort, discoveryPort);
 
@@ -267,9 +272,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return;
     }
 
-    if (dnsDaemon != null) {
-      dnsDaemon.close();
-    }
+    getDnsDaemon().ifPresent(DNSDaemon::close);
 
     peerConnectionScheduler.shutdownNow();
     peerDiscoveryAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());
@@ -322,6 +325,34 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   @VisibleForTesting
+  Optional<DNSDaemon> getDnsDaemon() {
+    return Optional.ofNullable(dnsDaemon);
+  }
+
+  @VisibleForTesting
+  DNSDaemonListener createDaemonListener() {
+    return (seq, records) -> {
+      List<DiscoveryPeer> peers = new ArrayList<>();
+      for (EthereumNodeRecord enr : records) {
+        EnodeURL enodeURL =
+            EnodeURLImpl.builder()
+                .ipAddress(enr.ip())
+                .nodeId(enr.publicKey().bytes())
+                .discoveryPort(Optional.ofNullable(enr.udp()))
+                .listeningPort(Optional.ofNullable(enr.tcp()))
+                .build();
+        DiscoveryPeer peer = DiscoveryPeer.fromEnode(enodeURL);
+        peers.add(peer);
+        rlpxAgent.connect(peer);
+      }
+      // only replace dnsPeers if the lookup was successful:
+      if (!peers.isEmpty()) {
+        dnsPeers.set(peers);
+      }
+    };
+  }
+
+  @VisibleForTesting
   void checkMaintainedConnectionPeers() {
     if (!localNode.isReady()) {
       return;
@@ -350,6 +381,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
     List<DiscoveryPeer> peers = dnsPeers.get();
     if (peers != null) {
+      Collections.shuffle(peers);
       return Stream.concat(peerDiscoveryAgent.streamDiscoveredPeers(), peers.stream());
     }
     return peerDiscoveryAgent.streamDiscoveredPeers();

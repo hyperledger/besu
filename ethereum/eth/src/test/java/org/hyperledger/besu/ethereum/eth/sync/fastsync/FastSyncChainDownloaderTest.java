@@ -108,7 +108,7 @@ public class FastSyncChainDownloaderTest {
         ethContext,
         syncState,
         new NoOpMetricsSystem(),
-        otherBlockchain.getBlockHeader(pivotBlockNumber).get());
+        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()));
   }
 
   @Test

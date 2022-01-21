@@ -22,8 +22,13 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class BLS12MapFp2ToG2PrecompiledContract extends AbstractBLS12PrecompiledContract {
 
+  private static final int PARAMETER_LENGTH = 128;
+
   public BLS12MapFp2ToG2PrecompiledContract() {
-    super("BLS12_MAP_FIELD_TO_CURVE", LibEthPairings.BLS12_MAP_FP2_TO_G2_OPERATION_RAW_VALUE);
+    super(
+        "BLS12_MAP_FIELD_TO_CURVE",
+        LibEthPairings.BLS12_MAP_FP2_TO_G2_OPERATION_RAW_VALUE,
+        PARAMETER_LENGTH);
   }
 
   @Override

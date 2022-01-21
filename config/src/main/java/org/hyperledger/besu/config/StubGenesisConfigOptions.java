@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +25,7 @@ import java.util.OptionalInt;
 import java.util.OptionalLong;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
@@ -37,9 +40,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong muirGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong berlinBlockNumber = OptionalLong.empty();
   private OptionalLong londonBlockNumber = OptionalLong.empty();
+  private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
+  private OptionalLong preMergeForkBlockNumber = OptionalLong.empty();
+  private Optional<UInt256> terminalTotalDifficulty = Optional.empty();
 
-  // TODO EIP-1559 change for the actual fork name when known
-  private final OptionalLong aleutBlockNumber = OptionalLong.empty();
+  private Optional<Wei> baseFeePerGas = Optional.empty();
   private OptionalLong classicForkBlock = OptionalLong.empty();
   private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
   private OptionalLong diehardBlockNumber = OptionalLong.empty();
@@ -50,14 +55,17 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong phoenixBlockNumber = OptionalLong.empty();
   private OptionalLong thanosBlockNumber = OptionalLong.empty();
   private OptionalLong magnetoBlockNumber = OptionalLong.empty();
+  private OptionalLong mystiqueBlockNumber = OptionalLong.empty();
   private OptionalLong ecip1049BlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
   private final OptionalLong ecip1017EraRounds = OptionalLong.empty();
   private Optional<String> ecCurve = Optional.empty();
-  private QbftConfigOptions qbftConfigOptions = QbftConfigOptions.DEFAULT;
+  private QbftConfigOptions qbftConfigOptions = JsonQbftConfigOptions.DEFAULT;
+  private BftConfigOptions bftConfigOptions = JsonBftConfigOptions.DEFAULT;
   private TransitionsConfigOptions transitions = TransitionsConfigOptions.DEFAULT;
+  private final DiscoveryOptions discoveryOptions = DiscoveryOptions.DEFAULT;
 
   @Override
   public String getConsensusEngine() {
@@ -106,12 +114,17 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public BftConfigOptions getBftConfigOptions() {
-    return BftConfigOptions.DEFAULT;
+    return bftConfigOptions;
   }
 
   @Override
   public QbftConfigOptions getQbftConfigOptions() {
     return qbftConfigOptions;
+  }
+
+  @Override
+  public DiscoveryOptions getDiscoveryOptions() {
+    return discoveryOptions;
   }
 
   @Override
@@ -180,18 +193,23 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  // TODO EIP-1559 change for the actual fork name when known
-  public OptionalLong getAleutBlockNumber() {
-    return aleutBlockNumber;
+  public OptionalLong getArrowGlacierBlockNumber() {
+    return arrowGlacierBlockNumber;
   }
 
   @Override
-  public OptionalLong getEIP1559BlockNumber() {
-    if (getAleutBlockNumber().isPresent()) {
-      return getAleutBlockNumber();
-    } else {
-      return getLondonBlockNumber();
-    }
+  public OptionalLong getPreMergeForkBlockNumber() {
+    return preMergeForkBlockNumber;
+  }
+
+  @Override
+  public Optional<Wei> getBaseFeePerGas() {
+    return baseFeePerGas;
+  }
+
+  @Override
+  public Optional<UInt256> getTerminalTotalDifficulty() {
+    return terminalTotalDifficulty;
   }
 
   @Override
@@ -245,6 +263,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getMystiqueBlockNumber() {
+    return mystiqueBlockNumber;
+  }
+
+  @Override
   public OptionalLong getEcip1049BlockNumber() {
     return ecip1049BlockNumber;
   }
@@ -294,7 +317,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
-    getAleutBlockNumber().ifPresent(l -> builder.put("aleutBlock", l));
+    getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
+    getPreMergeForkBlockNumber().ifPresent(l -> builder.put("preMergeForkBlock", l));
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
     getEcip1015BlockNumber().ifPresent(l -> builder.put("ecip1015Block", l));
@@ -306,6 +330,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getPhoenixBlockNumber().ifPresent(l -> builder.put("phoenixBlock", l));
     getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
     getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
+    getMystiqueBlockNumber().ifPresent(l -> builder.put("mystiqueBlock", l));
     getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
@@ -415,6 +440,27 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
+  public StubGenesisConfigOptions arrowGlacierBlock(final long blockNumber) {
+    arrowGlacierBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions preMergeForkBlock(final long blockNumber) {
+    preMergeForkBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions terminalTotalDifficulty(
+      final UInt256 updatedTerminalTotalDifficulty) {
+    terminalTotalDifficulty = Optional.of(updatedTerminalTotalDifficulty);
+    return this;
+  }
+
+  public StubGenesisConfigOptions baseFeePerGas(final long baseFeeOverride) {
+    baseFeePerGas = Optional.of(Wei.of(baseFeeOverride));
+    return this;
+  }
+
   public StubGenesisConfigOptions classicForkBlock(final long blockNumber) {
     classicForkBlock = OptionalLong.of(blockNumber);
     return this;
@@ -465,6 +511,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
+  public StubGenesisConfigOptions mystique(final long blockNumber) {
+    mystiqueBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
   public StubGenesisConfigOptions ecip1049(final long blockNumber) {
     ecip1049BlockNumber = OptionalLong.of(blockNumber);
     return this;
@@ -492,6 +543,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions qbftConfigOptions(final QbftConfigOptions qbftConfigOptions) {
     this.qbftConfigOptions = qbftConfigOptions;
+    return this;
+  }
+
+  public StubGenesisConfigOptions bftConfigOptions(final BftConfigOptions bftConfigOptions) {
+    this.bftConfigOptions = bftConfigOptions;
     return this;
   }
 

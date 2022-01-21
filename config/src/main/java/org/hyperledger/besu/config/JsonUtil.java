@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.util.number.PositiveNumber;
+
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
@@ -50,11 +52,28 @@ public class JsonUtil {
               final String normalizedKey = key.toLowerCase(Locale.US);
               if (value instanceof ObjectNode) {
                 normalized.set(normalizedKey, normalizeKeys((ObjectNode) value));
+              } else if (value instanceof ArrayNode) {
+                normalized.set(normalizedKey, normalizeKeysInArray((ArrayNode) value));
               } else {
                 normalized.set(normalizedKey, value);
               }
             });
     return normalized;
+  }
+
+  private static ArrayNode normalizeKeysInArray(final ArrayNode arrayNode) {
+    final ArrayNode normalizedArray = JsonUtil.createEmptyArrayNode();
+    arrayNode.forEach(
+        value -> {
+          if (value instanceof ObjectNode) {
+            normalizedArray.add(normalizeKeys((ObjectNode) value));
+          } else if (value instanceof ArrayNode) {
+            normalizedArray.add(normalizeKeysInArray((ArrayNode) value));
+          } else {
+            normalizedArray.add(value);
+          }
+        });
+    return normalizedArray;
   }
 
   /**
@@ -124,6 +143,27 @@ public class JsonUtil {
     return getInt(node, key).orElse(defaultValue);
   }
 
+  public static OptionalInt getPositiveInt(final ObjectNode node, final String key) {
+    return getValueAsString(node, key)
+        .map(v -> OptionalInt.of(parsePositiveInt(key, v)))
+        .orElse(OptionalInt.empty());
+  }
+
+  public static int getPositiveInt(
+      final ObjectNode node, final String key, final int defaultValue) {
+    final String value = getValueAsString(node, key, String.valueOf(defaultValue));
+    return parsePositiveInt(key, value);
+  }
+
+  private static int parsePositiveInt(final String key, final String value) {
+    try {
+      return PositiveNumber.fromString(value).getValue();
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+          "Invalid property value, " + key + " should be a positive integer: " + value);
+    }
+  }
+
   public static OptionalLong getLong(final ObjectNode json, final String key) {
     return getValue(json, key)
         .filter(jsonNode -> validateType(jsonNode, JsonNodeType.NUMBER))
@@ -151,6 +191,11 @@ public class JsonUtil {
   public static ObjectNode createEmptyObjectNode() {
     final ObjectMapper mapper = getObjectMapper();
     return mapper.createObjectNode();
+  }
+
+  public static ArrayNode createEmptyArrayNode() {
+    final ObjectMapper mapper = getObjectMapper();
+    return mapper.createArrayNode();
   }
 
   public static ObjectNode objectNodeFromMap(final Map<String, Object> map) {

@@ -39,6 +39,7 @@ dependencies {
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
 
@@ -48,4 +49,5 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation project(path: ':metrics:core', configuration: 'testSupportArtifacts')
 }

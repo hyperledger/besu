@@ -20,7 +20,7 @@ import static org.hyperledger.besu.metrics.noop.NoOpMetricsSystem.NO_OP_COUNTER;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -114,7 +114,7 @@ public class BatchingReadPipeTest {
   @Test
   public void shouldCountBatchesReturnedFromPoll() {
     assertThat(batchingPipe.poll()).isNull();
-    verifyZeroInteractions(batchCounter);
+    verifyNoInteractions(batchCounter);
 
     source.put("a");
     batchingPipe.poll();
@@ -126,7 +126,7 @@ public class BatchingReadPipeTest {
   public void shouldCountBatchesReturnedFromDrainTo() {
     final List<List<String>> output = new ArrayList<>();
     batchingPipe.drainTo(output, 3);
-    verifyZeroInteractions(batchCounter);
+    verifyNoInteractions(batchCounter);
 
     source.put("a");
     batchingPipe.drainTo(output, 3);

@@ -188,7 +188,7 @@ public final class EthHash {
     out.writeLongScalar(header.getTimestamp());
     out.writeBytes(header.getExtraData());
     if (header.getBaseFee().isPresent()) {
-      out.writeLongScalar(header.getBaseFee().get());
+      out.writeUInt256Scalar(header.getBaseFee().get());
     }
     out.endList();
     return Bytes32.wrap(

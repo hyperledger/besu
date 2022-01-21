@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
+import org.hyperledger.besu.ethereum.api.util.TestJsonRpcMethodsUtil;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -1341,32 +1342,6 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
   }
 
   @Test
-  public void invalidJson() throws Exception {
-    final RequestBody body = RequestBody.create(JSON, "{bla");
-
-    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
-      final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.PARSE_ERROR;
-      testHelper.assertValidJsonRpcError(
-          json, null, expectedError.getCode(), expectedError.getMessage());
-    }
-  }
-
-  @Test
-  public void wrongJsonType() throws Exception {
-    final RequestBody body = RequestBody.create(JSON, "\"a string\"");
-
-    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
-      final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.PARSE_ERROR;
-      testHelper.assertValidJsonRpcError(
-          json, null, expectedError.getCode(), expectedError.getMessage());
-    }
-  }
-
-  @Test
   public void requestWithWrongVersionShouldSucceed() throws Exception {
     final String id = "234";
     final RequestBody body =
@@ -1697,7 +1672,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final Transaction transaction,
       final Integer index,
       final Hash blockHash,
-      final Optional<Long> baseFee,
+      final Optional<Wei> baseFee,
       final Long blockNumber) {
     assertThat(Hash.fromHexString(result.getString("hash"))).isEqualTo(transaction.getHash());
     assertThat(Long.decode(result.getString("nonce"))).isEqualByComparingTo(transaction.getNonce());
@@ -2061,6 +2036,41 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
   public void assertThatReadinessProbeWorks() throws Exception {
     try (final Response resp = client.newCall(buildGetRequest("/readiness")).execute()) {
       assertThat(resp.code()).isEqualTo(200);
+    }
+  }
+
+  @Test
+  public void handleResponseWithOptionalEmptyValue() throws Exception {
+    final JsonRpcMethod method = TestJsonRpcMethodsUtil.optionalEmptyResponse();
+    rpcMethods.put(method.getName(), method);
+
+    final String jsonString =
+        "{ \"id\": 1, \"jsonrpc\": \"2.0\", \"method\": \"" + method.getName() + "\" }";
+    final RequestBody body = RequestBody.create(jsonString, JSON);
+
+    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+      final JsonObject json = new JsonObject(resp.body().string());
+      assertThat(json.getString("result")).isNull();
+    } finally {
+      rpcMethods.remove(method.getName());
+    }
+  }
+
+  @Test
+  public void handleResponseWithOptionalExistingValue() throws Exception {
+    final String expectedValue = "foo";
+    final JsonRpcMethod method = TestJsonRpcMethodsUtil.optionalResponseWithValue(expectedValue);
+    rpcMethods.put(method.getName(), method);
+
+    final String jsonString =
+        "{ \"id\": 1, \"jsonrpc\": \"2.0\", \"method\": \"" + method.getName() + "\" }";
+    final RequestBody body = RequestBody.create(jsonString, JSON);
+
+    try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+      final JsonObject json = new JsonObject(resp.body().string());
+      assertThat(json.getString("result")).isEqualTo(expectedValue);
+    } finally {
+      rpcMethods.remove(method.getName());
     }
   }
 }

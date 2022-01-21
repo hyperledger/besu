@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -26,6 +27,7 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** A mined Ethereum block header. */
 public class BlockHeader extends SealableBlockHeader
@@ -34,8 +36,6 @@ public class BlockHeader extends SealableBlockHeader
   public static final int MAX_EXTRA_DATA_BYTES = 32;
 
   public static final long GENESIS_BLOCK_NUMBER = 0L;
-
-  private final Hash mixHash;
 
   private final long nonce;
 
@@ -59,8 +59,8 @@ public class BlockHeader extends SealableBlockHeader
       final long gasUsed,
       final long timestamp,
       final Bytes extraData,
-      final Long baseFee,
-      final Hash mixHash,
+      final Wei baseFee,
+      final Bytes32 mixHashOrRandom,
       final long nonce,
       final BlockHeaderFunctions blockHeaderFunctions,
       final Optional<LogsBloomFilter> privateLogsBloom) {
@@ -78,8 +78,8 @@ public class BlockHeader extends SealableBlockHeader
         gasUsed,
         timestamp,
         extraData,
-        baseFee);
-    this.mixHash = mixHash;
+        baseFee,
+        mixHashOrRandom);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -100,8 +100,8 @@ public class BlockHeader extends SealableBlockHeader
       final long gasUsed,
       final long timestamp,
       final Bytes extraData,
-      final Long baseFee,
-      final Hash mixHash,
+      final Wei baseFee,
+      final Bytes32 mixHashOrRandom,
       final long nonce,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
@@ -118,8 +118,8 @@ public class BlockHeader extends SealableBlockHeader
         gasUsed,
         timestamp,
         extraData,
-        baseFee);
-    this.mixHash = mixHash;
+        baseFee,
+        mixHashOrRandom);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -133,7 +133,12 @@ public class BlockHeader extends SealableBlockHeader
    */
   @Override
   public Hash getMixHash() {
-    return mixHash;
+    return Hash.wrap(mixHashOrRandom);
+  }
+
+  @Override
+  public Bytes32 getMixHashOrRandom() {
+    return mixHashOrRandom;
   }
 
   /**
@@ -215,10 +220,10 @@ public class BlockHeader extends SealableBlockHeader
     out.writeLongScalar(gasUsed);
     out.writeLongScalar(timestamp);
     out.writeBytes(extraData);
-    out.writeBytes(mixHash);
+    out.writeBytes(mixHashOrRandom);
     out.writeLong(nonce);
     if (baseFee != null) {
-      out.writeLongScalar(baseFee);
+      out.writeUInt256Scalar(baseFee);
     }
     out.endList();
   }
@@ -239,9 +244,9 @@ public class BlockHeader extends SealableBlockHeader
     final long gasUsed = input.readLongScalar();
     final long timestamp = input.readLongScalar();
     final Bytes extraData = input.readBytes();
-    final Hash mixHash = Hash.wrap(input.readBytes32());
+    final Bytes32 mixHashOrRandom = input.readBytes32();
     final long nonce = input.readLong();
-    final Long baseFee = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
+    final Wei baseFee = !input.isEndOfCurrentList() ? Wei.of(input.readUInt256Scalar()) : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -258,7 +263,7 @@ public class BlockHeader extends SealableBlockHeader
         timestamp,
         extraData,
         baseFee,
-        mixHash,
+        mixHashOrRandom,
         nonce,
         blockHeaderFunctions);
   }
@@ -299,7 +304,7 @@ public class BlockHeader extends SealableBlockHeader
     sb.append("timestamp=").append(timestamp).append(", ");
     sb.append("extraData=").append(extraData).append(", ");
     sb.append("baseFee=").append(baseFee).append(", ");
-    sb.append("mixHash=").append(mixHash).append(", ");
+    sb.append("mixHashOrRandom=").append(mixHashOrRandom).append(", ");
     sb.append("nonce=").append(nonce);
     return sb.append("}").toString();
   }
@@ -321,8 +326,8 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getGasUsed(),
         pluginBlockHeader.getTimestamp(),
         pluginBlockHeader.getExtraData(),
-        pluginBlockHeader.getBaseFee().orElse(null),
-        Hash.fromHexString(pluginBlockHeader.getMixHash().toHexString()),
+        pluginBlockHeader.getBaseFee().map(Wei::fromQuantity).orElse(null),
+        pluginBlockHeader.getRandom().orElse(null),
         pluginBlockHeader.getNonce(),
         blockHeaderFunctions);
   }

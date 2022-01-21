@@ -55,7 +55,7 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
   private static final Logger LOG = LogManager.getLogger();
 
   // Used for transactions that are not tied to a specific chain
-  // (e.g. does not have a chain id associated with it).
+  // (i.e. does not have a chain id associated with it).
   private static final BigInteger REPLAY_UNPROTECTED_V_BASE = BigInteger.valueOf(27);
   private static final BigInteger REPLAY_UNPROTECTED_V_BASE_PLUS_1 = BigInteger.valueOf(28);
 
@@ -92,18 +92,13 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
   private final Restriction restriction;
 
   // Caches a "hash" of a portion of the transaction used for sender recovery.
-  // Note that this hash does not include the transaction signature so it does not
+  // Note that this hash does not include the transaction signature, so it does not
   // fully identify the transaction (use the result of the {@code hash()} for that).
   // It is only used to compute said signature and recover the sender from it.
   protected volatile Bytes32 hashNoSignature;
 
   // Caches the transaction sender.
   protected volatile Address sender;
-
-  // Caches the hash used to uniquely identify the transaction.
-  // This field will be removed in 1.5.0
-  @Deprecated(since = "1.4.3")
-  protected volatile Hash hash;
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -506,23 +501,6 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
       v = recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(chainId.get()));
     }
     return v;
-  }
-
-  /**
-   * Returns the transaction hash.
-   *
-   * @deprecated All private transactions should be identified by their corresponding PMT hash.
-   * @return the transaction hash
-   */
-  // This field will be removed in 1.5.0
-  @Deprecated(since = "1.4.3")
-  @Override
-  public Hash getHash() {
-    if (hash == null) {
-      final Bytes rlp = serialize(this).encoded();
-      hash = Hash.hash(rlp);
-    }
-    return hash;
   }
 
   /**

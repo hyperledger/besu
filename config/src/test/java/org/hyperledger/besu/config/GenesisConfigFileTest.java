@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.config.GenesisConfigFile.fromConfig;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -32,6 +34,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.Test;
 
@@ -147,19 +150,52 @@ public class GenesisConfigFileTest {
     GenesisConfigFile withBaseFeeAtGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":0},\"baseFeePerGas\":\"0xa\"}");
     assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isPresent();
-    assertThat(withBaseFeeAtGenesis.getBaseFeePerGas().get()).isEqualTo(10L);
+    assertThat(withBaseFeeAtGenesis.getBaseFeePerGas().get().toLong()).isEqualTo(10L);
   }
 
   @Test
   public void shouldGetDefaultBaseFeeAtGenesis() {
     GenesisConfigFile withBaseFeeAtGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":0}}");
+    // no specified baseFeePerGas:
     assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isNotPresent();
+    // supply a default genesis baseFeePerGas when london-at-genesis:
+    assertThat(withBaseFeeAtGenesis.getGenesisBaseFeePerGas().get())
+        .isEqualTo(GenesisConfigFile.BASEFEE_AT_GENESIS_DEFAULT_VALUE);
   }
 
   @Test
   public void shouldNotGetBaseFeeAtGenesis() {
-    assertThat(EMPTY_CONFIG.getBaseFeePerGas()).isNotPresent();
+    GenesisConfigFile withBaseFeeNotAtGenesis =
+        GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":10},\"baseFeePerGas\":\"0xa\"}");
+    // specified baseFeePerGas:
+    assertThat(withBaseFeeNotAtGenesis.getBaseFeePerGas().get().toLong()).isEqualTo(10L);
+    // but no baseFeePerGas since london block is not at genesis:
+    assertThat(withBaseFeeNotAtGenesis.getGenesisBaseFeePerGas()).isNotPresent();
+  }
+
+  @Test
+  public void shouldOverrideConfigOptionsBaseFeeWhenSpecified() {
+    GenesisConfigOptions withOverrides =
+        EMPTY_CONFIG.getConfigOptions(Map.of("baseFeePerGas", Wei.of(8).toString()));
+    assertThat(withOverrides.getBaseFeePerGas().get().toLong()).isEqualTo(8L);
+  }
+
+  @Test
+  public void shouldGetTerminalTotalDifficultyAtGenesis() {
+    GenesisConfigFile withTerminalTotalDifficultyAtGenesis =
+        fromConfig("{\"config\":{\"terminalTotalDifficulty\":1000}}");
+    assertThat(
+            withTerminalTotalDifficultyAtGenesis
+                .getConfigOptions()
+                .getTerminalTotalDifficulty()
+                .get())
+        .isEqualTo(UInt256.valueOf(1000L));
+  }
+
+  @Test
+  public void shouldGetEmptyTerminalTotalDifficultyAtGenesis() {
+    assertThat(EMPTY_CONFIG.getConfigOptions().getTerminalTotalDifficulty()).isNotPresent();
   }
 
   @Test

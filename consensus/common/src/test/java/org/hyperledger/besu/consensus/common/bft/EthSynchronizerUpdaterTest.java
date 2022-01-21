@@ -19,7 +19,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
@@ -48,7 +48,7 @@ public class EthSynchronizerUpdaterTest {
 
     updater.updatePeerChainState(1, mock(PeerConnection.class));
 
-    verifyZeroInteractions(ethPeer);
+    verifyNoInteractions(ethPeer);
   }
 
   @Test

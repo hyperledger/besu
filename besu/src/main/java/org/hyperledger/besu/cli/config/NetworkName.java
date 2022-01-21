@@ -14,16 +14,34 @@
  */
 package org.hyperledger.besu.cli.config;
 
+import java.math.BigInteger;
+
 public enum NetworkName {
-  MAINNET,
-  RINKEBY,
-  ROPSTEN,
-  GOERLI,
-  CALAVERAS,
-  DEV,
-  CLASSIC,
-  KOTTI,
-  MORDOR,
-  ECIP1049_DEV,
-  ASTOR
+  MAINNET("/mainnet.json", BigInteger.valueOf(1)),
+  RINKEBY("/rinkeby.json", BigInteger.valueOf(4)),
+  ROPSTEN("/ropsten.json", BigInteger.valueOf(3)),
+  SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
+  GOERLI("/goerli.json", BigInteger.valueOf(5)),
+  DEV("/dev.json", BigInteger.valueOf(2018)),
+  CLASSIC("/classic.json", BigInteger.valueOf(1)),
+  KOTTI("/kotti.json", BigInteger.valueOf(6)),
+  MORDOR("/mordor.json", BigInteger.valueOf(7)),
+  ECIP1049_DEV("/ecip1049_dev.json", BigInteger.valueOf(2021)),
+  ASTOR("/astor.json", BigInteger.valueOf(212));
+
+  private final String genesisFile;
+  private final BigInteger networkId;
+
+  NetworkName(final String genesisFile, final BigInteger networkId) {
+    this.genesisFile = genesisFile;
+    this.networkId = networkId;
+  }
+
+  public String getGenesisFile() {
+    return genesisFile;
+  }
+
+  public BigInteger getNetworkId() {
+    return networkId;
+  }
 }

@@ -59,8 +59,7 @@ public class FilterParameterTest {
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
 
-    assertThat(parsedFilterParameter)
-        .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+    assertThat(parsedFilterParameter).usingRecursiveComparison().isEqualTo(expectedFilterParameter);
   }
 
   @Test
@@ -74,8 +73,7 @@ public class FilterParameterTest {
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
 
-    assertThat(parsedFilterParameter)
-        .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+    assertThat(parsedFilterParameter).usingRecursiveComparison().isEqualTo(expectedFilterParameter);
   }
 
   @Test
@@ -94,8 +92,7 @@ public class FilterParameterTest {
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
 
-    assertThat(parsedFilterParameter)
-        .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+    assertThat(parsedFilterParameter).usingRecursiveComparison().isEqualTo(expectedFilterParameter);
   }
 
   @Test
@@ -114,8 +111,7 @@ public class FilterParameterTest {
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
 
-    assertThat(parsedFilterParameter)
-        .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+    assertThat(parsedFilterParameter).usingRecursiveComparison().isEqualTo(expectedFilterParameter);
   }
 
   @Test
@@ -137,8 +133,7 @@ public class FilterParameterTest {
     final FilterParameter parsedFilterParameter =
         request.getRequiredParameter(0, FilterParameter.class);
 
-    assertThat(parsedFilterParameter)
-        .isEqualToComparingFieldByFieldRecursively(expectedFilterParameter);
+    assertThat(parsedFilterParameter).usingRecursiveComparison().isEqualTo(expectedFilterParameter);
   }
 
   @Test
@@ -195,7 +190,8 @@ public class FilterParameterTest {
 
     assertThat(parsedFilterParameterUsingAlias.isValid()).isFalse();
     assertThat(parsedFilterParameter)
-        .isEqualToComparingFieldByField(parsedFilterParameterUsingAlias);
+        .usingRecursiveComparison()
+        .isEqualTo(parsedFilterParameterUsingAlias);
   }
 
   @Test
@@ -236,7 +232,8 @@ public class FilterParameterTest {
 
     // blockhash and blockHash should end up the same
     assertThat(parsedFilterParameter)
-        .isEqualToComparingFieldByField(parsedFilterParameterUsingAlias);
+        .usingRecursiveComparison()
+        .isEqualTo(parsedFilterParameterUsingAlias);
   }
 
   @Test
@@ -248,7 +245,8 @@ public class FilterParameterTest {
         "{\"address\":\"0x8CdaF0CD259887258Bc13a92C0a6dA92698644C0\",\"fromBlock\":\"earliest\",\"toBlock\":\"latest\",\"topics\":[\"0x492e34c7da2a87c57444aa0f6143558999bceec63065f04557cfb20932e0d591\"]}";
 
     assertThat(readJsonAsFilterParameter(jsonWithTopicsFirst))
-        .isEqualToComparingFieldByFieldRecursively(readJsonAsFilterParameter(jsonWithTopicsLast));
+        .usingRecursiveComparison()
+        .isEqualTo(readJsonAsFilterParameter(jsonWithTopicsLast));
   }
 
   @Test
@@ -413,6 +411,22 @@ public class FilterParameterTest {
             List.of(LogTopic.fromHexString(TOPIC_FOUR), LogTopic.fromHexString(TOPIC_FIVE)));
   }
 
+  @Test
+  public void fromAndToAddressesShouldDeserializeAsTwoListsOfAddresses()
+      throws java.io.IOException {
+    final FilterParameter filterParameter =
+        readJsonAsFilterParameter("{\"fromAddress\":[\"0x0\"], \"toAddress\":[\"0x1\"]}");
+    assertThat(filterParameter.getFromAddress()).containsExactly(Address.fromHexString("0x0"));
+    assertThat(filterParameter.getToAddress()).containsExactly(Address.fromHexString("0x1"));
+  }
+
+  @Test
+  public void countAndAfterShouldDeserializeCorrectly() throws java.io.IOException {
+    final FilterParameter filterParameter = readJsonAsFilterParameter("{\"after\":1, \"count\":2}");
+    assertThat(filterParameter.getAfter()).contains(1);
+    assertThat(filterParameter.getCount()).contains(2);
+  }
+
   private <T> FilterParameter createFilterWithTopics(final T inputTopics)
       throws JsonProcessingException {
     final Map<String, T> payload = new HashMap<>();
@@ -426,7 +440,11 @@ public class FilterParameterTest {
     return new FilterParameter(
         BlockParameter.LATEST,
         BlockParameter.LATEST,
+        null,
+        null,
         Arrays.stream(addresses).map(Address::fromHexString).collect(toUnmodifiableList()),
+        null,
+        null,
         null,
         null);
   }
@@ -435,9 +453,13 @@ public class FilterParameterTest {
     return new FilterParameter(
         BlockParameter.LATEST,
         BlockParameter.LATEST,
+        null,
+        null,
         singletonList(Address.fromHexString("0x0")),
         singletonList(
             Arrays.stream(topics).map(LogTopic::fromHexString).collect(toUnmodifiableList())),
+        null,
+        null,
         null);
   }
 
@@ -448,8 +470,12 @@ public class FilterParameterTest {
     return new FilterParameter(
         BlockParameter.LATEST,
         BlockParameter.LATEST,
+        null,
+        null,
         singletonList(Address.fromHexString("0x0")),
         topicsListList,
+        null,
+        null,
         null);
   }
 

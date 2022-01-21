@@ -15,8 +15,8 @@
 package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
-import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -28,15 +28,14 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
 public abstract class BaseBftProtocolSchedule {
@@ -45,44 +44,26 @@ public abstract class BaseBftProtocolSchedule {
 
   public ProtocolSchedule createProtocolSchedule(
       final GenesisConfigOptions config,
+      final ForksSchedule<? extends BftConfigOptions> forksSchedule,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
 
-    specMap.put(
-        0L,
-        builder ->
-            applyBftChanges(
-                config.getBftConfigOptions(),
-                builder,
-                config.isQuorum(),
-                createGenesisBlockHeaderRuleset(config),
-                bftExtraDataCodec,
-                Optional.of(config.getBftConfigOptions().getBlockRewardWei())));
-
-    final Supplier<List<? extends BftFork>> forks;
-    if (config.isIbft2()) {
-      forks = () -> config.getTransitions().getIbftForks();
-    } else {
-      forks = () -> config.getTransitions().getQbftForks();
-    }
-
-    forks
-        .get()
+    forksSchedule
+        .getForks()
         .forEach(
-            fork ->
+            forkSpec ->
                 specMap.put(
-                    fork.getForkBlock(),
+                    forkSpec.getBlock(),
                     builder ->
                         applyBftChanges(
-                            config.getBftConfigOptions(),
+                            forkSpec.getValue(),
                             builder,
                             config.isQuorum(),
-                            createForkBlockHeaderRuleset(config, fork),
                             bftExtraDataCodec,
-                            fork.getBlockRewardWei())));
+                            Optional.of(forkSpec.getValue().getBlockRewardWei()))));
 
     final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
 
@@ -97,17 +78,13 @@ public abstract class BaseBftProtocolSchedule {
         .createProtocolSchedule();
   }
 
-  protected abstract Supplier<BlockHeaderValidator.Builder> createForkBlockHeaderRuleset(
-      final GenesisConfigOptions config, BftFork fork);
-
-  protected abstract Supplier<BlockHeaderValidator.Builder> createGenesisBlockHeaderRuleset(
-      final GenesisConfigOptions config);
+  protected abstract BlockHeaderValidator.Builder createBlockHeaderRuleset(
+      final BftConfigOptions config, final FeeMarket feeMarket);
 
   private ProtocolSpecBuilder applyBftChanges(
       final BftConfigOptions configOptions,
       final ProtocolSpecBuilder builder,
       final boolean goQuorumMode,
-      final Supplier<BlockHeaderValidator.Builder> blockHeaderRuleset,
       final BftExtraDataCodec bftExtraDataCodec,
       final Optional<BigInteger> blockReward) {
 
@@ -120,8 +97,10 @@ public abstract class BaseBftProtocolSchedule {
     }
 
     builder
-        .blockHeaderValidatorBuilder(feeMarket -> blockHeaderRuleset.get())
-        .ommerHeaderValidatorBuilder(feeMarket -> blockHeaderRuleset.get())
+        .blockHeaderValidatorBuilder(
+            feeMarket -> createBlockHeaderRuleset(configOptions, feeMarket))
+        .ommerHeaderValidatorBuilder(
+            feeMarket -> createBlockHeaderRuleset(configOptions, feeMarket))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)

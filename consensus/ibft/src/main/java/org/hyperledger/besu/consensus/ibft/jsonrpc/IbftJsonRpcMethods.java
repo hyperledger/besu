@@ -27,7 +27,7 @@ import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetValidatorsByBl
 import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetValidatorsByBlockNumber;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftProposeValidatorVote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -44,8 +44,8 @@ public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return IbftRpcApis.IBFT;
+  protected String getApiGroup() {
+    return RpcApis.IBFT.name();
   }
 
   @Override
@@ -53,10 +53,10 @@ public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final MutableBlockchain blockchain = context.getBlockchain();
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, context.getWorldStateArchive());
-    final BftContext bftContext = context.getConsensusState(BftContext.class);
+    final BftContext bftContext = context.getConsensusContext(BftContext.class);
     final BlockInterface blockInterface = bftContext.getBlockInterface();
     final ValidatorProvider validatorProvider =
-        context.getConsensusState(BftContext.class).getValidatorProvider();
+        context.getConsensusContext(BftContext.class).getValidatorProvider();
 
     // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
     final ValidatorProvider readOnlyValidatorProvider =
@@ -73,7 +73,7 @@ public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private ValidatorProvider createValidatorProvider(
       final ProtocolContext context, final MutableBlockchain blockchain) {
-    final BftContext bftContext = context.getConsensusState(BftContext.class);
+    final BftContext bftContext = context.getConsensusContext(BftContext.class);
     final EpochManager epochManager = bftContext.getEpochManager();
     final BftBlockInterface bftBlockInterface = bftContext.getBlockInterface();
     return BlockValidatorProvider.nonForkingValidatorProvider(

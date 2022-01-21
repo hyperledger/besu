@@ -15,12 +15,10 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,7 +35,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -106,7 +103,7 @@ public class PrivCallTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(privacyController).simulatePrivateTransaction(any(), any(), any(), anyLong());
   }
 
@@ -123,7 +120,7 @@ public class PrivCallTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(privacyController)
         .simulatePrivateTransaction(any(), any(), eq(callParameter), anyLong());
   }
@@ -137,7 +134,7 @@ public class PrivCallTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(privacyController)
         .simulatePrivateTransaction(any(), any(), eq(callParameter()), anyLong());
   }
@@ -181,19 +178,6 @@ public class PrivCallTest {
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasNoCause()
         .hasMessage("Missing required json rpc parameter at index 0");
-  }
-
-  @Test
-  public void multiTenancyCheckFailure() {
-    doThrow(new MultiTenancyValidationException("msg"))
-        .when(privacyController)
-        .verifyPrivacyGroupContainsPrivacyUserId(
-            eq(privacyGroupId), eq(ENCLAVE_PUBLIC_KEY), eq(Optional.of(1L)));
-
-    final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter(), "0x02");
-
-    assertThatThrownBy(() -> method.response(request))
-        .isInstanceOf(MultiTenancyValidationException.class);
   }
 
   private JsonCallParameter callParameter() {

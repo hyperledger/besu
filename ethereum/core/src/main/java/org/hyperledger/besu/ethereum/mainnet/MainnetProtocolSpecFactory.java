@@ -150,6 +150,30 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
+  public ProtocolSpecBuilder arrowGlacierDefinition(
+      final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.arrowGlacierDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode,
+        evmConfiguration);
+  }
+
+  public ProtocolSpecBuilder preMergeForkDefinition(
+      final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.preMergeForkDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode,
+        evmConfiguration);
+  }
+
   ////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Classic Protocol Specs
@@ -224,6 +248,17 @@ public class MainnetProtocolSpecFactory {
 
   public ProtocolSpecBuilder magnetoDefinition() {
     return ClassicProtocolSpecs.magnetoDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        ecip1017EraRounds,
+        quorumCompatibilityMode,
+        evmConfiguration);
+  }
+
+  public ProtocolSpecBuilder mystiqueDefinition() {
+    return ClassicProtocolSpecs.mystiqueDefinition(
         chainId,
         contractSizeLimit,
         evmStackSize,

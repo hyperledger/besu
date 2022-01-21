@@ -73,7 +73,7 @@ public class PrivateStateRehydration {
     final Optional<Bytes> maybeGroupId =
         privateTransactionWithMetadataList.get(0).getPrivateTransaction().getPrivacyGroupId();
     if (maybeGroupId.isEmpty()) {
-      LOG.debug("Onchain groups must have a group id.");
+      LOG.debug("Flexible groups must have a group id.");
       return;
     }
     final Bytes32 privacyGroupId = Bytes32.wrap(maybeGroupId.get());

@@ -23,6 +23,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
+import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -103,11 +104,13 @@ public class BftBlockCreatorFactory {
   }
 
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
-    final BftContext bftContext = protocolContext.getConsensusState(BftContext.class);
+    final BftContext bftContext = protocolContext.getConsensusContext(BftContext.class);
     final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
-    checkState(validatorProvider.getVoteProvider().isPresent(), "Bft requires a vote provider");
+    Optional<VoteProvider> voteProviderAfterBlock =
+        validatorProvider.getVoteProviderAfterBlock(parentHeader);
+    checkState(voteProviderAfterBlock.isPresent(), "Bft requires a vote provider");
     final Optional<ValidatorVote> proposal =
-        validatorProvider.getVoteProvider().get().getVoteAfterBlock(parentHeader, localAddress);
+        voteProviderAfterBlock.get().getVoteAfterBlock(parentHeader, localAddress);
 
     final List<Address> validators =
         new ArrayList<>(validatorProvider.getValidatorsAfterBlock(parentHeader));

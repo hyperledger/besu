@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core.feemarket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
@@ -36,7 +37,7 @@ public class BaseFeeMarketTest {
                 TARGET_GAS_USED - 1000000L,
                 TARGET_GAS_USED))
         .isLessThan(baseFeeMarket.getInitialBasefee())
-        .isEqualTo(987500000L);
+        .isEqualTo(Wei.of(987500000L));
   }
 
   @Test
@@ -48,7 +49,7 @@ public class BaseFeeMarketTest {
                 TARGET_GAS_USED + 1000000L,
                 TARGET_GAS_USED))
         .isGreaterThan(baseFeeMarket.getInitialBasefee())
-        .isEqualTo(1012500000L);
+        .isEqualTo(Wei.of(1012500000L));
   }
 
   @Test

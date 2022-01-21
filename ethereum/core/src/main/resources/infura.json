@@ -3,7 +3,7 @@
     "chainId": 1337,
     "homesteadBlock":0,
     "eip150Block":0,
-    "eip158Block":10,
+    "eip158Block":10
   },
   "nonce": "0x0000000000000042",
   "alloc": {

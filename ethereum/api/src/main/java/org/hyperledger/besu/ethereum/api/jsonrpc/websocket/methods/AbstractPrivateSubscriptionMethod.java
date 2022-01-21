@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 abstract class AbstractPrivateSubscriptionMethod extends AbstractSubscriptionMethod {
 
-  private final PrivacyController privacyController;
+  final PrivacyController privacyController;
   protected final PrivacyIdProvider privacyIdProvider;
 
   AbstractPrivateSubscriptionMethod(

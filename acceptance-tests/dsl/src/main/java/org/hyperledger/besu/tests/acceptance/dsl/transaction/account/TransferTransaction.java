@@ -21,7 +21,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.SignUtil;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.TransactionWithSignatureAlgorithm;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -29,13 +28,12 @@ import java.math.BigInteger;
 import java.util.Optional;
 
 import org.web3j.crypto.RawTransaction;
-import org.web3j.crypto.TransactionEncoder;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.utils.Convert;
 import org.web3j.utils.Convert.Unit;
 import org.web3j.utils.Numeric;
 
-public class TransferTransaction
-    implements Transaction<Hash>, TransactionWithSignatureAlgorithm<Hash> {
+public class TransferTransaction implements Transaction<Hash> {
 
   /** Price for each for each GAS units in this transaction (wei). */
   private static final BigInteger MINIMUM_GAS_PRICE = BigInteger.valueOf(1000);
@@ -49,19 +47,26 @@ public class TransferTransaction
   private final Unit transferUnit;
   private final BigInteger gasPrice;
   private final BigInteger nonce;
+  private final Optional<BigInteger> chainId;
+  private final SignatureAlgorithm signatureAlgorithm;
+  private byte[] signedTxData = null;
 
   public TransferTransaction(
       final Account sender,
       final Account recipient,
       final Amount transferAmount,
       final Amount gasPrice,
-      final BigInteger nonce) {
+      final BigInteger nonce,
+      final Optional<BigInteger> chainId,
+      final SignatureAlgorithm signatureAlgorithm) {
     this.sender = sender;
     this.recipient = recipient;
     this.transferAmount = transferAmount.getValue();
     this.transferUnit = transferAmount.getUnit();
     this.gasPrice = gasPrice == null ? MINIMUM_GAS_PRICE : convertGasPriceToWei(gasPrice);
     this.nonce = nonce;
+    this.chainId = chainId;
+    this.signatureAlgorithm = signatureAlgorithm;
   }
 
   @Override
@@ -70,40 +75,44 @@ public class TransferTransaction
     return sendRawTransaction(node, signedTransactionData);
   }
 
-  @Override
-  public Hash execute(final NodeRequests node, final SignatureAlgorithm signatureAlgorithm) {
-    final String signedTransactionData =
-        signedTransactionDataWithSignatureAlgorithm(signatureAlgorithm);
-    return sendRawTransaction(node, signedTransactionData);
-  }
-
   public Amount executionCost() {
     return Amount.wei(INTRINSIC_GAS.multiply(gasPrice));
   }
 
   public String signedTransactionData() {
-    final RawTransaction transaction = createRawTransaction();
-
-    return Numeric.toHexString(
-        TransactionEncoder.signMessage(transaction, sender.web3jCredentialsOrThrow()));
+    return Numeric.toHexString(createSignedTransactionData());
   }
 
-  private String signedTransactionDataWithSignatureAlgorithm(
-      final SignatureAlgorithm signatureAlgorithm) {
-    return SignUtil.signTransaction(createRawTransaction(), sender, signatureAlgorithm);
+  public String transactionHash() {
+    final byte[] signedTx = createSignedTransactionData();
+    final byte[] txHash = org.web3j.crypto.Hash.sha3(signedTx);
+    return Numeric.toHexString(txHash);
+  }
+
+  private byte[] createSignedTransactionData() {
+    if (signedTxData == null) {
+      signedTxData =
+          SignUtil.signTransaction(createRawTransaction(), sender, signatureAlgorithm, chainId);
+    }
+    return signedTxData;
   }
 
   private Hash sendRawTransaction(final NodeRequests node, final String signedTransactionData) {
     try {
-      return Hash.fromHexString(
-          node.eth().ethSendRawTransaction(signedTransactionData).send().getTransactionHash());
+      final EthSendTransaction transaction =
+          node.eth().ethSendRawTransaction(signedTransactionData).send();
+      if (transaction.getResult() == null && transaction.getError() != null) {
+        throw new RuntimeException(
+            "Error sending transaction: " + transaction.getError().getMessage());
+      }
+      return Hash.fromHexString(transaction.getTransactionHash());
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private Optional<BigInteger> getNonce() {
-    return nonce == null ? Optional.empty() : Optional.of(nonce);
+  private BigInteger getNonce() {
+    return Optional.ofNullable(nonce).orElseGet(sender::getNextNonce);
   }
 
   private BigInteger convertGasPriceToWei(final Amount unconverted) {
@@ -121,13 +130,28 @@ public class TransferTransaction
   }
 
   private RawTransaction createRawTransaction() {
-    final Optional<BigInteger> nonce = getNonce();
+    return chainId
+        .map(this::createTransactionWithChainId)
+        .orElseGet(this::createTransactionWithoutChainId);
+  }
 
+  private RawTransaction createTransactionWithoutChainId() {
     return RawTransaction.createEtherTransaction(
-        nonce.orElse(nonce.orElseGet(sender::getNextNonce)),
+        getNonce(),
         gasPrice,
         INTRINSIC_GAS,
         recipient.getAddress(),
         Convert.toWei(transferAmount, transferUnit).toBigIntegerExact());
+  }
+
+  private RawTransaction createTransactionWithChainId(final BigInteger chainId) {
+    return RawTransaction.createEtherTransaction(
+        chainId.longValueExact(),
+        getNonce(),
+        INTRINSIC_GAS,
+        recipient.getAddress(),
+        Convert.toWei(transferAmount, transferUnit).toBigIntegerExact(),
+        BigInteger.ONE,
+        gasPrice);
   }
 }

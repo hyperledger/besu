@@ -88,7 +88,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             miningParameters,
             new CliqueBlockScheduler(
                 clock,
-                protocolContext.getConsensusState(CliqueContext.class).getValidatorProvider(),
+                protocolContext.getConsensusContext(CliqueContext.class).getValidatorProvider(),
                 localAddress,
                 secondsBetweenBlocks),
             epochManager);

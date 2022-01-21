@@ -14,51 +14,61 @@
  */
 package org.hyperledger.besu.consensus.ibft;
 
-import org.hyperledger.besu.config.BftFork;
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BaseBftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
-import java.util.function.Supplier;
+import java.util.Optional;
 
 /** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
 public class IbftProtocolSchedule extends BaseBftProtocolSchedule {
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
+      final ForksSchedule<BftConfigOptions> forksSchedule,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration) {
     return new IbftProtocolSchedule()
         .createProtocolSchedule(
-            config, privacyParameters, isRevertReasonEnabled, bftExtraDataCodec, evmConfiguration);
+            config,
+            forksSchedule,
+            privacyParameters,
+            isRevertReasonEnabled,
+            bftExtraDataCodec,
+            evmConfiguration);
   }
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
+      final ForksSchedule<BftConfigOptions> forksSchedule,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration) {
-    return create(config, PrivacyParameters.DEFAULT, false, bftExtraDataCodec, evmConfiguration);
+    return create(
+        config,
+        forksSchedule,
+        PrivacyParameters.DEFAULT,
+        false,
+        bftExtraDataCodec,
+        evmConfiguration);
   }
 
   @Override
-  protected Supplier<BlockHeaderValidator.Builder> createForkBlockHeaderRuleset(
-      final GenesisConfigOptions config, final BftFork fork) {
-    return () ->
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-            config.getBftConfigOptions().getBlockPeriodSeconds());
-  }
+  protected BlockHeaderValidator.Builder createBlockHeaderRuleset(
+      final BftConfigOptions config, final FeeMarket feeMarket) {
+    final Optional<BaseFeeMarket> baseFeeMarket =
+        Optional.of(feeMarket).filter(FeeMarket::implementsBaseFee).map(BaseFeeMarket.class::cast);
 
-  @Override
-  protected Supplier<BlockHeaderValidator.Builder> createGenesisBlockHeaderRuleset(
-      final GenesisConfigOptions config) {
-    return () ->
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-            config.getBftConfigOptions().getBlockPeriodSeconds());
+    return IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
+        config.getBlockPeriodSeconds(), baseFeeMarket);
   }
 }

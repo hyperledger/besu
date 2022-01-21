@@ -188,7 +188,7 @@ public class BlockTransactionSelector {
             .getTransactionPriceCalculator()
             .price(transaction, processableBlockHeader.getBaseFee());
     if (minTransactionGasPrice.compareTo(actualMinTransactionGasPriceInBlock) > 0) {
-      LOG.trace(
+      LOG.warn(
           "Gas fee of {} lower than configured minimum {}, deleting",
           transaction,
           minTransactionGasPrice);
@@ -197,10 +197,13 @@ public class BlockTransactionSelector {
 
     final WorldUpdater worldStateUpdater = worldState.updater();
     final BlockHashLookup blockHashLookup = new BlockHashLookup(processableBlockHeader, blockchain);
+    final boolean isGoQuorumPrivateTransaction =
+        transaction.isGoQuorumPrivateTransaction(
+            transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode());
 
     TransactionProcessingResult effectiveResult;
 
-    if (transaction.isGoQuorumPrivateTransaction()) {
+    if (isGoQuorumPrivateTransaction) {
       final ValidationResult<TransactionInvalidReason> validationResult =
           validateTransaction(processableBlockHeader, transaction, worldStateUpdater);
       if (!validationResult.isValid()) {
@@ -280,10 +283,12 @@ public class BlockTransactionSelector {
    */
   private void updateTransactionResultTracking(
       final Transaction transaction, final TransactionProcessingResult result) {
+    final boolean isGoQuorumPrivateTransaction =
+        transaction.isGoQuorumPrivateTransaction(
+            transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode());
+
     final long gasUsedByTransaction =
-        transaction.isGoQuorumPrivateTransaction()
-            ? 0
-            : transaction.getGasLimit() - result.getGasRemaining();
+        isGoQuorumPrivateTransaction ? 0 : transaction.getGasLimit() - result.getGasRemaining();
 
     final long cumulativeGasUsed =
         transactionSelectionResult.getCumulativeGasUsed() + gasUsedByTransaction;

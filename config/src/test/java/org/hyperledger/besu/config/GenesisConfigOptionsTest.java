@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class GenesisConfigOptionsTest {
@@ -58,7 +59,7 @@ public class GenesisConfigOptionsTest {
   public void shouldUseIbftLegacyWhenIbftInConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ibft", emptyMap()));
     assertThat(config.isIbftLegacy()).isTrue();
-    assertThat(config.getIbftLegacyConfigOptions()).isNotSameAs(BftConfigOptions.DEFAULT);
+    assertThat(config.getIbftLegacyConfigOptions()).isNotSameAs(JsonBftConfigOptions.DEFAULT);
     assertThat(config.getConsensusEngine()).isEqualTo("ibft");
   }
 
@@ -181,15 +182,13 @@ public class GenesisConfigOptionsTest {
   @Test
   public void shouldGetLondonBlockNumber() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("londonblock", 1000));
-    assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
     assertThat(config.getLondonBlockNumber()).hasValue(1000);
   }
 
   @Test
-  public void shouldGetBaikalBlockNumber() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("calaverasblock", 1000));
-    assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
-    assertThat(config.getLondonBlockNumber()).hasValue(1000);
+  public void shouldGetArrowGlacierBlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("arrowGlacierBlock", 1000));
+    assertThat(config.getArrowGlacierBlockNumber()).hasValue(1000);
   }
 
   @Test
@@ -213,7 +212,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getMuirGlacierBlockNumber()).isEmpty();
     assertThat(config.getBerlinBlockNumber()).isEmpty();
     assertThat(config.getLondonBlockNumber()).isEmpty();
-    assertThat(config.getAleutBlockNumber()).isEmpty();
+    assertThat(config.getArrowGlacierBlockNumber()).isEmpty();
     assertThat(config.getEcip1049BlockNumber()).isEmpty();
   }
 
@@ -231,6 +230,28 @@ public class GenesisConfigOptionsTest {
     assertThat(config.isIbftLegacy()).isFalse();
     assertThat(config.isClique()).isFalse();
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
+  }
+
+  @Test
+  public void shouldGetTerminalTotalDifficultyWhenSpecified() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(singletonMap("terminalTotalDifficulty", BigInteger.valueOf(1000)));
+    assertThat(config.getTerminalTotalDifficulty()).isPresent();
+    assertThat(config.getTerminalTotalDifficulty().get()).isEqualTo(UInt256.valueOf(1000));
+
+    // stubJsonGenesis
+    final GenesisConfigOptions stub =
+        new StubGenesisConfigOptions().terminalTotalDifficulty(UInt256.valueOf(500));
+    assertThat(stub.getTerminalTotalDifficulty()).isPresent();
+    assertThat(stub.getTerminalTotalDifficulty().get()).isEqualTo(UInt256.valueOf(500));
+  }
+
+  @Test
+  public void shouldNotReturnTerminalTotalDifficultyWhenNotSpecified() {
+    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getTerminalTotalDifficulty()).isNotPresent();
+    // stubJsonGenesis
+    assertThat(new StubGenesisConfigOptions().getTerminalTotalDifficulty()).isNotPresent();
   }
 
   @Test

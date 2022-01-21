@@ -36,14 +36,10 @@ public class ValidatorContractController {
   public static final String GET_VALIDATORS = "getValidators";
   public static final String CONTRACT_ERROR_MSG = "Failed validator smart contract call";
   private final TransactionSimulator transactionSimulator;
-  private final ValidatorSelectorForksSchedule forksSchedule;
   private final Function getValidatorsFunction;
 
-  public ValidatorContractController(
-      final TransactionSimulator transactionSimulator,
-      final ValidatorSelectorForksSchedule forksSchedule) {
+  public ValidatorContractController(final TransactionSimulator transactionSimulator) {
     this.transactionSimulator = transactionSimulator;
-    this.forksSchedule = forksSchedule;
 
     try {
       this.getValidatorsFunction =
@@ -56,8 +52,8 @@ public class ValidatorContractController {
     }
   }
 
-  public Collection<Address> getValidators(final long blockNumber) {
-    return callFunction(blockNumber, getValidatorsFunction)
+  public Collection<Address> getValidators(final long blockNumber, final Address contractAddress) {
+    return callFunction(blockNumber, getValidatorsFunction, contractAddress)
         .map(this::parseGetValidatorsResult)
         .orElseThrow(() -> new IllegalStateException(CONTRACT_ERROR_MSG));
   }
@@ -73,31 +69,27 @@ public class ValidatorContractController {
   }
 
   private Optional<TransactionSimulatorResult> callFunction(
-      final long blockNumber, final Function function) {
+      final long blockNumber, final Function function, final Address contractAddress) {
     final Bytes payload = Bytes.fromHexString(FunctionEncoder.encode(function));
-    final Address contractAddress = resolveContractAddress(blockNumber);
     final CallParameter callParams =
         new CallParameter(null, contractAddress, -1, null, null, payload);
     return transactionSimulator.process(callParams, blockNumber);
-  }
-
-  private Address resolveContractAddress(final long blockNumber) {
-    return forksSchedule
-        .getFork(blockNumber)
-        .flatMap(ValidatorSelectorConfig::getContractAddress)
-        .map(Address::fromHexString)
-        .orElseThrow(
-            () ->
-                new RuntimeException(
-                    "Error resolving smart contract address unable to make validator contract call"));
   }
 
   @SuppressWarnings("rawtypes")
   private List<Type> decodeResult(
       final TransactionSimulatorResult result, final Function function) {
     if (result.isSuccessful()) {
-      return DefaultFunctionReturnDecoder.decode(
-          result.getResult().getOutput().toHexString(), function.getOutputParameters());
+      final List<Type> decodedList =
+          DefaultFunctionReturnDecoder.decode(
+              result.getResult().getOutput().toHexString(), function.getOutputParameters());
+
+      if (decodedList.isEmpty()) {
+        throw new IllegalStateException(
+            "Unexpected empty result from validator smart contract call");
+      }
+
+      return decodedList;
     } else {
       throw new IllegalStateException("Failed validator smart contract call");
     }

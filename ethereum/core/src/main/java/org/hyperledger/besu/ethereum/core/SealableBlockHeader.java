@@ -16,9 +16,11 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** A block header capable of being sealed. */
 public class SealableBlockHeader extends ProcessableBlockHeader {
@@ -50,8 +52,9 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final long gasUsed,
       final long timestamp,
       final Bytes extraData,
-      final Long baseFee) {
-    super(parentHash, coinbase, difficulty, number, gasLimit, timestamp, baseFee);
+      final Wei baseFee,
+      final Bytes32 mixHashOrRandom) {
+    super(parentHash, coinbase, difficulty, number, gasLimit, timestamp, baseFee, mixHashOrRandom);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;

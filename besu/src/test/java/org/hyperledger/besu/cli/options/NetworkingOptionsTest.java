@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
@@ -32,8 +33,8 @@ public class NetworkingOptionsTest
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
     assertThat(networkingConfig.getCheckMaintainedConnectionsFrequencySec()).isEqualTo(2);
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -44,8 +45,8 @@ public class NetworkingOptionsTest
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
     assertThat(networkingConfig.getCheckMaintainedConnectionsFrequencySec()).isEqualTo(60);
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -56,8 +57,8 @@ public class NetworkingOptionsTest
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
     assertThat(networkingConfig.getInitiateConnectionsFrequencySec()).isEqualTo(2);
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -68,8 +69,33 @@ public class NetworkingOptionsTest
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
     assertThat(networkingConfig.getInitiateConnectionsFrequencySec()).isEqualTo(30);
 
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void checkDnsServerOverrideFlag_isSet() {
+    final TestBesuCommand cmd = parseCommand("--Xp2p-dns-discovery-server", "localhost");
+
+    final NetworkingOptions options = cmd.getNetworkingOptions();
+    final NetworkingConfiguration networkingConfig = options.toDomainObject();
+    assertThat(networkingConfig.getDnsDiscoveryServerOverride()).isPresent();
+    assertThat(networkingConfig.getDnsDiscoveryServerOverride().get()).isEqualTo("localhost");
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void checkDnsServerOverrideFlag_isNotSet() {
+    final TestBesuCommand cmd = parseCommand();
+
+    final NetworkingOptions options = cmd.getNetworkingOptions();
+    final NetworkingConfiguration networkingConfig = options.toDomainObject();
+    assertThat(networkingConfig.getDnsDiscoveryServerOverride()).isEmpty();
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Override
@@ -83,7 +109,7 @@ public class NetworkingOptionsTest
     config.setInitiateConnectionsFrequency(
         NetworkingConfiguration.DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC + 10);
     config.setCheckMaintainedConnectionsFrequency(
-        NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTSION_FREQUENCY_SEC + 10);
+        NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC + 10);
     return config;
   }
 

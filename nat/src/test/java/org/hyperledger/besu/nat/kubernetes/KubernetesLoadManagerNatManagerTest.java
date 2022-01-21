@@ -29,13 +29,13 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 import io.kubernetes.client.custom.IntOrString;
-import io.kubernetes.client.models.V1LoadBalancerIngressBuilder;
-import io.kubernetes.client.models.V1LoadBalancerStatusBuilder;
-import io.kubernetes.client.models.V1ObjectMeta;
-import io.kubernetes.client.models.V1Service;
-import io.kubernetes.client.models.V1ServicePort;
-import io.kubernetes.client.models.V1ServiceSpec;
-import io.kubernetes.client.models.V1ServiceStatus;
+import io.kubernetes.client.openapi.models.V1LoadBalancerIngress;
+import io.kubernetes.client.openapi.models.V1LoadBalancerStatus;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1Service;
+import io.kubernetes.client.openapi.models.V1ServicePort;
+import io.kubernetes.client.openapi.models.V1ServiceSpec;
+import io.kubernetes.client.openapi.models.V1ServiceStatus;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,10 +59,8 @@ public final class KubernetesLoadManagerNatManagerTest {
     final V1ServiceStatus v1ServiceStatus =
         new V1ServiceStatus()
             .loadBalancer(
-                new V1LoadBalancerStatusBuilder()
-                    .addToIngress(
-                        new V1LoadBalancerIngressBuilder().withIp(detectedAdvertisedHost).build())
-                    .build());
+                new V1LoadBalancerStatus()
+                    .addIngressItem(new V1LoadBalancerIngress().ip(detectedAdvertisedHost)));
     when(v1Service.getStatus()).thenReturn(v1ServiceStatus);
     when(v1Service.getSpec())
         .thenReturn(
@@ -123,7 +121,7 @@ public final class KubernetesLoadManagerNatManagerTest {
             p2pPort,
             p2pPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 
   @Test
@@ -142,7 +140,7 @@ public final class KubernetesLoadManagerNatManagerTest {
             rpcHttpPort,
             rpcHttpPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 
   @Test
@@ -161,6 +159,6 @@ public final class KubernetesLoadManagerNatManagerTest {
             p2pPort,
             p2pPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 }

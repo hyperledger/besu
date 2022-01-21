@@ -19,8 +19,11 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.config.BftConfigOptions;
+import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
@@ -42,12 +45,14 @@ import org.hyperledger.besu.consensus.common.bft.inttest.NetworkLayout;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubbedSynchronizerUpdater;
+import org.hyperledger.besu.consensus.common.bft.inttest.TestTransitions;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
+import org.hyperledger.besu.consensus.ibft.IbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
 import org.hyperledger.besu.consensus.ibft.IbftProtocolSchedule;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
@@ -155,6 +160,7 @@ public class TestContextBuilder {
   private int validatorCount = 4;
   private int indexOfFirstLocallyProposedBlock = 0; // Meaning first block is from remote peer.
   private boolean useGossip = false;
+  private List<BftFork> bftForks = Collections.emptyList();
   private static final IbftExtraDataCodec IBFT_EXTRA_DATA_ENCODER = new IbftExtraDataCodec();
 
   public TestContextBuilder clock(final Clock clock) {
@@ -162,7 +168,7 @@ public class TestContextBuilder {
     return this;
   }
 
-  public TestContextBuilder ibftEventQueue(final BftEventQueue bftEventQueue) {
+  public TestContextBuilder eventQueue(final BftEventQueue bftEventQueue) {
     this.bftEventQueue = bftEventQueue;
     return this;
   }
@@ -180,6 +186,11 @@ public class TestContextBuilder {
 
   public TestContextBuilder useGossip(final boolean useGossip) {
     this.useGossip = useGossip;
+    return this;
+  }
+
+  public TestContextBuilder bftForks(final List<BftFork> bftForks) {
+    this.bftForks = bftForks;
     return this;
   }
 
@@ -210,7 +221,8 @@ public class TestContextBuilder {
             clock,
             bftEventQueue,
             gossiper,
-            synchronizerUpdater);
+            synchronizerUpdater,
+            bftForks);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
     // NOTE: the remotePeers needs to be ordered based on Address (as this is used to determine
@@ -278,7 +290,8 @@ public class TestContextBuilder {
       final Clock clock,
       final BftEventQueue bftEventQueue,
       final Gossiper gossiper,
-      final SynchronizerUpdater synchronizerUpdater) {
+      final SynchronizerUpdater synchronizerUpdater,
+      final List<BftFork> bftForks) {
 
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
@@ -292,10 +305,14 @@ public class TestContextBuilder {
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.byzantiumBlock(0);
+    genesisConfigOptions.transitions(TestTransitions.createIbftTestTransitions(bftForks));
+
+    final ForksSchedule<BftConfigOptions> forksSchedule =
+        IbftForksSchedulesFactory.create(genesisConfigOptions);
 
     final ProtocolSchedule protocolSchedule =
         IbftProtocolSchedule.create(
-            genesisConfigOptions, IBFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
+            genesisConfigOptions, forksSchedule, IBFT_EXTRA_DATA_ENCODER, EvmConfiguration.DEFAULT);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController
@@ -340,13 +357,13 @@ public class TestContextBuilder {
     final BftExecutors bftExecutors = BftExecutors.create(new NoOpMetricsSystem());
     final BftFinalState finalState =
         new BftFinalState(
-            protocolContext.getConsensusState(BftContext.class).getValidatorProvider(),
+            protocolContext.getConsensusContext(BftContext.class).getValidatorProvider(),
             nodeKey,
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             multicaster,
             new RoundTimer(bftEventQueue, ROUND_TIMER_SEC, bftExecutors),
-            new BlockTimer(bftEventQueue, BLOCK_TIMER_SEC, bftExecutors, TestClock.fixed()),
+            new BlockTimer(bftEventQueue, forksSchedule, bftExecutors, TestClock.fixed()),
             blockCreatorFactory,
             clock);
 

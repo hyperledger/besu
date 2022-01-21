@@ -57,6 +57,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
+import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -142,8 +143,9 @@ public final class RunnerBuilderTest {
             .dataDir(dataDir.getRoot().toPath())
             .storageProvider(mock(KeyValueStorageProvider.class))
             .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
+            .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
-    runner.start();
+    runner.startEthereumMainLoop();
 
     final EnodeURL expectedEodeURL =
         EnodeURLImpl.builder()
@@ -185,8 +187,9 @@ public final class RunnerBuilderTest {
             .dataDir(dataDir.getRoot().toPath())
             .storageProvider(storageProvider)
             .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
+            .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
-    runner.start();
+    runner.startEthereumMainLoop();
     when(besuController.getProtocolSchedule().streamMilestoneBlocks())
         .thenAnswer(__ -> Stream.of(1L, 2L));
     for (int i = 0; i < 2; ++i) {

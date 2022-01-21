@@ -16,7 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.privacy.condition;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PrivacyTransactions;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory.OnchainPrivacyGroup;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory.FlexiblePrivacyGroup;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +39,14 @@ public class PrivateTransactionVerifier {
     return new ExpectValidPrivateTransactionReceipt(transactions, transactionHash, receipt);
   }
 
+  public ExpectValidPrivateTransactionReceipt validPrivateTransactionReceipt(
+      final String transactionHash,
+      final PrivateTransactionReceipt receipt,
+      final boolean ignoreOutput) {
+    return new ExpectValidPrivateTransactionReceipt(
+        transactions, transactionHash, receipt, ignoreOutput);
+  }
+
   public ExpectExistingPrivateTransactionReceipt existingPrivateTransactionReceipt(
       final String transactionHash) {
     return new ExpectExistingPrivateTransactionReceipt(transactions, transactionHash);
@@ -53,7 +61,7 @@ public class PrivateTransactionVerifier {
     return new ExpectValidPrivacyGroupCreated(transactions, expected);
   }
 
-  public ExpectValidOnchainPrivacyGroupCreated onchainPrivacyGroupExists(
+  public ExpectValidFlexiblePrivacyGroupCreated flexiblePrivacyGroupExists(
       final String privacyGroupId, final PrivacyNode... members) {
 
     final List<Base64String> membersEnclaveKeys =
@@ -61,16 +69,16 @@ public class PrivateTransactionVerifier {
             .map(PrivacyNode::getEnclaveKey)
             .map(Base64String::wrap)
             .collect(Collectors.toList());
-    return onchainPrivacyGroupExists(privacyGroupId, membersEnclaveKeys);
+    return flexiblePrivacyGroupExists(privacyGroupId, membersEnclaveKeys);
   }
 
-  public ExpectValidOnchainPrivacyGroupCreated onchainPrivacyGroupExists(
+  public ExpectValidFlexiblePrivacyGroupCreated flexiblePrivacyGroupExists(
       final String privacyGroupId, final List<Base64String> membersEnclaveKeys) {
 
-    final OnchainPrivacyGroup expectedGroup =
-        new OnchainPrivacyGroup(privacyGroupId, membersEnclaveKeys);
+    final FlexiblePrivacyGroup expectedGroup =
+        new FlexiblePrivacyGroup(privacyGroupId, membersEnclaveKeys);
 
-    return new ExpectValidOnchainPrivacyGroupCreated(transactions, expectedGroup);
+    return new ExpectValidFlexiblePrivacyGroupCreated(transactions, expectedGroup);
   }
 
   public ExpectInternalErrorPrivateTransactionReceipt internalErrorPrivateTransactionReceipt(

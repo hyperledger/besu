@@ -99,13 +99,13 @@ public class MainnetTransactionValidator {
    * @param transaction the transaction to validate
    * @param baseFee optional baseFee
    * @param transactionValidationParams Validation parameters that will be used
-   * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
+   * @return An empty {@link Optional} if the transaction is considered valid; otherwise an {@code
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */
   public ValidationResult<TransactionInvalidReason> validate(
       final Transaction transaction,
-      final Optional<Long> baseFee,
+      final Optional<Wei> baseFee,
       final TransactionValidationParams transactionValidationParams) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
         validateTransactionSignature(transaction);
@@ -130,8 +130,8 @@ public class MainnetTransactionValidator {
 
     if (baseFee.isPresent()) {
       final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, baseFee);
-      if (!transactionValidationParams.isAllowMaxFeerGasBelowBaseFee()
-          && price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
+      if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
+          && price.compareTo(baseFee.orElseThrow()) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
             "gasPrice is less than the current BaseFee");
@@ -205,7 +205,7 @@ public class MainnetTransactionValidator {
               transaction.getNonce(), senderNonce));
     }
 
-    if (!codeHash.equals(Hash.EMPTY)) {
+    if (!validationParams.isAllowContractAddressAsSender() && !codeHash.equals(Hash.EMPTY)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
           String.format(
@@ -222,6 +222,10 @@ public class MainnetTransactionValidator {
     return ValidationResult.valid();
   }
 
+  public boolean isReplayProtectionSupported() {
+    return chainId.isPresent();
+  }
+
   public ValidationResult<TransactionInvalidReason> validateTransactionSignature(
       final Transaction transaction) {
     if (chainId.isPresent()
@@ -233,7 +237,7 @@ public class MainnetTransactionValidator {
               transaction.getChainId().get(), chainId.get()));
     }
 
-    if (!transaction.isGoQuorumPrivateTransaction()
+    if (!transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)
         && !chainId.isPresent()
         && transaction.getChainId().isPresent()) {
       return ValidationResult.invalid(
@@ -284,7 +288,7 @@ public class MainnetTransactionValidator {
   }
 
   /**
-   * Asserts whether a transaction is valid for the sender accounts current state.
+   * Asserts whether a transaction is valid for the sender account's current state.
    *
    * <p>Note: {@code validate} should be called before getting the sender {@link Account} used in
    * this method to ensure that a sender can be extracted from the {@link Transaction}.
@@ -295,7 +299,7 @@ public class MainnetTransactionValidator {
    *     will be considered valid (used when received transactions in the transaction pool). If
    *     false, only a transaction with the nonce equals the account nonce will be considered valid
    *     (used when processing transactions).
-   * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
+   * @return An empty {@link Optional} if the transaction is considered valid; otherwise an {@code
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */
@@ -304,5 +308,9 @@ public class MainnetTransactionValidator {
     final TransactionValidationParams validationParams =
         ImmutableTransactionValidationParams.builder().isAllowFutureNonce(allowFutureNonce).build();
     return validateForSender(transaction, sender, validationParams);
+  }
+
+  public boolean getGoQuorumCompatibilityMode() {
+    return goQuorumCompatibilityMode;
   }
 }

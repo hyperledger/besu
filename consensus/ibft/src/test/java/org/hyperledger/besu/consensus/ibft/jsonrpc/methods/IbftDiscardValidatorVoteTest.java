@@ -47,7 +47,7 @@ public class IbftDiscardValidatorVoteTest {
   @Before
   public void setup() {
     method = new IbftDiscardValidatorVote(validatorProvider);
-    when(validatorProvider.getVoteProvider()).thenReturn(Optional.of(voteProvider));
+    when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
   }
 
   @Test

@@ -26,7 +26,7 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -43,8 +43,8 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return CliqueRpcApis.CLIQUE;
+  protected String getApiGroup() {
+    return RpcApis.CLIQUE.name();
   }
 
   @Override
@@ -54,7 +54,7 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, worldStateArchive);
     final ValidatorProvider validatorProvider =
-        context.getConsensusState(CliqueContext.class).getValidatorProvider();
+        context.getConsensusContext(CliqueContext.class).getValidatorProvider();
 
     // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
     final ValidatorProvider readOnlyValidatorProvider =
@@ -73,7 +73,7 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private ValidatorProvider createValidatorProvider(
       final ProtocolContext context, final MutableBlockchain blockchain) {
     final EpochManager epochManager =
-        context.getConsensusState(CliqueContext.class).getEpochManager();
+        context.getConsensusContext(CliqueContext.class).getEpochManager();
     final CliqueBlockInterface cliqueBlockInterface = new CliqueBlockInterface();
     return BlockValidatorProvider.nonForkingValidatorProvider(
         blockchain, epochManager, cliqueBlockInterface);

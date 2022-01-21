@@ -52,8 +52,8 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.util.ExceptionUtils;
 import org.hyperledger.besu.util.NetworkUtility;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +63,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
@@ -85,6 +89,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpConnection;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -112,6 +117,11 @@ public class JsonRpcHttpService {
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
   private static final String APPLICATION_JSON = "application/json";
   private static final JsonRpcResponse NO_RESPONSE = new JsonRpcNoResponse();
+  private static final ObjectWriter JSON_OBJECT_WRITER =
+      new ObjectMapper()
+          .registerModule(new Jdk8Module()) // Handle JDK8 Optionals (de)serialization
+          .writerWithDefaultPrettyPrinter()
+          .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
   private static final String EMPTY_RESPONSE = "";
 
   private static final TextMapPropagator traceFormats =
@@ -409,6 +419,19 @@ public class JsonRpcHttpService {
           .setUseAlpn(true);
 
       tlsConfiguration
+          .getSecureTransportProtocols()
+          .ifPresent(httpServerOptions::setEnabledSecureTransportProtocols);
+
+      tlsConfiguration
+          .getCipherSuites()
+          .ifPresent(
+              cipherSuites -> {
+                for (String cs : cipherSuites) {
+                  httpServerOptions.addEnabledCipherSuite(cs);
+                }
+              });
+
+      tlsConfiguration
           .getClientAuthConfiguration()
           .ifPresent(
               clientAuthConfiguration ->
@@ -439,13 +462,15 @@ public class JsonRpcHttpService {
   }
 
   private Throwable getFailureException(final Throwable listenFailure) {
-    if (listenFailure instanceof SocketException) {
-      return new JsonRpcServiceException(
-          String.format(
-              "Failed to bind Ethereum JSON-RPC listener to %s:%s: %s",
-              config.getHost(), config.getPort(), listenFailure.getMessage()));
-    }
-    return listenFailure;
+
+    JsonRpcServiceException servFail =
+        new JsonRpcServiceException(
+            String.format(
+                "Failed to bind Ethereum JSON-RPC listener to %s:%s: %s",
+                config.getHost(), config.getPort(), listenFailure.getMessage()));
+    servFail.initCause(listenFailure);
+
+    return servFail;
   }
 
   private Handler<RoutingContext> checkAllowlistHostHeader() {
@@ -472,7 +497,11 @@ public class JsonRpcHttpService {
   }
 
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
-    final Iterable<String> splitHostHeader = Splitter.on(':').split(event.request().host());
+    String hostname =
+        event.request().getHeader(HttpHeaders.HOST) != null
+            ? event.request().getHeader(HttpHeaders.HOST)
+            : event.request().host();
+    final Iterable<String> splitHostHeader = Splitter.on(':').split(hostname);
     final long hostPieces = stream(splitHostHeader).count();
     if (hostPieces > 1) {
       // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
@@ -560,7 +589,7 @@ public class JsonRpcHttpService {
               token,
               user -> handleJsonBatchRequest(routingContext, array, user));
         }
-      } catch (final DecodeException ex) {
+      } catch (final DecodeException | NullPointerException ex) {
         handleJsonRpcError(routingContext, null, JsonRpcError.PARSE_ERROR);
       }
     }
@@ -591,8 +620,17 @@ public class JsonRpcHttpService {
 
             response
                 .setStatusCode(status(jsonRpcResponse).code())
-                .putHeader("Content-Type", APPLICATION_JSON)
-                .end(serialize(jsonRpcResponse));
+                .putHeader("Content-Type", APPLICATION_JSON);
+
+            if (jsonRpcResponse.getType() == JsonRpcResponseType.NONE) {
+              response.end(EMPTY_RESPONSE);
+            } else {
+              try {
+                JSON_OBJECT_WRITER.writeValue(new JsonResponseStreamer(response), jsonRpcResponse);
+              } catch (IOException ex) {
+                LOG.error("Error streaming JSON-RPC response", ex);
+              }
+            }
           }
         });
   }
@@ -621,15 +659,6 @@ public class JsonRpcHttpService {
     }
   }
 
-  private String serialize(final JsonRpcResponse response) {
-
-    if (response.getType() == JsonRpcResponseType.NONE) {
-      return EMPTY_RESPONSE;
-    }
-
-    return Json.encodePrettily(response);
-  }
-
   @SuppressWarnings("rawtypes")
   private void handleJsonBatchRequest(
       final RoutingContext routingContext, final JsonArray jsonArray, final Optional<User> user) {
@@ -643,23 +672,13 @@ public class JsonRpcHttpService {
                   }
 
                   final JsonObject req = (JsonObject) obj;
-                  final Future<JsonRpcResponse> fut = Future.future();
-                  vertx.executeBlocking(
-                      future -> future.complete(process(routingContext, req, user)),
-                      false,
-                      ar -> {
-                        if (ar.failed()) {
-                          fut.fail(ar.cause());
-                        } else {
-                          fut.complete((JsonRpcResponse) ar.result());
-                        }
-                      });
-                  return fut;
+                  return vertx.executeBlocking(
+                      future -> future.complete(process(routingContext, req, user)));
                 })
             .collect(toList());
 
     CompositeFuture.all(responses)
-        .setHandler(
+        .onComplete(
             (res) -> {
               final HttpServerResponse response = routingContext.response();
               if (response.closed() || response.headWritten()) {
@@ -675,7 +694,11 @@ public class JsonRpcHttpService {
                       .filter(this::isNonEmptyResponses)
                       .toArray(JsonRpcResponse[]::new);
 
-              response.end(Json.encode(completed));
+              try {
+                JSON_OBJECT_WRITER.writeValue(new JsonResponseStreamer(response), completed);
+              } catch (IOException ex) {
+                LOG.error("Error streaming JSON-RPC response", ex);
+              }
             });
   }
 
@@ -796,7 +819,7 @@ public class JsonRpcHttpService {
       return "";
     }
     if (config.getCorsAllowedDomains().contains("*")) {
-      return "*";
+      return ".*";
     } else {
       final StringJoiner stringJoiner = new StringJoiner("|");
       config.getCorsAllowedDomains().stream().filter(s -> !s.isEmpty()).forEach(stringJoiner::add);

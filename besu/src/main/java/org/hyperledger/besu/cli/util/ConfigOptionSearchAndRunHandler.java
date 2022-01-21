@@ -49,10 +49,21 @@ public class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<
   public List<Object> handle(final ParseResult parseResult) throws ParameterException {
     final CommandLine commandLine = parseResult.asCommandLineList().get(0);
     final Optional<File> configFile = findConfigFile(parseResult, commandLine);
+    validatePrivacyOptions(parseResult, commandLine);
     commandLine.setDefaultValueProvider(createDefaultValueProvider(commandLine, configFile));
     commandLine.parseWithHandlers(
         resultHandler, exceptionHandler, parseResult.originalArgs().toArray(new String[0]));
     return new ArrayList<>();
+  }
+
+  private void validatePrivacyOptions(
+      final ParseResult parseResult, final CommandLine commandLine) {
+    if (parseResult.hasMatchedOption("--privacy-onchain-groups-enabled")
+        && parseResult.hasMatchedOption("--privacy-flexible-groups-enabled")) {
+      throw new ParameterException(
+          commandLine,
+          "The `--privacy-onchain-groups-enabled` option is deprecated and you should only use `--privacy-flexible-groups-enabled`");
+    }
   }
 
   private Optional<File> findConfigFile(

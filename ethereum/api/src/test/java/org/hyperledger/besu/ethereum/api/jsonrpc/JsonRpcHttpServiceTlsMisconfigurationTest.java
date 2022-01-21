@@ -15,9 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.tls.KnownClientFileUtil.writeToKnownClientsFile;
 import static org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration.Builder.aTlsClientAuthConfiguration;
 import static org.hyperledger.besu.ethereum.api.tls.TlsConfiguration.Builder.aTlsConfiguration;
@@ -54,7 +52,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -78,7 +75,6 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
 
   private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
-  private static final Collection<RpcApi> JSON_RPC_APIS = List.of(ETH, NET, WEB3);
   private static final NatService natService = new NatService(Optional.empty());
   private final SelfSignedP12Certificate besuCertificate = SelfSignedP12Certificate.create();
   private Path knownClientsFile;
@@ -119,7 +115,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
                     supportedCapabilities,
                     Optional.of(mock(AccountLocalConfigPermissioningController.class)),
                     Optional.of(mock(NodeLocalConfigPermissioningController.class)),
-                    JSON_RPC_APIS,
+                    DEFAULT_RPC_APIS,
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
@@ -137,6 +133,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
 
   @Test
   public void exceptionRaisedWhenNonExistentKeystoreFileIsSpecified() throws IOException {
+    Assertions.setMaxStackTraceElementsDisplayed(60);
     service =
         createJsonRpcHttpService(
             rpcMethods, createJsonRpcConfig(invalidKeystorePathTlsConfiguration()));
@@ -161,7 +158,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
               Assertions.fail("service.start should have failed");
             })
         .withCauseInstanceOf(JsonRpcServiceException.class)
-        .withMessageContaining("failed to decrypt safe contents entry");
+        .withMessageContaining("keystore password was incorrect");
   }
 
   @Test

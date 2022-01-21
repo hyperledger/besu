@@ -559,7 +559,7 @@ public class MessageFrame {
    * @param length The length of the bytes to read
    * @return The bytes in the specified range
    */
-  public Bytes readMutableMemory(final long offset, final long length) {
+  public MutableBytes readMutableMemory(final long offset, final long length) {
     return readMutableMemory(offset, length, false);
   }
 
@@ -583,9 +583,9 @@ public class MessageFrame {
    * @param explicitMemoryRead true if triggered by a memory opcode, false otherwise
    * @return The bytes in the specified range
    */
-  public Bytes readMutableMemory(
+  public MutableBytes readMutableMemory(
       final long offset, final long length, final boolean explicitMemoryRead) {
-    final Bytes value = memory.getBytes(offset, length);
+    final MutableBytes value = memory.getMutableBytes(offset, length);
     if (explicitMemoryRead) {
       setUpdatedMemory(offset, value);
     }
@@ -630,6 +630,24 @@ public class MessageFrame {
     memory.setBytes(offset, length, value);
     if (explicitMemoryUpdate) {
       setUpdatedMemory(offset, 0, length, value);
+    }
+  }
+
+  /**
+   * Copy the bytes from the value param into memory at the specified offset. In cases where the
+   * value does not have numBytes bytes the appropriate amount of zero bytes will be added before
+   * writing the value bytes.
+   *
+   * @param offset The offset in memory
+   * @param length The length of the bytes to write
+   * @param value The value to write
+   * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
+   */
+  public void writeMemoryRightAligned(
+      final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
+    memory.setBytesRightAligned(offset, length, value);
+    if (explicitMemoryUpdate) {
+      setUpdatedMemoryRightAligned(offset, length, value);
     }
   }
 
@@ -680,6 +698,22 @@ public class MessageFrame {
         setUpdatedMemory(offset, paddedAnswer.copy());
       } else {
         setUpdatedMemory(offset, value.slice((int) sourceOffset, (int) length).copy());
+      }
+    }
+  }
+
+  private void setUpdatedMemoryRightAligned(
+      final long offset, final long length, final Bytes value) {
+    if (length > 0) {
+      final int srcSize = value.size();
+      if (length > srcSize) {
+        final MutableBytes paddedAnswer = MutableBytes.create((int) length);
+        if ((long) 0 < srcSize) {
+          value.slice(0, srcSize).copyTo(paddedAnswer, (int) (length - srcSize));
+        }
+        setUpdatedMemory(offset, paddedAnswer.copy());
+      } else {
+        setUpdatedMemory(offset, value.slice(0, (int) length).copy());
       }
     }
   }

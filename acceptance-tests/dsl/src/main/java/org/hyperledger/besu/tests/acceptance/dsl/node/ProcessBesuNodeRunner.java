@@ -18,8 +18,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -97,7 +95,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add(node.p2pListenHost());
 
     params.add("--p2p-port");
-    params.add("0");
+    params.add(node.getP2pPort());
 
     if (node.getMiningParameters().isMiningEnabled()) {
       params.add("--miner-enabled");
@@ -132,11 +130,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add(node.getPrivacyParameters().getEnclavePublicKeyFile().getAbsolutePath());
       }
 
-      params.add("--privacy-marker-transaction-signing-key-file");
-      params.add(node.homeDirectory().resolve("key").toString());
+      if (!node.getExtraCLIOptions().contains("--plugin-privacy-service-signing-enabled=true")) {
+        params.add("--privacy-marker-transaction-signing-key-file");
+        params.add(node.homeDirectory().resolve("key").toString());
+      }
 
-      if (node.getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
-        params.add("--privacy-onchain-groups-enabled");
+      if (node.getPrivacyParameters().isFlexiblePrivacyGroupsEnabled()) {
+        params.add("--privacy-flexible-groups-enabled");
       }
 
       if (node.getPrivacyParameters().isPrivacyPluginEnabled()) {
@@ -144,9 +144,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       }
     }
 
-    params.add("--bootnodes");
-
     if (!node.getBootnodes().isEmpty()) {
+      params.add("--bootnodes");
       params.add(node.getBootnodes().stream().map(URI::toString).collect(Collectors.joining(",")));
     }
 
@@ -180,6 +179,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add("--rpc-http-authentication-jwt-public-key-file");
         params.add(node.jsonRpcConfiguration().getAuthenticationPublicKeyFile().getAbsolutePath());
       }
+      if (node.jsonRpcConfiguration().getAuthenticationAlgorithm() != null) {
+        params.add("--rpc-http-authentication-jwt-algorithm");
+        params.add(node.jsonRpcConfiguration().getAuthenticationAlgorithm().toString());
+      }
     }
 
     if (node.wsRpcEnabled()) {
@@ -201,6 +204,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add("--rpc-ws-authentication-jwt-public-key-file");
         params.add(
             node.webSocketConfiguration().getAuthenticationPublicKeyFile().getAbsolutePath());
+      }
+      if (node.webSocketConfiguration().getAuthenticationAlgorithm() != null) {
+        params.add("--rpc-ws-authentication-jwt-algorithm");
+        params.add(node.webSocketConfiguration().getAuthenticationAlgorithm().toString());
       }
     }
 
@@ -355,6 +362,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.add("--auto-log-bloom-caching-enabled");
     params.add("false");
 
+    params.add("--strict-tx-replay-protection-enabled");
+    params.add(Boolean.toString(node.isStrictTxReplayProtectionEnabled()));
+
     final String level = System.getProperty("root.log.level");
     if (level != null) {
       params.add("--logging=" + level);
@@ -447,8 +457,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     StaticNodesUtils.createStaticNodesFile(node.homeDirectory(), node.getStaticNodes());
   }
 
-  private String apiList(final Collection<RpcApi> rpcApis) {
-    return rpcApis.stream().map(RpcApis::getValue).collect(Collectors.joining(","));
+  private String apiList(final Collection<String> rpcApis) {
+    return String.join(",", rpcApis);
   }
 
   @Override

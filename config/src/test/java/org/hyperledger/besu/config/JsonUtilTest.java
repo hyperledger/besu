@@ -69,6 +69,81 @@ public class JsonUtilTest {
   }
 
   @Test
+  public void normalizeKeys_arrayNode() {
+    final ObjectNode originalObj =
+        mapper
+            .createObjectNode()
+            .set(
+                "ArrAy",
+                mapper
+                    .createArrayNode()
+                    .add(mapper.createObjectNode().put("lower", "foo"))
+                    .add(mapper.createObjectNode().put("UPPER", "BAR"))
+                    .add(mapper.createObjectNode().put("Camel", "Ziz"))
+                    .add(mapper.createObjectNode().put("MiXeD", "LoL")));
+
+    final ObjectNode expectedObj =
+        mapper
+            .createObjectNode()
+            .set(
+                "array",
+                mapper
+                    .createArrayNode()
+                    .add(mapper.createObjectNode().put("lower", "foo"))
+                    .add(mapper.createObjectNode().put("upper", "BAR"))
+                    .add(mapper.createObjectNode().put("camel", "Ziz"))
+                    .add(mapper.createObjectNode().put("mixed", "LoL")));
+
+    final ObjectNode normalizedObj = JsonUtil.normalizeKeys(originalObj);
+
+    assertThat(normalizedObj).isEqualTo(expectedObj);
+  }
+
+  @Test
+  public void normalizeKeys_arrayNode_depth() {
+    final ObjectNode originalObj =
+        mapper
+            .createObjectNode()
+            .set(
+                "ArrAy",
+                mapper
+                    .createArrayNode()
+                    .add(
+                        mapper
+                            .createArrayNode()
+                            .add(mapper.createObjectNode().put("dEpTh", "Foo"))));
+
+    final ObjectNode expectedObj =
+        mapper
+            .createObjectNode()
+            .set(
+                "array",
+                mapper
+                    .createArrayNode()
+                    .add(
+                        mapper
+                            .createArrayNode()
+                            .add(mapper.createObjectNode().put("depth", "Foo"))));
+
+    final ObjectNode normalizedObj = JsonUtil.normalizeKeys(originalObj);
+
+    assertThat(normalizedObj).isEqualTo(expectedObj);
+  }
+
+  @Test
+  public void normalizeKeys_arrayNode_withString() {
+    final ObjectNode originalObj =
+        mapper.createObjectNode().set("ArrAy", mapper.createArrayNode().add("StrIng"));
+
+    final ObjectNode expectedObj =
+        mapper.createObjectNode().set("array", mapper.createArrayNode().add("StrIng"));
+
+    final ObjectNode normalizedObj = JsonUtil.normalizeKeys(originalObj);
+
+    assertThat(normalizedObj).isEqualTo(expectedObj);
+  }
+
+  @Test
   public void getLong_nonExistentKey() {
     final ObjectNode node = mapper.createObjectNode();
     final OptionalLong result = JsonUtil.getLong(node, "test");
@@ -437,6 +512,101 @@ public class JsonUtilTest {
     assertThatThrownBy(() -> JsonUtil.getBoolean(rootNode, "test", true))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Expected boolean value but got number");
+  }
+
+  @Test
+  public void getPositiveInt_validValue() {
+    final ObjectNode node = mapper.createObjectNode();
+    final int validValue = 2;
+    node.put("test", validValue);
+    final OptionalInt result = JsonUtil.getPositiveInt(node, "test");
+    assertThat(result).hasValue(validValue);
+  }
+
+  @Test
+  public void getPositiveInt_nonExistentKey() {
+    final ObjectNode node = mapper.createObjectNode();
+    final OptionalInt result = JsonUtil.getPositiveInt(node, "test");
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  public void getPositiveInt_decimalValue() {
+    final ObjectNode node = mapper.createObjectNode();
+    final float decimalValue = Float.MAX_VALUE;
+    node.put("test", decimalValue);
+    assertThatThrownBy(() -> JsonUtil.getPositiveInt(node, "test"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid property value, test should be a positive integer: " + decimalValue);
+  }
+
+  @Test
+  public void getPositiveInt_nonPositiveValue() {
+    final ObjectNode node = mapper.createObjectNode();
+    final int nonPositiveValue = 0;
+    node.put("test", nonPositiveValue);
+    assertThatThrownBy(() -> JsonUtil.getPositiveInt(node, "test"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Invalid property value, test should be a positive integer: " + nonPositiveValue);
+  }
+
+  @Test
+  public void getPositiveInt_negativeValue() {
+    final ObjectNode node = mapper.createObjectNode();
+    final int negativeValue = Integer.MIN_VALUE;
+    node.put("test", negativeValue);
+    assertThatThrownBy(() -> JsonUtil.getPositiveInt(node, "test"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid property value, test should be a positive integer: " + negativeValue);
+  }
+
+  @Test
+  public void getPositiveInt_validValue_withDefault() {
+    final ObjectNode node = mapper.createObjectNode();
+    final int validValue = 2;
+    node.put("test", validValue);
+    final int result = JsonUtil.getPositiveInt(node, "test", 1);
+    assertThat(result).isEqualTo(validValue);
+  }
+
+  @Test
+  public void getPositiveInt_nonExistentKey_withDefault() {
+    final ObjectNode node = mapper.createObjectNode();
+    final int defaultValue = 1;
+    final int result = JsonUtil.getPositiveInt(node, "test", defaultValue);
+    assertThat(result).isEqualTo(defaultValue);
+  }
+
+  @Test
+  public void getPositiveInt_decimalValue_withDefault() {
+    final ObjectNode node = mapper.createObjectNode();
+    final float decimalValue = Float.MAX_VALUE;
+    node.put("test", decimalValue);
+    assertThatThrownBy(() -> JsonUtil.getPositiveInt(node, "test", 1))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid property value, test should be a positive integer: " + decimalValue);
+  }
+
+  @Test
+  public void getPositiveInt_nonPositiveValue_withDefault() {
+    final ObjectNode node = mapper.createObjectNode();
+    final int nonPositiveValue = 0;
+    node.put("test", nonPositiveValue);
+    assertThatThrownBy(() -> JsonUtil.getPositiveInt(node, "test", 1))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Invalid property value, test should be a positive integer: " + nonPositiveValue);
+  }
+
+  @Test
+  public void getPositiveInt_negativeValue_withDefault() {
+    final ObjectNode node = mapper.createObjectNode();
+    final int negativeValue = Integer.MIN_VALUE;
+    node.put("test", negativeValue);
+    assertThatThrownBy(() -> JsonUtil.getPositiveInt(node, "test", 1))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid property value, test should be a positive integer: " + negativeValue);
   }
 
   @Test

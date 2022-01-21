@@ -173,12 +173,11 @@ public class RlpxAgent {
     if (!localNode.isReady()) {
       return;
     }
-    final int availablePeerSlots = Math.max(0, maxConnections - getConnectionCount());
     peerStream
+        .takeWhile(peer -> Math.max(0, maxConnections - getConnectionCount()) > 0)
         .filter(peer -> !connectionsById.containsKey(peer.getId()))
         .filter(peer -> peer.getEnodeURL().isListening())
         .filter(peerPermissions::allowNewOutboundConnectionTo)
-        .limit(availablePeerSlots)
         .forEach(this::connect);
   }
 
@@ -315,7 +314,7 @@ public class RlpxAgent {
               connection.getPeer(), connection.initiatedRemotely())) {
             LOG.debug(
                 "Disconnecting from peer that is not permitted to maintain ongoing connection: {}",
-                connection);
+                connection.getPeerConnection());
             connection.disconnect(DisconnectReason.REQUESTED);
           }
         });
@@ -574,7 +573,12 @@ public class RlpxAgent {
           LOG.debug("TLS Configuration found using NettyTLSConnectionInitializer");
           connectionInitializer =
               new NettyTLSConnectionInitializer(
-                  nodeKey, config, localNode, connectionEvents, metricsSystem, p2pTLSConfiguration);
+                  nodeKey,
+                  config,
+                  localNode,
+                  connectionEvents,
+                  metricsSystem,
+                  p2pTLSConfiguration.get());
         } else {
           LOG.debug("Using default NettyConnectionInitializer");
           connectionInitializer =

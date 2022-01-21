@@ -17,9 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static okhttp3.Protocol.HTTP_1_1;
 import static okhttp3.Protocol.HTTP_2;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.tls.TlsConfiguration.Builder.aTlsConfiguration;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -54,10 +52,8 @@ import java.io.UncheckedIOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -85,7 +81,6 @@ public class JsonRpcHttpServiceTlsTest {
   private static final String JSON_HEADER = "application/json; charset=utf-8";
   private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
-  private static final Collection<RpcApi> JSON_RPC_APIS = List.of(ETH, NET, WEB3);
   private static final NatService natService = new NatService(Optional.empty());
   private JsonRpcHttpService service;
   private String baseUrl;
@@ -122,7 +117,7 @@ public class JsonRpcHttpServiceTlsTest {
                     supportedCapabilities,
                     Optional.of(mock(AccountLocalConfigPermissioningController.class)),
                     Optional.of(mock(NodeLocalConfigPermissioningController.class)),
-                    JSON_RPC_APIS,
+                    DEFAULT_RPC_APIS,
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),

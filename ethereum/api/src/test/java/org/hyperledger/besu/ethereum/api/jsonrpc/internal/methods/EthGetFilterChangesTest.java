@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -73,7 +73,7 @@ public class EthGetFilterChangesTest {
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessage("Missing required json rpc parameter at index 0");
 
-    verifyZeroInteractions(filterManager);
+    verifyNoInteractions(filterManager);
   }
 
   @Test
@@ -85,7 +85,7 @@ public class EthGetFilterChangesTest {
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessage("Missing required json rpc parameter at index 0");
 
-    verifyZeroInteractions(filterManager);
+    verifyNoInteractions(filterManager);
   }
 
   @Test
@@ -100,7 +100,7 @@ public class EthGetFilterChangesTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(filterManager).blockChanges(eq("0x1"));
     verify(filterManager).pendingTransactionChanges(eq("0x1"));
     verify(filterManager).logsChanges(eq("0x1"));
@@ -117,7 +117,7 @@ public class EthGetFilterChangesTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -129,7 +129,7 @@ public class EthGetFilterChangesTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -144,7 +144,7 @@ public class EthGetFilterChangesTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -157,7 +157,7 @@ public class EthGetFilterChangesTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -172,7 +172,7 @@ public class EthGetFilterChangesTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -187,7 +187,7 @@ public class EthGetFilterChangesTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

@@ -42,7 +42,7 @@ public class CliqueHelpers {
       final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
     final Collection<Address> validators =
         protocolContext
-            .getConsensusState(CliqueContext.class)
+            .getConsensusContext(CliqueContext.class)
             .getValidatorProvider()
             .getValidatorsAfterBlock(parent);
     return validators.contains(candidate);
@@ -51,7 +51,7 @@ public class CliqueHelpers {
   public static boolean addressIsAllowedToProduceNextBlock(
       final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
     final ValidatorProvider validatorProvider =
-        protocolContext.getConsensusState(CliqueContext.class).getValidatorProvider();
+        protocolContext.getConsensusContext(CliqueContext.class).getValidatorProvider();
 
     if (!isSigner(candidate, protocolContext, parent)) {
       return false;

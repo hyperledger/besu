@@ -15,56 +15,22 @@
 package org.hyperledger.besu.cli.config;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.ASTOR_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.CALAVERAS_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.CLASSIC_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_DISCOVERY_URL;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.KOTTI_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_DISCOVERY_URL;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MORDOR_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_DISCOVERY_URL;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.ROPSTEN_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.ROPSTEN_DISCOVERY_URL;
 
+import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-
-import com.google.common.base.Preconditions;
-import com.google.common.io.Resources;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class EthNetworkConfig {
-  public static final BigInteger MAINNET_NETWORK_ID = BigInteger.valueOf(1);
-  public static final BigInteger ROPSTEN_NETWORK_ID = BigInteger.valueOf(3);
-  public static final BigInteger RINKEBY_NETWORK_ID = BigInteger.valueOf(4);
-  public static final BigInteger GOERLI_NETWORK_ID = BigInteger.valueOf(5);
-  public static final BigInteger CALAVERAS_NETWORK_ID = BigInteger.valueOf(123);
-  public static final BigInteger DEV_NETWORK_ID = BigInteger.valueOf(2018);
-  public static final BigInteger ECIP1049_DEV_NETWORK_ID = BigInteger.valueOf(2021);
-  public static final BigInteger CLASSIC_NETWORK_ID = BigInteger.valueOf(1);
-  public static final BigInteger KOTTI_NETWORK_ID = BigInteger.valueOf(6);
-  public static final BigInteger MORDOR_NETWORK_ID = BigInteger.valueOf(7);
-  private static final BigInteger ASTOR_NETWORK_ID = BigInteger.valueOf(212);
-  private static final String MAINNET_GENESIS = "/mainnet.json";
-  private static final String ROPSTEN_GENESIS = "/ropsten.json";
-  private static final String RINKEBY_GENESIS = "/rinkeby.json";
-  private static final String GOERLI_GENESIS = "/goerli.json";
-  private static final String CALAVERAS_GENESIS = "/calaveras.json";
-  private static final String DEV_GENESIS = "/dev.json";
-  private static final String DEV_ECIP1049_GENESIS = "/ecip1049_dev.json";
-  private static final String CLASSIC_GENESIS = "/classic.json";
-  private static final String KOTTI_GENESIS = "/kotti.json";
-  private static final String MORDOR_GENESIS = "/mordor.json";
-  private static final String ASTOR_GENESIS = "/astor.json";
 
   private final String genesisConfig;
   private final BigInteger networkId;
@@ -76,8 +42,8 @@ public class EthNetworkConfig {
       final BigInteger networkId,
       final List<EnodeURL> bootNodes,
       final String dnsDiscoveryUrl) {
-    Preconditions.checkNotNull(genesisConfig);
-    Preconditions.checkNotNull(bootNodes);
+    Objects.requireNonNull(genesisConfig);
+    Objects.requireNonNull(bootNodes);
     this.genesisConfig = genesisConfig;
     this.networkId = networkId;
     this.bootNodes = bootNodes;
@@ -135,88 +101,35 @@ public class EthNetworkConfig {
   }
 
   public static EthNetworkConfig getNetworkConfig(final NetworkName networkName) {
-    switch (networkName) {
-      case ROPSTEN:
-        return new EthNetworkConfig(
-            jsonConfig(ROPSTEN_GENESIS),
-            ROPSTEN_NETWORK_ID,
-            ROPSTEN_BOOTSTRAP_NODES,
-            ROPSTEN_DISCOVERY_URL);
-      case RINKEBY:
-        return new EthNetworkConfig(
-            jsonConfig(RINKEBY_GENESIS),
-            RINKEBY_NETWORK_ID,
-            RINKEBY_BOOTSTRAP_NODES,
-            RINKEBY_DISCOVERY_URL);
-      case GOERLI:
-        return new EthNetworkConfig(
-            jsonConfig(GOERLI_GENESIS),
-            GOERLI_NETWORK_ID,
-            GOERLI_BOOTSTRAP_NODES,
-            GOERLI_DISCOVERY_URL);
-      case CALAVERAS:
-        return new EthNetworkConfig(
-            jsonConfig(CALAVERAS_GENESIS), CALAVERAS_NETWORK_ID, CALAVERAS_BOOTSTRAP_NODES, null);
-      case DEV:
-        return new EthNetworkConfig(
-            jsonConfig(DEV_GENESIS), DEV_NETWORK_ID, new ArrayList<>(), null);
-      case CLASSIC:
-        return new EthNetworkConfig(
-            jsonConfig(CLASSIC_GENESIS), CLASSIC_NETWORK_ID, CLASSIC_BOOTSTRAP_NODES, null);
-      case ECIP1049_DEV:
-        return new EthNetworkConfig(
-            jsonConfig(DEV_ECIP1049_GENESIS), ECIP1049_DEV_NETWORK_ID, new ArrayList<>(), null);
-      case KOTTI:
-        return new EthNetworkConfig(
-            jsonConfig(KOTTI_GENESIS), KOTTI_NETWORK_ID, KOTTI_BOOTSTRAP_NODES, null);
-      case MORDOR:
-        return new EthNetworkConfig(
-            jsonConfig(MORDOR_GENESIS), MORDOR_NETWORK_ID, MORDOR_BOOTSTRAP_NODES, null);
-      case ASTOR:
-        return new EthNetworkConfig(
-            jsonConfig(ASTOR_GENESIS), ASTOR_NETWORK_ID, ASTOR_BOOTSTRAP_NODES, null);
-      case MAINNET:
-      default:
-        return new EthNetworkConfig(
-            jsonConfig(MAINNET_GENESIS),
-            MAINNET_NETWORK_ID,
-            MAINNET_BOOTSTRAP_NODES,
-            MAINNET_DISCOVERY_URL);
-    }
+    final String genesisContent = jsonConfig(networkName.getGenesisFile());
+    final GenesisConfigOptions genesisConfigOptions =
+        GenesisConfigFile.fromConfig(genesisContent).getConfigOptions();
+    final Optional<List<String>> rawBootNodes =
+        genesisConfigOptions.getDiscoveryOptions().getBootNodes();
+    final List<EnodeURL> bootNodes =
+        rawBootNodes
+            .map(
+                strings ->
+                    strings.stream().map(EnodeURLImpl::fromString).collect(Collectors.toList()))
+            .orElse(Collections.emptyList());
+    return new EthNetworkConfig(
+        genesisContent,
+        networkName.getNetworkId(),
+        bootNodes,
+        genesisConfigOptions.getDiscoveryOptions().getDiscoveryDnsUrl().orElse(null));
   }
 
   private static String jsonConfig(final String resourceName) {
-    try {
-      final URI uri = EthNetworkConfig.class.getResource(resourceName).toURI();
-      return Resources.toString(uri.toURL(), UTF_8);
-    } catch (final URISyntaxException | IOException e) {
+    try (final InputStream genesisFileInputStream =
+        EthNetworkConfig.class.getResourceAsStream(resourceName)) {
+      return new String(genesisFileInputStream.readAllBytes(), UTF_8);
+    } catch (IOException | NullPointerException e) {
       throw new IllegalStateException(e);
     }
   }
 
   public static String jsonConfig(final NetworkName network) {
-    switch (network) {
-      case MAINNET:
-        return jsonConfig(MAINNET_GENESIS);
-      case ROPSTEN:
-        return jsonConfig(ROPSTEN_GENESIS);
-      case RINKEBY:
-        return jsonConfig(RINKEBY_GENESIS);
-      case GOERLI:
-        return jsonConfig(GOERLI_GENESIS);
-      case DEV:
-        return jsonConfig(DEV_GENESIS);
-      case ECIP1049_DEV:
-        return jsonConfig(DEV_ECIP1049_GENESIS);
-      case CLASSIC:
-        return jsonConfig(CLASSIC_GENESIS);
-      case KOTTI:
-        return jsonConfig(KOTTI_GENESIS);
-      case MORDOR:
-        return jsonConfig(MORDOR_GENESIS);
-      default:
-        throw new IllegalArgumentException("Unknown network:" + network);
-    }
+    return jsonConfig(network.getGenesisFile());
   }
 
   public static class Builder {

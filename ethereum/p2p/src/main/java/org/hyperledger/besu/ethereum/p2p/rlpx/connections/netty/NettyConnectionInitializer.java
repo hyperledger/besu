@@ -23,6 +23,12 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.ConnectionInitializer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
+import org.hyperledger.besu.ethereum.p2p.rlpx.framing.Framer;
+import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramerProvider;
+import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
+import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
+import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakerProvider;
+import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -51,7 +57,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import org.jetbrains.annotations.NotNull;
 
-public class NettyConnectionInitializer implements ConnectionInitializer {
+public class NettyConnectionInitializer
+    implements ConnectionInitializer, HandshakerProvider, FramerProvider {
 
   private static final int TIMEOUT_SECONDS = 10;
 
@@ -231,7 +238,9 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
         localNode,
         connectionFuture,
         eventDispatcher,
-        metricsSystem);
+        metricsSystem,
+        this,
+        this);
   }
 
   @NotNull
@@ -244,7 +253,9 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
         localNode,
         connectionFuture,
         eventDispatcher,
-        metricsSystem);
+        metricsSystem,
+        this,
+        this);
   }
 
   @NotNull
@@ -256,10 +267,10 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
         () -> connectionFuture.completeExceptionally(new TimeoutException(s)));
   }
 
-  protected void addAdditionalOutboundHandlers(final SocketChannel ch)
+  void addAdditionalOutboundHandlers(final Channel ch)
       throws GeneralSecurityException, IOException {}
 
-  protected void addAdditionalInboundHandlers(final SocketChannel ch)
+  void addAdditionalInboundHandlers(final Channel ch)
       throws GeneralSecurityException, IOException {}
 
   private IntSupplier pendingTaskCounter(final EventLoopGroup eventLoopGroup) {
@@ -268,5 +279,15 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
             .filter(eventExecutor -> eventExecutor instanceof SingleThreadEventExecutor)
             .mapToInt(eventExecutor -> ((SingleThreadEventExecutor) eventExecutor).pendingTasks())
             .sum();
+  }
+
+  @Override
+  public Handshaker buildInstance() {
+    return new ECIESHandshaker();
+  }
+
+  @Override
+  public Framer buildFramer(final HandshakeSecrets secrets) {
+    return new Framer(secrets);
   }
 }

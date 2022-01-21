@@ -70,6 +70,10 @@ rpc-http-tls-keystore-password-file="none.passwd"
 rpc-http-tls-client-auth-enabled=false
 rpc-http-tls-known-clients-file="rpc_tls_clients.txt"
 rpc-http-tls-ca-clients-enabled=false
+rpc-http-authentication-jwt-algorithm="RS256"
+rpc-ws-authentication-jwt-algorithm="RS256"
+rpc-http-tls-protocols=["TLSv1.2,TlSv1.1"]
+rpc-http-tls-cipher-suites=["TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]
 
 # PRIVACY TLS
 privacy-tls-enabled=false
@@ -146,6 +150,7 @@ privacy-multi-tenancy-enabled=true
 privacy-marker-transaction-signing-key-file="./signerKey"
 privacy-enable-database-migration=false
 privacy-onchain-groups-enabled=false
+privacy-flexible-groups-enabled=false
 
 # Transaction Pool
 tx-pool-retention-hours=999
@@ -154,6 +159,7 @@ tx-pool-max-size=1234
 tx-pool-hashes-max-size=10000
 Xincoming-tx-messages-keep-alive-seconds=60
 rpc-tx-feecap=2000000000000000000
+strict-tx-replay-protection-enabled=true
 
 # Revert Reason
 revert-reason-enabled=false
