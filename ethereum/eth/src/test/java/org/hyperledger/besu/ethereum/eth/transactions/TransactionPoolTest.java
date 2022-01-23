@@ -33,8 +33,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -78,6 +78,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -147,21 +148,34 @@ public class TransactionPoolTest {
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
     peerTransactionTracker = mock(PeerTransactionTracker.class);
     peerPendingTransactionTracker = mock(PeerPendingTransactionTracker.class);
-    transactionPool =
-        new TransactionPool(
-            transactions,
-            protocolSchedule,
-            protocolContext,
-            batchAddedListener,
-            pendingBatchAddedListener,
-            syncState,
-            ethContext,
-            peerTransactionTracker,
-            peerPendingTransactionTracker,
-            Wei.of(2),
-            metricsSystem,
-            TransactionPoolConfiguration.DEFAULT);
+    transactionPool = createTransactionPool();
     blockchain.observeBlockAdded(transactionPool);
+  }
+
+  private TransactionPool createTransactionPool() {
+    return createTransactionPool(b -> {});
+  }
+
+  private TransactionPool createTransactionPool(
+      final Consumer<ImmutableTransactionPoolConfiguration.Builder> configConsumer) {
+    final ImmutableTransactionPoolConfiguration.Builder configBuilder =
+        ImmutableTransactionPoolConfiguration.builder();
+    configConsumer.accept(configBuilder);
+    final TransactionPoolConfiguration config = configBuilder.build();
+
+    return new TransactionPool(
+        transactions,
+        protocolSchedule,
+        protocolContext,
+        batchAddedListener,
+        pendingBatchAddedListener,
+        syncState,
+        ethContext,
+        peerTransactionTracker,
+        peerPendingTransactionTracker,
+        Wei.of(2),
+        metricsSystem,
+        config);
   }
 
   @Test
@@ -306,6 +320,101 @@ public class TransactionPoolTest {
   }
 
   @Test
+  public void addLocalTransaction_strictReplayProtectionOn_txWithoutChainId_chainIdIsConfigured() {
+    protocolSupportsTxReplayProtection(1337, true);
+    transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
+    final Transaction tx = createTransactionWithoutChainId(1);
+    givenTransactionIsValid(tx);
+
+    assertLocalTransactionInvalid(tx, TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURE_REQUIRED);
+  }
+
+  @Test
+  public void
+      addLocalTransaction_strictReplayProtectionOn_txWithoutChainId_chainIdIsConfigured_protectionNotSupportedAtCurrentBlock() {
+    protocolSupportsTxReplayProtection(1337, false);
+    transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
+    final Transaction tx = createTransactionWithoutChainId(1);
+    givenTransactionIsValid(tx);
+
+    assertLocalTransactionValid(tx);
+  }
+
+  @Test
+  public void addLocalTransaction_strictReplayProtectionOff_txWithoutChainId_chainIdIsConfigured() {
+    protocolSupportsTxReplayProtection(1337, true);
+    transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(false));
+    final Transaction tx = createTransactionWithoutChainId(1);
+    givenTransactionIsValid(tx);
+
+    assertLocalTransactionValid(tx);
+  }
+
+  @Test
+  public void
+      addLocalTransaction_strictReplayProtectionOn_txWithoutChainId_chainIdIsNotConfigured() {
+    protocolDoesNotSupportTxReplayProtection();
+    transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
+    final Transaction tx = createTransactionWithoutChainId(1);
+    givenTransactionIsValid(tx);
+
+    assertLocalTransactionValid(tx);
+  }
+
+  @Test
+  public void addLocalTransaction_strictReplayProtectionOn_txWithChainId_chainIdIsConfigured() {
+    protocolSupportsTxReplayProtection(1337, true);
+    transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
+    final Transaction tx = createTransaction(1);
+    givenTransactionIsValid(tx);
+
+    assertLocalTransactionValid(tx);
+  }
+
+  @Test
+  public void
+      addRemoteTransactions_strictReplayProtectionOn_txWithoutChainId_chainIdIsConfigured() {
+    protocolSupportsTxReplayProtection(1337, true);
+    transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
+    final Transaction tx = createTransactionWithoutChainId(1);
+    givenTransactionIsValid(tx);
+
+    assertRemoteTransactionValid(tx);
+  }
+
+  @Test
+  public void
+      addRemoteTransactions_strictReplayProtectionOff_txWithoutChainId_chainIdIsConfigured() {
+    protocolSupportsTxReplayProtection(1337, true);
+    transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(false));
+    final Transaction tx = createTransactionWithoutChainId(1);
+    givenTransactionIsValid(tx);
+
+    assertRemoteTransactionValid(tx);
+  }
+
+  @Test
+  public void
+      addRemoteTransactions_strictReplayProtectionOn_txWithoutChainId_chainIdIsNotConfigured() {
+    protocolDoesNotSupportTxReplayProtection();
+    transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
+    final Transaction tx = createTransactionWithoutChainId(1);
+    givenTransactionIsValid(tx);
+
+    assertRemoteTransactionValid(tx);
+  }
+
+  @Test
+  public void addRemoteTransactions_strictReplayProtectionOn_txWithChainId_chainIdIsConfigured() {
+    protocolSupportsTxReplayProtection(1337, true);
+    transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
+    final Transaction tx = createTransaction(1);
+    givenTransactionIsValid(tx);
+
+    assertRemoteTransactionValid(tx);
+  }
+
+  @Test
   public void shouldNotAddRemoteTransactionsWhenGasPriceBelowMinimum() {
     final Transaction transaction =
         new TransactionTestFixture()
@@ -316,7 +425,7 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction));
 
     assertTransactionNotPending(transaction);
-    verifyZeroInteractions(transactionValidator); // Reject before validation
+    verifyNoInteractions(transactionValidator); // Reject before validation
   }
 
   @Test
@@ -452,7 +561,7 @@ public class TransactionPoolTest {
 
     verify(pendingTransactions).containsTransaction(transaction1.getHash());
     verify(pendingTransactions).tryEvictTransactionHash(transaction1.getHash());
-    verifyZeroInteractions(transactionValidator);
+    verifyNoInteractions(transactionValidator);
     verifyNoMoreInteractions(pendingTransactions);
   }
 
@@ -518,7 +627,7 @@ public class TransactionPoolTest {
         .isEqualTo(ValidationResult.invalid(EXCEEDS_BLOCK_GAS_LIMIT));
 
     assertTransactionNotPending(transaction1);
-    verifyZeroInteractions(batchAddedListener);
+    verifyNoInteractions(batchAddedListener);
   }
 
   @Test
@@ -532,13 +641,13 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(singleton(transaction1));
 
     assertTransactionNotPending(transaction1);
-    verifyZeroInteractions(batchAddedListener);
+    verifyNoInteractions(batchAddedListener);
   }
 
   @Test
   public void shouldNotNotifyBatchListenerIfNoTransactionsAreAdded() {
     transactionPool.addRemoteTransactions(emptyList());
-    verifyZeroInteractions(batchAddedListener);
+    verifyNoInteractions(batchAddedListener);
   }
 
   @Test
@@ -595,7 +704,7 @@ public class TransactionPoolTest {
     assertTransactionNotPending(transaction1);
     assertTransactionNotPending(transaction2);
     assertTransactionNotPending(transaction3);
-    verifyZeroInteractions(batchAddedListener);
+    verifyNoInteractions(batchAddedListener);
   }
 
   @Test
@@ -925,11 +1034,54 @@ public class TransactionPoolTest {
         .createTransaction(KEY_PAIR1);
   }
 
+  private Transaction createTransactionWithoutChainId(final int transactionNumber) {
+    return new TransactionTestFixture()
+        .chainId(Optional.empty())
+        .nonce(transactionNumber)
+        .gasLimit(0)
+        .createTransaction(KEY_PAIR1);
+  }
+
+  private void protocolDoesNotSupportTxReplayProtection() {
+    when(protocolSchedule.getChainId()).thenReturn(Optional.empty());
+  }
+
+  private void protocolSupportsTxReplayProtection(
+      final long chainId, final boolean isSupportedAtCurrentBlock) {
+    when(protocolSpec.isReplayProtectionSupported()).thenReturn(isSupportedAtCurrentBlock);
+    when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.valueOf(chainId)));
+  }
+
   private void givenTransactionIsValid(final Transaction transaction) {
     when(transactionValidator.validate(eq(transaction), any(Optional.class), any()))
         .thenReturn(valid());
     when(transactionValidator.validateForSender(
             eq(transaction), nullable(Account.class), any(TransactionValidationParams.class)))
         .thenReturn(valid());
+  }
+
+  private void assertLocalTransactionInvalid(
+      final Transaction tx, final TransactionInvalidReason invalidReason) {
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(tx);
+
+    assertThat(result.isValid()).isFalse();
+    assertThat(result.getInvalidReason()).isEqualTo(invalidReason);
+    assertTransactionNotPending(tx);
+  }
+
+  private void assertLocalTransactionValid(final Transaction tx) {
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(tx);
+
+    assertThat(result.isValid()).isTrue();
+    assertTransactionPending(tx);
+  }
+
+  private void assertRemoteTransactionValid(final Transaction tx) {
+    transactionPool.addRemoteTransactions(List.of(tx));
+
+    verify(batchAddedListener).onTransactionsAdded(singleton(tx));
+    assertTransactionPending(tx);
   }
 }

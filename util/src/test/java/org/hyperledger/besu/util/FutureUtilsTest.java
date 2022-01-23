@@ -21,7 +21,7 @@ import static org.hyperledger.besu.util.FutureUtils.propagateCancellation;
 import static org.hyperledger.besu.util.FutureUtils.propagateResult;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.concurrent.CompletableFuture;
@@ -120,7 +120,7 @@ public class FutureUtilsTest {
 
     final CompletableFuture<String> result = exceptionallyCompose(input, errorHandler);
 
-    verifyZeroInteractions(errorHandler);
+    verifyNoInteractions(errorHandler);
     assertThat(result).isNotDone();
 
     // Completing input should trigger our error handler but not complete the result yet.
@@ -142,7 +142,7 @@ public class FutureUtilsTest {
 
     final CompletableFuture<String> result = exceptionallyCompose(input, errorHandler);
 
-    verifyZeroInteractions(errorHandler);
+    verifyNoInteractions(errorHandler);
     assertThat(result).isNotDone();
 
     // Completing input should trigger our error handler but not complete the result yet.
@@ -163,7 +163,7 @@ public class FutureUtilsTest {
 
     final CompletableFuture<String> result = exceptionallyCompose(input, errorHandler);
 
-    verifyZeroInteractions(errorHandler);
+    verifyNoInteractions(errorHandler);
     assertThat(result).isNotDone();
 
     // Completing input should trigger our error handler but not complete the result yet.
@@ -182,11 +182,11 @@ public class FutureUtilsTest {
 
     final CompletableFuture<String> result = exceptionallyCompose(input, errorHandler);
 
-    verifyZeroInteractions(errorHandler);
+    verifyNoInteractions(errorHandler);
     assertThat(result).isNotDone();
 
     input.complete("Done");
-    verifyZeroInteractions(errorHandler);
+    verifyNoInteractions(errorHandler);
     assertThat(result).isCompletedWithValue("Done");
   }
 

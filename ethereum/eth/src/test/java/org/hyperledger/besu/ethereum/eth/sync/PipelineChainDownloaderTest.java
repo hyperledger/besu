@@ -22,8 +22,8 @@ import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -93,7 +93,7 @@ public class PipelineChainDownloaderTest {
     expectPipelineCreation(syncTarget, downloadPipeline);
     when(scheduler.startPipeline(downloadPipeline)).thenReturn(new CompletableFuture<>());
     chainDownloader.start();
-    verifyZeroInteractions(downloadPipelineFactory);
+    verifyNoInteractions(downloadPipelineFactory);
 
     selectTargetFuture.complete(syncTarget);
 
@@ -108,7 +108,7 @@ public class PipelineChainDownloaderTest {
     expectPipelineCreation(syncTarget, downloadPipeline);
     when(scheduler.startPipeline(downloadPipeline)).thenReturn(new CompletableFuture<>());
     chainDownloader.start();
-    verifyZeroInteractions(downloadPipelineFactory);
+    verifyNoInteractions(downloadPipelineFactory);
 
     selectTargetFuture.complete(syncTarget);
 
@@ -230,7 +230,7 @@ public class PipelineChainDownloaderTest {
     assertThat(result).isNotDone();
 
     selectSyncTargetFuture.complete(syncTarget);
-    verifyZeroInteractions(downloadPipelineFactory);
+    verifyNoInteractions(downloadPipelineFactory);
     assertCancelled(result);
   }
 

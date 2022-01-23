@@ -118,22 +118,22 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
     assertThat(spec.subcommands()).containsKeys(BLOCK_SUBCOMMAND_NAME);
     assertThat(spec.subcommands().get(BLOCK_SUBCOMMAND_NAME).getSubcommands())
         .containsKeys(BLOCK_IMPORT_SUBCOMMAND_NAME);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingBlockSubCommandWithoutSubSubcommandMustDisplayUsage() {
     parseCommand(BLOCK_SUBCOMMAND_NAME);
-    assertThat(commandOutput.toString()).startsWith(EXPECTED_BLOCK_USAGE);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_BLOCK_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void callingBlockSubCommandHelpMustDisplayUsage() {
     parseCommand(BLOCK_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString()).startsWith(EXPECTED_BLOCK_USAGE);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_BLOCK_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   // Import sub-sub-command
@@ -141,8 +141,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   public void callingBlockImportSubCommandWithoutPathMustDisplayErrorAndUsage() {
     parseCommand(BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME);
     final String expectedErrorOutputStart = "No files specified to import.";
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
   }
 
   @Test
@@ -155,15 +155,15 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         "--skip-pow-validation-enabled",
         "blocks.file");
     final String expectedErrorOutputStart = "Can't skip";
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
   }
 
   @Test
   public void callingBlockImportSubCommandHelpMustDisplayUsage() {
     parseCommand(BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString()).isEqualTo(EXPECTED_BLOCK_IMPORT_USAGE);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEqualTo(EXPECTED_BLOCK_IMPORT_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -177,8 +177,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
 
     assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(fileToImport.toPath());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -197,8 +197,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
 
     assertThat(pathArgumentCaptor.getValue()).isEqualByComparingTo(fileToImport.toPath());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -222,8 +222,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         .containsExactlyInAnyOrder(
             fileToImport.toPath(), file2ToImport.toPath(), file3ToImport.toPath());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -242,8 +242,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         "--from",
         fileToImport.getPath());
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     verify(jsonBlockImporter, times(1)).importChain(stringArgumentCaptor.capture());
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(fileContent);
@@ -258,8 +258,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME);
     final String expectedErrorOutputStart = "Missing required option: '--to=<FILE>'";
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
 
     verify(rlpBlockExporter, never()).exportBlocks(any(), any(), any());
   }
@@ -278,8 +278,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
             + folder.getRoot().getAbsolutePath()
             + File.separator
             + BesuController.DATABASE_PATH;
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
 
     verify(rlpBlockExporter, never()).exportBlocks(any(), any(), any());
   }
@@ -299,8 +299,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
             + folder.getRoot().getAbsolutePath()
             + File.separator
             + BesuController.DATABASE_PATH;
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
 
     verify(rlpBlockExporter, never()).exportBlocks(any(), any(), any());
   }
@@ -315,8 +315,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
         outputFile.getPath());
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     verify(rlpBlockExporter, times(1)).exportBlocks(outputFile, Optional.empty(), Optional.empty());
   }
@@ -332,8 +332,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         "--to",
         outputFile.getPath(),
         "--start-block=1");
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     verify(rlpBlockExporter, times(1)).exportBlocks(outputFile, Optional.of(1L), Optional.empty());
   }
@@ -349,8 +349,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         "--to",
         outputFile.getPath(),
         "--end-block=10");
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     verify(rlpBlockExporter, times(1)).exportBlocks(outputFile, Optional.empty(), Optional.of(10L));
   }
@@ -367,8 +367,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         outputFile.getPath(),
         "--start-block=1",
         "--end-block=10");
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     verify(rlpBlockExporter, times(1)).exportBlocks(outputFile, Optional.of(1L), Optional.of(10L));
   }
@@ -385,9 +385,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         outputFile.getPath(),
         "--start-block=10",
         "--end-block=1");
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Parameter --end-block (1) must be greater start block (10)");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
 
     verify(rlpBlockExporter, never()).exportBlocks(any(), any(), any());
   }
@@ -404,9 +404,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         outputFile.getPath(),
         "--start-block=10",
         "--end-block=10");
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Parameter --end-block (10) must be greater start block (10)");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
 
     verify(rlpBlockExporter, never()).exportBlocks(any(), any(), any());
   }
@@ -422,9 +422,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         "--to",
         outputFile.getPath(),
         "--start-block=-1");
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Parameter --start-block (-1) must be greater than or equal to zero");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
 
     verify(rlpBlockExporter, never()).exportBlocks(any(), any(), any());
   }
@@ -440,9 +440,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
         "--to",
         outputFile.getPath(),
         "--end-block=-1");
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Parameter --end-block (-1) must be greater than or equal to zero");
-    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
 
     verify(rlpBlockExporter, never()).exportBlocks(any(), any(), any());
   }
@@ -450,8 +450,8 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingBlockExportSubCommandHelpMustDisplayUsage() {
     parseCommand(BLOCK_SUBCOMMAND_NAME, BLOCK_EXPORT_SUBCOMMAND_NAME, "--help");
-    assertThat(commandOutput.toString()).startsWith(EXPECTED_BLOCK_EXPORT_USAGE);
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_BLOCK_EXPORT_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   private void createDbDirectory(final boolean createDataFiles) throws IOException {

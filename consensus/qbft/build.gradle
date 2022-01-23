@@ -72,6 +72,7 @@ dependencies {
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.web3j:abi'

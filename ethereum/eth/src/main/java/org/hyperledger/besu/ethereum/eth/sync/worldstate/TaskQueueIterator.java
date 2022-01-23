@@ -15,14 +15,16 @@
 package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
 import org.hyperledger.besu.services.tasks.Task;
+import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
 import java.util.Iterator;
 
-class TaskQueueIterator implements Iterator<Task<NodeDataRequest>> {
+public class TaskQueueIterator<REQUEST extends TasksPriorityProvider>
+    implements Iterator<Task<REQUEST>> {
 
-  private final WorldDownloadState downloadState;
+  private final WorldDownloadState<REQUEST> downloadState;
 
-  public TaskQueueIterator(final WorldDownloadState downloadState) {
+  public TaskQueueIterator(final WorldDownloadState<REQUEST> downloadState) {
     this.downloadState = downloadState;
   }
 
@@ -32,7 +34,7 @@ class TaskQueueIterator implements Iterator<Task<NodeDataRequest>> {
   }
 
   @Override
-  public Task<NodeDataRequest> next() {
+  public Task<REQUEST> next() {
     return downloadState.dequeueRequestBlocking();
   }
 }

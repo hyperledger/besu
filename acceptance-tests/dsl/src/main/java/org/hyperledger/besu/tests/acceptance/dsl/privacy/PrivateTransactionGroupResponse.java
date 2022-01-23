@@ -21,7 +21,6 @@ public class PrivateTransactionGroupResponse {
   private final String from;
   private final String gas;
   private final String gasPrice;
-  private final String hash;
   private final String input;
   private final String nonce;
   private final String to;
@@ -52,7 +51,6 @@ public class PrivateTransactionGroupResponse {
     this.from = from;
     this.gas = gas;
     this.gasPrice = gasPrice;
-    this.hash = hash;
     this.input = input;
     this.nonce = nonce;
     this.to = to;
@@ -75,10 +73,6 @@ public class PrivateTransactionGroupResponse {
 
   public String getGasPrice() {
     return gasPrice;
-  }
-
-  public String getHash() {
-    return hash;
   }
 
   public String getInput() {

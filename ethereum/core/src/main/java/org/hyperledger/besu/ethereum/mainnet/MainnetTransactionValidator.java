@@ -99,7 +99,7 @@ public class MainnetTransactionValidator {
    * @param transaction the transaction to validate
    * @param baseFee optional baseFee
    * @param transactionValidationParams Validation parameters that will be used
-   * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
+   * @return An empty {@link Optional} if the transaction is considered valid; otherwise an {@code
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */
@@ -222,6 +222,10 @@ public class MainnetTransactionValidator {
     return ValidationResult.valid();
   }
 
+  public boolean isReplayProtectionSupported() {
+    return chainId.isPresent();
+  }
+
   public ValidationResult<TransactionInvalidReason> validateTransactionSignature(
       final Transaction transaction) {
     if (chainId.isPresent()
@@ -295,7 +299,7 @@ public class MainnetTransactionValidator {
    *     will be considered valid (used when received transactions in the transaction pool). If
    *     false, only a transaction with the nonce equals the account nonce will be considered valid
    *     (used when processing transactions).
-   * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
+   * @return An empty {@link Optional} if the transaction is considered valid; otherwise an {@code
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */

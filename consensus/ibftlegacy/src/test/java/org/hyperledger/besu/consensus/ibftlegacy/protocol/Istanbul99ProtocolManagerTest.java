@@ -106,7 +106,8 @@ public class Istanbul99ProtocolManagerTest {
       throws ExecutionException, InterruptedException, TimeoutException {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     final EthScheduler ethScheduler = new DeterministicEthScheduler(() -> false);
-    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
+    EthPeers peers =
+        new EthPeers(Istanbul99Protocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
     EthMessages messages = new EthMessages();
 
     final BigInteger networkId = BigInteger.ONE;

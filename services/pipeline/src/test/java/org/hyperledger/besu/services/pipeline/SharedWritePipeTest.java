@@ -16,7 +16,7 @@ package org.hyperledger.besu.services.pipeline;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.junit.Test;
 
@@ -33,7 +33,7 @@ public class SharedWritePipeTest {
   public void shouldOnlyCloseDelegatePipeWhenCloseCalledSpecifiedNumberOfTimes() {
     for (int i = 0; i < CLOSES_REQUIRED - 1; i++) {
       pipe.close();
-      verifyZeroInteractions(delegate);
+      verifyNoInteractions(delegate);
     }
 
     pipe.close();

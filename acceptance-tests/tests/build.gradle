@@ -12,7 +12,7 @@
  */
 
 plugins {
-  id 'org.web3j' version '4.8.8'
+  id 'org.web3j' version '4.8.9'
   id 'org.web3j.solidity' version '0.3.2'
 }
 
@@ -65,9 +65,10 @@ dependencies {
   testImplementation 'io.opentracing:opentracing-api'
   testImplementation 'io.opentracing:opentracing-util'
   testImplementation 'io.jaegertracing:jaeger-client'
+  testImplementation 'io.vertx:vertx-core'
   testImplementation 'junit:junit'
-  testImplementation 'net.consensys:orion'
   testImplementation 'org.apache.commons:commons-compress'
+  testImplementation 'org.apache.logging.log4j:log4j-core'
   testImplementation 'org.apache.tuweni:tuweni-crypto'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
