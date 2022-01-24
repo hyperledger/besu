@@ -589,7 +589,7 @@ public class JsonRpcHttpService {
               token,
               user -> handleJsonBatchRequest(routingContext, array, user));
         }
-      } catch (final DecodeException ex) {
+      } catch (final DecodeException | NullPointerException ex) {
         handleJsonRpcError(routingContext, null, JsonRpcError.PARSE_ERROR);
       }
     }
@@ -819,7 +819,7 @@ public class JsonRpcHttpService {
       return "";
     }
     if (config.getCorsAllowedDomains().contains("*")) {
-      return "*";
+      return ".*";
     } else {
       final StringJoiner stringJoiner = new StringJoiner("|");
       config.getCorsAllowedDomains().stream().filter(s -> !s.isEmpty()).forEach(stringJoiner::add);

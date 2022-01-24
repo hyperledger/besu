@@ -267,10 +267,10 @@ public class NettyConnectionInitializer
         () -> connectionFuture.completeExceptionally(new TimeoutException(s)));
   }
 
-  protected void addAdditionalOutboundHandlers(final SocketChannel ch)
+  void addAdditionalOutboundHandlers(final Channel ch)
       throws GeneralSecurityException, IOException {}
 
-  protected void addAdditionalInboundHandlers(final SocketChannel ch)
+  void addAdditionalInboundHandlers(final Channel ch)
       throws GeneralSecurityException, IOException {}
 
   private IntSupplier pendingTaskCounter(final EventLoopGroup eventLoopGroup) {

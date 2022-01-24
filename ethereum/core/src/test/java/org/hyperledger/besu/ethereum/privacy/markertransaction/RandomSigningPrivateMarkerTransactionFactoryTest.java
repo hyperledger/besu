@@ -27,7 +27,10 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class RandomSigningPrivateMarkerTransactionFactoryTest {
 
   @Test

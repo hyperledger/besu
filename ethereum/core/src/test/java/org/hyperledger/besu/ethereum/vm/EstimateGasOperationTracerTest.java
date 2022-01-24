@@ -28,7 +28,10 @@ import org.hyperledger.besu.evm.tracing.OperationTracer.ExecuteOperation;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class EstimateGasOperationTracerTest {
 
   private EstimateGasOperationTracer operationTracer;

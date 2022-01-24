@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -65,7 +66,11 @@ public class EthFeeHistory implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
     final Object requestId = request.getRequest().getId();
 
-    final long blockCount = request.getRequiredParameter(0, Long.class);
+    final long blockCount =
+        Optional.of(request.getRequiredParameter(0, UnsignedLongParameter.class))
+            .map(UnsignedLongParameter::getValue)
+            .orElse(0L);
+
     if (blockCount < 1 || blockCount > 1024) {
       return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PARAMS);
     }

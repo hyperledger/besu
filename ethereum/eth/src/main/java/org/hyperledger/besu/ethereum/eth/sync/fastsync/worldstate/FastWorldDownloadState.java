@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
-import org.hyperledger.besu.services.tasks.CachingTaskCollection;
+import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
 import java.util.Optional;
@@ -31,7 +31,7 @@ public class FastWorldDownloadState extends WorldDownloadState<NodeDataRequest> 
   private static final Logger LOG = LogManager.getLogger();
 
   public FastWorldDownloadState(
-      final CachingTaskCollection<NodeDataRequest> pendingRequests,
+      final InMemoryTasksPriorityQueues<NodeDataRequest> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final Clock clock) {

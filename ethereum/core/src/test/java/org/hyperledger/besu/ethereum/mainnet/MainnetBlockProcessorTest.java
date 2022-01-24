@@ -31,7 +31,10 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import java.util.Optional;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class MainnetBlockProcessorTest {
 
   private final MainnetTransactionProcessor transactionProcessor =

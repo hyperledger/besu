@@ -25,9 +25,11 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
-import java.util.function.Supplier;
+import java.util.Optional;
 
 /** Defines the protocol behaviours for a blockchain using a QBFT consensus mechanism. */
 public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
@@ -78,13 +80,17 @@ public class QbftProtocolSchedule extends BaseBftProtocolSchedule {
   }
 
   @Override
-  protected Supplier<BlockHeaderValidator.Builder> createBlockHeaderRuleset(
-      final BftConfigOptions config) {
+  protected BlockHeaderValidator.Builder createBlockHeaderRuleset(
+      final BftConfigOptions config, final FeeMarket feeMarket) {
     checkArgument(
         config instanceof QbftConfigOptions, "QbftProtocolSchedule must use QbftConfigOptions");
     final QbftConfigOptions qbftConfigOptions = (QbftConfigOptions) config;
-    return () ->
-        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
-            qbftConfigOptions.getBlockPeriodSeconds(), qbftConfigOptions.isValidatorContractMode());
+    final Optional<BaseFeeMarket> baseFeeMarket =
+        Optional.of(feeMarket).filter(FeeMarket::implementsBaseFee).map(BaseFeeMarket.class::cast);
+
+    return QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
+        qbftConfigOptions.getBlockPeriodSeconds(),
+        qbftConfigOptions.isValidatorContractMode(),
+        baseFeeMarket);
   }
 }

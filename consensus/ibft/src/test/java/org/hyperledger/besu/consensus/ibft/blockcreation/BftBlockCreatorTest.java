@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTran
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -54,7 +55,6 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -89,9 +89,10 @@ public class BftBlockCreatorTest {
     final BaseBftProtocolSchedule bftProtocolSchedule =
         new BaseBftProtocolSchedule() {
           @Override
-          public Supplier<BlockHeaderValidator.Builder> createBlockHeaderRuleset(
-              final BftConfigOptions config) {
-            return () -> IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5);
+          public BlockHeaderValidator.Builder createBlockHeaderRuleset(
+              final BftConfigOptions config, final FeeMarket feeMarket) {
+            return IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
+                5, Optional.empty());
           }
         };
     final GenesisConfigOptions configOptions =
@@ -148,7 +149,9 @@ public class BftBlockCreatorTest {
     final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1);
 
     final BlockHeaderValidator rules =
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(secondsBetweenBlocks).build();
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
+                secondsBetweenBlocks, Optional.empty())
+            .build();
 
     // NOTE: The header will not contain commit seals, so can only do light validation on header.
     final boolean validationResult =

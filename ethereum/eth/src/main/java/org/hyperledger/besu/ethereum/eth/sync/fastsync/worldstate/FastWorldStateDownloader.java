@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.services.tasks.CachingTaskCollection;
+import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
 import java.util.Optional;
@@ -44,7 +44,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
   private final MetricsSystem metricsSystem;
 
   private final EthContext ethContext;
-  private final CachingTaskCollection<NodeDataRequest> taskCollection;
+  private final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection;
   private final int hashCountPerRequest;
   private final int maxOutstandingRequests;
   private final int maxNodeRequestsWithoutProgress;
@@ -57,7 +57,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
   public FastWorldStateDownloader(
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
-      final CachingTaskCollection<NodeDataRequest> taskCollection,
+      final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection,
       final int hashCountPerRequest,
       final int maxOutstandingRequests,
       final int maxNodeRequestsWithoutProgress,
@@ -104,6 +104,15 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
         failed.completeExceptionally(
             new IllegalStateException(
                 "Cannot run an already running " + this.getClass().getSimpleName()));
+        return failed;
+      }
+
+      Optional<BlockHeader> checkNull =
+          Optional.ofNullable(fastSyncState.getPivotBlockHeader().get());
+      if (checkNull.isEmpty()) {
+        LOG.error("Pivot Block not present");
+        final CompletableFuture<Void> failed = new CompletableFuture<>();
+        failed.completeExceptionally(new NullPointerException("Pivot Block not present"));
         return failed;
       }
 

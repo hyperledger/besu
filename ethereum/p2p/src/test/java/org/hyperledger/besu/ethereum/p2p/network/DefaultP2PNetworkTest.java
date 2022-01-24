@@ -254,6 +254,30 @@ public final class DefaultP2PNetworkTest {
   }
 
   @Test
+  public void start_withNatManagerUpnpP2p() {
+    final String externalIp = "127.0.0.3";
+    config.getRlpx().setBindPort(30303);
+    config.getDiscovery().setBindPort(30301);
+
+    final UpnpNatManager upnpNatManager = mock(UpnpNatManager.class);
+    when(upnpNatManager.getNatMethod()).thenReturn(NatMethod.UPNPP2PONLY);
+    when(upnpNatManager.queryExternalIPAddress())
+        .thenReturn(CompletableFuture.completedFuture(externalIp));
+
+    final NatService natService = spy(new NatService(Optional.of(upnpNatManager)));
+    final P2PNetwork network = builder().natService(natService).build();
+
+    network.start();
+    verify(upnpNatManager)
+        .requestPortForward(eq(config.getRlpx().getBindPort()), eq(NetworkProtocol.TCP), any());
+    verify(upnpNatManager)
+        .requestPortForward(
+            eq(config.getDiscovery().getBindPort()), eq(NetworkProtocol.UDP), any());
+
+    Assertions.assertThat(network.getLocalEnode().get().getIpAsString()).isEqualTo(externalIp);
+  }
+
+  @Test
   public void handlePeerBondedEvent_forListeningPeer() {
     final DefaultP2PNetwork network = network();
     network.start();
