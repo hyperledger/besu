@@ -745,9 +745,7 @@ task dockerUpload {
   if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
     additionalTags.add('latest')
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
-  }
-
-  if (!(dockerBuildVersion ==~ /.*MERGE/)) {
+  } else if (!(dockerBuildVersion ==~ /.*MERGE/)) {
     additionalTags.add('merge')
   }
 
