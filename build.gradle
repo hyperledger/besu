@@ -747,6 +747,10 @@ task dockerUpload {
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
+  if (!(dockerBuildVersion ==~ /.*MERGE/)) {
+    additionalTags.add('merge')
+  }
+
   doLast {
     for (def variant in dockerVariants) {
       def variantImage = "${image}-${variant}"
