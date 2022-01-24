@@ -49,6 +49,7 @@ import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
+import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
 import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
@@ -284,6 +285,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
   private final NodePrivateKeyFileOption nodePrivateKeyFileOption =
       NodePrivateKeyFileOption.create();
+  private final LoggingLevelOption loggingLevelOption = LoggingLevelOption.create();
 
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
@@ -827,12 +829,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Deprecated in favor of --host-allowlist. Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})")
   private final JsonRPCAllowlistHostsProperty hostsWhitelist = new JsonRPCAllowlistHostsProperty();
 
-  @Option(
-      names = {"--logging", "-l"},
-      paramLabel = "<LOG VERBOSITY LEVEL>",
-      description = "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL")
-  private final Level logLevel = null;
-
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
       names = {"--color-enabled"},
@@ -1340,6 +1336,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void handleStableOptions() {
     commandLine.addMixin("Ethstats", ethstatsOptions);
     commandLine.addMixin("Private key file", nodePrivateKeyFileOption);
+    commandLine.addMixin("Logging level", loggingLevelOption);
   }
 
   private void handleUnstableOptions() {
@@ -1520,6 +1517,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // To change the configuration if color was enabled/disabled
     Log4j2ConfiguratorUtil.reconfigure();
     // set log level per CLI flags
+    final Level logLevel = loggingLevelOption.getLogLevel();
     if (logLevel != null) {
       if (announce) {
         System.out.println("Setting logging level to " + logLevel.name());
@@ -2816,7 +2814,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @VisibleForTesting
   Level getLogLevel() {
-    return logLevel;
+    return loggingLevelOption.getLogLevel();
   }
 
   private class BesuCommandConfigurationService implements BesuConfiguration {

@@ -19,6 +19,7 @@ import static org.hyperledger.besu.cli.subcommands.RetestethSubCommand.COMMAND_N
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
+import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.retesteth.RetestethConfiguration;
 import org.hyperledger.besu.ethereum.retesteth.RetestethService;
@@ -31,6 +32,7 @@ import org.apache.logging.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(
@@ -57,12 +59,7 @@ public class RetestethSubCommand implements Runnable {
       description = "The path to Besu data directory (default: ${DEFAULT-VALUE})")
   private final Path dataPath = DefaultCommandValues.getDefaultBesuDataPath(this);
 
-  @Option(
-      names = {"--logging", "-l"},
-      paramLabel = "<LOG VERBOSITY LEVEL>",
-      description =
-          "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL (default: ${DEFAULT-VALUE})")
-  private final Level logLevel = null;
+  @Mixin private LoggingLevelOption loggingLevelOption;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
@@ -105,6 +102,7 @@ public class RetestethSubCommand implements Runnable {
 
   private void prepareLogging() {
     // set log level per CLI flags
+    final Level logLevel = loggingLevelOption.getLogLevel();
     if (logLevel != null) {
       System.out.println("Setting logging level to " + logLevel.name());
       Log4j2ConfiguratorUtil.setAllLevels("", logLevel);
