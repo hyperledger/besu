@@ -141,11 +141,11 @@ public class CliqueBlockChoiceTests {
     headerBuilder.number(8);
 
     headerBuilder.difficulty(Difficulty.of(1));
-    final Block betterBlock = createEmptyBlock(keyPairs.get(2));
+    final Block betterBlock = createEmptyBlock(keyPairs.get(3));
     final BlockHeader betterHeader = betterBlock.getHeader();
 
     headerBuilder.difficulty(Difficulty.of(1));
-    final Block worseBlock = createEmptyBlock(keyPairs.get(3));
+    final Block worseBlock = createEmptyBlock(keyPairs.get(2));
     final BlockHeader worseHeader = worseBlock.getHeader();
 
     // verify total difficulty is equal

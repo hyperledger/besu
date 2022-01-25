@@ -96,17 +96,28 @@ public class CliqueHelpers {
   public static void installCliqueBlockChoiceRule(
       final Blockchain blockchain, final CliqueContext cliqueContext) {
     blockchain.setBlockChoiceRule(
+        // EIP-3436 - https://eips.ethereum.org/EIPS/eip-3436
         blockchain
-            // most total difficulty
+            // 1. Choose the block with the most total difficulty.
             .getBlockChoiceRule()
-            // shortest chain
+            // 2. Then choose the block with the lowest block number.
             .thenComparing(Comparator.comparing(ProcessableBlockHeader::getNumber).reversed())
-            // proposer with least recent in-turn block
-            .thenComparing((BlockHeader header) -> distanceFromInTurn(header, cliqueContext))
-            // last resort: blockhash as uint256.
+            // 3. Then choose the block whose validator had the least recent in-turn block
+            // assignment.
+            .thenComparing((BlockHeader header) -> -distanceFromInTurn(header, cliqueContext))
+            // 4. Then choose the block with the lowest hash.
             .thenComparing(Comparator.comparing(BlockHeader::getHash).reversed()));
   }
 
+  /**
+   * Distance calculation from step 3 of the forck choice rule in EIP-3436
+   *
+   * <p>` (header_number - validator_index) % validator_count `
+   *
+   * @param header The block header to calculate distance
+   * @param context The clique context, holding validators last validaion
+   * @return the number of blocks from when the validator in that block was most recently "in turn"
+   */
   static int distanceFromInTurn(final BlockHeader header, final CliqueContext context) {
     final Address proposer = CliqueHelpers.getProposerOfBlock(header);
     final Collection<Address> validators =
