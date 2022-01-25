@@ -237,7 +237,7 @@ public class RlpBlockImporter implements Closeable {
     final long elapseMicros = segmentTimer.elapsed(TimeUnit.MICROSECONDS);
     //noinspection PlaceholderCountMatchesArgumentCount
     LOG.info(
-        "Import at block %8d / %,14d gas %,11d micros / Mgps %7.3f segment %6.3f cumulative",
+        "Import at block {} / {} gas {} micros / Mgps {} segment {} cumulative",
         blockNum,
         segmentGas,
         elapseMicros,
