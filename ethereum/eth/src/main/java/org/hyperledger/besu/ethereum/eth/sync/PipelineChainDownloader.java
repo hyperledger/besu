@@ -123,9 +123,7 @@ public class PipelineChainDownloader implements ChainDownloader {
       syncState.disconnectSyncTarget(DisconnectReason.BREACH_OF_PROTOCOL);
     }
 
-    if (!cancelled.get()
-        && syncTargetManager.shouldContinueDownloading()
-        && !(ExceptionUtils.rootCause(error) instanceof CancellationException)) {
+    if (!cancelled.get() && syncTargetManager.shouldContinueDownloading()) {
       logDownloadFailure("Chain download failed. Restarting after short delay.", error);
       // Allowing the normal looping logic to retry after a brief delay.
       return scheduler.scheduleFutureTask(() -> completedFuture(null), PAUSE_AFTER_ERROR_DURATION);
@@ -138,9 +136,9 @@ public class PipelineChainDownloader implements ChainDownloader {
 
   private void logDownloadFailure(final String message, final Throwable error) {
     final Throwable rootCause = ExceptionUtils.rootCause(error);
-    if (rootCause instanceof CancellationException || rootCause instanceof InterruptedException) {
-      LOG.trace(message, error);
-    } else if (rootCause instanceof EthTaskException) {
+    if (rootCause instanceof CancellationException
+        || rootCause instanceof InterruptedException
+        || rootCause instanceof EthTaskException) {
       LOG.debug(message, error);
     } else if (rootCause instanceof InvalidBlockException) {
       LOG.warn(message, error);

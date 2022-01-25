@@ -14,6 +14,7 @@
 ### Bug Fixes
 - Fix regression on cors-origin star value
 - Fix for ethFeeHistory accepting hex values for blockCount
+- Fix a sync issue, when the chain downloader incorrectly shutdown when a task in the pipeline is cancelled. [#3319](https://github.com/hyperledger/besu/pull/3319)
 
 ## 22.1.0-RC2
 
