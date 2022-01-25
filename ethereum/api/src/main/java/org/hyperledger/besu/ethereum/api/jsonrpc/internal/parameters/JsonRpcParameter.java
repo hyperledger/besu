@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 public class JsonRpcParameter {
 
@@ -68,6 +69,7 @@ public class JsonRpcParameter {
     } else {
       // Otherwise, serialize param back to json and then deserialize to the paramClass type
       try {
+        mapper.registerModule(new Jdk8Module());
         final String json = mapper.writeValueAsString(rawParam);
         param = mapper.readValue(json, paramClass);
       } catch (final JsonProcessingException e) {
