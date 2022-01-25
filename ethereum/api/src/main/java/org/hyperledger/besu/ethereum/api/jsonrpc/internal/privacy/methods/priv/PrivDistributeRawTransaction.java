@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
@@ -43,12 +42,13 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivDistributeRawTransaction implements JsonRpcMethod {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivDistributeRawTransaction.class);
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
   private final boolean flexiblePrivacyGroupsEnabled;
@@ -130,7 +130,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcErrorResponse(id, ENCLAVE_ERROR);
     } catch (final IllegalArgumentException | RLPException e) {
-      LOG.error(e);
+      LOG.error("Unable to decode transaction for distribute");
       return new JsonRpcErrorResponse(id, DECODE_ERROR);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(e.getMessage()));

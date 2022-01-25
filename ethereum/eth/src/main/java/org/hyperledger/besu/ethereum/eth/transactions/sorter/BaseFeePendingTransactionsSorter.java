@@ -36,8 +36,8 @@ import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Holds the current set of pending transactions with the ability to iterate them based on priority
@@ -47,7 +47,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class BaseFeePendingTransactionsSorter extends AbstractPendingTransactionsSorter {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BaseFeePendingTransactionsSorter.class);
 
   private Optional<Wei> baseFee;
 

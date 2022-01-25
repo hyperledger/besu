@@ -22,13 +22,13 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import com.sun.jna.ptr.IntByReference;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompiledContract {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractAltBnPrecompiledContract.class);
 
   // use the native library implementation, if it is available
   static boolean useNative = LibEthPairings.ENABLED;

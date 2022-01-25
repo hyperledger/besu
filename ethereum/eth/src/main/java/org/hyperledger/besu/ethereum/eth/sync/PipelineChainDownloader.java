@@ -37,11 +37,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PipelineChainDownloader implements ChainDownloader {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PipelineChainDownloader.class);
   static final Duration PAUSE_AFTER_ERROR_DURATION = Duration.ofSeconds(2);
   private final SyncState syncState;
   private final SyncTargetManager syncTargetManager;

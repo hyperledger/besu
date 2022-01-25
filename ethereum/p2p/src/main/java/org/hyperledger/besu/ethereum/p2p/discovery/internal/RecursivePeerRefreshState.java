@@ -28,12 +28,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RecursivePeerRefreshState {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RecursivePeerRefreshState.class);
   private static final int MAX_CONCURRENT_REQUESTS = 3;
   private Bytes target;
   private final PeerDiscoveryPermissions peerPermissions;

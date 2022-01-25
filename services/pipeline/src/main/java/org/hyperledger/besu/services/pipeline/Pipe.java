@@ -22,8 +22,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Forms the connection between two pipeline stages. A pipe is essentially a blocking queue with the
@@ -37,7 +37,7 @@ import org.apache.logging.log4j.Logger;
  * @param <T> the type of item that flows through the pipe.
  */
 public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(Pipe.class);
   private final BlockingQueue<T> queue;
   private final Counter inputCounter;
   private final Counter outputCounter;

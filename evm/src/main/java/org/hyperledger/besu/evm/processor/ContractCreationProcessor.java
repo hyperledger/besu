@@ -31,14 +31,14 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableSet;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** A contract creation message processor. */
 public class ContractCreationProcessor extends AbstractMessageProcessor {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ContractCreationProcessor.class);
 
   private final boolean requireCodeDepositToSucceed;
 

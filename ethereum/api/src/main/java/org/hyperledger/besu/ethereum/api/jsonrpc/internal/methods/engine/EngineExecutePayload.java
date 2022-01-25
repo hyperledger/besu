@@ -45,14 +45,14 @@ import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
 
   private static final Hash OMMERS_HASH_CONSTANT = Hash.EMPTY_LIST_HASH;
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(EngineExecutePayload.class);
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
   private final MergeMiningCoordinator mergeCoordinator;
 
@@ -86,7 +86,9 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
       return respondWith(reqId, blockParam.getBlockHash(), VALID, null);
     }
 
-    LOG.trace("blockparam: {}", () -> Json.encodePrettily(blockParam));
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("blockparam: {}", Json.encodePrettily(blockParam));
+    }
 
     final List<Transaction> transactions;
     try {

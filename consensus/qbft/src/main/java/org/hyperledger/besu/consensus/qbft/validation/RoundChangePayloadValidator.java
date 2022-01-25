@@ -21,8 +21,8 @@ import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Note: This does not validate that the received payload is for a future round, only that it was
@@ -32,7 +32,7 @@ import org.apache.logging.log4j.Logger;
 public class RoundChangePayloadValidator {
 
   private static final String ERROR_PREFIX = "Invalid RoundChange Payload";
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RoundChangePayloadValidator.class);
 
   private final Collection<Address> validators;
   private final long chainHeight;

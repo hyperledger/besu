@@ -32,8 +32,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.FormatMethod;
 import io.netty.buffer.ByteBuf;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.bouncycastle.crypto.BlockCipher;
@@ -42,6 +40,8 @@ import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.modes.SICBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This component is responsible for reading and composing RLPx protocol frames, conformant to the
@@ -57,7 +57,7 @@ import org.bouncycastle.crypto.params.ParametersWithIV;
  * @see <a href="https://github.com/ethereum/devp2p/blob/master/rlpx.md#framing">RLPx framing</a>
  */
 public class Framer {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(Framer.class);
 
   private static final int LENGTH_HEADER_DATA = 16;
   private static final int LENGTH_MAC = 16;

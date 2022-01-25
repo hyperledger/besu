@@ -42,12 +42,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvider {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BesuPluginContextImpl.class);
 
   private enum Lifecycle {
     UNINITIALIZED,

@@ -26,12 +26,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class IbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
     implements JsonRpcMethod {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(IbftGetValidatorsByBlockNumber.class);
 
   private final BlockInterface blockInterface;
 
