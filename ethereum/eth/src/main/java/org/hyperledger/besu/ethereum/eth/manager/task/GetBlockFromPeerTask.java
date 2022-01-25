@@ -82,6 +82,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
                     t.getCause());
                 result.completeExceptionally(t);
               } else if (r.getResult().isEmpty()) {
+                r.getPeer().recordUselessResponse("Download block returned an empty result");
                 LOG.debug(
                     "Failed to download block {} from peer {} with empty result.",
                     blockIdentifier,

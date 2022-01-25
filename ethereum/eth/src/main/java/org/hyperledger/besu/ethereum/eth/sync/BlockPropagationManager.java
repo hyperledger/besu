@@ -26,8 +26,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeersTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersTask;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
@@ -75,8 +73,10 @@ public class BlockPropagationManager {
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
-  private final Set<Hash> requestedBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final Set<Hash> importingBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Hash> requestedBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Set<Long> requestedNonAnnouncedBlocks =
+      Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final PendingBlocksManager pendingBlocksManager;
 
   BlockPropagationManager(
@@ -153,25 +153,9 @@ public class BlockPropagationManager {
               });
     } else {
 
-      LOG.trace("Not ready for import blocks found for {}", newBlock.getHeader().getNumber());
+      LOG.trace("No ready for import blocks found for {}", newBlock.getHeader().getNumber());
 
-      pendingBlocksManager
-          .lowestAnnouncedBlock()
-          .map(ProcessableBlockHeader::getNumber)
-          .ifPresent(
-              minAnnouncedBlockNumber -> {
-                long distance =
-                    minAnnouncedBlockNumber
-                        - protocolContext.getBlockchain().getChainHeadBlockNumber();
-                LOG.trace(
-                    "Found lowest announced block {} with distance {}",
-                    minAnnouncedBlockNumber,
-                    distance);
-                if (distance < config.getBlockPropagationRange().upperEndpoint()
-                    && minAnnouncedBlockNumber > newBlock.getHeader().getNumber()) {
-                  retrieveMissingAnnouncedBlock(newBlock.getHeader().getNumber() + 1);
-                }
-              });
+      maybeRetrieveNonAnnouncedBlocks(newBlock);
     }
 
     if (blockAddedEvent.getEventType().equals(EventType.HEAD_ADVANCED)) {
@@ -179,6 +163,31 @@ public class BlockPropagationManager {
       final long cutoff = head + config.getBlockPropagationRange().lowerEndpoint();
       pendingBlocksManager.purgeBlocksOlderThan(cutoff);
     }
+  }
+
+  private void maybeRetrieveNonAnnouncedBlocks(final Block newBlock) {
+    pendingBlocksManager
+        .lowestAnnouncedBlock()
+        .map(ProcessableBlockHeader::getNumber)
+        .ifPresent(
+            minAnnouncedBlockNumber -> {
+              long distance =
+                  minAnnouncedBlockNumber
+                      - protocolContext.getBlockchain().getChainHeadBlockNumber();
+              LOG.trace(
+                  "Found lowest announced block {} with distance {}",
+                  minAnnouncedBlockNumber,
+                  distance);
+              long firstNonAnnouncedBlockNumber = newBlock.getHeader().getNumber() + 1;
+
+              if (distance < config.getBlockPropagationRange().upperEndpoint()
+                  && minAnnouncedBlockNumber > firstNonAnnouncedBlockNumber) {
+
+                if (requestedNonAnnouncedBlocks.add(firstNonAnnouncedBlockNumber)) {
+                  retrieveNonAnnouncedBlock(firstNonAnnouncedBlockNumber);
+                }
+              }
+            });
   }
 
   private void handleNewBlockFromNetwork(final EthMessage message) {
@@ -238,9 +247,6 @@ public class BlockPropagationManager {
       // Filter for blocks we don't yet know about
       final List<NewBlockHash> newBlocks = new ArrayList<>();
       for (final NewBlockHash announcedBlock : relevantAnnouncements) {
-        if (requestedBlocks.contains(announcedBlock.hash())) {
-          continue;
-        }
         if (pendingBlocksManager.contains(announcedBlock.hash())) {
           continue;
         }
@@ -257,13 +263,7 @@ public class BlockPropagationManager {
 
       // Process known blocks we care about
       for (final NewBlockHash newBlock : newBlocks) {
-        final List<EthPeer> peers =
-            ethContext.getEthPeers().streamBestPeers().collect(Collectors.toList());
-        if (!peers.contains(message.getPeer())) {
-          peers.add(message.getPeer());
-        }
-        processAnnouncedBlock(newBlock)
-            .whenComplete((r, t) -> requestedBlocks.remove(newBlock.hash()));
+        processAnnouncedBlock(newBlock);
       }
     } catch (final RLPException e) {
       LOG.debug(
@@ -274,29 +274,38 @@ public class BlockPropagationManager {
     }
   }
 
-  private CompletableFuture<Block> retrieveMissingAnnouncedBlock(final long blockNumber) {
-    LOG.trace("Retrieve missing announced block {} from peer", blockNumber);
-    final List<EthPeer> peers =
-        ethContext.getEthPeers().streamBestPeers().collect(Collectors.toList());
-    final GetBlockFromPeersTask getBlockTask =
-        GetBlockFromPeersTask.create(
-            peers, protocolSchedule, ethContext, Optional.empty(), blockNumber, metricsSystem);
-    return getBlockTask
-        .run()
-        .thenCompose((r) -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()));
+  private CompletableFuture<Block> retrieveNonAnnouncedBlock(final long blockNumber) {
+    LOG.trace("Retrieve non announced block {} from peers", blockNumber);
+    return getBlockFromPeers(blockNumber, Optional.empty());
   }
 
-  private CompletableFuture<Block> processAnnouncedBlock(final NewBlockHash newBlock) {
+  private CompletableFuture<Block> processAnnouncedBlock(final NewBlockHash blockHash) {
+    LOG.trace("Retrieve announced block by header {} from peers", blockHash);
+    return getBlockFromPeers(blockHash.number(), Optional.of(blockHash.hash()));
+  }
+
+  private CompletableFuture<Block> getBlockFromPeers(
+      final long blockNumber, final Optional<Hash> blockHash) {
     final RetryingGetBlockFromPeersTask getBlockTask =
         RetryingGetBlockFromPeersTask.create(
-            ethContext,
-            protocolSchedule,
-            Optional.of(newBlock.hash()),
-            newBlock.number(),
-            metricsSystem);
-    return getBlockTask
-        .run()
-        .thenCompose((r) -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()));
+            protocolContext, protocolSchedule, ethContext, blockHash, blockNumber, metricsSystem);
+    return ethContext
+        .getScheduler()
+        .scheduleSyncWorkerTask(getBlockTask::run)
+        .thenCompose(r -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()))
+        .whenComplete(
+            (r, t) -> {
+              requestedNonAnnouncedBlocks.remove(blockNumber);
+              blockHash.ifPresentOrElse(
+                  requestedBlocks::remove,
+                  () -> {
+                    if (r != null) {
+                      // in case we successfully retrieved only by block number, when can remove
+                      // the request by hash too
+                      requestedBlocks.remove(r.getHash());
+                    }
+                  });
+            });
   }
 
   private void broadcastBlock(final Block block, final BlockHeader parent) {
