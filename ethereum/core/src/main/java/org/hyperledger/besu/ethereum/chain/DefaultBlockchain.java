@@ -375,7 +375,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private BlockAddedEvent handleChainReorg(
       final BlockchainStorage.Updater updater, final BlockWithReceipts newChainHeadWithReceipts) {
-    final BlockWithReceipts oldChainWithReceipts = getBlockWithReceipts(chainHeader).get();
+    BlockWithReceipts oldChainWithReceipts = getBlockWithReceipts(chainHeader).get();
     BlockWithReceipts currentOldChainWithReceipts = oldChainWithReceipts;
     BlockWithReceipts currentNewChainWithReceipts = newChainHeadWithReceipts;
 

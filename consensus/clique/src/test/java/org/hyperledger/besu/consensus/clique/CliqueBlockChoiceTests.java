@@ -104,8 +104,8 @@ public class CliqueBlockChoiceTests {
     // No prior fork choices to verify are equal
 
     final Comparator<BlockHeader> blockChoiceRule = blockchain.getBlockChoiceRule();
-    assertThat(blockChoiceRule.compare(worseHeader, betterHeader)).isLessThan(0);
-    assertThat(blockChoiceRule.compare(betterHeader, worseHeader)).isGreaterThan(0);
+    assertThat(blockChoiceRule.compare(worseHeader, betterHeader)).isNegative();
+    assertThat(blockChoiceRule.compare(betterHeader, worseHeader)).isPositive();
   }
 
   @Test
@@ -132,8 +132,8 @@ public class CliqueBlockChoiceTests {
     assertThat(blockchain.getTotalDifficultyByHash(worseHeader.getHash()))
         .isEqualTo(blockchain.getTotalDifficultyByHash(betterHeader.getHash()));
 
-    assertThat(blockChoiceRule.compare(worseHeader, betterHeader)).isLessThan(0);
-    assertThat(blockChoiceRule.compare(betterHeader, worseHeader)).isGreaterThan(0);
+    assertThat(blockChoiceRule.compare(worseHeader, betterHeader)).isNegative();
+    assertThat(blockChoiceRule.compare(betterHeader, worseHeader)).isPositive();
   }
 
   @Test
@@ -155,8 +155,8 @@ public class CliqueBlockChoiceTests {
     assertThat(worseHeader.getNumber()).isEqualTo(betterHeader.getNumber());
 
     final Comparator<BlockHeader> blockChoiceRule = blockchain.getBlockChoiceRule();
-    assertThat(blockChoiceRule.compare(worseHeader, betterHeader)).isLessThan(0);
-    assertThat(blockChoiceRule.compare(betterHeader, worseHeader)).isGreaterThan(0);
+    assertThat(blockChoiceRule.compare(worseHeader, betterHeader)).isNegative();
+    assertThat(blockChoiceRule.compare(betterHeader, worseHeader)).isPositive();
   }
 
   @Test
@@ -191,8 +191,8 @@ public class CliqueBlockChoiceTests {
         .isEqualTo(distanceFromInTurn(betterHeader, cliqueContext));
 
     final Comparator<BlockHeader> blockChoiceRule = blockchain.getBlockChoiceRule();
-    assertThat(blockChoiceRule.compare(worseHeader, betterHeader)).isLessThan(0);
-    assertThat(blockChoiceRule.compare(betterHeader, worseHeader)).isGreaterThan(0);
+    assertThat(blockChoiceRule.compare(worseHeader, betterHeader)).isNegative();
+    assertThat(blockChoiceRule.compare(betterHeader, worseHeader)).isPositive();
   }
 
   @Test
