@@ -103,15 +103,9 @@ public class FlexiblePrivacyController extends AbstractRestrictedPrivacyControll
       final PrivateTransaction privateTransaction,
       final String privacyUserId,
       final Optional<PrivacyGroup> privacyGroup) {
-    final String firstPart;
-    try {
-      LOG.trace("Storing private transaction in enclave");
-      final SendResponse sendResponse = sendRequest(privateTransaction, privacyGroup);
-      firstPart = sendResponse.getKey();
-    } catch (final Exception e) {
-      LOG.error("Failed to store private transaction in enclave", e);
-      throw e;
-    }
+    LOG.trace("Storing private transaction in enclave");
+    final SendResponse sendResponse = sendRequest(privateTransaction, privacyGroup);
+    final String firstPart = sendResponse.getKey();
     final Optional<String> optionalSecondPart =
         buildAndSendAddPayload(
             privateTransaction,

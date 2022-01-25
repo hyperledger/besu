@@ -135,8 +135,7 @@ public class Runner implements AutoCloseable {
       writeBesuNetworksToFile();
       writePidFile();
     } catch (final Exception ex) {
-      LOG.error("Startup failed", ex);
-      throw new IllegalStateException(ex);
+      throw new IllegalStateException("Startup failed", ex);
     }
   }
 
@@ -212,8 +211,7 @@ public class Runner implements AutoCloseable {
         Thread.currentThread().interrupt();
         throw new IllegalStateException("Interrupted while waiting for service to start", e);
       } catch (final ExecutionException e) {
-        LOG.error("Service " + serviceName + " failed to start", e);
-        throw new IllegalStateException(e);
+        throw new IllegalStateException("Service " + serviceName + " failed to start", e);
       } catch (final TimeoutException e) {
         LOG.warn("Service {} is taking an unusually long time to start", serviceName);
       }

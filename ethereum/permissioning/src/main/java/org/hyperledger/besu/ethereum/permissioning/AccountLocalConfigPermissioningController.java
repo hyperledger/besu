@@ -217,13 +217,11 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
       readAccountsFromConfig(updatedConfig);
       configuration = updatedConfig;
     } catch (Exception e) {
-      LOG.warn(
-          "Error reloading permissions file. In-memory accounts allowlist will be reverted to previous valid configuration. "
-              + "Details: {}",
-          e.getMessage());
       accountAllowlist.clear();
       accountAllowlist.addAll(currentAccountsList);
-      throw new RuntimeException(e);
+      throw new IllegalStateException(
+          "Error reloading permissions file. In-memory accounts allowlist will be reverted to previous valid configuration",
+          e);
     }
   }
 

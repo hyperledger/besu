@@ -52,9 +52,7 @@ public class PkiBlockCreationConfigurationProvider {
               null);
       LOG.info("Loaded PKI Block Creation KeyStore {}", pkiKeyStoreConfiguration.getKeyStorePath());
     } catch (Exception e) {
-      final String message = "Error loading PKI Block Creation KeyStore";
-      LOG.error(message, e);
-      throw new RuntimeException(message, e);
+      throw new IllegalStateException("Error loading PKI Block Creation KeyStore", e);
     }
 
     KeyStoreWrapper trustStore;
@@ -68,9 +66,7 @@ public class PkiBlockCreationConfigurationProvider {
       LOG.info(
           "Loaded PKI Block Creation TrustStore {}", pkiKeyStoreConfiguration.getTrustStorePath());
     } catch (Exception e) {
-      final String message = "Error loading PKI Block Creation TrustStore";
-      LOG.error(message, e);
-      throw new RuntimeException(message, e);
+      throw new IllegalStateException("Error loading PKI Block Creation TrustStore", e);
     }
 
     return new PkiBlockCreationConfiguration(

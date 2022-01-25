@@ -93,7 +93,6 @@ public class CmsValidator {
 
       return true;
     } catch (final Exception e) {
-      LOGGER.error("Error validating CMS data", e);
       throw new RuntimeException("Error validating CMS data", e);
     }
   }
@@ -117,7 +116,6 @@ public class CmsValidator {
 
       return new JcaX509CertificateConverter().getCertificate(certificateHolder);
     } catch (final Exception e) {
-      LOGGER.error("Error retrieving signer certificate from CMS data", e);
       throw new RuntimeException("Error retrieving signer certificate from CMS data", e);
     }
   }

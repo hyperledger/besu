@@ -180,24 +180,19 @@ public class StateBackupService {
   }
 
   private BackupStatus backup(final long block, final boolean compress) throws IOException {
-    try {
-      checkArgument(
-          block >= 0 && block <= blockchain.getChainHeadBlockNumber(),
-          "Backup Block must be within blockchain");
-      backupStatus.targetBlock = block;
-      backupStatus.compressed = compress;
-      backupStatus.currentAccount = Bytes32.ZERO;
+    checkArgument(
+        block >= 0 && block <= blockchain.getChainHeadBlockNumber(),
+        "Backup Block must be within blockchain");
+    backupStatus.targetBlock = block;
+    backupStatus.compressed = compress;
+    backupStatus.currentAccount = Bytes32.ZERO;
 
-      backupChainData();
-      backupLeaves();
+    backupChainData();
+    backupLeaves();
 
-      writeManifest();
+    writeManifest();
 
-      return backupStatus;
-    } catch (final Throwable t) {
-      LOG.error("Unexpected error", t);
-      throw t;
-    }
+    return backupStatus;
   }
 
   private void writeManifest() throws IOException {

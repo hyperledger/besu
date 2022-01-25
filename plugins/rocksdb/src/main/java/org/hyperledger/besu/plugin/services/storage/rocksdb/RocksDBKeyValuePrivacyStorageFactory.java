@@ -63,8 +63,7 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
       try {
         databaseVersion = readDatabaseVersion(commonConfiguration);
       } catch (final IOException e) {
-        LOG.error("Failed to retrieve the RocksDB database meta version: {}", e.getMessage());
-        throw new StorageException(e.getMessage(), e);
+        throw new StorageException("Failed to retrieve the RocksDB database meta version", e);
       }
     }
 

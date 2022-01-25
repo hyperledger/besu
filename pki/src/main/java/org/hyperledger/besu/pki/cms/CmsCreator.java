@@ -36,8 +36,6 @@ import org.bouncycastle.operator.DigestCalculatorProvider;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.Store;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class CmsCreator {
 
@@ -46,8 +44,6 @@ public class CmsCreator {
       Security.addProvider(new BouncyCastleProvider());
     }
   }
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(CmsCreator.class);
 
   private final String certificateAlias;
   private final KeyStoreWrapper keyStore;
@@ -100,7 +96,6 @@ public class CmsCreator {
 
       return Bytes.wrap(cmsSignedData.getEncoded());
     } catch (final Exception e) {
-      LOGGER.error("Error creating CMS data", e);
       throw new RuntimeException("Error creating CMS data", e);
     }
   }

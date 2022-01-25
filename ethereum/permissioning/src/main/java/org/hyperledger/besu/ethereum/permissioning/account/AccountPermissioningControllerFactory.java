@@ -165,10 +165,8 @@ public class AccountPermissioningControllerFactory {
       // We don't care about the validation result. All we need it to ensure the check doesn't fail
       transactionSmartContractPermissioningController.isPermitted(transaction);
     } catch (Exception e) {
-      final String msg =
-          "Error validating onchain account permissioning smart contract configuration";
-      LOG.error(msg + ":", e);
-      throw new IllegalStateException(msg, e);
+      throw new IllegalStateException(
+          "Error validating onchain account permissioning smart contract configuration", e);
     }
   }
 }

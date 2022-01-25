@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
-import org.hyperledger.besu.ethereum.api.handlers.RpcMethodTimeoutException;
 import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
@@ -670,12 +669,8 @@ public class BlockchainQueries {
         currentStep = nextStep;
       }
       return result;
-    } catch (final RpcMethodTimeoutException e) {
-      LOG.error("Error retrieving matching logs", e);
-      throw e;
     } catch (final Exception e) {
-      LOG.error("Error retrieving matching logs", e);
-      throw new RuntimeException(e);
+      throw new IllegalStateException("Error retrieving matching logs", e);
     }
   }
 

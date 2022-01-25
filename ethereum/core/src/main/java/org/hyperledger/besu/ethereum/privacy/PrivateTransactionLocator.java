@@ -155,8 +155,7 @@ public class PrivateTransactionLocator {
         privateTransaction = PrivateTransaction.readFrom(input);
       }
     } catch (final RLPException e) {
-      LOG.debug("Error de-serializing private transaction from enclave", e);
-      throw e;
+      throw new IllegalStateException("Error de-serializing private transaction from enclave", e);
     }
 
     return new TransactionFromEnclave(privateTransaction, receiveResponse.getPrivacyGroupId());

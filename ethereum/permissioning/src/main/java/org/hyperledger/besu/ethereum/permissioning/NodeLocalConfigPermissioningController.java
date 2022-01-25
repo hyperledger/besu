@@ -265,13 +265,11 @@ public class NodeLocalConfigPermissioningController implements NodeConnectionPer
 
       createNodeAllowlistModifiedEventAfterReload(currentAccountsList, nodesAllowlist);
     } catch (Exception e) {
-      LOG.warn(
-          "Error reloading permissions file. In-memory nodes allowlist will be reverted to previous valid configuration. "
-              + "Details: {}",
-          e.getMessage());
       nodesAllowlist.clear();
       nodesAllowlist.addAll(currentAccountsList);
-      throw new RuntimeException(e);
+      throw new IllegalStateException(
+          "Error reloading permissions file. In-memory nodes allowlist will be reverted to previous valid configuration",
+          e);
     }
   }
 

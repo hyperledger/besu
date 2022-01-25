@@ -79,8 +79,7 @@ public class StaticNodesParser {
           enode.isListening(), "Static node must be configured with a valid listening port.");
       return enode;
     } catch (IllegalArgumentException ex) {
-      LOG.info("Illegal static enode supplied ({}). {}", input, ex.getMessage());
-      throw ex;
+      throw new IllegalArgumentException("Illegal static enode supplied (" + input + ")", ex);
     }
   }
 }
