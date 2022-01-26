@@ -24,7 +24,9 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 public class JsonRpcParameter {
 
-  private static final ObjectMapper mapper = new ObjectMapper();
+  private static final ObjectMapper mapper =
+      new ObjectMapper()
+          .registerModule(new Jdk8Module()); // Handle JDK8 Optionals (de)serialization
 
   /**
    * Retrieves a required parameter at the given index interpreted as the given class. Throws
@@ -69,7 +71,6 @@ public class JsonRpcParameter {
     } else {
       // Otherwise, serialize param back to json and then deserialize to the paramClass type
       try {
-        mapper.registerModule(new Jdk8Module());
         final String json = mapper.writeValueAsString(rawParam);
         param = mapper.readValue(json, paramClass);
       } catch (final JsonProcessingException e) {
