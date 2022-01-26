@@ -1,4 +1,12 @@
 # Changelog
+## 22.1.0
+
+### 22.1.0 Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+
 
 ## 22.1.0-RC3
 - Changing the order in which we traverse the word state tree during fast sync. This should improve fast sync during subsequent pivot changes.
@@ -16,6 +24,10 @@
 - Fix regression on cors-origin star value
 - Fix for ethFeeHistory accepting hex values for blockCount
 - Fix a sync issue, when the chain downloader incorrectly shutdown when a task in the pipeline is cancelled. [#3319](https://github.com/hyperledger/besu/pull/3319)
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC3/besu-22.1.0-RC3.tar.gz \ SHA256 fb521c64529b5d19cc8121f91a14087a89a814a83ea1f372f15c0ebdba01bb3a
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC3/besu-22.1.0-RC3.zip \ SHA256 f0bcad0275f15078dad1dcb87f49e7c86d754e4346a06e8ac2f9a690c4b8c088
 
 ## 22.1.0-RC2
 
