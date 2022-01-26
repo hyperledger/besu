@@ -18,22 +18,33 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardsSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicReference;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   private final AtomicReference<SyncState> syncState = new AtomicReference<>();
+  private static final Logger LOG = LogManager.getLogger(MergeBesuControllerBuilder.class);
 
   @Override
   protected MiningCoordinator createMiningCoordinator(
@@ -71,6 +82,9 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
 
+    OptionalLong terminalBlockNumber = genesisConfig.getConfigOptions().getTerminalBlockNumber();
+    Optional<Hash> terminalBlockHash = genesisConfig.getConfigOptions().getTerminalBlockHash();
+
     final MergeContext mergeContext =
         PostMergeContext.get()
             .setSyncState(syncState.get())
@@ -80,6 +94,11 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
                     .getTerminalTotalDifficulty()
                     .map(Difficulty::of)
                     .orElse(Difficulty.ZERO));
+
+    if (terminalBlockNumber.isPresent() && terminalBlockHash.isPresent()) {
+      Optional<BlockHeader> termBlock = blockchain.getBlockHeader(terminalBlockNumber.getAsLong());
+      mergeContext.setTerminalPoWBlock(termBlock);
+    }
     blockchain.observeBlockAdded(
         blockAddedEvent ->
             blockchain
@@ -93,5 +112,26 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   protected PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext) {
     return new NoopPluginServiceFactory();
+  }
+
+  @Override
+  protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
+    List<PeerValidator> retval = super.createPeerValidators(protocolSchedule);
+    final OptionalLong powTerminalBlockNumber =
+        genesisConfig.getConfigOptions(genesisConfigOverrides).getTerminalBlockNumber();
+    final Optional<Hash> powTerminalBlockHash =
+        genesisConfig.getConfigOptions(genesisConfigOverrides).getTerminalBlockHash();
+    if (powTerminalBlockHash.isPresent() && powTerminalBlockNumber.isPresent()) {
+      retval.add(
+          new RequiredBlocksPeerValidator(
+              protocolSchedule,
+              metricsSystem,
+              powTerminalBlockNumber.getAsLong(),
+              powTerminalBlockHash.get(),
+              0));
+    } else {
+      LOG.debug("unable to validate peers with terminal difficulty blocks");
+    }
+    return retval;
   }
 }

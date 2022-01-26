@@ -128,6 +128,7 @@ public class EngineExecutePayloadTest {
             .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
             .buildBlockHeader();
 
+    //    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
 
@@ -149,7 +150,6 @@ public class EngineExecutePayloadTest {
     BlockHeader realHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     BlockHeader paramHeader = spy(realHeader);
     when(paramHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
-
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
 
@@ -169,6 +169,7 @@ public class EngineExecutePayloadTest {
   @Test
   public void shouldReturnInvalidOnMalformedTransactions() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
+    //    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any(Hash.class)))
         .thenReturn(Optional.of(mockHash));
 
@@ -224,20 +225,16 @@ public class EngineExecutePayloadTest {
         header.getParentHash(),
         header.getCoinbase(),
         header.getStateRoot(),
-        asUnsingedLongParameter(header.getNumber()),
+        new UnsignedLongParameter(header.getNumber()),
         header.getBaseFee().map(w -> w.toHexString()).orElse("0x0"),
-        asUnsingedLongParameter(header.getGasLimit()),
-        asUnsingedLongParameter(header.getGasUsed()),
-        asUnsingedLongParameter(header.getTimestamp()),
+        new UnsignedLongParameter(header.getGasLimit()),
+        new UnsignedLongParameter(header.getGasUsed()),
+        new UnsignedLongParameter(header.getTimestamp()),
         header.getExtraData().toHexString(),
         header.getReceiptsRoot(),
         header.getLogsBloom(),
         header.getRandom().map(Bytes32::toHexString).orElse("0x0"),
         txs);
-  }
-
-  private UnsignedLongParameter asUnsingedLongParameter(final long val) {
-    return new UnsignedLongParameter(Long.toHexString(val));
   }
 
   private EngineExecutionResult fromSuccessResp(final JsonRpcResponse resp) {

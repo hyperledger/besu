@@ -1613,6 +1613,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--nat-method", "UPNP");
     verify(mockRunnerBuilder).natMethod(eq(NatMethod.UPNP));
 
+    parseCommand("--nat-method", "UPNPP2PONLY");
+    verify(mockRunnerBuilder).natMethod(eq(NatMethod.UPNPP2PONLY));
+
     parseCommand("--nat-method", "AUTO");
     verify(mockRunnerBuilder).natMethod(eq(NatMethod.AUTO));
 
@@ -1634,7 +1637,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--nat-method': expected one of [UPNP, DOCKER, KUBERNETES, AUTO, NONE] (case-insensitive) but was 'invalid'");
+            "Invalid value for option '--nat-method': expected one of [UPNP, UPNPP2PONLY, DOCKER, KUBERNETES, AUTO, NONE] (case-insensitive) but was 'invalid'");
   }
 
   @Test

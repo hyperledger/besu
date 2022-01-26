@@ -285,6 +285,26 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     newFinalized.ifPresent(mergeContext::setFinalized);
   }
 
+  public boolean latestValidAncestorDescendsFromTerminal(final BlockHeader blockHeader) {
+    Optional<Hash> validAncestorHash = this.getLatestValidAncestor(blockHeader);
+    if (validAncestorHash.isPresent()) {
+      final Optional<BlockHeader> maybeFinalized = mergeContext.getFinalized();
+      if (maybeFinalized.isPresent()) {
+        return isDescendantOf(maybeFinalized.get(), blockHeader);
+      } else {
+        Optional<BlockHeader> terminalBlockHeader = mergeContext.getTerminalPoWBlock();
+        if (terminalBlockHeader.isPresent()) {
+          return isDescendantOf(terminalBlockHeader.get(), blockHeader);
+        } else {
+          LOG.warn("Couldn't find terminal block, no blocks will be valid");
+          return false;
+        }
+      }
+    } else {
+      return false;
+    }
+  }
+
   @Override
   public Optional<Hash> getLatestValidAncestor(final Hash blockHash) {
     final var chain = protocolContext.getBlockchain();

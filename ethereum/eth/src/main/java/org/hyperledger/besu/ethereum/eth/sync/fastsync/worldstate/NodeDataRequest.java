@@ -15,24 +15,36 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public abstract class NodeDataRequest {
+public abstract class NodeDataRequest implements TasksPriorityProvider {
+  private static final Logger LOG = getLogger();
+  public static final int MAX_CHILDREN = 16;
+
   private final RequestType requestType;
   private final Hash hash;
   private Bytes data;
   private boolean requiresPersisting = true;
   private final Optional<Bytes> location;
+  private Optional<NodeDataRequest> possibleParent = Optional.empty();
+  private final AtomicInteger pendingChildren = new AtomicInteger(0);
+  private int depth = 0;
+  private long priority;
 
   protected NodeDataRequest(
       final RequestType requestType, final Hash hash, final Optional<Bytes> location) {
@@ -132,10 +144,25 @@ public abstract class NodeDataRequest {
   }
 
   public final void persist(final WorldStateStorage.Updater updater) {
+    if (pendingChildren.get() > 0) {
+      return; // we do nothing. Our last child will eventually persist us.
+    }
     if (requiresPersisting) {
       checkNotNull(getData(), "Must set data before node can be persisted.");
       doPersist(updater);
     }
+    possibleParent.ifPresentOrElse(
+        parent -> parent.saveParent(updater), () -> LOG.warn("Missing a parent for {}", this.hash));
+  }
+
+  private void saveParent(final WorldStateStorage.Updater updater) {
+    if (pendingChildren.decrementAndGet() == 0) {
+      persist(updater);
+    }
+  }
+
+  private int incrementChildren() {
+    return pendingChildren.incrementAndGet();
   }
 
   protected abstract void writeTo(final RLPOutput out);
@@ -145,4 +172,23 @@ public abstract class NodeDataRequest {
   public abstract Stream<NodeDataRequest> getChildRequests(WorldStateStorage worldStateStorage);
 
   public abstract Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage);
+
+  protected void registerParent(final NodeDataRequest parent) {
+    if (this.possibleParent.isPresent()) {
+      throw new WorldStateDownloaderException("Cannot set parent twice");
+    }
+    this.possibleParent = Optional.of(parent);
+    this.depth = parent.depth + 1;
+    this.priority = parent.priority * MAX_CHILDREN + parent.incrementChildren();
+  }
+
+  @Override
+  public long getPriority() {
+    return priority;
+  }
+
+  @Override
+  public int getDepth() {
+    return depth;
+  }
 }

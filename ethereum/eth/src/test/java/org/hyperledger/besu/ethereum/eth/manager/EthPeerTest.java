@@ -27,7 +27,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
@@ -437,13 +436,10 @@ public class EthPeerTest {
       final List<NodeMessagePermissioningProvider> permissioningProviders) {
     final PeerConnection peerConnection = mock(PeerConnection.class);
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
+    // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
+    // that extend the sub-protocol work correctly
     return new EthPeer(
-        peerConnection,
-        EthProtocol.NAME,
-        onPeerReady,
-        peerValidators,
-        clock,
-        permissioningProviders);
+        peerConnection, "foo", onPeerReady, peerValidators, clock, permissioningProviders);
   }
 
   @FunctionalInterface

@@ -167,6 +167,21 @@ public class JsonRpcHttpServiceCorsTest {
   }
 
   @Test
+  public void requestFromBrowserExtensionShouldSucceedWhenCorsIsStar() throws Exception {
+    jsonRpcHttpService = createJsonRpcHttpServiceWithAllowedDomains("*");
+
+    final Request request =
+        new Request.Builder()
+            .url(jsonRpcHttpService.url())
+            .header("Origin", "moz-extension://802123e4-a916-2d4e-bebf-384b0e2e86dd")
+            .build();
+
+    try (final Response response = client.newCall(request).execute()) {
+      assertThat(response.isSuccessful()).isTrue();
+    }
+  }
+
+  @Test
   public void requestWithAccessControlRequestMethodShouldReturnAllowedHeaders() throws Exception {
     jsonRpcHttpService = createJsonRpcHttpServiceWithAllowedDomains("http://foo.io");
 

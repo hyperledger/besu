@@ -17,6 +17,7 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.isNull;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.math.BigInteger;
@@ -290,6 +291,16 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getTerminalBlockNumber() {
+    return getOptionalLong("terminalblocknumber");
+  }
+
+  @Override
+  public Optional<Hash> getTerminalBlockHash() {
+    return getOptionalHash("terminalblockhash");
+  }
+
+  @Override
   public OptionalLong getClassicForkBlock() {
     return getOptionalLong("classicforkblock");
   }
@@ -337,6 +348,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getMagnetoBlockNumber() {
     return getOptionalLong("magnetoblock");
+  }
+
+  @Override
+  public OptionalLong getMystiqueBlockNumber() {
+    return getOptionalLong("mystiqueblock");
   }
 
   @Override
@@ -417,6 +433,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
     getPreMergeForkBlockNumber().ifPresent(l -> builder.put("preMergeForkBlock", l));
+    getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
+    getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
 
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
@@ -429,6 +447,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getPhoenixBlockNumber().ifPresent(l -> builder.put("phoenixBlock", l));
     getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
     getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
+    getMystiqueBlockNumber().ifPresent(l -> builder.put("mystiqueBlock", l));
     getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
@@ -506,6 +525,15 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
   }
 
+  private Optional<Hash> getOptionalHash(final String key) {
+    if (configOverrides.containsKey(key)) {
+      final String overrideHash = configOverrides.get(key);
+      return Optional.of(Hash.fromHexString(overrideHash));
+    } else {
+      return JsonUtil.getValueAsString(configRoot, key).map(s -> Hash.fromHexString(s));
+    }
+  }
+
   @Override
   public List<Long> getForks() {
     Stream<OptionalLong> forkBlockNumbers =
@@ -523,6 +551,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getLondonBlockNumber(),
             getArrowGlacierBlockNumber(),
             getPreMergeForkBlockNumber(),
+            getTerminalBlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
             getGothamBlockNumber(),
@@ -532,6 +561,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getPhoenixBlockNumber(),
             getThanosBlockNumber(),
             getMagnetoBlockNumber(),
+            getMystiqueBlockNumber(),
             getEcip1049BlockNumber());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 

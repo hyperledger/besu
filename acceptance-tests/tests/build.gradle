@@ -24,8 +24,6 @@ sourceSets.main.solidity.srcDirs = ["$projectDir/contracts"]
 
 solidity {
   resolvePackages = false
-  executable = "solc"
-  version = "0.8.10"
 }
 
 dependencies {
@@ -65,9 +63,10 @@ dependencies {
   testImplementation 'io.opentracing:opentracing-api'
   testImplementation 'io.opentracing:opentracing-util'
   testImplementation 'io.jaegertracing:jaeger-client'
+  testImplementation 'io.vertx:vertx-core'
   testImplementation 'junit:junit'
-  testImplementation 'net.consensys:orion'
   testImplementation 'org.apache.commons:commons-compress'
+  testImplementation 'org.apache.logging.log4j:log4j-core'
   testImplementation 'org.apache.tuweni:tuweni-crypto'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'

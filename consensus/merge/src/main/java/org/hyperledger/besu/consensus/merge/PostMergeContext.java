@@ -46,6 +46,7 @@ public class PostMergeContext implements MergeContext {
   // latest finalized block
   // TODO: persist this to storage https://github.com/hyperledger/besu/issues/2913
   AtomicReference<BlockHeader> lastFinalized = new AtomicReference<>();
+  AtomicReference<Optional<BlockHeader>> terminalPoWBlock;
 
   private PostMergeContext() {
     this.terminalTotalDifficulty = new AtomicReference<>(Difficulty.ZERO);
@@ -130,6 +131,16 @@ public class PostMergeContext implements MergeContext {
   @Override
   public Optional<BlockHeader> getFinalized() {
     return Optional.ofNullable(lastFinalized.get());
+  }
+
+  @Override
+  public Optional<BlockHeader> getTerminalPoWBlock() {
+    return terminalPoWBlock.get();
+  }
+
+  @Override
+  public void setTerminalPoWBlock(final Optional<BlockHeader> hashAndNumber) {
+    this.terminalPoWBlock = new AtomicReference<>(hashAndNumber);
   }
 
   @Override

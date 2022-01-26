@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.math.BigInteger;
@@ -88,6 +89,10 @@ public interface GenesisConfigOptions {
   Optional<Wei> getBaseFeePerGas();
 
   Optional<UInt256> getTerminalTotalDifficulty();
+
+  OptionalLong getTerminalBlockNumber();
+
+  Optional<Hash> getTerminalBlockHash();
 
   List<Long> getForks();
 
@@ -204,6 +209,15 @@ public interface GenesisConfigOptions {
    *     href="https://github.com/ethereumclassic/ECIPs/issues/424">https://github.com/ethereumclassic/ECIPs/issues/424</a>
    */
   OptionalLong getMagnetoBlockNumber();
+
+  /**
+   * Block number to activate Mystique on Classic networks.
+   *
+   * @return block number of Mystique fork on Classic networks
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1104">https://ecips.ethereumclassic.org/ECIPs/ecip-1104</a>
+   */
+  OptionalLong getMystiqueBlockNumber();
 
   /**
    * Block number to activate ECIP-1049 on Classic networks. Changes the hashing algorithm to

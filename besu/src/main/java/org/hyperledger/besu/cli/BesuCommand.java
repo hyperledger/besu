@@ -2572,20 +2572,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final EthNetworkConfig.Builder builder =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network));
 
-    // custom genesis file use comes with specific default values for the genesis
-    // file itself
-    // but also for the network id and the bootnodes list.
     if (genesisFile != null) {
-
-      // noinspection ConstantConditions network is not always null but injected by
-      // PicoCLI if used
       if (commandLine.getParseResult().hasMatchedOption("network")) {
-        // We check if network option was really provided by user and not only looking
-        // at the
-        // default value.
-        // if user provided it and provided the genesis file option at the same time, it
-        // raises a
-        // conflict error
         throw new ParameterException(
             this.commandLine,
             "--network option and --genesis-file option can't be used at the same time.  Please "
@@ -2595,17 +2583,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setGenesisConfig(genesisConfig());
 
       if (networkId == null) {
-        // if no network id option is defined on the CLI we have to set a default value
-        // from the
-        // genesis file.
-        // We do the genesis parsing only in this case as we already have network id
-        // constants
-        // for known networks to speed up the process.
-        // Also we have to parse the genesis as we don't already have a parsed version
-        // at this
-        // stage.
-        // If no chain id is found in the genesis as it's an optional, we use mainnet
-        // network id.
+        // If no chain id is found in the genesis, use mainnet network id
         try {
           builder.setNetworkId(
               getGenesisConfigFile()
@@ -2624,12 +2602,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
 
       if (bootNodes == null) {
-        // We default to an empty bootnodes list if the option is not provided on CLI
-        // because
-        // mainnet bootnodes won't work as the default value for a custom genesis,
-        // so it's better to have an empty list as default value that forces to create a
-        // custom one
-        // than a useless one that may make user think that it can work when it can't.
         builder.setBootNodes(new ArrayList<>());
       }
       builder.setDnsDiscoveryUrl(null);
