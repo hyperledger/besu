@@ -41,9 +41,9 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for extracting transactions from PendingTransactions and determining if the
@@ -66,7 +66,7 @@ import org.apache.tuweni.bytes.Bytes;
  * not cleared between executions of buildTransactionListForBlock().
  */
 public class BlockTransactionSelector {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
 
   private final Wei minTransactionGasPrice;
   private final Double minBlockOccupancyRatio;

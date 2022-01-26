@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
@@ -26,7 +24,8 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.RunLast;
 
 public final class Besu {
@@ -68,7 +67,7 @@ public final class Besu {
           "Could not set logging system property as the security manager prevented it:"
               + e.getMessage());
     }
-    final Logger logger = getLogger();
+    final Logger logger = LoggerFactory.getLogger(Besu.class);
     Thread.setDefaultUncaughtExceptionHandler(log4jExceptionHandler(logger));
     Thread.currentThread().setUncaughtExceptionHandler(log4jExceptionHandler(logger));
 
@@ -76,8 +75,10 @@ public final class Besu {
   }
 
   private static Thread.UncaughtExceptionHandler log4jExceptionHandler(final Logger logger) {
-    return (thread, error) ->
-        logger.error(
-            () -> String.format("Uncaught exception in thread \"%s\"", thread.getName()), error);
+    return (thread, error) -> {
+      if (logger.isErrorEnabled()) {
+        logger.error(String.format("Uncaught exception in thread \"%s\"", thread.getName()), error);
+      }
+    };
   }
 }

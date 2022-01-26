@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
 
@@ -30,12 +29,14 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.Base64;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GoQuorumStoreRawPrivateTransaction implements JsonRpcMethod {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(GoQuorumStoreRawPrivateTransaction.class);
   private final GoQuorumEnclave enclave;
 
   public GoQuorumStoreRawPrivateTransaction(final GoQuorumEnclave enclave) {
@@ -61,7 +62,7 @@ public class GoQuorumStoreRawPrivateTransaction implements JsonRpcMethod {
       LOG.debug("retrieved lookupId from GoQuorum enclave " + enclaveLookupId);
       return new JsonRpcSuccessResponse(id, hexEncodeEnclaveKey(enclaveLookupId));
     } catch (final IllegalArgumentException | RLPException e) {
-      LOG.error(e);
+      LOG.error("Unable to decode private transaction for store", e);
       return new JsonRpcErrorResponse(id, DECODE_ERROR);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(e.getMessage()));

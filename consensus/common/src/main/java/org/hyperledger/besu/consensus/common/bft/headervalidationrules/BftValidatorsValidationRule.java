@@ -27,8 +27,8 @@ import java.util.NavigableSet;
 import java.util.TreeSet;
 
 import com.google.common.collect.Iterables;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Ensures the Validators listed in the block header match that tracked in memory (which was in-turn
@@ -36,7 +36,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class BftValidatorsValidationRule implements AttachedBlockHeaderValidationRule {
 
-  private static final Logger LOGGER = LogManager.getLogger();
+  private static final Logger LOGGER = LoggerFactory.getLogger(BftValidatorsValidationRule.class);
 
   @Override
   public boolean validate(

@@ -31,16 +31,16 @@ import java.util.stream.Collectors;
 
 import com.google.common.base.Charsets;
 import io.vertx.core.json.JsonArray;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.assertj.core.util.Files;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
 
 public class TesseraTestHarness implements EnclaveTestHarness {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TesseraTestHarness.class);
 
   private final EnclaveConfiguration enclaveConfiguration;
 

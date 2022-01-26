@@ -75,8 +75,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.http.WebSocketConnectOptions;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class describes the behaviour of the EthStats service. This class is used to report pending
@@ -84,7 +84,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class EthStatsService {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(EthStatsService.class);
 
   private static final Duration SEND_REPORT_DELAY = Duration.ofSeconds(5);
   private static final int HISTORY_RANGE = 50;

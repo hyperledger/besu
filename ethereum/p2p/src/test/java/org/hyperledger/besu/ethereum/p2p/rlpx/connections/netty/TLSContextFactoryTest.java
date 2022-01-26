@@ -45,13 +45,13 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RunWith(Parameterized.class)
 public class TLSContextFactoryTest {
@@ -79,7 +79,7 @@ public class TLSContextFactoryTest {
   private static final String partner2client2rvkJKSTruststore =
       "/keys/partner2client2rvk/truststore.jks";
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TLSContextFactoryTest.class);
 
   private static final int MAX_NUMBER_MESSAGES = 10;
 

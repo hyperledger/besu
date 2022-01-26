@@ -25,8 +25,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   public enum ExecutionStatus {
@@ -45,7 +45,7 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   }
 
   private final Vertx syncVertx;
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ExecutionEngineJsonRpcMethod.class);
   protected final MergeContext mergeContext;
   protected final ProtocolContext protocolContext;
 

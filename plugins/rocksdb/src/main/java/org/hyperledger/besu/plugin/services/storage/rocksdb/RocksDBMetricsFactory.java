@@ -23,11 +23,11 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.Statistics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RocksDBMetricsFactory {
 
@@ -40,7 +40,7 @@ public class RocksDBMetricsFactory {
           BesuMetricCategory.KVSTORE_PRIVATE_ROCKSDB,
           BesuMetricCategory.KVSTORE_PRIVATE_ROCKSDB_STATS);
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RocksDBMetricsFactory.class);
 
   private final MetricCategory rocksDbMetricCategory;
   private final MetricCategory statsDbMetricCategory;

@@ -15,12 +15,12 @@
 package org.hyperledger.besu.crypto;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SignatureAlgorithmFactory {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(SignatureAlgorithmFactory.class);
 
   private static SignatureAlgorithm instance = null;
 

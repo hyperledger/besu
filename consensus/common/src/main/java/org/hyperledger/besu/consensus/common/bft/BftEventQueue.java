@@ -21,14 +21,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Threadsafe queue that lets parts of the system inform the Bft infrastructure about events */
 public class BftEventQueue {
   private final BlockingQueue<BftEvent> queue = new LinkedBlockingQueue<>();
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BftEventQueue.class);
   private final int messageQueueLimit;
 
   public BftEventQueue(final int messageQueueLimit) {
