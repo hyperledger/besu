@@ -211,7 +211,7 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
           Call.Factory client = new TracingCallFactory(okClient, tracer);
           Request request =
               new Request.Builder()
-                  .url("http://localhost:" + metricsNode.getJsonRpcSocketPort().get())
+                  .url("http://localhost:" + metricsNode.getJsonRpcPort().get())
                   .post(
                       RequestBody.create(
                           "{\"jsonrpc\":\"2.0\",\"method\":\"net_version\",\"params\":[],\"id\":255}",

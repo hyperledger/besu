@@ -21,10 +21,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.network.PeerConnectionTracker;
 import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -56,9 +58,11 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.stream.Stream;
@@ -208,5 +212,80 @@ public final class RunnerBuilderTest {
                   .map(NodeRecord::getSeq))
           .contains(UInt64.valueOf(2 + i));
     }
+  }
+
+  @Test
+  public void whenEngineApiAddedListensOnDefaultPort() {
+    JsonRpcConfiguration defaultPlusEng = JsonRpcConfiguration.createDefault();
+    defaultPlusEng.addRpcApi("ENGINE");
+    defaultPlusEng.setEnabled(true);
+    EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
+    when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
+    MergeOptions.setMergeEnabled(true);
+    when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
+
+    final Runner runner =
+        new RunnerBuilder()
+            .discovery(true)
+            .p2pListenInterface("0.0.0.0")
+            .p2pListenPort(30303)
+            .p2pAdvertisedHost("127.0.0.1")
+            .p2pEnabled(true)
+            .natMethod(NatMethod.NONE)
+            .besuController(besuController)
+            .ethNetworkConfig(mockMainnet)
+            .metricsSystem(mock(ObservableMetricsSystem.class))
+            .permissioningService(mock(PermissioningServiceImpl.class))
+            .jsonRpcConfiguration(defaultPlusEng)
+            .graphQLConfiguration(mock(GraphQLConfiguration.class))
+            .webSocketConfiguration(mock(WebSocketConfiguration.class))
+            .metricsConfiguration(mock(MetricsConfiguration.class))
+            .vertx(Vertx.vertx())
+            .dataDir(dataDir.getRoot().toPath())
+            .storageProvider(mock(KeyValueStorageProvider.class))
+            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
+            .rpcEndpointService(new RpcEndpointServiceImpl())
+            .besuPluginContext(mock(BesuPluginContextImpl.class))
+            .build();
+
+    assertThat(runner.getJsonRpcPort()).isPresent();
+    assertThat(runner.getEngineJsonRpcPort()).isPresent();
+  }
+
+  @Test
+  public void noEngineApiNoServiceForMethods() {
+    JsonRpcConfiguration defaultPlusEng = JsonRpcConfiguration.createDefault();
+    defaultPlusEng.setEnabled(true);
+    EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
+    when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
+    MergeOptions.setMergeEnabled(true);
+    when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
+
+    final Runner runner =
+        new RunnerBuilder()
+            .discovery(true)
+            .p2pListenInterface("0.0.0.0")
+            .p2pListenPort(30303)
+            .p2pAdvertisedHost("127.0.0.1")
+            .p2pEnabled(true)
+            .natMethod(NatMethod.NONE)
+            .besuController(besuController)
+            .ethNetworkConfig(mockMainnet)
+            .metricsSystem(mock(ObservableMetricsSystem.class))
+            .permissioningService(mock(PermissioningServiceImpl.class))
+            .jsonRpcConfiguration(defaultPlusEng)
+            .graphQLConfiguration(mock(GraphQLConfiguration.class))
+            .webSocketConfiguration(mock(WebSocketConfiguration.class))
+            .metricsConfiguration(mock(MetricsConfiguration.class))
+            .vertx(Vertx.vertx())
+            .dataDir(dataDir.getRoot().toPath())
+            .storageProvider(mock(KeyValueStorageProvider.class))
+            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
+            .rpcEndpointService(new RpcEndpointServiceImpl())
+            .besuPluginContext(mock(BesuPluginContextImpl.class))
+            .build();
+
+    assertThat(runner.getJsonRpcPort()).isPresent();
+    assertThat(runner.getEngineJsonRpcPort()).isEmpty();
   }
 }
