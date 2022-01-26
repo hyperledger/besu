@@ -153,9 +153,10 @@ public class BlockPropagationManager {
               });
     } else {
 
-      LOG.trace("No ready for import blocks found for {}", newBlock.getHeader().getNumber());
+      LOG.trace(
+          "There are no blocks ready to import for block {}", newBlock.getHeader().getNumber());
 
-      maybeRetrieveNonAnnouncedBlocks(newBlock);
+      maybeProcessNonAnnouncedBlocks(newBlock);
     }
 
     if (blockAddedEvent.getEventType().equals(EventType.HEAD_ADVANCED)) {
@@ -165,7 +166,7 @@ public class BlockPropagationManager {
     }
   }
 
-  private void maybeRetrieveNonAnnouncedBlocks(final Block newBlock) {
+  private void maybeProcessNonAnnouncedBlocks(final Block newBlock) {
     pendingBlocksManager
         .lowestAnnouncedBlock()
         .map(ProcessableBlockHeader::getNumber)
