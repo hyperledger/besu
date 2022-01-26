@@ -1,4 +1,12 @@
 # Changelog
+## 22.1.0
+
+### 22.1.0 Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+
 
 ## 22.1.0-RC3
 - Changing the order in which we traverse the word state tree during fast sync. This should improve fast sync during subsequent pivot changes.
