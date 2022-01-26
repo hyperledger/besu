@@ -16,12 +16,12 @@ package org.hyperledger.besu.evm.contractvalidation;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrefixCodeRule implements ContractValidationRule {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrefixCodeRule.class);
 
   private final byte FORMAT_RESERVED = (byte) 0xEF;
 

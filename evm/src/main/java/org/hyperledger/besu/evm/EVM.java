@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.evm;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -36,11 +34,12 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EVM {
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(EVM.class);
 
   protected static final OperationResult OVERFLOW_RESPONSE =
       new OperationResult(

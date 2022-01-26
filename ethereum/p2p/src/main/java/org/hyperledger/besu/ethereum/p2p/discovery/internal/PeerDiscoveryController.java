@@ -55,10 +55,10 @@ import java.util.stream.Stream;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This component is the entrypoint for managing the lifecycle of peers.
@@ -104,7 +104,7 @@ import org.ethereum.beacon.discovery.schema.NodeRecord;
  * condition, the peer will be physically dropped (eliminated) from the table.
  */
 public class PeerDiscoveryController {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryController.class);
   private static final long REFRESH_CHECK_INTERVAL_MILLIS = MILLISECONDS.convert(30, SECONDS);
   private static final int PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS = 5;
   protected final TimerUtil timerUtil;

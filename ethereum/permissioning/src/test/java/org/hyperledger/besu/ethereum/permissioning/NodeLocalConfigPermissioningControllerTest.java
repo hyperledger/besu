@@ -378,7 +378,8 @@ public class NodeLocalConfigPermissioningControllerTest {
 
     assertThat(thrown)
         .isInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Unable to read permissioning TOML config file");
+        .hasRootCauseMessage(
+            "Unable to read permissioning TOML config file : foo Configuration file does not exist: foo");
 
     assertThat(controller.getNodesAllowlist()).containsExactly(expectedEnodeURI);
   }

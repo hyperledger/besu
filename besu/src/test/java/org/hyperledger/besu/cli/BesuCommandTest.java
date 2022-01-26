@@ -113,10 +113,13 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 import picocli.CommandLine;
 
+@RunWith(MockitoJUnitRunner.class)
 public class BesuCommandTest extends CommandTestAbstract {
 
   private static final String ENCLAVE_URI = "http://1.2.3.4:5555";

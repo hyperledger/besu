@@ -46,12 +46,12 @@ import java.util.concurrent.TimeoutException;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Runner implements AutoCloseable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(Runner.class);
 
   private final Vertx vertx;
   private final CountDownLatch vertxShutdownLatch = new CountDownLatch(1);
@@ -135,8 +135,7 @@ public class Runner implements AutoCloseable {
       writeBesuNetworksToFile();
       writePidFile();
     } catch (final Exception ex) {
-      LOG.error("Startup failed", ex);
-      throw new IllegalStateException(ex);
+      throw new IllegalStateException("Startup failed", ex);
     }
   }
 
@@ -212,8 +211,7 @@ public class Runner implements AutoCloseable {
         Thread.currentThread().interrupt();
         throw new IllegalStateException("Interrupted while waiting for service to start", e);
       } catch (final ExecutionException e) {
-        LOG.error("Service " + serviceName + " failed to start", e);
-        throw new IllegalStateException(e);
+        throw new IllegalStateException("Service " + serviceName + " failed to start", e);
       } catch (final TimeoutException e) {
         LOG.warn("Service {} is taking an unusually long time to start", serviceName);
       }

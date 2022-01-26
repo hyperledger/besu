@@ -20,13 +20,13 @@ import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Responsible for ensuring the timestamp of a block is newer than its parent. */
 public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidationRule {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TimestampMoreRecentThanParent.class);
   private final long minimumSecondsSinceParent;
 
   public TimestampMoreRecentThanParent(final long minimumSecondsSinceParent) {

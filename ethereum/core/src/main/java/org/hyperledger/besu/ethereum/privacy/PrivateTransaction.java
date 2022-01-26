@@ -44,15 +44,15 @@ import java.util.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** An operation submitted by an external actor to be applied to the system. */
 public class PrivateTransaction implements org.hyperledger.besu.plugin.data.PrivateTransaction {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivateTransaction.class);
 
   // Used for transactions that are not tied to a specific chain
   // (i.e. does not have a chain id associated with it).

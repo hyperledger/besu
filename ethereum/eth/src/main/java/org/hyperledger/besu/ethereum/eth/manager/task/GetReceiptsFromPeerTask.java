@@ -36,12 +36,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GetReceiptsFromPeerTask
     extends AbstractPeerRequestTask<Map<BlockHeader, List<TransactionReceipt>>> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(GetReceiptsFromPeerTask.class);
 
   private final Collection<BlockHeader> blockHeaders;
   private final Map<Hash, List<BlockHeader>> headersByReceiptsRoot = new HashMap<>();

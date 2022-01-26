@@ -55,9 +55,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
@@ -76,7 +76,7 @@ import picocli.CommandLine.Spec;
     subcommands = {ImportSubCommand.class, ExportSubCommand.class})
 public class BlocksSubCommand implements Runnable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BlocksSubCommand.class);
 
   public static final String COMMAND_NAME = "blocks";
 

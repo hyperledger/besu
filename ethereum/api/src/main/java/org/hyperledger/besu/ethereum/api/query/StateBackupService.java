@@ -52,14 +52,14 @@ import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class StateBackupService {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(StateBackupService.class);
   private static final Bytes ACCOUNT_END_MARKER;
 
   static {
@@ -180,24 +180,19 @@ public class StateBackupService {
   }
 
   private BackupStatus backup(final long block, final boolean compress) throws IOException {
-    try {
-      checkArgument(
-          block >= 0 && block <= blockchain.getChainHeadBlockNumber(),
-          "Backup Block must be within blockchain");
-      backupStatus.targetBlock = block;
-      backupStatus.compressed = compress;
-      backupStatus.currentAccount = Bytes32.ZERO;
+    checkArgument(
+        block >= 0 && block <= blockchain.getChainHeadBlockNumber(),
+        "Backup Block must be within blockchain");
+    backupStatus.targetBlock = block;
+    backupStatus.compressed = compress;
+    backupStatus.currentAccount = Bytes32.ZERO;
 
-      backupChainData();
-      backupLeaves();
+    backupChainData();
+    backupLeaves();
 
-      writeManifest();
+    writeManifest();
 
-      return backupStatus;
-    } catch (final Throwable t) {
-      LOG.error("Unexpected error", t);
-      throw t;
-    }
+    return backupStatus;
   }
 
   private void writeManifest() throws IOException {

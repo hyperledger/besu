@@ -28,14 +28,14 @@ import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
 
 import java.math.BigInteger;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivateStateGenesisAllocator {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivateStateGenesisAllocator.class);
 
   private final Boolean isFlexiblePrivacyEnabled;
   private final PrivacyGroupGenesisProvider privacyGroupGenesisProvider;

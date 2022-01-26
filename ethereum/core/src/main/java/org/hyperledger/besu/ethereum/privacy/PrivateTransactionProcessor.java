@@ -44,13 +44,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivateTransactionProcessor {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivateTransactionProcessor.class);
 
   private final GasCalculator gasCalculator;
 

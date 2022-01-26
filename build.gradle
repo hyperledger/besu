@@ -457,7 +457,7 @@ subprojects {
       duplicateClassesStrategy = DuplicatesStrategy.WARN
     }
 
-    dependencies { jmh 'org.apache.logging.log4j:log4j-api' }
+    dependencies { jmh 'org.slf4j:slf4j-api' }
   }
 }
 

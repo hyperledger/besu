@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -27,11 +25,12 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TrailingPeerLimiter implements BlockAddedObserver {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TrailingPeerLimiter.class);
 
   private static final Comparator<EthPeer> BY_CHAIN_HEIGHT =
       Comparator.comparing(peer -> peer.chainState().getEstimatedHeight());

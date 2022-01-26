@@ -28,6 +28,8 @@ jar {
 }
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   implementation project(':crypto')
   implementation project(':datatypes')
   implementation project(':ethereum:core')
@@ -38,7 +40,6 @@ dependencies {
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
-  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-toml'
   implementation 'org.apache.tuweni:tuweni-units'

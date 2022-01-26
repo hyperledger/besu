@@ -31,12 +31,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(WorldDownloadState.class);
 
   private boolean downloadWasResumed;
   protected final InMemoryTasksPriorityQueues<REQUEST> pendingRequests;

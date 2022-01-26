@@ -20,8 +20,11 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link MainnetBlockHeaderValidator}. */
+@RunWith(MockitoJUnitRunner.class)
 public final class MainnetBlockHeaderValidatorTest {
 
   @SuppressWarnings("unchecked")

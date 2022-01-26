@@ -24,12 +24,12 @@ import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 
 import java.util.function.Function;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PluginJsonRpcMethod implements JsonRpcMethod {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PluginJsonRpcMethod.class);
 
   private final String name;
   private final Function<PluginRpcRequest, ?> function;

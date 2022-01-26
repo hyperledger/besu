@@ -23,13 +23,13 @@ import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 import javax.annotation.Nonnull;
 
 import com.sun.jna.ptr.IntByReference;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractBLS12PrecompiledContract implements PrecompiledContract {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractBLS12PrecompiledContract.class);
 
   static final int[] DISCOUNT_TABLE =
       new int[] {

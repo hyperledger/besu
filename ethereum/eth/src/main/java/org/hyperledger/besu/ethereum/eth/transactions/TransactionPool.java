@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ADDED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 
@@ -51,7 +50,8 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Maintains the set of pending transactions received from JSON-RPC or other nodes. Transactions are
@@ -62,7 +62,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class TransactionPool implements BlockAddedObserver {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
 
   private static final long SYNC_TOLERANCE = 100L;
   private static final String REMOTE = "remote";

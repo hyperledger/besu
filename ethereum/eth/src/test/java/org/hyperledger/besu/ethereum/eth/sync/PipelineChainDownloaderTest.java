@@ -62,11 +62,13 @@ public class PipelineChainDownloaderTest {
   @Mock private SyncState syncState;
   private final BlockHeader commonAncestor = new BlockHeaderTestFixture().buildHeader();
   private SyncTarget syncTarget;
+  private SyncTarget syncTarget2;
   private PipelineChainDownloader chainDownloader;
 
   @Before
   public void setUp() {
     syncTarget = new SyncTarget(peer1, commonAncestor);
+    syncTarget2 = new SyncTarget(peer2, commonAncestor);
     chainDownloader =
         new PipelineChainDownloader(
             syncState,
@@ -171,7 +173,6 @@ public class PipelineChainDownloaderTest {
 
     final CompletableFuture<Void> result = chainDownloader.start();
 
-    final SyncTarget syncTarget2 = new SyncTarget(peer2, commonAncestor);
     verify(syncTargetManager).findSyncTarget(Optional.empty());
 
     // Setup expectation for second time round.
@@ -252,6 +253,40 @@ public class PipelineChainDownloaderTest {
     // And then things are complete when the pipeline is actually complete.
     pipelineFuture.completeExceptionally(new CancellationException("Pipeline aborted"));
     assertCancelled(result);
+  }
+
+  @Test
+  public void shouldRetryIfNotCancelledAndPipelineTaskThrowsException() {
+    when(syncTargetManager.shouldContinueDownloading()).thenReturn(true);
+
+    final CompletableFuture<Void> pipelineFuture1 = new CompletableFuture<>();
+    final CompletableFuture<Void> pipelineFuture2 = new CompletableFuture<>();
+
+    when(syncTargetManager.findSyncTarget(Optional.empty()))
+        .thenReturn(completedFuture(syncTarget))
+        .thenReturn(completedFuture(syncTarget2));
+
+    expectPipelineCreation(syncTarget, downloadPipeline);
+    expectPipelineCreation(syncTarget2, downloadPipeline2);
+
+    when(scheduler.startPipeline(downloadPipeline)).thenReturn(pipelineFuture1);
+    when(scheduler.startPipeline(downloadPipeline2)).thenReturn(pipelineFuture2);
+
+    final CompletableFuture<Void> result = chainDownloader.start();
+
+    // A task in the pipeline is cancelled, causing the pipeline to abort.
+    final Exception taskException =
+        new RuntimeException(
+            "Async operation failed", new ExecutionException(new CancellationException()));
+    pipelineFuture1.completeExceptionally(taskException);
+
+    assertThat(result).isNotDone();
+
+    // Second time round, there are no task errors in the pipeline, and the download can complete.
+    when(syncTargetManager.shouldContinueDownloading()).thenReturn(false);
+    pipelineFuture2.complete(null);
+
+    assertThat(result).isDone();
   }
 
   @Test

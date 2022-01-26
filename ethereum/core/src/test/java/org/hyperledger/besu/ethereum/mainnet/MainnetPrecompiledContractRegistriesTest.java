@@ -31,7 +31,10 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class MainnetPrecompiledContractRegistriesTest {
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final GasCalculator gasCalculator = mock(GasCalculator.class);

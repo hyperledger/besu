@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.time.Instant.now;
-import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -31,12 +30,13 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class TransactionsMessageProcessor {
 
   private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionsMessageProcessor.class);
   private final PeerTransactionTracker transactionTracker;
   private final TransactionPool transactionPool;
   private final Counter totalSkippedTransactionsMessageCounter;

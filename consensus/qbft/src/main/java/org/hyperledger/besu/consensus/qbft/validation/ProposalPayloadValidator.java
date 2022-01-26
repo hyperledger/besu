@@ -35,14 +35,14 @@ import org.hyperledger.besu.pki.cms.CmsValidator;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProposalPayloadValidator {
 
   private static final String ERROR_PREFIX = "Invalid Proposal Payload";
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ProposalPayloadValidator.class);
   private final Address expectedProposer;
   private final ConsensusRoundIdentifier targetRound;
   private final BlockValidator blockValidator;

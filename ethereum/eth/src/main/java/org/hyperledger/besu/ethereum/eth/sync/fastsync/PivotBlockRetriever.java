@@ -26,8 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This task attempts to find a non-controversial pivot block by confirming the pivot block number
@@ -38,7 +38,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class PivotBlockRetriever {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PivotBlockRetriever.class);
   public static final int MAX_QUERY_RETRIES_PER_PEER = 3;
   private static final int DEFAULT_MAX_PIVOT_BLOCK_RESETS = 250;
   private static final int SUSPICIOUS_NUMBER_OF_RETRIES = 5;

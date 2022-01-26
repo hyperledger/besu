@@ -25,11 +25,11 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import java.time.Instant;
 import java.util.function.Consumer;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FullImportBlockStep implements Consumer<Block> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(FullImportBlockStep.class);
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;

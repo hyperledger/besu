@@ -45,8 +45,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.google.common.collect.Maps;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for starting/clearing Consensus rounds at a given block height. One of these is
@@ -56,7 +56,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(IbftBlockHeightManager.class);
 
   private final IbftRoundFactory roundFactory;
   private final RoundChangeManager roundChangeManager;

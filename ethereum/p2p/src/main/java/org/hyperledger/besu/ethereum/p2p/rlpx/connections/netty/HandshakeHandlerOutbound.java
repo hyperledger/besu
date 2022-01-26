@@ -32,12 +32,12 @@ import java.util.concurrent.CompletableFuture;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(HandshakeHandlerOutbound.class);
 
   private final ByteBuf first;
 
