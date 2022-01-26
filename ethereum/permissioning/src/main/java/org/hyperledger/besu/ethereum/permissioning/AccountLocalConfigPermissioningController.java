@@ -31,13 +31,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AccountLocalConfigPermissioningController implements TransactionPermissioningProvider {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(AccountLocalConfigPermissioningController.class);
 
   private static final int ACCOUNT_BYTES_SIZE = 20;
   private LocalPermissioningConfiguration configuration;
@@ -216,13 +217,11 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
       readAccountsFromConfig(updatedConfig);
       configuration = updatedConfig;
     } catch (Exception e) {
-      LOG.warn(
-          "Error reloading permissions file. In-memory accounts allowlist will be reverted to previous valid configuration. "
-              + "Details: {}",
-          e.getMessage());
       accountAllowlist.clear();
       accountAllowlist.addAll(currentAccountsList);
-      throw new RuntimeException(e);
+      throw new IllegalStateException(
+          "Error reloading permissions file. In-memory accounts allowlist will be reverted to previous valid configuration",
+          e);
     }
   }
 

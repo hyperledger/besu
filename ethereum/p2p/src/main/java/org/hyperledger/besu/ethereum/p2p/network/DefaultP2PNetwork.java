@@ -75,12 +75,12 @@ import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.devp2p.EthereumNodeRecord;
 import org.apache.tuweni.discovery.DNSDaemon;
 import org.apache.tuweni.discovery.DNSDaemonListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The peer network service (defunct PeerNetworkingService) is the entrypoint to the peer-to-peer
@@ -124,7 +124,7 @@ import org.apache.tuweni.discovery.DNSDaemonListener;
  */
 public class DefaultP2PNetwork implements P2PNetwork {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultP2PNetwork.class);
 
   private final ScheduledExecutorService peerConnectionScheduler =
       Executors.newSingleThreadScheduledExecutor();

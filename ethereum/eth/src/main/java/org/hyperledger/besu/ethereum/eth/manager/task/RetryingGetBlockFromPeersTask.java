@@ -27,15 +27,15 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RetryingGetBlockFromPeersTask
     extends AbstractRetryingPeerTask<AbstractPeerTask.PeerTaskResult<Block>> {
 
   private static final int DEFAULT_MAX_RETRIES = 5;
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RetryingGetBlockFromPeersTask.class);
 
   private final ProtocolSchedule protocolSchedule;
   private final Optional<Hash> blockHash;

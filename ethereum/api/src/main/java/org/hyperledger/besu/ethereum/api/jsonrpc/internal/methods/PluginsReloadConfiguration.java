@@ -26,12 +26,12 @@ import org.hyperledger.besu.plugin.BesuPlugin;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PluginsReloadConfiguration implements JsonRpcMethod {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PluginsReloadConfiguration.class);
   private final Map<String, BesuPlugin> namedPlugins;
 
   public PluginsReloadConfiguration(final Map<String, BesuPlugin> namedPlugins) {

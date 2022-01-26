@@ -19,11 +19,11 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 
 import java.time.Duration;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PeerValidatorRunner {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PeerValidatorRunner.class);
   protected final EthContext ethContext;
   private final PeerValidator peerValidator;
 

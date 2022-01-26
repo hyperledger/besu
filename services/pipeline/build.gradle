@@ -29,15 +29,13 @@ jar {
 
 dependencies {
   api project(':util')
+  api 'org.slf4j:slf4j-api'
 
   implementation project(':metrics:core')
   implementation project(':plugin-api')
 
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'com.google.guava:guava'
-  implementation 'org.apache.logging.log4j:log4j-api'
-
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'

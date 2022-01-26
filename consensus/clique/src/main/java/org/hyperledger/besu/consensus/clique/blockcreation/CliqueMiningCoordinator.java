@@ -14,19 +14,18 @@
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CliqueMiningCoordinator extends AbstractMiningCoordinator<CliqueBlockMiner> {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(CliqueMiningCoordinator.class);
 
   private final CliqueMiningTracker miningTracker;
 

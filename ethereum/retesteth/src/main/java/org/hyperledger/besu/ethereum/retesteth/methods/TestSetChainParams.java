@@ -27,12 +27,12 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestSetChainParams implements JsonRpcMethod {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TestSetChainParams.class);
 
   public static final String METHOD_NAME = "test_setChainParams";
   private final RetestethContext context;

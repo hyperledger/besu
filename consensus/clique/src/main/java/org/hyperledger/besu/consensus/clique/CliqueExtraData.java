@@ -29,16 +29,16 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents the data structure stored in the extraData field of the BlockHeader used when
  * operating under an Clique consensus mechanism.
  */
 public class CliqueExtraData implements ParsedExtraData {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(CliqueExtraData.class);
   public static final int EXTRA_VANITY_LENGTH = 32;
 
   private final Bytes vanityData;

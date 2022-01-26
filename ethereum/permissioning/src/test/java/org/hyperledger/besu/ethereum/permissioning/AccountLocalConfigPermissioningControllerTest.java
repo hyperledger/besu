@@ -299,7 +299,8 @@ public class AccountLocalConfigPermissioningControllerTest {
 
     assertThat(thrown)
         .isInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Unable to read permissioning TOML config file");
+        .hasRootCauseMessage(
+            "Unable to read permissioning TOML config file : foo Configuration file does not exist: foo");
 
     assertThat(controller.getAccountAllowlist())
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");

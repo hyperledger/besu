@@ -36,6 +36,7 @@ publishing {
 
 dependencies {
   implementation project(':plugin-api')
+  api 'org.slf4j:slf4j-api'
 
   implementation 'com.google.guava:guava'
   implementation 'io.grpc:grpc-netty'
@@ -57,9 +58,6 @@ dependencies {
   implementation 'io.prometheus:simpleclient_pushgateway'
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
-  implementation 'org.apache.logging.log4j:log4j-api'
-
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   // test dependencies.
   testImplementation project(':util')

@@ -43,12 +43,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TransactionLogBloomCacher {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionLogBloomCacher.class);
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
 
   public static final int BLOCKS_PER_BLOOM_CACHE = 100_000;

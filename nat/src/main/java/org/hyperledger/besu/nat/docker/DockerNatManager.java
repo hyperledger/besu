@@ -29,15 +29,15 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class describes the behaviour of the Docker NAT manager. Docker Nat manager add support for
  * Docker’s NAT implementation when Besu is being run from a Docker container
  */
 public class DockerNatManager extends AbstractNatManager {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(DockerNatManager.class);
 
   private static final String PORT_MAPPING_TAG = "HOST_PORT_";
 

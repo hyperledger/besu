@@ -25,6 +25,8 @@ sourceCompatibility = 11
 targetCompatibility = 11
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   annotationProcessor 'com.google.auto.service:auto-service'
 
   implementation 'com.google.auto.service:auto-service'
@@ -34,7 +36,6 @@ dependencies {
 
   testImplementation 'com.google.errorprone:error_prone_test_helpers'
   testImplementation 'junit:junit'
-  testImplementation 'org.apache.logging.log4j:log4j-api'
   testImplementation 'org.assertj:assertj-core'
 
   epJavac 'com.google.errorprone:error_prone_check_api'

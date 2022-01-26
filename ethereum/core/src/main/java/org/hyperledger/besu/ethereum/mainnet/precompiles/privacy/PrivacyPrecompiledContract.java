@@ -51,10 +51,10 @@ import org.hyperledger.besu.plugin.data.Hash;
 
 import java.util.Base64;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private final Enclave enclave;
@@ -63,7 +63,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
   PrivateTransactionProcessor privateTransactionProcessor;
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivacyPrecompiledContract.class);
 
   public PrivacyPrecompiledContract(
       final GasCalculator gasCalculator,
@@ -147,11 +147,10 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       // This exception is thrown when the privacy group can not be found
       return Bytes.EMPTY;
     } catch (final EnclaveServerException e) {
-      LOG.error("Enclave is responding with an error, perhaps it has a misconfiguration?", e);
-      throw e;
+      throw new IllegalStateException(
+          "Enclave is responding with an error, perhaps it has a misconfiguration?", e);
     } catch (final EnclaveIOException e) {
-      LOG.error("Can not communicate with enclave, is it up?", e);
-      throw e;
+      throw new IllegalStateException("Can not communicate with enclave, is it up?", e);
     }
 
     LOG.debug("Processing private transaction {} in privacy group {}", pmtHash, privacyGroupId);
@@ -256,11 +255,10 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     try {
       receiveResponse = enclave.receive(key);
     } catch (final EnclaveServerException e) {
-      LOG.error("Enclave is responding with an error, perhaps it has a misconfiguration?", e);
-      throw e;
+      throw new IllegalStateException(
+          "Enclave is responding with an error, perhaps it has a misconfiguration?", e);
     } catch (final EnclaveIOException e) {
-      LOG.error("Can not communicate with enclave is it up?", e);
-      throw e;
+      throw new IllegalStateException("Can not communicate with enclave is it up?", e);
     }
     return receiveResponse;
   }

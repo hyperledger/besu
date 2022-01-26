@@ -28,16 +28,16 @@ jar {
 }
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   implementation project(':datatypes')
   implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
-  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'info.picocli:picocli'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation project(':testutil')
 

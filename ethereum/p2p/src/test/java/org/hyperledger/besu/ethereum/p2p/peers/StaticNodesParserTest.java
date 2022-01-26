@@ -169,7 +169,7 @@ public class StaticNodesParserTest {
                 StaticNodesParser.fromPath(
                     invalidFile.toPath(), EnodeDnsConfiguration.DEFAULT_CONFIG))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Static node must be configured with a valid listening port");
+        .hasRootCauseMessage("Static node must be configured with a valid listening port.");
   }
 
   @Test

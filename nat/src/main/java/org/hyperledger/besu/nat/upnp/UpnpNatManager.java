@@ -34,8 +34,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jupnp.UpnpService;
 import org.jupnp.UpnpServiceImpl;
 import org.jupnp.model.action.ActionInvocation;
@@ -51,13 +49,15 @@ import org.jupnp.support.igd.callback.GetExternalIP;
 import org.jupnp.support.igd.callback.PortMappingAdd;
 import org.jupnp.support.igd.callback.PortMappingDelete;
 import org.jupnp.support.model.PortMapping;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages underlying UPnP library "jupnp" and provides abstractions for asynchronously interacting
  * with the NAT environment through UPnP.
  */
 public class UpnpNatManager extends AbstractNatManager {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(UpnpNatManager.class);
 
   static final String SERVICE_TYPE_WAN_IP_CONNECTION = "WANIPConnection";
 

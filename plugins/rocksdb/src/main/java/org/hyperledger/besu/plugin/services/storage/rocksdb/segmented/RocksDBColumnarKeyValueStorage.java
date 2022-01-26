@@ -41,8 +41,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.ColumnFamilyDescriptor;
@@ -58,6 +56,8 @@ import org.rocksdb.Statistics;
 import org.rocksdb.Status;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RocksDBColumnarKeyValueStorage
     implements SegmentedKeyValueStorage<ColumnFamilyHandle> {
@@ -66,7 +66,7 @@ public class RocksDBColumnarKeyValueStorage
     RocksDbUtil.loadNativeLibrary();
   }
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RocksDBColumnarKeyValueStorage.class);
   private static final String DEFAULT_COLUMN = "default";
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
 

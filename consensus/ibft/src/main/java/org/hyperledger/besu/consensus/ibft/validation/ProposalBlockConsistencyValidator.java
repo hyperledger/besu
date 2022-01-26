@@ -21,12 +21,13 @@ import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.payload.ProposalPayload;
 import org.hyperledger.besu.ethereum.core.Block;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProposalBlockConsistencyValidator {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(ProposalBlockConsistencyValidator.class);
 
   public boolean validateProposalMatchesBlock(
       final SignedData<ProposalPayload> signedPayload,

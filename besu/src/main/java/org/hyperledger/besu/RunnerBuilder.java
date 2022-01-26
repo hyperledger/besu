@@ -130,13 +130,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RunnerBuilder {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RunnerBuilder.class);
 
   private Vertx vertx;
   private BesuController besuController;
