@@ -1,15 +1,16 @@
 # Changelog
 
-## 22.1.0
+## 22.1.0-RC3
 - Changing the order in which we traverse the word state tree during fast sync. This should improve fast sync during subsequent pivot changes.
 
-### 22.1.0 Breaking Changes
+### 22.1.0-RC3 Breaking Changes
 - Removed deprecated hash variable `protected volatile Hash hash;` which was used for private transactions [#3110](https://github.com/hyperledger/besu/pull/3110)
 
 ### Additions and Improvements
 - Genesis file parameter `blockperiodseconds` is validated as a positive integer on startup to prevent unexpected runtime behaviour [#3186](https://github.com/hyperledger/besu/pull/3186)
 - Add option to require replay protection for locally submitted transactions [\#1975](https://github.com/hyperledger/besu/issues/1975)
 - Update to block header validation for IBFT and QBFT to support London fork EIP-1559 [#3251](https://github.com/hyperledger/besu/pull/3251)
+- Move into SLF4J as logging facade [#3285](https://github.com/hyperledger/besu/pull/3285)
 
 ### Bug Fixes
 - Fix regression on cors-origin star value
@@ -25,7 +26,6 @@
 - Re-order external services (e.g JsonRpcHttpService) to start before blocks start processing [#3118](https://github.com/hyperledger/besu/pull/3118)
 - Stream JSON RPC responses to avoid creating big JSON strings in memory [#3076](https://github.com/hyperledger/besu/pull/3076)
 - Ethereum Classic Mystique Hard Fork [#3256](https://github.com/hyperledger/besu/pull/3256)
-- Move into SLF4J as logging facade [#3285](https://github.com/hyperledger/besu/pull/3285)
 
 ### Bug Fixes
 - Make 'to' field optional in eth_call method according to the spec [#3177](https://github.com/hyperledger/besu/pull/3177)
