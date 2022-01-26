@@ -46,6 +46,7 @@ public class RetryingGetBlockFromPeersTask
   private final Optional<Hash> blockHash;
   private final long blockNumber;
   private final Set<EthPeer> triedPeers = new HashSet<>();
+  private EthPeer currentPeer;
 
   protected RetryingGetBlockFromPeersTask(
       final ProtocolContext protocolContext,
@@ -86,7 +87,21 @@ public class RetryingGetBlockFromPeersTask
     final GetBlockFromPeerTask getBlockTask =
         GetBlockFromPeerTask.create(
             protocolSchedule, getEthContext(), blockHash, blockNumber, getMetricsSystem());
-    getBlockTask.assignPeer(assignedPeer.orElse(selectNextPeer()));
+
+    getBlockTask.assignPeer(
+        assignedPeer.orElseGet(
+            () -> {
+              currentPeer = selectNextPeer();
+              triedPeers.add(currentPeer);
+              return currentPeer;
+            }));
+
+    LOG.debug(
+        "Getting block {} ({}) from peer {}, attempt {}",
+        blockNumber,
+        blockHash,
+        currentPeer,
+        getRetryCount());
 
     return executeSubTask(getBlockTask::run)
         .thenApply(
@@ -103,11 +118,6 @@ public class RetryingGetBlockFromPeersTask
         .filter(peer -> !triedPeers.contains(peer))
         .sorted(EthPeers.LEAST_TO_MOST_BUSY)
         .findFirst()
-        .map(
-            peer -> {
-              triedPeers.add(peer);
-              return peer;
-            })
         .orElseThrow(NoAvailablePeersException::new);
   }
 
@@ -120,8 +130,15 @@ public class RetryingGetBlockFromPeersTask
   @Override
   protected void handleTaskError(final Throwable error) {
     if (getRetryCount() < getMaxRetries()) {
-      LOG.info(
-          "Failed to get block with hash {} and number {} retrying later", blockHash, blockNumber);
+      LOG.debug(
+          "Failed to get block {} ({}) from peer {}, attempt {}, retrying later",
+          blockNumber,
+          blockHash,
+          currentPeer,
+          getRetryCount());
+    } else {
+      LOG.warn(
+          "Failed to get block {} ({}) after {} retries", blockNumber, blockHash, getRetryCount());
     }
     super.handleTaskError(error);
   }

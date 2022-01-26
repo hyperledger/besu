@@ -126,4 +126,17 @@ public class PendingBlocksManager {
         .map(Block::getHeader)
         .min(Comparator.comparing(BlockHeader::getNumber));
   }
+
+  @Override
+  public String toString() {
+    return "PendingBlocksManager{"
+        + "pendingBlocks ["
+        + pendingBlocks.values().stream()
+            .map(ImmutablePendingBlock::block)
+            .map(b -> b.getHeader().getNumber() + " (" + b.getHash() + ")")
+            .collect(Collectors.joining(", "))
+        + "], pendingBlocksByParentHash="
+        + pendingBlocksByParentHash
+        + '}';
+  }
 }
