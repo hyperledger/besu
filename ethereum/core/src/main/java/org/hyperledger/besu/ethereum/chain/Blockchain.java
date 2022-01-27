@@ -234,8 +234,8 @@ public interface Blockchain {
 
   /**
    * Gets the current block choice rule. When presented with two block headers indicate which chain
-   * is more preferred. greater than zero: the first chain is more preferred, less than zero: the
-   * second chain is more preferred, or zero: no preference.
+   * is preferred. greater than zero: the first chain is preferred, less than zero: the second chain
+   * is preferred, or zero: no preference.
    *
    * @return The preferred block header
    */
