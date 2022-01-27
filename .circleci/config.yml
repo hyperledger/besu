@@ -1,6 +1,7 @@
 ---
 version: 2.1
 orbs:
+  slack: circleci/slack@3.4.2
   win: circleci/windows@2.2.0
 
 executors:
@@ -24,6 +25,12 @@ executors:
     machine:
       image: ubuntu-2004:202101-01
     resource_class: xlarge
+
+  trivy_executor:
+    docker:
+      - image: docker:stable-git
+    resource_class: small
+    working_directory: ~/project
 
 notify:
   webhooks:
@@ -127,6 +134,27 @@ jobs:
           command: |
             build\distributions\besu\bin\besu.bat --help
             build\distributions\besu\bin\besu.bat --version
+
+  dockerScan:
+    executor: trivy_executor
+    steps:
+      - prepare
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Install trivy
+          command: |
+            apk add --update-cache --upgrade curl bash
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+      - run:
+          name: Scan with trivy
+          shell: /bin/sh
+          command: |
+            for FILE in $(ls docker)
+            do
+              docker pull -q "hyperledger/besu:develop-$FILE"
+              trivy -q image --exit-code 1 --no-progress --severity HIGH,CRITICAL "hyperledger/besu:develop-$FILE"
+            done
 
   unitTests:
     executor: besu_executor_xl
@@ -335,3 +363,13 @@ workflows:
             - besu-dockerhub-ro
             - besu-dockerhub-rw
             - besu-acr-rw
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 19 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - dockerScan
