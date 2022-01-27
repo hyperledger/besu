@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.controller;
 
+import static org.hyperledger.besu.consensus.clique.CliqueHelpers.installCliqueBlockChoiceRule;
+
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
@@ -133,10 +135,13 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    return new CliqueContext(
-        BlockValidatorProvider.nonForkingValidatorProvider(
-            blockchain, epochManager, blockInterface),
-        epochManager,
-        blockInterface);
+    final CliqueContext cliqueContext =
+        new CliqueContext(
+            BlockValidatorProvider.nonForkingValidatorProvider(
+                blockchain, epochManager, blockInterface),
+            epochManager,
+            blockInterface);
+    installCliqueBlockChoiceRule(blockchain, cliqueContext);
+    return cliqueContext;
   }
 }

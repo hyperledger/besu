@@ -20,7 +20,7 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 import java.text.SimpleDateFormat
 
 plugins {
-  id 'com.diffplug.spotless' version '5.14.2'
+  id 'com.diffplug.spotless' version '5.16.0'
   id 'com.github.ben-manes.versions' version '0.39.0'
   id 'com.github.hierynomus.license' version '0.16.1-fix'
   id 'com.jfrog.artifactory' version '4.25.3'
@@ -130,7 +130,7 @@ allprojects {
     java {
       // This path needs to be relative to each project
       target '**/*.java'
-      targetExclude '**/reference-test/resources/**/*.java'
+      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**'
       removeUnusedImports()
       googleJavaFormat('1.10.0')
       importOrder 'org.hyperledger', 'java', ''
