@@ -87,14 +87,6 @@ commands:
       - store_artifacts:
           path: acceptance-tests/tests/build/jvmErrorLogs
 
-  notify:
-    description: "Notify Slack"
-    steps:
-      - slack/status:
-          fail_only: true
-          failure_message: ":alert: The besu nightly failed"
-          only_for_branches: 'main'
-
 jobs:
   assemble:
     executor: besu_executor_xl
@@ -163,7 +155,6 @@ jobs:
               docker pull -q "hyperledger/besu:develop-$FILE"
               trivy -q image --exit-code 1 --no-progress --severity HIGH,CRITICAL "hyperledger/besu:develop-$FILE"
             done
-      - notify
 
   unitTests:
     executor: besu_executor_xl
