@@ -21,12 +21,12 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NoDifficultyRule extends MergConsensusRule {
 
-  private static final Logger LOG = LogManager.getLogger(NoDifficultyRule.class);
+  private static final Logger LOG = LoggerFactory.getLogger(NoDifficultyRule.class);
 
   @Override
   public boolean validate(
