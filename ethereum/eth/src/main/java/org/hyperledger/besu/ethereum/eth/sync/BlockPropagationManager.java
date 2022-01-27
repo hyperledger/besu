@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersTask;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
@@ -210,7 +211,11 @@ public class BlockPropagationManager {
     try {
       final Block block = newBlockMessage.block(protocolSchedule);
       if (LOG.isTraceEnabled()) {
-        LOG.trace("New block from network {}. Current status {}", block.toLogString(), this);
+        LOG.trace(
+            "New block from network {} from peer {}. Current status {}",
+            block.toLogString(),
+            message.getPeer(),
+            this);
       }
       final Difficulty totalDifficulty = newBlockMessage.totalDifficulty(protocolSchedule);
 
@@ -259,8 +264,9 @@ public class BlockPropagationManager {
           Lists.newArrayList(newBlockHashesMessage.getNewHashes());
       if (LOG.isTraceEnabled()) {
         LOG.trace(
-            "New block hashes from network {}. Current status {}",
+            "New block hashes from network {} from peer {}. Current status {}",
             toLogString(announcedBlocks),
+            message.getPeer(),
             this);
       }
 
@@ -301,7 +307,7 @@ public class BlockPropagationManager {
 
       // Process known blocks we care about
       for (final NewBlockHash newBlock : newBlocks) {
-        processAnnouncedBlock(newBlock);
+        processAnnouncedBlock(message.getPeer(), newBlock);
       }
     } catch (final RLPException e) {
       LOG.debug(
@@ -314,19 +320,24 @@ public class BlockPropagationManager {
 
   private CompletableFuture<Block> retrieveNonAnnouncedBlock(final long blockNumber) {
     LOG.trace("Retrieve non announced block {} from peers", blockNumber);
-    return getBlockFromPeers(blockNumber, Optional.empty());
+    return getBlockFromPeers(Optional.empty(), blockNumber, Optional.empty());
   }
 
-  private CompletableFuture<Block> processAnnouncedBlock(final NewBlockHash blockHash) {
+  private CompletableFuture<Block> processAnnouncedBlock(
+      final EthPeer peer, final NewBlockHash blockHash) {
     LOG.trace("Retrieve announced block by header {} from peers", blockHash);
-    return getBlockFromPeers(blockHash.number(), Optional.of(blockHash.hash()));
+    return getBlockFromPeers(Optional.of(peer), blockHash.number(), Optional.of(blockHash.hash()));
   }
 
   private CompletableFuture<Block> getBlockFromPeers(
-      final long blockNumber, final Optional<Hash> blockHash) {
+      final Optional<EthPeer> preferredPeer,
+      final long blockNumber,
+      final Optional<Hash> blockHash) {
     final RetryingGetBlockFromPeersTask getBlockTask =
         RetryingGetBlockFromPeersTask.create(
             protocolContext, protocolSchedule, ethContext, blockHash, blockNumber, metricsSystem);
+    preferredPeer.ifPresent(getBlockTask::assignPeer);
+
     return ethContext
         .getScheduler()
         .scheduleSyncWorkerTask(getBlockTask::run)
@@ -463,7 +474,7 @@ public class BlockPropagationManager {
     return "BlockPropagationManager{"
         + "requestedBlocks="
         + requestedBlocks
-        + "requestedNonAnnounceBlocks="
+        + ", requestedNonAnnounceBlocks="
         + requestedNonAnnouncedBlocks
         + ", importingBlocks="
         + importingBlocks

@@ -71,6 +71,10 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     assignedPeer = Optional.of(peer);
   }
 
+  public Optional<EthPeer> getAssignedPeer() {
+    return assignedPeer;
+  }
+
   @Override
   protected void executeTask() {
     if (result.isDone()) {

@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -46,7 +45,6 @@ public class RetryingGetBlockFromPeersTask
   private final Optional<Hash> blockHash;
   private final long blockNumber;
   private final Set<EthPeer> triedPeers = new HashSet<>();
-  private EthPeer currentPeer;
 
   protected RetryingGetBlockFromPeersTask(
       final ProtocolContext protocolContext,
@@ -81,6 +79,12 @@ public class RetryingGetBlockFromPeersTask
   }
 
   @Override
+  public void assignPeer(final EthPeer peer) {
+    super.assignPeer(peer);
+    triedPeers.add(peer);
+  }
+
+  @Override
   protected CompletableFuture<AbstractPeerTask.PeerTaskResult<Block>> executePeerTask(
       final Optional<EthPeer> assignedPeer) {
 
@@ -89,18 +93,19 @@ public class RetryingGetBlockFromPeersTask
             protocolSchedule, getEthContext(), blockHash, blockNumber, getMetricsSystem());
 
     getBlockTask.assignPeer(
-        assignedPeer.orElseGet(
-            () -> {
-              currentPeer = selectNextPeer();
-              triedPeers.add(currentPeer);
-              return currentPeer;
-            }));
+        assignedPeer
+            .filter(__ -> getRetryCount() == 1) // first try with the assigned preferred peer
+            .orElseGet( // then selecting a new one from the pool
+                () -> {
+                  assignPeer(selectNextPeer());
+                  return getAssignedPeer().get();
+                }));
 
     LOG.debug(
         "Getting block {} ({}) from peer {}, attempt {}",
         blockNumber,
         blockHash,
-        currentPeer,
+        getAssignedPeer(),
         getRetryCount());
 
     return executeSubTask(getBlockTask::run)
@@ -114,9 +119,8 @@ public class RetryingGetBlockFromPeersTask
   private EthPeer selectNextPeer() {
     return getEthContext()
         .getEthPeers()
-        .streamAvailablePeers()
+        .streamBestPeers()
         .filter(peer -> !triedPeers.contains(peer))
-        .sorted(EthPeers.LEAST_TO_MOST_BUSY)
         .findFirst()
         .orElseThrow(NoAvailablePeersException::new);
   }
@@ -134,7 +138,7 @@ public class RetryingGetBlockFromPeersTask
           "Failed to get block {} ({}) from peer {}, attempt {}, retrying later",
           blockNumber,
           blockHash,
-          currentPeer,
+          getAssignedPeer(),
           getRetryCount());
     } else {
       LOG.warn(
