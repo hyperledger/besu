@@ -16,9 +16,9 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class BftExtraDataCodec {
 
@@ -28,7 +28,7 @@ public abstract class BftExtraDataCodec {
     EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER
   }
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BftExtraDataCodec.class);
 
   public static int EXTRA_VANITY_LENGTH = 32;
 

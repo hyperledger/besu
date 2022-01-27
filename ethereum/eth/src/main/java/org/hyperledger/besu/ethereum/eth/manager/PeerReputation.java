@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
 import java.util.Map;
@@ -27,10 +25,11 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PeerReputation {
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PeerReputation.class);
   private static final int TIMEOUT_THRESHOLD = 3;
   private static final int USELESS_RESPONSE_THRESHOLD = 5;
   static final long USELESS_RESPONSE_WINDOW_IN_MILLIS =

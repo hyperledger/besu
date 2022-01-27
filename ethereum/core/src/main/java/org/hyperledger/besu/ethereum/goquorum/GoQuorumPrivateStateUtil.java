@@ -15,8 +15,6 @@
 
 package org.hyperledger.besu.ethereum.goquorum;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
@@ -25,10 +23,11 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GoQuorumPrivateStateUtil {
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(GoQuorumPrivateStateUtil.class);
 
   public static MutableWorldState getPrivateWorldStateAtBlock(
       final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,

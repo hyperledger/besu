@@ -31,12 +31,12 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class FullSyncTargetManager extends SyncTargetManager {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(FullSyncTargetManager.class);
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
 

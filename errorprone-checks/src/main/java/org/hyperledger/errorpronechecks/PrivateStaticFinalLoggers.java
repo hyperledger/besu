@@ -45,8 +45,7 @@ import com.sun.tools.javac.code.Type;
     linkType = BugPattern.LinkType.NONE)
 public class PrivateStaticFinalLoggers extends BugChecker implements VariableTreeMatcher {
 
-  static final Supplier<Type> ORG_APACHE_LOGGING_LOG4J_LOGGER =
-      Suppliers.typeFromString("org.apache.logging.log4j.Logger");
+  static final Supplier<Type> ORG_SLF4J_LOGGER = Suppliers.typeFromString("org.slf4j.Logger");
 
   @Override
   public Description matchVariable(final VariableTree tree, final VisitorState state) {
@@ -58,7 +57,7 @@ public class PrivateStaticFinalLoggers extends BugChecker implements VariableTre
         .containsAll(List.of(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL))) {
       return NO_MATCH;
     }
-    if (!isSubtype(getType(tree), ORG_APACHE_LOGGING_LOG4J_LOGGER.get(state), state)) {
+    if (!isSubtype(getType(tree), ORG_SLF4J_LOGGER.get(state), state)) {
       return NO_MATCH;
     }
     return buildDescription(tree)

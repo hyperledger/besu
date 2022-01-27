@@ -33,7 +33,10 @@ import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class BlockHashLookupTest {
 
   private static final int CURRENT_BLOCK_NUMBER = 256;

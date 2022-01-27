@@ -38,6 +38,8 @@ sourceSets {
 }
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
 
   implementation project(':config')
@@ -56,7 +58,6 @@ dependencies {
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.vertx:vertx-core'
   implementation 'net.java.dev.jna:jna'
-  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-concurrent'
   implementation 'org.apache.tuweni:tuweni-units'
@@ -66,8 +67,6 @@ dependencies {
   implementation 'org.xerial.snappy:snappy-java'
 
   annotationProcessor 'org.immutables:value'
-
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:api')

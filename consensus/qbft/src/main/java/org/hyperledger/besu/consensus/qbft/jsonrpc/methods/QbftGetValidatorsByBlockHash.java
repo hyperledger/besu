@@ -28,11 +28,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class QbftGetValidatorsByBlockHash implements JsonRpcMethod {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(QbftGetValidatorsByBlockHash.class);
 
   private final Blockchain blockchain;
   private final ValidatorProvider validatorProvider;

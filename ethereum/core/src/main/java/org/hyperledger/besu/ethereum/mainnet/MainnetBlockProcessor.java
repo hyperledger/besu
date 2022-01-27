@@ -25,12 +25,12 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MainnetBlockProcessor extends AbstractBlockProcessor {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(MainnetBlockProcessor.class);
 
   public MainnetBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,

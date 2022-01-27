@@ -18,15 +18,15 @@ import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Skeleton class for {@link PrecompiledContract} implementations. */
 @SuppressWarnings("unused")
 public abstract class AbstractPrecompiledContract implements PrecompiledContract {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractPrecompiledContract.class);
 
   private final GasCalculator gasCalculator;
 

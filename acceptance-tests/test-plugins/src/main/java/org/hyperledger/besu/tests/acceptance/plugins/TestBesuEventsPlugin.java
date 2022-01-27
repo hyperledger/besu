@@ -28,12 +28,12 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.auto.service.AutoService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @AutoService(BesuPlugin.class)
 public class TestBesuEventsPlugin implements BesuPlugin {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TestBesuEventsPlugin.class);
 
   private BesuContext context;
 

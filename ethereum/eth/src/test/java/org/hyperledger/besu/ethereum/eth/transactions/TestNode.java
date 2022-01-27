@@ -69,13 +69,13 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestNode implements Closeable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TestNode.class);
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   protected final NodeKey nodeKey;

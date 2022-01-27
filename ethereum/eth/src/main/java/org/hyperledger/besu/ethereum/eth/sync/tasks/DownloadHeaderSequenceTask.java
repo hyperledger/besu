@@ -45,15 +45,15 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.primitives.Ints;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Retrieves a sequence of headers, sending out requests repeatedly until all headers are fulfilled.
  * Validates headers as they are received.
  */
 public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<BlockHeader>> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(DownloadHeaderSequenceTask.class);
   private static final int DEFAULT_RETRIES = 3;
 
   private final EthContext ethContext;

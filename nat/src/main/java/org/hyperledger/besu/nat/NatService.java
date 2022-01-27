@@ -25,13 +25,13 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Utility class to help interacting with various {@link NatManager}. */
 public class NatService {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(NatService.class);
 
   private static final boolean DEFAULT_FALLBACK_STATUS = true;
 

@@ -40,12 +40,12 @@ import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.IdentityCipherSuiteFilter;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TLSContextFactory {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TLSContextFactory.class);
 
   private static final String[] ALLOWED_PROTOCOLS = {"TLSv1.3"};
   private static final String KEYMANAGER_FACTORY_ALGORITHM = "PKIX";

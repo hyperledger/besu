@@ -39,14 +39,14 @@ import java.time.Clock;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FastDownloaderFactory {
 
   private static final String FAST_SYNC_FOLDER = "fastsync";
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(FastDownloaderFactory.class);
 
   public static Optional<FastSyncDownloader> create(
       final SynchronizerConfiguration syncConfig,

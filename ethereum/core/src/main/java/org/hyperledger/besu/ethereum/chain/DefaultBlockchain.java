@@ -49,11 +49,11 @@ import java.util.stream.Stream;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultBlockchain implements MutableBlockchain {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultBlockchain.class);
   protected final BlockchainStorage blockchainStorage;
 
   private final Subscribers<BlockAddedObserver> blockAddedObservers = Subscribers.create();
@@ -452,28 +452,28 @@ public class DefaultBlockchain implements MutableBlockchain {
       final BlockWithReceipts newChainHeadWithReceipts,
       final BlockWithReceipts oldChainWithReceipts,
       final BlockWithReceipts commonAncestorWithReceipts) {
-    if (newChainHeadWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber()
-            > reorgLoggingThreshold
-        || oldChainWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber()
-            > reorgLoggingThreshold) {
+    if ((newChainHeadWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber()
+                > reorgLoggingThreshold
+            || oldChainWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber()
+                > reorgLoggingThreshold)
+        && LOG.isWarnEnabled()) {
       LOG.warn(
           "Chain Reorganization +{} new / -{} old\n{}",
-          () -> newChainHeadWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber(),
-          () -> oldChainWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber(),
-          () ->
-              Streams.zip(
-                      Stream.of("Old", "New", "Ancestor"),
-                      Stream.of(
-                              oldChainWithReceipts,
-                              newChainHeadWithReceipts,
-                              commonAncestorWithReceipts)
-                          .map(
-                              blockWithReceipts ->
-                                  String.format(
-                                      "hash: %s, height: %s",
-                                      blockWithReceipts.getHash(), blockWithReceipts.getNumber())),
-                      (label, values) -> String.format("%10s - %s", label, values))
-                  .collect(joining("\n")));
+          newChainHeadWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber(),
+          oldChainWithReceipts.getNumber() - commonAncestorWithReceipts.getNumber(),
+          Streams.zip(
+                  Stream.of("Old", "New", "Ancestor"),
+                  Stream.of(
+                          oldChainWithReceipts,
+                          newChainHeadWithReceipts,
+                          commonAncestorWithReceipts)
+                      .map(
+                          blockWithReceipts ->
+                              String.format(
+                                  "hash: %s, height: %s",
+                                  blockWithReceipts.getHash(), blockWithReceipts.getNumber())),
+                  (label, values) -> String.format("%10s - %s", label, values))
+              .collect(joining("\n")));
     }
   }
 

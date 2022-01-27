@@ -1,5 +1,7 @@
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   implementation project(':besu')
   implementation project(':crypto')
   implementation project(':datatypes')
@@ -8,8 +10,6 @@ dependencies {
   implementation project(':plugin-api')
   implementation 'com.google.auto.service:auto-service'
   implementation 'info.picocli:picocli'
-  implementation 'org.apache.logging.log4j:log4j-api'
-  implementation 'org.apache.logging.log4j:log4j-core'
 
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'junit:junit'

@@ -27,14 +27,14 @@ import java.util.Optional;
 
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.signers.DSAKCalculator;
 import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
  * Adapted from the BitcoinJ ECKey (Apache 2 License) implementation:
@@ -46,7 +46,7 @@ import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
  */
 public class SECP256K1 extends AbstractSECP256 {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(SECP256K1.class);
 
   private boolean useNative;
 

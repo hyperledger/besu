@@ -25,7 +25,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service responsible for exposing metrics to the outside, either through a port and network
@@ -37,7 +37,8 @@ public interface MetricsService {
       final Vertx vertx,
       final MetricsConfiguration configuration,
       final MetricsSystem metricsSystem) {
-    LogManager.getLogger().trace("Creating metrics service {}", configuration.getProtocol());
+    LoggerFactory.getLogger(MetricsService.class)
+        .trace("Creating metrics service {}", configuration.getProtocol());
     if (configuration.getProtocol() == MetricsProtocol.PROMETHEUS) {
       if (configuration.isEnabled()) {
         return Optional.of(new MetricsHttpService(vertx, configuration, metricsSystem));
