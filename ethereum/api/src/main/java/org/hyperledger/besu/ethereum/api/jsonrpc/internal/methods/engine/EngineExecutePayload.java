@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.VALID;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
@@ -80,7 +81,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
       return respondWith(reqId, null, SYNCING, null);
     }
 
-    LOG.trace("blockparam: {}", () -> Json.encodePrettily(blockParam));
+    traceLambda(LOG, "blockparam: {}", () -> Json.encodePrettily(blockParam));
 
     final List<Transaction> transactions;
     try {

@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -26,11 +29,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BackwardChain { // TODO: this class now stores everything in memory...
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BackwardChain.class);
+
   private final List<BlockHeader> ancestors = new ArrayList<>();
   private final List<Block> successors = new ArrayList<>();
   private final Map<Hash, Block> trustedBlocks = new HashMap<>();
@@ -69,7 +73,8 @@ public class BackwardChain { // TODO: this class now stores everything in memory
               + firstHeader.getParentHash().toString().substring(0, 20));
     }
     ancestors.add(blockHeader);
-    LOG.debug(
+    debugLambda(
+        LOG,
         "Added header {} on height {} to backward chain led by pivot {} on height {}",
         () -> blockHeader.getHash().toString().substring(0, 20),
         blockHeader::getNumber,
@@ -90,7 +95,8 @@ public class BackwardChain { // TODO: this class now stores everything in memory
               .map(Block::getHeader)
               .collect(Collectors.toList()));
       this.ancestors.addAll(historicalBackwardChain.ancestors);
-      LOG.debug(
+      debugLambda(
+          LOG,
           "Merged backward chain led by block {} into chain led by block {}, new backward chain starts at height {} and ends at height {}",
           () -> historicalPivot.getHash().toString().substring(0, 20),
           () -> pivot.getHash().toString().substring(0, 20),
@@ -98,7 +104,8 @@ public class BackwardChain { // TODO: this class now stores everything in memory
           () -> getFirstAncestorHeader().orElseThrow().getNumber());
       trustedBlocks.putAll(historicalBackwardChain.trustedBlocks);
     } else {
-      LOG.warn(
+      warnLambda(
+          LOG,
           "Cannot merge previous historical run because headers of {} and {} do not equal. Ignoring previous run. Did someone lie to us?",
           () -> firstHeader.getHash().toString().substring(0, 20),
           () -> historicalPivot.getHash().toString().substring(0, 20));
