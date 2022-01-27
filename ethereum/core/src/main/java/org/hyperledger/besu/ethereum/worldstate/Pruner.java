@@ -30,12 +30,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Pruner {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(Pruner.class);
 
   private final MarkSweepPruner pruningStrategy;
   private final Blockchain blockchain;
@@ -165,7 +165,7 @@ public class Pruner {
     try {
       executorService.execute(action);
     } catch (final MerkleTrieException mte) {
-      LOG.fatal(
+      LOG.error(
           "An unrecoverable error occurred while pruning. The database directory must be deleted and resynced.",
           mte);
       System.exit(1);

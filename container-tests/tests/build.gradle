@@ -18,7 +18,6 @@ jar { enabled = false }
 
 dependencies {
   testImplementation 'junit:junit'
-  testImplementation 'org.apache.logging.log4j:log4j-slf4j-impl'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.testcontainers:testcontainers'

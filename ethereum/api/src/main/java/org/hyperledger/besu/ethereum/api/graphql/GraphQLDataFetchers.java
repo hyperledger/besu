@@ -58,14 +58,14 @@ import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GraphQLDataFetchers {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(GraphQLDataFetchers.class);
 
   private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
 

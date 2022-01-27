@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -25,10 +25,11 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BackwardSyncStep extends BackwardSyncTask {
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncStep.class);
 
   public BackwardSyncStep(final BackwardsSyncContext context, final BackwardChain backwardChain) {
     super(context, backwardChain);
@@ -53,7 +54,8 @@ public class BackwardSyncStep extends BackwardSyncTask {
                     new BackwardSyncException(
                         "No unprocessed hashes during backward sync. that is probably a bug."));
     Hash parentHash = firstHeader.getParentHash();
-    LOG.debug(
+    debugLambda(
+        LOG,
         "First unprocessed hash for current pivot is {} expected on height {}",
         () -> parentHash.toString().substring(0, 20),
         () -> firstHeader.getNumber() - 1);
@@ -62,7 +64,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
 
   @VisibleForTesting
   protected CompletableFuture<BlockHeader> requestHeader(final Hash hash) {
-    LOG.debug("Requesting header for hash {}", () -> hash.toString().substring(0, 20));
+    debugLambda(LOG, "Requesting header for hash {}", () -> hash.toString().substring(0, 20));
     return GetHeadersFromPeerByHashTask.forSingleHash(
             context.getProtocolSchedule(),
             context.getEthContext(),
@@ -78,7 +80,8 @@ public class BackwardSyncStep extends BackwardSyncTask {
                     "Did not receive a header for hash {}" + hash.toString().substring(0, 20));
               }
               BlockHeader blockHeader = result.get(0);
-              LOG.debug(
+              debugLambda(
+                  LOG,
                   "Got header {} with height {}",
                   () -> blockHeader.getHash().toString().substring(0, 20),
                   blockHeader::getNumber);

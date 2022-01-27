@@ -28,8 +28,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for tracking the network peers which have a connection to this node, then
@@ -37,7 +37,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class ValidatorPeers implements ValidatorMulticaster, PeerConnectionTracker {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ValidatorPeers.class);
 
   // It's possible for multiple connections between peers to exist for brief periods, so map each
   // address to a set of connections

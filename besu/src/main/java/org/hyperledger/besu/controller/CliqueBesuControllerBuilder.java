@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.controller;
 
+import static org.hyperledger.besu.consensus.clique.CliqueHelpers.installCliqueBlockChoiceRule;
+
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
@@ -40,12 +42,12 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(CliqueBesuControllerBuilder.class);
 
   private Address localAddress;
   private EpochManager epochManager;
@@ -135,10 +137,13 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    return new CliqueContext(
-        BlockValidatorProvider.nonForkingValidatorProvider(
-            blockchain, epochManager, blockInterface),
-        epochManager,
-        blockInterface);
+    final CliqueContext cliqueContext =
+        new CliqueContext(
+            BlockValidatorProvider.nonForkingValidatorProvider(
+                blockchain, epochManager, blockInterface),
+            epochManager,
+            blockInterface);
+    installCliqueBlockChoiceRule(blockchain, cliqueContext);
+    return cliqueContext;
   }
 }

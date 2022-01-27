@@ -25,12 +25,12 @@ import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestPrivacyPluginPayloadProvider implements PrivacyPluginPayloadProvider {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TestPrivacyPluginPayloadProvider.class);
   private String prefix;
 
   public void setPluginPayloadPrefix(final String prefix) {

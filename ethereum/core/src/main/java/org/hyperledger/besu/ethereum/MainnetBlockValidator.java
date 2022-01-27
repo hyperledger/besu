@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -33,11 +31,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MainnetBlockValidator implements BlockValidator {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(MainnetBlockValidator.class);
   protected final BlockHeaderValidator blockHeaderValidator;
   protected final BlockBodyValidator blockBodyValidator;
   protected final BlockProcessor blockProcessor;

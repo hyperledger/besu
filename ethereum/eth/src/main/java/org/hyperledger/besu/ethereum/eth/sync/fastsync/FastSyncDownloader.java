@@ -36,14 +36,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FastSyncDownloader {
 
   private static final Duration FAST_SYNC_RETRY_DELAY = Duration.ofSeconds(5);
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(FastSyncDownloader.class);
   private final FastSyncActions fastSyncActions;
   private final WorldStateStorage worldStateStorage;
   private final WorldStateDownloader worldStateDownloader;

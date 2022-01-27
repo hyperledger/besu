@@ -39,15 +39,15 @@ import io.kubernetes.client.openapi.models.V1Service;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.kubernetes.client.util.authenticators.GCPAuthenticator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class describes the behaviour of the Kubernetes NAT manager. Kubernetes Nat manager add
  * support for Kubernetes’s NAT implementation when Besu is being run from a Kubernetes cluster
  */
 public class KubernetesNatManager extends AbstractNatManager {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(KubernetesNatManager.class);
 
   public static final String DEFAULT_BESU_SERVICE_NAME_FILTER = "besu";
 

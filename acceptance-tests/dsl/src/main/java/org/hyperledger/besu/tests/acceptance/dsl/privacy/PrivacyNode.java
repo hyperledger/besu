@@ -57,14 +57,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Network;
 
 public class PrivacyNode implements AutoCloseable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivacyNode.class);
   private static final int MAX_OPEN_FILES = 1024;
   private static final long CACHE_CAPACITY = 8388608;
   private static final int MAX_BACKGROUND_COMPACTIONS = 4;

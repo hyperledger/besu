@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
@@ -29,11 +28,12 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class NodeDataRequest implements TasksPriorityProvider {
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(NodeDataRequest.class);
   public static final int MAX_CHILDREN = 16;
 
   private final RequestType requestType;

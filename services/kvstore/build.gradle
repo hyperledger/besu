@@ -30,17 +30,15 @@ jar {
 dependencies {
   api project(':plugin-api')
   api project(':util')
+  api 'org.slf4j:slf4j-api'
 
   implementation project(':metrics:core')
   implementation project(':metrics:rocksdb')
 
   implementation 'com.google.guava:guava'
   implementation 'io.prometheus:simpleclient'
-  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.rocksdb:rocksdbjni'
-
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation project(':testutil')
 

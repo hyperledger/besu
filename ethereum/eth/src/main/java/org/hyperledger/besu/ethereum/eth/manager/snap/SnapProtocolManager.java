@@ -36,11 +36,11 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SnapProtocolManager implements ProtocolManager {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(SnapProtocolManager.class);
 
   private final List<PeerValidator> peerValidators;
   private final List<Capability> supportedCapabilities;

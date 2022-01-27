@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.privx;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_FLEXIBLE_PRIVACY_GROUP_ERROR;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
@@ -31,11 +30,12 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import java.util.Arrays;
 
 import graphql.com.google.common.collect.Lists;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivxFindFlexiblePrivacyGroup implements JsonRpcMethod {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivxFindFlexiblePrivacyGroup.class);
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 

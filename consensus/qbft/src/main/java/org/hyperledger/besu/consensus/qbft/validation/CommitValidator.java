@@ -24,14 +24,14 @@ import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Collection;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CommitValidator {
 
   private static final String ERROR_PREFIX = "Invalid Commit Message";
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(CommitValidator.class);
 
   private final Collection<Address> validators;
   private final ConsensusRoundIdentifier targetRound;

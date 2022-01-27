@@ -83,11 +83,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class BesuControllerBuilder {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
   protected GenesisConfigFile genesisConfig;
   protected SynchronizerConfiguration syncConfig;

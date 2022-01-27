@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -26,11 +26,12 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ForwardSyncStep extends BackwardSyncTask {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ForwardSyncStep.class);
 
   public ForwardSyncStep(final BackwardsSyncContext context, final BackwardChain backwardChain) {
     super(context, backwardChain);
@@ -49,12 +50,14 @@ public class ForwardSyncStep extends BackwardSyncTask {
     while (backwardChain.getFirstAncestorHeader().isPresent()) {
       BlockHeader header = backwardChain.getFirstAncestorHeader().orElseThrow();
       if (context.getProtocolContext().getBlockchain().contains(header.getHash())) {
-        LOG.debug(
+        debugLambda(
+            LOG,
             "Block {} is already imported, we can ignore it for the sync process",
             () -> header.getHash().toString().substring(0, 20));
         backwardChain.dropFirstHeader();
       } else if (backwardChain.isTrusted(header.getHash())) {
-        LOG.debug(
+        debugLambda(
+            LOG,
             "Block {} was added by consensus layer, we can trust it and should therefore import it.",
             () -> header.getHash().toString().substring(0, 20));
         saveBlock(backwardChain.getTrustedBlock(header.getHash()));
@@ -70,7 +73,8 @@ public class ForwardSyncStep extends BackwardSyncTask {
     if (blockHeader == null) {
       return CompletableFuture.completedFuture(null);
     } else {
-      LOG.debug(
+      debugLambda(
+          LOG,
           "We don't have body of block {}, going to request it",
           () -> blockHeader.getHash().toString().substring(0, 20));
       return requestBlock(blockHeader).thenApply(this::saveBlock);
@@ -93,7 +97,8 @@ public class ForwardSyncStep extends BackwardSyncTask {
 
   @VisibleForTesting
   protected Void saveBlock(final Block block) {
-    LOG.debug(
+    debugLambda(
+        LOG,
         "Going to validate block {}",
         () -> block.getHeader().getHash().toString().substring(0, 20));
     var optResult =
@@ -107,7 +112,8 @@ public class ForwardSyncStep extends BackwardSyncTask {
 
     optResult.ifPresent(
         result -> {
-          LOG.debug(
+          debugLambda(
+              LOG,
               "Block {} was validated, going to import it",
               () -> block.getHeader().getHash().toString().substring(0, 20));
           result.worldState.persist(block.getHeader());
@@ -132,7 +138,8 @@ public class ForwardSyncStep extends BackwardSyncTask {
       LOG.debug("The sync is done...");
       return CompletableFuture.completedFuture(null);
     }
-    LOG.debug(
+    debugLambda(
+        LOG,
         "Block {} is not yet imported, we need to run another step of ForwardSync",
         () -> firstUnsynced.getHash().toString().substring(0, 20));
     return completableFuture.thenCompose(this::executeAsync);

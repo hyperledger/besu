@@ -56,12 +56,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EthPeer {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(EthPeer.class);
 
   private static final int MAX_OUTSTANDING_REQUESTS = 5;
 
@@ -226,14 +226,14 @@ public class EthPeer {
           "Permissioning blocked sending of message code {} to {}",
           messageData.getCode(),
           connection.getRemoteEnode());
-      LOG.debug(
-          "Permissioning blocked by providers {}",
-          () ->
-              permissioningProviders.stream()
-                  .filter(
-                      p ->
-                          !p.isMessagePermitted(
-                              connection.getRemoteEnode(), messageData.getCode())));
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(
+            "Permissioning blocked by providers {}",
+            permissioningProviders.stream()
+                .filter(
+                    p ->
+                        !p.isMessagePermitted(connection.getRemoteEnode(), messageData.getCode())));
+      }
       return null;
     }
 

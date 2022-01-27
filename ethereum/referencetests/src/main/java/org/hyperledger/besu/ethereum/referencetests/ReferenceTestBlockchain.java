@@ -177,5 +177,7 @@ public class ReferenceTestBlockchain implements Blockchain {
   }
 
   @Override
-  public void setBlockChoiceRule(final Comparator<BlockHeader> blockChoiceRule) {}
+  public void setBlockChoiceRule(final Comparator<BlockHeader> blockChoiceRule) {
+    throw new UnsupportedOperationException("Not Used for Reference Tests");
+  }
 }

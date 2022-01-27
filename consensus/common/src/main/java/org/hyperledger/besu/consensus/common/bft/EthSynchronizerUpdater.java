@@ -14,17 +14,16 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EthSynchronizerUpdater implements SynchronizerUpdater {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(EthSynchronizerUpdater.class);
   private final EthPeers ethPeers;
 
   public EthSynchronizerUpdater(final EthPeers ethPeers) {

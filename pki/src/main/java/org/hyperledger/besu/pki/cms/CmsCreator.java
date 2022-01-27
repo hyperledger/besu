@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cms.CMSProcessableByteArray;
@@ -46,8 +44,6 @@ public class CmsCreator {
       Security.addProvider(new BouncyCastleProvider());
     }
   }
-
-  private static final Logger LOGGER = LogManager.getLogger();
 
   private final String certificateAlias;
   private final KeyStoreWrapper keyStore;
@@ -100,7 +96,6 @@ public class CmsCreator {
 
       return Bytes.wrap(cmsSignedData.getEncoded());
     } catch (final Exception e) {
-      LOGGER.error("Error creating CMS data", e);
       throw new RuntimeException("Error creating CMS data", e);
     }
   }

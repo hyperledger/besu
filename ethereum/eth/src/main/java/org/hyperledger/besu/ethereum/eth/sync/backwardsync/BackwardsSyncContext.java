@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -29,10 +29,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BackwardsSyncContext {
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BackwardsSyncContext.class);
 
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
@@ -65,7 +66,8 @@ public class BackwardsSyncContext {
   public CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
     final BackwardChain backwardChain = currentChain.get();
     if (backwardChain == null) {
-      LOG.debug(
+      debugLambda(
+          LOG,
           "Starting new backward sync towards a pivot {} at height {}",
           () -> newPivot.getHash().toString().substring(0, 20),
           () -> newPivot.getHeader().getNumber());
@@ -82,7 +84,8 @@ public class BackwardsSyncContext {
       backwardChainMap.put(newPivot.getHeader().getNumber(), backwardChain);
       return currentBackwardSyncFuture.get();
     }
-    LOG.debug(
+    debugLambda(
+        LOG,
         "Stopping existing backward sync from pivot {} at height {} and restarting with pivot {} at height {}",
         () -> backwardChain.getPivot().getHash().toString().substring(0, 20),
         () -> backwardChain.getPivot().getHeader().getNumber(),

@@ -34,6 +34,8 @@ task testJar(type: Jar) {
 }
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
   implementation project(':config')
   implementation project(':datatypes')
@@ -47,6 +49,7 @@ dependencies {
   implementation project(':services:kvstore')
   implementation project(':services:pipeline')
   implementation project(':services:tasks')
+  implementation project(':util')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'

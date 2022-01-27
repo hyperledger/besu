@@ -36,12 +36,12 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PkiQbftBlockCreator implements BlockCreator {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PkiQbftBlockCreator.class);
 
   private final BlockCreator blockCreator;
   private final PkiQbftExtraDataCodec pkiQbftExtraDataCodec;

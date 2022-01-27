@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
@@ -35,8 +33,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserver {
 
@@ -46,7 +45,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
     STOPPED
   }
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BftMiningCoordinator.class);
 
   private final BftEventHandler eventHandler;
   private final BftProcessor bftProcessor;

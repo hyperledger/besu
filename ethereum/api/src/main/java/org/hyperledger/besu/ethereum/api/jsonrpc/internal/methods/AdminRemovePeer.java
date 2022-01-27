@@ -22,12 +22,12 @@ import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AdminRemovePeer extends AdminModifyPeer {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AdminRemovePeer.class);
 
   public AdminRemovePeer(final P2PNetwork peerNetwork) {
     super(peerNetwork);

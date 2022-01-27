@@ -25,11 +25,11 @@ import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.function.LongSupplier;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CompleteTaskStep {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(CompleteTaskStep.class);
   private static final int DISPLAY_PROGRESS_STEP = 100000;
   private final WorldStateStorage worldStateStorage;
   private final RunnableCounter completedRequestsCounter;

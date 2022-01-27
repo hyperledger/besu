@@ -31,8 +31,8 @@ import java.util.NavigableSet;
 import java.util.TreeSet;
 
 import com.google.common.collect.Iterables;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Ensures the byte content of the extraData field can be deserialised into an appropriate
@@ -41,7 +41,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidationRule {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(IbftExtraDataValidationRule.class);
 
   private final boolean validateCommitSeals;
   private final long ceil2nBy3Block;

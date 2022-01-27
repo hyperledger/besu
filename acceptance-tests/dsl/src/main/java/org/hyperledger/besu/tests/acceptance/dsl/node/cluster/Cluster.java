@@ -33,11 +33,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Cluster implements AutoCloseable {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(Cluster.class);
 
   private final Map<String, RunnableNode> nodes = new HashMap<>();
   private final BesuNodeRunner besuNodeRunner;

@@ -27,12 +27,12 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class InMemoryStoragePlugin implements BesuPlugin {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryStoragePlugin.class);
   private BesuContext context;
   private MemoryKeyValueStorageFactory factory;
   private MemoryKeyValueStorageFactory privacyFactory;

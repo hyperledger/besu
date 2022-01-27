@@ -35,11 +35,11 @@ import org.hyperledger.besu.util.ExceptionUtils;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FastWorldStateDownloadProcess implements WorldStateDownloadProcess {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(FastWorldStateDownloadProcess.class);
   private final Pipeline<Task<NodeDataRequest>> fetchDataPipeline;
   private final Pipeline<Task<NodeDataRequest>> completionPipeline;
   private final WritePipe<Task<NodeDataRequest>> requestsToComplete;
