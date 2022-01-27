@@ -4,6 +4,7 @@
 ### 22.1.0 Breaking Changes
 
 ### Additions and Improvements
+- Updated besu-native to version 0.4.3 [#3331](https://github.com/hyperledger/besu/pull/3331)
 
 ### Bug Fixes
 
