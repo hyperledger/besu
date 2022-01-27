@@ -56,8 +56,8 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC2/besu-22.1
 
  **Full Changelog**: https://github.com/hyperledger/besu/compare/21.10.8...21.10.9
 
-[besu-21.10.9.tar.gz](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.9/besu-21.10.9.tar.gz) b5ef15ede50e19ad9fbb79876d8d68aeb8e3811f8905e973874523df2ed179b4
-[besu-21.10.9.zip](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.9/besu-21.10.9.zip) 26489881d852eefdda2cf0203cb30f7b2045ecfb299da8c744e9579cbe2934e2
+[besu-21.10.9.tar.gz](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.9/besu-21.10.9.tar.gz) a4b85ba72ee73017303e4b2f0fdde84a87d376c2c17fdcebfa4e34680f52fc71
+[besu-21.10.9.zip](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.9/besu-21.10.9.zip) c3ba3f07340fa80064ba7c06f2c0ec081184e000f9a925d132084352d0665ef9
 
 ## 21.10.8
 
