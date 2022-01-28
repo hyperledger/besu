@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.permissions;
 
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.util.LimitedSet;
 import org.hyperledger.besu.util.LimitedSet.Mode;
@@ -54,7 +55,8 @@ public class PeerPermissionsDenylist extends PeerPermissions {
 
   @Override
   public boolean isPermitted(final Peer localNode, final Peer remotePeer, final Action action) {
-    return !blacklist.contains(remotePeer.getId());
+    return !EnodeURLImpl.sameListeningEndpoint(localNode.getEnodeURL(), remotePeer.getEnodeURL())
+        && !blacklist.contains(remotePeer.getId());
   }
 
   public void add(final Peer peer) {
