@@ -1,7 +1,6 @@
 ---
 version: 2.1
 orbs:
-  slack: circleci/slack@3.4.2
   win: circleci/windows@2.2.0
 
 executors:
@@ -138,7 +137,7 @@ jobs:
   dockerScan:
     executor: trivy_executor
     steps:
-      - prepare
+      - checkout
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
