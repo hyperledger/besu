@@ -43,6 +43,7 @@ dependencies {
   implementation project(':evm')
   implementation project(':services:kvstore')
   implementation project(':util')
+  implementation project(':consensus:merge')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'

@@ -24,6 +24,7 @@ import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
@@ -545,6 +546,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Port for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer rpcHttpPort = DEFAULT_JSON_RPC_PORT;
+
+  /*
+  @Option(
+      names = {"--engine-rpc-http-port"},
+      paramLabel = MANDATORY_PORT_FORMAT_HELP,
+      description = "Port for provide consensus client APIS on (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  */
+  private final Integer engineRpcHttpPort = DEFAULT_ENGINE_JSON_RPC_PORT;
 
   @Option(
       names = {"--rpc-http-max-active-connections"},
@@ -1146,6 +1156,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
+  private JsonRpcConfiguration engineJsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
   private ApiConfiguration apiConfiguration;
@@ -1449,6 +1460,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         p2pPort,
         graphQLConfiguration,
         jsonRpcConfiguration,
+        engineJsonRpcConfiguration,
         webSocketConfiguration,
         apiConfiguration,
         metricsConfiguration,
@@ -1723,6 +1735,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     checkGoQuorumCompatibilityConfig(ethNetworkConfig);
 
     jsonRpcConfiguration = jsonRpcConfiguration();
+    engineJsonRpcConfiguration = engineJsonRpcConfiguration();
     p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
@@ -1883,6 +1896,25 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     graphQLConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
 
     return graphQLConfiguration;
+  }
+
+  private JsonRpcConfiguration engineJsonRpcConfiguration() {
+    final JsonRpcConfiguration engineConfig = JsonRpcConfiguration.createDefault();
+    engineConfig.setEnabled(isRpcHttpEnabled);
+    engineConfig.setHost(rpcHttpHost);
+    engineConfig.setPort(rpcHttpPort);
+    engineConfig.setMaxActiveConnections(rpcHttpMaxConnections);
+    engineConfig.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
+    engineConfig.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
+    engineConfig.setHostsAllowlist(hostsAllowlist);
+    engineConfig.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
+    engineConfig.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
+    engineConfig.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
+    engineConfig.setAuthenticationAlgorithm(rpcHttpAuthenticationAlgorithm);
+    engineConfig.setTlsConfiguration(rpcHttpTlsConfiguration());
+    engineConfig.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
+    engineConfig.setPort(engineRpcHttpPort);
+    return engineConfig;
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration() {
@@ -2470,6 +2502,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final int p2pListenPort,
       final GraphQLConfiguration graphQLConfiguration,
       final JsonRpcConfiguration jsonRpcConfiguration,
+      final JsonRpcConfiguration engineJsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final ApiConfiguration apiConfiguration,
       final MetricsConfiguration metricsConfiguration,
@@ -2504,6 +2537,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
+            .engineJsonRpcConfiguration(engineJsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
             .apiConfiguration(apiConfiguration)
             .pidPath(pidPath)
