@@ -40,12 +40,11 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -107,7 +106,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   @Test
   public void reorgsAcrossTDDToDifferentTargetsWhenNotFinal() {
     // Add N blocks to chain from genesis, where total diff is < TTD
-    Configurator.setLevel(BlockHeaderValidator.class.getName(), Level.DEBUG);
+    Log4j2ConfiguratorUtil.setLevelDebug(BlockHeaderValidator.class.getName());
     List<Block> endOfWork = subChain(genesisState.getBlock().getHeader(), 10, Difficulty.of(100L));
     endOfWork.stream().forEach(coordinator::executeBlock);
     assertThat(blockchain.getChainHead().getHeight()).isEqualTo(10L);

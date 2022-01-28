@@ -24,14 +24,14 @@ import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConstantOmmersHashRule implements AttachedBlockHeaderValidationRule {
 
   private static final Hash mergeConstant = Hash.EMPTY_LIST_HASH;
 
-  private static final Logger LOG = LogManager.getLogger(ConstantOmmersHashRule.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ConstantOmmersHashRule.class);
 
   @Override
   public boolean validate(
