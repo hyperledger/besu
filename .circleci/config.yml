@@ -46,8 +46,8 @@ commands:
             sudo apt-get update
             sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools
             sudo service haveged restart
-      - restoreGradleCache
-  restoreGradleCache:
+      - restore_gradle_cache
+  restore_gradle_cache:
     description: "Restore Gradle cache"
     steps:
       - restore_cache:
@@ -142,7 +142,7 @@ jobs:
     executor: trivy_executor
     steps:
       - checkout
-      - restoreGradleCache
+      - restore_gradle_cache
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
