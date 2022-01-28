@@ -31,12 +31,12 @@ import io.opentelemetry.sdk.metrics.export.IntervalMetricReaderBuilder;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.SpanProcessor;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MetricsOtelGrpcPushService implements MetricsService {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsOtelGrpcPushService.class);
 
   private final MetricsConfiguration configuration;
   private final OpenTelemetrySystem metricsSystem;

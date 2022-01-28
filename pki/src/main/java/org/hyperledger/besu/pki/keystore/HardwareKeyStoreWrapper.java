@@ -31,8 +31,8 @@ import java.util.Properties;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Creates an instance of this class which is backed by a PKCS#11 keystore, such as a software
@@ -41,7 +41,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class HardwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(HardwareKeyStoreWrapper.class);
 
   private static final String pkcs11Provider = "SunPKCS11";
 

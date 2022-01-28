@@ -27,13 +27,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Downloads a block from a peer. Will complete exceptionally if block cannot be downloaded. */
 public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(GetBlockFromPeerTask.class);
 
   private final ProtocolSchedule protocolSchedule;
   private final Optional<Hash> hash;

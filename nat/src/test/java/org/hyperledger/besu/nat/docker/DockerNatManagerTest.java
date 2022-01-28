@@ -32,8 +32,11 @@ import java.util.concurrent.ExecutionException;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public final class DockerNatManagerTest {
 
   private final String advertisedHost = "99.45.69.12";

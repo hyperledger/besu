@@ -126,6 +126,13 @@ public class PeerPermissionsDenylistTest {
   }
 
   @Test
+  public void selfPeerIsNotPermitted() {
+    PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
+
+    checkPermissions(blacklist, localNode, false);
+  }
+
+  @Test
   public void subscribeUpdate() {
     PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
     final AtomicInteger callbackCount = new AtomicInteger(0);

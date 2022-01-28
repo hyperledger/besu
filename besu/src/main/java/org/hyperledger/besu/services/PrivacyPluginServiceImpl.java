@@ -20,11 +20,11 @@ import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivacyPluginServiceImpl implements PrivacyPluginService {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivacyPluginServiceImpl.class);
 
   private PrivacyPluginPayloadProvider privacyPluginPayloadProvider;
   private PrivateMarkerTransactionFactory privateMarkerTransactionFactory;

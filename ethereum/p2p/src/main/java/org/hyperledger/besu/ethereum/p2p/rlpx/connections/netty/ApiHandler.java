@@ -27,12 +27,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ApiHandler.class);
 
   private final CapabilityMultiplexer multiplexer;
   private final AtomicBoolean waitingForPong;

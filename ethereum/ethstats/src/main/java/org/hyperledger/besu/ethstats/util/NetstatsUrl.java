@@ -20,8 +20,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.common.primitives.Ints;
-import org.apache.logging.log4j.LogManager;
 import org.immutables.value.Value;
+import org.slf4j.LoggerFactory;
 
 @Value.Immutable
 public interface NetstatsUrl {
@@ -54,7 +54,7 @@ public interface NetstatsUrl {
       }
 
     } catch (IllegalArgumentException e) {
-      LogManager.getLogger().error(e.getMessage());
+      LoggerFactory.getLogger(NetstatsUrl.class).error(e.getMessage());
     }
     throw new IllegalArgumentException(
         "Invalid netstats URL syntax. Netstats URL should have the following format 'nodename:secret@host:port'.");

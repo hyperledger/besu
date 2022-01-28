@@ -28,6 +28,8 @@ jar {
 }
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   implementation project(':crypto')
   implementation project(':datatypes')
   implementation project(':ethereum:core')
@@ -40,7 +42,6 @@ dependencies {
   implementation 'dnsjava:dnsjava'
   implementation 'io.prometheus:simpleclient'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-crypto'
   implementation('org.apache.tuweni:tuweni-devp2p') {
@@ -58,8 +59,6 @@ dependencies {
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"
   implementation 'tech.pegasys.discovery:discovery'
-
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   // test dependencies.
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')

@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration
 import java.nio.file.Path;
 import java.util.Optional;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;

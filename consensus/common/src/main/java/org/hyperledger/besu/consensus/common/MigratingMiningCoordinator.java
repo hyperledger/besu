@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.common;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -30,12 +28,13 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MigratingMiningCoordinator implements MiningCoordinator, BlockAddedObserver {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(MigratingMiningCoordinator.class);
 
   private final ForksSchedule<MiningCoordinator> miningCoordinatorSchedule;
   private final Blockchain blockchain;

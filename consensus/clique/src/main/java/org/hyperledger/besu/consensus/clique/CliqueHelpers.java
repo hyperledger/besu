@@ -20,8 +20,10 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.util.Collection;
+import java.util.Comparator;
 
 public class CliqueHelpers {
 
@@ -30,13 +32,13 @@ public class CliqueHelpers {
     return extraData.getProposerAddress();
   }
 
-  public static Address getProposerForBlockAfter(
+  static Address getProposerForBlockAfter(
       final BlockHeader parent, final ValidatorProvider validatorProvider) {
     final CliqueProposerSelector proposerSelector = new CliqueProposerSelector(validatorProvider);
     return proposerSelector.selectProposerForNextBlock(parent);
   }
 
-  public static boolean isSigner(
+  static boolean isSigner(
       final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
     final Collection<Address> validators =
         protocolContext
@@ -89,5 +91,48 @@ public class CliqueHelpers {
     // The number of contiguous blocks in which a signer may only sign 1 (as taken from clique spec)
     final int signerLimit = (validatorCount / 2) + 1;
     return signerLimit - 1;
+  }
+
+  public static void installCliqueBlockChoiceRule(
+      final Blockchain blockchain, final CliqueContext cliqueContext) {
+    blockchain.setBlockChoiceRule(
+        // EIP-3436 - https://eips.ethereum.org/EIPS/eip-3436
+        blockchain
+            // 1. Choose the block with the most total difficulty.
+            .getBlockChoiceRule()
+            // 2. Then choose the block with the lowest block number.
+            .thenComparing(Comparator.comparing(ProcessableBlockHeader::getNumber).reversed())
+            // 3. Then choose the block whose validator had the least recent in-turn block
+            // assignment.
+            .thenComparing((BlockHeader header) -> -distanceFromInTurn(header, cliqueContext))
+            // 4. Then choose the block with the lowest hash.
+            .thenComparing(Comparator.comparing(BlockHeader::getHash).reversed()));
+  }
+
+  /**
+   * Distance calculation from step 3 of the forck choice rule in EIP-3436
+   *
+   * <p>` (header_number - validator_index) % validator_count `
+   *
+   * @param header The block header to calculate distance
+   * @param context The clique context, holding validators last validaion
+   * @return the number of blocks from when the validator in that block was most recently "in turn"
+   */
+  static int distanceFromInTurn(final BlockHeader header, final CliqueContext context) {
+    final Address proposer = CliqueHelpers.getProposerOfBlock(header);
+    final Collection<Address> validators =
+        context.getValidatorProvider().getValidatorsAfterBlock(header);
+
+    // validators is an ordered collection, but as it is a tree set the only way to get an "index"
+    // is to walk the tree.
+    int index = 0;
+    for (final Address validator : validators) {
+      if (validator.equals(proposer)) {
+        break;
+      }
+      index++;
+    }
+
+    return (int) (header.getNumber() - index) % validators.size();
   }
 }

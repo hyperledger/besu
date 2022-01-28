@@ -20,12 +20,12 @@ import java.util.concurrent.Semaphore;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class JsonResponseStreamer extends OutputStream {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(JsonResponseStreamer.class);
 
   private final HttpServerResponse response;
   private final Semaphore paused = new Semaphore(0);

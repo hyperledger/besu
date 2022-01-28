@@ -21,12 +21,12 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Retrieves a sequence of headers from a peer. */
 public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTask {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(GetHeadersFromPeerByNumberTask.class);
 
   private final long blockNumber;
 

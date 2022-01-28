@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.time.Instant.now;
-import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -33,14 +32,16 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PendingTransactionsMessageProcessor {
 
   private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
   private static final long SYNC_TOLERANCE = 100L;
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(PendingTransactionsMessageProcessor.class);
 
   private final ConcurrentHashMap<EthPeer, BufferedGetPooledTransactionsFromPeerFetcher>
       scheduledTasks;

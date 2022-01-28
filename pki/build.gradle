@@ -28,15 +28,15 @@ jar {
 }
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   implementation 'com.google.guava:guava'
-  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.bouncycastle:bcpkix-jdk15on'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
-  testImplementation 'org.apache.logging.log4j:log4j-core'
 }
 
 configurations { testArtifacts }

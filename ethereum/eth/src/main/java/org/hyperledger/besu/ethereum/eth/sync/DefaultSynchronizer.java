@@ -41,12 +41,12 @@ import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultSynchronizer implements Synchronizer {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultSynchronizer.class);
 
   private final Optional<Pruner> maybePruner;
   private final SyncState syncState;

@@ -24,14 +24,14 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // https://github.com/keep-network/go-ethereum/pull/4
 public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BLAKE2BFPrecompileContract.class);
 
   public BLAKE2BFPrecompileContract(final GasCalculator gasCalculator) {
     super("BLAKE2f", gasCalculator);

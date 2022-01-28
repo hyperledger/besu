@@ -28,13 +28,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PlainHandshaker implements Handshaker {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PlainHandshaker.class);
 
   private final AtomicReference<Handshaker.HandshakeStatus> status =
       new AtomicReference<>(Handshaker.HandshakeStatus.UNINITIALIZED);
