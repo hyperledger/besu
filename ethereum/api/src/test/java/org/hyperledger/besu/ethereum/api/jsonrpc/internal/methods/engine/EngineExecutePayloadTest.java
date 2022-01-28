@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -102,7 +103,7 @@ public class EngineExecutePayloadTest {
 
   @Test
   public void shouldReturnSuccessOnAlreadyPresent() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     Block mockBlock =
         new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
 
@@ -127,7 +128,7 @@ public class EngineExecutePayloadTest {
             .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
             .buildBlockHeader();
 
-    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
+    //    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
 
@@ -145,9 +146,30 @@ public class EngineExecutePayloadTest {
   }
 
   @Test
+  public void shouldCheckBlockValidityBeforeCheckingByHashForExisting() {
+    BlockHeader realHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader paramHeader = spy(realHeader);
+    when(paramHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.of(mockHash));
+
+    var resp = resp(mockPayload(paramHeader, Collections.emptyList()));
+
+    EngineExecutionResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).isEqualTo(mockHash.toString());
+    assertThat(res.getStatus()).isEqualTo(INVALID.name());
+
+    assertThat(res.getValidationError())
+        .isEqualTo(
+            String.format(
+                "Computed block hash %s does not match block hash parameter %s",
+                realHeader.getBlockHash(), paramHeader.getHash()));
+  }
+
+  @Test
   public void shouldReturnInvalidOnMalformedTransactions() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
-    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
+    //    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any(Hash.class)))
         .thenReturn(Optional.of(mockHash));
 
@@ -203,20 +225,16 @@ public class EngineExecutePayloadTest {
         header.getParentHash(),
         header.getCoinbase(),
         header.getStateRoot(),
-        asUnsingedLongParameter(header.getNumber()),
+        new UnsignedLongParameter(header.getNumber()),
         header.getBaseFee().map(w -> w.toHexString()).orElse("0x0"),
-        asUnsingedLongParameter(header.getGasLimit()),
-        asUnsingedLongParameter(header.getGasUsed()),
-        asUnsingedLongParameter(header.getTimestamp()),
+        new UnsignedLongParameter(header.getGasLimit()),
+        new UnsignedLongParameter(header.getGasUsed()),
+        new UnsignedLongParameter(header.getTimestamp()),
         header.getExtraData().toHexString(),
         header.getReceiptsRoot(),
         header.getLogsBloom(),
         header.getRandom().map(Bytes32::toHexString).orElse("0x0"),
         txs);
-  }
-
-  private UnsignedLongParameter asUnsingedLongParameter(final long val) {
-    return new UnsignedLongParameter(Long.toHexString(val));
   }
 
   private EngineExecutionResult fromSuccessResp(final JsonRpcResponse resp) {
