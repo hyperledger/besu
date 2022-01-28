@@ -27,6 +27,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
@@ -1918,6 +1919,20 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
         .containsExactlyInAnyOrder(ETH.name(), NET.name(), PERM.name());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcApisSupportsEngine() {
+    parseCommand("--rpc-http-api", "ENGINE", "--rpc-http-enabled");
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
+        .containsExactlyInAnyOrder(ENGINE.name());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();

@@ -547,13 +547,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Integer rpcHttpPort = DEFAULT_JSON_RPC_PORT;
 
-  /*
+
   @Option(
       names = {"--engine-rpc-http-port"},
       paramLabel = MANDATORY_PORT_FORMAT_HELP,
-      description = "Port for providing consensus client APIS on (default: ${DEFAULT-VALUE})",
+      description = "Port for provide consensus client APIS on (default: ${DEFAULT-VALUE})",
       arity = "1")
-  */
   private final Integer engineRpcHttpPort = DEFAULT_ENGINE_JSON_RPC_PORT;
 
   @Option(
