@@ -7,6 +7,7 @@
 - Updated besu-native to version 0.4.3 [#3331](https://github.com/hyperledger/besu/pull/3331)
 
 ### Bug Fixes
+- Prevent node from peering to itself [#3342](https://github.com/hyperledger/besu/pull/3342)
 
 
 ## 22.1.0-RC3
