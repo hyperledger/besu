@@ -14,19 +14,30 @@
  */
 package org.hyperledger.besu.util;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
+import java.util.ArrayDeque;
 import java.util.function.Supplier;
 
 import org.apache.logging.log4j.Level;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Slf4jLambdaHelperTest {
   private static final Logger LOG = LoggerFactory.getLogger(Slf4jLambdaHelperTest.class);
+  private static final ArrayDeque<String> paramStack = new ArrayDeque<>();
+
+  @Before
+  public void paramSetup() {
+    paramStack.push("stuff");
+    paramStack.push("more stuff");
+    paramStack.push("last stuff");
+  }
 
   @Test
   public void smokeDebugLambda() {
@@ -39,8 +50,11 @@ public class Slf4jLambdaHelperTest {
               throw new RuntimeException("should not evaluate");
             });
     Log4j2ConfiguratorUtil.setLevelDebug(LOG.getName());
-    debugLambda(LOG, "blah {}", () -> "stuff");
-    debugLambda(LOG, "blah {} {}", () -> "stuff", () -> "stuff2");
+    assertThat(paramStack.size()).isEqualTo(3);
+    debugLambda(LOG, "blah {}", paramStack::pop);
+    assertThat(paramStack.size()).isEqualTo(2);
+    debugLambda(LOG, "blah {} {}", paramStack::pop, paramStack::pop);
+    assertThat(paramStack.size()).isEqualTo(0);
   }
 
   @Test
@@ -53,8 +67,11 @@ public class Slf4jLambdaHelperTest {
               throw new RuntimeException("should not evaluate");
             });
     Log4j2ConfiguratorUtil.setLevel(LOG.getName(), Level.TRACE);
-    traceLambda(LOG, "blah {}", () -> "stuff");
-    traceLambda(LOG, "blah {} {}", () -> "stuff", () -> "stuff2");
+    assertThat(paramStack.size()).isEqualTo(3);
+    traceLambda(LOG, "blah {}", paramStack::pop);
+    assertThat(paramStack.size()).isEqualTo(2);
+    traceLambda(LOG, "blah {} {}", paramStack::pop, paramStack::pop);
+    assertThat(paramStack.size()).isEqualTo(0);
   }
 
   @Test
@@ -68,7 +85,10 @@ public class Slf4jLambdaHelperTest {
               throw new RuntimeException("should not evaluate");
             });
     Log4j2ConfiguratorUtil.setLevel(LOG.getName(), Level.WARN);
-    warnLambda(LOG, "blah {}", () -> "stuff");
-    warnLambda(LOG, "blah {} {}", () -> "stuff", () -> "stuff2");
+    assertThat(paramStack.size()).isEqualTo(3);
+    warnLambda(LOG, "blah {}", paramStack::pop);
+    assertThat(paramStack.size()).isEqualTo(2);
+    warnLambda(LOG, "blah {} {}", paramStack::pop, paramStack::pop);
+    assertThat(paramStack.size()).isEqualTo(0);
   }
 }
