@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.VALID;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
@@ -80,15 +81,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
       return respondWith(reqId, null, SYNCING, null);
     }
 
-    // we already have this payload
-    if (protocolContext.getBlockchain().getBlockByHash(blockParam.getBlockHash()).isPresent()) {
-      LOG.debug("block already present");
-      return respondWith(reqId, blockParam.getBlockHash(), VALID, null);
-    }
-
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("blockparam: {}", Json.encodePrettily(blockParam));
-    }
+    traceLambda(LOG, "blockparam: {}", () -> Json.encodePrettily(blockParam));
 
     final List<Transaction> transactions;
     try {
@@ -126,6 +119,25 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
             0,
             headerFunctions);
 
+    String errorMessage = null;
+
+    // ensure the block hash matches the blockParam hash
+    if (!newBlockHeader.getHash().equals(blockParam.getBlockHash())) {
+      errorMessage =
+          String.format(
+              "Computed block hash %s does not match block hash parameter %s",
+              newBlockHeader.getBlockHash(), blockParam.getBlockHash());
+    } else {
+      // do we already have this payload
+      if (protocolContext
+          .getBlockchain()
+          .getBlockByHash(newBlockHeader.getBlockHash())
+          .isPresent()) {
+        LOG.debug("block already present");
+        return respondWith(reqId, blockParam.getBlockHash(), VALID, null);
+      }
+    }
+
     final var block =
         new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
     final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(newBlockHeader);
@@ -134,22 +146,8 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
       return respondWith(reqId, null, SYNCING, null);
     }
 
-    boolean execSuccess = false;
-    String errorMessage = null;
-    // ensure the block hash matches the blockParam hash
-    if (newBlockHeader.getHash().equals(blockParam.getBlockHash())) {
-
-      // execute block
-      execSuccess = mergeCoordinator.executeBlock(block);
-    } else {
-      errorMessage =
-          String.format(
-              "Computed block hash %s does not match block hash parameter %s",
-              newBlockHeader.getBlockHash(), blockParam.getBlockHash());
-    }
-
-    // return result response
-    if (execSuccess) {
+    // execute block and return result response
+    if (errorMessage == null && mergeCoordinator.executeBlock(block)) {
       return respondWith(reqId, newBlockHeader.getHash(), VALID, errorMessage);
     } else {
       return respondWith(reqId, latestValidAncestor.get(), INVALID, errorMessage);
