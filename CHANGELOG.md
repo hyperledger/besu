@@ -1,6 +1,5 @@
 # Changelog
 ## 22.1.0
-- Add `--ec-curve` parameter to export/export-address public-key subcommands [#3333](https://github.com/hyperledger/besu/pull/3333)
 
 ### Bug Fixes
 - add a websocket frame size configuration CLI parameter [3368][https://github.com/hyperledger/besu/pull/3379]
