@@ -19,11 +19,14 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.UnmatchedArgumentException;
 
+@RunWith(MockitoJUnitRunner.class)
 public class PicoCLIOptionsImplTest {
 
   @Command

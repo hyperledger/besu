@@ -54,9 +54,12 @@ import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
+@RunWith(MockitoJUnitRunner.class)
 public class OperatorSubCommandTest extends CommandTestAbstract {
 
   private static final String EXPECTED_OPERATOR_USAGE =
