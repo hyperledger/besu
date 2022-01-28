@@ -31,35 +31,44 @@ public class Slf4jLambdaHelperTest {
   @Test
   public void smokeDebugLambda() {
     Log4j2ConfiguratorUtil.setLevel(LOG.getName(), Level.WARN);
-    debugLambda(LOG, "blah", (Supplier<String>) () -> {
-      throw new RuntimeException("should not evaluate");
-    }
-    );
+    debugLambda(
+        LOG,
+        "blah",
+        (Supplier<String>)
+            () -> {
+              throw new RuntimeException("should not evaluate");
+            });
     Log4j2ConfiguratorUtil.setLevelDebug(LOG.getName());
-    debugLambda(LOG,"blah {}", () -> "stuff");
-    debugLambda(LOG,"blah {} {}", () -> "stuff", () -> "stuff2");
+    debugLambda(LOG, "blah {}", () -> "stuff");
+    debugLambda(LOG, "blah {} {}", () -> "stuff", () -> "stuff2");
   }
 
   @Test
   public void smokeTraceLambda() {
-    traceLambda(LOG, "blah", (Supplier<String>) () -> {
-          throw new RuntimeException("should not evaluate");
-        }
-    );
+    traceLambda(
+        LOG,
+        "blah",
+        (Supplier<String>)
+            () -> {
+              throw new RuntimeException("should not evaluate");
+            });
     Log4j2ConfiguratorUtil.setLevel(LOG.getName(), Level.TRACE);
-    traceLambda(LOG,"blah {}", () -> "stuff");
-    traceLambda(LOG,"blah {} {}", () -> "stuff", () -> "stuff2");
+    traceLambda(LOG, "blah {}", () -> "stuff");
+    traceLambda(LOG, "blah {} {}", () -> "stuff", () -> "stuff2");
   }
 
   @Test
   public void smokeWarnLambda() {
     Log4j2ConfiguratorUtil.setLevel(LOG.getName(), Level.OFF);
-    traceLambda(LOG, "blah", (Supplier<String>) () -> {
-          throw new RuntimeException("should not evaluate");
-        }
-    );
+    traceLambda(
+        LOG,
+        "blah",
+        (Supplier<String>)
+            () -> {
+              throw new RuntimeException("should not evaluate");
+            });
     Log4j2ConfiguratorUtil.setLevel(LOG.getName(), Level.WARN);
-    warnLambda(LOG,"blah {}", () -> "stuff");
-    warnLambda(LOG,"blah {} {}", () -> "stuff", () -> "stuff2");
+    warnLambda(LOG, "blah {}", () -> "stuff");
+    warnLambda(LOG, "blah {} {}", () -> "stuff", () -> "stuff2");
   }
 }
