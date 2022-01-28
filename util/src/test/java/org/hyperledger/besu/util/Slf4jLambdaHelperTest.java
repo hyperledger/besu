@@ -54,7 +54,7 @@ public class Slf4jLambdaHelperTest {
     debugLambda(LOG, "blah {}", paramStack::pop);
     assertThat(paramStack.size()).isEqualTo(2);
     debugLambda(LOG, "blah {} {}", paramStack::pop, paramStack::pop);
-    assertThat(paramStack.size()).isEqualTo(0);
+    assertThat(paramStack.size()).isZero();
   }
 
   @Test
@@ -71,7 +71,7 @@ public class Slf4jLambdaHelperTest {
     traceLambda(LOG, "blah {}", paramStack::pop);
     assertThat(paramStack.size()).isEqualTo(2);
     traceLambda(LOG, "blah {} {}", paramStack::pop, paramStack::pop);
-    assertThat(paramStack.size()).isEqualTo(0);
+    assertThat(paramStack.size()).isZero();
   }
 
   @Test
@@ -89,6 +89,6 @@ public class Slf4jLambdaHelperTest {
     warnLambda(LOG, "blah {}", paramStack::pop);
     assertThat(paramStack.size()).isEqualTo(2);
     warnLambda(LOG, "blah {} {}", paramStack::pop, paramStack::pop);
-    assertThat(paramStack.size()).isEqualTo(0);
+    assertThat(paramStack.size()).isZero();
   }
 }
