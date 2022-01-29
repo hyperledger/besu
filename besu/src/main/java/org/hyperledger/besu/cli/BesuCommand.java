@@ -1674,17 +1674,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--remote-connections-max-percentage"));
 
     // Check that block producer options work
-    CommandLineUtils.checkOptionDependencies(
-        logger,
-        commandLine,
-        "--miner-enabled or --Xmerge-support",
-        !(isMiningEnabled || isMergeEnabled()),
-        asList(
-            "--miner-coinbase",
-            "--min-gas-price",
-            "--min-block-occupancy-ratio",
-            "--miner-extra-data"));
-
+    if (!isMergeEnabled()) {
+      CommandLineUtils.checkOptionDependencies(
+          logger,
+          commandLine,
+          "--miner-enabled",
+          !isMiningEnabled,
+          asList(
+              "--miner-coinbase",
+              "--min-gas-price",
+              "--min-block-occupancy-ratio",
+              "--miner-extra-data"));
+    }
     // Check that mining options are able to work
     CommandLineUtils.checkOptionDependencies(
         logger,

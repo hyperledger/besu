@@ -15,7 +15,6 @@
 package org.hyperledger.besu.cli.options.unstable;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,9 +51,10 @@ public class MergeOptionsTest {
   }
 
   @Test
-  public void shouldThrowOnReconfigure() {
-    assertThatThrownBy(
-            () -> org.hyperledger.besu.config.experimental.MergeOptions.setMergeEnabled(false))
-        .isInstanceOf(RuntimeException.class);
+  public void shouldRefuseToDisableMergeOnceSet() {
+    org.hyperledger.besu.config.experimental.MergeOptions.setMergeEnabled(true);
+    assertThat(org.hyperledger.besu.config.experimental.MergeOptions.isMergeEnabled()).isTrue();
+    org.hyperledger.besu.config.experimental.MergeOptions.setMergeEnabled(false);
+    assertThat(org.hyperledger.besu.config.experimental.MergeOptions.isMergeEnabled()).isTrue();
   }
 }
