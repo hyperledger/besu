@@ -331,6 +331,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     return backwardsSyncContext.isSyncing();
   }
 
+  @Override
+  public boolean isMiningBeforeMerge() {
+    return miningParameters.isMiningEnabled();
+  }
+
   private Optional<Hash> findValidAncestor(
       final Blockchain chain, final Hash parentHash, final BadBlockManager badBlocks) {
 
