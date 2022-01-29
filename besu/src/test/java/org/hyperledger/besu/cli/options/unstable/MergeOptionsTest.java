@@ -31,7 +31,7 @@ public class MergeOptionsTest {
   @Test
   public void shouldBeDisabledByDefault() {
     // disabledByDefault
-    assertThat(MergeOptions.create().isMergeEnabled()).isFalse();
+    assertThat(MergeOptions.isMergeEnabled()).isFalse();
   }
 
   @Test
