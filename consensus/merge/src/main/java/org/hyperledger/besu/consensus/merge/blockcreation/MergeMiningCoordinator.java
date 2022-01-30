@@ -40,4 +40,6 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   Optional<Hash> getLatestValidAncestor(BlockHeader blockheader);
 
   boolean isBackwardSyncing();
+
+  boolean isMiningBeforeMerge();
 }

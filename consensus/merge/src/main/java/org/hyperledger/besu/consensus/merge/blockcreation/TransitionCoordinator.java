@@ -44,7 +44,9 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
 
   @Override
   public void start() {
-    miningCoordinator.start();
+    if (isMiningBeforeMerge()) {
+      miningCoordinator.start();
+    }
   }
 
   @Override
@@ -142,5 +144,10 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   @Override
   public boolean isBackwardSyncing() {
     return mergeCoordinator.isBackwardSyncing();
+  }
+
+  @Override
+  public boolean isMiningBeforeMerge() {
+    return mergeCoordinator.isMiningBeforeMerge();
   }
 }
