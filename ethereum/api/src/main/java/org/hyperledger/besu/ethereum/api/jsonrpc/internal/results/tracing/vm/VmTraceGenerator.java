@@ -178,7 +178,7 @@ public class VmTraceGenerator {
         } else {
           if (currentTraceFrame.getPrecompiledGasCost().isPresent()) {
             op.setCost(op.getCost() + currentTraceFrame.getPrecompiledGasCost().get().toLong());
-          } else if (currentOperation.equals("STATICCALL")
+          } else if ((currentOperation.equals("STATICCALL") || currentOperation.equals("CALL"))
               && nextTraceFrame.map(TraceFrame::getDepth).orElse(0)
                   > currentTraceFrame.getDepth()) {
             op.setCost(currentTraceFrame.getGasRemainingPostExecution().toLong() + op.getCost());

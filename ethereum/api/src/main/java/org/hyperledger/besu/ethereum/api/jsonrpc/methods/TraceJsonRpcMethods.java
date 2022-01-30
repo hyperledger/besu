@@ -34,11 +34,15 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule protocolSchedule;
+  private final PrivacyParameters privacyParameters;
 
   TraceJsonRpcMethods(
-      final BlockchainQueries blockchainQueries, final ProtocolSchedule protocolSchedule) {
+      final BlockchainQueries blockchainQueries,
+      final ProtocolSchedule protocolSchedule,
+      final PrivacyParameters privacyParameters) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
+    this.privacyParameters = privacyParameters;
   }
 
   @Override
@@ -68,6 +72,6 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
                 protocolSchedule,
-                PrivacyParameters.DEFAULT)));
+                privacyParameters)));
   }
 }

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceFormatter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceWriter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -106,7 +107,19 @@ public class TraceCall implements JsonRpcMethod {
             tracer.getTraceFrames());
 
     final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
+    final AtomicInteger traceCounter = new AtomicInteger(0);
 
+    if (traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF)) {
+      final StateDiffGenerator stateDiffGenerator = new StateDiffGenerator();
+
+      generateTracesFromTransactionTrace(
+          trace -> resultNode.putPOJO("stateDiff", trace),
+          protocolSchedule,
+          transactionTrace,
+          block,
+          (__, txTrace, currentBlock, ignored) -> stateDiffGenerator.generateStateDiff(txTrace),
+          traceCounter);
+    }
     setNullNodesIfNotPresent(resultNode, "stateDiff");
 
     if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
@@ -115,7 +128,10 @@ public class TraceCall implements JsonRpcMethod {
           protocolSchedule,
           transactionTrace,
           block,
-          FlatTraceGenerator::generateFromTransactionTrace);
+          (protocolSchedule, txTrace, currentBlock, ignored) ->
+              FlatTraceGenerator.generateFromTransactionTrace(
+                  protocolSchedule, txTrace, currentBlock, ignored, false),
+          traceCounter);
     }
     setEmptyArrayIfNotPresent(resultNode, "trace");
 
@@ -126,7 +142,8 @@ public class TraceCall implements JsonRpcMethod {
           transactionTrace,
           block,
           (protocolSchedule, txTrace, currentBlock, ignored) ->
-              new VmTraceGenerator(transactionTrace).generateTraceStream());
+              new VmTraceGenerator(transactionTrace).generateTraceStream(),
+          traceCounter);
     }
     setNullNodesIfNotPresent(resultNode, "vmTrace");
 
@@ -173,9 +190,10 @@ public class TraceCall implements JsonRpcMethod {
       final ProtocolSchedule protocolSchedule,
       final TransactionTrace transactionTrace,
       final Block block,
-      final TraceFormatter formatter) {
+      final TraceFormatter formatter,
+      final AtomicInteger traceCounter) {
     formatter
-        .format(protocolSchedule, transactionTrace, block, new AtomicInteger(0))
+        .format(protocolSchedule, transactionTrace, block, traceCounter)
         .forEachOrdered(writer::write);
   }
 

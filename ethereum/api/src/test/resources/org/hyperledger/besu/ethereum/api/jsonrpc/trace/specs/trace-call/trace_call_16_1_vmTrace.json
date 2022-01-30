@@ -1,0 +1,316 @@
+{
+  "comment" : "Set contract storage (key,value)'s: (1,3),(2,4)",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_call",
+    "params" : [ {
+      "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+      "to" : "0x0060000000000000000000000000000000000000",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0xef",
+      "value" : "0x0",
+      "data" : "0x00000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004",
+      "nonce" : "0x0"
+    }, [ "vmTrace" ], "latest" ],
+    "id" : 91
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "stateDiff" : null,
+      "trace" : [ ],
+      "vmTrace" : {
+        "code" : "0x602060006020360380602060003760006000355af460206000f3",
+        "ops" : [ {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x20" ],
+            "store" : null,
+            "used" : 16755499
+          },
+          "pc" : 0,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x0" ],
+            "store" : null,
+            "used" : 16755496
+          },
+          "pc" : 2,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x20" ],
+            "store" : null,
+            "used" : 16755493
+          },
+          "pc" : 4,
+          "sub" : null
+        }, {
+          "cost" : 2,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0xa0" ],
+            "store" : null,
+            "used" : 16755491
+          },
+          "pc" : 6,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x80" ],
+            "store" : null,
+            "used" : 16755488
+          },
+          "pc" : 7,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x80", "0x80" ],
+            "store" : null,
+            "used" : 16755485
+          },
+          "pc" : 8,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x20" ],
+            "store" : null,
+            "used" : 16755482
+          },
+          "pc" : 9,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x0" ],
+            "store" : null,
+            "used" : 16755479
+          },
+          "pc" : 11,
+          "sub" : null
+        }, {
+          "cost" : 27,
+          "ex" : {
+            "mem" : {
+              "data" : "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004",
+              "off" : 0
+            },
+            "push" : [ ],
+            "store" : null,
+            "used" : 16755452
+          },
+          "pc" : 13,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x0" ],
+            "store" : null,
+            "used" : 16755449
+          },
+          "pc" : 14,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x0" ],
+            "store" : null,
+            "used" : 16755446
+          },
+          "pc" : 16,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x10000000000000000000000000000000000000" ],
+            "store" : null,
+            "used" : 16755443
+          },
+          "pc" : 18,
+          "sub" : null
+        }, {
+          "cost" : 2,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0xffaaf1" ],
+            "store" : null,
+            "used" : 16755441
+          },
+          "pc" : 19,
+          "sub" : null
+        }, {
+          "cost" : 16493649,
+          "ex" : {
+            "mem" : {
+              "data" : "0x0000000000000000000000000000000000000000000000000000000000000001",
+              "off" : 0
+            },
+            "push" : [ "0x1" ],
+            "store" : null,
+            "used" : 16714717
+          },
+          "pc" : 20,
+          "sub" : {
+            "code" : "0x6020356000355560603560403555",
+            "ops" : [ {
+              "cost" : 3,
+              "ex" : {
+                "mem" : null,
+                "push" : [ "0x20" ],
+                "store" : null,
+                "used" : 16492946
+              },
+              "pc" : 0,
+              "sub" : null
+            }, {
+              "cost" : 3,
+              "ex" : {
+                "mem" : null,
+                "push" : [ "0x3" ],
+                "store" : null,
+                "used" : 16492943
+              },
+              "pc" : 2,
+              "sub" : null
+            }, {
+              "cost" : 3,
+              "ex" : {
+                "mem" : null,
+                "push" : [ "0x0" ],
+                "store" : null,
+                "used" : 16492940
+              },
+              "pc" : 3,
+              "sub" : null
+            }, {
+              "cost" : 3,
+              "ex" : {
+                "mem" : null,
+                "push" : [ "0x1" ],
+                "store" : null,
+                "used" : 16492937
+              },
+              "pc" : 5,
+              "sub" : null
+            }, {
+              "cost" : 20000,
+              "ex" : {
+                "mem" : null,
+                "push" : [ ],
+                "store" : {
+                  "key" : "0x1",
+                  "val" : "0x3"
+                },
+                "used" : 16472937
+              },
+              "pc" : 6,
+              "sub" : null
+            }, {
+              "cost" : 3,
+              "ex" : {
+                "mem" : null,
+                "push" : [ "0x60" ],
+                "store" : null,
+                "used" : 16472934
+              },
+              "pc" : 7,
+              "sub" : null
+            }, {
+              "cost" : 3,
+              "ex" : {
+                "mem" : null,
+                "push" : [ "0x4" ],
+                "store" : null,
+                "used" : 16472931
+              },
+              "pc" : 9,
+              "sub" : null
+            }, {
+              "cost" : 3,
+              "ex" : {
+                "mem" : null,
+                "push" : [ "0x40" ],
+                "store" : null,
+                "used" : 16472928
+              },
+              "pc" : 10,
+              "sub" : null
+            }, {
+              "cost" : 3,
+              "ex" : {
+                "mem" : null,
+                "push" : [ "0x2" ],
+                "store" : null,
+                "used" : 16472925
+              },
+              "pc" : 12,
+              "sub" : null
+            }, {
+              "cost" : 20000,
+              "ex" : {
+                "mem" : null,
+                "push" : [ ],
+                "store" : {
+                  "key" : "0x2",
+                  "val" : "0x4"
+                },
+                "used" : 16452925
+              },
+              "pc" : 13,
+              "sub" : null
+            } ]
+          }
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x20" ],
+            "store" : null,
+            "used" : 16714714
+          },
+          "pc" : 21,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x0" ],
+            "store" : null,
+            "used" : 16714711
+          },
+          "pc" : 23,
+          "sub" : null
+        }, {
+          "cost" : 0,
+          "ex" : {
+            "mem" : null,
+            "push" : [ ],
+            "store" : null,
+            "used" : 16714711
+          },
+          "pc" : 25,
+          "sub" : null
+        } ]
+      }
+    },
+    "id" : 91
+  },
+  "statusCode" : 200
+}
