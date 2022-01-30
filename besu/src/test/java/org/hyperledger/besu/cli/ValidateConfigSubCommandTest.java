@@ -24,8 +24,11 @@ import java.nio.file.Path;
 
 import com.google.common.io.Resources;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import picocli.CommandLine.Model.CommandSpec;
 
+@RunWith(MockitoJUnitRunner.class)
 public class ValidateConfigSubCommandTest extends CommandTestAbstract {
 
   private static final String EXPECTED_PUBLIC_KEY_USAGE =

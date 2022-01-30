@@ -23,7 +23,10 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class EthProtocolOptionsTest
     extends AbstractCLIOptionsTest<EthProtocolConfiguration, EthProtocolOptions> {
 
