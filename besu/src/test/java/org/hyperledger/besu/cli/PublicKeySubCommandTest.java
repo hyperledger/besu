@@ -35,8 +35,11 @@ import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import picocli.CommandLine.Model.CommandSpec;
 
+@RunWith(MockitoJUnitRunner.class)
 public class PublicKeySubCommandTest extends CommandTestAbstract {
 
   private static final String EXPECTED_PUBLIC_KEY_USAGE =

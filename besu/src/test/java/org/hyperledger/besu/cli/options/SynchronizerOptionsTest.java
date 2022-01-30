@@ -21,7 +21,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.collect.Range;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class SynchronizerOptionsTest
     extends AbstractCLIOptionsTest<SynchronizerConfiguration.Builder, SynchronizerOptions> {
 
