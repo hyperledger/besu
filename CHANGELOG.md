@@ -3,11 +3,10 @@
 
 ### 22.1.0 Breaking Changes
 
+## 22.1.0-RC4
+
 ### Additions and Improvements
 - Updated besu-native to version 0.4.3 [#3331](https://github.com/hyperledger/besu/pull/3331)
-
-### Bug Fixes
-
 
 ## 22.1.0-RC3
 - Changing the order in which we traverse the word state tree during fast sync. This should improve fast sync during subsequent pivot changes.
