@@ -169,8 +169,9 @@ public class TraceCall implements JsonRpcMethod {
   private TraceOptions buildTraceOptions(final Set<TraceTypeParameter.TraceType> traceTypes) {
     return new TraceOptions(
         traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF),
-        traceTypes.contains(TraceTypeParameter.TraceType.TRACE),
-        traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE));
+        false,
+        traceTypes.contains(TraceTypeParameter.TraceType.TRACE)
+            || traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE));
   }
 
   private void parseRevertReasonToOutput(
