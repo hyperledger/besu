@@ -345,7 +345,13 @@ public class BlockPropagationManager {
       final Optional<Hash> blockHash) {
     final RetryingGetBlockFromPeersTask getBlockTask =
         RetryingGetBlockFromPeersTask.create(
-            protocolContext, protocolSchedule, ethContext, blockHash, blockNumber, metricsSystem);
+            protocolContext,
+            protocolSchedule,
+            ethContext,
+            metricsSystem,
+            ethContext.getEthPeers().getMaxPeers(),
+            blockHash,
+            blockNumber);
     preferredPeer.ifPresent(getBlockTask::assignPeer);
 
     return ethContext

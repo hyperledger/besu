@@ -36,8 +36,6 @@ import org.slf4j.LoggerFactory;
 public class RetryingGetBlockFromPeersTask
     extends AbstractRetryingPeerTask<AbstractPeerTask.PeerTaskResult<Block>> {
 
-  private static final int DEFAULT_RETRIES = 25;
-
   private static final Logger LOG = LoggerFactory.getLogger(RetryingGetBlockFromPeersTask.class);
 
   private final ProtocolContext protocolContext;
@@ -51,9 +49,9 @@ public class RetryingGetBlockFromPeersTask
       final EthContext ethContext,
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
+      final int maxRetries,
       final Optional<Hash> blockHash,
-      final long blockNumber,
-      final int maxRetries) {
+      final long blockNumber) {
     super(ethContext, maxRetries, Objects::isNull, metricsSystem);
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -65,17 +63,18 @@ public class RetryingGetBlockFromPeersTask
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
+      final MetricsSystem metricsSystem,
+      final int maxRetries,
       final Optional<Hash> hash,
-      final long blockNumber,
-      final MetricsSystem metricsSystem) {
+      final long blockNumber) {
     return new RetryingGetBlockFromPeersTask(
         protocolContext,
         ethContext,
         protocolSchedule,
         metricsSystem,
+        maxRetries,
         hash,
-        blockNumber,
-        DEFAULT_RETRIES);
+        blockNumber);
   }
 
   @Override

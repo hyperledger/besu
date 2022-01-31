@@ -189,7 +189,7 @@ public class RetestethContext {
 
     // mining support
 
-    final EthPeers ethPeers = new EthPeers("reteseth", retestethClock, metricsSystem);
+    final EthPeers ethPeers = new EthPeers("reteseth", retestethClock, metricsSystem, 0);
     final SyncState syncState = new SyncState(blockchain, ethPeers);
 
     ethScheduler = new EthScheduler(1, 1, 1, 1, metricsSystem);
