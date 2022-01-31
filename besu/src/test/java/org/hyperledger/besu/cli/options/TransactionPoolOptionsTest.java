@@ -24,7 +24,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import java.time.Duration;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class TransactionPoolOptionsTest
     extends AbstractCLIOptionsTest<
         ImmutableTransactionPoolConfiguration.Builder, TransactionPoolOptions> {

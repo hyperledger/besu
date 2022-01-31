@@ -93,8 +93,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link Runner}. */
+@RunWith(MockitoJUnitRunner.class)
 public final class RunnerTest {
 
   private static final int MAX_OPEN_FILES = 1024;

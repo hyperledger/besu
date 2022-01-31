@@ -22,7 +22,10 @@ import java.math.BigInteger;
 import com.google.common.collect.Range;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class OptionParserTest {
 
   @Test
