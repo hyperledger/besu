@@ -94,7 +94,7 @@ public class RetryingGetBlockFromPeersTask
 
     getBlockTask.assignPeer(
         assignedPeer
-            .filter(__ -> getRetryCount() == 1) // first try with the assigned preferred peer
+            .filter(unused -> getRetryCount() == 1) // first try with the assigned preferred peer
             .orElseGet( // then selecting a new one from the pool
                 () -> {
                   assignPeer(selectNextPeer());

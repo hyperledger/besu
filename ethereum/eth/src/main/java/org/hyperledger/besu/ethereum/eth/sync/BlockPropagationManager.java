@@ -130,21 +130,21 @@ public class BlockPropagationManager {
       readyForImport = pendingBlocksManager.childrenOf(newBlock.getHash());
     }
 
-    if (LOG.isTraceEnabled()) {
-      LOG.trace(
-          "Block added event type {} for block {}. Current status {}",
-          blockAddedEvent.getEventType(),
-          newBlock.toLogString(),
-          this);
-    }
+    logAtTrace(
+        () ->
+            LOG.trace(
+                "Block added event type {} for block {}. Current status {}",
+                blockAddedEvent.getEventType(),
+                newBlock.toLogString(),
+                this));
 
     if (!readyForImport.isEmpty()) {
-      if (LOG.isTraceEnabled()) {
-        LOG.trace(
-            "Ready to import pending blocks found [{}] for block {}",
-            readyForImport.stream().map(Block::toLogString).collect(Collectors.joining(", ")),
-            newBlock.toLogString());
-      }
+      logAtTrace(
+          () ->
+              LOG.trace(
+                  "Ready to import pending blocks found [{}] for block {}",
+                  readyForImport.stream().map(Block::toLogString).collect(Collectors.joining(", ")),
+                  newBlock.toLogString()));
 
       final Supplier<CompletableFuture<List<Block>>> importBlocksTask =
           PersistBlockTask.forUnorderedBlocks(
@@ -168,7 +168,11 @@ public class BlockPropagationManager {
               });
     } else {
 
-      LOG.trace("There are no pending blocks ready to import for block {}", newBlock.toLogString());
+      logAtTrace(
+          () ->
+              LOG.trace(
+                  "There are no pending blocks ready to import for block {}",
+                  newBlock.toLogString()));
 
       maybeProcessNonAnnouncedBlocks(newBlock);
     }
@@ -213,13 +217,14 @@ public class BlockPropagationManager {
     final NewBlockMessage newBlockMessage = NewBlockMessage.readFrom(message.getData());
     try {
       final Block block = newBlockMessage.block(protocolSchedule);
-      if (LOG.isTraceEnabled()) {
-        LOG.trace(
-            "New block from network {} from peer {}. Current status {}",
-            block.toLogString(),
-            message.getPeer(),
-            this);
-      }
+      logAtTrace(
+          () ->
+              LOG.trace(
+                  "New block from network {} from peer {}. Current status {}",
+                  block.toLogString(),
+                  message.getPeer(),
+                  this));
+
       final Difficulty totalDifficulty = newBlockMessage.totalDifficulty(protocolSchedule);
 
       message.getPeer().chainState().updateForAnnouncedBlock(block.getHeader(), totalDifficulty);
@@ -229,21 +234,23 @@ public class BlockPropagationManager {
       final long bestChainHeight = syncState.bestChainHeight(localChainHeight);
       if (!shouldImportBlockAtHeight(
           block.getHeader().getNumber(), localChainHeight, bestChainHeight)) {
-        if (LOG.isTraceEnabled()) {
-          LOG.trace(
-              "Do not import new block from network {}, current chain heights are: local {}, best {}",
-              block.toLogString(),
-              localChainHeight,
-              bestChainHeight);
-        }
+        logAtTrace(
+            () ->
+                LOG.trace(
+                    "Do not import new block from network {}, current chain heights are: local {}, best {}",
+                    block.toLogString(),
+                    localChainHeight,
+                    bestChainHeight));
         return;
       }
       if (pendingBlocksManager.contains(block.getHash())) {
-        LOG.trace("New block from network {} is already pending", block.toLogString());
+        logAtTrace(
+            () -> LOG.trace("New block from network {} is already pending", block.toLogString()));
         return;
       }
       if (blockchain.contains(block.getHash())) {
-        LOG.trace("New block from network {} is already present", block.toLogString());
+        logAtTrace(
+            () -> LOG.trace("New block from network {} is already present", block.toLogString()));
         return;
       }
 
@@ -265,13 +272,13 @@ public class BlockPropagationManager {
       // Register announced blocks
       final List<NewBlockHash> announcedBlocks =
           Lists.newArrayList(newBlockHashesMessage.getNewHashes());
-      if (LOG.isTraceEnabled()) {
-        LOG.trace(
-            "New block hashes from network {} from peer {}. Current status {}",
-            toLogString(announcedBlocks),
-            message.getPeer(),
-            this);
-      }
+      logAtTrace(
+          () ->
+              LOG.trace(
+                  "New block hashes from network {} from peer {}. Current status {}",
+                  toLogString(announcedBlocks),
+                  message.getPeer(),
+                  this));
 
       for (final NewBlockHash announcedBlock : announcedBlocks) {
         message.getPeer().registerKnownBlock(announcedBlock.hash());
@@ -375,7 +382,7 @@ public class BlockPropagationManager {
     // Synchronize to avoid race condition where block import event fires after the
     // blockchain.contains() check and before the block is registered, causing onBlockAdded() to be
     // invoked for the parent of this block before we are able to register it.
-    LOG.trace("Import or save pending block {}", block.toLogString());
+    logAtTrace(() -> LOG.trace("Import or save pending block {}", block.toLogString()));
 
     synchronized (pendingBlocksManager) {
       if (!protocolContext.getBlockchain().contains(block.getHeader().getParentHash())) {
@@ -388,12 +395,12 @@ public class BlockPropagationManager {
     }
 
     if (!importingBlocks.add(block.getHash())) {
-      LOG.trace("We're already importing this block {}", block.toLogString());
+      logAtTrace(() -> LOG.trace("We're already importing this block {}", block.toLogString()));
       return CompletableFuture.completedFuture(block);
     }
 
     if (protocolContext.getBlockchain().contains(block.getHash())) {
-      LOG.trace("We've already imported this block {}", block.toLogString());
+      logAtTrace(() -> LOG.trace("We've already imported this block {}", block.toLogString()));
       importingBlocks.remove(block.getHash());
       return CompletableFuture.completedFuture(block);
     }
@@ -470,6 +477,12 @@ public class BlockPropagationManager {
     return newBlockHashs.stream()
         .map(NewBlockHash::toString)
         .collect(Collectors.joining(", ", "[", "]"));
+  }
+
+  private static void logAtTrace(final Runnable log) {
+    if (LOG.isTraceEnabled()) {
+      log.run();
+    }
   }
 
   @Override
