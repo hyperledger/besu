@@ -181,28 +181,31 @@ public class BlockPropagationManager {
   }
 
   private void maybeProcessNonAnnouncedBlocks(final Block newBlock) {
-    pendingBlocksManager
-        .lowestAnnouncedBlock()
-        .map(ProcessableBlockHeader::getNumber)
-        .ifPresent(
-            minAnnouncedBlockNumber -> {
-              long distance =
-                  minAnnouncedBlockNumber
-                      - protocolContext.getBlockchain().getChainHeadBlockNumber();
-              LOG.trace(
-                  "Found lowest announced block {} with distance {}",
-                  minAnnouncedBlockNumber,
-                  distance);
-              long firstNonAnnouncedBlockNumber = newBlock.getHeader().getNumber() + 1;
+    final long localHeadBlockNumber = protocolContext.getBlockchain().getChainHeadBlockNumber();
 
-              if (distance < config.getBlockPropagationRange().upperEndpoint()
-                  && minAnnouncedBlockNumber > firstNonAnnouncedBlockNumber) {
+    if (newBlock.getHeader().getNumber() > localHeadBlockNumber) {
+      pendingBlocksManager
+          .lowestAnnouncedBlock()
+          .map(ProcessableBlockHeader::getNumber)
+          .ifPresent(
+              minAnnouncedBlockNumber -> {
+                long distance = minAnnouncedBlockNumber - localHeadBlockNumber;
+                LOG.trace(
+                    "Found lowest announced block {} with distance {}",
+                    minAnnouncedBlockNumber,
+                    distance);
 
-                if (requestedNonAnnouncedBlocks.add(firstNonAnnouncedBlockNumber)) {
-                  retrieveNonAnnouncedBlock(firstNonAnnouncedBlockNumber);
+                long firstNonAnnouncedBlockNumber = newBlock.getHeader().getNumber() + 1;
+
+                if (distance < config.getBlockPropagationRange().upperEndpoint()
+                    && minAnnouncedBlockNumber > firstNonAnnouncedBlockNumber) {
+
+                  if (requestedNonAnnouncedBlocks.add(firstNonAnnouncedBlockNumber)) {
+                    retrieveNonAnnouncedBlock(firstNonAnnouncedBlockNumber);
+                  }
                 }
-              }
-            });
+              });
+    }
   }
 
   private void handleNewBlockFromNetwork(final EthMessage message) {
