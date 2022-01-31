@@ -309,7 +309,6 @@ public class Runner implements AutoCloseable {
     return jsonRpc.map(service -> service.socketAddress().getPort());
   }
 
-  /** @return the port that provides Engine apis, if it is up and running */
   public Optional<Integer> getEngineJsonRpcPort() {
     return engineJsonRpc.map(service -> service.socketAddress().getPort());
   }
