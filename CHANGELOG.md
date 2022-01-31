@@ -5,7 +5,7 @@
 
 ### Additions and Improvements
 - Updated besu-native to version 0.4.3 [#3331](https://github.com/hyperledger/besu/pull/3331)
-
+- Adds ability to specify Engine API endpoint on its own port.
 ### Bug Fixes
 
 
