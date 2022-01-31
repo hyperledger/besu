@@ -46,7 +46,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Suppliers;
 
@@ -147,6 +149,8 @@ public class TraceCall implements JsonRpcMethod {
     }
     setNullNodesIfNotPresent(resultNode, "vmTrace");
 
+    parseRevertReasonToOutput(resultNode, mapper);
+
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), resultNode);
   }
 
@@ -162,6 +166,34 @@ public class TraceCall implements JsonRpcMethod {
         traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF),
         traceTypes.contains(TraceTypeParameter.TraceType.TRACE),
         traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE));
+  }
+
+  private void parseRevertReasonToOutput(final ObjectNode resultNode, final ObjectMapper mapper) {
+    JsonNode revertReason = null;
+    ArrayNode traceNode = mapper.createArrayNode();
+    ArrayNode vmTraceNode = mapper.createArrayNode();
+
+    if (!resultNode.findValue("trace").isEmpty()) {
+      ObjectNode json = mapper.valueToTree(resultNode.findValue("trace").get(0));
+      revertReason = json.findValue("revertReason");
+      if (revertReason != null && !revertReason.textValue().isBlank()) {
+        json.remove("revertReason");
+        traceNode.add(json);
+        resultNode.replace("trace", traceNode);
+      }
+    } else if (!resultNode.findValue("vmTrace").isEmpty()) {
+      ObjectNode json = mapper.valueToTree(resultNode.findValue("vmTrace").get(0));
+      revertReason = json.findValue("revertReason");
+      if (revertReason != null && !revertReason.textValue().isBlank()) {
+        json.remove("revertReason");
+        vmTraceNode.add(json);
+        resultNode.replace("vmTrace", vmTraceNode);
+      }
+    }
+
+    if (!(revertReason == null) && resultNode.findValue("output").textValue().equals("0x")) {
+      resultNode.replace("output", revertReason);
+    }
   }
 
   private Optional<BlockHeader> resolveBlockHeader(
