@@ -50,7 +50,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 
 public class TraceCall implements JsonRpcMethod {
   private final Supplier<BlockchainQueries> blockchainQueries;
@@ -149,7 +151,11 @@ public class TraceCall implements JsonRpcMethod {
     }
     setNullNodesIfNotPresent(resultNode, "vmTrace");
 
-    parseRevertReasonToOutput(resultNode, mapper);
+    transactionTrace
+        .getResult()
+        .getRevertReason()
+        .ifPresent(revertReason -> parseRevertReasonToOutput(revertReason, resultNode, mapper));
+    ;
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), resultNode);
   }
@@ -161,38 +167,30 @@ public class TraceCall implements JsonRpcMethod {
   }
 
   private TraceOptions buildTraceOptions(final Set<TraceTypeParameter.TraceType> traceTypes) {
-    // TODO: review if mapping of options is correct
     return new TraceOptions(
         traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF),
         traceTypes.contains(TraceTypeParameter.TraceType.TRACE),
         traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE));
   }
 
-  private void parseRevertReasonToOutput(final ObjectNode resultNode, final ObjectMapper mapper) {
-    JsonNode revertReason = null;
-    ArrayNode traceNode = mapper.createArrayNode();
-    ArrayNode vmTraceNode = mapper.createArrayNode();
-
+  private void parseRevertReasonToOutput(
+      final Bytes revertReason, final ObjectNode resultNode, final ObjectMapper mapper) {
     if (!resultNode.findValue("trace").isEmpty()) {
+      final ArrayNode traceNode = mapper.createArrayNode();
       ObjectNode json = mapper.valueToTree(resultNode.findValue("trace").get(0));
-      revertReason = json.findValue("revertReason");
-      if (revertReason != null && !revertReason.textValue().isBlank()) {
+
+      final JsonNode revertReasonNode = json.findValue("revertReason");
+      if (revertReasonNode != null && !revertReasonNode.textValue().isBlank()) {
         json.remove("revertReason");
         traceNode.add(json);
         resultNode.replace("trace", traceNode);
       }
-    } else if (!resultNode.findValue("vmTrace").isEmpty()) {
-      ObjectNode json = mapper.valueToTree(resultNode.findValue("vmTrace").get(0));
-      revertReason = json.findValue("revertReason");
-      if (revertReason != null && !revertReason.textValue().isBlank()) {
-        json.remove("revertReason");
-        vmTraceNode.add(json);
-        resultNode.replace("vmTrace", vmTraceNode);
-      }
     }
 
-    if (!(revertReason == null) && resultNode.findValue("output").textValue().equals("0x")) {
-      resultNode.replace("output", revertReason);
+    final TextNode outputWithRevertReason =
+        mapper.createArrayNode().textNode(revertReason.toHexString());
+    if (resultNode.findValue("output").textValue().equals("0x")) {
+      resultNode.replace("output", outputWithRevertReason);
     }
   }
 
