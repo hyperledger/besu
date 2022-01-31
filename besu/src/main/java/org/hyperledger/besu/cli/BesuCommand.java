@@ -1902,7 +1902,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final JsonRpcConfiguration engineConfig = JsonRpcConfiguration.createDefault();
     engineConfig.setEnabled(isRpcHttpEnabled);
     engineConfig.setHost(rpcHttpHost);
-    engineConfig.setPort(rpcHttpPort);
+    engineConfig.setPort(engineRpcHttpPort);
     engineConfig.setMaxActiveConnections(rpcHttpMaxConnections);
     engineConfig.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
     engineConfig.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
@@ -1913,7 +1913,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     engineConfig.setAuthenticationAlgorithm(rpcHttpAuthenticationAlgorithm);
     engineConfig.setTlsConfiguration(rpcHttpTlsConfiguration());
     engineConfig.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
-    engineConfig.setPort(engineRpcHttpPort);
     return engineConfig;
   }
 

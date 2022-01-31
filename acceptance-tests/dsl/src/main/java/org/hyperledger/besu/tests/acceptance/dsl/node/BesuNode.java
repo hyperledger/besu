@@ -171,7 +171,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
-    // this.engineJsonRpcConfiguration = engineJsonRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
