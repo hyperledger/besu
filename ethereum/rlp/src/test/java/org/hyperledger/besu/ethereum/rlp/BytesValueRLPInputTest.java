@@ -491,7 +491,7 @@ public class BytesValueRLPInputTest {
     assertThat(in.isDone()).isTrue();
   }
 
-  private void assertOffsetAndSize(RLPInput in, int offset, int size) {
+  private void assertOffsetAndSize(final RLPInput in, final int offset, final int size) {
     assertThat(in.nextOffset()).isEqualTo(offset);
     assertThat(in.nextSize()).isEqualTo(size);
   }
