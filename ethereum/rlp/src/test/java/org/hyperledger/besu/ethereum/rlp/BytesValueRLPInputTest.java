@@ -448,6 +448,62 @@ public class BytesValueRLPInputTest {
   }
 
   @Test
+  public void sizeAndPosition() {
+    final RLPInput in = RLP.input(h("0xc80102c51112c22122"));
+
+    assertThat(in.nextOffset()).isEqualTo(1);
+    assertThat(in.nextSize()).isEqualTo(8);
+    assertThat(in.enterList()).isEqualTo(3);
+
+    assertThat(in.nextOffset()).isEqualTo(1);
+    assertThat(in.nextSize()).isEqualTo(1);
+    assertThat(in.readByte()).isEqualTo((byte) 0x01);
+
+    assertThat(in.nextOffset()).isEqualTo(2);
+    assertThat(in.nextSize()).isEqualTo(1);
+    assertThat(in.readByte()).isEqualTo((byte) 0x02);
+
+    assertThat(in.nextOffset()).isEqualTo(4);
+    assertThat(in.nextSize()).isEqualTo(5);
+    assertThat(in.enterList()).isEqualTo(3);
+
+    assertThat(in.nextOffset()).isEqualTo(4);
+    assertThat(in.nextSize()).isEqualTo(1);
+    assertThat(in.readByte()).isEqualTo((byte) 0x11);
+
+    assertThat(in.nextOffset()).isEqualTo(5);
+    assertThat(in.nextSize()).isEqualTo(1);
+    assertThat(in.readByte()).isEqualTo((byte) 0x12);
+
+    assertThat(in.nextOffset()).isEqualTo(7);
+    assertThat(in.nextSize()).isEqualTo(2);
+    assertThat(in.enterList()).isEqualTo(2);
+
+    assertThat(in.nextOffset()).isEqualTo(7);
+    assertThat(in.nextSize()).isEqualTo(1);
+    assertThat(in.readByte()).isEqualTo((byte) 0x21);
+
+    assertThat(in.nextOffset()).isEqualTo(8);
+    assertThat(in.nextSize()).isEqualTo(1);
+    assertThat(in.readByte()).isEqualTo((byte) 0x22);
+
+    assertThat(in.nextOffset()).isEqualTo(9);
+    assertThat(in.nextSize()).isEqualTo(0);
+    in.leaveList();
+    assertThat(in.isDone()).isFalse();
+
+    assertThat(in.nextOffset()).isEqualTo(9);
+    assertThat(in.nextSize()).isEqualTo(0);
+    in.leaveList();
+    assertThat(in.isDone()).isFalse();
+
+    assertThat(in.nextOffset()).isEqualTo(9);
+    assertThat(in.nextSize()).isEqualTo(0);
+    in.leaveList();
+    assertThat(in.isDone()).isTrue();
+  }
+
+  @Test
   public void ignoreListTail() {
     final RLPInput in = RLP.input(h("0xc80102c51112c22122"));
     assertThat(in.enterList()).isEqualTo(3);

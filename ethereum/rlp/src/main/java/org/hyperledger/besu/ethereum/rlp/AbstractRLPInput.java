@@ -515,6 +515,11 @@ abstract class AbstractRLPInput implements RLPInput {
   }
 
   @Override
+  public int nextOffset() {
+    return Math.toIntExact(currentPayloadOffset);
+  }
+
+  @Override
   public boolean isEndOfCurrentList() {
     return depth > 0 && currentItem >= endOfListOffset[depth - 1];
   }
