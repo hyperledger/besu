@@ -572,7 +572,9 @@ public abstract class AbstractBlockPropagationManagerTest {
         .thenReturn(new CompletableFuture<>());
     final EthContext ethContext =
         new EthContext(
-            new EthPeers("eth", TestClock.fixed(), metricsSystem), new EthMessages(), ethScheduler);
+            new EthPeers("eth", TestClock.fixed(), metricsSystem, 25),
+            new EthMessages(),
+            ethScheduler);
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
             syncConfig,
@@ -629,7 +631,9 @@ public abstract class AbstractBlockPropagationManagerTest {
             });
     final EthContext ethContext =
         new EthContext(
-            new EthPeers("eth", TestClock.fixed(), metricsSystem), new EthMessages(), ethScheduler);
+            new EthPeers("eth", TestClock.fixed(), metricsSystem, 25),
+            new EthMessages(),
+            ethScheduler);
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
             syncConfig,
