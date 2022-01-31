@@ -199,7 +199,7 @@ public class BytesValueRLPInputTest {
   public void emptyList() {
     final RLPInput in = RLP.input(h("0xc0"));
     assertThat(in.isDone()).isFalse();
-    assertThat(in.enterList()).isEqualTo(0);
+    assertThat(in.enterList()).isZero();
     assertThat(in.isDone()).isFalse();
     in.leaveList();
     assertThat(in.isDone()).isTrue();
@@ -377,9 +377,9 @@ public class BytesValueRLPInputTest {
     final RLPInput el = RLP.input(emptyList);
     assertThat(el.readAsRlp().raw()).isEqualTo(emptyList);
     el.reset();
-    assertThat(el.readAsRlp().enterList()).isEqualTo(0);
+    assertThat(el.readAsRlp().enterList()).isZero();
     el.reset();
-    assertThat(el.enterList()).isEqualTo(0);
+    assertThat(el.enterList()).isZero();
 
     final Bytes nestedList =
         RLP.encode(
@@ -451,56 +451,49 @@ public class BytesValueRLPInputTest {
   public void sizeAndPosition() {
     final RLPInput in = RLP.input(h("0xc80102c51112c22122"));
 
-    assertThat(in.nextOffset()).isEqualTo(1);
-    assertThat(in.nextSize()).isEqualTo(8);
+    assertOffsetAndSize(in, 1, 8);
     assertThat(in.enterList()).isEqualTo(3);
 
-    assertThat(in.nextOffset()).isEqualTo(1);
-    assertThat(in.nextSize()).isEqualTo(1);
+    assertOffsetAndSize(in, 1, 1);
     assertThat(in.readByte()).isEqualTo((byte) 0x01);
 
-    assertThat(in.nextOffset()).isEqualTo(2);
-    assertThat(in.nextSize()).isEqualTo(1);
+    assertOffsetAndSize(in, 2, 1);
     assertThat(in.readByte()).isEqualTo((byte) 0x02);
 
-    assertThat(in.nextOffset()).isEqualTo(4);
-    assertThat(in.nextSize()).isEqualTo(5);
+    assertOffsetAndSize(in, 4, 5);
     assertThat(in.enterList()).isEqualTo(3);
 
-    assertThat(in.nextOffset()).isEqualTo(4);
-    assertThat(in.nextSize()).isEqualTo(1);
+    assertOffsetAndSize(in, 4, 1);
     assertThat(in.readByte()).isEqualTo((byte) 0x11);
 
-    assertThat(in.nextOffset()).isEqualTo(5);
-    assertThat(in.nextSize()).isEqualTo(1);
+    assertOffsetAndSize(in, 5, 1);
     assertThat(in.readByte()).isEqualTo((byte) 0x12);
 
-    assertThat(in.nextOffset()).isEqualTo(7);
-    assertThat(in.nextSize()).isEqualTo(2);
+    assertOffsetAndSize(in, 7, 2);
     assertThat(in.enterList()).isEqualTo(2);
 
-    assertThat(in.nextOffset()).isEqualTo(7);
-    assertThat(in.nextSize()).isEqualTo(1);
+    assertOffsetAndSize(in, 7, 1);
     assertThat(in.readByte()).isEqualTo((byte) 0x21);
 
-    assertThat(in.nextOffset()).isEqualTo(8);
-    assertThat(in.nextSize()).isEqualTo(1);
+    assertOffsetAndSize(in, 8, 1);
     assertThat(in.readByte()).isEqualTo((byte) 0x22);
 
-    assertThat(in.nextOffset()).isEqualTo(9);
-    assertThat(in.nextSize()).isEqualTo(0);
+    assertOffsetAndSize(in, 9, 0);
     in.leaveList();
     assertThat(in.isDone()).isFalse();
 
-    assertThat(in.nextOffset()).isEqualTo(9);
-    assertThat(in.nextSize()).isEqualTo(0);
+    assertOffsetAndSize(in, 9, 0);
     in.leaveList();
     assertThat(in.isDone()).isFalse();
 
-    assertThat(in.nextOffset()).isEqualTo(9);
-    assertThat(in.nextSize()).isEqualTo(0);
+    assertOffsetAndSize(in, 9, 0);
     in.leaveList();
     assertThat(in.isDone()).isTrue();
+  }
+
+  private void assertOffsetAndSize(RLPInput in, int offset, int size) {
+    assertThat(in.nextOffset()).isEqualTo(offset);
+    assertThat(in.nextSize()).isEqualTo(size);
   }
 
   @Test
