@@ -97,7 +97,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<String> runCommand;
   private PrivacyParameters privacyParameters = PrivacyParameters.DEFAULT;
   private final JsonRpcConfiguration jsonRpcConfiguration;
-  // private final Optional<JsonRpcConfiguration> engineJsonRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
@@ -127,7 +126,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final Optional<Path> dataPath,
       final MiningParameters miningParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
-      // final Optional<JsonRpcConfiguration> engineJsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,

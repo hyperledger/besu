@@ -1923,22 +1923,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
-  /*
-    @Test
-    public void rpcApisSupportsEngine() {
-      parseCommand("--rpc-http-api", "ENGINE", "--rpc-http-enabled");
-
-      verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-      verify(mockRunnerBuilder).build();
-
-      assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
-          .containsExactlyInAnyOrder(ENGINE.name());
-
-      assertThat(commandOutput.toString(UTF_8)).isEmpty();
-      assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    }
-  */
-
   @Test
   public void rpcApisPropertyIgnoresDuplicatesAndMustBeUsed() {
     parseCommand("--rpc-http-api", "ETH,NET,NET", "--rpc-http-enabled");

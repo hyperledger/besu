@@ -57,7 +57,7 @@ public class BesuNodeConfigurationBuilder {
           .minTransactionGasPrice(Wei.of(1000))
           .build();
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
-  private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createDefault();
+  private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
