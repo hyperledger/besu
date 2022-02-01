@@ -35,13 +35,13 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Given a set of headers, repeatedly requests the receipts for those blocks. */
 public class GetReceiptsForHeadersTask
     extends AbstractRetryingPeerTask<Map<BlockHeader, List<TransactionReceipt>>> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(GetReceiptsForHeadersTask.class);
   private static final int DEFAULT_RETRIES = 3;
 
   private final EthContext ethContext;

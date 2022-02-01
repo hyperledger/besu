@@ -24,7 +24,7 @@ import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;

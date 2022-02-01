@@ -21,11 +21,12 @@ import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 
 import java.math.BigInteger;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CalculatedDifficultyValidationRule implements AttachedBlockHeaderValidationRule {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(CalculatedDifficultyValidationRule.class);
   private final DifficultyCalculator difficultyCalculator;
 
   public CalculatedDifficultyValidationRule(final DifficultyCalculator difficultyCalculator) {

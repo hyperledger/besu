@@ -41,6 +41,7 @@ import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
+import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -59,10 +60,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -74,7 +74,7 @@ import picocli.CommandLine.ParentCommand;
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class StateTestSubCommand implements Runnable {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(StateTestSubCommand.class);
 
   public static final String COMMAND_NAME = "state-test";
 
@@ -138,7 +138,7 @@ public class StateTestSubCommand implements Runnable {
         }
       }
     } catch (final IOException e) {
-      LOG.fatal(e);
+      LOG.error("Unable to read state file", e);
     }
   }
 
@@ -152,10 +152,11 @@ public class StateTestSubCommand implements Runnable {
   }
 
   private void traceTestSpecs(final String test, final List<GeneralStateTestCaseEipSpec> specs) {
-    Configurator.setLevel(
+    Log4j2ConfiguratorUtil.setLevel(
         "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", Level.OFF);
     final var referenceTestProtocolSchedules = ReferenceTestProtocolSchedules.create();
-    Configurator.setLevel("org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", null);
+    Log4j2ConfiguratorUtil.setLevel(
+        "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", null);
 
     final OperationTracer tracer = // You should have picked Mercy.
         parentCommand.showJsonResults

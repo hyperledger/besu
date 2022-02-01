@@ -46,15 +46,15 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FlexiblePrivacyController extends AbstractRestrictedPrivacyController {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(FlexiblePrivacyController.class);
 
   private FlexiblePrivacyGroupContract flexiblePrivacyGroupContract;
 
@@ -103,15 +103,9 @@ public class FlexiblePrivacyController extends AbstractRestrictedPrivacyControll
       final PrivateTransaction privateTransaction,
       final String privacyUserId,
       final Optional<PrivacyGroup> privacyGroup) {
-    final String firstPart;
-    try {
-      LOG.trace("Storing private transaction in enclave");
-      final SendResponse sendResponse = sendRequest(privateTransaction, privacyGroup);
-      firstPart = sendResponse.getKey();
-    } catch (final Exception e) {
-      LOG.error("Failed to store private transaction in enclave", e);
-      throw e;
-    }
+    LOG.trace("Storing private transaction in enclave");
+    final SendResponse sendResponse = sendRequest(privateTransaction, privacyGroup);
+    final String firstPart = sendResponse.getKey();
     final Optional<String> optionalSecondPart =
         buildAndSendAddPayload(
             privateTransaction,

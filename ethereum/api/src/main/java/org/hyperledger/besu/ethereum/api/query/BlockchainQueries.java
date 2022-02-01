@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
-import org.hyperledger.besu.ethereum.api.handlers.RpcMethodTimeoutException;
 import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
@@ -54,13 +53,13 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BlockchainQueries {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BlockchainQueries.class);
 
   private final WorldStateArchive worldStateArchive;
   private final Blockchain blockchain;
@@ -670,12 +669,8 @@ public class BlockchainQueries {
         currentStep = nextStep;
       }
       return result;
-    } catch (final RpcMethodTimeoutException e) {
-      LOG.error("Error retrieving matching logs", e);
-      throw e;
     } catch (final Exception e) {
-      LOG.error("Error retrieving matching logs", e);
-      throw new RuntimeException(e);
+      throw new IllegalStateException("Error retrieving matching logs", e);
     }
   }
 

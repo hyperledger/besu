@@ -24,8 +24,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Collection;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides the logic to extract vote tally state from the blockchain and update it as blocks are
@@ -33,7 +33,7 @@ import org.apache.logging.log4j.Logger;
  */
 class VoteTallyUpdater {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(VoteTallyUpdater.class);
 
   private final EpochManager epochManager;
   private final BlockInterface blockInterface;

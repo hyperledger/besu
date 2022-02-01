@@ -32,11 +32,11 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EthSendRawTransaction implements JsonRpcMethod {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(EthSendRawTransaction.class);
 
   private final boolean sendEmptyHashOnInvalidBlock;
 

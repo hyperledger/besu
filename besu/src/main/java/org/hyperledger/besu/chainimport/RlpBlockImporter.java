@@ -45,12 +45,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Tool for importing rlp-encoded block data from files. */
 public class RlpBlockImporter implements Closeable {
-  private static final Logger LOG = LogManager.getFormatterLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RlpBlockImporter.class);
 
   private final Semaphore blockBacklog = new Semaphore(2);
 
@@ -237,7 +237,7 @@ public class RlpBlockImporter implements Closeable {
     final long elapseMicros = segmentTimer.elapsed(TimeUnit.MICROSECONDS);
     //noinspection PlaceholderCountMatchesArgumentCount
     LOG.info(
-        "Import at block %8d / %,14d gas %,11d micros / Mgps %7.3f segment %6.3f cumulative",
+        "Import at block {} / {} gas {} micros / Mgps {} segment {} cumulative",
         blockNum,
         segmentGas,
         elapseMicros,

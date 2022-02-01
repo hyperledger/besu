@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -32,12 +30,13 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 import java.util.Optional;
 
 import com.google.common.io.BaseEncoding;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EthGetWork implements JsonRpcMethod {
 
   private final MiningCoordinator miner;
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(EthGetWork.class);
   private final EpochCalculator epochCalculator;
 
   public EthGetWork(final MiningCoordinator miner) {

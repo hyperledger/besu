@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.stratum;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.function.Consumer;
@@ -24,14 +22,15 @@ import java.util.regex.Pattern;
 
 import com.google.common.base.Splitter;
 import io.vertx.core.buffer.Buffer;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Persistent TCP connection using a variant of the Stratum protocol, connecting the client to
  * miners.
  */
 final class StratumConnection {
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(StratumConnection.class);
 
   private String incompleteMessage = "";
   private boolean httpDetected = false;

@@ -1,13 +1,13 @@
 dependencies {
   api project(':util')
   api project(':crypto')
+  api 'org.slf4j:slf4j-api'
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
   implementation 'org.apache.tuweni:tuweni-net'
-  implementation 'org.apache.logging.log4j:log4j-api'
 
   runtimeOnly('org.bouncycastle:bcpkix-jdk15on')
 

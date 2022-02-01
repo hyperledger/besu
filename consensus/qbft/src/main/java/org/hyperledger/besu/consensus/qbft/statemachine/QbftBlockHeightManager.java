@@ -40,8 +40,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.google.common.collect.Maps;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for starting/clearing Consensus rounds at a given block height. One of these is
@@ -51,7 +51,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(QbftBlockHeightManager.class);
 
   private final QbftRoundFactory roundFactory;
   private final RoundChangeManager roundChangeManager;
@@ -105,10 +105,10 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   @Override
   public void handleBlockTimerExpiry(final ConsensusRoundIdentifier roundIdentifier) {
     if (currentRound.isPresent()) {
-      LOG.warn(
-          "Block timer expired for round ({}) after round has already started on round ({})",
-          roundIdentifier,
-          currentRound.get().getRoundIdentifier());
+      // It is possible for the block timer to take longer than it should due to the precision of
+      // the timer in Java and the OS. This means occasionally the proposal can arrive before the
+      // block timer expiry and hence the round has already been set. There is no negative impact
+      // on the protocol in this case.
       return;
     }
 

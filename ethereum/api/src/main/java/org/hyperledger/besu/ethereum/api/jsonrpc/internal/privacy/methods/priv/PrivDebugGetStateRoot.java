@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_PRIVACY_GROUP_ERROR;
 
 import org.hyperledger.besu.enclave.EnclaveClientException;
@@ -35,11 +34,12 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivDebugGetStateRoot.class);
 
   private final PrivacyIdProvider privacyIdProvider;
   private final PrivacyController privacyController;
@@ -68,7 +68,9 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
       final JsonRpcRequestContext requestContext, final long blockNumber) {
     final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
-    LOG.trace("Executing {}", this::getName);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Executing {}", getName());
+    }
 
     final Optional<PrivacyGroup> privacyGroup;
     try {

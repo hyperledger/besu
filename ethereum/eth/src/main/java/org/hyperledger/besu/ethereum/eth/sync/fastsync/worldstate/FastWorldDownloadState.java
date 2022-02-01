@@ -23,12 +23,12 @@ import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import java.time.Clock;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FastWorldDownloadState extends WorldDownloadState<NodeDataRequest> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(FastWorldDownloadState.class);
 
   public FastWorldDownloadState(
       final InMemoryTasksPriorityQueues<NodeDataRequest> pendingRequests,

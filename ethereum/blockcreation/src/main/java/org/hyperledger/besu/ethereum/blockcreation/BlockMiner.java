@@ -30,8 +30,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import com.google.common.base.Stopwatch;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for creating a block, and importing it to the blockchain. This is specifically a
@@ -45,7 +45,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BlockMiner.class);
 
   protected final Function<BlockHeader, M> blockCreatorFactory;
   protected final M minerBlockCreator;

@@ -56,14 +56,14 @@ import java.util.Set;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MainnetTransactionProcessor {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(MainnetTransactionProcessor.class);
 
   protected final GasCalculator gasCalculator;
 
@@ -404,8 +404,8 @@ public class MainnetTransactionProcessor {
       if (LOG.isTraceEnabled()) {
         LOG.trace(
             "Gas used by transaction: {}, by message call/contract creation: {}",
-            () -> Gas.of(transaction.getGasLimit()).minus(initialFrame.getRemainingGas()),
-            () -> gasAvailable.minus(initialFrame.getRemainingGas()));
+            Gas.of(transaction.getGasLimit()).minus(initialFrame.getRemainingGas()),
+            gasAvailable.minus(initialFrame.getRemainingGas()));
       }
 
       // Refund the sender by what we should and pay the miner fee (note that we're doing them one

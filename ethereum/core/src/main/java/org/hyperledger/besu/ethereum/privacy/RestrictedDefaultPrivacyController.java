@@ -28,13 +28,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RestrictedDefaultPrivacyController extends AbstractRestrictedPrivacyController {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(RestrictedDefaultPrivacyController.class);
 
   public RestrictedDefaultPrivacyController(
       final Blockchain blockchain,
@@ -79,15 +80,10 @@ public class RestrictedDefaultPrivacyController extends AbstractRestrictedPrivac
       final PrivateTransaction privateTransaction,
       final String privacyUserId,
       final Optional<PrivacyGroup> maybePrivacyGroup) {
-    try {
-      LOG.trace("Storing private transaction in enclave");
-      final SendResponse sendResponse =
-          sendRequest(privateTransaction, privacyUserId, maybePrivacyGroup);
-      return sendResponse.getKey();
-    } catch (final Exception e) {
-      LOG.error("Failed to store private transaction in enclave", e);
-      throw e;
-    }
+    LOG.trace("Storing private transaction in enclave");
+    final SendResponse sendResponse =
+        sendRequest(privateTransaction, privacyUserId, maybePrivacyGroup);
+    return sendResponse.getKey();
   }
 
   @Override

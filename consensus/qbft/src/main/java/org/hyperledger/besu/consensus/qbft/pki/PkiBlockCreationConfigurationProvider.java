@@ -21,12 +21,13 @@ import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PkiBlockCreationConfigurationProvider {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(PkiBlockCreationConfigurationProvider.class);
 
   private final KeyStoreWrapperProvider keyStoreWrapperProvider;
 
@@ -51,9 +52,7 @@ public class PkiBlockCreationConfigurationProvider {
               null);
       LOG.info("Loaded PKI Block Creation KeyStore {}", pkiKeyStoreConfiguration.getKeyStorePath());
     } catch (Exception e) {
-      final String message = "Error loading PKI Block Creation KeyStore";
-      LOG.error(message, e);
-      throw new RuntimeException(message, e);
+      throw new IllegalStateException("Error loading PKI Block Creation KeyStore", e);
     }
 
     KeyStoreWrapper trustStore;
@@ -67,9 +66,7 @@ public class PkiBlockCreationConfigurationProvider {
       LOG.info(
           "Loaded PKI Block Creation TrustStore {}", pkiKeyStoreConfiguration.getTrustStorePath());
     } catch (Exception e) {
-      final String message = "Error loading PKI Block Creation TrustStore";
-      LOG.error(message, e);
-      throw new RuntimeException(message, e);
+      throw new IllegalStateException("Error loading PKI Block Creation TrustStore", e);
     }
 
     return new PkiBlockCreationConfiguration(

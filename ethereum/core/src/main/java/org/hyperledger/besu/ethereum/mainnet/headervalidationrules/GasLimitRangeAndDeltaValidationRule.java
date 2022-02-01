@@ -21,8 +21,8 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for ensuring the gasLimit specified in the supplied block header is within bounds as
@@ -32,7 +32,8 @@ import org.apache.logging.log4j.Logger;
 public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecification
     implements DetachedBlockHeaderValidationRule {
 
-  private static final Logger LOG = LogManager.getLogger(GasLimitRangeAndDeltaValidationRule.class);
+  private static final Logger LOG =
+      LoggerFactory.getLogger(GasLimitRangeAndDeltaValidationRule.class);
 
   private final Optional<BaseFeeMarket> baseFeeMarket;
 

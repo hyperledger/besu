@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
@@ -35,13 +34,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivateTransactionLocator {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivateTransactionLocator.class);
 
   private final Blockchain blockchain;
   private final Enclave enclave;
@@ -155,8 +155,7 @@ public class PrivateTransactionLocator {
         privateTransaction = PrivateTransaction.readFrom(input);
       }
     } catch (final RLPException e) {
-      LOG.debug("Error de-serializing private transaction from enclave", e);
-      throw e;
+      throw new IllegalStateException("Error de-serializing private transaction from enclave", e);
     }
 
     return new TransactionFromEnclave(privateTransaction, receiveResponse.getPrivacyGroupId());

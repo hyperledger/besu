@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
@@ -43,11 +42,12 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 import java.util.Optional;
 
 import io.vertx.ext.auth.User;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractEeaSendRawTransaction.class);
   private final TransactionPool transactionPool;
   private final PrivacyIdProvider privacyIdProvider;
   private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
@@ -102,7 +102,7 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
     } catch (final JsonRpcErrorResponseException e) {
       return new JsonRpcErrorResponse(id, e.getJsonRpcError());
     } catch (final IllegalArgumentException | RLPException e) {
-      LOG.error(e);
+      LOG.error("Unable to decode EEA raw transaction", e);
       return new JsonRpcErrorResponse(id, DECODE_ERROR);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(e.getMessage()));

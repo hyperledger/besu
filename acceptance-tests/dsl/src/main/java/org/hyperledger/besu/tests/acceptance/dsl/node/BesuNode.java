@@ -15,7 +15,6 @@
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
 import static java.util.Collections.unmodifiableList;
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.apache.tuweni.io.file.Files.copyResource;
 
 import org.hyperledger.besu.cli.config.NetworkName;
@@ -66,10 +65,11 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.MoreObjects;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
-import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
 import org.web3j.protocol.http.HttpService;
@@ -81,7 +81,7 @@ import org.web3j.utils.Async;
 public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable {
 
   private static final String LOCALHOST = "127.0.0.1";
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BesuNode.class);
 
   private final Path homeDirectory;
   private KeyPair keyPair;

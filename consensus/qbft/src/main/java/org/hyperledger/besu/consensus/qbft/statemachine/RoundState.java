@@ -28,12 +28,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // Data items used to define how a round will operate
 public class RoundState {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RoundState.class);
 
   private final ConsensusRoundIdentifier roundIdentifier;
   private final MessageValidator validator;

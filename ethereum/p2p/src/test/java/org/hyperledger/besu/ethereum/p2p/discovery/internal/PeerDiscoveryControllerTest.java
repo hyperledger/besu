@@ -71,7 +71,7 @@ import org.mockito.ArgumentCaptor;
 
 public class PeerDiscoveryControllerTest {
 
-  private static final byte MOST_SIGNFICANT_BIT_MASK = -128;
+  private static final byte MOST_SIGNIFICANT_BIT_MASK = -128;
   private static final PeerRequirement PEER_REQUIREMENT = () -> true;
   private static final long TABLE_REFRESH_INTERVAL_MS = TimeUnit.HOURS.toMillis(1);
   private PeerDiscoveryController controller;
@@ -1393,7 +1393,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes32 keccak256 = host.keccak256();
     final MutableBytes template = MutableBytes.create(keccak256.size());
     byte msb = keccak256.get(0);
-    msb ^= MOST_SIGNFICANT_BIT_MASK;
+    msb ^= MOST_SIGNIFICANT_BIT_MASK;
     template.set(0, msb);
 
     for (int i = 0; i < n; i++) {

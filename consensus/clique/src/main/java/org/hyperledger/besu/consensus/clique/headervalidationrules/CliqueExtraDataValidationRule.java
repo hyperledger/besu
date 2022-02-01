@@ -26,12 +26,12 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import java.util.Collection;
 
 import com.google.common.collect.Iterables;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CliqueExtraDataValidationRule implements AttachedBlockHeaderValidationRule {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(CliqueExtraDataValidationRule.class);
 
   private final EpochManager epochManager;
 

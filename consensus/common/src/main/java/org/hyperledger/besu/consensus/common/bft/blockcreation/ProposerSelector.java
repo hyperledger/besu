@@ -30,8 +30,8 @@ import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for determining which member of the validator pool should propose the next block
@@ -44,7 +44,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class ProposerSelector {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ProposerSelector.class);
 
   private final Blockchain blockchain;
 
