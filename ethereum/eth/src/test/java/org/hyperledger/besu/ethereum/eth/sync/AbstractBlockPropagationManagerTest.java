@@ -572,7 +572,9 @@ public abstract class AbstractBlockPropagationManagerTest {
         .thenReturn(new CompletableFuture<>());
     final EthContext ethContext =
         new EthContext(
-            new EthPeers("eth", TestClock.fixed(), metricsSystem), new EthMessages(), ethScheduler);
+            new EthPeers("eth", TestClock.fixed(), metricsSystem, 25),
+            new EthMessages(),
+            ethScheduler);
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
             syncConfig,
@@ -629,7 +631,9 @@ public abstract class AbstractBlockPropagationManagerTest {
             });
     final EthContext ethContext =
         new EthContext(
-            new EthPeers("eth", TestClock.fixed(), metricsSystem), new EthMessages(), ethScheduler);
+            new EthPeers("eth", TestClock.fixed(), metricsSystem, 25),
+            new EthMessages(),
+            ethScheduler);
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
             syncConfig,
@@ -673,7 +677,10 @@ public abstract class AbstractBlockPropagationManagerTest {
     // Setup peer and messages
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final RespondingEthPeer secondPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 2);
+
+    // Pretend the second peer is busier, so the first is selected a first
+    when(spy(secondPeer.getEthPeer()).outstandingRequests()).thenReturn(1);
 
     final NewBlockHashesMessage nextAnnouncement =
         NewBlockHashesMessage.create(

@@ -159,6 +159,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .strictTransactionReplayProtectionEnabled(node.isStrictTxReplayProtectionEnabled())
             .build();
 
+    final int maxPeers = 25;
+
     final BesuController besuController =
         builder
             .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
@@ -178,6 +180,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                     .map(
                         (pkiConfig) -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
             .evmConfiguration(EvmConfiguration.DEFAULT)
+            .maxPeers(maxPeers)
             .build();
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
@@ -191,7 +194,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .discovery(node.isDiscoveryEnabled())
             .p2pAdvertisedHost(node.getHostName())
             .p2pListenPort(0)
-            .maxPeers(25)
+            .maxPeers(maxPeers)
             .networkingConfiguration(node.getNetworkingConfiguration())
             .jsonRpcConfiguration(node.jsonRpcConfiguration())
             .webSocketConfiguration(node.webSocketConfiguration())
