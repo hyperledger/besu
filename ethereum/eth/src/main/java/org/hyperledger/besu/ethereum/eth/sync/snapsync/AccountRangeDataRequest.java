@@ -84,7 +84,6 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     request =
         GetAccountRangeMessage.create(
             originalRootHash, startKeyHash, endKeyHash, BigInteger.valueOf(524288));
-    new BigInteger(1, startKeyHash.toArray());
   }
 
   @Override
@@ -120,7 +119,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
     trie.commit(
         (location, hash, value) -> {
-          if (worldStateStorage.getTrieNode(location).isEmpty()) {
+          if (worldStateStorage.getTrieNodeByLocation(location).isEmpty()) {
             updater.putAccountStateTrieNode(location, hash, value);
             nbNodesSaved.getAndIncrement();
           }
@@ -147,7 +146,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
         requestData.startKeyHash(),
         requestData.endKeyHash(),
         requestData.worldStateRootHash(),
-        Optional.of(accountData.proofs()),
+        accountData.proofs(),
         accountData.accounts());
   }
 

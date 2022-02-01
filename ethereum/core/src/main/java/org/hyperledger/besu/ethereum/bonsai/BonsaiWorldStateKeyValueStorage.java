@@ -132,8 +132,15 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public Optional<Bytes> getTrieNode(final Bytes location) {
+  public Optional<Bytes> getTrieNodeByLocation(final Bytes location) {
     return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
+  }
+
+  @Override
+  public Optional<Bytes> getTrieNodeByLocation(final Hash accountHash, final Bytes location) {
+    return trieBranchStorage
+        .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
+        .map(Bytes::wrap);
   }
 
   public Optional<byte[]> getTrieLog(final Hash blockHash) {
@@ -175,7 +182,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         response =
             new StoredMerklePatriciaTrie<>(
                     new StoredNodeFactory<>(
-                        (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+                        (location, hash) -> {
+                          Optional<Bytes> accountStorageTrieNode =
+                              getAccountStorageTrieNode(accountHash, location, hash);
+                          if (accountStorageTrieNode.isEmpty()) {
+                            System.out.println(
+                                "accountHash " + accountHash + " " + location + " " + hash);
+                            System.out.println("accountHash " + getCode(null, accountHash));
+                          }
+                          return accountStorageTrieNode;
+                        },
                         Function.identity(),
                         Function.identity()),
                     accountValue.getStorageRoot())

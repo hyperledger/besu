@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -60,7 +59,6 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   private final GetStorageRangeMessage request;
   private GetStorageRangeMessage.StorageRange range;
   private StorageRangeMessage.SlotRangeData response;
-  private boolean isTaskCompleted = true;
   private final int depth;
   private final long priority;
 
@@ -75,10 +73,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     super(STORAGE_RANGE, rootHash);
     this.depth = depth;
     this.priority = priority;
-    LOG.trace(
-        "create get storage range data request for {} accounts {} with root hash={} from {} to {}",
+    LOG.info(
+        "create get storage range data request for {} accounts {}->{} with root hash={} from {} to {}",
         accountsHashes.size(),
-        (accountsHashes.size() == 1) ? accountsHashes.get(0) : "...",
+        accountsHashes.first(),
+        accountsHashes.last(),
         rootHash,
         startKeyHash,
         endKeyHash);
@@ -109,33 +108,49 @@ public class StorageRangeDataRequest extends SnapDataRequest {
           getStorageRangeMessage().getStorageRoots().orElseThrow();
 
       for (int i = 0; i < slotRangeData.slots().size(); i++) {
-
         final Hash accountHash = Hash.wrap(getRange().hashes().get(i));
+        if (slotRangeData.validated().get(i)) {
+          final StoredNodeFactory<Bytes> snapStoredNodeFactory =
+              new StoredNodeFactory<>(
+                  (location, hash) -> Optional.ofNullable(proofsEntries.get(hash)),
+                  Function.identity(),
+                  Function.identity()) {
+                @Override
+                public Optional<Node<Bytes>> retrieve(final Bytes location, final Bytes32 hash)
+                    throws MerkleTrieException {
+                  return super.retrieve(location, hash)
+                      .or(() -> Optional.of(new MissingNode<>(hash, location)));
+                }
+              };
+          MerklePatriciaTrie<Bytes, Bytes> trie =
+              new StoredMerklePatriciaTrie<>(snapStoredNodeFactory, storageRoots.get(i));
 
-        final StoredNodeFactory<Bytes> snapStoredNodeFactory =
-            new StoredNodeFactory<>(
-                (location, hash) -> Optional.ofNullable(proofsEntries.get(hash)),
-                Function.identity(),
-                Function.identity()) {
-              @Override
-              public Optional<Node<Bytes>> retrieve(final Bytes location, final Bytes32 hash)
-                  throws MerkleTrieException {
-                return super.retrieve(location, hash)
-                    .or(() -> Optional.of(new MissingNode<>(hash, location)));
-              }
-            };
-        MerklePatriciaTrie<Bytes, Bytes> trie =
-            new StoredMerklePatriciaTrie<>(snapStoredNodeFactory, storageRoots.get(i));
+          for (Map.Entry<Bytes32, Bytes> slot : slotRangeData.slots().get(i).entrySet()) {
+            trie.put(slot.getKey(), slot.getValue());
+          }
 
-        for (Map.Entry<Bytes32, Bytes> slot : slotRangeData.slots().get(i).entrySet()) {
-          trie.put(slot.getKey(), slot.getValue());
+          trie.commit(
+              (location, nodeHash, value) -> {
+                if (worldStateStorage.getTrieNodeByLocation(accountHash, location).isEmpty()) {
+                  updater.putAccountStorageTrieNode(accountHash, location, nodeHash, value);
+                  nbNodesSaved.getAndIncrement();
+                }
+              });
+        } else {
+          LOG.info(
+              "account to heal "
+                  + accountHash
+                  + " "
+                  + storageRoots.get(i)
+                  + " "
+                  + getOriginalRootHash()
+                  + " "
+                  + getRange().worldStateRootHash()
+                  + " "
+                  + getRange().startKeyHash()
+                  + " "
+                  + getRange().endKeyHash());
         }
-
-        trie.commit(
-            (location, nodeHash, value) -> {
-              updater.putAccountStorageTrieNode(accountHash, location, nodeHash, value);
-              nbNodesSaved.getAndIncrement();
-            });
       }
     }
 
@@ -151,56 +166,64 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     final GetStorageRangeMessage.StorageRange requestData = getRange();
     final StorageRangeMessage.SlotRangeData responseData = getResponse();
 
-    isTaskCompleted = true;
-
+    if (responseData.slots().isEmpty()
+        && responseData.proofs().isEmpty()
+        && getOriginalRootHash().compareTo(requestData.worldStateRootHash()) != 0) {
+      LOG.info(
+          "Invalidated root hash detected {} during get storage range data request from {} to {}",
+          getOriginalRootHash(),
+          requestData.hashes().first(),
+          requestData.hashes().last());
+      downloadState.enqueueRequest(
+          createAccountRangeDataRequest(
+              requestData.worldStateRootHash(),
+              requestData.hashes().first(),
+              requestData.hashes().last(),
+              getDepth(),
+              Long.MAX_VALUE - 1));
+    }
     if (responseData.slots().isEmpty() && responseData.proofs().isEmpty()) {
-      isTaskCompleted = false;
+      LOG.info(
+          "Invalidated but not root hash detected {} during get storage range data request from {} to {}",
+          getOriginalRootHash(),
+          requestData.hashes().first(),
+          requestData.hashes().last());
+      return false;
     }
 
     // reject if the peer sent more slots than requested
     if (requestData.hashes().size() < responseData.slots().getSize()) {
-      isTaskCompleted = false;
+      LOG.info("Failed reason reject if the peer sent more slots than requested");
+      return false;
     }
 
     for (int i = 0; i < responseData.slots().getSize(); i++) {
       // if this is not the last account in the list we must validate the full range
       final boolean isLastRange = i == responseData.slots().getSize() - 1;
       final Hash endHash = isLastRange ? requestData.endKeyHash() : MAX_RANGE;
-      final Optional<List<Bytes>> proofs =
-          isLastRange ? Optional.of(responseData.proofs()) : Optional.empty();
+      final List<Bytes> proofs = isLastRange ? responseData.proofs() : Collections.emptyList();
       if (!worldStateProofProvider.isValidRangeProof(
           requestData.startKeyHash(),
           endHash,
           request.getStorageRoots().orElseThrow().get(i),
           proofs,
           responseData.slots().get(i))) {
-        isTaskCompleted = false;
+        // we cannot sync this account we need to heal it
+        responseData.validated().add(i, false);
+        downloadState.enqueueRequest(
+            createAccountDataRequest(
+                requestData.worldStateRootHash(),
+                Hash.wrap(requestData.hashes().get(i)),
+                requestData.startKeyHash(),
+                endHash,
+                getDepth(),
+                getPriority()));
+      } else {
+        responseData.validated().add(i, true);
       }
     }
 
-    if (!isTaskCompleted
-        && getOriginalRootHash().compareTo(requestData.worldStateRootHash()) != 0) {
-      LOG.trace(
-          "Invalidated root hash detected {} during get storage range data request {}",
-          getOriginalRootHash());
-      if (requestData.hashes().size() > 1) {
-        // split this range in order to fill more account quickly
-        AtomicLong counter = new AtomicLong(getPriority() * 16);
-        RangeManager.generateRanges(requestData.hashes().first(), requestData.hashes().last(), 16)
-            .forEach(
-                (min, max) ->
-                    downloadState.enqueueRequest(
-                        createAccountRangeDataRequest(
-                            requestData.worldStateRootHash(),
-                            min,
-                            max,
-                            getDepth() + 1,
-                            counter.incrementAndGet())));
-      }
-      return true;
-    }
-
-    return isTaskCompleted;
+    return true;
   }
 
   public GetStorageRangeMessage getStorageRangeMessage() {
@@ -227,18 +250,17 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     final StorageRangeMessage.SlotRangeData responseData = getResponse();
     final List<SnapDataRequest> childRequests = new ArrayList<>();
 
-    // flag storages if peers cannot find them
-    if (isTaskCompleted) {
-      // new request if there are some missing accounts
-      if (responseData.slots().isEmpty()) {
-        return Stream.empty();
-      } else {
-        final int lastSlotIndex = responseData.slots().size();
+    // new request if there are some missing accounts
+    if (responseData.slots().isEmpty()) {
+      return Stream.empty();
+    } else {
+      final int lastSlotIndex = responseData.slots().size();
+      final boolean isLastSlotValid = responseData.validated().last();
+      if (isLastSlotValid) {
         final boolean isLastRange = lastSlotIndex == requestData.hashes().size();
         final Hash endKeyHash = isLastRange ? requestData.endKeyHash() : MAX_RANGE;
         final Bytes32 lastSlotRootHash =
             getStorageRangeMessage().getStorageRoots().orElseThrow().get(lastSlotIndex - 1);
-
         // new request if there are some missing storage slots for the last account sent
         // create a specific request for this big storage
         findNewBeginElementInRange(
@@ -254,27 +276,27 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                           depth,
                           priority));
                 });
+      }
 
-        // new request if we are missing accounts in the response
-        if (requestData.hashes().size() > lastSlotIndex) {
-          final ArrayDeque<Bytes32> missingAccounts =
-              new ArrayDeque<>(
-                  requestData.hashes().stream().skip(lastSlotIndex).collect(Collectors.toList()));
-          final ArrayDeque<Bytes32> missingStorageRoots =
-              new ArrayDeque<>(
-                  getStorageRangeMessage().getStorageRoots().orElseThrow().stream()
-                      .skip(lastSlotIndex)
-                      .collect(Collectors.toList()));
+      // new request if we are missing accounts in the response
+      if (requestData.hashes().size() > lastSlotIndex) {
+        final ArrayDeque<Bytes32> missingAccounts =
+            new ArrayDeque<>(
+                requestData.hashes().stream().skip(lastSlotIndex).collect(Collectors.toList()));
+        final ArrayDeque<Bytes32> missingStorageRoots =
+            new ArrayDeque<>(
+                getStorageRangeMessage().getStorageRoots().orElseThrow().stream()
+                    .skip(lastSlotIndex)
+                    .collect(Collectors.toList()));
 
-          childRequests.add(
-              createStorageRangeDataRequest(
-                  missingAccounts,
-                  missingStorageRoots,
-                  requestData.startKeyHash(),
-                  requestData.endKeyHash(),
-                  depth,
-                  priority));
-        }
+        childRequests.add(
+            createStorageRangeDataRequest(
+                missingAccounts,
+                missingStorageRoots,
+                requestData.startKeyHash(),
+                requestData.endKeyHash(),
+                depth,
+                priority));
       }
     }
     return childRequests.stream();

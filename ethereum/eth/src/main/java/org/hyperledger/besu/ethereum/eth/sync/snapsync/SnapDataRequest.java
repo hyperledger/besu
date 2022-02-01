@@ -52,6 +52,17 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
     return new AccountRangeDataRequest(rootHash, startKeyHash, endKeyHash, depth, priority);
   }
 
+  public static AccountDataRequest createAccountDataRequest(
+      final Hash rootHash,
+      final Hash accountHash,
+      final Bytes32 startStorageRange,
+      final Bytes32 endStorageRange,
+      final int depth,
+      final long priority) {
+    return new AccountDataRequest(
+        rootHash, accountHash, startStorageRange, endStorageRange, depth, priority);
+  }
+
   public StorageRangeDataRequest createStorageRangeDataRequest(
       final ArrayDeque<Bytes32> accountsHashes,
       final ArrayDeque<Bytes32> storageRoots,

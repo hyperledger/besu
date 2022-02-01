@@ -77,8 +77,15 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public Optional<Bytes> getTrieNode(final Bytes location) {
-    throw new UnsupportedOperationException("getTrieNode by location is not available with forest");
+  public Optional<Bytes> getTrieNodeByLocation(final Bytes location) {
+    throw new UnsupportedOperationException(
+        "getTrieNodeByLocation by location is not available with forest");
+  }
+
+  @Override
+  public Optional<Bytes> getTrieNodeByLocation(final Hash accountHash, final Bytes location) {
+    throw new UnsupportedOperationException(
+        "getTrieNodeByLocation by location is not available with forest");
   }
 
   @Override

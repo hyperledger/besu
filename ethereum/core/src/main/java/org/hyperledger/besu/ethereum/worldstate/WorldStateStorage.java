@@ -33,7 +33,9 @@ public interface WorldStateStorage {
 
   Optional<Bytes> getAccountStorageTrieNode(Hash accountHash, Bytes location, Bytes32 nodeHash);
 
-  Optional<Bytes> getTrieNode(Bytes location);
+  Optional<Bytes> getTrieNodeByLocation(Bytes location);
+
+  Optional<Bytes> getTrieNodeByLocation(Hash accountHash, Bytes location);
 
   Optional<Bytes> getNodeData(Bytes location, Bytes32 hash);
 

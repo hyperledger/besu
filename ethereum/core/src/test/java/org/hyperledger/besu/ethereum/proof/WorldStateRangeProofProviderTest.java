@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -80,11 +79,7 @@ public class WorldStateRangeProofProviderTest {
     // validate the range proof
     boolean isValidRangeProof =
         worldStateProofProvider.isValidRangeProof(
-            Bytes32.ZERO,
-            accounts.lastKey(),
-            accountStateTrie.getRootHash(),
-            Optional.of(proofs),
-            accounts);
+            Bytes32.ZERO, accounts.lastKey(), accountStateTrie.getRootHash(), proofs, accounts);
     assertThat(isValidRangeProof).isTrue();
   }
 
@@ -120,11 +115,7 @@ public class WorldStateRangeProofProviderTest {
     // validate the range proof
     boolean isValidRangeProof =
         worldStateProofProvider.isValidRangeProof(
-            Bytes32.ZERO,
-            accounts.lastKey(),
-            accountStateTrie.getRootHash(),
-            Optional.of(proofs),
-            accounts);
+            Bytes32.ZERO, accounts.lastKey(), accountStateTrie.getRootHash(), proofs, accounts);
     assertThat(isValidRangeProof).isFalse();
   }
 
@@ -159,7 +150,7 @@ public class WorldStateRangeProofProviderTest {
             Bytes32.ZERO,
             accounts.lastKey(),
             accountStateTrie.getRootHash(),
-            Optional.of(proofs),
+            new ArrayList<>(),
             accounts);
     assertThat(isValidRangeProof).isFalse();
   }
@@ -186,7 +177,7 @@ public class WorldStateRangeProofProviderTest {
             Bytes32.ZERO,
             accounts.lastKey(),
             accountStateTrie.getRootHash(),
-            Optional.empty(),
+            new ArrayList<>(),
             accounts);
     assertThat(isValidRangeProof).isTrue();
   }
@@ -213,7 +204,7 @@ public class WorldStateRangeProofProviderTest {
             Bytes32.ZERO,
             accounts.lastKey(),
             accountStateTrie.getRootHash(),
-            Optional.empty(),
+            new ArrayList<>(),
             accounts);
     assertThat(isValidRangeProof).isFalse();
   }
