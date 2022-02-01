@@ -63,27 +63,35 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
           + System.lineSeparator();
 
   private static final String EXPECTED_PUBLIC_KEY_EXPORT_USAGE =
-      "Usage: besu public-key export [-hV] [--node-private-key-file=<PATH>]"
+      "Usage: besu public-key export [-hV] [--ec-curve[=<NAME>]]"
           + System.lineSeparator()
-          + "                              [--to=<FILE>]"
+          + "                              [--node-private-key-file=<PATH>] [--to=<FILE>]"
           + System.lineSeparator()
           + "This command outputs the node public key. Default output is standard output."
           + System.lineSeparator()
-          + "  -h, --help        Show this help message and exit."
+          + "      --ec-curve[=<NAME>]   Elliptic curve to use when creating a new key"
+          + System.lineSeparator()
+          + "                              (default: secp256k1)"
+          + System.lineSeparator()
+          + "  -h, --help                Show this help message and exit."
           + System.lineSeparator()
           + "      --node-private-key-file=<PATH>"
           + System.lineSeparator()
-          + "                    The node's private key file (default: a file named \"key\" in"
+          + "                            The node's private key file (default: a file named"
           + System.lineSeparator()
-          + "                      the Besu data directory)"
+          + "                              \"key\" in the Besu data directory)"
           + System.lineSeparator()
-          + "      --to=<FILE>   File to write public key to instead of standard output"
+          + "      --to=<FILE>           File to write public key to instead of standard"
           + System.lineSeparator()
-          + "  -V, --version     Print version information and exit."
+          + "                              output"
+          + System.lineSeparator()
+          + "  -V, --version             Print version information and exit."
           + System.lineSeparator();
 
   private static final String EXPECTED_PUBLIC_KEY_EXPORT_ADDRESS_USAGE =
-      "Usage: besu public-key export-address [-hV] [--node-private-key-file=<PATH>]"
+      "Usage: besu public-key export-address [-hV] [--ec-curve[=<NAME>]]"
+          + System.lineSeparator()
+          + "                                      [--node-private-key-file=<PATH>]"
           + System.lineSeparator()
           + "                                      [--to=<FILE>]"
           + System.lineSeparator()
@@ -91,17 +99,21 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "output."
           + System.lineSeparator()
-          + "  -h, --help        Show this help message and exit."
+          + "      --ec-curve[=<NAME>]   Elliptic curve to use when creating a new key"
+          + System.lineSeparator()
+          + "                              (default: secp256k1)"
+          + System.lineSeparator()
+          + "  -h, --help                Show this help message and exit."
           + System.lineSeparator()
           + "      --node-private-key-file=<PATH>"
           + System.lineSeparator()
-          + "                    The node's private key file (default: a file named \"key\" in"
+          + "                            The node's private key file (default: a file named"
           + System.lineSeparator()
-          + "                      the Besu data directory)"
+          + "                              \"key\" in the Besu data directory)"
           + System.lineSeparator()
-          + "      --to=<FILE>   File to write address to instead of standard output"
+          + "      --to=<FILE>           File to write address to instead of standard output"
           + System.lineSeparator()
-          + "  -V, --version     Print version information and exit."
+          + "  -V, --version             Print version information and exit."
           + System.lineSeparator();
 
   private static final String PUBLIC_KEY_SUBCOMMAND_NAME = "public-key";
