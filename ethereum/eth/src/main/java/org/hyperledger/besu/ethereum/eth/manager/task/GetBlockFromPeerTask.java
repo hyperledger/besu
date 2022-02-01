@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +63,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
 
   @Override
   protected void executeTask() {
-    final String blockIdentifier = hash.map(Bytes::toHexString).orElse(Long.toString(blockNumber));
+    final String blockIdentifier = blockNumber + " (" + hash + ")";
     LOG.debug(
         "Downloading block {} from peer {}.",
         blockIdentifier,
@@ -82,6 +81,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
                     t.getCause());
                 result.completeExceptionally(t);
               } else if (r.getResult().isEmpty()) {
+                r.getPeer().recordUselessResponse("Download block returned an empty result");
                 LOG.debug(
                     "Failed to download block {} from peer {} with empty result.",
                     blockIdentifier,
