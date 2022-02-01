@@ -37,12 +37,12 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TraceFilter extends TraceBlock {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TraceFilter.class);
 
   public TraceFilter(
       final Supplier<BlockTracer> blockTracerSupplier,

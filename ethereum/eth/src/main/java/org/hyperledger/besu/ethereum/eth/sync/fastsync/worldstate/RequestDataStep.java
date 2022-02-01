@@ -34,12 +34,12 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RequestDataStep {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RequestDataStep.class);
   private final BiFunction<List<Hash>, Long, EthTask<Map<Hash, Bytes>>> getNodeDataTaskFactory;
 
   public RequestDataStep(final EthContext ethContext, final MetricsSystem metricsSystem) {

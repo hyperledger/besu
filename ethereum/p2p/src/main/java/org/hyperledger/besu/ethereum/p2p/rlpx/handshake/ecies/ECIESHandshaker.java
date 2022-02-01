@@ -36,11 +36,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.common.annotations.VisibleForTesting;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.crypto.InvalidCipherTextException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An Elliptic Curve Integrated Encryption Scheme implementation, following the handshake ceremony
@@ -51,7 +51,7 @@ import org.bouncycastle.crypto.InvalidCipherTextException;
  */
 public class ECIESHandshaker implements Handshaker {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ECIESHandshaker.class);
   private static final SecureRandom RANDOM = SecureRandomProvider.publicSecureRandom();
 
   static final int SIGNATURE_LENGTH = 65;

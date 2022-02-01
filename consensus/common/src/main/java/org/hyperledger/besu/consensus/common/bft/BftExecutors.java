@@ -25,8 +25,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BftExecutors {
 
@@ -36,7 +36,7 @@ public class BftExecutors {
     STOPPED
   }
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BftExecutors.class);
 
   private final Duration shutdownTimeout = Duration.ofSeconds(30);
   private final MetricsSystem metricsSystem;

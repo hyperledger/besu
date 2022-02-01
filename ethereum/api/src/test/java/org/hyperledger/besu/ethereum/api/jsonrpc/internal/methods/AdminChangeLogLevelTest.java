@@ -24,12 +24,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AdminChangeLogLevelTest {
@@ -55,14 +56,14 @@ public class AdminChangeLogLevelTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId());
 
-    final Level levelBeforeJsonRpcRequest = LogManager.getLogger().getLevel();
+    final Logger loggerBeforeJsonRpcRequest = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
     final JsonRpcSuccessResponse actualResponse =
         (JsonRpcSuccessResponse) adminChangeLogLevel.response(request);
-    final Level levelAfterJsonRpcRequest = LogManager.getLogger().getLevel();
+    final Logger loggerAfterJsonRpcRequest = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    assertThat(levelBeforeJsonRpcRequest).isEqualByComparingTo(Level.INFO);
-    assertThat(levelAfterJsonRpcRequest).isEqualByComparingTo(Level.DEBUG);
+    assertThat(loggerBeforeJsonRpcRequest.isInfoEnabled()).isTrue();
+    assertThat(loggerAfterJsonRpcRequest.isDebugEnabled()).isTrue();
   }
 
   @Test
@@ -74,20 +75,20 @@ public class AdminChangeLogLevelTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId());
 
-    final Level levelOfAllProjectBeforeJsonRpcRequest = LogManager.getLogger().getLevel();
-    final Level levelWithSpecificPackageBeforeJsonRpcRequest =
-        LogManager.getLogger("com").getLevel();
+    final Logger loggerOfAllProjectBeforeJsonRpcRequest =
+        LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    final Logger loggerWithSpecificPackageBeforeJsonRpcRequest = LoggerFactory.getLogger("com");
     final JsonRpcSuccessResponse actualResponse =
         (JsonRpcSuccessResponse) adminChangeLogLevel.response(request);
-    final Level levelOfAllProjectAfterJsonRpcRequest = LogManager.getLogger().getLevel();
-    final Level levelWithSpecificPackageAfterJsonRpcRequest =
-        LogManager.getLogger("com").getLevel();
+    final Logger loggerOfAllProjectAfterJsonRpcRequest =
+        LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    final Logger loggerWithSpecificPackageAfterJsonRpcRequest = LoggerFactory.getLogger("com");
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    assertThat(levelOfAllProjectBeforeJsonRpcRequest).isEqualByComparingTo(Level.INFO);
-    assertThat(levelOfAllProjectAfterJsonRpcRequest).isEqualByComparingTo(Level.INFO);
-    assertThat(levelWithSpecificPackageBeforeJsonRpcRequest).isEqualByComparingTo(Level.INFO);
-    assertThat(levelWithSpecificPackageAfterJsonRpcRequest).isEqualByComparingTo(Level.DEBUG);
+    assertThat(loggerOfAllProjectBeforeJsonRpcRequest.isInfoEnabled()).isTrue();
+    assertThat(loggerOfAllProjectAfterJsonRpcRequest.isInfoEnabled()).isTrue();
+    assertThat(loggerWithSpecificPackageBeforeJsonRpcRequest.isInfoEnabled()).isTrue();
+    assertThat(loggerWithSpecificPackageAfterJsonRpcRequest.isDebugEnabled()).isTrue();
   }
 
   @Test
@@ -98,14 +99,14 @@ public class AdminChangeLogLevelTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId());
 
-    final Level levelBeforeJsonRpcRequest = LogManager.getLogger().getLevel();
+    final Logger loggerBeforeJsonRpcRequest = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
     final JsonRpcSuccessResponse actualResponse =
         (JsonRpcSuccessResponse) adminChangeLogLevel.response(request);
-    final Level levelAfterJsonRpcRequest = LogManager.getLogger().getLevel();
+    final Logger loggerAfterJsonRpcRequest = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    assertThat(levelBeforeJsonRpcRequest).isEqualByComparingTo(Level.INFO);
-    assertThat(levelAfterJsonRpcRequest).isEqualByComparingTo(Level.DEBUG);
+    assertThat(loggerBeforeJsonRpcRequest.isInfoEnabled()).isTrue();
+    assertThat(loggerAfterJsonRpcRequest.isDebugEnabled()).isTrue();
   }
 
   @Test

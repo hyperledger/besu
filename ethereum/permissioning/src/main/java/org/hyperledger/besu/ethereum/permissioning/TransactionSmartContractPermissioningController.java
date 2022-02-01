@@ -30,11 +30,11 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.BaseUInt256Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Controller that can read from a smart contract that exposes the permissioning call
@@ -43,7 +43,8 @@ import org.apache.tuweni.units.bigints.BaseUInt256Value;
 public class TransactionSmartContractPermissioningController
     implements TransactionPermissioningProvider {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(TransactionSmartContractPermissioningController.class);
 
   private final Address contractAddress;
   private final TransactionSimulator transactionSimulator;

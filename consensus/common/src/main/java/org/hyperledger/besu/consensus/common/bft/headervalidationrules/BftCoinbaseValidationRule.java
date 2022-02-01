@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 
 import java.util.Collection;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Ensures that the coinbase (which corresponds to the block proposer) is included in the list of
@@ -31,7 +31,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class BftCoinbaseValidationRule implements AttachedBlockHeaderValidationRule {
 
-  private static final Logger LOGGER = LogManager.getLogger(BftCoinbaseValidationRule.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(BftCoinbaseValidationRule.class);
 
   @Override
   public boolean validate(

@@ -34,8 +34,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Function;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -51,7 +51,7 @@ import picocli.CommandLine.Spec;
     mixinStandardHelpOptions = true,
     subcommands = {ExportSubCommand.class, AddressSubCommand.class})
 public class PublicKeySubCommand implements Runnable {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PublicKeySubCommand.class);
 
   public static final String COMMAND_NAME = "public-key";
 

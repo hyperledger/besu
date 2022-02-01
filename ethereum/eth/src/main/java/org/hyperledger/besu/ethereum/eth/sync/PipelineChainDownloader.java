@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException;
@@ -37,11 +38,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PipelineChainDownloader implements ChainDownloader {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PipelineChainDownloader.class);
   static final Duration PAUSE_AFTER_ERROR_DURATION = Duration.ofSeconds(2);
   private final SyncState syncState;
   private final SyncTargetManager syncTargetManager;
@@ -118,14 +119,12 @@ public class PipelineChainDownloader implements ChainDownloader {
     pipelineErrorCounter.inc();
     if (ExceptionUtils.rootCause(error) instanceof InvalidBlockException) {
       LOG.warn(
-          "Invalid block detected.  Disconnecting from sync target. {}",
+          "Invalid block detected. Disconnecting from sync target. {}",
           ExceptionUtils.rootCause(error).getMessage());
       syncState.disconnectSyncTarget(DisconnectReason.BREACH_OF_PROTOCOL);
     }
 
-    if (!cancelled.get()
-        && syncTargetManager.shouldContinueDownloading()
-        && !(ExceptionUtils.rootCause(error) instanceof CancellationException)) {
+    if (!cancelled.get() && syncTargetManager.shouldContinueDownloading()) {
       logDownloadFailure("Chain download failed. Restarting after short delay.", error);
       // Allowing the normal looping logic to retry after a brief delay.
       return scheduler.scheduleFutureTask(() -> completedFuture(null), PAUSE_AFTER_ERROR_DURATION);
@@ -138,9 +137,9 @@ public class PipelineChainDownloader implements ChainDownloader {
 
   private void logDownloadFailure(final String message, final Throwable error) {
     final Throwable rootCause = ExceptionUtils.rootCause(error);
-    if (rootCause instanceof CancellationException || rootCause instanceof InterruptedException) {
-      LOG.trace(message, error);
-    } else if (rootCause instanceof EthTaskException) {
+    if (rootCause instanceof CancellationException
+        || rootCause instanceof InterruptedException
+        || rootCause instanceof EthTaskException) {
       LOG.debug(message, error);
     } else if (rootCause instanceof InvalidBlockException) {
       LOG.warn(message, error);
@@ -156,6 +155,12 @@ public class PipelineChainDownloader implements ChainDownloader {
     }
     syncState.setSyncTarget(target.peer(), target.commonAncestor());
     currentDownloadPipeline = downloadPipelineFactory.createDownloadPipelineForSyncTarget(target);
+    debugLambda(
+        LOG,
+        "Starting download pipeline for sync target {}, common ancestor {} ({})",
+        () -> target,
+        () -> target.commonAncestor().getNumber(),
+        () -> target.commonAncestor().getBlockHash());
     return scheduler.startPipeline(currentDownloadPipeline);
   }
 }

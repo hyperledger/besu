@@ -40,13 +40,13 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Tool for importing blocks with transactions from human-readable json. */
 public class JsonBlockImporter {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(JsonBlockImporter.class);
 
   private final ObjectMapper mapper;
   private final BesuController controller;

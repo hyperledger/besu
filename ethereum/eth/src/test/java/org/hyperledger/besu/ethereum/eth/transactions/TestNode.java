@@ -69,13 +69,13 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestNode implements Closeable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TestNode.class);
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   protected final NodeKey nodeKey;
@@ -123,7 +123,7 @@ public class TestNode implements Closeable {
 
     final EthMessages ethMessages = new EthMessages();
 
-    final EthPeers ethPeers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem);
+    final EthPeers ethPeers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem, 25);
 
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);

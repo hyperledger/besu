@@ -91,13 +91,16 @@ dependencyManagement {
 
     dependency 'io.reactivex.rxjava2:rxjava:2.2.21'
 
-    dependency 'io.vertx:vertx-auth-jwt:4.2.1'
-    dependency 'io.vertx:vertx-codegen:4.2.1'
-    dependency 'io.vertx:vertx-core:4.2.1'
-    dependency 'io.vertx:vertx-unit:4.2.1'
-    dependency 'io.vertx:vertx-web:4.2.1'
-    dependency 'io.vertx:vertx-web-client:4.2.1'
-    dependency 'io.vertx:vertx-auth-jwt:4.2.1'
+
+    dependencySet(group: 'io.vertx', version: '4.2.3') {
+      entry 'vertx-auth-jwt'
+      entry 'vertx-codegen'
+      entry 'vertx-core'
+      entry 'vertx-unit'
+      entry 'vertx-web'
+      entry 'vertx-web-client'
+      entry 'vertx-auth-jwt'
+    }
 
     dependency 'junit:junit:4.13.2'
 
@@ -113,17 +116,17 @@ dependencyManagement {
     dependency 'org.apache.logging.log4j:log4j-jul:2.17.1'
     dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.1'
 
-    dependency 'org.apache.tuweni:tuweni-bytes:2.0.0'
-    dependency 'org.apache.tuweni:tuweni-config:2.0.0'
-    dependency 'org.apache.tuweni:tuweni-concurrent:2.0.0'
-    dependency 'org.apache.tuweni:tuweni-crypto:2.0.0'
-    dependency 'org.apache.tuweni:tuweni-devp2p:2.0.0'
-    dependency 'org.apache.tuweni:tuweni-dns-discovery:2.0.0'
-    dependency 'org.apache.tuweni:tuweni-io:2.0.0'
-    dependency 'org.apache.tuweni:tuweni-net:2.0.0'
-    dependency 'org.apache.tuweni:tuweni-rlp:2.0.0'
-    dependency 'org.apache.tuweni:tuweni-toml:2.0.0'
-    dependency 'org.apache.tuweni:tuweni-units:2.0.0'
+    dependency 'org.apache.tuweni:tuweni-bytes:2.1.0'
+    dependency 'org.apache.tuweni:tuweni-config:2.1.0'
+    dependency 'org.apache.tuweni:tuweni-concurrent:2.1.0'
+    dependency 'org.apache.tuweni:tuweni-crypto:2.1.0'
+    dependency 'org.apache.tuweni:tuweni-devp2p:2.1.0'
+    dependency 'org.apache.tuweni:tuweni-dns-discovery:2.1.0'
+    dependency 'org.apache.tuweni:tuweni-io:2.1.0'
+    dependency 'org.apache.tuweni:tuweni-net:2.1.0'
+    dependency 'org.apache.tuweni:tuweni-rlp:2.1.0'
+    dependency 'org.apache.tuweni:tuweni-toml:2.1.0'
+    dependency 'org.apache.tuweni:tuweni-units:2.1.0'
 
     dependency 'org.assertj:assertj-core:3.22.0'
 
@@ -136,9 +139,9 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
 
-    dependency 'org.hyperledger.besu:bls12-381:0.4.2'
-    dependency 'org.hyperledger.besu:secp256k1:0.4.2'
-    dependency 'org.hyperledger.besu:secp256r1:0.4.2'
+    dependency 'org.hyperledger.besu:bls12-381:0.4.3'
+    dependency 'org.hyperledger.besu:secp256k1:0.4.3'
+    dependency 'org.hyperledger.besu:secp256r1:0.4.3'
 
     dependency 'org.immutables:value-annotations:2.8.8'
     dependency 'org.immutables:value:2.8.8'
@@ -157,7 +160,7 @@ dependencyManagement {
 
     dependency 'org.rocksdb:rocksdbjni:6.15.2'
 
-    dependency 'org.slf4j:slf4j-log4j12:1.7.26'
+    dependency 'org.slf4j:slf4j-api:1.7.25'
 
     dependency 'org.springframework.security:spring-security-crypto:5.6.1'
 

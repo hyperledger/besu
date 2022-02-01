@@ -55,8 +55,8 @@ import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.EvictingQueue;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Holds the current set of pending transactions with the ability to iterate them based on priority
@@ -65,7 +65,8 @@ import org.apache.logging.log4j.Logger;
  * <p>This class is safe for use across multiple threads.
  */
 public abstract class AbstractPendingTransactionsSorter {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(AbstractPendingTransactionsSorter.class);
 
   protected final int maxTransactionRetentionHours;
   protected final Clock clock;

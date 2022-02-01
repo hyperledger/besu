@@ -23,14 +23,14 @@ import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Collection;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrepareValidator {
 
   private static final String ERROR_PREFIX = "Invalid Prepare Message";
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrepareValidator.class);
 
   private final Collection<Address> validators;
   private final ConsensusRoundIdentifier targetRound;

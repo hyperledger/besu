@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Ensures the Validators listed in the block header match that tracked in memory (which was in-turn
@@ -31,7 +31,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class QbftValidatorsValidationRule implements AttachedBlockHeaderValidationRule {
 
-  private static final Logger LOGGER = LogManager.getLogger();
+  private static final Logger LOGGER = LoggerFactory.getLogger(QbftValidatorsValidationRule.class);
   private final boolean extraDataValidatorsAndVoteMustBeEmpty;
   private final BftValidatorsValidationRule bftValidatorsValidationRule =
       new BftValidatorsValidationRule();

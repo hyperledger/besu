@@ -67,14 +67,14 @@ import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RetestethContext {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RetestethContext.class);
   private static final PoWHasher NO_WORK_HASHER =
       (final long nonce, final long number, EpochCalculator epochCalc, final Bytes headerHash) ->
           new PoWSolution(nonce, Hash.ZERO, UInt256.ZERO, Hash.ZERO);
@@ -189,7 +189,7 @@ public class RetestethContext {
 
     // mining support
 
-    final EthPeers ethPeers = new EthPeers("reteseth", retestethClock, metricsSystem);
+    final EthPeers ethPeers = new EthPeers("reteseth", retestethClock, metricsSystem, 0);
     final SyncState syncState = new SyncState(blockchain, ethPeers);
 
     ethScheduler = new EthScheduler(1, 1, 1, 1, metricsSystem);
@@ -209,7 +209,9 @@ public class RetestethContext {
             Wei.ZERO,
             transactionPoolConfiguration);
 
-    LOG.trace("Genesis Block {} ", genesisState::getBlock);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Genesis Block {} ", genesisState.getBlock());
+    }
 
     return true;
   }

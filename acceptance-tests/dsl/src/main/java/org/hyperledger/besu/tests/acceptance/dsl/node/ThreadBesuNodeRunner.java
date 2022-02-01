@@ -65,15 +65,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
 public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ThreadBesuNodeRunner.class);
   private final Map<String, Runner> besuRunners = new HashMap<>();
 
   private final Map<Node, BesuPluginContextImpl> besuPluginContextMap = new ConcurrentHashMap<>();
@@ -111,10 +111,10 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   @Override
   public void startNode(final BesuNode node) {
 
-    if (ThreadContext.containsKey("node")) {
-      LOG.error("ThreadContext node is already set to {}", ThreadContext.get("node"));
+    if (MDC.get("node") != null) {
+      LOG.error("ThreadContext node is already set to {}", MDC.get("node"));
     }
-    ThreadContext.put("node", node.getName());
+    MDC.put("node", node.getName());
 
     if (!node.getRunCommand().isEmpty()) {
       throw new UnsupportedOperationException("commands are not supported with thread runner");
@@ -159,6 +159,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .strictTransactionReplayProtectionEnabled(node.isStrictTxReplayProtectionEnabled())
             .build();
 
+    final int maxPeers = 25;
+
     final BesuController besuController =
         builder
             .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
@@ -178,6 +180,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                     .map(
                         (pkiConfig) -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
             .evmConfiguration(EvmConfiguration.DEFAULT)
+            .maxPeers(maxPeers)
             .build();
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
@@ -191,7 +194,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .discovery(node.isDiscoveryEnabled())
             .p2pAdvertisedHost(node.getHostName())
             .p2pListenPort(0)
-            .maxPeers(25)
+            .maxPeers(maxPeers)
             .networkingConfiguration(node.getNetworkingConfiguration())
             .jsonRpcConfiguration(node.jsonRpcConfiguration())
             .webSocketConfiguration(node.webSocketConfiguration())
@@ -229,7 +232,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     runner.startEthereumMainLoop();
 
     besuRunners.put(node.getName(), runner);
-    ThreadContext.remove("node");
+    MDC.remove("node");
   }
 
   @Override

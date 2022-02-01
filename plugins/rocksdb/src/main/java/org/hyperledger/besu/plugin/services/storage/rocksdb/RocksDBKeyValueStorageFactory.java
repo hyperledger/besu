@@ -39,12 +39,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Supplier;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RocksDBKeyValueStorageFactory.class);
   private static final int DEFAULT_VERSION = 1;
   private static final Set<Integer> SUPPORTED_VERSIONS = Set.of(0, 1, 2);
   private static final String NAME = "rocksdb";
@@ -145,8 +145,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     try {
       databaseVersion = readDatabaseVersion(commonConfiguration);
     } catch (final IOException e) {
-      LOG.error("Failed to retrieve the RocksDB database meta version: {}", e.getMessage());
-      throw new StorageException(e.getMessage(), e);
+      throw new StorageException("Failed to retrieve the RocksDB database meta version", e);
     }
     isSegmentIsolationSupported = databaseVersion >= 1;
     rocksDBConfiguration =

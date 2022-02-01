@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -29,11 +29,12 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.function.Supplier;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ChainHeadTracker implements ConnectCallback {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ChainHeadTracker.class);
 
   private final EthContext ethContext;
   private final ProtocolSchedule protocolSchedule;
@@ -67,7 +68,7 @@ public class ChainHeadTracker implements ConnectCallback {
 
   @Override
   public void onPeerConnected(final EthPeer peer) {
-    LOG.debug("Requesting chain head info for {}", peer);
+    LOG.debug("Requesting chain head info from {}", peer);
     GetHeadersFromPeerByHashTask.forSingleHash(
             protocolSchedule,
             ethContext,
@@ -82,9 +83,13 @@ public class ChainHeadTracker implements ConnectCallback {
                 final BlockHeader chainHeadHeader = peerResult.getResult().get(0);
                 peer.chainState().update(chainHeadHeader);
                 trailingPeerLimiter.enforceTrailingPeerLimit();
+                debugLambda(
+                    LOG,
+                    "Retrieved chain head info {} from {}",
+                    () -> chainHeadHeader.getNumber() + " (" + chainHeadHeader.getBlockHash() + ")",
+                    () -> peer);
               } else {
-                LOG.debug(
-                    "Failed to retrieve chain head information. Disconnecting " + peer, error);
+                LOG.debug("Failed to retrieve chain head info. Disconnecting {}", peer, error);
                 peer.disconnect(DisconnectReason.USELESS_PEER);
               }
             });

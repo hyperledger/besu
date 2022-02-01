@@ -26,13 +26,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 import com.google.auto.service.AutoService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Option;
 
 @AutoService(BesuPlugin.class)
 public class BadCLIOptionsPlugin implements BesuPlugin {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BadCLIOptionsPlugin.class);
 
   @Option(names = "--poorly-named-option")
   String poorlyNamedOption = "nothing";

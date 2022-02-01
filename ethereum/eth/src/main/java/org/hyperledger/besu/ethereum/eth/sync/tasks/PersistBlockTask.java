@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.tasks;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -33,12 +34,12 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PersistBlockTask extends AbstractEthTask<Block> {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PersistBlockTask.class);
 
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -196,6 +197,7 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
       final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
+      debugLambda(LOG, "Running import task for block {}", block::toLogString);
       blockImported = blockImporter.importBlock(protocolContext, block, validateHeaders);
       if (!blockImported) {
         result.completeExceptionally(

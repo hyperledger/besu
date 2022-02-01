@@ -25,11 +25,11 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PeerPermissionsAdapter extends PeerPermissions {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PeerPermissionsAdapter.class);
 
   private final NodePermissioningController nodePermissioningController;
   private final List<EnodeURL> bootnodes;

@@ -16,12 +16,12 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import org.hyperledger.besu.util.InvalidConfigurationException;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.rocksdb.RocksDB;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RocksDbUtil {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RocksDbUtil.class);
 
   private RocksDbUtil() {}
 

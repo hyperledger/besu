@@ -83,11 +83,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class BesuControllerBuilder {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
   protected GenesisConfigFile genesisConfig;
   protected SynchronizerConfiguration syncConfig;
@@ -115,6 +115,7 @@ public abstract class BesuControllerBuilder {
   protected List<NodeMessagePermissioningProvider> messagePermissioningProviders =
       Collections.emptyList();
   protected EvmConfiguration evmConfiguration;
+  protected int maxPeers;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -238,6 +239,11 @@ public abstract class BesuControllerBuilder {
     return this;
   }
 
+  public BesuControllerBuilder maxPeers(final int maxPeers) {
+    this.maxPeers = maxPeers;
+    return this;
+  }
+
   public BesuController build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -309,7 +315,8 @@ public abstract class BesuControllerBuilder {
       }
     }
     final EthPeers ethPeers =
-        new EthPeers(getSupportedProtocol(), clock, metricsSystem, messagePermissioningProviders);
+        new EthPeers(
+            getSupportedProtocol(), clock, metricsSystem, maxPeers, messagePermissioningProviders);
 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();

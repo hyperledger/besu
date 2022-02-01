@@ -28,6 +28,12 @@ public class UnsignedLongParameter {
     checkArgument(this.value >= 0);
   }
 
+  @JsonCreator
+  public UnsignedLongParameter(final long value) {
+    this.value = value;
+    checkArgument(this.value >= 0);
+  }
+
   public long getValue() {
     return value;
   }

@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for ensuring the extra data fields in the header contain the appropriate number of
@@ -27,7 +27,7 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class ExtraDataMaxLengthValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ExtraDataMaxLengthValidationRule.class);
   private final long maxExtraDataBytes;
 
   public ExtraDataMaxLengthValidationRule(final long maxExtraDataBytes) {

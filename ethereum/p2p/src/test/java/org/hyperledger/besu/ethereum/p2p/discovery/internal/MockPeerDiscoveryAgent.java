@@ -33,12 +33,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(MockPeerDiscoveryAgent.class);
 
   // The set of known agents operating on the network
   private final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork;
