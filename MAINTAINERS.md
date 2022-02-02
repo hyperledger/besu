@@ -29,6 +29,7 @@
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Stefan Pingel    | pinges           | pinges           |
 | Rai Sur          | RatanRSur        | ratanraisur      |
+| Ryan Jones       | ryanjjones10     | ryanjjones10     |
 | Sajida Zouarhi   | sajz             | SajidaZ          |
 | Simon Dudley     | siladu           | siladu           |
 | Danno Ferrin     | shemnon          | shemnon          |
