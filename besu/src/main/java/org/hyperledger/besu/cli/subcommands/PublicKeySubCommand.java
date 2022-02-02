@@ -99,7 +99,7 @@ public class PublicKeySubCommand implements Runnable {
 
     @Override
     public void run() {
-      configureEcCurve(ecCurve);
+      configureEcCurve(ecCurve, parentCommand.spec.commandLine());
       run(publicKeyExportFile, keyPair -> keyPair.getPublicKey().toString());
     }
   }
@@ -129,7 +129,7 @@ public class PublicKeySubCommand implements Runnable {
 
     @Override
     public void run() {
-      configureEcCurve(ecCurve);
+      configureEcCurve(ecCurve, parentCommand.spec.commandLine());
       run(addressExportFile, keyPair -> Util.publicKeyToAddress(keyPair.getPublicKey()).toString());
     }
   }
@@ -138,7 +138,7 @@ public class PublicKeySubCommand implements Runnable {
 
     @SuppressWarnings("unused")
     @ParentCommand
-    private PublicKeySubCommand parentCommand; // Picocli injects reference to parent command
+    protected PublicKeySubCommand parentCommand; // Picocli injects reference to parent command
 
     @Mixin private final NodePrivateKeyFileOption nodePrivateKeyFileOption = null;
 
@@ -187,13 +187,12 @@ public class PublicKeySubCommand implements Runnable {
       }
     }
 
-    protected static void configureEcCurve(final String ecCurve) {
+    protected static void configureEcCurve(final String ecCurve, final CommandLine commandLine) {
       if (ecCurve != null) {
         try {
           SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(ecCurve));
         } catch (IllegalArgumentException e) {
-          LOG.error("Invalid parameter for ecCurve: {}", ecCurve, e);
-          throw e;
+          throw new CommandLine.ParameterException(commandLine, e.getMessage(), e);
         }
       }
     }
