@@ -59,7 +59,7 @@ public class FullImportBlockStep implements Consumer<Block> {
     if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
       peerCount = ethContext.getEthPeers().peerCount();
     }
-    if (blockNumber % 200 == 0) {
+    if (blockNumber % 200 == 0 || LOG.isTraceEnabled()) {
       final long nowMilli = Instant.now().toEpochMilli();
       final long deltaMilli = nowMilli - lastReportMillis;
       final String mgps =

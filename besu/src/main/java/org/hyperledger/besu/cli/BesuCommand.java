@@ -1874,7 +1874,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
-        .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject());
+        .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject())
+        .maxPeers(maxPeers);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {

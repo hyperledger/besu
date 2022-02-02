@@ -22,6 +22,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.io.File;
@@ -33,10 +34,14 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import picocli.CommandLine.Model.CommandSpec;
 
+@RunWith(MockitoJUnitRunner.class)
 public class PublicKeySubCommandTest extends CommandTestAbstract {
 
   private static final String EXPECTED_PUBLIC_KEY_USAGE =
@@ -60,27 +65,35 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
           + System.lineSeparator();
 
   private static final String EXPECTED_PUBLIC_KEY_EXPORT_USAGE =
-      "Usage: besu public-key export [-hV] [--node-private-key-file=<PATH>]"
+      "Usage: besu public-key export [-hV] [--ec-curve[=<NAME>]]"
           + System.lineSeparator()
-          + "                              [--to=<FILE>]"
+          + "                              [--node-private-key-file=<PATH>] [--to=<FILE>]"
           + System.lineSeparator()
           + "This command outputs the node public key. Default output is standard output."
           + System.lineSeparator()
-          + "  -h, --help        Show this help message and exit."
+          + "      --ec-curve[=<NAME>]   Elliptic curve to use when creating a new key"
+          + System.lineSeparator()
+          + "                              (default: secp256k1)"
+          + System.lineSeparator()
+          + "  -h, --help                Show this help message and exit."
           + System.lineSeparator()
           + "      --node-private-key-file=<PATH>"
           + System.lineSeparator()
-          + "                    The node's private key file (default: a file named \"key\" in"
+          + "                            The node's private key file (default: a file named"
           + System.lineSeparator()
-          + "                      the Besu data directory)"
+          + "                              \"key\" in the Besu data directory)"
           + System.lineSeparator()
-          + "      --to=<FILE>   File to write public key to instead of standard output"
+          + "      --to=<FILE>           File to write public key to instead of standard"
           + System.lineSeparator()
-          + "  -V, --version     Print version information and exit."
+          + "                              output"
+          + System.lineSeparator()
+          + "  -V, --version             Print version information and exit."
           + System.lineSeparator();
 
   private static final String EXPECTED_PUBLIC_KEY_EXPORT_ADDRESS_USAGE =
-      "Usage: besu public-key export-address [-hV] [--node-private-key-file=<PATH>]"
+      "Usage: besu public-key export-address [-hV] [--ec-curve[=<NAME>]]"
+          + System.lineSeparator()
+          + "                                      [--node-private-key-file=<PATH>]"
           + System.lineSeparator()
           + "                                      [--to=<FILE>]"
           + System.lineSeparator()
@@ -88,17 +101,21 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "output."
           + System.lineSeparator()
-          + "  -h, --help        Show this help message and exit."
+          + "      --ec-curve[=<NAME>]   Elliptic curve to use when creating a new key"
+          + System.lineSeparator()
+          + "                              (default: secp256k1)"
+          + System.lineSeparator()
+          + "  -h, --help                Show this help message and exit."
           + System.lineSeparator()
           + "      --node-private-key-file=<PATH>"
           + System.lineSeparator()
-          + "                    The node's private key file (default: a file named \"key\" in"
+          + "                            The node's private key file (default: a file named"
           + System.lineSeparator()
-          + "                      the Besu data directory)"
+          + "                              \"key\" in the Besu data directory)"
           + System.lineSeparator()
-          + "      --to=<FILE>   File to write address to instead of standard output"
+          + "      --to=<FILE>           File to write address to instead of standard output"
           + System.lineSeparator()
-          + "  -V, --version     Print version information and exit."
+          + "  -V, --version             Print version information and exit."
           + System.lineSeparator();
 
   private static final String PUBLIC_KEY_SUBCOMMAND_NAME = "public-key";
@@ -112,6 +129,11 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   public static void setUp() {
     final X9ECParameters params = SECNamedCurves.getByName(CURVE_NAME);
     curve = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
+  }
+
+  @Before
+  public void before() {
+    SignatureAlgorithmFactory.resetInstance();
   }
 
   // public-key sub-command
@@ -319,5 +341,130 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("Private key cannot be loaded from file");
+  }
+
+  @Test
+  public void
+      callingPublicKeyExportSubCommandWithEcCurveNameCorrectlyConfiguresSignatureAlgorithmFactory()
+          throws Exception {
+    assertThat(SignatureAlgorithmFactory.isInstanceSet()).isFalse();
+
+    final File file = File.createTempFile("public", "key");
+
+    parseCommand(
+        PUBLIC_KEY_SUBCOMMAND_NAME,
+        PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME,
+        "--to",
+        file.getPath(),
+        "--ec-curve",
+        CURVE_NAME);
+
+    assertThat(SignatureAlgorithmFactory.isInstanceSet()).isTrue();
+    assertThat(SignatureAlgorithmFactory.getInstance().getCurveName()).isEqualTo(CURVE_NAME);
+  }
+
+  @Test
+  public void
+      callingPublicKeyExportSubCommandWithoutEcCurveNameDoesNotConfiguresSignatureAlgorithmFactory()
+          throws Exception {
+    assertThat(SignatureAlgorithmFactory.isInstanceSet()).isFalse();
+
+    final File file = File.createTempFile("public", "key");
+
+    parseCommand(
+        PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME, "--to", file.getPath());
+
+    assertThat(SignatureAlgorithmFactory.isInstanceSet()).isFalse();
+  }
+
+  @Test
+  public void callingPublicKeyExportSubCommandWithInvalidEcCurveNameFails() throws Exception {
+    final File file = File.createTempFile("public", "key");
+
+    parseCommand(
+        PUBLIC_KEY_SUBCOMMAND_NAME,
+        PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME,
+        "--to",
+        file.getPath(),
+        "--ec-curve",
+        "foo");
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("foo is not in the list of valid elliptic curves");
+  }
+
+  @Test
+  public void
+      callingPublicKeyExportAddressSubCommandWithEcCurveNameCorrectlyConfiguresSignatureAlgorithmFactory()
+          throws Exception {
+    assertThat(SignatureAlgorithmFactory.isInstanceSet()).isFalse();
+
+    final SECPPrivateKey privateKey =
+        SECPPrivateKey.create(
+            Bytes32.fromHexString(
+                "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"),
+            ALGORITHM);
+
+    final Path privateKeyFile = Files.createTempFile("private", "address");
+    Files.writeString(privateKeyFile, privateKey.toString());
+
+    parseCommand(
+        PUBLIC_KEY_SUBCOMMAND_NAME,
+        PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME,
+        "--node-private-key-file",
+        privateKeyFile.toString(),
+        "--ec-curve",
+        CURVE_NAME);
+
+    assertThat(SignatureAlgorithmFactory.isInstanceSet()).isTrue();
+    assertThat(SignatureAlgorithmFactory.getInstance().getCurveName()).isEqualTo(CURVE_NAME);
+  }
+
+  @Test
+  public void
+      callingPublicKeyExportAddressSubCommandWithoutEcCurveNameDoesNotConfiguresSignatureAlgorithmFactory()
+          throws Exception {
+    assertThat(SignatureAlgorithmFactory.isInstanceSet()).isFalse();
+
+    final SECPPrivateKey privateKey =
+        SECPPrivateKey.create(
+            Bytes32.fromHexString(
+                "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"),
+            ALGORITHM);
+
+    final Path privateKeyFile = Files.createTempFile("private", "address");
+    Files.writeString(privateKeyFile, privateKey.toString());
+
+    parseCommand(
+        PUBLIC_KEY_SUBCOMMAND_NAME,
+        PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME,
+        "--node-private-key-file",
+        privateKeyFile.toString());
+
+    assertThat(SignatureAlgorithmFactory.isInstanceSet()).isFalse();
+  }
+
+  @Test
+  public void callingPublicKeyExportAddressSubCommandWithInvalidEcCurveNameFails()
+      throws Exception {
+    final SECPPrivateKey privateKey =
+        SECPPrivateKey.create(
+            Bytes32.fromHexString(
+                "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"),
+            ALGORITHM);
+
+    final Path privateKeyFile = Files.createTempFile("private", "address");
+    Files.writeString(privateKeyFile, privateKey.toString());
+
+    parseCommand(
+        PUBLIC_KEY_SUBCOMMAND_NAME,
+        PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME,
+        "--node-private-key-file",
+        privateKeyFile.toString(),
+        "--ec-curve",
+        "foo");
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("foo is not in the list of valid elliptic curves");
   }
 }

@@ -69,11 +69,13 @@ public class KeyPairUtil {
       LOG.info(
           "Loaded public key {} from {}", key.getPublicKey().toString(), keyFile.getAbsolutePath());
     } else {
-      key = SIGNATURE_ALGORITHM.get().generateKeyPair();
+      final SignatureAlgorithm signatureAlgorithm = SIGNATURE_ALGORITHM.get();
+      key = signatureAlgorithm.generateKeyPair();
       storeKeyFile(key, keyFile.getParentFile().toPath());
 
       LOG.info(
-          "Generated new public key {} and stored it to {}",
+          "Generated new {} public key {} and stored it to {}",
+          signatureAlgorithm.getCurveName(),
           key.getPublicKey().toString(),
           keyFile.getAbsolutePath());
     }

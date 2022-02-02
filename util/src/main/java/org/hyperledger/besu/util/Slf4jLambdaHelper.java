@@ -25,6 +25,9 @@ import org.slf4j.Logger;
  */
 public class Slf4jLambdaHelper {
 
+  // sonar code smell
+  private Slf4jLambdaHelper() {}
+
   public static void debugLambda(
       final Logger log, final String message, final Supplier<?>... params) {
     if (log.isDebugEnabled()) {

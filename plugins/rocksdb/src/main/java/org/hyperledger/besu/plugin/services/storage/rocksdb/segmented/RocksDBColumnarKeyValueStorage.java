@@ -88,13 +88,17 @@ public class RocksDBColumnarKeyValueStorage
     try (final ColumnFamilyOptions columnFamilyOptions = new ColumnFamilyOptions()) {
       final List<ColumnFamilyDescriptor> columnDescriptors =
           segments.stream()
-              .map(segment -> new ColumnFamilyDescriptor(segment.getId()))
+              .map(
+                  segment ->
+                      new ColumnFamilyDescriptor(
+                          segment.getId(), new ColumnFamilyOptions().setTtl(0)))
               .collect(Collectors.toList());
       columnDescriptors.add(
           new ColumnFamilyDescriptor(
               DEFAULT_COLUMN.getBytes(StandardCharsets.UTF_8),
-              columnFamilyOptions.setTableFormatConfig(
-                  createBlockBasedTableConfig(configuration))));
+              columnFamilyOptions
+                  .setTtl(0)
+                  .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
 
       final Statistics stats = new Statistics();
       options =
