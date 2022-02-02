@@ -7,6 +7,7 @@
 ### Additions and Improvements
 - Updated besu-native to version 0.4.3 [#3331](https://github.com/hyperledger/besu/pull/3331)
 - Refactor synchronizer to asynchronously retrieve blocks from peers, and to change peer when retrying to get a block. [#3326](https://github.com/hyperledger/besu/pull/3326)
+- Disable RocksDB TTL compactions [#3356](https://github.com/hyperledger/besu/pull/3356)
 
 ### Bug Fixes
 - Prevent node from peering to itself [#3342](https://github.com/hyperledger/besu/pull/3342)
