@@ -24,6 +24,8 @@ import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.AddressSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.ExportSubCommand;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.crypto.SignatureAlgorithmType;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.io.BufferedWriter;
@@ -97,6 +99,7 @@ public class PublicKeySubCommand implements Runnable {
 
     @Override
     public void run() {
+      configureEcCurve(ecCurve, parentCommand.spec.commandLine());
       run(publicKeyExportFile, keyPair -> keyPair.getPublicKey().toString());
     }
   }
@@ -126,6 +129,7 @@ public class PublicKeySubCommand implements Runnable {
 
     @Override
     public void run() {
+      configureEcCurve(ecCurve, parentCommand.spec.commandLine());
       run(addressExportFile, keyPair -> Util.publicKeyToAddress(keyPair.getPublicKey()).toString());
     }
   }
@@ -134,9 +138,19 @@ public class PublicKeySubCommand implements Runnable {
 
     @SuppressWarnings("unused")
     @ParentCommand
-    private PublicKeySubCommand parentCommand; // Picocli injects reference to parent command
+    protected PublicKeySubCommand parentCommand; // Picocli injects reference to parent command
 
     @Mixin private final NodePrivateKeyFileOption nodePrivateKeyFileOption = null;
+
+    @Option(
+        names = "--ec-curve",
+        paramLabel = "<NAME>",
+        description =
+            "Elliptic curve to use when creating a new key (default: "
+                + SignatureAlgorithmType.DEFAULT_EC_CURVE_NAME
+                + ")",
+        arity = "0..1")
+    protected String ecCurve = null;
 
     @Spec private final CommandSpec spec = null;
 
@@ -170,6 +184,16 @@ public class PublicKeySubCommand implements Runnable {
         }
       } else {
         parentCommand.out.println(output);
+      }
+    }
+
+    protected static void configureEcCurve(final String ecCurve, final CommandLine commandLine) {
+      if (ecCurve != null) {
+        try {
+          SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(ecCurve));
+        } catch (IllegalArgumentException e) {
+          throw new CommandLine.ParameterException(commandLine, e.getMessage(), e);
+        }
       }
     }
   }
