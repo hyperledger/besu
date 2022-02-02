@@ -31,8 +31,8 @@
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Ryan Jones       | ryanjjones10     | ryanjjones10     |
 | Sajida Zouarhi   | sajz             | SajidaZ          |
-| Simon Dudley     | siladu           | siladu           |
 | Danno Ferrin     | shemnon          | shemnon          |
+| Simon Dudley     | siladu           | siladu           |
 | Taccat Isid      | taccatisid       | taccatisid       |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
 | Vijay Michalik   | vmichalik        | VijayMichalik    |
