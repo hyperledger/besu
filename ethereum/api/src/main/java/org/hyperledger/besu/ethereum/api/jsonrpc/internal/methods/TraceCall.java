@@ -55,6 +55,11 @@ import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
 public class TraceCall implements JsonRpcMethod {
+  private static final String TRACE_NODE_PROPERTY_NAME = "trace";
+  private static final String OUTPUT_NODE_PROPERTY_NAME = "output";
+  private static final String STATE_DIFF_NODE_PROPERTY_NAME = "stateDiff";
+  private static final String VM_TRACE_NODE_PROPERTY_NAME = "vmTrace";
+
   private final Supplier<BlockchainQueries> blockchainQueries;
   private final ProtocolSchedule protocolSchedule;
   private final TransactionSimulator transactionSimulator;
@@ -102,7 +107,7 @@ public class TraceCall implements JsonRpcMethod {
     final ObjectMapper mapper = new ObjectMapper();
     final ObjectNode resultNode = mapper.createObjectNode();
 
-    resultNode.put("output", maybeSimulatorResult.get().getOutput().toString());
+    resultNode.put(OUTPUT_NODE_PROPERTY_NAME, maybeSimulatorResult.get().getOutput().toString());
 
     final TransactionTrace transactionTrace =
         new TransactionTrace(
@@ -117,45 +122,44 @@ public class TraceCall implements JsonRpcMethod {
       final StateDiffGenerator stateDiffGenerator = new StateDiffGenerator();
 
       generateTracesFromTransactionTrace(
-          trace -> resultNode.putPOJO("stateDiff", trace),
+          trace -> resultNode.putPOJO(STATE_DIFF_NODE_PROPERTY_NAME, trace),
           protocolSchedule,
           transactionTrace,
           block,
-          (__, txTrace, currentBlock, ignored) -> stateDiffGenerator.generateStateDiff(txTrace),
+          (ignoredProtocolSchedule, txTrace, currentBlock, ignored) -> stateDiffGenerator.generateStateDiff(txTrace),
           traceCounter);
     }
-    setNullNodesIfNotPresent(resultNode, "stateDiff");
+    setNullNodesIfNotPresent(resultNode, STATE_DIFF_NODE_PROPERTY_NAME);
 
     if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
       generateTracesFromTransactionTrace(
-          resultNode.putArray("trace")::addPOJO,
+          resultNode.putArray(TRACE_NODE_PROPERTY_NAME)::addPOJO,
           protocolSchedule,
           transactionTrace,
           block,
-          (protocolSchedule, txTrace, currentBlock, ignored) ->
+          (protocolSchedule, txTrace, currentBlock, ignoredTraceCounter) ->
               FlatTraceGenerator.generateFromTransactionTrace(
-                  protocolSchedule, txTrace, currentBlock, ignored, false),
+                  protocolSchedule, txTrace, currentBlock, ignoredTraceCounter, false),
           traceCounter);
     }
-    setEmptyArrayIfNotPresent(resultNode, "trace");
+    setEmptyArrayIfNotPresent(resultNode, TRACE_NODE_PROPERTY_NAME);
 
     if (traceTypes.contains(VM_TRACE)) {
       generateTracesFromTransactionTrace(
-          trace -> resultNode.putPOJO("vmTrace", trace),
+          trace -> resultNode.putPOJO(VM_TRACE_NODE_PROPERTY_NAME, trace),
           protocolSchedule,
           transactionTrace,
           block,
-          (protocolSchedule, txTrace, currentBlock, ignored) ->
+          (protocolSchedule, txTrace, currentBlock, ignoredTraceCounter) ->
               new VmTraceGenerator(transactionTrace).generateTraceStream(),
           traceCounter);
     }
-    setNullNodesIfNotPresent(resultNode, "vmTrace");
+    setNullNodesIfNotPresent(resultNode, VM_TRACE_NODE_PROPERTY_NAME);
 
     transactionTrace
         .getResult()
         .getRevertReason()
         .ifPresent(revertReason -> parseRevertReasonToOutput(revertReason, resultNode, mapper));
-    ;
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), resultNode);
   }
@@ -176,22 +180,22 @@ public class TraceCall implements JsonRpcMethod {
 
   private void parseRevertReasonToOutput(
       final Bytes revertReason, final ObjectNode resultNode, final ObjectMapper mapper) {
-    if (!resultNode.findValue("trace").isEmpty()) {
+    if (!resultNode.findValue(TRACE_NODE_PROPERTY_NAME).isEmpty()) {
       final ArrayNode traceNode = mapper.createArrayNode();
-      ObjectNode json = mapper.valueToTree(resultNode.findValue("trace").get(0));
+      ObjectNode json = mapper.valueToTree(resultNode.findValue(TRACE_NODE_PROPERTY_NAME).get(0));
 
       final JsonNode revertReasonNode = json.findValue("revertReason");
       if (revertReasonNode != null && !revertReasonNode.textValue().isBlank()) {
         json.remove("revertReason");
         traceNode.add(json);
-        resultNode.replace("trace", traceNode);
+        resultNode.replace(TRACE_NODE_PROPERTY_NAME, traceNode);
       }
     }
 
     final TextNode outputWithRevertReason =
         mapper.createArrayNode().textNode(revertReason.toHexString());
-    if (resultNode.findValue("output").textValue().equals("0x")) {
-      resultNode.replace("output", outputWithRevertReason);
+    if (resultNode.findValue(OUTPUT_NODE_PROPERTY_NAME).textValue().equals("0x")) {
+      resultNode.replace(OUTPUT_NODE_PROPERTY_NAME, outputWithRevertReason);
     }
   }
 
