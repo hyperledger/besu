@@ -176,7 +176,13 @@ public class VmTraceGenerator {
             op.setCost(
                 currentTraceFrame.getGasRemaining().toLong()
                     - currentTraceFrame.getGasRemainingPostExecution().toLong());
-            op.setSub(new VmTrace(currentTraceFrame.getMaybeCode().get().getBytes().toHexString()));
+            currentTraceFrame
+                .getMaybeCode()
+                .ifPresent(
+                    code ->
+                        op.setSub(
+                            new VmTrace(
+                                currentTraceFrame.getMaybeCode().get().getBytes().toHexString())));
           } else {
             op.setCost(op.getCost());
             op.setSub(null);

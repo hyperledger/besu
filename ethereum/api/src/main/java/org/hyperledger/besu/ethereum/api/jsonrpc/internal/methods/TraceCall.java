@@ -126,7 +126,8 @@ public class TraceCall implements JsonRpcMethod {
           protocolSchedule,
           transactionTrace,
           block,
-          (ignoredProtocolSchedule, txTrace, currentBlock, ignored) -> stateDiffGenerator.generateStateDiff(txTrace),
+          (ignoredProtocolSchedule, txTrace, currentBlock, ignored) ->
+              stateDiffGenerator.generateStateDiff(txTrace),
           traceCounter);
     }
     setNullNodesIfNotPresent(resultNode, STATE_DIFF_NODE_PROPERTY_NAME);
