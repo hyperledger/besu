@@ -117,7 +117,8 @@ public class VmTraceGenerator {
       final TraceFrame frame, final VmOperation op, final VmOperationExecutionReport report) {
     // add the operation representation to the list of traces
     final Optional<ExceptionalHaltReason> exceptionalHaltReason = frame.getExceptionalHaltReason();
-    if (exceptionalHaltReason.isPresent()
+    if (frame.getDepth() > 0
+        && exceptionalHaltReason.isPresent()
         && exceptionalHaltReason.get() == ExceptionalHaltReason.INSUFFICIENT_GAS) {
       op.setVmOperationExecutionReport(null);
     } else {
@@ -171,6 +172,11 @@ public class VmTraceGenerator {
             final VmTrace newSubTrace = new VmTrace();
             parentTraces.addLast(newSubTrace);
             op.setSub(newSubTrace);
+          } else if (currentTraceFrame.getDepth() == 0) {
+            op.setCost(
+                currentTraceFrame.getGasRemaining().toLong()
+                    - currentTraceFrame.getGasRemainingPostExecution().toLong());
+            op.setSub(new VmTrace(currentTraceFrame.getMaybeCode().get().getBytes().toHexString()));
           } else {
             op.setCost(op.getCost());
             op.setSub(null);
