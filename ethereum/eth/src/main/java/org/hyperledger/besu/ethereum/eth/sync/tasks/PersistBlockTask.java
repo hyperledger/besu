@@ -147,7 +147,7 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
     checkArgument(!blocks.isEmpty(), "No blocks to import provided");
     return () -> {
       final CompletableFuture<List<Block>> finalResult = new CompletableFuture<>();
-      final List<Block> successfulImports = new ArrayList<>();
+      final List<Block> successfulImports = new ArrayList<>(blocks.size());
       final Iterator<PersistBlockTask> tasks =
           blocks.stream()
               .map(
@@ -205,27 +205,25 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
                 "Failed to import block", block.getHeader().getNumber(), block.getHash()));
         return;
       }
+      logStats();
       result.complete(block);
     } catch (final Exception e) {
       result.completeExceptionally(e);
     }
   }
 
-  @Override
-  protected void cleanup() {
-    if (blockImported) {
-      final double timeInS = getTaskTimeInSec();
-      LOG.info(
-          String.format(
-              "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
-              block.getHeader().getNumber(),
-              block.getBody().getTransactions().size(),
-              block.getBody().getOmmers().size(),
-              block.getHeader().getGasUsed(),
-              (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-              block.getHash().toHexString(),
-              timeInS,
-              ethContext.getEthPeers().peerCount()));
-    }
+  private void logStats() {
+    final double timeInS = getTaskTimeInSec();
+    LOG.info(
+        String.format(
+            "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
+            block.getHeader().getNumber(),
+            block.getBody().getTransactions().size(),
+            block.getBody().getOmmers().size(),
+            block.getHeader().getGasUsed(),
+            (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
+            block.getHash().toHexString(),
+            timeInS,
+            ethContext.getEthPeers().peerCount()));
   }
 }
