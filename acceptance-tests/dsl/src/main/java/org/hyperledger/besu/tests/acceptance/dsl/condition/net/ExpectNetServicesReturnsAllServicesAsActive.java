@@ -41,15 +41,15 @@ public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
         .containsExactlyInAnyOrderElementsOf(Arrays.asList("p2p", "jsonrpc", "ws"));
 
     assertThat(InetAddresses.isUriInetAddress(result.get("p2p").get("host"))).isTrue();
-    final int p2pPort = Integer.valueOf(result.get("p2p").get("port"));
+    final int p2pPort = Integer.parseInt(result.get("p2p").get("port"));
     assertThat(NetworkUtility.isValidPort(p2pPort)).isTrue();
 
     assertThat(InetAddresses.isUriInetAddress(result.get("ws").get("host"))).isTrue();
-    final int wsPort = Integer.valueOf(result.get("ws").get("port"));
+    final int wsPort = Integer.parseInt(result.get("ws").get("port"));
     assertThat(NetworkUtility.isValidPort(wsPort)).isTrue();
 
     assertThat(InetAddresses.isUriInetAddress(result.get("jsonrpc").get("host"))).isTrue();
-    final int jsonRpcPort = Integer.valueOf(result.get("jsonrpc").get("port"));
+    final int jsonRpcPort = Integer.parseInt(result.get("jsonrpc").get("port"));
     assertThat(NetworkUtility.isValidPort(jsonRpcPort)).isTrue();
   }
 }
