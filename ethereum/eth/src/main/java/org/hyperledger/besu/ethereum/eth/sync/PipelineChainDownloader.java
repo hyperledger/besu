@@ -32,7 +32,6 @@ import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.time.Duration;
-import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -99,7 +98,7 @@ public class PipelineChainDownloader implements ChainDownloader {
 
   private CompletableFuture<Void> selectSyncTargetAndDownload() {
     return syncTargetManager
-        .findSyncTarget(Optional.empty())
+        .findSyncTarget()
         .thenCompose(this::startDownloadForSyncTarget)
         .thenRun(pipelineCompleteCounter::inc);
   }
