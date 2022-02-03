@@ -44,7 +44,6 @@ public class PostMergeContext implements MergeContext {
   private final EvictingQueue<PayloadTuple> blocksInProgress = EvictingQueue.create(12);
 
   // latest finalized block
-  // TODO: persist this to storage https://github.com/hyperledger/besu/issues/2913
   AtomicReference<BlockHeader> lastFinalized = new AtomicReference<>();
   AtomicReference<Optional<BlockHeader>> terminalPoWBlock;
 

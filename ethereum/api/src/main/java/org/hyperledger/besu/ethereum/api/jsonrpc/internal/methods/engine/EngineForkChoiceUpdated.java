@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -13,6 +13,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
+
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
@@ -32,14 +34,14 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
-  private static final Logger LOG = LogManager.getLogger();
+public class EngineForkChoiceUpdated extends ExecutionEngineJsonRpcMethod {
+  private static final Logger LOG = LoggerFactory.getLogger(EngineForkChoiceUpdated.class);
   private final MergeMiningCoordinator mergeCoordinator;
 
-  public EngineForkchoiceUpdated(
+  public EngineForkChoiceUpdated(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator) {
@@ -92,10 +94,13 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
       payloadId.ifPresent(
           pid ->
-              LOG.debug(
+              debugLambda(
+                  LOG,
                   "returning identifier {} for requested payload {}",
-                  pid.toHexString(),
-                  optionalPayloadAttributes.map(ExecutionPayloadAttributesParameter::serialize)));
+                  () -> pid.toHexString(),
+                  () ->
+                      optionalPayloadAttributes.map(
+                          ExecutionPayloadAttributesParameter::serialize)));
 
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
