@@ -1938,35 +1938,28 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcNoAuthenticationApisWhenAuthIsNotEnabledAreIgnored() {
+  public void rpcHttpNoAuthenticationApisWhenAuthIsNotEnabledAreInvalid() {
     parseCommand(
-        "--rpc-http-api", "ETH,NET", "--rpc-http-enabled", "--rpc-http-no-auth-api", "ETH");
+        "--rpc-http-api", "ETH,NET", "--rpc-http-enabled", "--rpc-http-api-no-auth", "MINER");
 
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-    verify(mockLogger)
-        .warn("--rpc-http-no-auth-api options are ignored, enable RPC authentication first.");
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
-        .containsExactlyInAnyOrder(ETH.name(), NET.name());
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Invalid value for option '--rpc-http-apis-no-auth', APIs must be enabled first using option '--rpc-http-apis'");
   }
 
   @Test
-  public void rpcNoAuthenticationApisWhenApisAreNotEnabledAreIgnored() {
-    parseCommand(
-        "--rpc-http-api", "ETH,NET", "--rpc-http-enabled", "--rpc-http-authentication-enabled");
+  public void rpcWebSocketNoAuthenticationApisWhenAuthIsNotEnabledAreInvalid() {
+    parseCommand("--rpc-ws-api", "ETH,NET", "--rpc-ws-enabled", "--rpc-ws-api-no-auth", "MINER");
 
-    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-    verify(mockLogger)
-        .warn("--rpc-http-no-auth-api options PERM are ignored because the API is not enabled");
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
 
-    assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
-        .containsExactlyInAnyOrder(ETH.name(), NET.name());
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Invalid value for option '--rpc-ws-apis-no-auth', APIs must be enabled first using option '--rpc-ws-apis'");
   }
 
   @Test

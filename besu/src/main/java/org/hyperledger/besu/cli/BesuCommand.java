@@ -570,6 +570,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final List<String> rpcHttpApis = DEFAULT_RPC_APIS;
 
   @Option(
+      names = {"--rpc-http-api-no-auth", "--rpc-http-apis-no-auth"},
+      paramLabel = "<api name>",
+      split = " {0,1}, {0,1}",
+      arity = "1..*",
+      description =
+          "Comma separated list of APIs to exclude from RPC authentication services, the APIs must be enabled and RPC HTTP authentication must be enabled")
+  private final List<String> rpcHttpApisNoAuth = new ArrayList<String>();
+
+  @Option(
       names = {"--rpc-http-authentication-enabled"},
       description =
           "Require authentication for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
@@ -694,6 +703,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Comma separated list of APIs to enable on JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
   private final List<String> rpcWsApis = DEFAULT_RPC_APIS;
+
+  @Option(
+      names = {"--rpc-ws-api-no-auth", "--rpc-ws-apis-no-auth"},
+      paramLabel = "<api name>",
+      split = " {0,1}, {0,1}",
+      arity = "1..*",
+      description =
+          "Comma separated list of APIs to exclude from RPC authentication services, the APIs must be enabled and RPC WebSocket authentication must be enabled")
+  private final List<String> rpcWsApisNoAuth = new ArrayList<String>();
 
   @Option(
       names = {"--rpc-ws-authentication-enabled"},
@@ -1638,6 +1656,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (!rpcWsApis.stream().allMatch(configuredApis)) {
       throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-ws-apis'");
+    }
+
+    if (!rpcHttpApis.containsAll(rpcHttpApisNoAuth)) {
+      throw new ParameterException(
+          this.commandLine,
+          "Invalid value for option '--rpc-http-apis-no-auth', APIs must be enabled first using option '--rpc-http-apis'");
+    }
+
+    if (!rpcWsApis.containsAll(rpcWsApisNoAuth)) {
+      throw new ParameterException(
+          this.commandLine,
+          "Invalid value for option '--rpc-ws-apis-no-auth', APIs must be enabled first using option '--rpc-ws-apis'");
     }
   }
 
