@@ -17,13 +17,16 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
-import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -48,27 +51,27 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   @Mock AbstractPendingTransactionsSorter mockSorter;
+  @Mock MergeContext mergeContext;
 
   private MergeCoordinator coordinator;
+  private ProtocolContext protocolContext;
 
-  private final MergeContext mergeContext = PostMergeContext.get();
   private final ProtocolSchedule mockProtocolSchedule = getMergeProtocolSchedule();
   private final GenesisState genesisState =
       GenesisState.fromConfig(getPosGenesisConfigFile(), mockProtocolSchedule);
 
   private final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
-  private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
 
-  private final ProtocolContext protocolContext =
-      new ProtocolContext(blockchain, worldStateArchive, mergeContext);
+  private final MutableBlockchain blockchain =
+      spy(createInMemoryBlockchain(genesisState.getBlock()));
 
   private final Address suggestedFeeRecipient = Address.ZERO;
   private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
@@ -78,6 +81,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   @Before
   public void setUp() {
+    when(mergeContext.as(MergeContext.class)).thenReturn(mergeContext);
+    when(mergeContext.getTerminalTotalDifficulty())
+        .thenReturn(genesisState.getBlock().getHeader().getDifficulty().plus(1L));
+    when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.of(terminalPowBlock()));
+
+    protocolContext = new ProtocolContext(blockchain, worldStateArchive, mergeContext);
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
@@ -90,13 +99,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             mockSorter,
             new MiningParameters.Builder().coinbase(coinbase).build(),
             mock(BackwardsSyncContext.class));
-    mergeContext.setTerminalTotalDifficulty(
-        genesisState.getBlock().getHeader().getDifficulty().plus(1L));
-    mergeContext.setIsPostMerge(genesisState.getBlock().getHeader().getDifficulty().plus(2L));
   }
 
   @Test
   public void coinbaseShouldMatchSuggestedFeeRecipient() {
+    when(mergeContext.getFinalized()).thenReturn(Optional.empty());
+
     var payloadId =
         coordinator.preparePayload(
             genesisState.getBlock().getHeader(),
@@ -104,10 +112,11 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             Bytes32.ZERO,
             suggestedFeeRecipient);
 
-    var mockBlock = mergeContext.retrieveBlockById(payloadId);
-    assertThat(mockBlock).isPresent();
-    Block proposed = mockBlock.get();
-    assertThat(proposed.getHeader().getCoinbase()).isEqualTo(suggestedFeeRecipient);
+    ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
+
+    verify(mergeContext, atLeastOnce()).putPayloadById(eq(payloadId), block.capture());
+
+    assertThat(block.getValue().getHeader().getCoinbase()).isEqualTo(suggestedFeeRecipient);
   }
 
   @Test
@@ -116,38 +125,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     BlockHeader terminalHeader = terminalPowBlock();
     coordinator.executeBlock(new Block(terminalHeader, BlockBody.empty()));
 
-    BlockHeader parentHeader =
-        headerGenerator
-            .difficulty(Difficulty.ZERO)
-            .parentHash(terminalHeader.getHash())
-            .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
-            .number(terminalHeader.getNumber() + 1)
-            .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
-            .baseFeePerGas(
-                feeMarket.computeBaseFee(
-                    genesisState.getBlock().getHeader().getNumber() + 1,
-                    terminalHeader.getBaseFee().orElse(Wei.of(0x3b9aca00)),
-                    0,
-                    15000000l))
-            .buildHeader();
+    BlockHeader parentHeader = nextBlockHeader(terminalHeader);
 
     Block parent = new Block(parentHeader, BlockBody.empty());
     coordinator.executeBlock(parent);
 
-    BlockHeader childHeader =
-        headerGenerator
-            .difficulty(Difficulty.ZERO)
-            .parentHash(parentHeader.getHash())
-            .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
-            .number(parentHeader.getNumber() + 1)
-            .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
-            .baseFeePerGas(
-                feeMarket.computeBaseFee(
-                    genesisState.getBlock().getHeader().getNumber() + 1,
-                    parentHeader.getBaseFee().orElse(Wei.of(0x3b9aca00)),
-                    0,
-                    15000000l))
-            .buildHeader();
+    BlockHeader childHeader = nextBlockHeader(parentHeader);
     Block child = new Block(childHeader, BlockBody.empty());
     coordinator.executeBlock(child);
     assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader()))
@@ -160,82 +143,102 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     BlockHeader terminalHeader = terminalPowBlock();
     coordinator.executeBlock(new Block(terminalHeader, BlockBody.empty()));
 
-    BlockHeader grandParentHeader =
-        headerGenerator
-            .difficulty(Difficulty.ZERO)
-            .parentHash(terminalHeader.getHash())
-            .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
-            .number(terminalHeader.getNumber() + 1)
-            .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
-            .baseFeePerGas(
-                feeMarket.computeBaseFee(
-                    genesisState.getBlock().getHeader().getNumber() + 1,
-                    terminalHeader.getBaseFee().orElse(Wei.of(0x3b9aca00)),
-                    0,
-                    15000000l))
-            .buildHeader();
+    BlockHeader grandParentHeader = nextBlockHeader(terminalHeader);
 
     Block grandParent = new Block(grandParentHeader, BlockBody.empty());
     coordinator.executeBlock(grandParent);
-    mergeContext.setFinalized(grandParentHeader);
+    when(mergeContext.getFinalized()).thenReturn(Optional.of(grandParentHeader));
 
-    MergeContext spy = spy(this.mergeContext);
-    BlockHeader parentHeader =
-        headerGenerator
-            .difficulty(Difficulty.ZERO)
-            .parentHash(grandParentHeader.getHash())
-            .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
-            .number(grandParentHeader.getNumber() + 1)
-            .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
-            .baseFeePerGas(
-                feeMarket.computeBaseFee(
-                    genesisState.getBlock().getHeader().getNumber() + 1,
-                    grandParentHeader.getBaseFee().orElse(Wei.of(0x3b9aca00)),
-                    0,
-                    15000000l))
-            .buildHeader();
+    BlockHeader parentHeader = nextBlockHeader(grandParentHeader);
 
     Block parent = new Block(parentHeader, BlockBody.empty());
     coordinator.executeBlock(parent);
 
-    BlockHeader childHeader =
-        headerGenerator
-            .difficulty(Difficulty.ZERO)
-            .parentHash(parentHeader.getHash())
-            .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
-            .number(parentHeader.getNumber() + 1)
-            .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
-            .baseFeePerGas(
-                feeMarket.computeBaseFee(
-                    genesisState.getBlock().getHeader().getNumber() + 1,
-                    parentHeader.getBaseFee().orElse(Wei.of(0x3b9aca00)),
-                    0,
-                    15000000l))
-            .buildHeader();
+    BlockHeader childHeader = nextBlockHeader(parentHeader);
     Block child = new Block(childHeader, BlockBody.empty());
     coordinator.executeBlock(child);
+
     assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader()))
         .isTrue();
-    Mockito.verify(spy, never()).getTerminalPoWBlock();
+    verify(mergeContext, never()).getTerminalPoWBlock();
+  }
+
+  @Test
+  public void updateForkChoiceShouldPersistFirstFinalizedBlockHash() {
+
+    when(mergeContext.getFinalized()).thenReturn(Optional.empty());
+
+    BlockHeader terminalHeader = terminalPowBlock();
+    coordinator.executeBlock(new Block(terminalHeader, BlockBody.empty()));
+
+    BlockHeader firstFinalizedHeader = nextBlockHeader(terminalHeader);
+    Block firstFinalizedBlock = new Block(firstFinalizedHeader, BlockBody.empty());
+    coordinator.executeBlock(firstFinalizedBlock);
+
+    BlockHeader headBlockHeader = nextBlockHeader(firstFinalizedHeader);
+    Block headBlock = new Block(headBlockHeader, BlockBody.empty());
+    coordinator.executeBlock(headBlock);
+
+    coordinator.updateForkChoice(headBlock.getHash(), firstFinalizedBlock.getHash());
+
+    verify(blockchain).setFinalized(firstFinalizedBlock.getHash());
+    verify(mergeContext).setFinalized(firstFinalizedHeader);
+  }
+
+  @Test
+  public void updateForkChoiceShouldPersistLastFinalizedBlockHash() {
+    BlockHeader terminalHeader = terminalPowBlock();
+    coordinator.executeBlock(new Block(terminalHeader, BlockBody.empty()));
+
+    BlockHeader prevFinalizedHeader = nextBlockHeader(terminalHeader);
+    Block prevFinalizedBlock = new Block(prevFinalizedHeader, BlockBody.empty());
+    coordinator.executeBlock(prevFinalizedBlock);
+
+    when(mergeContext.getFinalized()).thenReturn(Optional.of(prevFinalizedHeader));
+
+    BlockHeader lastFinalizedHeader = nextBlockHeader(prevFinalizedHeader);
+    Block lastFinalizedBlock = new Block(lastFinalizedHeader, BlockBody.empty());
+    coordinator.executeBlock(lastFinalizedBlock);
+
+    BlockHeader headBlockHeader = nextBlockHeader(lastFinalizedHeader);
+    Block headBlock = new Block(headBlockHeader, BlockBody.empty());
+    coordinator.executeBlock(headBlock);
+
+    coordinator.updateForkChoice(headBlock.getHash(), lastFinalizedBlock.getHash());
+
+    verify(blockchain).setFinalized(lastFinalizedBlock.getHash());
+    verify(mergeContext).setFinalized(lastFinalizedHeader);
   }
 
   private BlockHeader terminalPowBlock() {
+    return headerGenerator
+        .difficulty(Difficulty.MAX_VALUE)
+        .parentHash(genesisState.getBlock().getHash())
+        .number(genesisState.getBlock().getHeader().getNumber() + 1)
+        .baseFeePerGas(
+            feeMarket.computeBaseFee(
+                genesisState.getBlock().getHeader().getNumber() + 1,
+                genesisState.getBlock().getHeader().getBaseFee().orElse(Wei.of(0x3b9aca00)),
+                0,
+                15000000l))
+        .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
+        .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
+        .buildHeader();
+  }
 
-    BlockHeader terminal =
-        headerGenerator
-            .difficulty(Difficulty.MAX_VALUE)
-            .parentHash(genesisState.getBlock().getHash())
-            .number(genesisState.getBlock().getHeader().getNumber() + 1)
-            .baseFeePerGas(
-                feeMarket.computeBaseFee(
-                    genesisState.getBlock().getHeader().getNumber() + 1,
-                    genesisState.getBlock().getHeader().getBaseFee().orElse(Wei.of(0x3b9aca00)),
-                    0,
-                    15000000l))
-            .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
-            .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
-            .buildHeader();
-    mergeContext.setTerminalPoWBlock(Optional.of(terminal));
-    return terminal;
+  private BlockHeader nextBlockHeader(final BlockHeader parentHeader) {
+    return headerGenerator
+        .difficulty(Difficulty.ZERO)
+        .parentHash(parentHeader.getHash())
+        .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
+        .number(parentHeader.getNumber() + 1)
+        .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
+        .baseFeePerGas(
+            feeMarket.computeBaseFee(
+                genesisState.getBlock().getHeader().getNumber() + 1,
+                parentHeader.getBaseFee().orElse(Wei.of(0x3b9aca00)),
+                0,
+                15000000l))
+        .buildHeader();
   }
 }

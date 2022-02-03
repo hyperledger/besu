@@ -97,7 +97,7 @@ public class EngineForkChoiceUpdated extends ExecutionEngineJsonRpcMethod {
               debugLambda(
                   LOG,
                   "returning identifier {} for requested payload {}",
-                  () -> pid.toHexString(),
+                  pid::toHexString,
                   () ->
                       optionalPayloadAttributes.map(
                           ExecutionPayloadAttributesParameter::serialize)));
