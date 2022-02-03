@@ -128,7 +128,7 @@ public class AdminAddPeerTest {
 
   @Test
   public void requestAddsValidEnode() {
-    when(p2pNetwork.addMaintainConnectionPeer(any())).thenReturn(true);
+    when(p2pNetwork.addMaintainedConnectionPeer(any())).thenReturn(true);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(validRequest.getRequest().getId(), true);
@@ -154,7 +154,7 @@ public class AdminAddPeerTest {
 
   @Test
   public void requestReturnsFalseIfAddFails() {
-    when(p2pNetwork.addMaintainConnectionPeer(any())).thenReturn(false);
+    when(p2pNetwork.addMaintainedConnectionPeer(any())).thenReturn(false);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(validRequest.getRequest().getId(), false);
@@ -166,7 +166,7 @@ public class AdminAddPeerTest {
 
   @Test
   public void requestReturnsErrorWhenP2pDisabled() {
-    when(p2pNetwork.addMaintainConnectionPeer(any()))
+    when(p2pNetwork.addMaintainedConnectionPeer(any()))
         .thenThrow(
             new P2PDisabledException("P2P networking disabled.  Unable to connect to add peer."));
 
