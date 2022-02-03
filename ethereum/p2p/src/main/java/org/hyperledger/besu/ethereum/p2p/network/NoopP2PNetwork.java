@@ -56,7 +56,7 @@ public class NoopP2PNetwork implements P2PNetwork {
   public void subscribeDisconnect(final DisconnectCallback callback) {}
 
   @Override
-  public boolean addMaintainConnectionPeer(final Peer peer) {
+  public boolean addMaintainedConnectionPeer(final Peer peer) {
     throw new P2PDisabledException("P2P networking disabled.  Unable to connect to add peer.");
   }
 

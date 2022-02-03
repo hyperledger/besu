@@ -138,7 +138,7 @@ final class DeFramer extends ByteToMessageDecoder {
         // Check peer is who we expected
         if (expectedPeer.isPresent()
             && !Objects.equals(expectedPeer.get().getId(), peerInfo.getNodeId())) {
-          String unexpectedMsg =
+          final String unexpectedMsg =
               String.format(
                   "Expected id %s, but got %s", expectedPeer.get().getId(), peerInfo.getNodeId());
           connectFuture.completeExceptionally(new UnexpectedPeerConnectionException(unexpectedMsg));
@@ -166,7 +166,7 @@ final class DeFramer extends ByteToMessageDecoder {
                 new MessageFramer(capabilityMultiplexer, framer));
         connectFuture.complete(connection);
       } else if (message.getCode() == WireMessageCodes.DISCONNECT) {
-        DisconnectMessage disconnectMessage = DisconnectMessage.readFrom(message);
+        final DisconnectMessage disconnectMessage = DisconnectMessage.readFrom(message);
         LOG.debug(
             "Peer {} disconnected before sending HELLO.  Reason: {}",
             expectedPeer.map(Peer::getEnodeURLString).orElse("unknown"),

@@ -101,12 +101,12 @@ public interface P2PNetwork extends Closeable {
    * @return boolean representing whether or not the peer has been added to the list, false is
    *     returned if the peer was already on the list
    */
-  boolean addMaintainConnectionPeer(final Peer peer);
+  boolean addMaintainedConnectionPeer(final Peer peer);
 
   /**
    * Disconnect and remove the given {@link Peer} from the maintained peer list. Peer is
    * disconnected even if it is not in the maintained peer list. See {@link
-   * #addMaintainConnectionPeer(Peer)} for details on the maintained peer list.
+   * #addMaintainedConnectionPeer(Peer)} for details on the maintained peer list.
    *
    * @param peer The peer to which connections are not longer required
    * @return boolean representing whether the peer was removed from the maintained peer list

@@ -204,6 +204,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void callingBesuCommandWithoutOptionsMustSyncWithDefaultValues() throws Exception {
     parseCommand();
 
+    final int maxPeers = 25;
+
     final ArgumentCaptor<EthNetworkConfig> ethNetworkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
     verify(mockRunnerBuilder).discovery(eq(true));
@@ -216,7 +218,7 @@ public class BesuCommandTest extends CommandTestAbstract {
                 MAINNET_DISCOVERY_URL));
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
     verify(mockRunnerBuilder).p2pListenPort(eq(30303));
-    verify(mockRunnerBuilder).maxPeers(eq(25));
+    verify(mockRunnerBuilder).maxPeers(eq(maxPeers));
     verify(mockRunnerBuilder).fractionRemoteConnectionsAllowed(eq(0.6f));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(DEFAULT_JSON_RPC_CONFIGURATION));
     verify(mockRunnerBuilder).graphQLConfiguration(eq(DEFAULT_GRAPH_QL_CONFIGURATION));
@@ -235,6 +237,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).nodeKey(isNotNull());
     verify(mockControllerBuilder).storageProvider(storageProviderArgumentCaptor.capture());
     verify(mockControllerBuilder).gasLimitCalculator(eq(GasLimitCalculator.constant()));
+    verify(mockControllerBuilder).maxPeers(eq(maxPeers));
     verify(mockControllerBuilder).build();
 
     assertThat(storageProviderArgumentCaptor.getValue()).isNotNull();
