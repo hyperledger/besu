@@ -1938,6 +1938,38 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcNoAuthenticationApisWhenAuthIsNotEnabledAreIgnored() {
+    parseCommand(
+        "--rpc-http-api", "ETH,NET", "--rpc-http-enabled", "--rpc-http-no-auth-api", "ETH");
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    verify(mockLogger)
+        .warn("--rpc-http-no-auth-api options are ignored, enable RPC authentication first.");
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
+        .containsExactlyInAnyOrder(ETH.name(), NET.name());
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcNoAuthenticationApisWhenApisAreNotEnabledAreIgnored() {
+    parseCommand(
+        "--rpc-http-api", "ETH,NET", "--rpc-http-enabled", "--rpc-http-authentication-enabled");
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    verify(mockLogger)
+        .warn("--rpc-http-no-auth-api options PERM are ignored because the API is not enabled");
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
+        .containsExactlyInAnyOrder(ETH.name(), NET.name());
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void rpcHttpOptionsRequiresServiceToBeEnabled() {
     parseCommand(
         "--rpc-http-api",

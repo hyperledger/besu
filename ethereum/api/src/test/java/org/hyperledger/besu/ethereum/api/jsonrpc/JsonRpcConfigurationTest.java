@@ -33,6 +33,7 @@ public class JsonRpcConfigurationTest {
     assertThat(configuration.getPort()).isEqualTo(8545);
     assertThat(configuration.getCorsAllowedDomains()).isEmpty();
     assertThat(configuration.getRpcApis()).containsExactlyInAnyOrderElementsOf(DEFAULT_RPC_APIS);
+    assertThat(configuration.getNoAuthRpcApis()).isEmpty();
     assertThat(configuration.getMaxActiveConnections())
         .isEqualTo(JsonRpcConfiguration.DEFAULT_MAX_ACTIVE_CONNECTIONS);
   }
@@ -70,6 +71,18 @@ public class JsonRpcConfigurationTest {
 
     configuration.setRpcApis(Lists.newArrayList(RpcApis.DEBUG.name()));
     assertThat(configuration.getRpcApis()).containsExactly(RpcApis.DEBUG.name());
+  }
+
+  @Test
+  public void settingNoAuthRpcApisShouldOverridePreviousValues() {
+    final JsonRpcConfiguration configuration = JsonRpcConfiguration.createDefault();
+
+    configuration.setNoAtuhRpcApis(Lists.newArrayList(RpcApis.ETH.name(), RpcApis.MINER.name()));
+    assertThat(configuration.getNoAuthRpcApis())
+        .containsExactly(RpcApis.ETH.name(), RpcApis.MINER.name());
+
+    configuration.setNoAtuhRpcApis(Lists.newArrayList(RpcApis.DEBUG.name()));
+    assertThat(configuration.getNoAuthRpcApis()).containsExactly(RpcApis.DEBUG.name());
   }
 
   @Test
