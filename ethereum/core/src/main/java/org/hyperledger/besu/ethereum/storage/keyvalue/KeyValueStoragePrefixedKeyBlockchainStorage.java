@@ -45,7 +45,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   private static final Bytes FINALIZED_BLOCK_HASH_KEY =
       Bytes.wrap("finalizedBlockHash".getBytes(StandardCharsets.UTF_8));
 
-  private static final Bytes CONSTANTS_PREFIX = Bytes.of(1);
+  private static final Bytes VARIABLES_PREFIX = Bytes.of(1);
   static final Bytes BLOCK_HEADER_PREFIX = Bytes.of(2);
   private static final Bytes BLOCK_BODY_PREFIX = Bytes.of(3);
   private static final Bytes TRANSACTION_RECEIPTS_PREFIX = Bytes.of(4);
@@ -64,19 +64,19 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
   @Override
   public Optional<Hash> getChainHead() {
-    return get(CONSTANTS_PREFIX, CHAIN_HEAD_KEY).map(this::bytesToHash);
+    return get(VARIABLES_PREFIX, CHAIN_HEAD_KEY).map(this::bytesToHash);
   }
 
   @Override
   public Collection<Hash> getForkHeads() {
-    return get(CONSTANTS_PREFIX, FORK_HEADS_KEY)
+    return get(VARIABLES_PREFIX, FORK_HEADS_KEY)
         .map(bytes -> RLP.input(bytes).readList(in -> this.bytesToHash(in.readBytes32())))
         .orElse(Lists.newArrayList());
   }
 
   @Override
   public Optional<Hash> getFinalized() {
-    return get(CONSTANTS_PREFIX, FINALIZED_BLOCK_HASH_KEY).map(this::bytesToHash);
+    return get(VARIABLES_PREFIX, FINALIZED_BLOCK_HASH_KEY).map(this::bytesToHash);
   }
 
   @Override
@@ -171,19 +171,19 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
     @Override
     public void setChainHead(final Hash blockHash) {
-      set(CONSTANTS_PREFIX, CHAIN_HEAD_KEY, blockHash);
+      set(VARIABLES_PREFIX, CHAIN_HEAD_KEY, blockHash);
     }
 
     @Override
     public void setForkHeads(final Collection<Hash> forkHeadHashes) {
       final Bytes data =
           RLP.encode(o -> o.writeList(forkHeadHashes, (val, out) -> out.writeBytes(val)));
-      set(CONSTANTS_PREFIX, FORK_HEADS_KEY, data);
+      set(VARIABLES_PREFIX, FORK_HEADS_KEY, data);
     }
 
     @Override
     public void setFinalized(final Hash blockHash) {
-      set(CONSTANTS_PREFIX, FINALIZED_BLOCK_HASH_KEY, blockHash);
+      set(VARIABLES_PREFIX, FINALIZED_BLOCK_HASH_KEY, blockHash);
     }
 
     @Override
