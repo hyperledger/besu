@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -210,6 +211,108 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     verify(mergeContext).setFinalized(lastFinalizedHeader);
   }
 
+  @Test(expected = IllegalStateException.class)
+  public void updateForkChoiceShouldFailIfLastFinalizedNotDescendantOfPreviousFinalized() {
+    BlockHeader terminalHeader = terminalPowBlock();
+    coordinator.executeBlock(new Block(terminalHeader, BlockBody.empty()));
+
+    BlockHeader prevFinalizedHeader = nextBlockHeader(terminalHeader);
+    Block prevFinalizedBlock = new Block(prevFinalizedHeader, BlockBody.empty());
+    coordinator.executeBlock(prevFinalizedBlock);
+
+    when(mergeContext.getFinalized()).thenReturn(Optional.of(prevFinalizedHeader));
+
+    // not descendant of previous finalized block
+    BlockHeader lastFinalizedHeader = disjointBlockHeader(prevFinalizedHeader);
+    Block lastFinalizedBlock = new Block(lastFinalizedHeader, BlockBody.empty());
+    coordinator.executeBlock(lastFinalizedBlock);
+
+    BlockHeader headBlockHeader = nextBlockHeader(lastFinalizedHeader);
+    Block headBlock = new Block(headBlockHeader, BlockBody.empty());
+    coordinator.executeBlock(headBlock);
+
+    coordinator.updateForkChoice(headBlock.getHash(), lastFinalizedBlock.getHash());
+
+    verify(blockchain, never()).setFinalized(lastFinalizedBlock.getHash());
+    verify(mergeContext, never()).setFinalized(lastFinalizedHeader);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void updateForkChoiceShouldFailIfHeadNotDescendantOfLastFinalized() {
+    BlockHeader terminalHeader = terminalPowBlock();
+    coordinator.executeBlock(new Block(terminalHeader, BlockBody.empty()));
+
+    BlockHeader prevFinalizedHeader = nextBlockHeader(terminalHeader);
+    Block prevFinalizedBlock = new Block(prevFinalizedHeader, BlockBody.empty());
+    coordinator.executeBlock(prevFinalizedBlock);
+
+    when(mergeContext.getFinalized()).thenReturn(Optional.of(prevFinalizedHeader));
+
+    BlockHeader lastFinalizedHeader = nextBlockHeader(prevFinalizedHeader);
+    Block lastFinalizedBlock = new Block(lastFinalizedHeader, BlockBody.empty());
+    coordinator.executeBlock(lastFinalizedBlock);
+
+    // not descendant of last finalized block
+    BlockHeader headBlockHeader = disjointBlockHeader(lastFinalizedHeader);
+    Block headBlock = new Block(headBlockHeader, BlockBody.empty());
+    coordinator.executeBlock(headBlock);
+
+    coordinator.updateForkChoice(headBlock.getHash(), lastFinalizedBlock.getHash());
+
+    verify(blockchain, never()).setFinalized(lastFinalizedBlock.getHash());
+    verify(mergeContext, never()).setFinalized(lastFinalizedHeader);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void updateForkChoiceShouldFailIfHeadBlockNotFound() {
+    BlockHeader terminalHeader = terminalPowBlock();
+    coordinator.executeBlock(new Block(terminalHeader, BlockBody.empty()));
+
+    BlockHeader prevFinalizedHeader = nextBlockHeader(terminalHeader);
+    Block prevFinalizedBlock = new Block(prevFinalizedHeader, BlockBody.empty());
+    coordinator.executeBlock(prevFinalizedBlock);
+
+    when(mergeContext.getFinalized()).thenReturn(Optional.of(prevFinalizedHeader));
+
+    BlockHeader lastFinalizedHeader = nextBlockHeader(prevFinalizedHeader);
+    Block lastFinalizedBlock = new Block(lastFinalizedHeader, BlockBody.empty());
+    coordinator.executeBlock(lastFinalizedBlock);
+
+    BlockHeader headBlockHeader = nextBlockHeader(lastFinalizedHeader);
+    Block headBlock = new Block(headBlockHeader, BlockBody.empty());
+    // note this block is not executed, so not known by us
+
+    coordinator.updateForkChoice(headBlock.getHash(), lastFinalizedBlock.getHash());
+
+    verify(blockchain, never()).setFinalized(lastFinalizedBlock.getHash());
+    verify(mergeContext, never()).setFinalized(lastFinalizedHeader);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void updateForkChoiceShouldFailIfFinalizedBlockNotFound() {
+    BlockHeader terminalHeader = terminalPowBlock();
+    coordinator.executeBlock(new Block(terminalHeader, BlockBody.empty()));
+
+    BlockHeader prevFinalizedHeader = nextBlockHeader(terminalHeader);
+    Block prevFinalizedBlock = new Block(prevFinalizedHeader, BlockBody.empty());
+    coordinator.executeBlock(prevFinalizedBlock);
+
+    when(mergeContext.getFinalized()).thenReturn(Optional.of(prevFinalizedHeader));
+
+    BlockHeader lastFinalizedHeader = nextBlockHeader(prevFinalizedHeader);
+    Block lastFinalizedBlock = new Block(lastFinalizedHeader, BlockBody.empty());
+    // note this block is not executed, so not known by us
+
+    BlockHeader headBlockHeader = nextBlockHeader(lastFinalizedHeader);
+    Block headBlock = new Block(headBlockHeader, BlockBody.empty());
+    coordinator.executeBlock(headBlock);
+
+    coordinator.updateForkChoice(headBlock.getHash(), lastFinalizedBlock.getHash());
+
+    verify(blockchain, never()).setFinalized(lastFinalizedBlock.getHash());
+    verify(mergeContext, never()).setFinalized(lastFinalizedHeader);
+  }
+
   private BlockHeader terminalPowBlock() {
     return headerGenerator
         .difficulty(Difficulty.MAX_VALUE)
@@ -237,6 +340,24 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             feeMarket.computeBaseFee(
                 genesisState.getBlock().getHeader().getNumber() + 1,
                 parentHeader.getBaseFee().orElse(Wei.of(0x3b9aca00)),
+                0,
+                15000000l))
+        .buildHeader();
+  }
+
+  private BlockHeader disjointBlockHeader(final BlockHeader disjointFromHeader) {
+    Hash disjointParentHash = Hash.wrap(disjointFromHeader.getParentHash().shiftRight(1));
+
+    return headerGenerator
+        .difficulty(Difficulty.ZERO)
+        .parentHash(disjointParentHash)
+        .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
+        .number(disjointFromHeader.getNumber() + 1)
+        .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
+        .baseFeePerGas(
+            feeMarket.computeBaseFee(
+                genesisState.getBlock().getHeader().getNumber() + 1,
+                disjointFromHeader.getBaseFee().orElse(Wei.of(0x3b9aca00)),
                 0,
                 15000000l))
         .buildHeader();
