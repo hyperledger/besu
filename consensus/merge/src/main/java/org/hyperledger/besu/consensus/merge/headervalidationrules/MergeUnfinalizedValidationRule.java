@@ -38,7 +38,10 @@ public class MergeUnfinalizedValidationRule implements AttachedBlockHeaderValida
         .filter(finalized -> header.getNumber() <= finalized.getNumber())
         .filter(finalized -> !header.getHash().equals(finalized.getHash()))
         .isPresent()) {
-      LOG.warn("BlockHeader failed validation due to block number already finalized");
+      LOG.warn(
+          "BlockHeader {} failed validation due to block {} already finalized",
+          header.toLogString(),
+          mergeContext.getFinalized().map(BlockHeader::toLogString).orElse("{}"));
       return false;
     }
 
