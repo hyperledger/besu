@@ -174,7 +174,7 @@ public final class MockNetwork {
     }
 
     @Override
-    public boolean addMaintainConnectionPeer(final Peer peer) {
+    public boolean addMaintainedConnectionPeer(final Peer peer) {
       return true;
     }
 
