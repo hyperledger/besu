@@ -42,7 +42,7 @@ public class ExpectNetServicesReturnsOnlyJsonRpcActive implements Condition {
         .containsExactlyInAnyOrderElementsOf(Collections.singletonList(JSON_RPC_CONSTANT));
 
     assertThat(InetAddresses.isUriInetAddress(result.get(JSON_RPC_CONSTANT).get("host"))).isTrue();
-    final int jsonrpcPort = Integer.valueOf(result.get(JSON_RPC_CONSTANT).get("port"));
+    final int jsonrpcPort = Integer.parseInt(result.get(JSON_RPC_CONSTANT).get("port"));
     assertThat(NetworkUtility.isValidPort(jsonrpcPort)).isTrue();
   }
 }
