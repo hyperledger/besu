@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,10 +23,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypePa
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceFormatter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceWriter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceCallResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffGenerator;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.MixInIgnoreRevertReason;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -39,27 +42,17 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.base.Suppliers;
-import org.apache.tuweni.bytes.Bytes;
 
 public class TraceCall implements JsonRpcMethod {
-  private static final String TRACE_NODE_PROPERTY_NAME = "trace";
-  private static final String OUTPUT_NODE_PROPERTY_NAME = "output";
-  private static final String STATE_DIFF_NODE_PROPERTY_NAME = "stateDiff";
-  private static final String VM_TRACE_NODE_PROPERTY_NAME = "vmTrace";
-
   private final Supplier<BlockchainQueries> blockchainQueries;
   private final ProtocolSchedule protocolSchedule;
   private final TransactionSimulator transactionSimulator;
@@ -104,11 +97,6 @@ public class TraceCall implements JsonRpcMethod {
       throw new IllegalStateException("Invalid transaction simulator result.");
     }
 
-    final ObjectMapper mapper = new ObjectMapper();
-    final ObjectNode resultNode = mapper.createObjectNode();
-
-    resultNode.put(OUTPUT_NODE_PROPERTY_NAME, maybeSimulatorResult.get().getOutput().toString());
-
     final TransactionTrace transactionTrace =
         new TransactionTrace(
             maybeSimulatorResult.get().getTransaction(),
@@ -116,53 +104,36 @@ public class TraceCall implements JsonRpcMethod {
             tracer.getTraceFrames());
 
     final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
-    final AtomicInteger traceCounter = new AtomicInteger(0);
 
-    if (traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF)) {
-      final StateDiffGenerator stateDiffGenerator = new StateDiffGenerator();
-
-      generateTracesFromTransactionTrace(
-          trace -> resultNode.putPOJO(STATE_DIFF_NODE_PROPERTY_NAME, trace),
-          protocolSchedule,
-          transactionTrace,
-          block,
-          (ignoredProtocolSchedule, txTrace, currentBlock, ignored) ->
-              stateDiffGenerator.generateStateDiff(txTrace),
-          traceCounter);
-    }
-    setNullNodesIfNotPresent(resultNode, STATE_DIFF_NODE_PROPERTY_NAME);
-
-    if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
-      generateTracesFromTransactionTrace(
-          resultNode.putArray(TRACE_NODE_PROPERTY_NAME)::addPOJO,
-          protocolSchedule,
-          transactionTrace,
-          block,
-          (protocolSchedule, txTrace, currentBlock, ignoredTraceCounter) ->
-              FlatTraceGenerator.generateFromTransactionTrace(
-                  protocolSchedule, txTrace, currentBlock, ignoredTraceCounter, false),
-          traceCounter);
-    }
-    setEmptyArrayIfNotPresent(resultNode, TRACE_NODE_PROPERTY_NAME);
-
-    if (traceTypes.contains(VM_TRACE)) {
-      generateTracesFromTransactionTrace(
-          trace -> resultNode.putPOJO(VM_TRACE_NODE_PROPERTY_NAME, trace),
-          protocolSchedule,
-          transactionTrace,
-          block,
-          (protocolSchedule, txTrace, currentBlock, ignoredTraceCounter) ->
-              new VmTraceGenerator(transactionTrace).generateTraceStream(),
-          traceCounter);
-    }
-    setNullNodesIfNotPresent(resultNode, VM_TRACE_NODE_PROPERTY_NAME);
+    final TraceCallResult.Builder builder = TraceCallResult.builder();
 
     transactionTrace
         .getResult()
         .getRevertReason()
-        .ifPresent(revertReason -> parseRevertReasonToOutput(revertReason, resultNode, mapper));
+        .ifPresentOrElse(
+            revertReason -> builder.output(revertReason.toHexString()),
+            () -> builder.output(maybeSimulatorResult.get().getOutput().toString()));
 
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), resultNode);
+    if (traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF)) {
+      new StateDiffGenerator()
+          .generateStateDiff(transactionTrace)
+          .forEachOrdered(stateDiff -> builder.stateDiff((StateDiffTrace) stateDiff));
+    }
+
+    if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
+      FlatTraceGenerator.generateFromTransactionTrace(
+              protocolSchedule, transactionTrace, block, new AtomicInteger(), false)
+          .forEachOrdered(trace -> builder.addTrace((FlatTrace) trace));
+    }
+
+    if (traceTypes.contains(VM_TRACE)) {
+      new VmTraceGenerator(transactionTrace)
+          .generateTraceStream()
+          .forEachOrdered(vmTrace -> builder.vmTrace((VmTrace) vmTrace));
+    }
+
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), removeRevertReasonFromResult(builder.build()));
   }
 
   private TransactionValidationParams buildTransactionValidationParams() {
@@ -177,27 +148,6 @@ public class TraceCall implements JsonRpcMethod {
         false,
         traceTypes.contains(TraceTypeParameter.TraceType.TRACE)
             || traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE));
-  }
-
-  private void parseRevertReasonToOutput(
-      final Bytes revertReason, final ObjectNode resultNode, final ObjectMapper mapper) {
-    if (!resultNode.findValue(TRACE_NODE_PROPERTY_NAME).isEmpty()) {
-      final ArrayNode traceNode = mapper.createArrayNode();
-      ObjectNode json = mapper.valueToTree(resultNode.findValue(TRACE_NODE_PROPERTY_NAME).get(0));
-
-      final JsonNode revertReasonNode = json.findValue("revertReason");
-      if (revertReasonNode != null && !revertReasonNode.textValue().isBlank()) {
-        json.remove("revertReason");
-        traceNode.add(json);
-        resultNode.replace(TRACE_NODE_PROPERTY_NAME, traceNode);
-      }
-    }
-
-    final TextNode outputWithRevertReason =
-        mapper.createArrayNode().textNode(revertReason.toHexString());
-    if (resultNode.findValue(OUTPUT_NODE_PROPERTY_NAME).textValue().equals("0x")) {
-      resultNode.replace(OUTPUT_NODE_PROPERTY_NAME, outputWithRevertReason);
-    }
   }
 
   private Optional<BlockHeader> resolveBlockHeader(
@@ -221,31 +171,11 @@ public class TraceCall implements JsonRpcMethod {
     return blockchainQueries.get().getBlockHeaderByNumber(blockNumber.get());
   }
 
-  private void generateTracesFromTransactionTrace(
-      final TraceWriter writer,
-      final ProtocolSchedule protocolSchedule,
-      final TransactionTrace transactionTrace,
-      final Block block,
-      final TraceFormatter formatter,
-      final AtomicInteger traceCounter) {
-    formatter
-        .format(protocolSchedule, transactionTrace, block, traceCounter)
-        .forEachOrdered(writer::write);
-  }
+  // OpenEthereum does not output the revert reason as separate field, so we have to remove it
+  private ObjectNode removeRevertReasonFromResult(final TraceCallResult result) {
+    final ObjectMapper mapper = new ObjectMapper();
+    mapper.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
 
-  private void setNullNodesIfNotPresent(final ObjectNode parentNode, final String... keys) {
-    Arrays.asList(keys)
-        .forEach(
-            key ->
-                Optional.ofNullable(parentNode.get(key))
-                    .ifPresentOrElse(ignored -> {}, () -> parentNode.put(key, (String) null)));
-  }
-
-  private void setEmptyArrayIfNotPresent(final ObjectNode parentNode, final String... keys) {
-    Arrays.asList(keys)
-        .forEach(
-            key ->
-                Optional.ofNullable(parentNode.get(key))
-                    .ifPresentOrElse(ignored -> {}, () -> parentNode.putArray(key)));
+    return mapper.valueToTree(result);
   }
 }
