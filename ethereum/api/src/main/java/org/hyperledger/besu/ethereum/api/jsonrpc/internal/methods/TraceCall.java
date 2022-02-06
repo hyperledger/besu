@@ -15,12 +15,15 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType.VM_TRACE;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceCallResult;
@@ -85,7 +88,7 @@ public class TraceCall implements JsonRpcMethod {
     final Optional<BlockHeader> maybeBlockHeader = resolveBlockHeader(maybeBlockParameter);
 
     if (maybeBlockHeader.isEmpty()) {
-      throw new IllegalStateException("Invalid block parameter.");
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), BLOCK_NOT_FOUND);
     }
 
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
@@ -98,7 +101,7 @@ public class TraceCall implements JsonRpcMethod {
             maybeBlockHeader.get());
 
     if (maybeSimulatorResult.isEmpty()) {
-      throw new IllegalStateException("Invalid transaction simulator result.");
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
     }
 
     final TransactionTrace transactionTrace =
@@ -156,8 +159,9 @@ public class TraceCall implements JsonRpcMethod {
 
   private Optional<BlockHeader> resolveBlockHeader(
       final Optional<BlockParameter> maybeBlockParameter) {
-    AtomicLong blockNumber = new AtomicLong();
+    final AtomicLong blockNumber = new AtomicLong();
 
+    try {
     maybeBlockParameter.ifPresentOrElse(
         blockParameter -> {
           if (blockParameter.isNumeric()) {
@@ -167,10 +171,13 @@ public class TraceCall implements JsonRpcMethod {
           } else if (blockParameter.isPending() || blockParameter.isLatest()) {
             blockNumber.set(blockchainQueries.get().headBlockNumber());
           } else {
-            throw new IllegalStateException("Unknown block parameter type.");
+            throw new IllegalArgumentException();
           }
         },
         () -> blockNumber.set(blockchainQueries.get().headBlockNumber()));
+    } catch (final IllegalArgumentException e) {
+      return Optional.empty();
+    }
 
     return blockchainQueries.get().getBlockHeaderByNumber(blockNumber.get());
   }
