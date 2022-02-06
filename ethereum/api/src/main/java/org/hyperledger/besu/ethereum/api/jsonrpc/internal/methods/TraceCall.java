@@ -56,7 +56,7 @@ public class TraceCall implements JsonRpcMethod {
   private final ProtocolSchedule protocolSchedule;
   private final TransactionSimulator transactionSimulator;
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper MAPPER_IGNORE_REVERT_REASON = new ObjectMapper();
 
   public TraceCall(
       final BlockchainQueries blockchainQueries,
@@ -67,7 +67,7 @@ public class TraceCall implements JsonRpcMethod {
     this.transactionSimulator = transactionSimulator;
 
     // OpenEthereum does not output the revert reason in the trace, so we have to remove it
-    OBJECT_MAPPER.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
+    MAPPER_IGNORE_REVERT_REASON.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
   }
 
   @Override
@@ -137,7 +137,7 @@ public class TraceCall implements JsonRpcMethod {
     }
 
     return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(), OBJECT_MAPPER.valueToTree(builder.build()));
+        requestContext.getRequest().getId(), MAPPER_IGNORE_REVERT_REASON.valueToTree(builder.build()));
   }
 
   private TransactionValidationParams buildTransactionValidationParams() {
