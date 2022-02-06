@@ -140,7 +140,8 @@ public class TraceCall implements JsonRpcMethod {
     }
 
     return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(), MAPPER_IGNORE_REVERT_REASON.valueToTree(builder.build()));
+        requestContext.getRequest().getId(),
+        MAPPER_IGNORE_REVERT_REASON.valueToTree(builder.build()));
   }
 
   private TransactionValidationParams buildTransactionValidationParams() {
@@ -162,19 +163,19 @@ public class TraceCall implements JsonRpcMethod {
     final AtomicLong blockNumber = new AtomicLong();
 
     try {
-    maybeBlockParameter.ifPresentOrElse(
-        blockParameter -> {
-          if (blockParameter.isNumeric()) {
-            blockNumber.set(blockParameter.getNumber().get());
-          } else if (blockParameter.isEarliest()) {
-            blockNumber.set(0);
-          } else if (blockParameter.isPending() || blockParameter.isLatest()) {
-            blockNumber.set(blockchainQueries.get().headBlockNumber());
-          } else {
-            throw new IllegalArgumentException();
-          }
-        },
-        () -> blockNumber.set(blockchainQueries.get().headBlockNumber()));
+      maybeBlockParameter.ifPresentOrElse(
+          blockParameter -> {
+            if (blockParameter.isNumeric()) {
+              blockNumber.set(blockParameter.getNumber().get());
+            } else if (blockParameter.isEarliest()) {
+              blockNumber.set(0);
+            } else if (blockParameter.isPending() || blockParameter.isLatest()) {
+              blockNumber.set(blockchainQueries.get().headBlockNumber());
+            } else {
+              throw new IllegalArgumentException();
+            }
+          },
+          () -> blockNumber.set(blockchainQueries.get().headBlockNumber()));
     } catch (final IllegalArgumentException e) {
       return Optional.empty();
     }
