@@ -49,13 +49,14 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Suppliers;
 
 public class TraceCall implements JsonRpcMethod {
   private final Supplier<BlockchainQueries> blockchainQueries;
   private final ProtocolSchedule protocolSchedule;
   private final TransactionSimulator transactionSimulator;
+
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   public TraceCall(
       final BlockchainQueries blockchainQueries,
@@ -64,6 +65,9 @@ public class TraceCall implements JsonRpcMethod {
     this.blockchainQueries = Suppliers.ofInstance(blockchainQueries);
     this.protocolSchedule = protocolSchedule;
     this.transactionSimulator = transactionSimulator;
+
+    // OpenEthereum does not output the revert reason in the trace, so we have to remove it
+    OBJECT_MAPPER.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
   }
 
   @Override
@@ -133,7 +137,7 @@ public class TraceCall implements JsonRpcMethod {
     }
 
     return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(), removeRevertReasonFromResult(builder.build()));
+        requestContext.getRequest().getId(), OBJECT_MAPPER.valueToTree(builder.build()));
   }
 
   private TransactionValidationParams buildTransactionValidationParams() {
@@ -169,13 +173,5 @@ public class TraceCall implements JsonRpcMethod {
         () -> blockNumber.set(blockchainQueries.get().headBlockNumber()));
 
     return blockchainQueries.get().getBlockHeaderByNumber(blockNumber.get());
-  }
-
-  // OpenEthereum does not output the revert reason as separate field, so we have to remove it
-  private ObjectNode removeRevertReasonFromResult(final TraceCallResult result) {
-    final ObjectMapper mapper = new ObjectMapper();
-    mapper.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
-
-    return mapper.valueToTree(result);
   }
 }
