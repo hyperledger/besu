@@ -169,6 +169,18 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder jsonRpcAuthenticationConfiguration(
+      final String authFile, final List<String> apis) throws URISyntaxException {
+    final String authTomlPath =
+        Paths.get(ClassLoader.getSystemResource(authFile).toURI()).toAbsolutePath().toString();
+
+    this.jsonRpcConfiguration.setAuthenticationEnabled(true);
+    this.jsonRpcConfiguration.setAuthenticationCredentialsFile(authTomlPath);
+    this.jsonRpcConfiguration.setNoAtuhRpcApis(apis);
+
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder jsonRpcAuthenticationUsingRSA() throws URISyntaxException {
     final File jwtPublicKey =
         Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_rsa").toURI())

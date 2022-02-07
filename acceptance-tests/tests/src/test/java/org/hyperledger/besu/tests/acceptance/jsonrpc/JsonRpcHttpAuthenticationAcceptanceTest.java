@@ -22,15 +22,18 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurati
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
 
-public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
+public class JsonRpcHttpAuthenticationAcceptanceTest extends AcceptanceTestBase {
   private Cluster authenticatedCluster;
   private BesuNode nodeUsingAuthFile;
   private BesuNode nodeUsingRsaJwtPublicKey;
   private BesuNode nodeUsingEcdsaJwtPublicKey;
+  private BesuNode nodeUsingAuthFileWithNoAuthApi;
   private static final String AUTH_FILE = "authentication/auth.toml";
 
   // token with payload{"iat": 1516239022,"exp": 4729363200,"permissions": ["net:peerCount"]}
@@ -47,6 +50,8 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
           + "c2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ.pWXniN6XQ7G8b1nawy8sviPCMxrfbcI6c7UFzeXm26CMGMUEZxiC"
           + "JjRntB8ueuZcsxnGlEhCHt-KngpFEmx5TA";
 
+  private static final List<String> NO_AUTH_API = Arrays.asList("ETH");
+
   @Before
   public void setUp() throws IOException, URISyntaxException {
 
@@ -57,48 +62,69 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
     nodeUsingAuthFile = besu.createNodeWithAuthentication("node1", AUTH_FILE);
     nodeUsingRsaJwtPublicKey = besu.createNodeWithAuthenticationUsingRsaJwtPublicKey("node2");
     nodeUsingEcdsaJwtPublicKey = besu.createNodeWithAuthenticationUsingEcdsaJwtPublicKey("node3");
+    nodeUsingAuthFileWithNoAuthApi =
+        besu.createNodeWithAuthFileAndNoAuthApi("node4", AUTH_FILE, NO_AUTH_API);
     authenticatedCluster.start(
-        nodeUsingAuthFile, nodeUsingRsaJwtPublicKey, nodeUsingEcdsaJwtPublicKey);
+        nodeUsingAuthFile,
+        nodeUsingRsaJwtPublicKey,
+        nodeUsingEcdsaJwtPublicKey,
+        nodeUsingAuthFileWithNoAuthApi);
 
     nodeUsingAuthFile.verify(login.awaitResponse("user", "badpassword"));
     nodeUsingRsaJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
     nodeUsingEcdsaJwtPublicKey.verify(login.awaitResponse("user", "badpassword"));
+    nodeUsingAuthFileWithNoAuthApi.verify(login.awaitResponse("user", "badpassword"));
   }
 
   @Test
   public void shouldFailLoginWithWrongCredentials() {
     nodeUsingAuthFile.verify(login.failure("user", "badpassword"));
+    nodeUsingAuthFileWithNoAuthApi.verify(login.failure("user", "badpassword"));
   }
 
   @Test
   public void shouldSucceedLoginWithCorrectCredentials() {
     nodeUsingAuthFile.verify(login.success("user", "pegasys"));
+    nodeUsingAuthFileWithNoAuthApi.verify(login.success("user", "pegasys"));
   }
 
   @Test
   public void jsonRpcMethodShouldSucceedWithAuthenticatedUserAndPermission() {
-    final String token =
+    String token =
         nodeUsingAuthFile.execute(
             permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
-    nodeUsingAuthFile.verify(net.awaitPeerCount(2));
+    nodeUsingAuthFile.verify(net.awaitPeerCount(3));
+
+    token =
+        nodeUsingAuthFileWithNoAuthApi.execute(
+            permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
+    nodeUsingAuthFileWithNoAuthApi.useAuthenticationTokenInHeaderForJsonRpc(token);
+    nodeUsingAuthFileWithNoAuthApi.verify(net.awaitPeerCount(3));
   }
 
   @Test
   public void jsonRpcMethodShouldFailOnNonPermittedMethod() {
-    final String token =
+    String token =
         nodeUsingAuthFile.execute(
             permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
     nodeUsingAuthFile.verify(net.netVersionUnauthorized());
     nodeUsingAuthFile.verify(net.netServicesUnauthorized());
+
+    token =
+        nodeUsingAuthFileWithNoAuthApi.execute(
+            permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
+    nodeUsingAuthFileWithNoAuthApi.useAuthenticationTokenInHeaderForJsonRpc(token);
+    nodeUsingAuthFileWithNoAuthApi.verify(net.netVersionUnauthorized());
+    nodeUsingAuthFileWithNoAuthApi.verify(net.netServicesUnauthorized());
   }
 
   @Test
   public void externalRsaJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
     nodeUsingRsaJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
         RSA_TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingRsaJwtPublicKey.verify(net.awaitPeerCount(2));
+    nodeUsingRsaJwtPublicKey.verify(net.awaitPeerCount(3));
   }
 
   @Test
@@ -113,7 +139,7 @@ public class HttpServiceLoginAcceptanceTest extends AcceptanceTestBase {
   public void externalEcdsaJwtPublicKeyUsedOnJsonRpcMethodShouldSucceed() {
     nodeUsingEcdsaJwtPublicKey.useAuthenticationTokenInHeaderForJsonRpc(
         ECDSA_TOKEN_ALLOWING_NET_PEER_COUNT);
-    nodeUsingEcdsaJwtPublicKey.verify(net.awaitPeerCount(2));
+    nodeUsingEcdsaJwtPublicKey.verify(net.awaitPeerCount(3));
   }
 
   @Test
