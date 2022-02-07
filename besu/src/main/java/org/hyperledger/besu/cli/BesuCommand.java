@@ -547,7 +547,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Integer rpcHttpPort = DEFAULT_JSON_RPC_PORT;
 
-
   @Option(
       names = {"--engine-rpc-http-port"},
       paramLabel = MANDATORY_PORT_FORMAT_HELP,
