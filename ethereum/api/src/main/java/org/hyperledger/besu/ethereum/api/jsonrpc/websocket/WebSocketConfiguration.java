@@ -37,7 +37,7 @@ public class WebSocketConfiguration {
   private int port;
   private String host;
   private List<String> rpcApis;
-  private List<String> rpcApisNoAuth;
+  private List<String> rpcApisNoAuth = Collections.emptyList();
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");

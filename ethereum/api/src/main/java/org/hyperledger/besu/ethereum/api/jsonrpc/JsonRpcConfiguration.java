@@ -41,7 +41,7 @@ public class JsonRpcConfiguration {
   private String host;
   private List<String> corsAllowedDomains = Collections.emptyList();
   private List<String> rpcApis;
-  private List<String> noAtuhRpcApis;
+  private List<String> noAtuhRpcApis = Collections.emptyList();
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
