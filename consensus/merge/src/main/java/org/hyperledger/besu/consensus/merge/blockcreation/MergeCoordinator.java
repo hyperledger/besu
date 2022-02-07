@@ -193,11 +193,12 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public boolean executeBlock(final Block block) {
+    final var chain = protocolContext.getBlockchain();
+
     // TODO: if we are missing the parentHash, attempt backwards sync
     // https://github.com/hyperledger/besu/issues/2912
 
-    protocolContext
-        .getBlockchain()
+    chain
         .getBlockHeader(block.getHeader().getParentHash())
         .ifPresentOrElse(
             blockHeader ->
@@ -208,7 +209,6 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
     // TODO: End Jiri
 
-    final var chain = protocolContext.getBlockchain();
     var optResult =
         protocolSchedule
             .getByBlockNumber(block.getHeader().getNumber())
@@ -222,7 +222,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
           chain.appendBlock(block, result.receipts);
         });
 
-    if (!optResult.isPresent()) {
+    if (optResult.isEmpty()) {
       protocolSchedule
           .getByBlockNumber(chain.getChainHeadBlockNumber())
           .getBadBlocksManager()
@@ -281,8 +281,12 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     // set the new head
     blockchain.rewindToBlock(newHead.getHash());
 
-    // set the new finalized block if it present
-    newFinalized.ifPresent(mergeContext::setFinalized);
+    // set and persist the new finalized block if it is present
+    newFinalized.ifPresent(
+        blockHeader -> {
+          blockchain.setFinalized(blockHeader.getHash());
+          mergeContext.setFinalized(blockHeader);
+        });
   }
 
   public boolean latestValidAncestorDescendsFromTerminal(final BlockHeader blockHeader) {

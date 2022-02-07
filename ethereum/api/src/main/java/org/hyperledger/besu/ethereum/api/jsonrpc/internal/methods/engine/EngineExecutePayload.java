@@ -138,13 +138,14 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
       }
     }
 
-    final var block =
-        new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
     final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(newBlockHeader);
 
     if (latestValidAncestor.isEmpty()) {
       return respondWith(reqId, null, SYNCING, null);
     }
+
+    final var block =
+        new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
 
     // execute block and return result response
     if (errorMessage == null && mergeCoordinator.executeBlock(block)) {
