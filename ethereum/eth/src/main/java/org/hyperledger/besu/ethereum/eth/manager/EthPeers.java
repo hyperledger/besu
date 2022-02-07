@@ -36,6 +36,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class EthPeers {
   public static final Comparator<EthPeer> TOTAL_DIFFICULTY =
       Comparator.comparing(((final EthPeer p) -> p.chainState().getEstimatedTotalDifficulty()));
@@ -49,7 +51,7 @@ public class EthPeers {
       Comparator.comparing(EthPeer::outstandingRequests)
           .thenComparing(EthPeer::getLastRequestTimestamp);
 
-  private final Map<PeerConnection, EthPeer> connections = new ConcurrentHashMap<>();
+  private final Map<Bytes, EthPeer> connections = new ConcurrentHashMap<>();
   private final String protocolName;
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
@@ -93,11 +95,11 @@ public class EthPeers {
             peerValidators,
             clock,
             permissioningProviders);
-    connections.putIfAbsent(peerConnection, peer);
+    connections.putIfAbsent(peerConnection.getPeer().getId(), peer);
   }
 
   public void registerDisconnect(final PeerConnection connection) {
-    final EthPeer peer = connections.remove(connection);
+    final EthPeer peer = connections.remove(connection.getPeer().getId());
     if (peer != null) {
       disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
       peer.handleDisconnect();
@@ -118,8 +120,8 @@ public class EthPeers {
     }
   }
 
-  public EthPeer peer(final PeerConnection peerConnection) {
-    return connections.get(peerConnection);
+  public EthPeer peer(final Bytes peerId) {
+    return connections.get(peerId);
   }
 
   public PendingPeerRequest executePeerRequest(

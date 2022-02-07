@@ -108,12 +108,12 @@ public class EnodeURLImpl implements EnodeURL {
         "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix.");
 
     final Bytes id = Bytes.fromHexString(uri.getUserInfo());
-    String host = uri.getHost();
-    int tcpPort = uri.getPort();
+    final String host = uri.getHost();
+    final int tcpPort = uri.getPort();
 
     // Parse discport if it exists
     Optional<Integer> discoveryPort = Optional.empty();
-    String query = uri.getQuery();
+    final String query = uri.getQuery();
     if (query != null) {
       final Matcher discPortMatcher = DISCPORT_QUERY_STRING_REGEX.matcher(query);
       if (discPortMatcher.matches()) {
@@ -322,11 +322,11 @@ public class EnodeURLImpl implements EnodeURL {
       checkState(ip != null, "Ip address must be configured.");
     }
 
-    public Builder configureFromEnode(final EnodeURL enode) {
-      return this.nodeId(enode.getNodeId())
-          .listeningPort(enode.getListeningPort())
-          .discoveryPort(enode.getDiscoveryPort())
-          .ipAddress(enode.getIp());
+    public Builder configureFromEnode(final EnodeURL enodeURL) {
+      return this.nodeId(enodeURL.getNodeId())
+          .listeningPort(enodeURL.getListeningPort())
+          .discoveryPort(enodeURL.getDiscoveryPort())
+          .ipAddress(enodeURL.getIp());
     }
 
     public Builder nodeId(final Bytes nodeId) {

@@ -234,7 +234,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     final MessageData messageData = message.getData();
     final int code = messageData.getCode();
     LOG.trace("Process message {}, {}", cap, code);
-    final EthPeer ethPeer = ethPeers.peer(message.getConnection());
+    final EthPeer ethPeer = ethPeers.peer(message.getConnection().getPeer().getId());
     if (ethPeer == null) {
       LOG.debug(
           "Ignoring message received from unknown peer connection: " + message.getConnection());
@@ -306,7 +306,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   @Override
   public void handleNewConnection(final PeerConnection connection) {
     ethPeers.registerConnection(connection, peerValidators);
-    final EthPeer peer = ethPeers.peer(connection);
+    final EthPeer peer = ethPeers.peer(connection.getPeer().getId());
     if (peer.statusHasBeenSentToPeer()) {
       return;
     }

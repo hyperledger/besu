@@ -33,7 +33,7 @@ public class EthSynchronizerUpdater implements SynchronizerUpdater {
   @Override
   public void updatePeerChainState(
       final long knownBlockNumber, final PeerConnection peerConnection) {
-    final EthPeer ethPeer = ethPeers.peer(peerConnection);
+    final EthPeer ethPeer = ethPeers.peer(peerConnection.getPeer().getId());
     if (ethPeer == null) {
       LOG.debug("Received message from a peer with no corresponding EthPeer.");
       return;

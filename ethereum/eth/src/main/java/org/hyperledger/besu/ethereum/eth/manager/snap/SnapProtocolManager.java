@@ -93,7 +93,7 @@ public class SnapProtocolManager implements ProtocolManager {
     final MessageData messageData = AbstractSnapMessageData.create(message);
     final int code = messageData.getCode();
     LOG.trace("Process snap message {}, {}", cap, code);
-    final EthPeer ethPeer = ethPeers.peer(message.getConnection());
+    final EthPeer ethPeer = ethPeers.peer(message.getConnection().getPeer().getId());
     if (ethPeer == null) {
       LOG.debug(
           "Ignoring message received from unknown peer connection: " + message.getConnection());

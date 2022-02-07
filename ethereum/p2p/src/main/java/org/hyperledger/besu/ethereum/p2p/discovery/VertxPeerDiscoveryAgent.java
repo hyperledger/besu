@@ -106,7 +106,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
 
   @Override
   protected CompletableFuture<InetSocketAddress> listenForConnections() {
-    CompletableFuture<InetSocketAddress> future = new CompletableFuture<>();
+    final CompletableFuture<InetSocketAddress> future = new CompletableFuture<>();
     vertx
         .createDatagramSocket(new DatagramSocketOptions().setIpV6(NetworkUtility.isIPv6Available()))
         .listen(
@@ -135,8 +135,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
     this.socket = listenResult.result();
 
     // TODO: when using wildcard hosts (0.0.0.0), we need to handle multiple addresses by
-    // selecting
-    // the correct 'announce' address.
+    // selecting the correct 'announce' address.
     final String effectiveHost = socket.localAddress().host();
     final int effectivePort = socket.localAddress().port();
 
@@ -148,7 +147,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
     socket.exceptionHandler(this::handleException);
     socket.handler(this::handlePacket);
 
-    InetSocketAddress address =
+    final InetSocketAddress address =
         new InetSocketAddress(socket.localAddress().host(), socket.localAddress().port());
     addressFuture.complete(address);
   }
@@ -156,7 +155,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
   @Override
   protected CompletableFuture<Void> sendOutgoingPacket(
       final DiscoveryPeer peer, final Packet packet) {
-    CompletableFuture<Void> result = new CompletableFuture<>();
+    final CompletableFuture<Void> result = new CompletableFuture<>();
     socket.send(
         packet.encode(),
         peer.getEndpoint().getUdpPort(),
