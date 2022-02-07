@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -192,6 +192,11 @@ public class DefaultBlockchain implements MutableBlockchain {
   @Override
   public ChainHead getChainHead() {
     return new ChainHead(chainHeader.getHash(), totalDifficulty, chainHeader.getNumber());
+  }
+
+  @Override
+  public Optional<Hash> getFinalized() {
+    return blockchainStorage.getFinalized();
   }
 
   @Override
@@ -516,6 +521,13 @@ public class DefaultBlockchain implements MutableBlockchain {
       updater.rollback();
       throw new IllegalStateException("Blockchain is missing data that should be present.", e);
     }
+  }
+
+  @Override
+  public void setFinalized(final Hash blockHash) {
+    final var updater = blockchainStorage.updater();
+    updater.setFinalized(blockHash);
+    updater.commit();
   }
 
   private void updateCacheForNewCanonicalHead(final Block block, final Difficulty uInt256) {

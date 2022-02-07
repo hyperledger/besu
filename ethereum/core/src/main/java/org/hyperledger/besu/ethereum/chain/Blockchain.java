@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -36,6 +36,13 @@ public interface Blockchain {
    * @return The head of the blockchain.
    */
   ChainHead getChainHead();
+
+  /**
+   * Return the last finalized block hash if present.
+   *
+   * @return The hash of the last finalized block
+   */
+  Optional<Hash> getFinalized();
 
   /**
    * Return the block number of the head of the canonical chain.

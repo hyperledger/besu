@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
@@ -41,4 +42,11 @@ public interface MutableBlockchain extends Blockchain {
    *     {@code blockNumber}
    */
   boolean rewindToBlock(final long blockNumber);
+
+  /**
+   * Set the hash of the last finalized block.
+   *
+   * @param blockHash The hash of the last finalized block.
+   */
+  void setFinalized(final Hash blockHash);
 }
