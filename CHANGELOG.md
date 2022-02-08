@@ -1,16 +1,26 @@
 # Changelog
 ## 22.1.0
 
+### Bug Fixes
+- add a websocket frame size configuration CLI parameter [3368][https://github.com/hyperledger/besu/pull/3379]
+
 ### 22.1.0 Breaking Changes
 
 ## 22.1.0-RC4
 
 ### Additions and Improvements
 - Updated besu-native to version 0.4.3 [#3331](https://github.com/hyperledger/besu/pull/3331)
+- Refactor synchronizer to asynchronously retrieve blocks from peers, and to change peer when retrying to get a block. [#3326](https://github.com/hyperledger/besu/pull/3326)
+- Disable RocksDB TTL compactions [#3356](https://github.com/hyperledger/besu/pull/3356)
+
+### Bug Fixes
+- Prevent node from peering to itself [#3342](https://github.com/hyperledger/besu/pull/3342)
+- Fix an `IndexOutOfBoundsException` exception when getting block from peers. [#3304](https://github.com/hyperledger/besu/issues/3304)
 
 ### Download Links
 - https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC4/besu-22.1.0-RC4.tar.gz \ SHA256 f1e34fddf4aad0d6699b38f6bdeff3799255d2c9bfdab0718f5f72bf90b56117
 - https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC4/besu-22.1.0-RC4.zip \ SHA256 f5a2dd72c164fd609963a9f1c3c9993632cf6b7eff85ce6cac95e444a53f2de4
+
 ## 22.1.0-RC3
 - Changing the order in which we traverse the word state tree during fast sync. This should improve fast sync during subsequent pivot changes.
 
@@ -58,8 +68,8 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC2/besu-22.1
 
  **Full Changelog**: https://github.com/hyperledger/besu/compare/21.10.8...21.10.9
 
-[besu-21.10.9.tar.gz](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.9/besu-21.10.9.tar.gz) b5ef15ede50e19ad9fbb79876d8d68aeb8e3811f8905e973874523df2ed179b4
-[besu-21.10.9.zip](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.9/besu-21.10.9.zip) 26489881d852eefdda2cf0203cb30f7b2045ecfb299da8c744e9579cbe2934e2
+[besu-21.10.9.tar.gz](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.9/besu-21.10.9.tar.gz) a4b85ba72ee73017303e4b2f0fdde84a87d376c2c17fdcebfa4e34680f52fc71
+[besu-21.10.9.zip](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.9/besu-21.10.9.zip) c3ba3f07340fa80064ba7c06f2c0ec081184e000f9a925d132084352d0665ef9
 
 ## 21.10.8
 

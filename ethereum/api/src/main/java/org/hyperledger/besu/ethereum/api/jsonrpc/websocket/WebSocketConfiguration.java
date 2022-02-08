@@ -31,6 +31,7 @@ import com.google.common.base.MoreObjects;
 public class WebSocketConfiguration {
   public static final String DEFAULT_WEBSOCKET_HOST = "127.0.0.1";
   public static final int DEFAULT_WEBSOCKET_PORT = 8546;
+  public static final int DEFAULT_WEBSOCKET_MAX_FRAME_SIZE = 1024 * 1024;
   public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
 
   private boolean enabled;
@@ -44,6 +45,7 @@ public class WebSocketConfiguration {
   private JwtAlgorithm authenticationAlgorithm = JwtAlgorithm.RS256;
   private long timeoutSec;
   private int maxActiveConnections;
+  private int maxFrameSize;
 
   public static WebSocketConfiguration createDefault() {
     final WebSocketConfiguration config = new WebSocketConfiguration();
@@ -53,6 +55,7 @@ public class WebSocketConfiguration {
     config.setRpcApis(DEFAULT_RPC_APIS);
     config.setTimeoutSec(TimeoutOptions.defaultOptions().getTimeoutSeconds());
     config.setMaxActiveConnections(DEFAULT_MAX_ACTIVE_CONNECTIONS);
+    config.setMaxFrameSize(DEFAULT_WEBSOCKET_MAX_FRAME_SIZE);
     return config;
   }
 
@@ -193,5 +196,13 @@ public class WebSocketConfiguration {
 
   public void setMaxActiveConnections(final int maxActiveConnections) {
     this.maxActiveConnections = maxActiveConnections;
+  }
+
+  public void setMaxFrameSize(final int maxFrameSize) {
+    this.maxFrameSize = maxFrameSize;
+  }
+
+  public Integer getMaxFrameSize() {
+    return maxFrameSize;
   }
 }
