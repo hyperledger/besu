@@ -680,6 +680,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer rpcWsPort = DEFAULT_WEBSOCKET_PORT;
 
   @Option(
+      names = {"--rpc-ws-max-frame-size"},
+      description =
+          "Maximum size in bytes for JSON-RPC WebSocket frames (default: ${DEFAULT-VALUE}). If this limit is exceeded, the websocket will be disconnected.",
+      arity = "1")
+  private final Integer rpcWsMaxFrameSize = DEFAULT_WS_MAX_FRAME_SIZE;
+
+  @Option(
       names = {"--rpc-ws-max-active-connections"},
       description =
           "Maximum number of WebSocket connections allowed for JSON-RPC (default: ${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected.",
@@ -2071,6 +2078,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-ws-apis",
             "--rpc-ws-host",
             "--rpc-ws-port",
+            "--rpc-ws-max-frame-size",
             "--rpc-ws-max-active-connections",
             "--rpc-ws-authentication-enabled",
             "--rpc-ws-authentication-credentials-file",
@@ -2098,6 +2106,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setEnabled(isRpcWsEnabled);
     webSocketConfiguration.setHost(rpcWsHost);
     webSocketConfiguration.setPort(rpcWsPort);
+    webSocketConfiguration.setMaxFrameSize(rpcWsMaxFrameSize);
     webSocketConfiguration.setMaxActiveConnections(rpcWsMaxConnections);
     webSocketConfiguration.setRpcApis(rpcWsApis);
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
