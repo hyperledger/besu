@@ -2103,6 +2103,20 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcWsMaxFrameSizePropertyMustBeUsed() {
+    final int maxFrameSize = 65535;
+    parseCommand("--rpc-ws-max-frame-size", String.valueOf(maxFrameSize));
+
+    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(wsRpcConfigArgumentCaptor.getValue().getMaxFrameSize()).isEqualTo(maxFrameSize);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void rpcWsMaxActiveConnectionsPropertyMustBeUsed() {
     final int maxConnections = 99;
     parseCommand("--rpc-ws-max-active-connections", String.valueOf(maxConnections));
@@ -2936,14 +2950,17 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-ws-port",
         "1234",
         "--rpc-ws-max-active-connections",
-        "77");
+        "77",
+        "--rpc-ws-max-frame-size",
+        "65535");
 
     verifyOptionsConstraintLoggerCall(
         "--rpc-ws-enabled",
         "--rpc-ws-host",
         "--rpc-ws-port",
         "--rpc-ws-api",
-        "--rpc-ws-max-active-connections");
+        "--rpc-ws-max-active-connections",
+        "--rpc-ws-max-frame-size");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
