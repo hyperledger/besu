@@ -35,7 +35,10 @@ import java.util.List;
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class LocalPermissioningConfigurationValidatorTest {
 
   static final String PERMISSIONING_CONFIG_ROPSTEN_BOOTNODES =

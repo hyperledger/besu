@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.BlockValidator;
+import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -41,7 +42,6 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +111,7 @@ public class BackwardsSyncContextTest {
             invocation -> {
               final Object[] arguments = invocation.getArguments();
               Block block = (Block) arguments[1];
-              return Optional.of(
+              return new Result(
                   new BlockValidator.BlockProcessingOutputs(
                       new ReferenceTestWorldState(), blockDataGenerator.receipts(block)));
             });

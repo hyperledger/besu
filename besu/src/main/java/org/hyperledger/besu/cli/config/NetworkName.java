@@ -21,6 +21,7 @@ public enum NetworkName {
   RINKEBY("/rinkeby.json", BigInteger.valueOf(4)),
   ROPSTEN("/ropsten.json", BigInteger.valueOf(3)),
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
+  KINTSUGI_V1("/kintsugi_v1.json", BigInteger.valueOf(1337702)),
   GOERLI("/goerli.json", BigInteger.valueOf(5)),
   DEV("/dev.json", BigInteger.valueOf(2018)),
   CLASSIC("/classic.json", BigInteger.valueOf(1)),

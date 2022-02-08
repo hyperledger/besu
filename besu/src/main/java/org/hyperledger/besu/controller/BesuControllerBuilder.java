@@ -115,6 +115,7 @@ public abstract class BesuControllerBuilder {
   protected List<NodeMessagePermissioningProvider> messagePermissioningProviders =
       Collections.emptyList();
   protected EvmConfiguration evmConfiguration;
+  protected int maxPeers;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -238,6 +239,11 @@ public abstract class BesuControllerBuilder {
     return this;
   }
 
+  public BesuControllerBuilder maxPeers(final int maxPeers) {
+    this.maxPeers = maxPeers;
+    return this;
+  }
+
   public BesuController build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -309,7 +315,8 @@ public abstract class BesuControllerBuilder {
       }
     }
     final EthPeers ethPeers =
-        new EthPeers(getSupportedProtocol(), clock, metricsSystem, messagePermissioningProviders);
+        new EthPeers(
+            getSupportedProtocol(), clock, metricsSystem, maxPeers, messagePermissioningProviders);
 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();

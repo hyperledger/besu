@@ -541,7 +541,7 @@ public class RunnerBuilder {
 
     sanitizePeers(network, staticNodes)
         .map(DefaultPeer::fromEnodeURL)
-        .forEach(peerNetwork::addMaintainConnectionPeer);
+        .forEach(peerNetwork::addMaintainedConnectionPeer);
 
     final Optional<NodeLocalConfigPermissioningController> nodeLocalConfigPermissioningController =
         nodePermissioningController.flatMap(NodePermissioningController::localConfigController);

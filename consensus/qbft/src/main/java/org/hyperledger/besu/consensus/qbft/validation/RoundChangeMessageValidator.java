@@ -24,14 +24,12 @@ import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.BlockValidator;
-import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,12 +77,15 @@ public class RoundChangeMessageValidator {
   }
 
   private boolean validateBlock(final Block block) {
-    final Optional<BlockProcessingOutputs> validationResult =
+    final var validationResult =
         blockValidator.validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
 
-    if (validationResult.isEmpty()) {
-      LOG.info("{}: block did not pass validation.", ERROR_PREFIX);
+    if (validationResult.blockProcessingOutputs.isEmpty()) {
+      LOG.info(
+          "{}: block did not pass validation. Reason {}",
+          ERROR_PREFIX,
+          validationResult.errorMessage);
       return false;
     }
 

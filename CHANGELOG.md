@@ -1,13 +1,18 @@
 # Changelog
 ## 22.1.0
+- Add `--ec-curve` parameter to export/export-address public-key subcommands [#3333](https://github.com/hyperledger/besu/pull/3333)
 
 ### 22.1.0 Breaking Changes
 
 ### Additions and Improvements
 - Updated besu-native to version 0.4.3 [#3331](https://github.com/hyperledger/besu/pull/3331)
 - Adds ability to specify Engine API endpoint on its own port.
-### Bug Fixes
+- Refactor synchronizer to asynchronously retrieve blocks from peers, and to change peer when retrying to get a block. [#3326](https://github.com/hyperledger/besu/pull/3326)
+- Disable RocksDB TTL compactions [#3356](https://github.com/hyperledger/besu/pull/3356)
 
+### Bug Fixes
+- Prevent node from peering to itself [#3342](https://github.com/hyperledger/besu/pull/3342)
+- Fix an `IndexOutOfBoundsException` exception when getting block from peers. [#3304](https://github.com/hyperledger/besu/issues/3304)
 
 ## 22.1.0-RC3
 - Changing the order in which we traverse the word state tree during fast sync. This should improve fast sync during subsequent pivot changes.

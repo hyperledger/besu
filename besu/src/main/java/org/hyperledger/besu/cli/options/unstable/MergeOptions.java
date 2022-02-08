@@ -40,7 +40,7 @@ public class MergeOptions implements Options {
     return new MergeOptions();
   }
 
-  public Boolean isMergeEnabled() {
+  static Boolean isMergeEnabled() {
     return mergeEnabled;
   }
 

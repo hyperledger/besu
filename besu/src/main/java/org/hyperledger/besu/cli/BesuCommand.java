@@ -22,6 +22,7 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPa
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
+import static org.hyperledger.besu.config.experimental.MergeOptions.isMergeEnabled;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
@@ -686,6 +687,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Port for JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer rpcWsPort = DEFAULT_WEBSOCKET_PORT;
+
+  @Option(
+      names = {"--rpc-ws-max-frame-size"},
+      description =
+          "Maximum size in bytes for JSON-RPC WebSocket frames (default: ${DEFAULT-VALUE}). If this limit is exceeded, the websocket will be disconnected.",
+      arity = "1")
+  private final Integer rpcWsMaxFrameSize = DEFAULT_WS_MAX_FRAME_SIZE;
 
   @Option(
       names = {"--rpc-ws-max-active-connections"},
@@ -1664,6 +1672,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void issueOptionWarnings() {
+
     // Check that P2P options are able to work
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -1680,6 +1689,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-interface",
             "--p2p-port",
             "--remote-connections-max-percentage"));
+
+    // Check that block producer options work
+    if (!isMergeEnabled()) {
+      CommandLineUtils.checkOptionDependencies(
+          logger,
+          commandLine,
+          "--miner-enabled",
+          !isMiningEnabled,
+          asList(
+              "--miner-coinbase",
+              "--min-gas-price",
+              "--min-block-occupancy-ratio",
+              "--miner-extra-data"));
+    }
     // Check that mining options are able to work
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -1687,10 +1710,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--miner-enabled",
         !isMiningEnabled,
         asList(
-            "--miner-coinbase",
-            "--min-gas-price",
-            "--min-block-occupancy-ratio",
-            "--miner-extra-data",
             "--miner-stratum-enabled",
             "--Xminer-remote-sealers-limit",
             "--Xminer-remote-sealers-hashrate-ttl"));
@@ -1873,7 +1892,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
-        .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject());
+        .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject())
+        .maxPeers(maxPeers);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -2099,6 +2119,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-ws-apis",
             "--rpc-ws-host",
             "--rpc-ws-port",
+            "--rpc-ws-max-frame-size",
             "--rpc-ws-max-active-connections",
             "--rpc-ws-authentication-enabled",
             "--rpc-ws-authentication-credentials-file",
@@ -2126,6 +2147,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setEnabled(isRpcWsEnabled);
     webSocketConfiguration.setHost(rpcWsHost);
     webSocketConfiguration.setPort(rpcWsPort);
+    webSocketConfiguration.setMaxFrameSize(rpcWsMaxFrameSize);
     webSocketConfiguration.setMaxActiveConnections(rpcWsMaxConnections);
     webSocketConfiguration.setRpcApis(rpcWsApis);
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);

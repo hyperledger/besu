@@ -30,6 +30,7 @@ import org.hyperledger.besu.config.Keccak256ConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -45,6 +46,8 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
@@ -63,6 +66,7 @@ import java.util.OptionalLong;
 
 import com.google.common.collect.Range;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Rule;
@@ -96,6 +100,7 @@ public class MergeBesuControllerBuilderTest {
 
   BigInteger networkId = BigInteger.ONE;
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
+  private final BaseFeeMarket feeMarket = new LondonFeeMarket(0, Optional.of(Wei.of(42)));
 
   @Rule public final TemporaryFolder tempDirRule = new TemporaryFolder();
 
@@ -223,5 +228,49 @@ public class MergeBesuControllerBuilderTest {
 
     blockchain.appendBlock(new Block(terminal, BlockBody.empty()), Collections.emptyList());
     assertThat(mergeContext.isPostMerge()).isTrue();
+  }
+
+  @Test
+  public void assertNoFinalizedBlockWhenNotStored() {
+    Blockchain mockChain = mock(Blockchain.class);
+    when(mockChain.getFinalized()).thenReturn(Optional.empty());
+    MergeContext mergeContext =
+        besuControllerBuilder.createConsensusContext(
+            mockChain,
+            mock(WorldStateArchive.class),
+            this.besuControllerBuilder.createProtocolSchedule());
+    assertThat(mergeContext).isNotNull();
+    assertThat(mergeContext.getFinalized()).isEmpty();
+  }
+
+  @Test
+  public void assertFinalizedBlockIsPresentWhenStored() {
+    final BlockHeader finalizedHeader = finalizedBlockHeader();
+
+    final Blockchain mockChain = mock(Blockchain.class);
+    when(mockChain.getFinalized()).thenReturn(Optional.of(finalizedHeader.getHash()));
+    when(mockChain.getBlockHeader(finalizedHeader.getHash()))
+        .thenReturn(Optional.of(finalizedHeader));
+    MergeContext mergeContext =
+        besuControllerBuilder.createConsensusContext(
+            mockChain,
+            mock(WorldStateArchive.class),
+            this.besuControllerBuilder.createProtocolSchedule());
+    assertThat(mergeContext).isNotNull();
+    assertThat(mergeContext.getFinalized().get()).isEqualTo(finalizedHeader);
+  }
+
+  private BlockHeader finalizedBlockHeader() {
+    final long blockNumber = 42;
+    final Hash magicHash = Hash.wrap(Bytes32.leftPad(Bytes.ofUnsignedInt(42)));
+
+    return headerGenerator
+        .difficulty(Difficulty.MAX_VALUE)
+        .parentHash(magicHash)
+        .number(blockNumber)
+        .baseFeePerGas(feeMarket.computeBaseFee(blockNumber, Wei.of(0x3b9aca00), 0, 15000000l))
+        .gasLimit(30000000l)
+        .stateRoot(magicHash)
+        .buildHeader();
   }
 }

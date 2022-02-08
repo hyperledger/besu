@@ -22,9 +22,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.Model.PositionalParamSpec;
 
+@RunWith(MockitoJUnitRunner.class)
 public class EnvironmentVariableDefaultProviderTest {
 
   private final Map<String, String> environment = new HashMap<>();

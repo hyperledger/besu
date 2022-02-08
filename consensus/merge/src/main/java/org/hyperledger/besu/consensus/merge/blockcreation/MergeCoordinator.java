@@ -14,10 +14,13 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -165,10 +168,15 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     // put the empty block in first
     final Block emptyBlock =
         mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp);
-    if (executeBlock(emptyBlock)) {
+
+    Result result = executeBlock(emptyBlock);
+    if (result.blockProcessingOutputs.isPresent()) {
       mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
     } else {
-      LOG.warn("failed to execute empty block proposal {}", emptyBlock.getHash());
+      LOG.warn(
+          "failed to execute empty block proposal {}, reason {}",
+          emptyBlock.getHash(),
+          result.errorMessage);
     }
 
     // start working on a full block and update the payload value and candidate when it's ready
@@ -180,10 +188,14 @@ public class MergeCoordinator implements MergeMiningCoordinator {
               if (throwable != null) {
                 LOG.warn("something went wrong creating block", throwable);
               } else {
-                if (executeBlock(bestBlock)) {
+                final var resultBest = executeBlock(bestBlock);
+                if (resultBest.blockProcessingOutputs.isPresent()) {
                   mergeContext.putPayloadById(payloadIdentifier, bestBlock);
                 } else {
-                  LOG.warn("failed to execute block proposal {}", bestBlock.getHash());
+                  LOG.warn(
+                      "failed to execute block proposal {}, reason {}",
+                      bestBlock.getHash(),
+                      resultBest.errorMessage);
                 }
               }
             });
@@ -192,44 +204,40 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @Override
-  public boolean executeBlock(final Block block) {
+  public Result executeBlock(final Block block) {
+    final var chain = protocolContext.getBlockchain();
+
     // TODO: if we are missing the parentHash, attempt backwards sync
     // https://github.com/hyperledger/besu/issues/2912
 
-    protocolContext
-        .getBlockchain()
+    chain
         .getBlockHeader(block.getHeader().getParentHash())
         .ifPresentOrElse(
             blockHeader ->
-                LOG.debug(
-                    "Parent of block {} is already present",
-                    block.getHash().toString().substring(0, 20)),
+                debugLambda(LOG, "Parent of block {} is already present", block::toLogString),
             () -> backwardsSyncContext.syncBackwardsUntil(block));
 
     // TODO: End Jiri
 
-    final var chain = protocolContext.getBlockchain();
-    var optResult =
+    final var validationResult =
         protocolSchedule
             .getByBlockNumber(block.getHeader().getNumber())
             .getBlockValidator()
             .validateAndProcessBlock(
                 protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE);
 
-    optResult.ifPresent(
+    validationResult.blockProcessingOutputs.ifPresentOrElse(
         result -> {
           result.worldState.persist(block.getHeader());
           chain.appendBlock(block, result.receipts);
-        });
+        },
+        () ->
+            protocolSchedule
+                .getByBlockNumber(chain.getChainHeadBlockNumber())
+                .getBadBlocksManager()
+                .addBadBlock(block));
 
-    if (!optResult.isPresent()) {
-      protocolSchedule
-          .getByBlockNumber(chain.getChainHeadBlockNumber())
-          .getBadBlocksManager()
-          .addBadBlock(block);
-    }
-
-    return optResult.isPresent();
+    return validationResult;
   }
 
   @Override
@@ -281,8 +289,12 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     // set the new head
     blockchain.rewindToBlock(newHead.getHash());
 
-    // set the new finalized block if it present
-    newFinalized.ifPresent(mergeContext::setFinalized);
+    // set and persist the new finalized block if it is present
+    newFinalized.ifPresent(
+        blockHeader -> {
+          blockchain.setFinalized(blockHeader.getHash());
+          mergeContext.setFinalized(blockHeader);
+        });
   }
 
   public boolean latestValidAncestorDescendsFromTerminal(final BlockHeader blockHeader) {
@@ -329,6 +341,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   @Override
   public boolean isBackwardSyncing() {
     return backwardsSyncContext.isSyncing();
+  }
+
+  @Override
+  public boolean isMiningBeforeMerge() {
+    return miningParameters.isMiningEnabled();
   }
 
   private Optional<Hash> findValidAncestor(

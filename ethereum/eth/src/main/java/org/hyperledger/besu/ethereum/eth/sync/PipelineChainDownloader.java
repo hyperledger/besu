@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException;
@@ -31,7 +32,6 @@ import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.time.Duration;
-import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -98,7 +98,7 @@ public class PipelineChainDownloader implements ChainDownloader {
 
   private CompletableFuture<Void> selectSyncTargetAndDownload() {
     return syncTargetManager
-        .findSyncTarget(Optional.empty())
+        .findSyncTarget()
         .thenCompose(this::startDownloadForSyncTarget)
         .thenRun(pipelineCompleteCounter::inc);
   }
@@ -119,7 +119,7 @@ public class PipelineChainDownloader implements ChainDownloader {
     pipelineErrorCounter.inc();
     if (ExceptionUtils.rootCause(error) instanceof InvalidBlockException) {
       LOG.warn(
-          "Invalid block detected.  Disconnecting from sync target. {}",
+          "Invalid block detected. Disconnecting from sync target. {}",
           ExceptionUtils.rootCause(error).getMessage());
       syncState.disconnectSyncTarget(DisconnectReason.BREACH_OF_PROTOCOL);
     }
@@ -155,6 +155,12 @@ public class PipelineChainDownloader implements ChainDownloader {
     }
     syncState.setSyncTarget(target.peer(), target.commonAncestor());
     currentDownloadPipeline = downloadPipelineFactory.createDownloadPipelineForSyncTarget(target);
+    debugLambda(
+        LOG,
+        "Starting download pipeline for sync target {}, common ancestor {} ({})",
+        () -> target,
+        () -> target.commonAncestor().getNumber(),
+        () -> target.commonAncestor().getBlockHash());
     return scheduler.startPipeline(currentDownloadPipeline);
   }
 }

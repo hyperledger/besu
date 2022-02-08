@@ -133,11 +133,11 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     postMergeContext.observeNewIsPostMergeState(
         newIsPostMergeState -> {
           if (newIsPostMergeState) {
-            // if we transitioned to post-merge, stop mining
+            // if we transitioned to post-merge, stop and disable any mining
             composedCoordinator.getPreMergeObject().disable();
             composedCoordinator.getPreMergeObject().stop();
-          } else {
-            // if we transitioned to pre-merge, start mining
+          } else if (composedCoordinator.isMiningBeforeMerge()) {
+            // if we transitioned back to pre-merge and were mining, restart mining
             composedCoordinator.getPreMergeObject().enable();
             composedCoordinator.getPreMergeObject().start();
           }

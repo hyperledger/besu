@@ -83,6 +83,13 @@ public interface RLPInput {
   int nextSize();
 
   /**
+   * Returns the offset of the next item, counting from the start of the RLP Input as a whole.
+   *
+   * @return offset from buffer start
+   */
+  int nextOffset();
+
+  /**
    * Whether the input is at the end of a currently entered list, that is if {@link #leaveList()}
    * should be the next method called.
    *

@@ -179,7 +179,7 @@ public class AcceptanceTestBase {
   }
 
   @Rule
-  public TestWatcher log_eraser =
+  public TestWatcher logEraser =
       new TestWatcher() {
 
         @Override

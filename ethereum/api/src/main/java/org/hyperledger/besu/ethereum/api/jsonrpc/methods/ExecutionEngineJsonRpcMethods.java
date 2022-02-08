@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineExecutePayload;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdated;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkChoiceUpdated;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -53,6 +53,6 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
     return mapOf(
         new EngineGetPayload(syncVertx, protocolContext, blockResultFactory),
         new EngineExecutePayload(syncVertx, protocolContext, mergeCoordinator),
-        new EngineForkchoiceUpdated(syncVertx, protocolContext, mergeCoordinator));
+        new EngineForkChoiceUpdated(syncVertx, protocolContext, mergeCoordinator));
   }
 }

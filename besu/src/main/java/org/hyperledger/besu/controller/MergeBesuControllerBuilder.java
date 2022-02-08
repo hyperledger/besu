@@ -95,6 +95,11 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
                     .map(Difficulty::of)
                     .orElse(Difficulty.ZERO));
 
+    blockchain
+        .getFinalized()
+        .flatMap(blockchain::getBlockHeader)
+        .ifPresent(mergeContext::setFinalized);
+
     if (terminalBlockNumber.isPresent() && terminalBlockHash.isPresent()) {
       Optional<BlockHeader> termBlock = blockchain.getBlockHeader(terminalBlockNumber.getAsLong());
       mergeContext.setTerminalPoWBlock(termBlock);
