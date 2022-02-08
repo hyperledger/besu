@@ -17,7 +17,7 @@ package org.hyperledger.besu.config.experimental;
 import java.util.Optional;
 
 /** For now there is a static config that is driven by a command line option. */
-public class MergeOptions {
+public class MergeConfiguration {
   private static Optional<Boolean> mergeEnabled = Optional.empty();
 
   public static void setMergeEnabled(final boolean bool) {

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.config.experimental.MergeOptions;
+import org.hyperledger.besu.config.experimental.MergeConfiguration;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -189,7 +189,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .populateFrom(processableBlockHeader)
               .ommersHash(
                   BodyValidation.ommersHash(
-                      MergeOptions.isMergeEnabled() ? Collections.emptyList() : ommers))
+                      MergeConfiguration.isMergeEnabled() ? Collections.emptyList() : ommers))
               .stateRoot(disposableWorldState.rootHash())
               .transactionsRoot(
                   BodyValidation.transactionsRoot(transactionResults.getTransactions()))

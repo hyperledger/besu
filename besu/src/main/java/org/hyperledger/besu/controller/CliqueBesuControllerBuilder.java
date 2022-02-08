@@ -17,7 +17,7 @@ package org.hyperledger.besu.controller;
 import static org.hyperledger.besu.consensus.clique.CliqueHelpers.installCliqueBlockChoiceRule;
 
 import org.hyperledger.besu.config.CliqueConfigOptions;
-import org.hyperledger.besu.config.experimental.MergeOptions;
+import org.hyperledger.besu.config.experimental.MergeConfiguration;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
@@ -108,7 +108,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
       miningCoordinator.enable();
     }
 
-    if (MergeOptions.isMergeEnabled()) {
+    if (MergeConfiguration.isMergeEnabled()) {
       final BackwardsSyncContext backwardsSyncContext =
           new BackwardsSyncContext(
               protocolContext, protocolSchedule, metricsSystem, ethProtocolManager.ethContext());
