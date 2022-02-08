@@ -55,14 +55,7 @@ public abstract class SyncTargetManager {
     this.metricsSystem = metricsSystem;
   }
 
-  public CompletableFuture<SyncTarget> findSyncTarget(
-      final Optional<SyncTarget> currentSyncTarget) {
-    return currentSyncTarget
-        .map(CompletableFuture::completedFuture) // Return an existing sync target if present
-        .orElseGet(this::selectNewSyncTarget);
-  }
-
-  private CompletableFuture<SyncTarget> selectNewSyncTarget() {
+  public CompletableFuture<SyncTarget> findSyncTarget() {
     return selectBestAvailableSyncTarget()
         .thenCompose(
             maybeBestPeer -> {
@@ -113,7 +106,7 @@ public abstract class SyncTargetManager {
   protected abstract CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget();
 
   private CompletableFuture<SyncTarget> waitForPeerAndThenSetSyncTarget() {
-    return waitForNewPeer().handle((r, t) -> r).thenCompose((r) -> selectNewSyncTarget());
+    return waitForNewPeer().handle((r, t) -> r).thenCompose((r) -> findSyncTarget());
   }
 
   private CompletableFuture<?> waitForNewPeer() {

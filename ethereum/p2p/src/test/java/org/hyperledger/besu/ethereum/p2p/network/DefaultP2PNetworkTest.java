@@ -120,7 +120,7 @@ public final class DefaultP2PNetworkTest {
     network.start();
     final Peer peer = PeerTestHelper.createPeer();
 
-    assertThat(network.addMaintainConnectionPeer(peer)).isTrue();
+    assertThat(network.addMaintainedConnectionPeer(peer)).isTrue();
 
     assertThat(maintainedPeers.contains(peer)).isTrue();
     verify(rlpxAgent).connect(peer);
@@ -133,8 +133,8 @@ public final class DefaultP2PNetworkTest {
     network.start();
     final Peer peer = PeerTestHelper.createPeer();
 
-    assertThat(network.addMaintainConnectionPeer(peer)).isTrue();
-    assertThat(network.addMaintainConnectionPeer(peer)).isFalse();
+    assertThat(network.addMaintainedConnectionPeer(peer)).isTrue();
+    assertThat(network.addMaintainedConnectionPeer(peer)).isFalse();
     verify(rlpxAgent, times(2)).connect(peer);
     verify(discoveryAgent, times(2)).bond(peer);
     assertThat(maintainedPeers.contains(peer)).isTrue();
@@ -146,7 +146,7 @@ public final class DefaultP2PNetworkTest {
     network.start();
     final Peer peer = PeerTestHelper.createPeer();
 
-    assertThat(network.addMaintainConnectionPeer(peer)).isTrue();
+    assertThat(network.addMaintainedConnectionPeer(peer)).isTrue();
     assertThat(network.removeMaintainedConnectionPeer(peer)).isTrue();
 
     assertThat(maintainedPeers.contains(peer)).isFalse();
@@ -363,7 +363,7 @@ public final class DefaultP2PNetworkTest {
     network.start();
     assertThat(network.getLocalEnode()).isPresent();
     final Peer peer = PeerTestHelper.createPeer(network.getLocalEnode().get().getNodeId());
-    assertThat(network.addMaintainConnectionPeer(peer)).isFalse();
+    assertThat(network.addMaintainedConnectionPeer(peer)).isFalse();
   }
 
   @Test
