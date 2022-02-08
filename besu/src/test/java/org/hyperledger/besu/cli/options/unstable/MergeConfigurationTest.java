@@ -16,10 +16,11 @@ package org.hyperledger.besu.cli.options.unstable;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import org.hyperledger.besu.config.experimental.MergeConfiguration;
+
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.hyperledger.besu.config.experimental.MergeConfiguration;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
