@@ -113,7 +113,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
     BlockHeader tddPenultimate = this.blockchain.getChainHeadHeader();
     // Add TTD block A to chain as child of N.
     Block ttdA = new Block(terminalPowBlock(tddPenultimate, Difficulty.ONE), BlockBody.empty());
-    boolean worked = coordinator.executeBlock(ttdA);
+    boolean worked = coordinator.executeBlock(ttdA).blockProcessingOutputs.isPresent();
     assertThat(worked).isTrue();
     assertThat(blockchain.getChainHead().getHeight()).isEqualTo(11L);
     assertThat(blockchain.getTotalDifficultyByHash(ttdA.getHash())).isPresent();
@@ -133,7 +133,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
         .isEqualTo(builtOnTTDA.get(builtOnTTDA.size() - 1).getHash());
 
     Block ttdB = new Block(terminalPowBlock(tddPenultimate, Difficulty.of(2L)), BlockBody.empty());
-    worked = coordinator.executeBlock(ttdB);
+    worked = coordinator.executeBlock(ttdB).blockProcessingOutputs.isPresent();
     assertThat(worked).isTrue();
     List<Block> builtOnTTDB = subChain(ttdB.getHeader(), 10, Difficulty.of(0L));
     builtOnTTDB.stream().forEach(coordinator::executeBlock);
