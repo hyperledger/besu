@@ -23,6 +23,7 @@ import org.hyperledger.besu.util.EndianUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.LongSupplier;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
@@ -64,17 +65,19 @@ public class ForkIdManager {
         !forkBlockNumbers.isEmpty() ? forkBlockNumbers.get(forkBlockNumbers.size() - 1) : 0L;
   }
 
-  public ForkId getForkIdForChainHead() {
+  public Optional<ForkId> getForkIdForChainHead() {
     if (legacyEth64) {
-      return forkIds.isEmpty() ? null : forkIds.get(forkIds.size() - 1);
+      return forkIds.isEmpty() ? Optional.empty() : Optional.of(forkIds.get(forkIds.size() - 1));
     }
     final long head = chainHeadSupplier.getAsLong();
     for (final ForkId forkId : forkIds) {
       if (head < forkId.getNext()) {
-        return forkId;
+        return Optional.of(forkId);
       }
     }
-    return forkIds.isEmpty() ? new ForkId(genesisHashCrc, 0) : forkIds.get(forkIds.size() - 1);
+    return forkIds.isEmpty()
+        ? Optional.of(new ForkId(genesisHashCrc, 0))
+        : Optional.of(forkIds.get(forkIds.size() - 1));
   }
 
   @VisibleForTesting

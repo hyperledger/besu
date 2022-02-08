@@ -313,7 +313,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     final Capability cap = connection.capability(getSupportedProtocol());
     final ForkId latestForkId =
-        cap.getVersion() >= 64 ? forkIdManager.getForkIdForChainHead() : null;
+        cap.getVersion() >= 64 ? forkIdManager.getForkIdForChainHead().orElse(null) : null;
+
     // TODO: look to consolidate code below if possible
     // making status non-final and implementing it above would be one way.
     final StatusMessage status =
@@ -394,6 +395,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   public List<Bytes> getForkIdAsBytesList() {
-    return forkIdManager.getForkIdForChainHead().getForkIdAsBytesList();
+    final Optional<ForkId> forkIdForChainHead = forkIdManager.getForkIdForChainHead();
+    if (forkIdForChainHead.isPresent()) {
+      return forkIdForChainHead.get().getForkIdAsBytesList();
+    }
+    return Collections.emptyList();
   }
 }

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
@@ -44,11 +45,11 @@ public class LegacyForkIdManager {
     return this.forkAndHashList;
   }
 
-  public ForkId getLatestForkId() {
+  public Optional<ForkId> getLatestForkId() {
     if (forkAndHashList.size() > 0) {
-      return forkAndHashList.get(forkAndHashList.size() - 1);
+      return Optional.of(forkAndHashList.get(forkAndHashList.size() - 1));
     }
-    return null;
+    return Optional.empty();
   }
 
   public static ForkId readFrom(final RLPInput in) {
