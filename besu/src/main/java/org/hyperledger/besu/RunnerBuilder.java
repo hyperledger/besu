@@ -163,6 +163,7 @@ public class RunnerBuilder {
   private Optional<JsonRpcConfiguration> engineJsonRpcConfiguration = Optional.empty();
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
+  private Optional<WebSocketConfiguration> engineWebSocketConfiguration;
   private ApiConfiguration apiConfiguration;
   private Path dataDir;
   private Optional<Path> pidPath = Optional.empty();
@@ -303,6 +304,11 @@ public class RunnerBuilder {
 
   public RunnerBuilder webSocketConfiguration(final WebSocketConfiguration webSocketConfiguration) {
     this.webSocketConfiguration = webSocketConfiguration;
+    return this;
+  }
+
+  public RunnerBuilder engineWebSocketConfiguration(final WebSocketConfiguration engineWebSocketConfig) {
+    this.engineWebSocketConfiguration = Optional.of(engineWebSocketConfig);
     return this;
   }
 

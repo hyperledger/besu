@@ -31,6 +31,7 @@ import com.google.common.base.MoreObjects;
 public class WebSocketConfiguration {
   public static final String DEFAULT_WEBSOCKET_HOST = "127.0.0.1";
   public static final int DEFAULT_WEBSOCKET_PORT = 8546;
+  public static final int DEFAULT_WEBSOCKET_ENGINE_PORT = 8551;
   public static final int DEFAULT_WEBSOCKET_MAX_FRAME_SIZE = 1024 * 1024;
   public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
 

@@ -49,7 +49,7 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Runner implements AutoCloseable {
+public class  Runner implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(Runner.class);
 
@@ -66,6 +66,7 @@ public class Runner implements AutoCloseable {
   private final Optional<MetricsService> metrics;
   private final Optional<Path> pidPath;
   private final Optional<WebSocketService> websocketRpc;
+  private final Optional<WebSocketService> engineWebsocketRpc;
   private final TransactionPoolEvictionService transactionPoolEvictionService;
 
   private final BesuController besuController;
@@ -82,6 +83,7 @@ public class Runner implements AutoCloseable {
       final Optional<JsonRpcHttpService> engineJsonRpc,
       final Optional<GraphQLHttpService> graphQLHttp,
       final Optional<WebSocketService> websocketRpc,
+      final Optional<WebSocketService> engineWebsocketRpc,
       final Optional<StratumServer> stratumServer,
       final Optional<MetricsService> metrics,
       final Optional<EthStatsService> ethStatsService,
@@ -98,6 +100,7 @@ public class Runner implements AutoCloseable {
     this.jsonRpc = jsonRpc;
     this.engineJsonRpc = engineJsonRpc;
     this.websocketRpc = websocketRpc;
+    this.engineWebsocketRpc = engineWebsocketRpc;
     this.metrics = metrics;
     this.ethStatsService = ethStatsService;
     this.besuController = besuController;
@@ -118,6 +121,7 @@ public class Runner implements AutoCloseable {
     engineJsonRpc.ifPresent(service -> waitForServiceToStart("engineJsonRpc", service.start()));
     graphQLHttp.ifPresent(service -> waitForServiceToStart("graphQLHttp", service.start()));
     websocketRpc.ifPresent(service -> waitForServiceToStart("websocketRpc", service.start()));
+    engineWebsocketRpc.ifPresent(service -> waitForServiceToStart("engineWebsocketRpc", service.start()));
     stratumServer.ifPresent(server -> waitForServiceToStart("stratum", server.start()));
     autoTransactionLogBloomCachingService.ifPresent(AutoTransactionLogBloomCachingService::start);
     ethStatsService.ifPresent(EthStatsService::start);
@@ -149,6 +153,7 @@ public class Runner implements AutoCloseable {
     engineJsonRpc.ifPresent(service -> waitForServiceToStop("engineJsonRpc", service.stop()));
     graphQLHttp.ifPresent(service -> waitForServiceToStop("graphQLHttp", service.stop()));
     websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
+    engineWebsocketRpc.ifPresent(service -> waitForServiceToStop("engineWebsocketRpc", service.stop()));
     metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
     ethStatsService.ifPresent(EthStatsService::stop);
     besuController.getMiningCoordinator().stop();
@@ -320,6 +325,8 @@ public class Runner implements AutoCloseable {
   public Optional<Integer> getWebsocketPort() {
     return websocketRpc.map(service -> service.socketAddress().getPort());
   }
+
+  public Optional<Integer> getEngineWebsocketPort() { return engineWebsocketRpc.map(service -> service.socketAddress().getPort());}
 
   public Optional<Integer> getMetricsPort() {
     if (metrics.isPresent()) {
