@@ -28,6 +28,7 @@ import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEF
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_ENGINE_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
 import static org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration.QIP714_DEFAULT_BLOCK;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
@@ -687,6 +688,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Port for JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer rpcWsPort = DEFAULT_WEBSOCKET_PORT;
+
+  @Option(
+          names = {"--engine-rpc-ws-port"},
+          paramLabel = MANDATORY_PORT_FORMAT_HELP,
+          description = "Port for Execution Engine JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
+          arity = "1")
+  private final Integer engineRpcWsPort = DEFAULT_WEBSOCKET_ENGINE_PORT;
 
   @Option(
       names = {"--rpc-ws-max-frame-size"},
