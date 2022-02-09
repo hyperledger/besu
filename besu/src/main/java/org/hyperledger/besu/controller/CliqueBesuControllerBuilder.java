@@ -17,7 +17,6 @@ package org.hyperledger.besu.controller;
 import static org.hyperledger.besu.consensus.clique.CliqueHelpers.installCliqueBlockChoiceRule;
 
 import org.hyperledger.besu.config.CliqueConfigOptions;
-import org.hyperledger.besu.config.experimental.MergeConfiguration;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
@@ -29,8 +28,6 @@ import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueJsonRpcMethods;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
-import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
-import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -40,7 +37,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
-import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardsSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -106,22 +102,6 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
     if (miningParameters.isMiningEnabled()) {
       miningCoordinator.enable();
-    }
-
-    if (MergeConfiguration.isMergeEnabled()) {
-      final BackwardsSyncContext backwardsSyncContext =
-          new BackwardsSyncContext(
-              protocolContext, protocolSchedule, metricsSystem, ethProtocolManager.ethContext());
-      final MergeCoordinator mergeCoordinator =
-          new MergeCoordinator(
-              protocolContext,
-              protocolSchedule,
-              transactionPool.getPendingTransactions(),
-              miningParameters,
-              backwardsSyncContext);
-      final TransitionCoordinator mergeReadyClique =
-          new TransitionCoordinator(miningCoordinator, mergeCoordinator);
-      return mergeReadyClique;
     }
 
     return miningCoordinator;
