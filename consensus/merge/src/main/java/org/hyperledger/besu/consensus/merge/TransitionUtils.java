@@ -69,7 +69,8 @@ public abstract class TransitionUtils<SwitchingObject> {
     if (currentChainTotalDifficulty
             .get()
             .add(header.getDifficulty() == null ? Difficulty.ZERO : header.getDifficulty())
-            .greaterThan(configuredTotalTerminalDifficulty) // adding would equal or go over limit
+            .greaterOrEqualThan(
+                configuredTotalTerminalDifficulty) // adding would equal or go over limit
         && currentChainTotalDifficulty
             .get()
             .lessThan(configuredTotalTerminalDifficulty) // parent was under
