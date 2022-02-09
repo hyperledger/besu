@@ -15,13 +15,32 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,6 +53,7 @@ public class EngineForkchoiceUpdatedTest {
 
   private EngineForkchoiceUpdated method;
   private static final Vertx vertx = Vertx.vertx();
+  private static final Hash mockHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
 
   @Mock private ProtocolContext protocolContext;
 
@@ -41,9 +61,12 @@ public class EngineForkchoiceUpdatedTest {
 
   @Mock private MergeMiningCoordinator mergeCoordinator;
 
+  @Mock private MutableBlockchain blockchain;
+
   @Before
   public void before() {
     when(protocolContext.getConsensusContext(Mockito.any())).thenReturn(mergeContext);
+    when(protocolContext.getBlockchain()).thenReturn(blockchain);
     this.method = new EngineForkchoiceUpdated(vertx, protocolContext, mergeCoordinator);
   }
 
@@ -51,5 +74,30 @@ public class EngineForkchoiceUpdatedTest {
   public void shouldReturnExpectedMethodName() {
     // will break as specs change, intentional:
     assertThat(method.getName()).isEqualTo("engine_forkchoiceUpdatedV1");
+  }
+
+  @Test
+  public void shouldReturnErrorOnInvalidTerminalblock() {
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+
+    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+        .thenReturn(false);
+    var resp =
+        resp(new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash), Optional.empty());
+    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    JsonRpcErrorResponse res = ((JsonRpcErrorResponse) resp);
+    assertThat(res.getError()).isEqualTo(JsonRpcError.INVALID_TERMINAL_BLOCK);
+  }
+
+  private JsonRpcResponse resp(
+      final EngineForkchoiceUpdatedParameter forkchoiceParam,
+      final Optional<EnginePayloadAttributesParameter> payloadParam) {
+    return method.response(
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0",
+                RpcMethod.ENGINE_FORKCHOICE_UPDATED.getMethodName(),
+                Stream.concat(Stream.of(forkchoiceParam), payloadParam.stream()).toArray())));
   }
 }

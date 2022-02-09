@@ -19,7 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class EngineForkChoiceUpdatedParameter {
+public class EngineForkchoiceUpdatedParameter {
   private final Hash headBlockHash;
 
   private final Hash safeBlockHash;
@@ -39,7 +39,7 @@ public class EngineForkChoiceUpdatedParameter {
   }
 
   @JsonCreator
-  public EngineForkChoiceUpdatedParameter(
+  public EngineForkchoiceUpdatedParameter(
       @JsonProperty("headBlockHash") final Hash headBlockHash,
       @JsonProperty("finalizedBlockHash") final Hash finalizedBlockHash,
       @JsonProperty("safeBlockHash") final Hash safeBlockHash) {

@@ -35,6 +35,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -120,6 +122,24 @@ public class EngineExecutePayloadTest {
     assertThat(res.getLatestValidHash()).isEqualTo(mockHeader.getHash().toString());
     assertThat(res.getStatus()).isEqualTo(VALID.name());
     assertThat(res.getValidationError()).isNull();
+  }
+
+  @Test
+  public void shouldReturnErrorOnInvalidTerminalblock() {
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+
+    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.of(mockHash));
+
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+        .thenReturn(false);
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    JsonRpcErrorResponse res = ((JsonRpcErrorResponse) resp);
+    assertThat(res.getError()).isEqualTo(JsonRpcError.INVALID_TERMINAL_BLOCK);
   }
 
   @Test
