@@ -605,10 +605,16 @@ public class RunnerBuilder {
 
       final Map<String, JsonRpcMethod> engineMethods =
           allJsonRpcMethods.entrySet().stream()
-              .filter(entry -> entry.getKey().toLowerCase().startsWith("engine"))
+              .filter(
+                  entry -> {
+                    return entry.getKey().toLowerCase().startsWith("engine")
+                        || entry.getKey().toLowerCase().startsWith("eth");
+                  })
               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-      if (!engineMethods.isEmpty()) {
+      if (!engineMethods.isEmpty()
+          && engineMethods.keySet().stream()
+              .anyMatch(apiName -> apiName.toLowerCase().startsWith("engine"))) {
         engineJsonRpcHttpService =
             Optional.of(
                 new JsonRpcHttpService(
