@@ -24,8 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkChoiceResult;
@@ -81,8 +79,9 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
       // TODO: post-merge cleanup
       if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(currentHead.get())) {
-        return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.INVALID_TERMINAL_BLOCK);
+        return new JsonRpcSuccessResponse(
+            requestContext.getRequest().getId(),
+            new EngineUpdateForkChoiceResult(ForkChoiceStatus.INVALID_TERMINAL_BLOCK, null));
       }
 
       // update fork choice
@@ -110,11 +109,12 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
-          new EngineUpdateForkChoiceResult(ForkChoiceStatus.SUCCESS, payloadId.orElse(null)));
+          new EngineUpdateForkChoiceResult(ForkChoiceStatus.VALID, payloadId.orElse(null)));
     }
 
-    // else fail with parent not found
-    return new JsonRpcErrorResponse(
-        requestContext.getRequest().getId(), JsonRpcError.PARENT_BLOCK_NOT_FOUND);
+    // TODO: start sync for this head https://github.com/hyperledger/besu/issues/3268
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(),
+        new EngineUpdateForkChoiceResult(ForkChoiceStatus.SYNCING, null));
   }
 }

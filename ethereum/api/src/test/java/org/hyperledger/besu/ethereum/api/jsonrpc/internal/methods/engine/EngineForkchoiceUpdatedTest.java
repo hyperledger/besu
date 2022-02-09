@@ -29,9 +29,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkChoiceResult;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -77,7 +78,7 @@ public class EngineForkchoiceUpdatedTest {
   }
 
   @Test
-  public void shouldReturnErrorOnInvalidTerminalblock() {
+  public void shouldReturnInvalidTerminalblock() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
 
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
@@ -85,9 +86,9 @@ public class EngineForkchoiceUpdatedTest {
         .thenReturn(false);
     var resp =
         resp(new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash), Optional.empty());
-    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
-    JsonRpcErrorResponse res = ((JsonRpcErrorResponse) resp);
-    assertThat(res.getError()).isEqualTo(JsonRpcError.INVALID_TERMINAL_BLOCK);
+    var res = fromSuccessResp(resp);
+    assertThat(res.getStatus()).isEqualTo(JsonRpcError.INVALID_TERMINAL_BLOCK.name());
+    assertThat(res.getPayloadId()).isNull();
   }
 
   private JsonRpcResponse resp(
@@ -99,5 +100,14 @@ public class EngineForkchoiceUpdatedTest {
                 "2.0",
                 RpcMethod.ENGINE_FORKCHOICE_UPDATED.getMethodName(),
                 Stream.concat(Stream.of(forkchoiceParam), payloadParam.stream()).toArray())));
+  }
+
+  private EngineUpdateForkChoiceResult fromSuccessResp(final JsonRpcResponse resp) {
+    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    return Optional.of(resp)
+        .map(JsonRpcSuccessResponse.class::cast)
+        .map(JsonRpcSuccessResponse::getResult)
+        .map(EngineUpdateForkChoiceResult.class::cast)
+        .get();
   }
 }
