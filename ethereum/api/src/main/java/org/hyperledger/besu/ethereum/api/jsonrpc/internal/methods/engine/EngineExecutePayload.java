@@ -151,7 +151,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
       return respondWith(reqId, latestValidAncestor.get(), INVALID, errorMessage);
     }
 
-      // TODO: post-merge cleanup
+    // TODO: post-merge cleanup
     if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_TERMINAL_BLOCK);

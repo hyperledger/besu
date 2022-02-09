@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;

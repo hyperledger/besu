@@ -93,6 +93,8 @@ public class EngineExecutePayloadTest {
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+        .thenReturn(true);
     when(mergeCoordinator.executeBlock(any()))
         .thenReturn(new Result(new BlockProcessingOutputs(null, List.of())));
 
