@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionForkChoiceUpdatedParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionPayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkChoiceUpdatedParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -37,11 +37,11 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EngineForkChoiceUpdated extends ExecutionEngineJsonRpcMethod {
-  private static final Logger LOG = LoggerFactory.getLogger(EngineForkChoiceUpdated.class);
+public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
+  private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdated.class);
   private final MergeMiningCoordinator mergeCoordinator;
 
-  public EngineForkChoiceUpdated(
+  public EngineForkchoiceUpdated(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator) {
@@ -57,10 +57,10 @@ public class EngineForkChoiceUpdated extends ExecutionEngineJsonRpcMethod {
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
 
-    final ExecutionForkChoiceUpdatedParameter forkChoice =
-        requestContext.getRequiredParameter(0, ExecutionForkChoiceUpdatedParameter.class);
-    final Optional<ExecutionPayloadAttributesParameter> optionalPayloadAttributes =
-        requestContext.getOptionalParameter(1, ExecutionPayloadAttributesParameter.class);
+    final EngineForkChoiceUpdatedParameter forkChoice =
+        requestContext.getRequiredParameter(0, EngineForkChoiceUpdatedParameter.class);
+    final Optional<EnginePayloadAttributesParameter> optionalPayloadAttributes =
+        requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
 
     if (mergeContext.isSyncing() || mergeCoordinator.isBackwardSyncing()) {
       // if we are syncing, return SYNCING
@@ -74,10 +74,17 @@ public class EngineForkChoiceUpdated extends ExecutionEngineJsonRpcMethod {
         forkChoice.getHeadBlockHash(),
         forkChoice.getFinalizedBlockHash());
 
-    Optional<BlockHeader> parentHeader =
+    Optional<BlockHeader> currentHead =
         protocolContext.getBlockchain().getBlockHeader(forkChoice.getHeadBlockHash());
 
-    if (parentHeader.isPresent()) {
+    if (currentHead.isPresent()) {
+
+      // TODO: post-merge cleanup
+      if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(currentHead.get())) {
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.INVALID_TERMINAL_BLOCK);
+      }
+
       // update fork choice
       mergeCoordinator.updateForkChoice(
           forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
@@ -87,7 +94,7 @@ public class EngineForkChoiceUpdated extends ExecutionEngineJsonRpcMethod {
           optionalPayloadAttributes.map(
               payloadAttributes ->
                   mergeCoordinator.preparePayload(
-                      parentHeader.get(),
+                      currentHead.get(),
                       payloadAttributes.getTimestamp(),
                       payloadAttributes.getRandom(),
                       payloadAttributes.getSuggestedFeeRecipient()));
@@ -99,8 +106,7 @@ public class EngineForkChoiceUpdated extends ExecutionEngineJsonRpcMethod {
                   "returning identifier {} for requested payload {}",
                   pid::toHexString,
                   () ->
-                      optionalPayloadAttributes.map(
-                          ExecutionPayloadAttributesParameter::serialize)));
+                      optionalPayloadAttributes.map(EnginePayloadAttributesParameter::serialize)));
 
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),

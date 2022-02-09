@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionPayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
@@ -189,7 +189,7 @@ public class EngineExecutePayloadTest {
   @Test
   public void shouldRespondWithSyncingDuringForwardSync() {
     when(mergeContext.isSyncing()).thenReturn(Boolean.TRUE);
-    var resp = resp(mock(ExecutionPayloadParameter.class));
+    var resp = resp(mock(EnginePayloadParameter.class));
     EngineExecutionResult res = fromSuccessResp(resp);
     assertThat(res.getValidationError()).isNull();
     assertThat(res.getStatus()).isEqualTo(SYNCING.name());
@@ -215,15 +215,15 @@ public class EngineExecutePayloadTest {
     assertThat(mergeContext.getTerminalTotalDifficulty()).isNull();
   }
 
-  private JsonRpcResponse resp(final ExecutionPayloadParameter payload) {
+  private JsonRpcResponse resp(final EnginePayloadParameter payload) {
     return method.response(
         new JsonRpcRequestContext(
             new JsonRpcRequest(
                 "2.0", RpcMethod.ENGINE_EXECUTE_PAYLOAD.getMethodName(), new Object[] {payload})));
   }
 
-  private ExecutionPayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {
-    return new ExecutionPayloadParameter(
+  private EnginePayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {
+    return new EnginePayloadParameter(
         header.getHash(),
         header.getParentHash(),
         header.getCoinbase(),

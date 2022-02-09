@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
@@ -27,6 +28,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardsSyncContext;
@@ -297,6 +299,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         });
   }
 
+  @Override
   public boolean latestValidAncestorDescendsFromTerminal(final BlockHeader blockHeader) {
     Optional<Hash> validAncestorHash = this.getLatestValidAncestor(blockHeader);
     if (validAncestorHash.isPresent()) {
@@ -308,13 +311,38 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         if (terminalBlockHeader.isPresent()) {
           return isDescendantOf(terminalBlockHeader.get(), blockHeader);
         } else {
-          LOG.warn("Couldn't find terminal block, no blocks will be valid");
-          return false;
+          if (ancestorIsValidTerminalProofOfWork(blockHeader)) {
+            return true;
+          } else {
+            LOG.warn("Couldn't find terminal block, no blocks will be valid");
+            return false;
+          }
         }
       }
     } else {
       return false;
     }
+  }
+
+  // TODO: post-merge cleanup
+  private static final long MAX_TTD_SEARCH_DEPTH = 1024L; // 32 epochs
+
+  private boolean ancestorIsValidTerminalProofOfWork(final BlockHeader blockheader) {
+    // this should only happen during a reorg very close to the transition from PoW to PoS
+    var blockchain = protocolContext.getBlockchain();
+    Optional<BlockHeader> parent;
+    do {
+      parent = blockchain.getBlockHeader(blockheader.getParentHash());
+      if (parent.isPresent()
+          && MAX_TTD_SEARCH_DEPTH < blockheader.getNumber() - parent.get().getNumber()) {
+        return false;
+      }
+    } while (parent.isPresent() && parent.get().getDifficulty().equals(Difficulty.ZERO));
+
+    return parent
+        .filter(header -> !header.getDifficulty().equals(Difficulty.ZERO))
+        .filter(header -> isTerminalProofOfWorkBlock(header, protocolContext))
+        .isPresent();
   }
 
   @Override

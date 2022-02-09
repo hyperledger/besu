@@ -15,6 +15,8 @@
 
 package org.hyperledger.besu.consensus.merge.headervalidationrules;
 
+import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
+
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -24,7 +26,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NoNonceRule extends MergConsensusRule {
+public class NoNonceRule extends MergeConsensusRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(NoNonceRule.class);
 
@@ -38,8 +40,7 @@ public class NoNonceRule extends MergConsensusRule {
       return false;
     }
     if (super.shouldUsePostMergeRules(header, protocolContext)
-        && !super.isTerminalProofOfWorkBlock(
-            header, protocolContext)) { // past TDD, invalid if has nonce
+        && !isTerminalProofOfWorkBlock(header, protocolContext)) { // past TDD, invalid if has nonce
       return header.getNonce() == 0L;
     } else {
       return true;

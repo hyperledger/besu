@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.merge.headervalidationrules;
 
+import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
+
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -25,59 +27,38 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class MergConsensusRule implements AttachedBlockHeaderValidationRule {
-  private static final Logger LOG = LoggerFactory.getLogger(MergConsensusRule.class);
+public abstract class MergeConsensusRule implements AttachedBlockHeaderValidationRule {
+  private static final Logger LOG = LoggerFactory.getLogger(MergeConsensusRule.class);
 
+  // TODO: post-merge cleanup
   protected boolean shouldUsePostMergeRules(
       final BlockHeader header, final ProtocolContext context) {
     if (context.getConsensusContext(MergeContext.class).getFinalized().isPresent()) {
       // if anything has been finalized, we are now using PoS block validation rules forevermore
       return true;
     }
-    Optional<Difficulty> currentChainTotalDifficulty =
+
+    Optional<Difficulty> parentChainTotalDifficulty =
         context.getBlockchain().getTotalDifficultyByHash(header.getParentHash());
     Difficulty configuredTotalTerminalDifficulty =
         context.getConsensusContext(MergeContext.class).getTerminalTotalDifficulty();
 
-    if (currentChainTotalDifficulty.isEmpty()) {
+    if (parentChainTotalDifficulty.isEmpty()) {
       LOG.warn("unable to get total difficulty, parent {} not found", header.getParentHash());
       return false;
     }
+
     if (isTerminalProofOfWorkBlock(header, context)) {
       // ttd block looks like proof of stake, but is the last proof of work
       return false;
     }
-    if (currentChainTotalDifficulty
+
+    if (parentChainTotalDifficulty
         .get()
         .add(header.getDifficulty() == null ? Difficulty.ZERO : header.getDifficulty())
         .greaterThan(configuredTotalTerminalDifficulty)) {
       return true;
     } else { // still PoWing
-      return false;
-    }
-  }
-
-  protected boolean isTerminalProofOfWorkBlock(
-      final BlockHeader header, final ProtocolContext context) {
-    Optional<Difficulty> currentChainTotalDifficulty =
-        context.getBlockchain().getTotalDifficultyByHash(header.getParentHash());
-    Difficulty configuredTotalTerminalDifficulty =
-        context.getConsensusContext(MergeContext.class).getTerminalTotalDifficulty();
-
-    if (currentChainTotalDifficulty.isEmpty()) {
-      LOG.warn("unable to get total difficulty, parent {} not found", header.getParentHash());
-      return false;
-    }
-    if (currentChainTotalDifficulty
-            .get()
-            .add(header.getDifficulty() == null ? Difficulty.ZERO : header.getDifficulty())
-            .greaterThan(configuredTotalTerminalDifficulty) // adding would equal or go over limit
-        && currentChainTotalDifficulty
-            .get()
-            .lessThan(configuredTotalTerminalDifficulty) // parent was under
-    ) {
-      return true;
-    } else {
       return false;
     }
   }
