@@ -145,9 +145,9 @@ public class WebSocketRequestHandlerTest {
   @Test
   public void handlerBatchRequestContainingErrorsShouldRespondWithBatchErrors(
       final TestContext context) {
-    ServerWebSocket websocket = mock(ServerWebSocket.class);
+    ServerWebSocket websocketMock = mock(ServerWebSocket.class);
 
-    when(websocket.textHandlerID()).thenReturn(UUID.randomUUID().toString());
+    when(websocketMock.textHandlerID()).thenReturn(UUID.randomUUID().toString());
 
     WebSocketRequestHandler handleBadCalls =
         new WebSocketRequestHandler(
@@ -170,15 +170,15 @@ public class WebSocketRequestHandlerTest {
     final JsonArray expectedBatchResponse =
         new JsonArray(List.of(expectedErrorResponse1, expectedErrorResponse2));
 
-    when(websocket.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    handleBadCalls.handle(websocket, arrayJson.toString());
+    handleBadCalls.handle(websocketMock, arrayJson.toString());
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
 
     // can verify only after async not before
-    verify(websocket).writeFrame(argThat(isFrameWithText(Json.encode(expectedBatchResponse))));
-    verify(websocket).writeFrame(argThat(this::isFinalFrame));
+    verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedBatchResponse))));
+    verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
   }
 
   @Test
