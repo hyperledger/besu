@@ -216,9 +216,9 @@ public final class RunnerBuilderTest {
 
   @Test
   public void whenEngineApiAddedListensOnDefaultPort() {
-    JsonRpcConfiguration defaultPlusEng = JsonRpcConfiguration.createDefault();
-    defaultPlusEng.addRpcApi("ENGINE");
-    defaultPlusEng.setEnabled(true);
+    JsonRpcConfiguration jrpc = JsonRpcConfiguration.createDefault();
+    jrpc.setEnabled(true);
+    JsonRpcConfiguration engine = JsonRpcConfiguration.createEngineDefault();
     EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
     MergeConfiguration.setMergeEnabled(true);
@@ -236,7 +236,8 @@ public final class RunnerBuilderTest {
             .ethNetworkConfig(mockMainnet)
             .metricsSystem(mock(ObservableMetricsSystem.class))
             .permissioningService(mock(PermissioningServiceImpl.class))
-            .jsonRpcConfiguration(defaultPlusEng)
+            .jsonRpcConfiguration(jrpc)
+            .engineJsonRpcConfiguration(engine)
             .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .webSocketConfiguration(mock(WebSocketConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))

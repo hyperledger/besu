@@ -1923,7 +1923,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     engineConfig.setPort(engineRpcHttpPort);
     engineConfig.setMaxActiveConnections(rpcHttpMaxConnections);
     engineConfig.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
-    engineConfig.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
+    engineConfig.setRpcApis(Arrays.asList("ENGINE", "ETH"));
     engineConfig.setHostsAllowlist(hostsAllowlist);
     engineConfig.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     engineConfig.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());

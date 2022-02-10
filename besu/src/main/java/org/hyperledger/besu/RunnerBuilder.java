@@ -603,18 +603,32 @@ public class RunnerBuilder {
                   new HealthService(new LivenessCheck()),
                   new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
 
-      final Map<String, JsonRpcMethod> engineMethods =
-          allJsonRpcMethods.entrySet().stream()
-              .filter(
-                  entry -> {
-                    return entry.getKey().toLowerCase().startsWith("engine")
-                        || entry.getKey().toLowerCase().startsWith("eth");
-                  })
-              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      if (engineJsonRpcConfiguration.isPresent()) {
+        final Map<String, JsonRpcMethod> engineMethods =
+            jsonRpcMethods(
+                protocolSchedule,
+                context,
+                besuController,
+                peerNetwork,
+                blockchainQueries,
+                synchronizer,
+                transactionPool,
+                miningCoordinator,
+                metricsSystem,
+                supportedCapabilities,
+                engineJsonRpcConfiguration.get().getRpcApis(),
+                filterManager,
+                accountLocalConfigPermissioningController,
+                nodeLocalConfigPermissioningController,
+                privacyParameters,
+                engineJsonRpcConfiguration.get(),
+                webSocketConfiguration,
+                metricsConfiguration,
+                natService,
+                besuPluginContext.getNamedPlugins(),
+                dataDir,
+                rpcEndpointServiceImpl);
 
-      if (!engineMethods.isEmpty()
-          && engineMethods.keySet().stream()
-              .anyMatch(apiName -> apiName.toLowerCase().startsWith("engine"))) {
         engineJsonRpcHttpService =
             Optional.of(
                 new JsonRpcHttpService(
