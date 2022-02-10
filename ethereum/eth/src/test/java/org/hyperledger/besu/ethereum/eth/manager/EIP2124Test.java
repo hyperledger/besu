@@ -637,7 +637,7 @@ public class EIP2124Test {
     final ForkIdManager forkIdManager =
         new ForkIdManager(mockBlockchain(network.hash, head), network.forks, false);
     wantForkId.ifPresent(
-        forkId -> assertThat(forkIdManager.getForkIdForChainHead().get()).isEqualTo(forkId));
+        forkId -> assertThat(forkIdManager.getForkIdForChainHead()).contains(forkId));
     wantForkIds.ifPresent(
         forkIds -> assertThat(forkIdManager.getForkIds()).containsExactlyElementsOf(forkIds));
     wantPeerCheckCase.ifPresent(
