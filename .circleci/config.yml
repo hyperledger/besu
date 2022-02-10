@@ -357,6 +357,7 @@ workflows:
               only:
                 - main
                 - merge
+                - kintsugi
                 - /^release-.*/
           requires:
             - integrationTests
