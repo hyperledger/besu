@@ -101,6 +101,7 @@ public class TransactionPoolTest {
   @Mock private PendingTransactionListener listener;
   @Mock private TransactionPool.TransactionBatchAddedListener batchAddedListener;
   @Mock private TransactionPool.TransactionBatchAddedListener pendingBatchAddedListener;
+  @Mock private MiningParameters miningParameters;
 
   @SuppressWarnings("unchecked")
   @Mock
@@ -151,6 +152,7 @@ public class TransactionPoolTest {
     peerPendingTransactionTracker = mock(PeerPendingTransactionTracker.class);
     transactionPool = createTransactionPool();
     blockchain.observeBlockAdded(transactionPool);
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.of(2));
   }
 
   private TransactionPool createTransactionPool() {
@@ -174,7 +176,7 @@ public class TransactionPoolTest {
         ethContext,
         peerTransactionTracker,
         peerPendingTransactionTracker,
-        new MiningParameters.Builder().minTransactionGasPrice(Wei.of(2)).build(),
+        miningParameters,
         metricsSystem,
         config);
   }
@@ -985,6 +987,46 @@ public class TransactionPoolTest {
         .isEqualTo(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
     assertThat(result38.getInvalidReason())
         .isEqualTo(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
+  }
+
+  @Test
+  public void shouldAcceptZeroGasPriceFrontierTransactionsWhenMining() {
+    when(miningParameters.isMiningEnabled()).thenReturn(true);
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .type(TransactionType.FRONTIER)
+            .gasPrice(Wei.ZERO)
+            .value(Wei.ONE)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction);
+
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transaction);
+
+    assertThat(result).isEqualTo(ValidationResult.valid());
+  }
+
+  @Test
+  public void shouldRejectZeroGasPriceFrontierTransactions() {
+    when(miningParameters.isMiningEnabled()).thenReturn(false);
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .type(TransactionType.FRONTIER)
+            .gasPrice(Wei.ZERO)
+            .value(Wei.ONE)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction);
+
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transaction);
+
+    assertThat(result.getInvalidReason()).isEqualTo(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
   }
 
   private void assertTransactionPending(final Transaction t) {
