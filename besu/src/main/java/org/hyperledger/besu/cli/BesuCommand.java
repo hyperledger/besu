@@ -838,6 +838,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final JsonRPCAllowlistHostsProperty hostsAllowlist = new JsonRPCAllowlistHostsProperty();
 
   @Option(
+      names = {"--engine-host-allowlist"},
+      paramLabel = "<hostname>[,<hostname>...]... or * or all",
+      description =
+          "Comma separated list of hostnames to allow for ENGINE API access, or * to accept any host (default: ${DEFAULT-VALUE})",
+      defaultValue = "localhost,127.0.0.1")
+  private final JsonRPCAllowlistHostsProperty engineHostsAllowlist =
+      new JsonRPCAllowlistHostsProperty();
+
+  @Option(
       names = {"--host-whitelist"},
       hidden = true,
       paramLabel = "<hostname>[,<hostname>...]... or * or all",
@@ -1924,7 +1933,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     engineConfig.setMaxActiveConnections(rpcHttpMaxConnections);
     engineConfig.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
     engineConfig.setRpcApis(Arrays.asList("ENGINE", "ETH"));
-    engineConfig.setHostsAllowlist(hostsAllowlist);
+    engineConfig.setHostsAllowlist(engineHostsAllowlist);
     engineConfig.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     engineConfig.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
     engineConfig.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
