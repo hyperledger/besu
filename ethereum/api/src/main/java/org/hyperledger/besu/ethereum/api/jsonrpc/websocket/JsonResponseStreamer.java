@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.ServerWebSocket;
@@ -30,13 +30,18 @@ class JsonResponseStreamer extends OutputStream {
   private static final Buffer EMPTY_BUFFER = Buffer.buffer();
 
   private final ServerWebSocket response;
-  private final Semaphore paused = new Semaphore(0);
   private final byte[] singleByteBuf = new byte[1];
   private boolean firstFrame = true;
   private Buffer buffer = EMPTY_BUFFER;
+  private final AtomicReference<Throwable> failure = new AtomicReference<>();
 
   public JsonResponseStreamer(final ServerWebSocket response) {
     this.response = response;
+    this.response.exceptionHandler(
+        event -> {
+          LOG.debug("Write to remote address {} failed", response.remoteAddress(), event);
+          failure.set(event);
+        });
   }
 
   @Override
@@ -47,6 +52,8 @@ class JsonResponseStreamer extends OutputStream {
 
   @Override
   public void write(final byte[] bbuf, final int off, final int len) throws IOException {
+    stopOnFailure();
+
     if (buffer != EMPTY_BUFFER) {
       writeFrame(buffer, false);
     }
@@ -55,29 +62,37 @@ class JsonResponseStreamer extends OutputStream {
     buffer = buf;
   }
 
-  private void writeFrame(final Buffer buf, final boolean isFinal) throws IOException {
-    if (response.writeQueueFull()) {
-      LOG.debug("WebSocketResponse write queue is full pausing streaming");
-      response.drainHandler(e -> paused.release());
-      try {
-        paused.acquire();
-        LOG.debug("WebSocketResponse write queue is not accepting more data, resuming streaming");
-      } catch (InterruptedException ex) {
-        Thread.currentThread().interrupt();
-        throw new IOException(
-            "Interrupted while waiting for HttpServerResponse to drain the write queue", ex);
-      }
-    }
+  private void writeFrame(final Buffer buf, final boolean isFinal) {
     if (firstFrame) {
-      response.writeFrame(WebSocketFrame.textFrame(buf.toString(), isFinal));
+      response
+          .writeFrame(WebSocketFrame.textFrame(buf.toString(), isFinal))
+          .onFailure(this::handleFailure);
       firstFrame = false;
     } else {
-      response.writeFrame(WebSocketFrame.continuationFrame(buf, isFinal));
+      response
+          .writeFrame(WebSocketFrame.continuationFrame(buf, isFinal))
+          .onFailure(this::handleFailure);
     }
   }
 
   @Override
   public void close() throws IOException {
-    writeFrame(buffer, true);
+    // write last buffer only if there were no previous failures
+    if (failure.get() == null) {
+      writeFrame(buffer, true);
+    }
+  }
+
+  private void stopOnFailure() throws IOException {
+    Throwable t = failure.get();
+    if (t != null) {
+      LOG.debug("Stop writing to remote address {} due to a failure", response.remoteAddress(), t);
+      throw (t instanceof IOException) ? (IOException) t : new IOException(t);
+    }
+  }
+
+  private void handleFailure(final Throwable t) {
+    LOG.debug("Write to remote address {} failed", response.remoteAddress(), t);
+    failure.set(t);
   }
 }
