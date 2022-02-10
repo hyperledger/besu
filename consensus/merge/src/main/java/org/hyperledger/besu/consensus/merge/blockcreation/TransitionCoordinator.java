@@ -143,6 +143,12 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
+  public boolean latestValidAncestorDescendsFromTerminal(final BlockHeader blockHeader) {
+    // this is nonsensical pre-merge, but should be fine to delegate
+    return mergeCoordinator.latestValidAncestorDescendsFromTerminal(blockHeader);
+  }
+
+  @Override
   public boolean isBackwardSyncing() {
     return mergeCoordinator.isBackwardSyncing();
   }

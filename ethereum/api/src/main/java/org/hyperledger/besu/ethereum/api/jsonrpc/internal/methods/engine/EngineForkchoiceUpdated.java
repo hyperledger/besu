@@ -22,10 +22,8 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionForkChoiceUpdatedParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionPayloadAttributesParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkChoiceResult;
@@ -37,11 +35,11 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EngineForkChoiceUpdated extends ExecutionEngineJsonRpcMethod {
-  private static final Logger LOG = LoggerFactory.getLogger(EngineForkChoiceUpdated.class);
+public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
+  private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdated.class);
   private final MergeMiningCoordinator mergeCoordinator;
 
-  public EngineForkChoiceUpdated(
+  public EngineForkchoiceUpdated(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator) {
@@ -57,10 +55,10 @@ public class EngineForkChoiceUpdated extends ExecutionEngineJsonRpcMethod {
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
 
-    final ExecutionForkChoiceUpdatedParameter forkChoice =
-        requestContext.getRequiredParameter(0, ExecutionForkChoiceUpdatedParameter.class);
-    final Optional<ExecutionPayloadAttributesParameter> optionalPayloadAttributes =
-        requestContext.getOptionalParameter(1, ExecutionPayloadAttributesParameter.class);
+    final EngineForkchoiceUpdatedParameter forkChoice =
+        requestContext.getRequiredParameter(0, EngineForkchoiceUpdatedParameter.class);
+    final Optional<EnginePayloadAttributesParameter> optionalPayloadAttributes =
+        requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
 
     if (mergeContext.isSyncing() || mergeCoordinator.isBackwardSyncing()) {
       // if we are syncing, return SYNCING
@@ -74,10 +72,18 @@ public class EngineForkChoiceUpdated extends ExecutionEngineJsonRpcMethod {
         forkChoice.getHeadBlockHash(),
         forkChoice.getFinalizedBlockHash());
 
-    Optional<BlockHeader> parentHeader =
+    Optional<BlockHeader> currentHead =
         protocolContext.getBlockchain().getBlockHeader(forkChoice.getHeadBlockHash());
 
-    if (parentHeader.isPresent()) {
+    if (currentHead.isPresent()) {
+
+      // TODO: post-merge cleanup
+      if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(currentHead.get())) {
+        return new JsonRpcSuccessResponse(
+            requestContext.getRequest().getId(),
+            new EngineUpdateForkChoiceResult(ForkChoiceStatus.INVALID_TERMINAL_BLOCK, null));
+      }
+
       // update fork choice
       mergeCoordinator.updateForkChoice(
           forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
@@ -87,7 +93,7 @@ public class EngineForkChoiceUpdated extends ExecutionEngineJsonRpcMethod {
           optionalPayloadAttributes.map(
               payloadAttributes ->
                   mergeCoordinator.preparePayload(
-                      parentHeader.get(),
+                      currentHead.get(),
                       payloadAttributes.getTimestamp(),
                       payloadAttributes.getRandom(),
                       payloadAttributes.getSuggestedFeeRecipient()));
@@ -99,16 +105,16 @@ public class EngineForkChoiceUpdated extends ExecutionEngineJsonRpcMethod {
                   "returning identifier {} for requested payload {}",
                   pid::toHexString,
                   () ->
-                      optionalPayloadAttributes.map(
-                          ExecutionPayloadAttributesParameter::serialize)));
+                      optionalPayloadAttributes.map(EnginePayloadAttributesParameter::serialize)));
 
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
-          new EngineUpdateForkChoiceResult(ForkChoiceStatus.SUCCESS, payloadId.orElse(null)));
+          new EngineUpdateForkChoiceResult(ForkChoiceStatus.VALID, payloadId.orElse(null)));
     }
 
-    // else fail with parent not found
-    return new JsonRpcErrorResponse(
-        requestContext.getRequest().getId(), JsonRpcError.PARENT_BLOCK_NOT_FOUND);
+    // TODO: start sync for this head https://github.com/hyperledger/besu/issues/3268
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(),
+        new EngineUpdateForkChoiceResult(ForkChoiceStatus.SYNCING, null));
   }
 }
