@@ -43,6 +43,7 @@ remote-connections-max-percentage=60
 random-peer-priority-enabled=false
 host-whitelist=["all"]
 host-allowlist=["all"]
+engine-host-allowlist=["all"]
 required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
 discovery-dns-url="enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org"
 
