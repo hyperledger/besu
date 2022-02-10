@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -73,7 +74,7 @@ public class TransactionPool implements BlockAddedObserver {
   private final TransactionBatchAddedListener transactionBatchAddedListener;
   private final TransactionBatchAddedListener pendingTransactionBatchAddedListener;
   private final SyncState syncState;
-  private final Wei minTransactionGasPrice;
+  private final MiningParameters miningParameters;
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final PeerTransactionTracker peerTransactionTracker;
   private final PeerPendingTransactionTracker peerPendingTransactionTracker;
@@ -89,7 +90,7 @@ public class TransactionPool implements BlockAddedObserver {
       final EthContext ethContext,
       final PeerTransactionTracker peerTransactionTracker,
       final PeerPendingTransactionTracker peerPendingTransactionTracker,
-      final Wei minTransactionGasPrice,
+      final MiningParameters miningParameters,
       final MetricsSystem metricsSystem,
       final TransactionPoolConfiguration configuration) {
     this.pendingTransactions = pendingTransactions;
@@ -100,7 +101,7 @@ public class TransactionPool implements BlockAddedObserver {
     this.syncState = syncState;
     this.peerTransactionTracker = peerTransactionTracker;
     this.peerPendingTransactionTracker = peerPendingTransactionTracker;
-    this.minTransactionGasPrice = minTransactionGasPrice;
+    this.miningParameters = miningParameters;
     this.configuration = configuration;
 
     duplicateTransactionCounter =
@@ -165,7 +166,7 @@ public class TransactionPool implements BlockAddedObserver {
         continue;
       }
       final Wei transactionGasPrice = minTransactionGasPrice(transaction);
-      if (transactionGasPrice.compareTo(minTransactionGasPrice) < 0) {
+      if (transactionGasPrice.compareTo(miningParameters.getMinTransactionGasPrice()) < 0) {
         continue;
       }
       final ValidationResult<TransactionInvalidReason> validationResult =

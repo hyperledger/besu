@@ -38,7 +38,7 @@ public class MiningParameters {
   private final Optional<AtomicLong> targetGasLimit;
   private final Wei minTransactionGasPrice;
   private final Bytes extraData;
-  private final boolean enabled;
+  private final boolean miningEnabled;
   private final boolean stratumMiningEnabled;
   private final String stratumNetworkInterface;
   private final int stratumPort;
@@ -55,7 +55,7 @@ public class MiningParameters {
       final Long targetGasLimit,
       final Wei minTransactionGasPrice,
       final Bytes extraData,
-      final boolean enabled,
+      final boolean miningEnabled,
       final boolean stratumMiningEnabled,
       final String stratumNetworkInterface,
       final int stratumPort,
@@ -70,7 +70,7 @@ public class MiningParameters {
     this.targetGasLimit = Optional.ofNullable(targetGasLimit).map(AtomicLong::new);
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.extraData = extraData;
-    this.enabled = enabled;
+    this.miningEnabled = miningEnabled;
     this.stratumMiningEnabled = stratumMiningEnabled;
     this.stratumNetworkInterface = stratumNetworkInterface;
     this.stratumPort = stratumPort;
@@ -100,7 +100,7 @@ public class MiningParameters {
   }
 
   public boolean isMiningEnabled() {
-    return enabled;
+    return miningEnabled;
   }
 
   public boolean isStratumMiningEnabled() {
@@ -153,7 +153,7 @@ public class MiningParameters {
         && Objects.equals(targetGasLimit, that.targetGasLimit)
         && Objects.equals(minTransactionGasPrice, that.minTransactionGasPrice)
         && Objects.equals(extraData, that.extraData)
-        && enabled == that.enabled
+        && miningEnabled == that.miningEnabled
         && stratumMiningEnabled == that.stratumMiningEnabled
         && Objects.equals(stratumNetworkInterface, that.stratumNetworkInterface)
         && Objects.equals(stratumExtranonce, that.stratumExtranonce)
@@ -170,7 +170,7 @@ public class MiningParameters {
         targetGasLimit,
         minTransactionGasPrice,
         extraData,
-        enabled,
+        miningEnabled,
         stratumMiningEnabled,
         stratumNetworkInterface,
         stratumPort,
@@ -193,7 +193,7 @@ public class MiningParameters {
         + ", extraData="
         + extraData
         + ", enabled="
-        + enabled
+        + miningEnabled
         + ", stratumMiningEnabled="
         + stratumMiningEnabled
         + ", stratumNetworkInterface='"
@@ -223,7 +223,7 @@ public class MiningParameters {
     private Long targetGasLimit = null;
     private Wei minTransactionGasPrice = Wei.ZERO;
     private Bytes extraData = Bytes.EMPTY;
-    private boolean enabled = false;
+    private boolean miningEnabled = false;
     private boolean stratumMiningEnabled = false;
     private String stratumNetworkInterface = "0.0.0.0";
     private int stratumPort = 8008;
@@ -280,8 +280,8 @@ public class MiningParameters {
       return this;
     }
 
-    public Builder enabled(final boolean enabled) {
-      this.enabled = enabled;
+    public Builder miningEnabled(final boolean miningEnabled) {
+      this.miningEnabled = miningEnabled;
       return this;
     }
 
@@ -341,7 +341,7 @@ public class MiningParameters {
           targetGasLimit,
           minTransactionGasPrice,
           extraData,
-          enabled,
+          miningEnabled,
           stratumMiningEnabled,
           stratumNetworkInterface,
           stratumPort,

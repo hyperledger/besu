@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -173,7 +174,7 @@ public class TransactionPoolTest {
         ethContext,
         peerTransactionTracker,
         peerPendingTransactionTracker,
-        Wei.of(2),
+        new MiningParameters.Builder().minTransactionGasPrice(Wei.of(2)).build(),
         metricsSystem,
         config);
   }
@@ -551,7 +552,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);
 
@@ -690,7 +691,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);
 
@@ -749,7 +750,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);
 
@@ -811,7 +812,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ZERO).build());
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
@@ -848,7 +849,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ONE).build());
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
@@ -885,7 +886,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ONE).build());
     // pre-London feemarket
@@ -925,7 +926,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
 
@@ -966,7 +967,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
 

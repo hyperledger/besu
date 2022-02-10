@@ -52,7 +52,7 @@ public class BesuNodeConfigurationBuilder {
   private Optional<Path> dataPath = Optional.empty();
   private MiningParameters miningParameters =
       new MiningParameters.Builder()
-          .enabled(false)
+          .miningEnabled(false)
           .coinbase(AddressHelpers.ofValue(1))
           .minTransactionGasPrice(Wei.of(1000))
           .build();
@@ -108,7 +108,10 @@ public class BesuNodeConfigurationBuilder {
 
   public BesuNodeConfigurationBuilder miningEnabled(final boolean enabled) {
     this.miningParameters =
-        new MiningParameters.Builder().enabled(enabled).coinbase(AddressHelpers.ofValue(1)).build();
+        new MiningParameters.Builder()
+            .miningEnabled(enabled)
+            .coinbase(AddressHelpers.ofValue(1))
+            .build();
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER.name());
     return this;
   }
