@@ -78,7 +78,7 @@ public class EngineForkchoiceUpdatedTest {
   }
 
   @Test
-  public void shouldReturnInvalidTerminalblock() {
+  public void shouldReturnInvalidTerminalBlock() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
 
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));

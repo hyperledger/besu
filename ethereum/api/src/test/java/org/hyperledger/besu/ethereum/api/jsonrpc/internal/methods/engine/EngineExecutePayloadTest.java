@@ -125,7 +125,7 @@ public class EngineExecutePayloadTest {
   }
 
   @Test
-  public void shouldReturnErrorOnInvalidTerminalblock() {
+  public void shouldReturnErrorOnInvalidTerminalBlock() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
 
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());

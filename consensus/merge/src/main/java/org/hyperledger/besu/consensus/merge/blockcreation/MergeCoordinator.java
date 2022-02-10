@@ -327,6 +327,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   // TODO: post-merge cleanup
   static final long MAX_TTD_SEARCH_DEPTH = 1024L; // 32 epochs
 
+  // package visibility for testing
   boolean ancestorIsValidTerminalProofOfWork(final BlockHeader blockheader) {
     // this should only happen during a reorg very close to the transition from PoW to PoS
     var blockchain = protocolContext.getBlockchain();
@@ -339,10 +340,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       }
     } while (parent.isPresent() && parent.get().getDifficulty().equals(Difficulty.ZERO));
 
-    return parent
-        .filter(header -> !header.getDifficulty().equals(Difficulty.ZERO))
-        .filter(header -> isTerminalProofOfWorkBlock(header, protocolContext))
-        .isPresent();
+    return parent.filter(header -> isTerminalProofOfWorkBlock(header, protocolContext)).isPresent();
   }
 
   @Override
