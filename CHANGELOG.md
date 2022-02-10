@@ -17,6 +17,7 @@
 - QBFT consensus algorithm is production ready
 
 ### Bug Fixes
+- Reject locally-sourced transactions below the minimum gas price when not mining. [#3397](https://github.com/hyperledger/besu/pull/3397)
 
 ## 22.1.0
 
