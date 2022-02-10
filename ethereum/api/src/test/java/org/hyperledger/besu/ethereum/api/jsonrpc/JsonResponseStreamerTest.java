@@ -16,29 +16,43 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
-import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.impl.future.FailedFuture;
+import io.vertx.core.impl.future.SucceededFuture;
+import io.vertx.core.net.SocketAddress;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
-import org.mockito.invocation.InvocationOnMock;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class JsonResponseStreamerTest {
+  private final SocketAddress testAddress = SocketAddress.domainSocketAddress("test");
+
+  @Mock private HttpServerResponse httpResponse;
+
+  @Mock private HttpServerResponse failedResponse;
+
+  @Before
+  public void before() {
+    when(httpResponse.write(any(Buffer.class))).thenReturn(new SucceededFuture<>(null, null));
+    when(failedResponse.write(any(Buffer.class)))
+        .thenReturn(new FailedFuture<Void>(new IOException()));
+  }
 
   @Test
   public void writeSingleChar() throws IOException {
-    HttpServerResponse httpResponse = mock(HttpServerResponse.class);
-
-    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse);
+    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse, testAddress);
     streamer.write('x');
 
     verify(httpResponse).write(argThat(bufferContains("x")));
@@ -46,9 +60,7 @@ public class JsonResponseStreamerTest {
 
   @Test
   public void writeString() throws IOException {
-    HttpServerResponse httpResponse = mock(HttpServerResponse.class);
-
-    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse);
+    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse, testAddress);
     streamer.write("xyz".getBytes(StandardCharsets.UTF_8));
 
     verify(httpResponse).write(argThat(bufferContains("xyz")));
@@ -56,9 +68,7 @@ public class JsonResponseStreamerTest {
 
   @Test
   public void writeSubString() throws IOException {
-    HttpServerResponse httpResponse = mock(HttpServerResponse.class);
-
-    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse);
+    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse, testAddress);
     streamer.write("abcxyz".getBytes(StandardCharsets.UTF_8), 1, 3);
 
     verify(httpResponse).write(argThat(bufferContains("bcx")));
@@ -66,9 +76,7 @@ public class JsonResponseStreamerTest {
 
   @Test
   public void writeTwice() throws IOException {
-    HttpServerResponse httpResponse = mock(HttpServerResponse.class);
-
-    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse);
+    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse, testAddress);
     streamer.write("xyz".getBytes(StandardCharsets.UTF_8));
     streamer.write('\n');
 
@@ -78,9 +86,7 @@ public class JsonResponseStreamerTest {
 
   @Test
   public void writeStringAndClose() throws IOException {
-    HttpServerResponse httpResponse = mock(HttpServerResponse.class);
-
-    try (JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse)) {
+    try (JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse, testAddress)) {
       streamer.write("xyz".getBytes(StandardCharsets.UTF_8));
     }
 
@@ -88,30 +94,16 @@ public class JsonResponseStreamerTest {
     verify(httpResponse).end();
   }
 
-  @Test
-  public void waitQueueIsDrained() throws IOException {
-    HttpServerResponse httpResponse = mock(HttpServerResponse.class);
-    when(httpResponse.writeQueueFull()).thenReturn(Boolean.TRUE, Boolean.FALSE);
-
-    when(httpResponse.drainHandler(any())).then(this::emptyQueueAfterAWhile);
-
-    try (JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse)) {
+  @Test(expected = IOException.class)
+  public void stopOnError() throws IOException {
+    try (JsonResponseStreamer streamer = new JsonResponseStreamer(failedResponse, testAddress)) {
       streamer.write("xyz".getBytes(StandardCharsets.UTF_8));
-      streamer.write("123".getBytes(StandardCharsets.UTF_8));
+      streamer.write("abc".getBytes(StandardCharsets.UTF_8));
     }
 
-    verify(httpResponse).write(argThat(bufferContains("xyz")));
-    verify(httpResponse).write(argThat(bufferContains("123")));
-    verify(httpResponse).end();
-  }
-
-  private HttpServerResponse emptyQueueAfterAWhile(final InvocationOnMock invocation) {
-    Handler<Void> handler = invocation.getArgument(0);
-
-    Executors.newSingleThreadScheduledExecutor()
-        .schedule(() -> handler.handle(null), 1, TimeUnit.SECONDS);
-
-    return (HttpServerResponse) invocation.getMock();
+    verify(failedResponse).write(argThat(bufferContains("xyz")));
+    verify(failedResponse, never()).write(argThat(bufferContains("abc")));
+    verify(failedResponse).end();
   }
 
   private ArgumentMatcher<Buffer> bufferContains(final String text) {
