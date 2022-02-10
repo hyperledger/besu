@@ -197,13 +197,13 @@ public class BesuNodeFactory {
   }
 
   public BesuNode createNodeWithAuthFileAndNoAuthApi(
-      final String name, final String authFile, final List<String> noAuthApis)
+      final String name, final String authFile, final List<String> noAuthApiMethods)
       throws URISyntaxException, IOException {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
             .jsonRpcEnabled()
-            .jsonRpcAuthenticationConfiguration(authFile, noAuthApis)
+            .jsonRpcAuthenticationConfiguration(authFile, noAuthApiMethods)
             .webSocketEnabled()
             .webSocketAuthenticationEnabled()
             .build());

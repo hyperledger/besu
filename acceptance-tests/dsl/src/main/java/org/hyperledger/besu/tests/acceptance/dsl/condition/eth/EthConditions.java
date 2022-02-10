@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.condition.eth;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.miner.MiningStatusCondition;
+import org.hyperledger.besu.tests.acceptance.dsl.condition.net.ExpectUnauthorized;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 
 import java.math.BigInteger;
@@ -35,6 +36,10 @@ public class EthConditions {
 
   public Condition getWorkExceptional(final String expectedMessage) {
     return new ExpectEthGetWorkException(transactions.getWork(), expectedMessage);
+  }
+
+  public Condition getWorkUnauthorized() {
+    return new ExpectUnauthorized(transactions.getWork());
   }
 
   public Condition accountsExceptional(final String expectedMessage) {

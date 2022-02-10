@@ -563,7 +563,7 @@ public class JsonRpcHttpService {
   private void handleJsonRPCRequest(final RoutingContext routingContext) {
     // first check token if authentication is required
     final String token = getAuthToken(routingContext);
-    if (authenticationService.isPresent() && token == null) {
+    if (authenticationService.isPresent() && token == null && config.getNoAuthRpcApis().isEmpty()) {
       // no auth token when auth required
       handleJsonRpcUnauthorizedError(routingContext, null, JsonRpcError.UNAUTHORIZED);
     } else {

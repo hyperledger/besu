@@ -105,6 +105,7 @@ import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
@@ -570,13 +571,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final List<String> rpcHttpApis = DEFAULT_RPC_APIS;
 
   @Option(
-      names = {"--rpc-http-api-no-auth", "--rpc-http-apis-no-auth"},
+      names = {"--rpc-http-api-method-no-auth", "--rpc-http-api-methods-no-auth"},
       paramLabel = "<api name>",
       split = " {0,1}, {0,1}",
       arity = "1..*",
       description =
-          "Comma separated list of APIs to exclude from RPC authentication services, the APIs must be enabled and RPC HTTP authentication must be enabled")
-  private final List<String> rpcHttpApisNoAuth = new ArrayList<String>();
+          "Comma separated list of API methods to exclude from RPC authentication services, RPC HTTP authentication must be enabled")
+  private final List<String> rpcHttpApiMethodsNoAuth = new ArrayList<String>();
 
   @Option(
       names = {"--rpc-http-authentication-enabled"},
@@ -705,13 +706,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final List<String> rpcWsApis = DEFAULT_RPC_APIS;
 
   @Option(
-      names = {"--rpc-ws-api-no-auth", "--rpc-ws-apis-no-auth"},
+      names = {"--rpc-ws-api-methods-no-auth", "--rpc-ws-api-method-no-auth"},
       paramLabel = "<api name>",
       split = " {0,1}, {0,1}",
       arity = "1..*",
       description =
-          "Comma separated list of APIs to exclude from RPC authentication services, the APIs must be enabled and RPC WebSocket authentication must be enabled")
-  private final List<String> rpcWsApisNoAuth = new ArrayList<String>();
+          "Comma separated list of RPC methods to exclude from RPC authentication services, RPC WebSocket authentication must be enabled")
+  private final List<String> rpcWsApiMethodsNoAuth = new ArrayList<String>();
 
   @Option(
       names = {"--rpc-ws-authentication-enabled"},
@@ -1658,16 +1659,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-ws-apis'");
     }
 
-    if (!rpcHttpApis.containsAll(rpcHttpApisNoAuth)) {
+    final boolean validHttpApiMethods =
+        rpcHttpApiMethodsNoAuth.stream()
+            .map(RpcMethod::rpcMethodExists)
+            .reduce(true, (a, c) -> a && c);
+
+    if (!validHttpApiMethods) {
       throw new ParameterException(
           this.commandLine,
-          "Invalid value for option '--rpc-http-apis-no-auth', APIs must be enabled first using option '--rpc-http-apis'");
+          "Invalid value for option '--rpc-http-api-methods-no-auth', options must be valid RPC methods");
     }
 
-    if (!rpcWsApis.containsAll(rpcWsApisNoAuth)) {
+    final boolean validWsApiMethods =
+        rpcWsApiMethodsNoAuth.stream()
+            .map(RpcMethod::rpcMethodExists)
+            .reduce(true, (a, c) -> a && c);
+
+    if (!validWsApiMethods) {
       throw new ParameterException(
           this.commandLine,
-          "Invalid value for option '--rpc-ws-apis-no-auth', APIs must be enabled first using option '--rpc-ws-apis'");
+          "Invalid value for option '--rpc-ws-api-methods-no-auth', options must be valid RPC methods");
     }
   }
 
@@ -1944,8 +1955,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setMaxActiveConnections(rpcHttpMaxConnections);
     jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
     jsonRpcConfiguration.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
-    jsonRpcConfiguration.setNoAtuhRpcApis(
-        rpcHttpApisNoAuth.stream().distinct().collect(Collectors.toList()));
+    jsonRpcConfiguration.setNoAtuhRpcApis(rpcHttpApiMethodsNoAuth);
     jsonRpcConfiguration.setHostsAllowlist(hostsAllowlist);
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
@@ -1965,8 +1975,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         asList(
             "--rpc-http-api",
             "--rpc-http-apis",
-            "--rpc-http-api-no-auth",
-            "--rpc-http-apis-no-auth",
+            "--rpc-http-api-method-no-auth",
+            "--rpc-http-api-methods-no-auth",
             "--rpc-http-cors-origins",
             "--rpc-http-host",
             "--rpc-http-port",
@@ -2102,6 +2112,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         asList(
             "--rpc-ws-api",
             "--rpc-ws-apis",
+            "--rpc-ws-api-method-no-auth",
+            "--rpc-ws-api-methods-no-auth",
             "--rpc-ws-host",
             "--rpc-ws-port",
             "--rpc-ws-max-active-connections",
@@ -2133,7 +2145,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setPort(rpcWsPort);
     webSocketConfiguration.setMaxActiveConnections(rpcWsMaxConnections);
     webSocketConfiguration.setRpcApis(rpcWsApis);
-    webSocketConfiguration.setRpcApisNoAuth(rpcWsApisNoAuth);
+    webSocketConfiguration.setRpcApisNoAuth(rpcWsApiMethodsNoAuth);
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);

@@ -59,6 +59,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -1938,28 +1939,45 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcHttpNoAuthenticationApisWhenAuthIsNotEnabledAreInvalid() {
+  public void rpcApiNoAuthMethodsIgnoresDuplicatesAndMustBeUsed() {
     parseCommand(
-        "--rpc-http-api", "ETH,NET", "--rpc-http-enabled", "--rpc-http-api-no-auth", "MINER");
+        "--rpc-http-api-methods-no-auth",
+        "admin_peers, admin_peers, eth_getWork",
+        "--rpc-http-enabled");
 
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getNoAuthRpcApis())
+        .containsExactlyInAnyOrder(
+            RpcMethod.ADMIN_PEERS.getMethodName(), RpcMethod.ETH_GET_WORK.getMethodName());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "Invalid value for option '--rpc-http-apis-no-auth', APIs must be enabled first using option '--rpc-http-apis'");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
-  public void rpcWebSocketNoAuthenticationApisWhenAuthIsNotEnabledAreInvalid() {
-    parseCommand("--rpc-ws-api", "ETH,NET", "--rpc-ws-enabled", "--rpc-ws-api-no-auth", "MINER");
+  public void rpcHttpNoAuthApiMethodsCannotBeInvalid() {
+    parseCommand("--rpc-http-enabled", "--rpc-http-api-method-no-auth", "invalid");
 
     Mockito.verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--rpc-ws-apis-no-auth', APIs must be enabled first using option '--rpc-ws-apis'");
+            "Invalid value for option '--rpc-http-api-methods-no-auth', options must be valid RPC methods");
+  }
+
+  @Test
+  public void rpcWsNoAuthApiMethodsCannotBeInvalid() {
+    parseCommand("--rpc-ws-enabled", "--rpc-ws-api-methods-no-auth", "invalid");
+
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Invalid value for option '--rpc-ws-api-methods-no-auth', options must be valid RPC methods");
   }
 
   @Test

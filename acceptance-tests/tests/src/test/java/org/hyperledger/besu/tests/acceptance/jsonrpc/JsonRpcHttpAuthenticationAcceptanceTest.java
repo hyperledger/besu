@@ -50,7 +50,8 @@ public class JsonRpcHttpAuthenticationAcceptanceTest extends AcceptanceTestBase 
           + "c2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ.pWXniN6XQ7G8b1nawy8sviPCMxrfbcI6c7UFzeXm26CMGMUEZxiC"
           + "JjRntB8ueuZcsxnGlEhCHt-KngpFEmx5TA";
 
-  private static final List<String> NO_AUTH_API = Arrays.asList("ETH");
+  private static final List<String> NO_AUTH_API_METHODS =
+      Arrays.asList("admin_nodeInfo", "eth_getWork");
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
@@ -63,7 +64,7 @@ public class JsonRpcHttpAuthenticationAcceptanceTest extends AcceptanceTestBase 
     nodeUsingRsaJwtPublicKey = besu.createNodeWithAuthenticationUsingRsaJwtPublicKey("node2");
     nodeUsingEcdsaJwtPublicKey = besu.createNodeWithAuthenticationUsingEcdsaJwtPublicKey("node3");
     nodeUsingAuthFileWithNoAuthApi =
-        besu.createNodeWithAuthFileAndNoAuthApi("node4", AUTH_FILE, NO_AUTH_API);
+        besu.createNodeWithAuthFileAndNoAuthApi("node4", AUTH_FILE, NO_AUTH_API_METHODS);
     authenticatedCluster.start(
         nodeUsingAuthFile,
         nodeUsingRsaJwtPublicKey,
@@ -118,6 +119,35 @@ public class JsonRpcHttpAuthenticationAcceptanceTest extends AcceptanceTestBase 
     nodeUsingAuthFileWithNoAuthApi.useAuthenticationTokenInHeaderForJsonRpc(token);
     nodeUsingAuthFileWithNoAuthApi.verify(net.netVersionUnauthorized());
     nodeUsingAuthFileWithNoAuthApi.verify(net.netServicesUnauthorized());
+  }
+
+  @Test
+  public void jsonRpcMethodsNotIncludedInNoAuthListShouldFailWithoutToken() {
+    nodeUsingAuthFile.verify(net.netVersionUnauthorized());
+    nodeUsingAuthFileWithNoAuthApi.verify(net.netVersionUnauthorized());
+  }
+
+  @Test
+  public void noAuthJsonRpcMethodShouldSucceedWithoutToken() {
+    nodeUsingAuthFile.verify(eth.getWorkUnauthorized());
+    nodeUsingAuthFileWithNoAuthApi.verify(eth.getWork());
+  }
+
+  @Test
+  public void noAuthJsonRpcConfiguredNodeShouldWorkAsIntended() {
+    // No token -> all methods other than specified no auth methods should fail
+    nodeUsingAuthFileWithNoAuthApi.verify(net.netVersionUnauthorized());
+    nodeUsingAuthFileWithNoAuthApi.verify(eth.getWork());
+
+    // Should behave the same with valid token
+    String token =
+        nodeUsingAuthFileWithNoAuthApi.execute(
+            permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
+    nodeUsingAuthFileWithNoAuthApi.useAuthenticationTokenInHeaderForJsonRpc(token);
+    nodeUsingAuthFileWithNoAuthApi.verify(net.netVersionUnauthorized());
+    nodeUsingAuthFileWithNoAuthApi.verify(eth.getWork());
+    nodeUsingAuthFileWithNoAuthApi.verify(net.netServicesUnauthorized());
+    nodeUsingAuthFileWithNoAuthApi.verify(net.awaitPeerCount(3));
   }
 
   @Test
