@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.common.bft;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -110,17 +109,12 @@ public abstract class BaseBftProtocolSchedule {
 
     blockReward.ifPresent(bigInteger -> builder.blockReward(Wei.of(bigInteger)));
 
-    if (configOptions.getMiningBeneficiary().isPresent()) {
-      final Address miningBeneficiary;
-      try {
-        // Precalculate beneficiary to ensure string is valid now, rather than on lambda execution.
-        miningBeneficiary = Address.fromHexString(configOptions.getMiningBeneficiary().get());
-      } catch (final IllegalArgumentException e) {
-        throw new IllegalArgumentException(
-            "Mining beneficiary in config is not a valid ethereum address", e);
-      }
-      builder.miningBeneficiaryCalculator(header -> miningBeneficiary);
-    }
+    configOptions
+        .getMiningBeneficiary()
+        .ifPresent(
+            miningBeneficiary -> {
+              builder.miningBeneficiaryCalculator(header -> miningBeneficiary);
+            });
 
     return builder;
   }

@@ -49,7 +49,7 @@ public class BaseBftProtocolScheduleTest {
   @Test
   public void ensureBlockRewardAndMiningBeneficiaryInProtocolSpecMatchConfig() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(5);
-    final String miningBeneficiary = Address.fromHexString("0x1").toString();
+    final Address miningBeneficiary = Address.fromHexString("0x1");
     final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
@@ -64,21 +64,7 @@ public class BaseBftProtocolScheduleTest {
 
     assertThat(spec.getBlockReward()).isEqualTo(Wei.of(arbitraryBlockReward));
     assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(null))
-        .isEqualTo(Address.fromHexString(miningBeneficiary));
-  }
-
-  @Test
-  public void illegalMiningBeneficiaryStringThrowsException() {
-    final String miningBeneficiary = "notHexStringOfTwentyBytes";
-    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
-    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
-    when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
-    when(configOptions.getEpochLength()).thenReturn(3000L);
-    when(configOptions.getBlockRewardWei()).thenReturn(BigInteger.ZERO);
-    when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
-    assertThatThrownBy(() -> createProtocolSchedule(List.of(new ForkSpec<>(0, configOptions))))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Mining beneficiary in config is not a valid ethereum address");
+        .isEqualTo(miningBeneficiary);
   }
 
   @Test
@@ -152,7 +138,7 @@ public class BaseBftProtocolScheduleTest {
   @Test
   public void blockRewardSpecifiedInTransitionCreatesNewMilestone() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(5);
-    final String miningBeneficiary = Address.fromHexString("0x1").toString();
+    final Address miningBeneficiary = Address.fromHexString("0x1");
     final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);

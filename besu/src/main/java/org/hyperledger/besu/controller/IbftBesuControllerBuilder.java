@@ -148,7 +148,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             protocolSchedule,
             miningParameters,
             localAddress,
-            bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
+            bftConfig.getMiningBeneficiary().orElse(localAddress),
             bftExtraDataCodec().get());
 
     final ValidatorProvider validatorProvider =

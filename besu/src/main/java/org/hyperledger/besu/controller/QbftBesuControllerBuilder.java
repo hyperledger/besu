@@ -187,7 +187,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             protocolSchedule,
             miningParameters,
             localAddress,
-            qbftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
+            qbftConfig.getMiningBeneficiary().orElse(localAddress),
             bftExtraDataCodec().get(),
             qbftForksSchedule);
 
