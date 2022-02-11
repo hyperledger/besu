@@ -1051,7 +1051,7 @@ public final class EthProtocolManagerTest {
             EthProtocolConfiguration.defaultConfig(),
             new ForkIdManager(blockchain, Collections.emptyList(), true))) {
 
-      ethManager.getForkIdAsBytesList();
+      assertThat(ethManager.getForkIdAsBytesList()).isEmpty();
     }
   }
 }
