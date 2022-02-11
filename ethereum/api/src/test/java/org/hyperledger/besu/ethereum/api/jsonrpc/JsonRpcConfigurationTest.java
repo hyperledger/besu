@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
+
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
@@ -36,6 +38,7 @@ public class JsonRpcConfigurationTest {
     assertThat(configuration.getNoAuthRpcApis()).isEmpty();
     assertThat(configuration.getMaxActiveConnections())
         .isEqualTo(JsonRpcConfiguration.DEFAULT_MAX_ACTIVE_CONNECTIONS);
+    assertThat(configuration.getAuthenticationAlgorithm()).isEqualTo(JwtAlgorithm.RS256);
   }
 
   @Test

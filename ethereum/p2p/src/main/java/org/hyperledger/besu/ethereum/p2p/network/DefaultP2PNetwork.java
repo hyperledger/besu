@@ -240,7 +240,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     final Consumer<? super NatManager> natAction =
         natManager -> {
-          UpnpNatManager upnpNatManager = (UpnpNatManager) natManager;
+          final UpnpNatManager upnpNatManager = (UpnpNatManager) natManager;
           upnpNatManager.requestPortForward(
               discoveryPort, NetworkProtocol.UDP, NatServiceType.DISCOVERY);
           upnpNatManager.requestPortForward(
@@ -302,7 +302,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public boolean addMaintainConnectionPeer(final Peer peer) {
+  public boolean addMaintainedConnectionPeer(final Peer peer) {
     if (localNode.isReady()
         && localNode.getPeer() != null
         && localNode.getPeer().getEnodeURL() != null
@@ -332,16 +332,16 @@ public class DefaultP2PNetwork implements P2PNetwork {
   @VisibleForTesting
   DNSDaemonListener createDaemonListener() {
     return (seq, records) -> {
-      List<DiscoveryPeer> peers = new ArrayList<>();
-      for (EthereumNodeRecord enr : records) {
-        EnodeURL enodeURL =
+      final List<DiscoveryPeer> peers = new ArrayList<>();
+      for (final EthereumNodeRecord enr : records) {
+        final EnodeURL enodeURL =
             EnodeURLImpl.builder()
                 .ipAddress(enr.ip())
                 .nodeId(enr.publicKey().bytes())
                 .discoveryPort(Optional.ofNullable(enr.udp()))
                 .listeningPort(Optional.ofNullable(enr.tcp()))
                 .build();
-        DiscoveryPeer peer = DiscoveryPeer.fromEnode(enodeURL);
+        final DiscoveryPeer peer = DiscoveryPeer.fromEnode(enodeURL);
         peers.add(peer);
         rlpxAgent.connect(peer);
       }
@@ -379,7 +379,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
-    List<DiscoveryPeer> peers = dnsPeers.get();
+    final List<DiscoveryPeer> peers = dnsPeers.get();
     if (peers != null) {
       Collections.shuffle(peers);
       return Stream.concat(peerDiscoveryAgent.streamDiscoveredPeers(), peers.stream());

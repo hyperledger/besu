@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableMap;
 
 public class SignatureAlgorithmType {
 
-  private static final String DEFAULT_EC_CURVE_NAME = "secp256k1";
+  public static final String DEFAULT_EC_CURVE_NAME = "secp256k1";
   private static final ImmutableMap<String, Supplier<SignatureAlgorithm>> SUPPORTED_ALGORITHMS =
       ImmutableMap.of(DEFAULT_EC_CURVE_NAME, SECP256K1::new, "secp256r1", SECP256R1::new);
 

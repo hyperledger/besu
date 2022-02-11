@@ -79,7 +79,7 @@ public class EnodeURLImpl implements EnodeURL {
     try {
       checkStringArgumentNotEmpty(value, "Invalid empty value.");
       return fromURI(URI.create(value), enodeDnsConfiguration);
-    } catch (IllegalArgumentException e) {
+    } catch (final IllegalArgumentException e) {
       String message =
           String.format(
               "Invalid enode URL syntax '%s'. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.",
@@ -237,7 +237,7 @@ public class EnodeURLImpl implements EnodeURL {
                 hostname -> {
                   try {
                     return InetAddress.getByName(hostname);
-                  } catch (UnknownHostException e) {
+                  } catch (final UnknownHostException e) {
                     return ip;
                   }
                 })
@@ -283,7 +283,7 @@ public class EnodeURLImpl implements EnodeURL {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    EnodeURL enodeURL = (EnodeURL) o;
+    final EnodeURL enodeURL = (EnodeURL) o;
     return Objects.equals(getNodeId(), enodeURL.getNodeId())
         && Objects.equals(getIp(), enodeURL.getIp())
         && Objects.equals(getListeningPort(), enodeURL.getListeningPort())
@@ -364,7 +364,7 @@ public class EnodeURLImpl implements EnodeURL {
             this.maybeHostname = Optional.of(ip);
           }
           this.ip = InetAddress.getByName(ip);
-        } catch (UnknownHostException e) {
+        } catch (final UnknownHostException e) {
           if (!enodeDnsConfiguration.updateEnabled()) {
             throw new IllegalArgumentException("Invalid ip address or hostname.");
           } else {
