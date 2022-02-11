@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -44,12 +44,18 @@ public class AuthenticationUtils {
       final Optional<AuthenticationService> authenticationService,
       final Optional<User> optionalUser,
       final JsonRpcMethod jsonRpcMethod,
-      final Collection<RpcMethod> noAuthMethods) {
+      final Collection<String> noAuthMethods) {
 
     AtomicBoolean foundMatchingPermission = new AtomicBoolean();
 
     if (authenticationService.isEmpty()) {
       // no auth provider configured thus anything is permitted
+      return true;
+    }
+
+    // if the method is configured as a no auth method we skip permission check
+    if (Optional.ofNullable(noAuthMethods).orElse(Collections.emptyList()).stream()
+        .anyMatch(m -> m.equals(jsonRpcMethod.getName()))) {
       return true;
     }
 

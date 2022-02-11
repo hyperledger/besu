@@ -51,7 +51,7 @@ public class JsonRpcHttpAuthenticationAcceptanceTest extends AcceptanceTestBase 
           + "JjRntB8ueuZcsxnGlEhCHt-KngpFEmx5TA";
 
   private static final List<String> NO_AUTH_API_METHODS =
-      Arrays.asList("admin_nodeInfo", "eth_getWork");
+      Arrays.asList("net_services", "eth_getWork");
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
@@ -130,14 +130,14 @@ public class JsonRpcHttpAuthenticationAcceptanceTest extends AcceptanceTestBase 
   @Test
   public void noAuthJsonRpcMethodShouldSucceedWithoutToken() {
     nodeUsingAuthFile.verify(eth.getWorkUnauthorized());
-    nodeUsingAuthFileWithNoAuthApi.verify(eth.getWork());
+    nodeUsingAuthFileWithNoAuthApi.verify(net.netServicesAllActive());
   }
 
   @Test
   public void noAuthJsonRpcConfiguredNodeShouldWorkAsIntended() {
     // No token -> all methods other than specified no auth methods should fail
     nodeUsingAuthFileWithNoAuthApi.verify(net.netVersionUnauthorized());
-    nodeUsingAuthFileWithNoAuthApi.verify(eth.getWork());
+    nodeUsingAuthFileWithNoAuthApi.verify(net.netServicesAllActive());
 
     // Should behave the same with valid token
     String token =
@@ -145,8 +145,7 @@ public class JsonRpcHttpAuthenticationAcceptanceTest extends AcceptanceTestBase 
             permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     nodeUsingAuthFileWithNoAuthApi.useAuthenticationTokenInHeaderForJsonRpc(token);
     nodeUsingAuthFileWithNoAuthApi.verify(net.netVersionUnauthorized());
-    nodeUsingAuthFileWithNoAuthApi.verify(eth.getWork());
-    nodeUsingAuthFileWithNoAuthApi.verify(net.netServicesUnauthorized());
+    nodeUsingAuthFileWithNoAuthApi.verify(net.netServicesAllActive());
     nodeUsingAuthFileWithNoAuthApi.verify(net.awaitPeerCount(3));
   }
 
