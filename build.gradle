@@ -747,6 +747,8 @@ task dockerUpload {
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   } else if (!(dockerBuildVersion ==~ /.*MERGE/)) {
     additionalTags.add('merge')
+  } else if (!(dockerBuildVersion ==~ /.*KINTSUGI/)) {
+    additionalTags.add('kintsugi')
   }
 
   doLast {
