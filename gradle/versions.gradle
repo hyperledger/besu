@@ -15,6 +15,8 @@
 
 dependencyManagement {
   dependencies {
+    dependency 'ch.qos.logback:logback-classic:1.2.10'
+
     dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.2.2'
     dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.13.2'
 
@@ -114,10 +116,7 @@ dependencyManagement {
     dependency 'org.apache.commons:commons-compress:1.21'
     dependency 'org.apache.commons:commons-text:1.9'
 
-    dependency 'org.apache.logging.log4j:log4j-api:2.17.2'
-    dependency 'org.apache.logging.log4j:log4j-core:2.17.2'
-    dependency 'org.apache.logging.log4j:log4j-jul:2.17.2'
-    dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
+    dependency 'org.apache.logging.log4j:log4j-to-slf4j:2.17.2'
 
     dependency 'org.apache.tuweni:tuweni-bytes:2.2.0'
     dependency 'org.apache.tuweni:tuweni-config:2.2.0'
@@ -139,6 +138,9 @@ dependencyManagement {
       entry'bcpkix-jdk15on'
       entry'bcprov-jdk15on'
     }
+
+    dependency 'org.codehaus.janino:janino:3.1.6'
+    dependency 'org.codehaus.janino:commons-compiler:3.1.6'
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
 
@@ -166,6 +168,7 @@ dependencyManagement {
 
     dependency 'org.rocksdb:rocksdbjni:6.29.5'
 
+    dependency 'org.slf4j:jul-to-slf4j:1.7.25'
     dependency 'org.slf4j:slf4j-api:1.7.25'
 
     dependency 'org.springframework.security:spring-security-crypto:5.6.2'

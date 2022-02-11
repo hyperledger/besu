@@ -107,12 +107,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import ch.qos.logback.classic.Level;
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
-import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
@@ -810,7 +810,7 @@ public class BesuCommandTest extends CommandTestAbstract {
           .describedAs("Option '%s' should be a configurable option.", tomlKey)
           .isNotNull();
       // Verify TOML stores it by the appropriate type
-      if (optionSpec.type().equals(Boolean.class)) {
+      if (optionSpec.type().equals(Boolean.class) || optionSpec.type().equals(Boolean.TYPE)) {
         tomlResult.getBoolean(tomlKey);
       } else if (optionSpec.isMultiValue() || optionSpec.arity().max > 1) {
         tomlResult.getArray(tomlKey);
@@ -3463,7 +3463,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         .forEach(
             bool -> {
               parseCommand("--color-enabled", bool.toString());
-              assertThat(BesuCommand.getColorEnabled()).contains(bool);
+              assertThat(System.getProperties().containsKey("NO_COLOR")).isEqualTo(!bool);
             });
   }
 

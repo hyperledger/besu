@@ -52,6 +52,7 @@ import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
+import org.hyperledger.besu.cli.options.stable.ColorEnabledOption;
 import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
@@ -180,7 +181,7 @@ import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
-import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
+import org.hyperledger.besu.util.LogbackConfiguratorUtil;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.PermissioningConfigurationValidator;
 import org.hyperledger.besu.util.number.Fraction;
@@ -219,6 +220,8 @@ import java.util.stream.Collectors;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.core.joran.spi.JoranException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Suppliers;
@@ -233,7 +236,6 @@ import net.consensys.quorum.mainnet.launcher.LauncherManager;
 import net.consensys.quorum.mainnet.launcher.config.ImmutableLauncherConfig;
 import net.consensys.quorum.mainnet.launcher.exception.LauncherException;
 import net.consensys.quorum.mainnet.launcher.util.ParseArgsHelper;
-import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -294,6 +296,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NodePrivateKeyFileOption nodePrivateKeyFileOption =
       NodePrivateKeyFileOption.create();
   private final LoggingLevelOption loggingLevelOption = LoggingLevelOption.create();
+  private final ColorEnabledOption colorEnabledOption = ColorEnabledOption.create();
 
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
@@ -981,13 +984,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Deprecated in favor of --host-allowlist. Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})")
   private final JsonRPCAllowlistHostsProperty hostsWhitelist = new JsonRPCAllowlistHostsProperty();
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
-  @Option(
-      names = {"--color-enabled"},
-      description =
-          "Force color output to be enabled/disabled (default: colorized only if printing to console)")
-  private static Boolean colorEnabled = null;
-
   @Option(
       names = {"--reorg-logging-threshold"},
       description =
@@ -1469,6 +1465,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.addMixin("Private key file", nodePrivateKeyFileOption);
     commandLine.addMixin("Logging level", loggingLevelOption);
     commandLine.addMixin("Data Storage Options", dataStorageOptions);
+    commandLine.addMixin("Color enabled", colorEnabledOption);
   }
 
   private void handleUnstableOptions() {
@@ -1651,19 +1648,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public void configureLogging(final boolean announce) {
     // To change the configuration if color was enabled/disabled
-    Log4j2ConfiguratorUtil.reconfigure();
+    try {
+      LogbackConfiguratorUtil.reconfigure();
+    } catch (JoranException e) {
+      System.err.println("Unable to reconfigure logback: " + e.getMessage());
+    }
     // set log level per CLI flags
     final Level logLevel = loggingLevelOption.getLogLevel();
     if (logLevel != null) {
       if (announce) {
-        System.out.println("Setting logging level to " + logLevel.name());
+        System.out.println("Setting logging level to " + logLevel);
       }
-      Log4j2ConfiguratorUtil.setAllLevels("", logLevel);
+      LogbackConfiguratorUtil.setAllLevels("", logLevel);
     }
-  }
-
-  public static Optional<Boolean> getColorEnabled() {
-    return Optional.ofNullable(colorEnabled);
   }
 
   private void configureNativeLibs() {
@@ -2850,7 +2847,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                   try {
                     besuPluginContext.stopPlugins();
                     runner.close();
-                    Log4j2ConfiguratorUtil.shutdown();
+                    LogbackConfiguratorUtil.shutdown();
                   } catch (final Exception e) {
                     logger.error("Failed to stop Besu");
                   }

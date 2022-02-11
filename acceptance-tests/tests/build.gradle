@@ -48,6 +48,7 @@ dependencies {
   testImplementation project(':testutil')
   testImplementation project(':util')
 
+  testImplementation 'ch.qos.logback:logback-classic'
   testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
   testImplementation 'commons-io:commons-io'
   testImplementation 'io.grpc:grpc-core'
@@ -67,7 +68,6 @@ dependencies {
   testImplementation 'io.vertx:vertx-core'
   testImplementation 'junit:junit'
   testImplementation 'org.apache.commons:commons-compress'
-  testImplementation 'org.apache.logging.log4j:log4j-core'
   testImplementation 'org.apache.tuweni:tuweni-crypto'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'

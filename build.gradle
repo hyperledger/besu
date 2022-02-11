@@ -470,13 +470,6 @@ applicationDefaultJvmArgs = [
   '-Dvertx.disableFileCPResolving=true',
   // BESU_HOME is replaced by a doFirst block in the run task.
   '-Dbesu.home=BESU_HOME',
-  // We shutdown log4j ourselves, as otherwise this shutdown hook runs before our own and whatever
-  // happens during shutdown is not logged.
-  '-Dlog4j.shutdownHookEnabled=false',
-  // Disable JNI lookups in log4j messages to improve security
-  '-Dlog4j2.formatMsgNoLookups=true',
-  // Redirect java.util.logging loggers to use log4j2.
-  '-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager',
   // Suppress Java JPMS warnings.  Document the reason for each suppression.
   // Bouncy Castle needs access to sun.security.provider, which is not open by default.
   '--add-opens',

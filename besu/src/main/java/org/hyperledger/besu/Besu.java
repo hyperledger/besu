@@ -18,12 +18,11 @@ import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
-import org.hyperledger.besu.cli.logging.BesuLoggingConfigurationFactory;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import io.netty.util.internal.logging.Log4J2LoggerFactory;
+import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.RunLast;
@@ -54,14 +53,11 @@ public final class Besu {
   }
 
   private static Logger setupLogging() {
-    InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
+    InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
     try {
       System.setProperty(
           "vertx.logger-delegate-factory-class-name",
-          "io.vertx.core.logging.Log4j2LogDelegateFactory");
-      System.setProperty(
-          "log4j.configurationFactory", BesuLoggingConfigurationFactory.class.getName());
-      System.setProperty("log4j.skipJansi", String.valueOf(false));
+          "io.vertx.core.logging.SLF4JLogDelegateFactory");
     } catch (SecurityException e) {
       System.out.println(
           "Could not set logging system property as the security manager prevented it:"

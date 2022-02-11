@@ -24,12 +24,12 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.retesteth.RetestethConfiguration;
 import org.hyperledger.besu.ethereum.retesteth.RetestethService;
-import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
+import org.hyperledger.besu.util.LogbackConfiguratorUtil;
 
 import java.net.InetAddress;
 import java.nio.file.Path;
 
-import org.apache.logging.log4j.Level;
+import ch.qos.logback.classic.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -106,8 +106,8 @@ public class RetestethSubCommand implements Runnable {
     // set log level per CLI flags
     final Level logLevel = loggingLevelOption.getLogLevel();
     if (logLevel != null) {
-      System.out.println("Setting logging level to " + logLevel.name());
-      Log4j2ConfiguratorUtil.setAllLevels("", logLevel);
+      System.out.println("Setting logging level to " + logLevel);
+      LogbackConfiguratorUtil.setAllLevels("", logLevel);
     }
   }
 
@@ -130,7 +130,7 @@ public class RetestethSubCommand implements Runnable {
                 () -> {
                   try {
                     retestethService.close();
-                    Log4j2ConfiguratorUtil.shutdown();
+                    LogbackConfiguratorUtil.shutdown();
                   } catch (final Exception e) {
                     LOG.error("Failed to stop Besu Retesteth");
                   }

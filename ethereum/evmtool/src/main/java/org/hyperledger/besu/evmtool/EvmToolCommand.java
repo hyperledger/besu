@@ -36,7 +36,7 @@ import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
-import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
+import org.hyperledger.besu.util.LogbackConfiguratorUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,9 +48,9 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 
+import ch.qos.logback.classic.Level;
 import com.google.common.base.Stopwatch;
 import io.vertx.core.json.JsonObject;
-import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -201,12 +201,12 @@ public class EvmToolCommand implements Runnable {
               .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
               .buildBlockHeader();
 
-      Log4j2ConfiguratorUtil.setAllLevels("", repeat == 0 ? Level.INFO : Level.OFF);
+      LogbackConfiguratorUtil.setAllLevels("", repeat == 0 ? Level.INFO : Level.OFF);
       int repeat = this.repeat;
-      Log4j2ConfiguratorUtil.setLevel(
+      LogbackConfiguratorUtil.setLevel(
           "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", Level.OFF);
       final ProtocolSpec protocolSpec = component.getProtocolSpec().apply(0);
-      Log4j2ConfiguratorUtil.setLevel(
+      LogbackConfiguratorUtil.setLevel(
           "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", null);
       final PrecompileContractRegistry precompileContractRegistry =
           protocolSpec.getPrecompileContractRegistry();

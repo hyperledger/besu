@@ -17,7 +17,7 @@ package org.hyperledger.besu.cli.error;
 import java.util.List;
 import java.util.function.Supplier;
 
-import org.apache.logging.log4j.Level;
+import ch.qos.logback.classic.Level;
 import picocli.CommandLine;
 
 public class BesuExceptionHandler
@@ -34,7 +34,7 @@ public class BesuExceptionHandler
   public List<Object> handleParseException(
       final CommandLine.ParameterException ex, final String[] args) {
     final Level logLevel = levelSupplier.get();
-    if (logLevel != null && Level.DEBUG.isMoreSpecificThan(logLevel)) {
+    if (logLevel != null && Level.DEBUG.isGreaterOrEqual(logLevel)) {
       ex.printStackTrace(err());
     } else {
       err().println(ex.getMessage());

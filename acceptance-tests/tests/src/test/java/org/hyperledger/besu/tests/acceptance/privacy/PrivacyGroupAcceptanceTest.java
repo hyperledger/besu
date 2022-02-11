@@ -20,7 +20,7 @@ import static org.web3j.utils.Restriction.RESTRICTED;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
-import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
+import org.hyperledger.besu.util.LogbackConfiguratorUtil;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
@@ -28,7 +28,7 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Optional;
 
-import org.apache.logging.log4j.Level;
+import ch.qos.logback.classic.Level;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -87,7 +87,7 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   @Test
   public void nodeCanCreatePrivacyGroup() {
-    Log4j2ConfiguratorUtil.setLevel("", Level.DEBUG);
+    LogbackConfiguratorUtil.setLevel("", Level.DEBUG);
     final String privacyGroupId =
         alice.execute(
             privacyTransactions.createPrivacyGroup(

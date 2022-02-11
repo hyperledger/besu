@@ -60,6 +60,7 @@ dependencies {
   implementation project(':services:kvstore')
   implementation project(':util')
 
+  implementation 'ch.qos.logback:logback-classic'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
   implementation 'com.google.guava:guava'
@@ -67,7 +68,6 @@ dependencies {
   implementation 'info.picocli:picocli'
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
-  implementation 'org.apache.logging.log4j:log4j-core'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-config'
   implementation 'org.apache.tuweni:tuweni-toml'
@@ -76,9 +76,11 @@ dependencies {
   implementation 'org.xerial.snappy:snappy-java'
   implementation 'net.consensys.services:quorum-mainnet-launcher'
 
-  runtimeOnly 'org.apache.logging.log4j:log4j-jul'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
+  runtimeOnly 'org.codehaus.janino:janino'
+  runtimeOnly 'org.codehaus.janino:commons-compiler'
   runtimeOnly 'org.fusesource.jansi:jansi' // for color logging in windows
+  runtimeOnly 'org.slf4j:jul-to-slf4j'
 
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')

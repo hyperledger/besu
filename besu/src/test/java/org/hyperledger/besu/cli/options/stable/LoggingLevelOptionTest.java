@@ -17,9 +17,9 @@ package org.hyperledger.besu.cli.options.stable;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 
-import java.util.Arrays;
+import java.util.stream.Stream;
 
-import org.apache.logging.log4j.Level;
+import ch.qos.logback.classic.Level;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -43,11 +43,10 @@ public class LoggingLevelOptionTest {
 
   @Test
   public void setsExpectedLevels() {
-    Arrays.stream(Level.values())
-        .filter(level -> !Level.FATAL.equals(level))
+    Stream.of(Level.OFF, Level.ERROR, Level.WARN, Level.INFO, Level.DEBUG, Level.TRACE, Level.ALL)
         .forEach(
             level -> {
-              levelOption.setLogLevel(level.name());
+              levelOption.setLogLevel(level.toString());
               assertThat(levelOption.getLogLevel()).isEqualTo(level);
             });
   }

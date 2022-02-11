@@ -58,7 +58,11 @@ dependencies {
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"
-  implementation 'tech.pegasys.discovery:discovery'
+  implementation('tech.pegasys.discovery:discovery') {
+    exclude group: 'org.apache.logging.log4j'
+  }
+
+  runtimeOnly 'org.apache.logging.log4j:log4j-to-slf4j'
 
   // test dependencies.
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')

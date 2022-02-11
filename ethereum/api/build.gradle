@@ -33,7 +33,6 @@ configurations {
 
 dependencies {
   api 'org.slf4j:slf4j-api'
-  api 'org.apache.logging.log4j:log4j-api'
 
   implementation project(':config')
   implementation project(':consensus:merge')
@@ -53,6 +52,7 @@ dependencies {
   implementation project(':plugin-api')
   implementation project(':util')
 
+  implementation 'ch.qos.logback:logback-classic'
   implementation 'com.google.guava:guava'
   implementation 'com.graphql-java:graphql-java'
   implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
@@ -95,7 +95,6 @@ dependencies {
   testImplementation 'io.vertx:vertx-unit'
   testImplementation 'io.vertx:vertx-web-client'
   testImplementation 'junit:junit'
-  testImplementation 'org.apache.logging.log4j:log4j-core'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'

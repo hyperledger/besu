@@ -51,12 +51,12 @@ dependencies {
   implementation project(':services:kvstore')
   implementation project(':util')
 
+  implementation 'ch.qos.logback:logback-classic'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.dagger:dagger'
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.logging.log4j:log4j-core'
 
   annotationProcessor 'com.google.dagger:dagger-compiler'
 

@@ -16,7 +16,7 @@ package org.hyperledger.besu.cli.options.stable;
 
 import java.util.Set;
 
-import org.apache.logging.log4j.Level;
+import ch.qos.logback.classic.Level;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
@@ -41,7 +41,7 @@ public class LoggingLevelOption {
       System.out.println("FATAL level is deprecated");
       this.logLevel = Level.ERROR;
     } else if (ACCEPTED_VALUES.contains(logLevel.toUpperCase())) {
-      this.logLevel = Level.getLevel(logLevel.toUpperCase());
+      this.logLevel = Level.toLevel(logLevel.toUpperCase());
     } else {
       throw new CommandLine.ParameterException(
           spec.commandLine(), "Unknown logging value: " + logLevel);

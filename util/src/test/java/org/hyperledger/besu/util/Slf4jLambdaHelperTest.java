@@ -22,7 +22,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 import java.util.ArrayDeque;
 import java.util.function.Supplier;
 
-import org.apache.logging.log4j.Level;
+import ch.qos.logback.classic.Level;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -41,7 +41,7 @@ public class Slf4jLambdaHelperTest {
 
   @Test
   public void smokeDebugLambda() {
-    Log4j2ConfiguratorUtil.setLevel(LOG.getName(), Level.WARN);
+    LogbackConfiguratorUtil.setLevel(LOG.getName(), Level.WARN);
     debugLambda(
         LOG,
         "blah",
@@ -49,7 +49,7 @@ public class Slf4jLambdaHelperTest {
             () -> {
               throw new RuntimeException("should not evaluate");
             });
-    Log4j2ConfiguratorUtil.setLevelDebug(LOG.getName());
+    LogbackConfiguratorUtil.setLevelDebug(LOG.getName());
     assertThat(paramStack.size()).isEqualTo(3);
     debugLambda(LOG, "blah {}", paramStack::pop);
     assertThat(paramStack.size()).isEqualTo(2);
@@ -66,7 +66,7 @@ public class Slf4jLambdaHelperTest {
             () -> {
               throw new RuntimeException("should not evaluate");
             });
-    Log4j2ConfiguratorUtil.setLevel(LOG.getName(), Level.TRACE);
+    LogbackConfiguratorUtil.setLevel(LOG.getName(), Level.TRACE);
     assertThat(paramStack.size()).isEqualTo(3);
     traceLambda(LOG, "blah {}", paramStack::pop);
     assertThat(paramStack.size()).isEqualTo(2);
@@ -76,7 +76,7 @@ public class Slf4jLambdaHelperTest {
 
   @Test
   public void smokeWarnLambda() {
-    Log4j2ConfiguratorUtil.setLevel(LOG.getName(), Level.OFF);
+    LogbackConfiguratorUtil.setLevel(LOG.getName(), Level.OFF);
     traceLambda(
         LOG,
         "blah",
@@ -84,7 +84,7 @@ public class Slf4jLambdaHelperTest {
             () -> {
               throw new RuntimeException("should not evaluate");
             });
-    Log4j2ConfiguratorUtil.setLevel(LOG.getName(), Level.WARN);
+    LogbackConfiguratorUtil.setLevel(LOG.getName(), Level.WARN);
     assertThat(paramStack.size()).isEqualTo(3);
     warnLambda(LOG, "blah {}", paramStack::pop);
     assertThat(paramStack.size()).isEqualTo(2);
