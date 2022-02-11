@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import static java.lang.Boolean.FALSE;
 
-import org.hyperledger.besu.config.experimental.MergeOptions;
+import org.hyperledger.besu.config.experimental.MergeConfiguration;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
@@ -72,7 +72,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
     // TODO: remove this rule bypass, use post-merge headervalidation rules
     // https://github.com/hyperledger/besu/issues/2898
-    if (MergeOptions.isMergeEnabled()) {
+    if (MergeConfiguration.isMergeEnabled()) {
       return true;
     }
 

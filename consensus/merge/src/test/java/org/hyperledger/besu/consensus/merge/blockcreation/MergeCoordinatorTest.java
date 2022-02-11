@@ -26,7 +26,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.experimental.MergeOptions;
+import org.hyperledger.besu.config.experimental.MergeConfiguration;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -94,7 +94,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
 
-    MergeOptions.setMergeEnabled(true);
+    MergeConfiguration.setMergeEnabled(true);
     this.coordinator =
         new MergeCoordinator(
             protocolContext,
