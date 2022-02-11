@@ -16,28 +16,41 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
-import io.vertx.core.Handler;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.http.WebSocketFrame;
+import io.vertx.core.impl.future.FailedFuture;
+import io.vertx.core.impl.future.SucceededFuture;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
-import org.mockito.invocation.InvocationOnMock;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class JsonResponseStreamerTest {
+
+  @Mock private ServerWebSocket response;
+
+  @Mock private ServerWebSocket failedResponse;
+
+  @Before
+  public void before() {
+    when(response.writeFrame(any(WebSocketFrame.class)))
+        .thenReturn(new SucceededFuture<>(null, null));
+    when(failedResponse.writeFrame(any(WebSocketFrame.class)))
+        .thenReturn(new FailedFuture<Void>(new IOException()));
+  }
 
   @Test
   public void writeSingleChar() throws IOException {
-    final ServerWebSocket response = mock(ServerWebSocket.class);
-
     try (JsonResponseStreamer streamer = new JsonResponseStreamer(response)) {
       streamer.write('x');
     }
@@ -47,8 +60,6 @@ public class JsonResponseStreamerTest {
 
   @Test
   public void writeString() throws IOException {
-    final ServerWebSocket response = mock(ServerWebSocket.class);
-
     try (JsonResponseStreamer streamer = new JsonResponseStreamer(response)) {
       streamer.write("xyz".getBytes(StandardCharsets.UTF_8), 0, 3);
     }
@@ -58,8 +69,6 @@ public class JsonResponseStreamerTest {
 
   @Test
   public void writeSubString() throws IOException {
-    final ServerWebSocket response = mock(ServerWebSocket.class);
-
     try (JsonResponseStreamer streamer = new JsonResponseStreamer(response)) {
       streamer.write("abcxyz".getBytes(StandardCharsets.UTF_8), 1, 3);
     }
@@ -69,8 +78,6 @@ public class JsonResponseStreamerTest {
 
   @Test
   public void writeTwice() throws IOException {
-    final ServerWebSocket response = mock(ServerWebSocket.class);
-
     try (JsonResponseStreamer streamer = new JsonResponseStreamer(response)) {
       streamer.write("xyz".getBytes(StandardCharsets.UTF_8));
       streamer.write('\n');
@@ -80,30 +87,16 @@ public class JsonResponseStreamerTest {
     verify(response).writeFrame(argThat(frameContains("\n", true)));
   }
 
-  @Test
-  public void waitQueueIsDrained() throws IOException {
-    final ServerWebSocket response = mock(ServerWebSocket.class);
-
-    when(response.writeQueueFull()).thenReturn(Boolean.TRUE, Boolean.FALSE);
-
-    when(response.drainHandler(any())).then(this::emptyQueueAfterAWhile);
-
-    try (JsonResponseStreamer streamer = new JsonResponseStreamer(response)) {
+  @Test(expected = IOException.class)
+  public void stopOnError() throws IOException {
+    try (JsonResponseStreamer streamer = new JsonResponseStreamer(failedResponse)) {
       streamer.write("xyz".getBytes(StandardCharsets.UTF_8));
-      streamer.write("123".getBytes(StandardCharsets.UTF_8));
+      streamer.write('\n');
+      streamer.write('\n');
     }
 
-    verify(response).writeFrame(argThat(frameContains("xyz", false)));
-    verify(response).writeFrame(argThat(frameContains("123", true)));
-  }
-
-  private ServerWebSocket emptyQueueAfterAWhile(final InvocationOnMock invocation) {
-    Handler<Void> handler = invocation.getArgument(0);
-
-    Executors.newSingleThreadScheduledExecutor()
-        .schedule(() -> handler.handle(null), 1, TimeUnit.SECONDS);
-
-    return (ServerWebSocket) invocation.getMock();
+    verify(failedResponse).writeFrame(argThat(frameContains("xyz", false)));
+    verify(failedResponse, never()).writeFrame(argThat(frameContains("\n", true)));
   }
 
   private ArgumentMatcher<WebSocketFrame> frameContains(final String text, final boolean isFinal) {
