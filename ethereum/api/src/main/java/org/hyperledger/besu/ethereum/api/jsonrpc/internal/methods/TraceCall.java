@@ -24,8 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceCallResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffTrace;
@@ -48,14 +46,10 @@ import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Suppliers;
 
-public class TraceCall implements JsonRpcMethod {
-  private final Supplier<BlockchainQueries> blockchainQueries;
+public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMethod {
   private final ProtocolSchedule protocolSchedule;
   private final TransactionSimulator transactionSimulator;
 
@@ -65,7 +59,8 @@ public class TraceCall implements JsonRpcMethod {
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionSimulator transactionSimulator) {
-    this.blockchainQueries = Suppliers.ofInstance(blockchainQueries);
+    super(blockchainQueries);
+
     this.protocolSchedule = protocolSchedule;
     this.transactionSimulator = transactionSimulator;
 
@@ -79,13 +74,23 @@ public class TraceCall implements JsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final TraceTypeParameter traceTypeParameter =
-        requestContext.getRequiredParameter(1, TraceTypeParameter.class);
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
     final Optional<BlockParameter> maybeBlockParameter =
-        requestContext.getOptionalParameter(2, BlockParameter.class);
+            request.getOptionalParameter(2, BlockParameter.class);
 
-    final Optional<BlockHeader> maybeBlockHeader = resolveBlockHeader(maybeBlockParameter);
+    if (maybeBlockParameter.isPresent()) {
+      return maybeBlockParameter.get();
+    }
+
+    return BlockParameter.LATEST;
+  }
+
+  @Override
+  protected Object resultByBlockNumber(final JsonRpcRequestContext requestContext, final long blockNumber) {
+    final TraceTypeParameter traceTypeParameter =
+            requestContext.getRequiredParameter(1, TraceTypeParameter.class);
+
+    final Optional<BlockHeader> maybeBlockHeader = blockchainQueries.get().getBlockHeaderByNumber(blockNumber);
 
     if (maybeBlockHeader.isEmpty()) {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), BLOCK_NOT_FOUND);
@@ -94,54 +99,52 @@ public class TraceCall implements JsonRpcMethod {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
     final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
-        transactionSimulator.process(
-            JsonCallParameterUtil.validateAndGetCallParams(requestContext),
-            buildTransactionValidationParams(),
-            tracer,
-            maybeBlockHeader.get());
+            transactionSimulator.process(
+                    JsonCallParameterUtil.validateAndGetCallParams(requestContext),
+                    buildTransactionValidationParams(),
+                    tracer,
+                    maybeBlockHeader.get());
 
     if (maybeSimulatorResult.isEmpty()) {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
     }
 
     final TransactionTrace transactionTrace =
-        new TransactionTrace(
-            maybeSimulatorResult.get().getTransaction(),
-            maybeSimulatorResult.get().getResult(),
-            tracer.getTraceFrames());
+            new TransactionTrace(
+                    maybeSimulatorResult.get().getTransaction(),
+                    maybeSimulatorResult.get().getResult(),
+                    tracer.getTraceFrames());
 
     final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
 
     final TraceCallResult.Builder builder = TraceCallResult.builder();
 
     transactionTrace
-        .getResult()
-        .getRevertReason()
-        .ifPresentOrElse(
-            revertReason -> builder.output(revertReason.toHexString()),
-            () -> builder.output(maybeSimulatorResult.get().getOutput().toString()));
+            .getResult()
+            .getRevertReason()
+            .ifPresentOrElse(
+                    revertReason -> builder.output(revertReason.toHexString()),
+                    () -> builder.output(maybeSimulatorResult.get().getOutput().toString()));
 
     if (traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF)) {
       new StateDiffGenerator()
-          .generateStateDiff(transactionTrace)
-          .forEachOrdered(stateDiff -> builder.stateDiff((StateDiffTrace) stateDiff));
+              .generateStateDiff(transactionTrace)
+              .forEachOrdered(stateDiff -> builder.stateDiff((StateDiffTrace) stateDiff));
     }
 
     if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
       FlatTraceGenerator.generateFromTransactionTrace(
-              protocolSchedule, transactionTrace, block, new AtomicInteger(), false)
-          .forEachOrdered(trace -> builder.addTrace((FlatTrace) trace));
+                      protocolSchedule, transactionTrace, block, new AtomicInteger(), false)
+              .forEachOrdered(trace -> builder.addTrace((FlatTrace) trace));
     }
 
     if (traceTypes.contains(VM_TRACE)) {
       new VmTraceGenerator(transactionTrace)
-          .generateTraceStream()
-          .forEachOrdered(vmTrace -> builder.vmTrace((VmTrace) vmTrace));
+              .generateTraceStream()
+              .forEachOrdered(vmTrace -> builder.vmTrace((VmTrace) vmTrace));
     }
 
-    return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(),
-        MAPPER_IGNORE_REVERT_REASON.valueToTree(builder.build()));
+    return MAPPER_IGNORE_REVERT_REASON.valueToTree(builder.build());
   }
 
   private TransactionValidationParams buildTransactionValidationParams() {
@@ -156,30 +159,5 @@ public class TraceCall implements JsonRpcMethod {
         false,
         traceTypes.contains(TraceTypeParameter.TraceType.TRACE)
             || traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE));
-  }
-
-  private Optional<BlockHeader> resolveBlockHeader(
-      final Optional<BlockParameter> maybeBlockParameter) {
-    final AtomicLong blockNumber = new AtomicLong();
-
-    try {
-      maybeBlockParameter.ifPresentOrElse(
-          blockParameter -> {
-            if (blockParameter.isNumeric()) {
-              blockNumber.set(blockParameter.getNumber().get());
-            } else if (blockParameter.isEarliest()) {
-              blockNumber.set(0);
-            } else if (blockParameter.isPending() || blockParameter.isLatest()) {
-              blockNumber.set(blockchainQueries.get().headBlockNumber());
-            } else {
-              throw new IllegalArgumentException();
-            }
-          },
-          () -> blockNumber.set(blockchainQueries.get().headBlockNumber()));
-    } catch (final IllegalArgumentException e) {
-      return Optional.empty();
-    }
-
-    return blockchainQueries.get().getBlockHeaderByNumber(blockNumber.get());
   }
 }
