@@ -279,6 +279,7 @@ public abstract class PeerDiscoveryAgent {
   }
 
   protected void handleIncomingPacket(final Endpoint sourceEndpoint, final Packet packet) {
+    // TODO: check whether
     final int udpPort = sourceEndpoint.getUdpPort();
     final int tcpPort =
         packet
