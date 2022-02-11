@@ -73,7 +73,7 @@ dependencyManagement {
     dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.6.0-alpha'
     dependency 'io.opentelemetry:opentelemetry-exporter-otlp:1.6.0'
     dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.6.0'
-    dependency 'io.opentelemetry:opentelemetry-proto:1.6.0-alpha'
+    dependency 'io.opentelemetry:opentelemetry-proto:1.5.0-alpha'
     dependency 'io.opentelemetry:opentelemetry-sdk-trace:1.6.0'
     dependency 'io.opentelemetry:opentelemetry-sdk:1.6.0'
     dependency 'io.opentelemetry:opentelemetry-semconv:1.6.0-alpha'
