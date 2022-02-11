@@ -18,7 +18,8 @@ import java.util.Optional;
 
 /** For now there is a static config that is driven by a command line option. */
 public class MergeConfigOptions {
-  private static Optional<Boolean> mergeEnabled = Optional.empty();
+  private static final AtomicBoolean mergeEnabled = new AtomicBoolean(false);
+>>>>>>>> 0e50266c5 (2914 execution specific endpoint (#3350)):config/src/main/java/org/hyperledger/besu/config/experimental/MergeConfiguration.java
 
   public static void setMergeEnabled(final boolean bool) {
     if (!mergeEnabled.isPresent()) {

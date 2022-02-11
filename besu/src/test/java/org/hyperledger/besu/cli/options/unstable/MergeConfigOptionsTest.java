@@ -19,6 +19,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import org.hyperledger.besu.config.experimental.MergeConfigOptions;
 
+import org.hyperledger.besu.config.experimental.MergeConfiguration;
+
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -54,8 +56,10 @@ public class MergeConfigOptionsTest {
   }
 
   @Test
-  public void shouldThrowOnReconfigure() {
-    assertThatThrownBy(() -> MergeConfigOptions.setMergeEnabled(false))
-        .isInstanceOf(RuntimeException.class);
+  public void shouldRefuseToDisableMergeOnceSet() {
+    MergeConfiguration.setMergeEnabled(true);
+    assertThat(MergeConfiguration.isMergeEnabled()).isTrue();
+    MergeConfiguration.setMergeEnabled(false);
+    assertThat(MergeConfiguration.isMergeEnabled()).isTrue();
   }
 }

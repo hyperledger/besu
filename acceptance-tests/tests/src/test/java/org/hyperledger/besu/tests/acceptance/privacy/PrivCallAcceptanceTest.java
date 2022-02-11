@@ -228,7 +228,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
             "http://"
                 + minerNode.getBesu().getHostName()
                 + ":"
-                + minerNode.getBesu().getJsonRpcSocketPort().get());
+                + minerNode.getBesu().getJsonRpcPort().get());
 
     final String validContractAddress = eventEmitter.getContractAddress();
     final String invalidContractAddress = constructInvalidString(validContractAddress);
