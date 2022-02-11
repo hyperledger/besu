@@ -33,6 +33,7 @@ import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,66 @@ public class QbftForksSchedulesFactoryTest {
     assertThat(forksSchedule.getFork(0)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
     assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
     assertThat(forksSchedule.getFork(2)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
+  }
+
+  @Test
+  public void createsScheduleThatChangesMiningBeneficiary_beneficiaryInitiallyEmpty() {
+    final Address beneficiaryAddress =
+        Address.fromHexString("0x1111111111111111111111111111111111111111");
+    final MutableQbftConfigOptions qbftConfigOptions =
+        new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+
+    final ObjectNode forkWithBeneficiary =
+        JsonUtil.objectNodeFromMap(
+            Map.of(
+                BftFork.FORK_BLOCK_KEY,
+                1,
+                BftFork.MINING_BENEFICIARY_KEY,
+                beneficiaryAddress.toHexString()));
+    final ObjectNode forkWithNoBeneficiary =
+        JsonUtil.objectNodeFromMap(Map.of(BftFork.FORK_BLOCK_KEY, 2));
+
+    final GenesisConfigOptions genesisConfigOptions =
+        createGenesisConfig(qbftConfigOptions, forkWithBeneficiary, forkWithNoBeneficiary);
+    final ForksSchedule<QbftConfigOptions> forksSchedule =
+        QbftForksSchedulesFactory.create(genesisConfigOptions);
+
+    assertThat(forksSchedule.getFork(0).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(forksSchedule.getFork(1).getValue().getMiningBeneficiary())
+        .contains(beneficiaryAddress);
+    assertThat(forksSchedule.getFork(2).getValue().getMiningBeneficiary()).isEmpty();
+  }
+
+  @Test
+  public void createsScheduleThatChangesMiningBeneficiary_beneficiaryInitiallyNonEmpty() {
+    final Address beneficiaryAddress =
+        Address.fromHexString("0x1111111111111111111111111111111111111111");
+    final Address beneficiaryAddress2 = Address.fromHexString("0x02");
+    final MutableQbftConfigOptions qbftConfigOptions =
+        new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+    qbftConfigOptions.setMiningBeneficiary(Optional.of(beneficiaryAddress));
+
+    final ObjectNode forkWithBeneficiary =
+        JsonUtil.objectNodeFromMap(
+            Map.of(BftFork.FORK_BLOCK_KEY, 1, BftFork.MINING_BENEFICIARY_KEY, ""));
+    final ObjectNode forkWithNoBeneficiary =
+        JsonUtil.objectNodeFromMap(
+            Map.of(
+                BftFork.FORK_BLOCK_KEY,
+                2,
+                BftFork.MINING_BENEFICIARY_KEY,
+                beneficiaryAddress2.toUnprefixedHexString()));
+
+    final GenesisConfigOptions genesisConfigOptions =
+        createGenesisConfig(qbftConfigOptions, forkWithBeneficiary, forkWithNoBeneficiary);
+    final ForksSchedule<QbftConfigOptions> forksSchedule =
+        QbftForksSchedulesFactory.create(genesisConfigOptions);
+
+    assertThat(forksSchedule.getFork(0).getValue().getMiningBeneficiary())
+        .contains(beneficiaryAddress);
+    assertThat(forksSchedule.getFork(1).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(forksSchedule.getFork(2).getValue().getMiningBeneficiary())
+        .contains(beneficiaryAddress2);
   }
 
   @Test
@@ -190,11 +251,12 @@ public class QbftForksSchedulesFactoryTest {
   }
 
   private GenesisConfigOptions createGenesisConfig(
-      final QbftConfigOptions configOptions, final ObjectNode fork) {
+      final QbftConfigOptions configOptions, final ObjectNode... forks) {
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.qbftConfigOptions(configOptions);
     genesisConfigOptions.transitions(
-        new TransitionsConfigOptions(JsonUtil.objectNodeFromMap(Map.of("qbft", List.of(fork)))));
+        new TransitionsConfigOptions(
+            JsonUtil.objectNodeFromMap(Map.of("qbft", Arrays.asList(forks)))));
     return genesisConfigOptions;
   }
 }

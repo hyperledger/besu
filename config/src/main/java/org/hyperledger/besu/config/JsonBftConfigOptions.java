@@ -42,7 +42,7 @@ public class JsonBftConfigOptions implements BftConfigOptions {
 
   protected final ObjectNode bftConfigRoot;
 
-  JsonBftConfigOptions(final ObjectNode bftConfigRoot) {
+  public JsonBftConfigOptions(final ObjectNode bftConfigRoot) {
     this.bftConfigRoot = bftConfigRoot;
   }
 

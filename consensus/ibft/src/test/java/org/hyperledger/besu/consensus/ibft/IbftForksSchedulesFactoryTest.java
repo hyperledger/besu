@@ -19,17 +19,19 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.JsonQbftConfigOptions;
+import org.hyperledger.besu.config.JsonBftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
+import org.hyperledger.besu.datatypes.Address;
 
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
@@ -39,7 +41,7 @@ public class IbftForksSchedulesFactoryTest {
   @Test
   public void createsScheduleForJustGenesisConfig() {
     final MutableBftConfigOptions bftConfigOptions =
-        new MutableBftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+        new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
     final ForkSpec<BftConfigOptions> expectedForkSpec = new ForkSpec<>(0, bftConfigOptions);
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.bftConfigOptions(bftConfigOptions);
@@ -54,7 +56,7 @@ public class IbftForksSchedulesFactoryTest {
   @Test
   public void createsScheduleWithForkThatOverridesGenesisValues() {
     final MutableBftConfigOptions configOptions =
-        new MutableBftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+        new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
 
     final ObjectNode fork =
         JsonUtil.objectNodeFromMap(
@@ -78,19 +80,80 @@ public class IbftForksSchedulesFactoryTest {
 
     final BftConfigOptions expectedForkConfig =
         new MutableBftConfigOptions(
-            new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(forkOptions)));
+            new JsonBftConfigOptions(JsonUtil.objectNodeFromMap(forkOptions)));
 
     final ForkSpec<BftConfigOptions> expectedFork = new ForkSpec<>(1, expectedForkConfig);
     assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedFork);
     assertThat(forksSchedule.getFork(2)).usingRecursiveComparison().isEqualTo(expectedFork);
   }
 
+  @Test
+  public void createsScheduleThatChangesMiningBeneficiary_beneficiaryInitiallyEmpty() {
+    final Address beneficiaryAddress =
+        Address.fromHexString("0x1111111111111111111111111111111111111111");
+    final MutableBftConfigOptions bftConfigOptions =
+        new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
+
+    final ObjectNode forkWithBeneficiary =
+        JsonUtil.objectNodeFromMap(
+            Map.of(
+                BftFork.FORK_BLOCK_KEY,
+                1,
+                BftFork.MINING_BENEFICIARY_KEY,
+                beneficiaryAddress.toHexString()));
+    final ObjectNode forkWithNoBeneficiary =
+        JsonUtil.objectNodeFromMap(Map.of(BftFork.FORK_BLOCK_KEY, 2));
+
+    final GenesisConfigOptions genesisConfigOptions =
+        createGenesisConfig(bftConfigOptions, forkWithBeneficiary, forkWithNoBeneficiary);
+    final ForksSchedule<BftConfigOptions> forksSchedule =
+        IbftForksSchedulesFactory.create(genesisConfigOptions);
+
+    assertThat(forksSchedule.getFork(0).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(forksSchedule.getFork(1).getValue().getMiningBeneficiary())
+        .contains(beneficiaryAddress);
+    assertThat(forksSchedule.getFork(2).getValue().getMiningBeneficiary()).isEmpty();
+  }
+
+  @Test
+  public void createsScheduleThatChangesMiningBeneficiary_beneficiaryInitiallyNonEmpty() {
+    final Address beneficiaryAddress =
+        Address.fromHexString("0x1111111111111111111111111111111111111111");
+    final Address beneficiaryAddress2 = Address.fromHexString("0x02");
+    final MutableBftConfigOptions bftConfigOptions =
+        new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
+    bftConfigOptions.setMiningBeneficiary(Optional.of(beneficiaryAddress));
+
+    final ObjectNode forkWithBeneficiary =
+        JsonUtil.objectNodeFromMap(
+            Map.of(BftFork.FORK_BLOCK_KEY, 1, BftFork.MINING_BENEFICIARY_KEY, ""));
+    final ObjectNode forkWithNoBeneficiary =
+        JsonUtil.objectNodeFromMap(
+            Map.of(
+                BftFork.FORK_BLOCK_KEY,
+                2,
+                BftFork.MINING_BENEFICIARY_KEY,
+                beneficiaryAddress2.toUnprefixedHexString()));
+
+    final GenesisConfigOptions genesisConfigOptions =
+        createGenesisConfig(bftConfigOptions, forkWithBeneficiary, forkWithNoBeneficiary);
+    final ForksSchedule<BftConfigOptions> forksSchedule =
+        IbftForksSchedulesFactory.create(genesisConfigOptions);
+
+    assertThat(forksSchedule.getFork(0).getValue().getMiningBeneficiary())
+        .contains(beneficiaryAddress);
+    assertThat(forksSchedule.getFork(1).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(forksSchedule.getFork(2).getValue().getMiningBeneficiary())
+        .contains(beneficiaryAddress2);
+  }
+
   private GenesisConfigOptions createGenesisConfig(
-      final BftConfigOptions configOptions, final ObjectNode fork) {
+      final BftConfigOptions configOptions, final ObjectNode... fork) {
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.bftConfigOptions(configOptions);
     genesisConfigOptions.transitions(
-        new TransitionsConfigOptions(JsonUtil.objectNodeFromMap(Map.of("ibft2", List.of(fork)))));
+        new TransitionsConfigOptions(
+            JsonUtil.objectNodeFromMap(Map.of("ibft2", Arrays.asList(fork)))));
     return genesisConfigOptions;
   }
 }

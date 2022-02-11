@@ -41,6 +41,7 @@ public class QbftForksSchedulesFactory {
 
     fork.getBlockPeriodSeconds().ifPresent(bftConfigOptions::setBlockPeriodSeconds);
     fork.getBlockRewardWei().ifPresent(bftConfigOptions::setBlockRewardWei);
+    bftConfigOptions.setMiningBeneficiary(fork.getMiningBeneficiary());
 
     if (fork.getValidatorSelectionMode().isPresent()) {
       final VALIDATOR_SELECTION_MODE mode = fork.getValidatorSelectionMode().get();
