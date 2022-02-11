@@ -1955,10 +1955,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setMaxActiveConnections(rpcHttpMaxConnections);
     jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
     jsonRpcConfiguration.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
-    jsonRpcConfiguration.setNoAtuhRpcApis(rpcHttpApiMethodsNoAuth
-        .stream()
-        .distinct()
-        .collect(Collectors.toList()));
+    jsonRpcConfiguration.setNoAtuhRpcApis(
+        rpcHttpApiMethodsNoAuth.stream().distinct().collect(Collectors.toList()));
     jsonRpcConfiguration.setHostsAllowlist(hostsAllowlist);
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
@@ -2148,10 +2146,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setPort(rpcWsPort);
     webSocketConfiguration.setMaxActiveConnections(rpcWsMaxConnections);
     webSocketConfiguration.setRpcApis(rpcWsApis);
-    webSocketConfiguration.setRpcApisNoAuth(rpcHttpApiMethodsNoAuth
-        .stream()
-        .distinct()
-        .collect(Collectors.toList()););
+    webSocketConfiguration.setRpcApisNoAuth(
+        rpcHttpApiMethodsNoAuth.stream().distinct().collect(Collectors.toList()));
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
