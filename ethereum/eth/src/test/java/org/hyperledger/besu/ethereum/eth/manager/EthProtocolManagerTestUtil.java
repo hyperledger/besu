@@ -137,7 +137,7 @@ public class EthProtocolManagerTestUtil {
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration configuration) {
-    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
+    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem(), 25);
     EthMessages messages = new EthMessages();
 
     return create(
@@ -175,7 +175,7 @@ public class EthProtocolManagerTestUtil {
 
   public static EthProtocolManager create(
       final Blockchain blockchain, final EthScheduler ethScheduler) {
-    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
+    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem(), 25);
     EthMessages messages = new EthMessages();
 
     return create(

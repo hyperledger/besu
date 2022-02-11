@@ -33,13 +33,13 @@ public class MaintainedPeers {
     checkArgument(
         peer.getEnodeURL().isListening(),
         "Invalid enode url.  Enode url must contain a non-zero listening port.");
-    boolean wasAdded = maintainedPeers.add(peer);
+    final boolean wasAdded = maintainedPeers.add(peer);
     addedSubscribers.forEach(s -> s.onPeerAdded(peer, wasAdded));
     return wasAdded;
   }
 
   public boolean remove(final Peer peer) {
-    boolean wasRemoved = maintainedPeers.remove(peer);
+    final boolean wasRemoved = maintainedPeers.remove(peer);
     removedCallbackSubscribers.forEach(s -> s.onPeerRemoved(peer, wasRemoved));
     return wasRemoved;
   }

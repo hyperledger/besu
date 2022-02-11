@@ -53,22 +53,29 @@ public class EthPeers {
   private final String protocolName;
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
+  private final int maxPeers;
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
 
-  public EthPeers(final String protocolName, final Clock clock, final MetricsSystem metricsSystem) {
-    this(protocolName, clock, metricsSystem, Collections.emptyList());
+  public EthPeers(
+      final String protocolName,
+      final Clock clock,
+      final MetricsSystem metricsSystem,
+      final int maxPeers) {
+    this(protocolName, clock, metricsSystem, maxPeers, Collections.emptyList());
   }
 
   public EthPeers(
       final String protocolName,
       final Clock clock,
       final MetricsSystem metricsSystem,
+      final int maxPeers,
       final List<NodeMessagePermissioningProvider> permissioningProviders) {
     this.protocolName = protocolName;
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
+    this.maxPeers = maxPeers;
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.PEERS,
         "pending_peer_requests_current",
@@ -159,6 +166,10 @@ public class EthPeers {
 
   public int peerCount() {
     return connections.size();
+  }
+
+  public int getMaxPeers() {
+    return maxPeers;
   }
 
   public Stream<EthPeer> streamAllPeers() {

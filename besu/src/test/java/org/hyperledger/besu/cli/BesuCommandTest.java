@@ -59,6 +59,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -203,6 +204,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void callingBesuCommandWithoutOptionsMustSyncWithDefaultValues() throws Exception {
     parseCommand();
 
+    final int maxPeers = 25;
+
     final ArgumentCaptor<EthNetworkConfig> ethNetworkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
     verify(mockRunnerBuilder).discovery(eq(true));
@@ -215,7 +218,7 @@ public class BesuCommandTest extends CommandTestAbstract {
                 MAINNET_DISCOVERY_URL));
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
     verify(mockRunnerBuilder).p2pListenPort(eq(30303));
-    verify(mockRunnerBuilder).maxPeers(eq(25));
+    verify(mockRunnerBuilder).maxPeers(eq(maxPeers));
     verify(mockRunnerBuilder).fractionRemoteConnectionsAllowed(eq(0.6f));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(DEFAULT_JSON_RPC_CONFIGURATION));
     verify(mockRunnerBuilder).graphQLConfiguration(eq(DEFAULT_GRAPH_QL_CONFIGURATION));
@@ -234,6 +237,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).nodeKey(isNotNull());
     verify(mockControllerBuilder).storageProvider(storageProviderArgumentCaptor.capture());
     verify(mockControllerBuilder).gasLimitCalculator(eq(GasLimitCalculator.constant()));
+    verify(mockControllerBuilder).maxPeers(eq(maxPeers));
     verify(mockControllerBuilder).build();
 
     assertThat(storageProviderArgumentCaptor.getValue()).isNotNull();
@@ -2103,6 +2107,20 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcWsMaxFrameSizePropertyMustBeUsed() {
+    final int maxFrameSize = 65535;
+    parseCommand("--rpc-ws-max-frame-size", String.valueOf(maxFrameSize));
+
+    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(wsRpcConfigArgumentCaptor.getValue().getMaxFrameSize()).isEqualTo(maxFrameSize);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void rpcWsMaxActiveConnectionsPropertyMustBeUsed() {
     final int maxConnections = 99;
     parseCommand("--rpc-ws-max-active-connections", String.valueOf(maxConnections));
@@ -2936,14 +2954,17 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-ws-port",
         "1234",
         "--rpc-ws-max-active-connections",
-        "77");
+        "77",
+        "--rpc-ws-max-frame-size",
+        "65535");
 
     verifyOptionsConstraintLoggerCall(
         "--rpc-ws-enabled",
         "--rpc-ws-host",
         "--rpc-ws-port",
         "--rpc-ws-api",
-        "--rpc-ws-max-active-connections");
+        "--rpc-ws-max-active-connections",
+        "--rpc-ws-max-frame-size");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -4210,6 +4231,28 @@ public class BesuCommandTest extends CommandTestAbstract {
         .containsEntry(block1, Hash.fromHexStringLenient(hash1));
     assertThat(requiredBlocksArg.getValue())
         .containsEntry(block2, Hash.fromHexStringLenient(hash2));
+  }
+
+  @Test
+  public void httpAuthenticationAlgorithIsConfigured() {
+    parseCommand("--rpc-http-authentication-jwt-algorithm", "ES256");
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getAuthenticationAlgorithm())
+        .isEqualTo(JwtAlgorithm.ES256);
+  }
+
+  @Test
+  public void webSocketAuthenticationAlgorithIsConfigured() {
+    parseCommand("--rpc-ws-authentication-jwt-algorithm", "ES256");
+
+    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(wsRpcConfigArgumentCaptor.getValue().getAuthenticationAlgorithm())
+        .isEqualTo(JwtAlgorithm.ES256);
   }
 
   @Test

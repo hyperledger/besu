@@ -38,7 +38,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.http.WebSocketFrame;
 import io.vertx.core.json.JsonObject;
@@ -62,6 +61,7 @@ public class WebSocketServiceTest {
   private WebSocketService websocketService;
   private HttpClient httpClient;
   private final int maxConnections = 3;
+  private final int maxFrameSize = 1024 * 1024;
 
   @Before
   public void before() {
@@ -71,6 +71,7 @@ public class WebSocketServiceTest {
     websocketConfiguration.setPort(0);
     websocketConfiguration.setHostsAllowlist(Collections.singletonList("*"));
     websocketConfiguration.setMaxActiveConnections(maxConnections);
+    websocketConfiguration.setMaxFrameSize(maxFrameSize);
 
     websocketMethods =
         new WebSocketMethodsFactory(
@@ -221,7 +222,7 @@ public class WebSocketServiceTest {
   public void websocketServiceCloseConnectionOnUnrecoverableError(final TestContext context) {
     final Async async = context.async();
 
-    final byte[] bigMessage = new byte[HttpServerOptions.DEFAULT_MAX_WEBSOCKET_MESSAGE_SIZE + 1];
+    final byte[] bigMessage = new byte[maxFrameSize + 1];
     Arrays.fill(bigMessage, (byte) 1);
 
     httpClient.webSocket(
