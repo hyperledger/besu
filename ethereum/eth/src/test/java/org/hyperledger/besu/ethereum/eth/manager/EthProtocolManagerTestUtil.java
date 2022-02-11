@@ -77,7 +77,7 @@ public class EthProtocolManagerTestUtil {
         ethMessages,
         ethContext,
         new ForkIdManager(blockchain, Collections.emptyList(), false));
-    }
+  }
 
   public static EthProtocolManager create(
       final Blockchain blockchain,
@@ -87,9 +87,9 @@ public class EthProtocolManagerTestUtil {
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
       final EthMessages ethMessages,
-      final EthContext ethContext, 
+      final EthContext ethContext,
       final ForkIdManager forkIdManager) {
-    
+
     final BigInteger networkId = BigInteger.ONE;
     return new EthProtocolManager(
         blockchain,

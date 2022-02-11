@@ -1038,19 +1038,19 @@ public final class EthProtocolManagerTest {
       verify(transactions).execute(any());
     }
   }
-  
-  @Test 
+
+  @Test
   public void forkIdForChainHeadMayBeNull() {
     EthScheduler ethScheduler = mock(EthScheduler.class);
     try (final EthProtocolManager ethManager =
-             EthProtocolManagerTestUtil.create(
-                 blockchain,
-                 ethScheduler,
-                 protocolContext.getWorldStateArchive(),
-                 transactionPool,
-                 EthProtocolConfiguration.defaultConfig(),
-                 new ForkIdManager(blockchain, Collections.emptyList(), true))) {
-      
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            ethScheduler,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig(),
+            new ForkIdManager(blockchain, Collections.emptyList(), true))) {
+
       ethManager.getForkIdAsBytesList();
     }
   }
