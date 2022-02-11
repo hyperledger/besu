@@ -58,13 +58,13 @@ public class IbftBlockCreator extends AbstractBlockCreator {
       final BlockHeader parentHeader) {
     super(
         coinbase,
+        __ -> Util.publicKeyToAddress(nodeKeys.getPublicKey()),
         targetGasLimitSupplier,
         extraDataCalculator,
         pendingTransactions,
         protocolContext,
         protocolSchedule,
         minTransactionGasPrice,
-        Util.publicKeyToAddress(nodeKeys.getPublicKey()),
         minBlockOccupancyRatio,
         parentHeader);
     this.nodeKeys = nodeKeys;

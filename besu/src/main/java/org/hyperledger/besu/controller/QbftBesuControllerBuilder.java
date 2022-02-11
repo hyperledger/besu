@@ -180,16 +180,15 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         BftExecutors.create(metricsSystem, BftExecutors.ConsensusType.QBFT);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
-    final BftBlockCreatorFactory blockCreatorFactory =
+    final BftBlockCreatorFactory<?> blockCreatorFactory =
         new QbftBlockCreatorFactory(
             transactionPool.getPendingTransactions(),
             protocolContext,
             protocolSchedule,
+            qbftForksSchedule,
             miningParameters,
             localAddress,
-            qbftConfig.getMiningBeneficiary().orElse(localAddress),
-            bftExtraDataCodec().get(),
-            qbftForksSchedule);
+            bftExtraDataCodec().get());
 
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusContext(BftContext.class).getValidatorProvider();

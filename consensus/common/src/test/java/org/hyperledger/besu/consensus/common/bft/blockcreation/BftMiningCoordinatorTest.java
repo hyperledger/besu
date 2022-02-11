@@ -47,7 +47,7 @@ public class BftMiningCoordinatorTest {
   @Mock private BftEventHandler controller;
   @Mock private BftExecutors bftExecutors;
   @Mock private BftProcessor bftProcessor;
-  @Mock private BftBlockCreatorFactory bftBlockCreatorFactory;
+  @Mock private BftBlockCreatorFactory<?> bftBlockCreatorFactory;
   @Mock private Blockchain blockChain;
   @Mock private Block block;
   @Mock private BlockBody blockBody;

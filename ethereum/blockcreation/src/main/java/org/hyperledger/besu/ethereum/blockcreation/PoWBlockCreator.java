@@ -52,13 +52,13 @@ public class PoWBlockCreator extends AbstractBlockCreator {
       final BlockHeader parentHeader) {
     super(
         coinbase,
+        __ -> coinbase,
         targetGasLimitSupplier,
         extraDataCalculator,
         pendingTransactions,
         protocolContext,
         protocolSchedule,
         minTransactionGasPrice,
-        coinbase,
         minBlockOccupancyRatio,
         parentHeader);
 

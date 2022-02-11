@@ -141,14 +141,14 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
         BftExecutors.create(metricsSystem, BftExecutors.ConsensusType.IBFT);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
-    final BftBlockCreatorFactory blockCreatorFactory =
-        new BftBlockCreatorFactory(
+    final BftBlockCreatorFactory<BftConfigOptions> blockCreatorFactory =
+        new BftBlockCreatorFactory<>(
             transactionPool.getPendingTransactions(),
             protocolContext,
             protocolSchedule,
+            forksSchedule,
             miningParameters,
             localAddress,
-            bftConfig.getMiningBeneficiary().orElse(localAddress),
             bftExtraDataCodec().get());
 
     final ValidatorProvider validatorProvider =
