@@ -158,7 +158,7 @@ public class EthProtocolManagerTestUtil {
       final TransactionPool transactionPool,
       final EthProtocolConfiguration configuration,
       final ForkIdManager forkIdManager) {
-    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
+    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem(), 25);
     EthMessages messages = new EthMessages();
 
     return create(
