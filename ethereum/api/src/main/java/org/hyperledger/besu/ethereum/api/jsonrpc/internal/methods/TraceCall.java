@@ -76,7 +76,7 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
     final Optional<BlockParameter> maybeBlockParameter =
-            request.getOptionalParameter(2, BlockParameter.class);
+        request.getOptionalParameter(2, BlockParameter.class);
 
     if (maybeBlockParameter.isPresent()) {
       return maybeBlockParameter.get();
@@ -86,11 +86,13 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
   }
 
   @Override
-  protected Object resultByBlockNumber(final JsonRpcRequestContext requestContext, final long blockNumber) {
+  protected Object resultByBlockNumber(
+      final JsonRpcRequestContext requestContext, final long blockNumber) {
     final TraceTypeParameter traceTypeParameter =
-            requestContext.getRequiredParameter(1, TraceTypeParameter.class);
+        requestContext.getRequiredParameter(1, TraceTypeParameter.class);
 
-    final Optional<BlockHeader> maybeBlockHeader = blockchainQueries.get().getBlockHeaderByNumber(blockNumber);
+    final Optional<BlockHeader> maybeBlockHeader =
+        blockchainQueries.get().getBlockHeaderByNumber(blockNumber);
 
     if (maybeBlockHeader.isEmpty()) {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), BLOCK_NOT_FOUND);
@@ -99,49 +101,49 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
     final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
-            transactionSimulator.process(
-                    JsonCallParameterUtil.validateAndGetCallParams(requestContext),
-                    buildTransactionValidationParams(),
-                    tracer,
-                    maybeBlockHeader.get());
+        transactionSimulator.process(
+            JsonCallParameterUtil.validateAndGetCallParams(requestContext),
+            buildTransactionValidationParams(),
+            tracer,
+            maybeBlockHeader.get());
 
     if (maybeSimulatorResult.isEmpty()) {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
     }
 
     final TransactionTrace transactionTrace =
-            new TransactionTrace(
-                    maybeSimulatorResult.get().getTransaction(),
-                    maybeSimulatorResult.get().getResult(),
-                    tracer.getTraceFrames());
+        new TransactionTrace(
+            maybeSimulatorResult.get().getTransaction(),
+            maybeSimulatorResult.get().getResult(),
+            tracer.getTraceFrames());
 
     final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
 
     final TraceCallResult.Builder builder = TraceCallResult.builder();
 
     transactionTrace
-            .getResult()
-            .getRevertReason()
-            .ifPresentOrElse(
-                    revertReason -> builder.output(revertReason.toHexString()),
-                    () -> builder.output(maybeSimulatorResult.get().getOutput().toString()));
+        .getResult()
+        .getRevertReason()
+        .ifPresentOrElse(
+            revertReason -> builder.output(revertReason.toHexString()),
+            () -> builder.output(maybeSimulatorResult.get().getOutput().toString()));
 
     if (traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF)) {
       new StateDiffGenerator()
-              .generateStateDiff(transactionTrace)
-              .forEachOrdered(stateDiff -> builder.stateDiff((StateDiffTrace) stateDiff));
+          .generateStateDiff(transactionTrace)
+          .forEachOrdered(stateDiff -> builder.stateDiff((StateDiffTrace) stateDiff));
     }
 
     if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
       FlatTraceGenerator.generateFromTransactionTrace(
-                      protocolSchedule, transactionTrace, block, new AtomicInteger(), false)
-              .forEachOrdered(trace -> builder.addTrace((FlatTrace) trace));
+              protocolSchedule, transactionTrace, block, new AtomicInteger(), false)
+          .forEachOrdered(trace -> builder.addTrace((FlatTrace) trace));
     }
 
     if (traceTypes.contains(VM_TRACE)) {
       new VmTraceGenerator(transactionTrace)
-              .generateTraceStream()
-              .forEachOrdered(vmTrace -> builder.vmTrace((VmTrace) vmTrace));
+          .generateTraceStream()
+          .forEachOrdered(vmTrace -> builder.vmTrace((VmTrace) vmTrace));
     }
 
     return MAPPER_IGNORE_REVERT_REASON.valueToTree(builder.build());
