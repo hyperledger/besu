@@ -9,8 +9,6 @@
 - Refactor synchronizer to asynchronously retrieve blocks from peers, and to change peer when retrying to get a block. [#3326](https://github.com/hyperledger/besu/pull/3326)
 - Disable RocksDB TTL compactions [#3356](https://github.com/hyperledger/besu/pull/3356)
 - add a websocket frame size configuration CLI parameter [3368][https://github.com/hyperledger/besu/pull/3379]
-- Added trace_call API endpoint [#3166](https://github.com/hyperledger/besu/pull/3166)
-
 
 ### Bug Fixes
 - Prevent node from peering to itself [#3342](https://github.com/hyperledger/besu/pull/3342)
