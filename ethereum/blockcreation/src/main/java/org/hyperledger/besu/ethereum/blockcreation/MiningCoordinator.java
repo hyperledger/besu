@@ -105,6 +105,15 @@ public interface MiningCoordinator {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers);
 
+  /**
+   * Creates a block if possible, otherwise return an empty result
+   *
+   * @param parentHeader The parent block's header
+   * @param timestamp unix timestamp of the new block.
+   * @return If supported, returns the block that was created, otherwise an empty response.
+   */
+  Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp);
+
   default void addEthHashObserver(final PoWObserver observer) {}
 
   void changeTargetGasLimit(final Long targetGasLimit);
