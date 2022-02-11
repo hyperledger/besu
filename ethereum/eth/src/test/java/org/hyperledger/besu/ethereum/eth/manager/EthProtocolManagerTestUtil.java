@@ -67,6 +67,29 @@ public class EthProtocolManagerTestUtil {
       final EthPeers ethPeers,
       final EthMessages ethMessages,
       final EthContext ethContext) {
+    return create(
+        blockchain,
+        ethScheduler,
+        worldStateArchive,
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        ethPeers,
+        ethMessages,
+        ethContext,
+        new ForkIdManager(blockchain, Collections.emptyList(), false));
+    }
+
+  public static EthProtocolManager create(
+      final Blockchain blockchain,
+      final EthScheduler ethScheduler,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final EthPeers ethPeers,
+      final EthMessages ethMessages,
+      final EthContext ethContext, 
+      final ForkIdManager forkIdManager) {
+    
     final BigInteger networkId = BigInteger.ONE;
     return new EthProtocolManager(
         blockchain,
@@ -80,7 +103,7 @@ public class EthProtocolManagerTestUtil {
         Collections.emptyList(),
         false,
         ethScheduler,
-        new ForkIdManager(blockchain, Collections.emptyList(), false));
+        forkIdManager);
   }
 
   public static EthProtocolManager create(final Blockchain blockchain) {
@@ -126,6 +149,28 @@ public class EthProtocolManagerTestUtil {
         peers,
         messages,
         new EthContext(peers, messages, ethScheduler));
+  }
+
+  public static EthProtocolManager create(
+      final Blockchain blockchain,
+      final EthScheduler ethScheduler,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration configuration,
+      final ForkIdManager forkIdManager) {
+    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
+    EthMessages messages = new EthMessages();
+
+    return create(
+        blockchain,
+        ethScheduler,
+        worldStateArchive,
+        transactionPool,
+        configuration,
+        peers,
+        messages,
+        new EthContext(peers, messages, ethScheduler),
+        forkIdManager);
   }
 
   public static EthProtocolManager create(
