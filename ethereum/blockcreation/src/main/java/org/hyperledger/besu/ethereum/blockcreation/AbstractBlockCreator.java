@@ -126,21 +126,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
    */
   @Override
   public Block createBlock(final long timestamp) {
-    return createBlock(Optional.empty(), Optional.empty(), timestamp);
+    return createBlock(Collections.emptyList(), Collections.emptyList(), timestamp);
   }
 
   @Override
   public Block createBlock(
       final List<Transaction> transactions, final List<BlockHeader> ommers, final long timestamp) {
-    return createBlock(Optional.of(transactions), Optional.of(ommers), timestamp);
-  }
-
-  @Override
-  public Block createBlock(
-      final Optional<List<Transaction>> maybeTransactions,
-      final Optional<List<BlockHeader>> maybeOmmers,
-      final long timestamp) {
-    return createBlock(maybeTransactions, maybeOmmers, Optional.empty(), timestamp, true);
+    return createBlock(
+        Optional.of(transactions), Optional.of(ommers), Optional.empty(), timestamp, true);
   }
 
   protected Block createBlock(

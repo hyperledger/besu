@@ -19,16 +19,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface BlockCreator {
   Block createBlock(final long timestamp);
 
   Block createBlock(
       final List<Transaction> transactions, final List<BlockHeader> ommers, final long timestamp);
-
-  Block createBlock(
-      final Optional<List<Transaction>> maybeTransactions,
-      final Optional<List<BlockHeader>> maybeOmmers,
-      final long timestamp);
 }

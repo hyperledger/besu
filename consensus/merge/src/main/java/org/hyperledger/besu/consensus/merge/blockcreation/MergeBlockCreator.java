@@ -74,9 +74,7 @@ public class MergeBlockCreator extends AbstractBlockCreator {
 
   @Override
   public Block createBlock(
-      final Optional<List<Transaction>> maybeTransactions,
-      final Optional<List<BlockHeader>> maybeOmmers,
-      final long timestamp) {
+      final List<Transaction> transactions, final List<BlockHeader> ommers, final long timestamp) {
     throw new UnsupportedOperationException("random is required");
   }
 
