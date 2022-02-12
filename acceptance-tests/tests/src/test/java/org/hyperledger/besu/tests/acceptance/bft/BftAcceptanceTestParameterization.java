@@ -27,7 +27,7 @@ public class BftAcceptanceTestParameterization {
     ret.addAll(
         List.of(
             new Object[] {
-              "ibft",
+              "ibft2",
               new BftAcceptanceTestParameterization(
                   BesuNodeFactory::createIbft2Node, BesuNodeFactory::createIbft2NodeWithValidators)
             },
