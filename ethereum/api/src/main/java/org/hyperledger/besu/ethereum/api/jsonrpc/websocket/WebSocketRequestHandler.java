@@ -226,9 +226,7 @@ public class WebSocketRequestHandler {
 
   private void replyToClient(final ServerWebSocket websocket, final Object result) {
     try {
-      final JsonResponseStreamer jsonResponseStreamer = new JsonResponseStreamer(websocket);
-      JSON_OBJECT_WRITER.writeValue(jsonResponseStreamer, result);
-      jsonResponseStreamer.close();
+      JSON_OBJECT_WRITER.writeValue(new JsonResponseStreamer(websocket), result);
     } catch (IOException ex) {
       LOG.error("Error streaming JSON-RPC response", ex);
     }
