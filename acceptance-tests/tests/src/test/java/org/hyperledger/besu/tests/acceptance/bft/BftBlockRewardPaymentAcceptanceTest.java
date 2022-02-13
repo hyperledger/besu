@@ -66,7 +66,7 @@ public class BftBlockRewardPaymentAcceptanceTest extends ParameterizedBftTestBas
     final Account miningBeneficiaryAccount =
         Account.create(ethTransactions, Address.fromHexString(miningBeneficiaryAddress));
 
-    final String bftOptions = formatKeyValue("miningbeneficiary", miningBeneficiaryAddress);
+    final String bftOptions = formatKeyValues("miningbeneficiary", miningBeneficiaryAddress);
     final String configWithMiningBeneficiary = configureBftOptions(initialConfig.get(), bftOptions);
     validator1.setGenesisConfig(configWithMiningBeneficiary);
 
@@ -80,8 +80,21 @@ public class BftBlockRewardPaymentAcceptanceTest extends ParameterizedBftTestBas
             Amount.ether(blockRewardEth * blockToCheck), BigInteger.valueOf(blockToCheck)));
   }
 
-  private String formatKeyValue(final String key, final String value) {
-    return String.format("\"%s\": \"%s\"", key, value);
+  private String formatKeyValues(final String... keyOrValue) {
+    if (keyOrValue.length % 2 == 1) {
+      // An odd number of strings cannot form a set of key-value pairs
+      throw new IllegalArgumentException("Must supply key-value pairs");
+    }
+    final StringBuilder stringBuilder = new StringBuilder();
+    for (int i = 0; i < keyOrValue.length; i += 2) {
+      if (i > 0) {
+        stringBuilder.append(", ");
+      }
+      final String key = keyOrValue[i];
+      final String value = keyOrValue[i + 1];
+      stringBuilder.append(String.format("\"%s\": \"%s\"", key, value));
+    }
+    return stringBuilder.toString();
   }
 
   private String configureBftOptions(final String originalOptions, final String bftOptions) {
