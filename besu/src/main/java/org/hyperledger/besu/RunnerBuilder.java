@@ -164,7 +164,7 @@ public class RunnerBuilder {
   private Optional<JsonRpcConfiguration> engineJsonRpcConfiguration = Optional.empty();
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
-  private Optional<WebSocketConfiguration> engineWebSocketConfiguration;
+  private Optional<WebSocketConfiguration> engineWebSocketConfiguration = Optional.empty();
   private ApiConfiguration apiConfiguration;
   private Path dataDir;
   private Optional<Path> pidPath = Optional.empty();
@@ -308,7 +308,8 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder engineWebSocketConfiguration(final WebSocketConfiguration engineWebSocketConfig) {
+  public RunnerBuilder engineWebSocketConfiguration(
+      final WebSocketConfiguration engineWebSocketConfig) {
     this.engineWebSocketConfiguration = Optional.of(engineWebSocketConfig);
     return this;
   }
@@ -593,7 +594,8 @@ public class RunnerBuilder {
               dataDir,
               rpcEndpointServiceImpl);
 
-      final Map<String, JsonRpcMethod> nonEngineMethods = filterToNonEngineMethods(allJsonRpcMethods);
+      final Map<String, JsonRpcMethod> nonEngineMethods =
+          filterToNonEngineMethods(allJsonRpcMethods);
 
       jsonRpcHttpService =
           Optional.of(
@@ -705,8 +707,8 @@ public class RunnerBuilder {
               dataDir,
               rpcEndpointServiceImpl);
 
-      final Map<String, JsonRpcMethod> nonEngineWebSocketMethods = filterToNonEngineMethods(allWebSocketMethods);
-      final Map<String, JsonRpcMethod> engineWebSocketMethods = filterToEngineMethods(allWebSocketMethods);
+      final Map<String, JsonRpcMethod> nonEngineWebSocketMethods =
+          filterToNonEngineMethods(allWebSocketMethods);
 
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool, blockchainQueries);
@@ -732,19 +734,43 @@ public class RunnerBuilder {
                   privacyParameters,
                   protocolSchedule,
                   blockchainQueries));
-      if (!engineWebSocketMethods.isEmpty()
-              && engineWebSocketMethods.keySet().stream()
-              .anyMatch(apiName -> apiName.toLowerCase().startsWith("engine"))) {
+      if (engineWebSocketConfiguration.isPresent()
+          && engineWebSocketConfiguration.get().isEnabled()) {
+        final Map<String, JsonRpcMethod> engineWebSocketMethods =
+            jsonRpcMethods(
+                protocolSchedule,
+                context,
+                besuController,
+                peerNetwork,
+                blockchainQueries,
+                synchronizer,
+                transactionPool,
+                miningCoordinator,
+                metricsSystem,
+                supportedCapabilities,
+                engineWebSocketConfiguration.get().getRpcApis(),
+                filterManager,
+                accountLocalConfigPermissioningController,
+                nodeLocalConfigPermissioningController,
+                privacyParameters,
+                jsonRpcConfiguration,
+                engineWebSocketConfiguration.get(),
+                metricsConfiguration,
+                natService,
+                besuPluginContext.getNamedPlugins(),
+                dataDir,
+                rpcEndpointServiceImpl);
+
         engineWebSocketService =
-                Optional.of(
-                        createWebsocketService(
-                                vertx,
-                                webSocketConfiguration,
-                                subscriptionManager,
-                                engineWebSocketMethods,
-                                privacyParameters,
-                                protocolSchedule,
-                                blockchainQueries));
+            Optional.of(
+                createWebsocketService(
+                    vertx,
+                    webSocketConfiguration,
+                    subscriptionManager,
+                    engineWebSocketMethods,
+                    privacyParameters,
+                    protocolSchedule,
+                    blockchainQueries));
       }
       createPrivateTransactionObserver(subscriptionManager, privacyParameters);
     }
@@ -789,20 +815,9 @@ public class RunnerBuilder {
         context.getBlockchain());
   }
 
-  private Map<String, JsonRpcMethod> filterToEngineMethods(Map<String, JsonRpcMethod> allJsonRpcMethods) {
-    final Map<String, JsonRpcMethod> engineMethods =
-        allJsonRpcMethods.entrySet().stream()
-            .filter(
-                entry -> {
-                  return entry.getKey().toLowerCase().startsWith("engine")
-                      || entry.getKey().toLowerCase().startsWith("eth");
-                })
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    return engineMethods;
-  }
-
   @NotNull
-  private Map<String, JsonRpcMethod> filterToNonEngineMethods(Map<String, JsonRpcMethod> allJsonRpcMethods) {
+  private Map<String, JsonRpcMethod> filterToNonEngineMethods(
+      final Map<String, JsonRpcMethod> allJsonRpcMethods) {
     final Map<String, JsonRpcMethod> nonEngineMethods =
         allJsonRpcMethods.entrySet().stream()
             .filter(entry -> !entry.getKey().toLowerCase().startsWith("engine"))

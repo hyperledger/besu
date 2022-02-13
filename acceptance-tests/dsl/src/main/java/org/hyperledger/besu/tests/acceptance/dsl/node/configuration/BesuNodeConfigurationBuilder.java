@@ -59,7 +59,8 @@ public class BesuNodeConfigurationBuilder {
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
-  private WebSocketConfiguration engineWebSocketConfiguration = WebSocketConfiguration.createDefault();
+  private WebSocketConfiguration engineWebSocketConfiguration =
+      WebSocketConfiguration.createDefault();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private String keyFilePath = null;
@@ -133,7 +134,8 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder engineWebSocketConfiguration( final WebSocketConfiguration engineConfig) {
+  public BesuNodeConfigurationBuilder engineWebSocketConfiguration(
+      final WebSocketConfiguration engineConfig) {
     this.engineWebSocketConfiguration = engineConfig;
     return this;
   }

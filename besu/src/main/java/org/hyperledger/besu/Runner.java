@@ -49,7 +49,7 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class  Runner implements AutoCloseable {
+public class Runner implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(Runner.class);
 
@@ -121,7 +121,8 @@ public class  Runner implements AutoCloseable {
     engineJsonRpc.ifPresent(service -> waitForServiceToStart("engineJsonRpc", service.start()));
     graphQLHttp.ifPresent(service -> waitForServiceToStart("graphQLHttp", service.start()));
     websocketRpc.ifPresent(service -> waitForServiceToStart("websocketRpc", service.start()));
-    engineWebsocketRpc.ifPresent(service -> waitForServiceToStart("engineWebsocketRpc", service.start()));
+    engineWebsocketRpc.ifPresent(
+        service -> waitForServiceToStart("engineWebsocketRpc", service.start()));
     stratumServer.ifPresent(server -> waitForServiceToStart("stratum", server.start()));
     autoTransactionLogBloomCachingService.ifPresent(AutoTransactionLogBloomCachingService::start);
     ethStatsService.ifPresent(EthStatsService::start);
@@ -153,7 +154,8 @@ public class  Runner implements AutoCloseable {
     engineJsonRpc.ifPresent(service -> waitForServiceToStop("engineJsonRpc", service.stop()));
     graphQLHttp.ifPresent(service -> waitForServiceToStop("graphQLHttp", service.stop()));
     websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
-    engineWebsocketRpc.ifPresent(service -> waitForServiceToStop("engineWebsocketRpc", service.stop()));
+    engineWebsocketRpc.ifPresent(
+        service -> waitForServiceToStop("engineWebsocketRpc", service.stop()));
     metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
     ethStatsService.ifPresent(EthStatsService::stop);
     besuController.getMiningCoordinator().stop();
@@ -326,7 +328,9 @@ public class  Runner implements AutoCloseable {
     return websocketRpc.map(service -> service.socketAddress().getPort());
   }
 
-  public Optional<Integer> getEngineWebsocketPort() { return engineWebsocketRpc.map(service -> service.socketAddress().getPort());}
+  public Optional<Integer> getEngineWebsocketPort() {
+    return engineWebsocketRpc.map(service -> service.socketAddress().getPort());
+  }
 
   public Optional<Integer> getMetricsPort() {
     if (metrics.isPresent()) {
