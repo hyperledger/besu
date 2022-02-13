@@ -61,6 +61,14 @@ public class WebSocketConfiguration {
     return config;
   }
 
+  public static WebSocketConfiguration createEngineDefault() {
+    final WebSocketConfiguration config = createDefault();
+    config.setPort(DEFAULT_WEBSOCKET_ENGINE_PORT);
+    config.setRpcApis(Arrays.asList("ENGINE", "ETH"));
+    config.setHostsAllowlist(Arrays.asList("localhost", "127.0.0.1"));
+    return config;
+  }
+
   private WebSocketConfiguration() {}
 
   public boolean isEnabled() {

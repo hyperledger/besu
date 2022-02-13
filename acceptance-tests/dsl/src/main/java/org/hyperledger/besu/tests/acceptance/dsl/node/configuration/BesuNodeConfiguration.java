@@ -31,8 +31,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-public class
-BesuNodeConfiguration {
+public class BesuNodeConfiguration {
 
   private final String name;
   private final Optional<Path> dataPath;
@@ -151,7 +150,9 @@ BesuNodeConfiguration {
     return webSocketConfiguration;
   }
 
-  public Optional<WebSocketConfiguration> getEngineWebSocketConfiguration() { return engineWebSocketConfiguration; }
+  public Optional<WebSocketConfiguration> getEngineWebSocketConfiguration() {
+    return engineWebSocketConfiguration;
+  }
 
   public MetricsConfiguration getMetricsConfiguration() {
     return metricsConfiguration;
