@@ -52,7 +52,7 @@ public class AdminChangeLogLevelTest {
   public void shouldReturnCorrectResponseWhenRequestHasLogLevel() {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {Level.DEBUG}));
+            new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {Level.DEBUG.name()}));
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId());
 
@@ -71,7 +71,9 @@ public class AdminChangeLogLevelTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
-                "2.0", "admin_changeLogLevel", new Object[] {Level.DEBUG, new String[] {"com"}}));
+                "2.0",
+                "admin_changeLogLevel",
+                new Object[] {Level.DEBUG.name(), new String[] {"com"}}));
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId());
 
