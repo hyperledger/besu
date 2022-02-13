@@ -61,25 +61,15 @@ public class BftBlockRewardPaymentAcceptanceTest extends ParameterizedBftTestBas
     if (initialConfig.isEmpty()) {
       throw new RuntimeException("Unable to generate genesis config.");
     }
+
     final String miningBeneficiaryAddress = "0x1234567890123456789012345678901234567890";
-
-    final String configWithMiningBeneficiary =
-        initialConfig
-            .get()
-            .replace(
-                "\"" + bftType + "\": {",
-                "\""
-                    + bftType
-                    + "\": { \"miningbeneficiary\": \""
-                    + miningBeneficiaryAddress
-                    + "\",");
-
-    validator1.setGenesisConfig(configWithMiningBeneficiary);
-
     final Account miningBeneficiaryAccount =
         Account.create(ethTransactions, Address.fromHexString(miningBeneficiaryAddress));
 
-    // This starts a node, without executing its configGenerator
+    final String bftOptions = formatKeyValue("miningbeneficiary", miningBeneficiaryAddress);
+    final String configWithMiningBeneficiary = configureBftOptions(initialConfig.get(), bftOptions);
+    validator1.setGenesisConfig(configWithMiningBeneficiary);
+
     cluster.start(validator1);
     final int blockRewardEth = 5;
     final int blockToCheck = 2;
@@ -88,5 +78,14 @@ public class BftBlockRewardPaymentAcceptanceTest extends ParameterizedBftTestBas
     cluster.verify(
         miningBeneficiaryAccount.balanceAtBlockEquals(
             Amount.ether(blockRewardEth * blockToCheck), BigInteger.valueOf(blockToCheck)));
+  }
+
+  private String formatKeyValue(final String key, final String value) {
+    return String.format("\"%s\": \"%s\"", key, value);
+  }
+
+  private String configureBftOptions(final String originalOptions, final String bftOptions) {
+    return originalOptions.replace(
+        "\"" + bftType + "\": {", "\"" + bftType + "\": { " + bftOptions + ",");
   }
 }
