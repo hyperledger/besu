@@ -1,21 +1,23 @@
 # Changelog
 ## 22.1.0
 
+### Additions and Improvements
+- Updated besu-native to version 0.4.3 [#3331](https://github.com/hyperledger/besu/pull/3331)
+- Refactor synchronizer to asynchronously retrieve blocks from peers, and to change peer when retrying to get a block. [#3326](https://github.com/hyperledger/besu/pull/3326)
+- Disable RocksDB TTL compactions [#3356](https://github.com/hyperledger/besu/pull/3356)
+- add a websocket frame size configuration CLI parameter [3368][https://github.com/hyperledger/besu/pull/3379]
+- Add `--ec-curve` parameter to export/export-address public-key subcommands [#3333](https://github.com/hyperledger/besu/pull/3333)
+
 ### Bug Fixes
 - add a websocket frame size configuration CLI parameter [3368][https://github.com/hyperledger/besu/pull/3379]
-
-### 22.1.0 Breaking Changes
+- Prevent node from peering to itself [#3342](https://github.com/hyperledger/besu/pull/3342)
+- Fix an `IndexOutOfBoundsException` exception when getting block from peers. [#3304](https://github.com/hyperledger/besu/issues/3304)
+- Handle legacy eth64 without throwing null pointer exceptions [#3343](https://github.com/hyperledger/besu/pull/3343)
 
 ## 22.1.0-RC4
 
 ### Additions and Improvements
 - Updated besu-native to version 0.4.3 [#3331](https://github.com/hyperledger/besu/pull/3331)
-- Refactor synchronizer to asynchronously retrieve blocks from peers, and to change peer when retrying to get a block. [#3326](https://github.com/hyperledger/besu/pull/3326)
-- Disable RocksDB TTL compactions [#3356](https://github.com/hyperledger/besu/pull/3356)
-
-### Bug Fixes
-- Prevent node from peering to itself [#3342](https://github.com/hyperledger/besu/pull/3342)
-- Fix an `IndexOutOfBoundsException` exception when getting block from peers. [#3304](https://github.com/hyperledger/besu/issues/3304)
 
 ### Download Links
 - https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC4/besu-22.1.0-RC4.tar.gz \ SHA256 f1e34fddf4aad0d6699b38f6bdeff3799255d2c9bfdab0718f5f72bf90b56117
