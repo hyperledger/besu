@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.config.experimental.MergeOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -43,6 +44,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
@@ -51,6 +53,7 @@ import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,12 +135,23 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     return createBlock(Optional.of(transactions), Optional.of(ommers), timestamp);
   }
 
-  private Block createBlock(
+  @Override
+  public Block createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
+    return createBlock(maybeTransactions, maybeOmmers, Optional.empty(), timestamp, true);
+  }
+
+  protected Block createBlock(
+      final Optional<List<Transaction>> maybeTransactions,
+      final Optional<List<BlockHeader>> maybeOmmers,
+      final Optional<Bytes32> maybeRandom,
+      final long timestamp,
+      boolean rewardCoinbase) {
     try {
-      final ProcessableBlockHeader processableBlockHeader = createPendingBlockHeader(timestamp);
+      final ProcessableBlockHeader processableBlockHeader =
+          createPendingBlockHeader(timestamp, maybeRandom);
 
       throwIfStopped();
 
@@ -157,12 +171,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(processableBlockHeader.getNumber());
 
-      if (!rewardBeneficiary(
-          disposableWorldState,
-          processableBlockHeader,
-          ommers,
-          protocolSpec.getBlockReward(),
-          protocolSpec.isSkipZeroBlockRewards())) {
+      if (rewardCoinbase
+          && !rewardBeneficiary(
+              disposableWorldState,
+              processableBlockHeader,
+              ommers,
+              protocolSpec.getBlockReward(),
+              protocolSpec.isSkipZeroBlockRewards())) {
         LOG.trace("Failed to apply mining reward, exiting.");
         throw new RuntimeException("Failed to apply mining reward.");
       }
@@ -172,7 +187,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final SealableBlockHeader sealableBlockHeader =
           BlockHeaderBuilder.create()
               .populateFrom(processableBlockHeader)
-              .ommersHash(BodyValidation.ommersHash(ommers))
+              .ommersHash(
+                  BodyValidation.ommersHash(
+                      MergeOptions.isMergeEnabled() ? Collections.emptyList() : ommers))
               .stateRoot(disposableWorldState.rootHash())
               .transactionsRoot(
                   BodyValidation.transactionsRoot(transactionResults.getTransactions()))
@@ -250,7 +267,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     return Lists.newArrayList();
   }
 
-  private ProcessableBlockHeader createPendingBlockHeader(final long timestamp) {
+  private ProcessableBlockHeader createPendingBlockHeader(
+      final long timestamp, final Optional<Bytes32> maybeRandom) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
     long gasLimit =
         protocolSpec
@@ -277,6 +295,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                         feeMarket.targetGasUsed(parentHeader)))
             .orElse(null);
 
+    final Bytes32 random = maybeRandom.orElse(null);
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
         .coinbase(coinbase)
@@ -285,6 +304,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         .gasLimit(gasLimit)
         .timestamp(timestamp)
         .baseFee(baseFee)
+        .random(random)
         .buildProcessableBlockHeader();
   }
 
