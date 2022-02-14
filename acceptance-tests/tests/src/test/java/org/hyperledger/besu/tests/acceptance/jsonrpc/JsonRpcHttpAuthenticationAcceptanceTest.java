@@ -50,8 +50,7 @@ public class JsonRpcHttpAuthenticationAcceptanceTest extends AcceptanceTestBase 
           + "c2lvbnMiOlsibmV0OnBlZXJDb3VudCJdfQ.pWXniN6XQ7G8b1nawy8sviPCMxrfbcI6c7UFzeXm26CMGMUEZxiC"
           + "JjRntB8ueuZcsxnGlEhCHt-KngpFEmx5TA";
 
-  private static final List<String> NO_AUTH_API_METHODS =
-      Arrays.asList("net_services", "eth_getWork");
+  private static final List<String> NO_AUTH_API_METHODS = Arrays.asList("net_services");
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
@@ -129,7 +128,6 @@ public class JsonRpcHttpAuthenticationAcceptanceTest extends AcceptanceTestBase 
 
   @Test
   public void noAuthJsonRpcMethodShouldSucceedWithoutToken() {
-    nodeUsingAuthFile.verify(eth.getWorkUnauthorized());
     nodeUsingAuthFileWithNoAuthApi.verify(net.netServicesAllActive());
   }
 
