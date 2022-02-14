@@ -394,6 +394,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   public List<Bytes> getForkIdAsBytesList() {
-    return forkIdManager.getForkIdForChainHead().getForkIdAsBytesList();
+    ForkId chainHeadForkId = forkIdManager.getForkIdForChainHead();
+    return chainHeadForkId == null
+        ? Collections.emptyList()
+        : chainHeadForkId.getForkIdAsBytesList();
   }
 }
