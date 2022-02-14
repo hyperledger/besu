@@ -10,6 +10,7 @@
 - Add a websocket frame size configuration CLI parameter [#3368](https://github.com/hyperledger/besu/pull/3379)
 - Add `--ec-curve` parameter to export/export-address public-key subcommands [#3333](https://github.com/hyperledger/besu/pull/3333)
 - Merge: extend block creation and mining to support The Merge [#3412](https://github.com/hyperledger/besu/pull/3412)
+- Merge: backward sync [#3410](https://github.com/hyperledger/besu/pull/3410)
 
 ### Bug Fixes
 - Prevent node from peering to itself [#3342](https://github.com/hyperledger/besu/pull/3342)
