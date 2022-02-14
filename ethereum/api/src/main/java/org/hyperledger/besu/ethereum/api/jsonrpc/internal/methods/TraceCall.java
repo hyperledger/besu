@@ -64,7 +64,7 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
     this.protocolSchedule = protocolSchedule;
     this.transactionSimulator = transactionSimulator;
 
-    // OpenEthereum does not output the revert reason in the trace, so we have to remove it
+    // The trace_call specification does not output the revert reason, so we have to remove it
     MAPPER_IGNORE_REVERT_REASON.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
   }
 
