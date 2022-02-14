@@ -85,11 +85,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     final Function<BlockHeader, PoWBlockCreator> blockCreator =
         (header) ->
             new PoWBlockCreator(
-                coinbase.orElseGet(
-                    () ->
-                        // TODO: FROMRAYONISM does this still apply to the merge?
-                        //  supply a ZERO coinbase if unspecified AND merge is enabled
-                        MergeOptions.isMergeEnabled() ? Address.ZERO : null),
+                coinbase.orElseGet(() -> MergeOptions.isMergeEnabled() ? Address.ZERO : null),
                 () -> targetGasLimit.map(AtomicLong::longValue),
                 parent -> extraData,
                 pendingTransactions,
