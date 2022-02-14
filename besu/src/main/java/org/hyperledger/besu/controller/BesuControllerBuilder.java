@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -371,7 +372,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             dataDirectory,
             clock,
-            metricsSystem);
+            metricsSystem,
+            getTerminalTotalDifficulty());
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -414,6 +416,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         nodeKey,
         closeables,
         additionalPluginServices);
+  }
+
+  protected Optional<Difficulty> getTerminalTotalDifficulty() {
+    return genesisConfig.getConfigOptions().getTerminalTotalDifficulty().map(Difficulty::of);
   }
 
   protected void prepForBuild() {}

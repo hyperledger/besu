@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastDownloaderFactory;
@@ -66,7 +67,8 @@ public class DefaultSynchronizer implements Synchronizer {
       final SyncState syncState,
       final Path dataDirectory,
       final Clock clock,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Optional<Difficulty> terminalTotalDifficulty) {
     this.maybePruner = maybePruner;
     this.syncState = syncState;
 
@@ -91,7 +93,13 @@ public class DefaultSynchronizer implements Synchronizer {
 
     this.fullSyncDownloader =
         new FullSyncDownloader(
-            syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
+            syncConfig,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            syncState,
+            metricsSystem,
+            terminalTotalDifficulty);
     this.fastSyncDownloader =
         FastDownloaderFactory.create(
             syncConfig,

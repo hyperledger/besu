@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -22,6 +23,8 @@ import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,14 +43,21 @@ public class FullSyncDownloader {
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Optional<Difficulty> terminalTotalDifficulty) {
     this.syncConfig = syncConfig;
     this.protocolContext = protocolContext;
     this.syncState = syncState;
 
     this.chainDownloader =
         FullSyncChainDownloader.create(
-            syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
+            syncConfig,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            syncState,
+            metricsSystem,
+            terminalTotalDifficulty);
   }
 
   public void start() {
