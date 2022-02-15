@@ -1,0 +1,75 @@
+{
+  "comment" : "Transfert ERC20 tokens (with contract created 0xbaaa2a3237035a2c7fa2a33c76b44a8c6fe18e87)",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_call",
+    "params" : [ {
+      "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+      "to" : "0xbaaa2a3237035a2c7fa2a33c76b44a8c6fe18e87",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0x23c346000",
+      "value" : "0x0",
+      "data" : "0xa9059cbb0000000000000000000000000a13aa5589f0dd8dd3bd5055b31add5ca0f2f8e400000000000000000000000000000000000000000000003635c9adc5dea00000",
+      "nonce" : "0x0"
+    }, [ "stateDiff" ], "latest" ],
+    "id" : 44
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18385c0b29e",
+              "to" : "0x393f245bb51ccf29e"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x627306090abab3a6e1400e9345bc60c78a8bef57" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xefffffffffffe28d07a0be63b",
+              "to" : "0xefffffffffffcd498adffa63b"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x17",
+              "to" : "0x18"
+            }
+          },
+          "storage" : { }
+        },
+        "0xbaaa2a3237035a2c7fa2a33c76b44a8c6fe18e87" : {
+          "balance" : "=",
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : {
+            "0x47dfe2af6b00a2aac81c542b40f5676fc0072fa1ce62e1ef260aade0f4b29643" : {
+              "*" : {
+                "from" : "0x00000000000000000000000000000000000000000000003635c9adc5dea00000",
+                "to" : "0x00000000000000000000000000000000000000000000006c6b935b8bbd400000"
+              }
+            },
+            "0xa9312db2f5fb32846f141a1d722f773c1064b8a16a8469d25062d3455a375b5d" : {
+              "*" : {
+                "from" : "0x000000000000000000000000000000000000000000a56f6f83c66bdfe9600000",
+                "to" : "0x000000000000000000000000000000000000000000a56f394dfcbe1a0ac00000"
+              }
+            }
+          }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    },
+    "id" : 44
+  },
+  "statusCode" : 200
+}

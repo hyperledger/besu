@@ -32,6 +32,7 @@ class JsonResponseStreamer extends OutputStream {
   private final SocketAddress remoteAddress;
   private final byte[] singleByteBuf = new byte[1];
   private boolean chunked = false;
+  private boolean closed = false;
   private final AtomicReference<Throwable> failure = new AtomicReference<>();
 
   public JsonResponseStreamer(
@@ -53,7 +54,7 @@ class JsonResponseStreamer extends OutputStream {
 
   @Override
   public void write(final byte[] bbuf, final int off, final int len) throws IOException {
-    stopOnFailure();
+    stopOnFailureOrClosed();
 
     if (!chunked) {
       response.setChunked(true);
@@ -67,10 +68,17 @@ class JsonResponseStreamer extends OutputStream {
 
   @Override
   public void close() throws IOException {
-    response.end();
+    if (!closed) {
+      response.end();
+      closed = true;
+    }
   }
 
-  private void stopOnFailure() throws IOException {
+  private void stopOnFailureOrClosed() throws IOException {
+    if (closed) {
+      throw new IOException("Stream closed");
+    }
+
     Throwable t = failure.get();
     if (t != null) {
       LOG.debug("Stop writing to remote address {} due to a failure", remoteAddress, t);

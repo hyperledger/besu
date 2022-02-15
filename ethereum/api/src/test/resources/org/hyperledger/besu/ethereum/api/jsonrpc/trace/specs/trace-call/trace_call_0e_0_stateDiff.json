@@ -1,0 +1,68 @@
+{
+  "comment" : "Increments contract storage 0 by 1",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_call",
+    "params" : [ {
+      "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+      "to" : "0x0090000000000000000000000000000000000000",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0xef",
+      "value" : "0x0",
+      "nonce" : "0x0"
+    }, [ "stateDiff" ], "latest" ],
+    "id" : 14
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x04",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18385c0b29e",
+              "to" : "0x393f0f18386228af0"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x0090000000000000000000000000000000000000" : {
+          "balance" : "=",
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : {
+            "0x0000000000000000000000000000000000000000000000000000000000000000" : {
+              "*" : {
+                "from" : "0x0000000000000000000000000000000000000000000000000000000000000003",
+                "to" : "0x0000000000000000000000000000000000000000000000000000000000000004"
+              }
+            }
+          }
+        },
+        "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xffffffffffffffffffffffffffffffffd27fb671b",
+              "to" : "0xffffffffffffffffffffffffffffffffd27998ec9"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1e",
+              "to" : "0x1f"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    },
+    "id" : 14
+  },
+  "statusCode" : 200
+}

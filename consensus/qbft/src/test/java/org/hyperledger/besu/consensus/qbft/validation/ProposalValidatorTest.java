@@ -39,6 +39,7 @@ import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
+import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -105,7 +106,7 @@ public class ProposalValidatorTest {
             any(),
             eq(HeaderValidationMode.LIGHT),
             eq(HeaderValidationMode.FULL)))
-        .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
+        .thenReturn(new Result(new BlockProcessingOutputs(null, null)));
 
     roundItems.put(ROUND_ID.ZERO, createRoundSpecificItems(0));
     roundItems.put(ROUND_ID.ONE, createRoundSpecificItems(1));
@@ -157,7 +158,7 @@ public class ProposalValidatorTest {
             any(),
             eq(HeaderValidationMode.LIGHT),
             eq(HeaderValidationMode.FULL)))
-        .thenReturn(Optional.empty());
+        .thenReturn(new Result("Failed"));
 
     assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
   }
