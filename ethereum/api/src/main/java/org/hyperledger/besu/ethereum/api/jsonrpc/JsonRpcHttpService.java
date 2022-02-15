@@ -626,10 +626,9 @@ public class JsonRpcHttpService {
               response.end(EMPTY_RESPONSE);
             } else {
               try {
-                final JsonResponseStreamer jsonResponseStreamer =
-                    new JsonResponseStreamer(response, routingContext.request().remoteAddress());
-                JSON_OBJECT_WRITER.writeValue(jsonResponseStreamer, jsonRpcResponse);
-                jsonResponseStreamer.close();
+                JSON_OBJECT_WRITER.writeValue(
+                    new JsonResponseStreamer(response, routingContext.request().remoteAddress()),
+                    jsonRpcResponse);
               } catch (IOException ex) {
                 LOG.error("Error streaming JSON-RPC response", ex);
               }
@@ -698,10 +697,9 @@ public class JsonRpcHttpService {
                       .toArray(JsonRpcResponse[]::new);
 
               try {
-                final JsonResponseStreamer jsonResponseStreamer =
-                    new JsonResponseStreamer(response, routingContext.request().remoteAddress());
-                JSON_OBJECT_WRITER.writeValue(jsonResponseStreamer, completed);
-                jsonResponseStreamer.close();
+                JSON_OBJECT_WRITER.writeValue(
+                    new JsonResponseStreamer(response, routingContext.request().remoteAddress()),
+                    completed);
               } catch (IOException ex) {
                 LOG.error("Error streaming JSON-RPC response", ex);
               }
