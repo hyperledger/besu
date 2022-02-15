@@ -371,6 +371,7 @@ workflows:
               only:
                 - main
     jobs:
+      - assemble
       - acceptanceTestsQuorum:
           requires:
             - assemble
