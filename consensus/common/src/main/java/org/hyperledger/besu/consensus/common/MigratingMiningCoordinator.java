@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -122,17 +124,33 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
     final long currentBlock = event.getBlock().getHeader().getNumber();
     final MiningCoordinator nextMiningCoordinator =
         miningCoordinatorSchedule.getFork(currentBlock + 1).getValue();
+
     if (activeMiningCoordinator != nextMiningCoordinator) {
       LOG.trace(
           "Migrating mining coordinator at block {} from {} to {}",
           currentBlock,
           activeMiningCoordinator.getClass().getSimpleName(),
           nextMiningCoordinator.getClass().getSimpleName());
-      activeMiningCoordinator.stop();
-      activeMiningCoordinator = nextMiningCoordinator;
-      startActiveMiningCoordinator();
-    }
-    if (activeMiningCoordinator instanceof BlockAddedObserver) {
+
+      final Runnable stopActiveCoordinatorTask = () -> activeMiningCoordinator.stop();
+      final Runnable startNextCoordinatorTask =
+          () -> {
+            activeMiningCoordinator = nextMiningCoordinator;
+            startActiveMiningCoordinator();
+            if (activeMiningCoordinator instanceof BlockAddedObserver) {
+              ((BlockAddedObserver) activeMiningCoordinator).onBlockAdded(event);
+            }
+          };
+
+      try {
+        CompletableFuture.runAsync(stopActiveCoordinatorTask)
+            .thenRun(startNextCoordinatorTask)
+            .get(10, TimeUnit.SECONDS);
+      } catch (Exception e) {
+        throw new IllegalStateException("Could not migrate mining coordinator", e);
+      }
+
+    } else if (activeMiningCoordinator instanceof BlockAddedObserver) {
       ((BlockAddedObserver) activeMiningCoordinator).onBlockAdded(event);
     }
   }
