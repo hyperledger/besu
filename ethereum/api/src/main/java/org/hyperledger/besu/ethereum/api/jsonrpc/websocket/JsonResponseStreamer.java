@@ -32,6 +32,7 @@ class JsonResponseStreamer extends OutputStream {
   private final ServerWebSocket response;
   private final byte[] singleByteBuf = new byte[1];
   private boolean firstFrame = true;
+  private boolean closed = false;
   private Buffer buffer = EMPTY_BUFFER;
   private final AtomicReference<Throwable> failure = new AtomicReference<>();
 
@@ -52,7 +53,7 @@ class JsonResponseStreamer extends OutputStream {
 
   @Override
   public void write(final byte[] bbuf, final int off, final int len) throws IOException {
-    stopOnFailure();
+    stopOnFailureOrClosed();
 
     if (buffer != EMPTY_BUFFER) {
       writeFrame(buffer, false);
@@ -77,13 +78,18 @@ class JsonResponseStreamer extends OutputStream {
 
   @Override
   public void close() throws IOException {
-    // write last buffer only if there were no previous failures
-    if (failure.get() == null) {
+    // write last buffer only if there were no previous failures and not already closed
+    if (!closed && failure.get() == null) {
       writeFrame(buffer, true);
+      closed = true;
     }
   }
 
-  private void stopOnFailure() throws IOException {
+  private void stopOnFailureOrClosed() throws IOException {
+    if (closed) {
+      throw new IOException("Stream closed");
+    }
+
     Throwable t = failure.get();
     if (t != null) {
       LOG.debug("Stop writing to remote address {} due to a failure", response.remoteAddress(), t);
