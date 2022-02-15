@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateAndPublicWorldStateUpdater;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.Gas;
@@ -148,7 +149,8 @@ public class TransactionSimulator {
     if (publicWorldState == null) {
       return Optional.empty();
     }
-    final WorldUpdater updater = getEffectiveWorldStateUpdater(header, publicWorldState);
+    final WorldUpdater updater =
+        getEffectiveWorldStateUpdater(header, publicWorldState, operationTracer);
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
 
@@ -260,7 +262,9 @@ public class TransactionSimulator {
 
   // return combined private/public world state updater if GoQuorum mode, otherwise the public state
   private WorldUpdater getEffectiveWorldStateUpdater(
-      final BlockHeader header, final MutableWorldState publicWorldState) {
+      final BlockHeader header,
+      final MutableWorldState publicWorldState,
+      final OperationTracer operationTracer) {
 
     if (maybePrivacyParameters.isPresent()
         && maybePrivacyParameters.get().getGoQuorumPrivacyParameters().isPresent()) {
@@ -271,7 +275,16 @@ public class TransactionSimulator {
       return new GoQuorumMutablePrivateAndPublicWorldStateUpdater(
           publicWorldState.updater(), privateWorldState.updater());
     }
-    return publicWorldState.updater();
+
+    final WorldUpdater updater = publicWorldState.updater();
+
+    // in order to trace the state diff we need to make sure that
+    // the world updater always has a parent
+    if (operationTracer instanceof DebugOperationTracer) {
+      return updater.parentUpdater().isPresent() ? updater : updater.updater();
+    }
+
+    return updater;
   }
 
   public Optional<Boolean> doesAddressExistAtHead(final Address address) {
