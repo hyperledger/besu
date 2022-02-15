@@ -80,12 +80,12 @@ public class JsonRpcConfigurationTest {
   public void settingNoAuthRpcApisShouldOverridePreviousValues() {
     final JsonRpcConfiguration configuration = JsonRpcConfiguration.createDefault();
 
-    configuration.setNoAtuhRpcApis(
+    configuration.setNoAuthRpcApis(
         Lists.newArrayList(RpcMethod.ADMIN_ADD_PEER.name(), RpcMethod.ADMIN_PEERS.name()));
     assertThat(configuration.getNoAuthRpcApis())
         .containsExactly(RpcMethod.ADMIN_ADD_PEER.name(), RpcMethod.ADMIN_PEERS.name());
 
-    configuration.setNoAtuhRpcApis(Lists.newArrayList(RpcMethod.MINER_SET_COINBASE.name()));
+    configuration.setNoAuthRpcApis(Lists.newArrayList(RpcMethod.MINER_SET_COINBASE.name()));
     assertThat(configuration.getNoAuthRpcApis())
         .containsExactly(RpcMethod.MINER_SET_COINBASE.name());
   }

@@ -117,7 +117,6 @@ public class JsonRpcHttpAuthenticationAcceptanceTest extends AcceptanceTestBase 
             permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     nodeUsingAuthFileWithNoAuthApi.useAuthenticationTokenInHeaderForJsonRpc(token);
     nodeUsingAuthFileWithNoAuthApi.verify(net.netVersionUnauthorized());
-    nodeUsingAuthFileWithNoAuthApi.verify(net.netServicesUnauthorized());
   }
 
   @Test

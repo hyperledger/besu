@@ -176,7 +176,7 @@ public class BesuNodeConfigurationBuilder {
 
     this.jsonRpcConfiguration.setAuthenticationEnabled(true);
     this.jsonRpcConfiguration.setAuthenticationCredentialsFile(authTomlPath);
-    this.jsonRpcConfiguration.setNoAtuhRpcApis(apiMethods);
+    this.jsonRpcConfiguration.setNoAuthRpcApis(apiMethods);
 
     return this;
   }
