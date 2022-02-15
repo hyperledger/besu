@@ -64,7 +64,12 @@ public class DownloadHeadersStep
   public CompletableFuture<CheckpointRangeHeaders> apply(final CheckpointRange checkpointRange) {
     final CompletableFuture<List<BlockHeader>> taskFuture = downloadHeaders(checkpointRange);
     final CompletableFuture<CheckpointRangeHeaders> processedFuture =
-        taskFuture.thenApply(headers -> processHeaders(checkpointRange, headers));
+        FutureUtils.exceptionallyCompose(
+            taskFuture.thenApply(headers -> processHeaders(checkpointRange, headers)),
+            ex -> {
+              LOG.debug(ex.getMessage(), ex);
+              return CompletableFuture.failedFuture(ex);
+            });
     FutureUtils.propagateCancellation(processedFuture, taskFuture);
     return processedFuture;
   }
@@ -114,6 +119,8 @@ public class DownloadHeadersStep
       List<BlockHeader> headersToImport = headers;
       if (!headers.isEmpty() && headers.get(0).equals(checkpointRange.getStart())) {
         headersToImport = headers.subList(1, headers.size());
+      } else if (headers.isEmpty()) {
+        throw new RuntimeException("Import failed. Must have at least one header to import");
       }
       return new CheckpointRangeHeaders(checkpointRange, headersToImport);
     }

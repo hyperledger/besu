@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.List;
@@ -29,7 +27,6 @@ public class CheckpointRangeHeaders {
 
   public CheckpointRangeHeaders(
       final CheckpointRange checkpointRange, final List<BlockHeader> headersToImport) {
-    checkArgument(!headersToImport.isEmpty(), "Must have at least one header to import");
     this.checkpointRange = checkpointRange;
     this.headersToImport = headersToImport;
   }
