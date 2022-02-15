@@ -156,7 +156,9 @@ jobs:
           command: |
             for FILE in $(ls docker)
             do
-              if [[FILE == "test.sh"]]; then continue
+              if [[ $FILE == "test.sh" || $FILE == "tests" ]]; then
+                continue
+              fi
               docker pull -q "hyperledger/besu:develop-$FILE"
               trivy -q image --exit-code 1 --no-progress --severity HIGH,CRITICAL "hyperledger/besu:develop-$FILE"
             done
