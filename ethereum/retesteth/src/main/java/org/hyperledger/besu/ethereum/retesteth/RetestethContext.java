@@ -20,6 +20,7 @@ import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -206,7 +207,7 @@ public class RetestethContext {
             retestethClock,
             metricsSystem,
             syncState,
-            new MiningParameters.Builder().build(),
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             transactionPoolConfiguration);
 
     if (LOG.isTraceEnabled()) {

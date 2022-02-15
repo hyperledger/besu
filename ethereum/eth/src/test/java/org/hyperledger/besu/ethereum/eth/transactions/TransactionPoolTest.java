@@ -1010,7 +1010,7 @@ public class TransactionPoolTest {
   }
 
   @Test
-  public void shouldRejectZeroGasPriceFrontierTransactions() {
+  public void shouldRejectZeroGasPriceFrontierTransactionsWhenNotMining() {
     when(miningParameters.isMiningEnabled()).thenReturn(false);
 
     final Transaction transaction =

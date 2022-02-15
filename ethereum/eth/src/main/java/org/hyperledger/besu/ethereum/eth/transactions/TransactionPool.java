@@ -135,7 +135,9 @@ public class TransactionPool implements BlockAddedObserver {
     final ValidationResult<TransactionInvalidReason> validationResult =
         validateLocalTransaction(transaction);
     if (validationResult.isValid()) {
-      if (!miningParameters.isMiningEnabled() && zeroGasPriceFrontierTransaction(transaction)) {
+      if (!miningParameters.isMiningEnabled()
+          && transaction.getType() == TransactionType.FRONTIER
+          && gasPriceIsLessThanMinGasPrice(transaction)) {
         return ValidationResult.invalid(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
       }
       if (!configuration.getTxFeeCap().isZero()
@@ -156,12 +158,11 @@ public class TransactionPool implements BlockAddedObserver {
     return validationResult;
   }
 
-  private boolean zeroGasPriceFrontierTransaction(final Transaction transaction) {
-    return transaction.getType() == TransactionType.FRONTIER
-        && transaction
-            .getGasPrice()
-            .map(g -> g.lessThan(miningParameters.getMinTransactionGasPrice()))
-            .orElse(false);
+  private boolean gasPriceIsLessThanMinGasPrice(final Transaction transaction) {
+    return transaction
+        .getGasPrice()
+        .map(g -> g.lessThan(miningParameters.getMinTransactionGasPrice()))
+        .orElse(false);
   }
 
   public void addRemoteTransactions(final Collection<Transaction> transactions) {
