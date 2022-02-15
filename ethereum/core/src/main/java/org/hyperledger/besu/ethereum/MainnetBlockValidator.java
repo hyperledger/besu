@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
-import org.hyperledger.besu.ethereum.mainnet.BlockProcessor.Result;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.ArrayList;
@@ -64,64 +63,56 @@ public class MainnetBlockValidator implements BlockValidator {
    *     the block, empty if the block was deemed invalid or couldn't be processed
    */
   @Override
-  public Optional<BlockProcessingOutputs> validateAndProcessBlock(
+  public BlockValidator.Result validateAndProcessBlock(
       final ProtocolContext context,
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
+
     final BlockHeader header = block.getHeader();
 
     final MutableBlockchain blockchain = context.getBlockchain();
     final Optional<BlockHeader> maybeParentHeader =
         blockchain.getBlockHeader(header.getParentHash());
     if (maybeParentHeader.isEmpty()) {
-      LOG.error(
-          "Attempted to import block {} with hash {} but parent block {} was not present",
-          header.getNumber(),
-          header.getHash(),
-          header.getParentHash());
-      badBlockManager.addBadBlock(block);
-      return Optional.empty();
+      return handleAndReportFailure(
+          block, "Parent block with hash " + header.getParentHash() + " not present");
     }
     final BlockHeader parentHeader = maybeParentHeader.get();
 
     if (!blockHeaderValidator.validateHeader(header, parentHeader, context, headerValidationMode)) {
-      badBlockManager.addBadBlock(block);
-      return Optional.empty();
+      return handleAndReportFailure(block, "Invalid block header");
     }
 
     final Optional<MutableWorldState> maybeWorldState =
         context
             .getWorldStateArchive()
             .getMutable(parentHeader.getStateRoot(), parentHeader.getHash());
-    if (!maybeWorldState.isPresent()) {
-      LOG.debug(
-          "Unable to process block {} because parent world state {} is not available",
-          block.getHeader().getNumber(),
-          parentHeader.getStateRoot());
-      badBlockManager.addBadBlock(block);
-      return Optional.empty();
+    if (maybeWorldState.isEmpty()) {
+      return handleAndReportFailure(
+          block,
+          "Unable to process block because parent world state "
+              + parentHeader.getStateRoot()
+              + " is not available");
     }
     final MutableWorldState worldState = maybeWorldState.get();
 
-    final Result result = processBlock(context, worldState, block);
+    final BlockProcessor.Result result = processBlock(context, worldState, block);
     if (result.isFailed()) {
-      badBlockManager.addBadBlock(block);
-      return Optional.empty();
+      return handleAndReportFailure(block, "Error processing block");
     }
 
     List<TransactionReceipt> receipts = result.getReceipts();
     if (!blockBodyValidator.validateBody(
         context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
-      badBlockManager.addBadBlock(block);
-      return Optional.empty();
+      return handleAndReportFailure(block, "Block body not valid");
     }
 
     if (!result.getPrivateReceipts().isEmpty()) {
       // replace the public receipts for marker transactions with the private receipts if we are in
       // goQuorumCompatibilityMode. That can be done now because we have validated the block.
       final List<TransactionReceipt> privateTransactionReceipts = result.getPrivateReceipts();
-      final ArrayList<TransactionReceipt> resultingList = new ArrayList<>();
+      final ArrayList<TransactionReceipt> resultingList = new ArrayList<>(receipts.size());
       for (int i = 0; i < receipts.size(); i++) {
         if (privateTransactionReceipts.get(i) != null) {
           resultingList.add(privateTransactionReceipts.get(i));
@@ -132,7 +123,13 @@ public class MainnetBlockValidator implements BlockValidator {
       receipts = Collections.unmodifiableList(resultingList);
     }
 
-    return Optional.of(new BlockProcessingOutputs(worldState, receipts));
+    return new Result(new BlockProcessingOutputs(worldState, receipts));
+  }
+
+  private Result handleAndReportFailure(final Block invalidBlock, final String reason) {
+    badBlockManager.addBadBlock(invalidBlock);
+    LOG.error("{}. Block {}", reason, invalidBlock.toLogString());
+    return new Result(reason);
   }
 
   /**
@@ -143,7 +140,7 @@ public class MainnetBlockValidator implements BlockValidator {
    * @param block the block to be processed
    * @return the result of processing the block
    */
-  protected Result processBlock(
+  protected BlockProcessor.Result processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
 
     return blockProcessor.processBlock(context.getBlockchain(), worldState, block);

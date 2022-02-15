@@ -110,7 +110,7 @@ public class ForwardSyncStep extends BackwardSyncTask {
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE);
 
-    optResult.ifPresent(
+    optResult.blockProcessingOutputs.ifPresent(
         result -> {
           debugLambda(
               LOG,
