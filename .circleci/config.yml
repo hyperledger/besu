@@ -331,9 +331,6 @@ workflows:
       - acceptanceTests:
           requires:
             - assemble
-      - acceptanceTestsQuorum:
-          requires:
-            - assemble
       - buildDocker:
           requires:
             - assemble
@@ -376,4 +373,7 @@ workflows:
               only:
                 - main
     jobs:
+      - acceptanceTestsQuorum:
+          requires:
+            - assemble
       - dockerScan
