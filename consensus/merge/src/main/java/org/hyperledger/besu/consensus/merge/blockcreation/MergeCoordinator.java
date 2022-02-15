@@ -287,7 +287,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
                         newHead.getBlockHash(), finalized.getBlockHash()));
 
     if (descendantError.isPresent()) {
-      return descendantError.map(error -> ForkchoiceResult.withFailure(error)).get();
+      return ForkchoiceResult.withFailure(descendantError.get());
     }
 
     // set the new head
