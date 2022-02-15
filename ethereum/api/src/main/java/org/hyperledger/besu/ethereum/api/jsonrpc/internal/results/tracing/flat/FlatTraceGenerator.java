@@ -222,11 +222,23 @@ public class FlatTraceGenerator {
       final Block block,
       final AtomicInteger traceCounter) {
     return generateFromTransactionTrace(
+        protocolSchedule, transactionTrace, block, traceCounter, true);
+  }
+
+  public static Stream<Trace> generateFromTransactionTrace(
+      final ProtocolSchedule protocolSchedule,
+      final TransactionTrace transactionTrace,
+      final Block block,
+      final AtomicInteger traceCounter,
+      final boolean includeCreationMethod) {
+    return generateFromTransactionTrace(
         protocolSchedule,
         transactionTrace,
         block,
         traceCounter,
-        builder -> addContractCreationMethodToTrace(transactionTrace, builder));
+        includeCreationMethod
+            ? builder -> addContractCreationMethodToTrace(transactionTrace, builder)
+            : builder -> {});
   }
 
   /**
