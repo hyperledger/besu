@@ -269,7 +269,7 @@ public class MainnetTransactionProcessor {
       // compare against a sender account (because the transaction may not
       // be signed correctly to extract the sender).
       if (!validationResult.isValid()) {
-        LOG.warn("Invalid transaction: {}", validationResult.getErrorMessage());
+        LOG.debug("Invalid transaction: {}", validationResult.getErrorMessage());
         return TransactionProcessingResult.invalid(validationResult);
       }
 
