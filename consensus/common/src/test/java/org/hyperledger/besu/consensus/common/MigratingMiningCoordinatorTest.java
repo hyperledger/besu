@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.common;
 
 import static java.util.Collections.emptyList;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.ethereum.core.BlockHeader.GENESIS_BLOCK_NUMBER;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -37,7 +38,10 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -122,31 +126,6 @@ public class MigratingMiningCoordinatorTest {
   }
 
   @Test
-  public void onBlockAddedShouldMigrateToNextDelegateAndRemoveItAsObserver() {
-    final BftMiningCoordinator delegateCoordinator = createDelegateCoordinator();
-    when(blockHeader.getNumber()).thenReturn(MIGRATION_BLOCK_NUMBER - 1);
-    when(blockchain.observeBlockAdded(delegateCoordinator)).thenReturn(2L);
-
-    new MigratingMiningCoordinator(
-            createCoordinatorSchedule(coordinator1, delegateCoordinator), blockchain)
-        .onBlockAdded(blockEvent);
-
-    verify(blockchain).observeBlockAdded(delegateCoordinator);
-    verify(blockchain).removeObserver(2L);
-  }
-
-  @Test
-  public void onBlockAddedShouldMigrateToNextMiningCoordinatorAndDelegate() {
-    when(blockHeader.getNumber()).thenReturn(MIGRATION_BLOCK_NUMBER - 1);
-
-    new MigratingMiningCoordinator(coordinatorSchedule, blockchain).onBlockAdded(blockEvent);
-
-    verify(coordinator1).stop();
-    verify(coordinator2).start();
-    verify(coordinator2).onBlockAdded(blockEvent);
-  }
-
-  @Test
   public void onBlockAddedShouldNotDelegateWhenDelegateIsNoop() {
     NoopMiningCoordinator mockNoopCoordinator = mock(NoopMiningCoordinator.class);
     coordinatorSchedule = createCoordinatorSchedule(mockNoopCoordinator, coordinator2);
@@ -155,6 +134,71 @@ public class MigratingMiningCoordinatorTest {
     new MigratingMiningCoordinator(coordinatorSchedule, blockchain).onBlockAdded(blockEvent);
 
     verifyNoInteractions(mockNoopCoordinator);
+  }
+
+  @Test
+  public void onBlockAddedShouldStartNextCoordinatorAfterWaitingForActiveCoordinatorToStop()
+      throws InterruptedException {
+    when(blockHeader.getNumber()).thenReturn(MIGRATION_BLOCK_NUMBER - 1);
+
+    // use latches to ensure both tasks complete and stopTask is completed before startTask
+    CountDownLatch stopTaskLatch = new CountDownLatch(1);
+    CountDownLatch startTaskLatch = new CountDownLatch(1);
+
+    Runnable stopTask = stopTaskLatch::countDown;
+    Function<MiningCoordinator, Runnable> createStartTask =
+        (mc) ->
+            () -> {
+              try {
+                boolean taskCompleted = stopTaskLatch.await(10, TimeUnit.MILLISECONDS);
+                if (taskCompleted) {
+                  startTaskLatch.countDown();
+                }
+              } catch (InterruptedException e) {
+                throw new AssertionError(e);
+              }
+            };
+
+    new MigratingMiningCoordinator(coordinatorSchedule, blockchain)
+        .onBlockAdded(blockEvent, stopTask, createStartTask);
+
+    assertThat(startTaskLatch.await(10, TimeUnit.MILLISECONDS)).isTrue();
+  }
+
+  @Test
+  public void stopActiveCoordinator() {
+    new MigratingMiningCoordinator(coordinatorSchedule, blockchain).stopActiveCoordinator();
+
+    verify(coordinator1).stop();
+  }
+
+  @Test
+  public void startNextCoordinator() {
+    final MigratingMiningCoordinator migratingCoordinator =
+        new MigratingMiningCoordinator(coordinatorSchedule, blockchain);
+
+    migratingCoordinator.startNextCoordinator(coordinator2, blockEvent);
+
+    verify(coordinator2).start();
+    verify(coordinator2).onBlockAdded(blockEvent);
+
+    // ensure next mining coordinator was assigned to activeMiningCoordinator
+    migratingCoordinator.enable();
+    verify(coordinator2).enable();
+    verifyNoInteractions(coordinator1);
+  }
+
+  @Test
+  public void startNextCoordinatorShouldRemoveActiveDelegateAsObserver() {
+    final BftMiningCoordinator delegateCoordinator = createDelegateCoordinator();
+    when(blockchain.observeBlockAdded(delegateCoordinator)).thenReturn(2L);
+
+    new MigratingMiningCoordinator(
+            createCoordinatorSchedule(coordinator1, delegateCoordinator), blockchain)
+        .startNextCoordinator(delegateCoordinator, blockEvent);
+
+    verify(blockchain).observeBlockAdded(delegateCoordinator);
+    verify(blockchain).removeObserver(2L);
   }
 
   @Test

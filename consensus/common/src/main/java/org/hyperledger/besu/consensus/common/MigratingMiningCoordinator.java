@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -119,20 +121,50 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
+
+    Function<MiningCoordinator, Runnable> createStartNextCoordinatorTask =
+        (MiningCoordinator nextCoordinator) -> () -> startNextCoordinator(nextCoordinator, event);
+
+    onBlockAdded(event, this::stopActiveCoordinator, createStartNextCoordinatorTask);
+  }
+
+  @VisibleForTesting
+  void stopActiveCoordinator() {
+    activeMiningCoordinator.stop();
+  }
+
+  @VisibleForTesting
+  void startNextCoordinator(
+      final MiningCoordinator nextMiningCoordinator, final BlockAddedEvent event) {
+    activeMiningCoordinator = nextMiningCoordinator;
+
+    startActiveMiningCoordinator();
+
+    if (activeMiningCoordinator instanceof BlockAddedObserver) {
+      ((BlockAddedObserver) activeMiningCoordinator).onBlockAdded(event);
+    }
+  }
+
+  @VisibleForTesting
+  void onBlockAdded(
+      final BlockAddedEvent event,
+      final Runnable stopActiveCoordinatorTask,
+      final Function<MiningCoordinator, Runnable> createStartTask) {
     final long currentBlock = event.getBlock().getHeader().getNumber();
     final MiningCoordinator nextMiningCoordinator =
         miningCoordinatorSchedule.getFork(currentBlock + 1).getValue();
+
     if (activeMiningCoordinator != nextMiningCoordinator) {
       LOG.trace(
           "Migrating mining coordinator at block {} from {} to {}",
           currentBlock,
           activeMiningCoordinator.getClass().getSimpleName(),
           nextMiningCoordinator.getClass().getSimpleName());
-      activeMiningCoordinator.stop();
-      activeMiningCoordinator = nextMiningCoordinator;
-      startActiveMiningCoordinator();
-    }
-    if (activeMiningCoordinator instanceof BlockAddedObserver) {
+
+      final Runnable startNextCoordinatorTask = createStartTask.apply(nextMiningCoordinator);
+      CompletableFuture.runAsync(stopActiveCoordinatorTask).thenRun(startNextCoordinatorTask);
+
+    } else if (activeMiningCoordinator instanceof BlockAddedObserver) {
       ((BlockAddedObserver) activeMiningCoordinator).onBlockAdded(event);
     }
   }
