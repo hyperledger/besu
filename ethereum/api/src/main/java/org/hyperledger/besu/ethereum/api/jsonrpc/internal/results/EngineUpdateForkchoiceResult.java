@@ -15,9 +15,16 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_TERMINAL_BLOCK;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus;
 
+import java.util.EnumSet;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -25,13 +32,21 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"payloadStatus", "payloadId"})
-public class EngineUpdateForkChoiceResult {
+public class EngineUpdateForkchoiceResult {
   private final EnginePayloadStatusResult payloadStatus;
   private final PayloadIdentifier payloadId;
+  static final EnumSet<EngineStatus> FORK_CHOICE_ENGINE_STATUS =
+      EnumSet.of(VALID, INVALID, SYNCING, INVALID_TERMINAL_BLOCK);
 
-  public EngineUpdateForkChoiceResult(
-      final EnginePayloadStatusResult payloadStatus, final PayloadIdentifier payloadId) {
-    this.payloadStatus = payloadStatus;
+  public EngineUpdateForkchoiceResult(
+      final EngineStatus status, final Hash latestValidHash, final PayloadIdentifier payloadId) {
+
+    if (!FORK_CHOICE_ENGINE_STATUS.contains(status)) {
+      throw new IllegalStateException(
+          String.format("Invalid status response %s for EngineForkChoiceResult", status.name()));
+    }
+
+    this.payloadStatus = new EnginePayloadStatusResult(status, latestValidHash, null);
     this.payloadId = payloadId;
   }
 

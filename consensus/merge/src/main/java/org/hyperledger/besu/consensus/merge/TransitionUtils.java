@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
+
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -69,10 +71,11 @@ public abstract class TransitionUtils<SwitchingObject> {
             .orElse(Difficulty.ZERO);
 
     if (currentChainTotalDifficulty.isZero()) {
-      LOG.warn(
+      warnLambda(
+          LOG,
           "unable to get total difficulty for {}, parent hash {} difficulty not found",
-          header.toLogString(),
-          header.getParentHash());
+          () -> header.toLogString(),
+          () -> header.getParentHash());
     }
     Difficulty configuredTotalTerminalDifficulty =
         context.getConsensusContext(MergeContext.class).getTerminalTotalDifficulty();
@@ -87,12 +90,8 @@ public abstract class TransitionUtils<SwitchingObject> {
       return true;
     }
 
-    // return true for genesis block when merge-at-genesis
-    if (header.getNumber() == 0L
-        && header.getDifficulty().greaterOrEqualThan(configuredTotalTerminalDifficulty)) {
-      return true;
-    }
-    // otherwise false
-    return false;
+    // return true for genesis block when merge-at-genesis, otherwise false
+    return header.getNumber() == 0L
+        && header.getDifficulty().greaterOrEqualThan(configuredTotalTerminalDifficulty);
   }
 }
