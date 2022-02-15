@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ForkChoiceStatus;
 
 import java.util.Optional;
 
@@ -25,20 +24,20 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"status", "payloadId"})
+@JsonPropertyOrder({"payloadStatus", "payloadId"})
 public class EngineUpdateForkChoiceResult {
-  private final ForkChoiceStatus status;
+  private final EnginePayloadStatusResult payloadStatus;
   private final PayloadIdentifier payloadId;
 
   public EngineUpdateForkChoiceResult(
-      final ForkChoiceStatus status, final PayloadIdentifier payloadId) {
-    this.status = status;
+      final EnginePayloadStatusResult payloadStatus, final PayloadIdentifier payloadId) {
+    this.payloadStatus = payloadStatus;
     this.payloadId = payloadId;
   }
 
-  @JsonGetter(value = "status")
-  public String getStatus() {
-    return status.name();
+  @JsonGetter(value = "payloadStatus")
+  public EnginePayloadStatusResult getPayloadStatus() {
+    return payloadStatus;
   }
 
   @JsonGetter(value = "payloadId")

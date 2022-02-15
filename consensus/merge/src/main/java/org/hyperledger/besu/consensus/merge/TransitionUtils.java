@@ -57,27 +57,42 @@ public abstract class TransitionUtils<SwitchingObject> {
 
   public static boolean isTerminalProofOfWorkBlock(
       final BlockHeader header, final ProtocolContext context) {
-    Optional<Difficulty> currentChainTotalDifficulty =
-        context.getBlockchain().getTotalDifficultyByHash(header.getParentHash());
+
+    Difficulty headerDifficulty =
+        Optional.ofNullable(header.getDifficulty()).orElse(Difficulty.ZERO);
+
+    Difficulty currentChainTotalDifficulty =
+        context
+            .getBlockchain()
+            .getTotalDifficultyByHash(header.getParentHash())
+            // if we cannot find difficulty or are merge-at-genesis
+            .orElse(Difficulty.ZERO);
+
+    if (currentChainTotalDifficulty.isZero()) {
+      LOG.warn(
+          "unable to get total difficulty for {}, parent hash {} difficulty not found",
+          header.toLogString(),
+          header.getParentHash());
+    }
     Difficulty configuredTotalTerminalDifficulty =
         context.getConsensusContext(MergeContext.class).getTerminalTotalDifficulty();
 
-    if (currentChainTotalDifficulty.isEmpty()) {
-      LOG.warn("unable to get total difficulty, parent {} not found", header.getParentHash());
-      return false;
-    }
     if (currentChainTotalDifficulty
-            .get()
-            .add(header.getDifficulty() == null ? Difficulty.ZERO : header.getDifficulty())
+            .add(headerDifficulty)
             .greaterOrEqualThan(
                 configuredTotalTerminalDifficulty) // adding would equal or go over limit
-        && currentChainTotalDifficulty
-            .get()
-            .lessThan(configuredTotalTerminalDifficulty) // parent was under
+        && currentChainTotalDifficulty.lessThan(
+            configuredTotalTerminalDifficulty) // parent was under
     ) {
       return true;
-    } else {
-      return false;
     }
+
+    // return true for genesis block when merge-at-genesis
+    if (header.getNumber() == 0L
+        && header.getDifficulty().greaterOrEqualThan(configuredTotalTerminalDifficulty)) {
+      return true;
+    }
+    // otherwise false
+    return false;
   }
 }

@@ -56,6 +56,7 @@ public class NoDifficultyValidationTest {
 
     final BlockHeader invalidHeader = mock(BlockHeader.class);
     when(invalidHeader.getDifficulty()).thenReturn(Difficulty.of(10));
+    when(invalidHeader.getNumber()).thenReturn(1337L);
     assertThat(rule.validate(invalidHeader, parentHeader, protocolContext)).isFalse();
 
     final BlockHeader validHeader = mock(BlockHeader.class);

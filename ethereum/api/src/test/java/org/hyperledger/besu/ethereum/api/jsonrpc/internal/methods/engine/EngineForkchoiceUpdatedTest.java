@@ -87,7 +87,8 @@ public class EngineForkchoiceUpdatedTest {
     var resp =
         resp(new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash), Optional.empty());
     var res = fromSuccessResp(resp);
-    assertThat(res.getStatus()).isEqualTo(JsonRpcError.INVALID_TERMINAL_BLOCK.name());
+    assertThat(res.getPayloadStatus().getStatus())
+        .isEqualTo(JsonRpcError.INVALID_TERMINAL_BLOCK.name());
     assertThat(res.getPayloadId()).isNull();
   }
 

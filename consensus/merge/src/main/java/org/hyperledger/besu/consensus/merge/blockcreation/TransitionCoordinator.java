@@ -128,8 +128,9 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
-    mergeCoordinator.updateForkChoice(headBlockHash, finalizedBlockHash);
+  public ForkchoiceResult updateForkChoice(
+      final Hash headBlockHash, final Hash finalizedBlockHash) {
+    return mergeCoordinator.updateForkChoice(headBlockHash, finalizedBlockHash);
   }
 
   @Override
