@@ -344,7 +344,6 @@ workflows:
             - integrationTests
             - unitTests
             - acceptanceTests
-            - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
       - publishDocker:
@@ -357,7 +356,6 @@ workflows:
             - integrationTests
             - unitTests
             - acceptanceTests
-            - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
           context:
