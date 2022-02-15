@@ -55,6 +55,10 @@ public class TransactionSimulatorResult {
     return result;
   }
 
+  public Transaction getTransaction() {
+    return transaction;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {

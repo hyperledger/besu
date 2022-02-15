@@ -85,7 +85,7 @@ public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
     final Hash transactionHash =
         minerNode.execute(accountTransactions.createTransfer(recipient, 5, new SECP256R1()));
     assertThat(transactionHash).isNotNull();
-    cluster.verify(recipient.balanceEquals(5));
+    noDiscoveryCluster.verify(recipient.balanceEquals(5));
   }
 
   @Override
