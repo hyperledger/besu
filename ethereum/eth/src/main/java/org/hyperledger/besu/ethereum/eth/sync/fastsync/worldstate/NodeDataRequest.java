@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
@@ -76,45 +75,6 @@ public abstract class NodeDataRequest implements TasksPriorityProvider {
 
   public static Bytes serialize(final NodeDataRequest request) {
     return RLP.encode(request::writeTo);
-  }
-
-  public static NodeDataRequest deserialize(final Bytes encoded) {
-    final RLPInput in = RLP.input(encoded);
-    in.enterList();
-    final RequestType requestType = RequestType.fromValue(in.readByte());
-    final Hash hash = Hash.wrap(in.readBytes32());
-
-    final Optional<Hash> accountHash;
-    final Optional<Bytes> location;
-
-    try {
-      final NodeDataRequest deserialized;
-      switch (requestType) {
-        case ACCOUNT_TRIE_NODE:
-          location = Optional.of((!in.isEndOfCurrentList()) ? in.readBytes() : Bytes.EMPTY);
-          deserialized = createAccountDataRequest(hash, location);
-          break;
-        case STORAGE_TRIE_NODE:
-          accountHash =
-              Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.wrap(in.readBytes32()) : null);
-          location = Optional.ofNullable((!in.isEndOfCurrentList()) ? in.readBytes() : Bytes.EMPTY);
-          deserialized = createStorageDataRequest(hash, accountHash, location);
-          break;
-        case CODE:
-          accountHash =
-              Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.wrap(in.readBytes32()) : null);
-          deserialized = createCodeRequest(hash, accountHash);
-          break;
-        default:
-          throw new IllegalArgumentException(
-              "Unable to deserialize provided data into a valid "
-                  + NodeDataRequest.class.getSimpleName());
-      }
-
-      return deserialized;
-    } finally {
-      in.leaveList();
-    }
   }
 
   public RequestType getRequestType() {
