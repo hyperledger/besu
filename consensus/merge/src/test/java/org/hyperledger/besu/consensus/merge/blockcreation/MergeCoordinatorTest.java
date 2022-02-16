@@ -345,8 +345,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Test
   public void assertMergeAtGenesisSatisifiesTerminalPoW() {
     var mockConsensusContext = mock(MergeContext.class);
-    when(mockConsensusContext.getTerminalTotalDifficulty()).
-        thenReturn(Difficulty.of(1337L));
+    when(mockConsensusContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(1337L));
     var mockBlockchain = mock(MutableBlockchain.class);
     when(mockBlockchain.getTotalDifficultyByHash(any(Hash.class)))
         .thenReturn(Optional.of(Difficulty.of(1337L)));
@@ -357,41 +356,33 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     var mockHeaderBuilder = new BlockHeaderTestFixture();
 
-    MergeCoordinator mockCoordinator = new MergeCoordinator(
-        mockProtocolContext,
-        mockProtocolSchedule,
-        mockSorter,
-        new MiningParameters.Builder().coinbase(coinbase).build(),
-        mock(BackwardsSyncContext.class));
-
+    MergeCoordinator mockCoordinator =
+        new MergeCoordinator(
+            mockProtocolContext,
+            mockProtocolSchedule,
+            mockSorter,
+            new MiningParameters.Builder().coinbase(coinbase).build(),
+            mock(BackwardsSyncContext.class));
 
     var blockZero = mockHeaderBuilder.number(0L).buildHeader();
-    var blockOne = mockHeaderBuilder
-        .number(1L)
-        .parentHash(blockZero.getHash())
-        .buildHeader();
+    var blockOne = mockHeaderBuilder.number(1L).parentHash(blockZero.getHash()).buildHeader();
 
     // assert total difficulty found for block 1 return true if post-merge
-    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockOne))
-    .isTrue();
+    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockOne)).isTrue();
     // change mock behavior to not find TTD for block 1 and defer to parent
     when(mockBlockchain.getTotalDifficultyByHash(blockOne.getBlockHash()))
         .thenReturn(Optional.empty());
     // assert total difficulty NOT found for block 1 returns true if parent is post-merge
-    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockOne))
-        .isTrue();
+    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockOne)).isTrue();
     // assert true if we send in a merge-at-genesis block
-    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockZero))
-        .isTrue();
+    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockZero)).isTrue();
 
     // change mock TTD so that neither block satisfies TTD condition:
     when(mockConsensusContext.getTerminalTotalDifficulty())
         .thenReturn(Difficulty.of(UInt256.fromHexString("0xdeadbeef")));
-    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockOne))
-        .isFalse();
+    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockOne)).isFalse();
     // assert true if we send in a merge-at-genesis block
-    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockZero))
-        .isFalse();
+    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockZero)).isFalse();
   }
 
   private BlockHeader terminalPowBlock() {
