@@ -36,7 +36,7 @@ public class AuthenticationUtils {
       final Optional<AuthenticationService> authenticationService,
       final Optional<User> optionalUser,
       final JsonRpcMethod jsonRpcMethod) {
-    return isPermitted(authenticationService, optionalUser, jsonRpcMethod, null);
+    return isPermitted(authenticationService, optionalUser, jsonRpcMethod, Collections.emptyList());
   }
 
   @VisibleForTesting
@@ -54,8 +54,7 @@ public class AuthenticationUtils {
     }
 
     // if the method is configured as a no auth method we skip permission check
-    if (Optional.ofNullable(noAuthMethods).orElse(Collections.emptyList()).stream()
-        .anyMatch(m -> m.equals(jsonRpcMethod.getName()))) {
+    if (noAuthMethods.stream().anyMatch(m -> m.equals(jsonRpcMethod.getName()))) {
       return true;
     }
 

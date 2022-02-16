@@ -170,13 +170,13 @@ public class BesuNodeConfigurationBuilder {
   }
 
   public BesuNodeConfigurationBuilder jsonRpcAuthenticationConfiguration(
-      final String authFile, final List<String> apiMethods) throws URISyntaxException {
+      final String authFile, final List<String> noAuthApiMethods) throws URISyntaxException {
     final String authTomlPath =
         Paths.get(ClassLoader.getSystemResource(authFile).toURI()).toAbsolutePath().toString();
 
     this.jsonRpcConfiguration.setAuthenticationEnabled(true);
     this.jsonRpcConfiguration.setAuthenticationCredentialsFile(authTomlPath);
-    this.jsonRpcConfiguration.setNoAuthRpcApis(apiMethods);
+    this.jsonRpcConfiguration.setNoAuthRpcApis(noAuthApiMethods);
 
     return this;
   }

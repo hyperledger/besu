@@ -1668,9 +1668,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     final boolean validHttpApiMethods =
-        rpcHttpApiMethodsNoAuth.stream()
-            .map(RpcMethod::rpcMethodExists)
-            .reduce(true, (a, c) -> a && c);
+        rpcHttpApiMethodsNoAuth.stream().allMatch(RpcMethod::rpcMethodExists);
 
     if (!validHttpApiMethods) {
       throw new ParameterException(
@@ -1679,9 +1677,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     final boolean validWsApiMethods =
-        rpcWsApiMethodsNoAuth.stream()
-            .map(RpcMethod::rpcMethodExists)
-            .reduce(true, (a, c) -> a && c);
+        rpcWsApiMethodsNoAuth.stream().allMatch(RpcMethod::rpcMethodExists);
 
     if (!validWsApiMethods) {
       throw new ParameterException(
