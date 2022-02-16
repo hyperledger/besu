@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -63,7 +63,8 @@ public class WebSocketRequestHandler {
       new ObjectMapper()
           .registerModule(new Jdk8Module()) // Handle JDK8 Optionals (de)serialization
           .writer()
-          .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
+          .without(Feature.FLUSH_PASSED_TO_STREAM)
+          .with(Feature.AUTO_CLOSE_TARGET);
 
   private final Vertx vertx;
   private final Map<String, JsonRpcMethod> methods;
@@ -226,6 +227,7 @@ public class WebSocketRequestHandler {
 
   private void replyToClient(final ServerWebSocket websocket, final Object result) {
     try {
+      // underlying output stream lifecycle is managed by the json object writer
       JSON_OBJECT_WRITER.writeValue(new JsonResponseStreamer(websocket), result);
     } catch (IOException ex) {
       LOG.error("Error streaming JSON-RPC response", ex);
