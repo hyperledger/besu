@@ -305,9 +305,14 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public boolean latestValidAncestorDescendsFromTerminal(final BlockHeader blockHeader) {
-    if (blockHeader.getNumber() == 0L) {
-      // parent is a genesis block, presume merge-at-genesis
-      return true;
+    if (blockHeader.getNumber() <= 1L) {
+      // parent is a genesis block, check for merge-at-genesis
+      return protocolContext
+          .getBlockchain()
+          .getTotalDifficultyByHash(blockHeader.getBlockHash())
+          .filter(
+              currDiff -> currDiff.greaterOrEqualThan(mergeContext.getTerminalTotalDifficulty()))
+          .isPresent();
     }
 
     Optional<Hash> validAncestorHash = this.getLatestValidAncestor(blockHeader);
