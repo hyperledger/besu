@@ -27,9 +27,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -149,16 +146,7 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
             }
           };
 
-      try {
-        CompletableFuture.runAsync(stopActiveCoordinatorTask)
-            .thenRun(startNextCoordinatorTask)
-            .get(10, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        LOG.error("Could not migrate mining coordinator as thread was interrupted", e);
-        Thread.currentThread().interrupt();
-      } catch (ExecutionException | TimeoutException e) {
-        throw new IllegalStateException("Could not migrate mining coordinator", e);
-      }
+      CompletableFuture.runAsync(stopActiveCoordinatorTask).thenRun(startNextCoordinatorTask);
 
     } else if (activeMiningCoordinator instanceof BlockAddedObserver) {
       ((BlockAddedObserver) activeMiningCoordinator).onBlockAdded(event);
