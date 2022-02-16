@@ -15,20 +15,25 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_TERMINAL_BLOCK;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -78,18 +83,88 @@ public class EngineForkchoiceUpdatedTest {
   }
 
   @Test
+  public void shouldReturnSyncingIfForwardSync() {
+    when(mergeContext.isSyncing()).thenReturn(true);
+    var resp =
+        resp(new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash), Optional.empty());
+    var res = fromSuccessResp(resp);
+    assertThat(res.getPayloadStatus().getStatus()).isEqualTo(SYNCING.name());
+    assertThat(res.getPayloadId()).isNull();
+  }
+
+  @Test
+  public void shouldReturnSyncingIfBackwardSync() {
+    when(mergeCoordinator.isBackwardSyncing()).thenReturn(true);
+    var resp =
+        resp(new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash), Optional.empty());
+    var res = fromSuccessResp(resp);
+    assertThat(res.getPayloadStatus().getStatus()).isEqualTo(SYNCING.name());
+    assertThat(res.getPayloadId()).isNull();
+  }
+
+  @Test
   public void shouldReturnInvalidTerminalBlock() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
 
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
-        .thenReturn(false);
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(false);
+    assertSuccessWithPayloadForForkchoiceResult(
+        Optional.empty(), mock(ForkchoiceResult.class), INVALID_TERMINAL_BLOCK);
+  }
+
+  @Test
+  public void shouldReturnSyncingOnHeadNotFound() {
+    assertSuccessWithPayloadForForkchoiceResult(
+        Optional.empty(), mock(ForkchoiceResult.class), SYNCING);
+  }
+
+  @Test
+  public void shouldReturnValidWithoutFinalizedOrPayload() {
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+
+    assertSuccessWithPayloadForForkchoiceResult(
+        Optional.empty(),
+        ForkchoiceResult.withResult(Optional.empty(), Optional.of(mockHeader)),
+        VALID);
+  }
+
+  private EngineUpdateForkchoiceResult assertSuccessWithPayloadForForkchoiceResult(
+      final Optional<EnginePayloadAttributesParameter> payloadParam,
+      final ForkchoiceResult forkchoiceResult,
+      final EngineStatus expectedStatus) {
+
+    // result from mergeCoordinator has no new finalized, new head:
+    when(mergeCoordinator.updateForkChoice(any(Hash.class), any(Hash.class)))
+        .thenReturn(forkchoiceResult);
     var resp =
-        resp(new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash), Optional.empty());
+        resp(new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash), payloadParam);
     var res = fromSuccessResp(resp);
-    assertThat(res.getPayloadStatus().getStatus())
-        .isEqualTo(JsonRpcError.INVALID_TERMINAL_BLOCK.name());
-    assertThat(res.getPayloadId()).isNull();
+
+    assertThat(res.getPayloadStatus().getStatus()).isEqualTo(expectedStatus.name());
+
+    if (expectedStatus.equals(VALID)) {
+      // check conditions when response is valid
+      assertThat(res.getPayloadStatus().getLatestValidHash())
+          .isEqualTo(
+              forkchoiceResult
+                  .getNewHead()
+                  .map(BlockHeader::getBlockHash)
+                  .map(Hash::toHexString)
+                  .orElse(""));
+      assertThat(res.getPayloadStatus().getError()).isNullOrEmpty();
+      if (payloadParam.isPresent()) {
+        assertThat(res.getPayloadId()).isNotNull();
+      } else {
+        assertThat(res.getPayloadId()).isNull();
+      }
+    } else {
+      // assert null latest valid and payload identifier:
+      assertThat(res.getPayloadStatus().getLatestValidHash()).isNull();
+      assertThat(res.getPayloadId()).isNull();
+    }
+    return res;
   }
 
   private JsonRpcResponse resp(

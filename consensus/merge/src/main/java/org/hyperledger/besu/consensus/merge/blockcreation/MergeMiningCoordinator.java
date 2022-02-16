@@ -60,11 +60,11 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       this.newHead = newHead;
     }
 
-    static ForkchoiceResult withFailure(final String errorMessage) {
+    public static ForkchoiceResult withFailure(final String errorMessage) {
       return new ForkchoiceResult(Optional.of(errorMessage), Optional.empty(), Optional.empty());
     }
 
-    static ForkchoiceResult withResult(
+    public static ForkchoiceResult withResult(
         final Optional<BlockHeader> newFinalized, final Optional<BlockHeader> newHead) {
       return new ForkchoiceResult(Optional.empty(), newFinalized, newHead);
     }
