@@ -12,6 +12,7 @@
 - Merge: extend block creation and mining to support The Merge [#3412](https://github.com/hyperledger/besu/pull/3412)
 - Merge: backward sync [#3410](https://github.com/hyperledger/besu/pull/3410)
 - Allow optional no auth API methods [#3382](https://github.com/hyperledger/besu/pull/3382)
+- Merge: Extend validateAndProcessBlock to return an error message in case of failure, so it can be returned to the caller of ExecutePayload API [#3411](https://github.com/hyperledger/besu/pull/3411)
 
 ### Bug Fixes
 - Prevent node from peering to itself [#3342](https://github.com/hyperledger/besu/pull/3342)

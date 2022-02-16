@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.BlockValidator;
+import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -102,7 +103,7 @@ public class ForwardSyncStepTest {
             invocation -> {
               final Object[] arguments = invocation.getArguments();
               Block block = (Block) arguments[1];
-              return Optional.of(
+              return new Result(
                   new BlockValidator.BlockProcessingOutputs(
                       new ReferenceTestWorldState(), blockDataGenerator.receipts(block)));
             });

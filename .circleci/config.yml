@@ -156,6 +156,9 @@ jobs:
           command: |
             for FILE in $(ls docker)
             do
+              if [[ $FILE == "test.sh" || $FILE == "tests" ]]; then
+                continue
+              fi
               docker pull -q "hyperledger/besu:develop-$FILE"
               trivy -q image --exit-code 1 --no-progress --severity HIGH,CRITICAL "hyperledger/besu:develop-$FILE"
             done
@@ -331,9 +334,6 @@ workflows:
       - acceptanceTests:
           requires:
             - assemble
-      - acceptanceTestsQuorum:
-          requires:
-            - assemble
       - buildDocker:
           requires:
             - assemble
@@ -347,7 +347,6 @@ workflows:
             - integrationTests
             - unitTests
             - acceptanceTests
-            - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
       - publishDocker:
@@ -360,7 +359,6 @@ workflows:
             - integrationTests
             - unitTests
             - acceptanceTests
-            - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
           context:
@@ -376,4 +374,8 @@ workflows:
               only:
                 - main
     jobs:
+      - assemble
+      - acceptanceTestsQuorum:
+          requires:
+            - assemble
       - dockerScan

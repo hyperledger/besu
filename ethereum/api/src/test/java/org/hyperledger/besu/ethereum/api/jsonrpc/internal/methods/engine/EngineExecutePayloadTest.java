@@ -27,6 +27,8 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
+import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -91,7 +93,8 @@ public class EngineExecutePayloadTest {
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
-    when(mergeCoordinator.executeBlock(any())).thenReturn(Boolean.TRUE);
+    when(mergeCoordinator.executeBlock(any()))
+        .thenReturn(new Result(new BlockProcessingOutputs(null, List.of())));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
