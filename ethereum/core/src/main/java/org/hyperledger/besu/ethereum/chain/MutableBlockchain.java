@@ -44,6 +44,15 @@ public interface MutableBlockchain extends Blockchain {
   boolean rewindToBlock(final long blockNumber);
 
   /**
+   * Rolls back the canonical chainhead to the specified block hash.
+   *
+   * @param blockHash The block hash to roll back to.
+   * @return {@code true} on success, {@code false} if the canonical chain height is less than
+   *     {@code blockNumber}
+   */
+  boolean rewindToBlock(final Hash blockHash);
+
+  /**
    * Set the hash of the last finalized block.
    *
    * @param blockHash The hash of the last finalized block.
