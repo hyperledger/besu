@@ -1777,7 +1777,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             engineRpcHttpPort, Arrays.asList("ENGINE", "ETH"), engineHostsAllowlist);
     p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration = graphQLConfiguration();
-    webSocketConfiguration = webSocketConfiguration(rpcWsPort, rpcHttpApis, hostsAllowlist);
+    webSocketConfiguration = webSocketConfiguration(rpcWsPort, rpcWsApis, hostsAllowlist);
     engineWebSocketConfiguration =
         webSocketConfiguration(
             engineRpcWsPort, Arrays.asList("ENGINE", "ETH"), engineHostsAllowlist);
