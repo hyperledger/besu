@@ -8,18 +8,18 @@
 | ---------------- | ---------------- | ---------------- |
 | Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Adrian Sutton    | ajsutton         | ajsutton         |
-| Antoine Toulme   | atoulme          | atoulme          |
 | Antony Denyer    | antonydenyer     | antonydenyer     |
+| Antoine Toulme   | atoulme          | atoulme          |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
 | Frank Li         | frankisawesome   | frankliawesome   |
 | Gary Schulte     | garyschulte      | GarySchulte      | 
-| Jason Frame      | jframe           | jframe           |
 | Jiri Peinlich    | gezero           | JiriPeinlich     |
-| Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
+| Jason Frame      | jframe           | jframe           |
+| Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
 | Sally MacFarlane | macfarla         | macfarla         |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
@@ -27,12 +27,12 @@
 | Karim Taam       | matkt            | matkt            |
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
-| Sajida Zouarhi   | sajz             | SajidaZ          |
-| Simon Dudley     | siladu           | siladu           |
 | Stefan Pingel    | pinges           | pinges           |
-| Taccat Isid      | taccatisid       | taccatisid       |
 | Rai Sur          | RatanRSur        | ratanraisur      |
+| Sajida Zouarhi   | sajz             | SajidaZ          |
 | Danno Ferrin     | shemnon          | shemnon          |
+| Simon Dudley     | siladu           | siladu           |
+| Taccat Isid      | taccatisid       | taccatisid       |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
 | Vijay Michalik   | vmichalik        | VijayMichalik    |
 
@@ -45,9 +45,9 @@
 | Edward Evans     | EdJoJob          | EdJoJob          |
 | Edward Mack      | edwardmack       | mackcom          | 
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
+| Trent Mohay      | rain-on          | trent.mohay      |
 | Rob Dawson       | rojotek          | RobDawson        |
 | Tim Beiko        | timbeiko         | timbeiko         |
-| Trent Mohay      | rain-on          | trent.mohay      |
 
 ## Becoming a Maintainer
 
@@ -85,7 +85,7 @@ For both types of maintainers, the following steps must occur for a contributor 
   - The proposed maintainer accepts the nomination and expresses a willingness
     to be a long-term (more than 6 month) committer by adding a comment in the proposal PR.
   - The PR will be communicated in all appropriate communication channels
-    including at least [Besu Rocket Chat](https://wiki.hyperledger.org/display/BESU/Rocket+Chat),
+    including at least [besu-contributors channel on Hyperledger Discord](https://discord.gg/hyperledger),
     the [mailing list](https://lists.hyperledger.org/g/besu)
     and any maintainer/community call.
 - Approval by at least 3 current maintainers within two weeks of the proposal or

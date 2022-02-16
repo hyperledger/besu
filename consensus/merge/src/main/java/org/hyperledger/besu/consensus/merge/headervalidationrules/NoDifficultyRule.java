@@ -15,6 +15,8 @@
 
 package org.hyperledger.besu.consensus.merge.headervalidationrules;
 
+import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
+
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -24,7 +26,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NoDifficultyRule extends MergConsensusRule {
+public class NoDifficultyRule extends MergeConsensusRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(NoDifficultyRule.class);
 
@@ -38,7 +40,7 @@ public class NoDifficultyRule extends MergConsensusRule {
       return false;
     }
     if (super.shouldUsePostMergeRules(header, protocolContext)
-        && !super.isTerminalProofOfWorkBlock(header, protocolContext)) {
+        && !isTerminalProofOfWorkBlock(header, protocolContext)) {
       return (header.getDifficulty() == null || header.getDifficulty().equals(Difficulty.ZERO));
     } else {
       return true;

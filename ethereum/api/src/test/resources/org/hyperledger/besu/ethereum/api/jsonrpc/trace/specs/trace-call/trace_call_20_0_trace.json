@@ -1,0 +1,55 @@
+{
+  "comment" : "Call to a contract creation that fails with a depth of 1",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_call",
+    "params" : [ {
+      "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+      "to" : "0x0180000000000000000000000000000000000000",
+      "gas" : "0x11fa1",
+      "gasPrice" : "0x10",
+      "value" : "0x0",
+      "data" : "0x000000000000000000000000000000000000000000000000000000000000ea60",
+      "nonce" : "0x0"
+    }, [ "trace" ], "latest" ],
+    "id" : 51
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : null,
+      "trace" : [ {
+        "action" : {
+          "callType" : "call",
+          "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas" : "0xcd01",
+          "input" : "0x000000000000000000000000000000000000000000000000000000000000ea60",
+          "to" : "0x0180000000000000000000000000000000000000",
+          "value" : "0x0"
+        },
+        "result" : {
+          "gasUsed" : "0xcbc2",
+          "output" : "0x"
+        },
+        "subtraces" : 1,
+        "traceAddress" : [ ],
+        "type" : "call"
+      }, {
+        "action" : {
+          "from" : "0x0180000000000000000000000000000000000000",
+          "gas" : "0x4eaa",
+          "init" : "0x600c600055602060406000f000",
+          "value" : "0x0"
+        },
+        "error" : "Out of gas",
+        "subtraces" : 0,
+        "traceAddress" : [ 0 ],
+        "type" : "create"
+      } ],
+      "vmTrace" : null
+    },
+    "id" : 51
+  },
+  "statusCode" : 200
+}

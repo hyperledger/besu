@@ -14,10 +14,19 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
+
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public abstract class TransitionUtils<SwitchingObject> {
+  private static final Logger LOG = LoggerFactory.getLogger(TransitionUtils.class);
 
   private final MergeContext mergeContext = PostMergeContext.get();
   private final SwitchingObject preMergeObject;
@@ -44,5 +53,31 @@ public abstract class TransitionUtils<SwitchingObject> {
 
   SwitchingObject getPostMergeObject() {
     return postMergeObject;
+  }
+
+  public static boolean isTerminalProofOfWorkBlock(
+      final BlockHeader header, final ProtocolContext context) {
+    Optional<Difficulty> currentChainTotalDifficulty =
+        context.getBlockchain().getTotalDifficultyByHash(header.getParentHash());
+    Difficulty configuredTotalTerminalDifficulty =
+        context.getConsensusContext(MergeContext.class).getTerminalTotalDifficulty();
+
+    if (currentChainTotalDifficulty.isEmpty()) {
+      LOG.warn("unable to get total difficulty, parent {} not found", header.getParentHash());
+      return false;
+    }
+    if (currentChainTotalDifficulty
+            .get()
+            .add(header.getDifficulty() == null ? Difficulty.ZERO : header.getDifficulty())
+            .greaterOrEqualThan(
+                configuredTotalTerminalDifficulty) // adding would equal or go over limit
+        && currentChainTotalDifficulty
+            .get()
+            .lessThan(configuredTotalTerminalDifficulty) // parent was under
+    ) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }

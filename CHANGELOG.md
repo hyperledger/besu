@@ -1,6 +1,5 @@
 # Changelog
 ## 22.1.0
-- Add `--ec-curve` parameter to export/export-address public-key subcommands [#3333](https://github.com/hyperledger/besu/pull/3333)
 
 ### 22.1.0 Breaking Changes
 
@@ -9,10 +8,17 @@
 - Adds ability to specify Engine API endpoint on its own port.
 - Refactor synchronizer to asynchronously retrieve blocks from peers, and to change peer when retrying to get a block. [#3326](https://github.com/hyperledger/besu/pull/3326)
 - Disable RocksDB TTL compactions [#3356](https://github.com/hyperledger/besu/pull/3356)
+- Add a websocket frame size configuration CLI parameter [#3368](https://github.com/hyperledger/besu/pull/3379)
+- Add `--ec-curve` parameter to export/export-address public-key subcommands [#3333](https://github.com/hyperledger/besu/pull/3333)
+- Merge: extend block creation and mining to support The Merge [#3412](https://github.com/hyperledger/besu/pull/3412)
+- Merge: backward sync [#3410](https://github.com/hyperledger/besu/pull/3410)
+- Merge: Extend validateAndProcessBlock to return an error message in case of failure, so it can be returned to the caller of ExecutePayload API [#3411](https://github.com/hyperledger/besu/pull/3411)
+- Merge: Persist latest finalized block [#2913](https://github.com/hyperledger/besu/issues/2913)
 
 ### Bug Fixes
 - Prevent node from peering to itself [#3342](https://github.com/hyperledger/besu/pull/3342)
 - Fix an `IndexOutOfBoundsException` exception when getting block from peers. [#3304](https://github.com/hyperledger/besu/issues/3304)
+- Handle legacy eth64 without throwing null pointer exceptions [#3343](https://github.com/hyperledger/besu/pull/3343)
 
 ## 22.1.0-RC3
 - Changing the order in which we traverse the word state tree during fast sync. This should improve fast sync during subsequent pivot changes.

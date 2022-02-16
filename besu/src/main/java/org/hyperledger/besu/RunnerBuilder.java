@@ -765,7 +765,7 @@ public class RunnerBuilder {
             Optional.of(
                 createWebsocketService(
                     vertx,
-                    webSocketConfiguration,
+                    engineWebSocketConfiguration.get(),
                     subscriptionManager,
                     engineWebSocketMethods,
                     privacyParameters,

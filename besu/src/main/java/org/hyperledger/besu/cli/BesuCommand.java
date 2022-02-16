@@ -1537,6 +1537,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
 
       if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
+          && privacyPluginService != null
           && privacyPluginService.getPayloadProvider() == null) {
         throw new ParameterException(
             commandLine,
@@ -1777,7 +1778,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             engineRpcHttpPort, Arrays.asList("ENGINE", "ETH"), engineHostsAllowlist);
     p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration = graphQLConfiguration();
-    webSocketConfiguration = webSocketConfiguration(rpcWsPort, rpcHttpApis, hostsAllowlist);
+    webSocketConfiguration = webSocketConfiguration(rpcWsPort, rpcWsApis, hostsAllowlist);
     engineWebSocketConfiguration =
         webSocketConfiguration(
             engineRpcWsPort, Arrays.asList("ENGINE", "ETH"), engineHostsAllowlist);
@@ -1971,7 +1972,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setMaxActiveConnections(rpcHttpMaxConnections);
     jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
     // jsonRpcConfiguration.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
-    jsonRpcConfiguration.setRpcApis(apiGroups);
+    jsonRpcConfiguration.setRpcApis(apiGroups.stream().distinct().collect(Collectors.toList()));
     jsonRpcConfiguration.setHostsAllowlist(allowCallsFrom);
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());

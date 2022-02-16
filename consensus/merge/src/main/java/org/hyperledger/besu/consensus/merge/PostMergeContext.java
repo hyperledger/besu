@@ -44,8 +44,9 @@ public class PostMergeContext implements MergeContext {
   private final EvictingQueue<PayloadTuple> blocksInProgress = EvictingQueue.create(12);
 
   // latest finalized block
-  AtomicReference<BlockHeader> lastFinalized = new AtomicReference<>();
-  AtomicReference<Optional<BlockHeader>> terminalPoWBlock;
+  private final AtomicReference<BlockHeader> lastFinalized = new AtomicReference<>();
+  private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
+      new AtomicReference<>(Optional.empty());
 
   private PostMergeContext() {
     this.terminalTotalDifficulty = new AtomicReference<>(Difficulty.ZERO);
@@ -139,7 +140,7 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public void setTerminalPoWBlock(final Optional<BlockHeader> hashAndNumber) {
-    this.terminalPoWBlock = new AtomicReference<>(hashAndNumber);
+    terminalPoWBlock.set(hashAndNumber);
   }
 
   @Override

@@ -54,7 +54,8 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
           "trace/specs/replay-trace-transaction/statediff",
           "trace/specs/replay-trace-transaction/all",
           "trace/specs/replay-trace-transaction/halt-cases",
-          "trace/specs/trace-filter"
+          "trace/specs/trace-filter",
+          "trace/specs/trace-call"
         });
   }
 }

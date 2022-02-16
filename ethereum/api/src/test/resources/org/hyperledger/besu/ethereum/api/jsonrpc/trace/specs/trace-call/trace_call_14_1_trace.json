@@ -1,0 +1,54 @@
+{
+  "comment" : "CREATE2",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_call",
+    "params" : [ {
+      "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+      "to" : "0x0140000000000000000000000000000000000000",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0xef",
+      "value" : "0x0",
+      "nonce" : "0x0"
+    }, [ "trace" ], "latest" ],
+    "id" : 32
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : null,
+      "trace" : [ {
+        "action" : {
+          "callType" : "call",
+          "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas" : "0xffadea",
+          "input" : "0x",
+          "to" : "0x0140000000000000000000000000000000000000",
+          "value" : "0x0"
+        },
+        "result" : {
+          "gasUsed" : "0xfbc4b2",
+          "output" : "0x"
+        },
+        "subtraces" : 1,
+        "traceAddress" : [ ],
+        "type" : "call"
+      }, {
+        "action" : {
+          "from" : "0x0140000000000000000000000000000000000000",
+          "gas" : "0xfb3409",
+          "init" : "0x600160015560015460025560ff60005360016000f3",
+          "value" : "0x0"
+        },
+        "error" : "Out of gas",
+        "subtraces" : 0,
+        "traceAddress" : [ 0 ],
+        "type" : "create"
+      } ],
+      "vmTrace" : null
+    },
+    "id" : 32
+  },
+  "statusCode" : 200
+}

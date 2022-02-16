@@ -344,7 +344,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     final Hash newBlockHash = newBlock.getHash();
     try {
-      if ((chainHead == null || newBlock.getHeader().getParentHash().equals(chainHead))) {
+      if (chainHead == null || newBlock.getHeader().getParentHash().equals(chainHead)) {
         // This block advances the chain, update the chain head
         updater.putBlockHash(newBlock.getHeader().getNumber(), newBlockHash);
         updater.setChainHead(newBlockHash);
