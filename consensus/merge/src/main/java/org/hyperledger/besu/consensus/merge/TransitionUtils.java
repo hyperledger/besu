@@ -74,8 +74,8 @@ public abstract class TransitionUtils<SwitchingObject> {
       warnLambda(
           LOG,
           "unable to get total difficulty for {}, parent hash {} difficulty not found",
-          () -> header.toLogString(),
-          () -> header.getParentHash());
+          header::toLogString,
+          header::getParentHash);
     }
     Difficulty configuredTotalTerminalDifficulty =
         context.getConsensusContext(MergeContext.class).getTerminalTotalDifficulty();
