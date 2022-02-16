@@ -84,7 +84,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   public void setupTest() {
     peersDoTimeout = new AtomicBoolean(false);
     peerCountToTimeout = new AtomicInteger(0);
-    ethPeers = spy(new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem));
+    ethPeers = spy(new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem, 25));
     final EthMessages ethMessages = new EthMessages();
     final EthScheduler ethScheduler =
         new DeterministicEthScheduler(
