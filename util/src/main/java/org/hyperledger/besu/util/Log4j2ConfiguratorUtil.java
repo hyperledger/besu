@@ -48,6 +48,10 @@ public class Log4j2ConfiguratorUtil {
     }
   }
 
+  public static void setLevelDebug(final String loggerName) {
+    setLevel(loggerName, Level.DEBUG);
+  }
+
   public static void setLevel(final String loggerName, final Level level) {
     final LoggerContext loggerContext = getLoggerContext();
     if (Strings.isEmpty(loggerName)) {
