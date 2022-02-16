@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -29,6 +29,8 @@ public interface BlockchainStorage {
   Optional<Hash> getChainHead();
 
   Collection<Hash> getForkHeads();
+
+  Optional<Hash> getFinalized();
 
   Optional<BlockHeader> getBlockHeader(Hash blockHash);
 
@@ -61,6 +63,8 @@ public interface BlockchainStorage {
     void setChainHead(Hash blockHash);
 
     void setForkHeads(Collection<Hash> forkHeadHashes);
+
+    void setFinalized(Hash blockHash);
 
     void removeBlockHash(long blockNumber);
 

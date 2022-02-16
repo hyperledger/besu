@@ -58,6 +58,8 @@ public class ReferenceTestBlockchain implements Blockchain {
       "Blocks must not be looked up by number in the EVM. The block being processed may not be on the canonical chain.";
   private static final String CHAIN_HEAD_ERROR =
       "Chain head is inherently non-deterministic. The block currently being processed should be treated as the chain head.";
+  private static final String FINALIZED_ERROR =
+      "Finalized block is inherently non-deterministic. The block currently being processed should be treated as the finalized block.";
   private final Map<Hash, BlockHeader> hashToHeader = new HashMap<>();
 
   public ReferenceTestBlockchain() {
@@ -91,6 +93,11 @@ public class ReferenceTestBlockchain implements Blockchain {
   @Override
   public ChainHead getChainHead() {
     throw new NonDeterministicOperationException(CHAIN_HEAD_ERROR);
+  }
+
+  @Override
+  public Optional<Hash> getFinalized() {
+    throw new NonDeterministicOperationException(FINALIZED_ERROR);
   }
 
   @Override
