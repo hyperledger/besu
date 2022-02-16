@@ -118,7 +118,9 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
         return new JsonRpcSuccessResponse(
             requestContext.getRequest().getId(),
             new EngineUpdateForkchoiceResult(
-                VALID, result.getNewHead().map(BlockHeader::getHash).orElse(null), null));
+                VALID,
+                result.getNewHead().map(BlockHeader::getHash).orElse(null),
+                payloadId.orElse(null)));
       }
     }
 

@@ -25,6 +25,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
+import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -85,21 +87,15 @@ public class EngineForkchoiceUpdatedTest {
   @Test
   public void shouldReturnSyncingIfForwardSync() {
     when(mergeContext.isSyncing()).thenReturn(true);
-    var resp =
-        resp(new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash), Optional.empty());
-    var res = fromSuccessResp(resp);
-    assertThat(res.getPayloadStatus().getStatus()).isEqualTo(SYNCING.name());
-    assertThat(res.getPayloadId()).isNull();
+    assertSuccessWithPayloadForForkchoiceResult(
+        Optional.empty(), mock(ForkchoiceResult.class), SYNCING);
   }
 
   @Test
   public void shouldReturnSyncingIfBackwardSync() {
     when(mergeCoordinator.isBackwardSyncing()).thenReturn(true);
-    var resp =
-        resp(new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash), Optional.empty());
-    var res = fromSuccessResp(resp);
-    assertThat(res.getPayloadStatus().getStatus()).isEqualTo(SYNCING.name());
-    assertThat(res.getPayloadId()).isNull();
+    assertSuccessWithPayloadForForkchoiceResult(
+        Optional.empty(), mock(ForkchoiceResult.class), SYNCING);
   }
 
   @Test
@@ -128,6 +124,47 @@ public class EngineForkchoiceUpdatedTest {
         Optional.empty(),
         ForkchoiceResult.withResult(Optional.empty(), Optional.of(mockHeader)),
         VALID);
+  }
+
+  @Test
+  public void shouldReturnValidWithNewHeadAndFinalizedNoPayload() {
+    var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
+    BlockHeader mockParent = builder.number(9L).buildHeader();
+    BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
+    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+
+    assertSuccessWithPayloadForForkchoiceResult(
+        Optional.empty(),
+        ForkchoiceResult.withResult(Optional.of(mockParent), Optional.of(mockHeader)),
+        VALID);
+  }
+
+  @Test
+  public void shouldReturnValidWithoutFinalizedWithPayload() {
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+
+    var payloadParams =
+        new EnginePayloadAttributesParameter(
+            String.valueOf(System.currentTimeMillis()),
+            Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
+            Address.ECREC.toString());
+    var mockPayloadId =
+        PayloadIdentifier.forPayloadParams(mockHeader.getHash(), payloadParams.getTimestamp());
+
+    when(mergeCoordinator.preparePayload(
+            mockHeader, payloadParams.getTimestamp(), payloadParams.getRandom(), Address.ECREC))
+        .thenReturn(mockPayloadId);
+
+    var res =
+        assertSuccessWithPayloadForForkchoiceResult(
+            Optional.of(payloadParams),
+            ForkchoiceResult.withResult(Optional.empty(), Optional.of(mockHeader)),
+            VALID);
+
+    assertThat(res.getPayloadId()).isEqualTo(mockPayloadId.toHexString());
   }
 
   private EngineUpdateForkchoiceResult assertSuccessWithPayloadForForkchoiceResult(
