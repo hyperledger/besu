@@ -32,12 +32,16 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   public enum ExecutionStatus {
     VALID,
     INVALID,
-    SYNCING;
+    SYNCING,
+    INVALID_BLOCK_HASH,
+    INVALID_TERMINAL_BLOCK;
   }
 
   public enum ForkChoiceStatus {
-    SUCCESS,
-    SYNCING;
+    VALID,
+    INVALID,
+    SYNCING,
+    INVALID_TERMINAL_BLOCK;
 
     public boolean equalsIgnoreCase(final String status) {
       return name().equalsIgnoreCase(status);

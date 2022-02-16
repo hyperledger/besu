@@ -1537,6 +1537,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
 
       if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
+          && privacyPluginService != null
           && privacyPluginService.getPayloadProvider() == null) {
         throw new ParameterException(
             commandLine,

@@ -63,7 +63,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -121,7 +121,8 @@ public class JsonRpcHttpService {
       new ObjectMapper()
           .registerModule(new Jdk8Module()) // Handle JDK8 Optionals (de)serialization
           .writerWithDefaultPrettyPrinter()
-          .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
+          .without(Feature.FLUSH_PASSED_TO_STREAM)
+          .with(Feature.AUTO_CLOSE_TARGET);
   private static final String EMPTY_RESPONSE = "";
 
   private static final TextMapPropagator traceFormats =
@@ -626,7 +627,10 @@ public class JsonRpcHttpService {
               response.end(EMPTY_RESPONSE);
             } else {
               try {
-                JSON_OBJECT_WRITER.writeValue(new JsonResponseStreamer(response), jsonRpcResponse);
+                // underlying output stream lifecycle is managed by the json object writer
+                JSON_OBJECT_WRITER.writeValue(
+                    new JsonResponseStreamer(response, routingContext.request().remoteAddress()),
+                    jsonRpcResponse);
               } catch (IOException ex) {
                 LOG.error("Error streaming JSON-RPC response", ex);
               }
@@ -695,7 +699,10 @@ public class JsonRpcHttpService {
                       .toArray(JsonRpcResponse[]::new);
 
               try {
-                JSON_OBJECT_WRITER.writeValue(new JsonResponseStreamer(response), completed);
+                // underlying output stream lifecycle is managed by the json object writer
+                JSON_OBJECT_WRITER.writeValue(
+                    new JsonResponseStreamer(response, routingContext.request().remoteAddress()),
+                    completed);
               } catch (IOException ex) {
                 LOG.error("Error streaming JSON-RPC response", ex);
               }

@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
@@ -47,6 +48,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
@@ -313,6 +315,26 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     verify(mergeContext, never()).setFinalized(lastFinalizedHeader);
   }
 
+  @Test
+  public void ancestorIsValidTerminalProofOfWork() {
+    final long howDeep = 100L;
+    assertThat(
+            terminalAncestorMock(howDeep)
+                .ancestorIsValidTerminalProofOfWork(
+                    new BlockHeaderTestFixture().number(howDeep).buildHeader()))
+        .isTrue();
+  }
+
+  @Test
+  public void ancestorNotFoundValidTerminalProofOfWork() {
+    final long howDeep = MergeCoordinator.MAX_TTD_SEARCH_DEPTH + 1;
+    assertThat(
+            terminalAncestorMock(howDeep)
+                .ancestorIsValidTerminalProofOfWork(
+                    new BlockHeaderTestFixture().number(howDeep).buildHeader()))
+        .isFalse();
+  }
+
   private BlockHeader terminalPowBlock() {
     return headerGenerator
         .difficulty(Difficulty.MAX_VALUE)
@@ -361,5 +383,46 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                 0,
                 15000000l))
         .buildHeader();
+  }
+
+  MergeCoordinator terminalAncestorMock(final long howDeepBeforeTerminal) {
+    final Difficulty mockTTD = Difficulty.of(1000);
+    BlockHeaderTestFixture builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
+
+    BlockHeader terminal = builder.number(0L).difficulty(mockTTD).buildHeader();
+    MutableBlockchain mockBlockchain = mock(MutableBlockchain.class);
+
+    // return decreasing numbered blocks:
+    final var invocations = new AtomicLong(howDeepBeforeTerminal);
+    when(mockBlockchain.getBlockHeader(any()))
+        .thenAnswer(
+            z ->
+                Optional.of(
+                    (invocations.decrementAndGet() < 1)
+                        ? terminal
+                        : builder
+                            .difficulty(Difficulty.ZERO)
+                            .number(invocations.get())
+                            .buildHeader()));
+
+    // mock total difficulty for isTerminalProofOfWorkBlock invocation:
+    when(mockBlockchain.getTotalDifficultyByHash(any())).thenReturn(Optional.of(Difficulty.ZERO));
+
+    var mockContext = mock(MergeContext.class);
+    when(mockContext.getTerminalTotalDifficulty()).thenReturn(mockTTD);
+    ProtocolContext mockProtocolContext = mock(ProtocolContext.class);
+    when(mockProtocolContext.getBlockchain()).thenReturn(mockBlockchain);
+    when(mockProtocolContext.getConsensusContext(any())).thenReturn(mockContext);
+
+    MergeCoordinator mockCoordinator =
+        spy(
+            new MergeCoordinator(
+                mockProtocolContext,
+                mockProtocolSchedule,
+                mockSorter,
+                new MiningParameters.Builder().coinbase(coinbase).build(),
+                mock(BackwardsSyncContext.class)));
+
+    return mockCoordinator;
   }
 }
