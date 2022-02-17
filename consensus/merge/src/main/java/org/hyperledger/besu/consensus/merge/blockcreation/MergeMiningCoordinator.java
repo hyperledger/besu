@@ -34,11 +34,63 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
   Result executeBlock(final Block block);
 
-  void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash);
+  ForkchoiceResult updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash);
 
-  Optional<Hash> getLatestValidAncestor(Hash blockhash);
+  Optional<Hash> getLatestValidAncestor(Hash blockHash);
 
   Optional<Hash> getLatestValidAncestor(BlockHeader blockheader);
 
+  boolean latestValidAncestorDescendsFromTerminal(final BlockHeader blockHeader);
+
   boolean isBackwardSyncing();
+
+  boolean isMiningBeforeMerge();
+
+  class ForkchoiceResult {
+    private final Optional<String> errorMessage;
+    private final Optional<BlockHeader> newFinalized;
+    private final Optional<BlockHeader> newHead;
+
+    private ForkchoiceResult(
+        final Optional<String> errorMessage,
+        final Optional<BlockHeader> newFinalized,
+        final Optional<BlockHeader> newHead) {
+      this.errorMessage = errorMessage;
+      this.newFinalized = newFinalized;
+      this.newHead = newHead;
+    }
+
+    public static ForkchoiceResult withFailure(final String errorMessage) {
+      return new ForkchoiceResult(Optional.of(errorMessage), Optional.empty(), Optional.empty());
+    }
+
+    public static ForkchoiceResult withResult(
+        final Optional<BlockHeader> newFinalized, final Optional<BlockHeader> newHead) {
+      return new ForkchoiceResult(Optional.empty(), newFinalized, newHead);
+    }
+
+    public Optional<String> getErrorMessage() {
+      return errorMessage;
+    }
+
+    public Optional<BlockHeader> getNewFinalized() {
+      return newFinalized;
+    }
+
+    public Optional<BlockHeader> getNewHead() {
+      return newHead;
+    }
+
+    public boolean isFailed() {
+      return errorMessage.isPresent();
+    }
+
+    public boolean isSuccessful() {
+      return newHead.isPresent() || newFinalized.isPresent();
+    }
+
+    public boolean isUnknown() {
+      return errorMessage.isEmpty() && newFinalized.isEmpty();
+    }
+  }
 }
