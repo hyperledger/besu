@@ -57,12 +57,12 @@ public class RangeManager {
    *
    * @param min start of the range in bytes
    * @param max the max end of the range in bytes
-   * @param sizeRange size of the range
+   * @param nbRange number of ranges
    * @return the start and end of the generated range
    */
   public static Map<Bytes32, Bytes32> generateRanges(
-      final Bytes32 min, final Bytes32 max, final int sizeRange) {
-    return generateRanges(min.toUnsignedBigInteger(), max.toUnsignedBigInteger(), sizeRange);
+      final Bytes32 min, final Bytes32 max, final int nbRange) {
+    return generateRanges(min.toUnsignedBigInteger(), max.toUnsignedBigInteger(), nbRange);
   }
 
   /**
@@ -70,12 +70,12 @@ public class RangeManager {
    *
    * @param min start of the range
    * @param max the max end of the range
-   * @param sizeRange size of the range
+   * @param nbRange number of ranges
    * @return the start and end of the generated range
    */
   public static Map<Bytes32, Bytes32> generateRanges(
-      final BigInteger min, final BigInteger max, final int sizeRange) {
-    final BigInteger rangeSize = max.subtract(min).divide(BigInteger.valueOf(sizeRange));
+      final BigInteger min, final BigInteger max, final int nbRange) {
+    final BigInteger rangeSize = max.subtract(min).divide(BigInteger.valueOf(nbRange));
     final TreeMap<Bytes32, Bytes32> ranges = new TreeMap<>();
     if (min.equals(max)) {
       ranges.put(format(min), format(max));

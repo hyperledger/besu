@@ -20,66 +20,79 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerRequestTask;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
-import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class GetAccountRangeFromPeerTask extends AbstractPeerRequestTask<AccountRangeMessage> {
+public class GetAccountRangeFromPeerTask
+    extends AbstractPeerRequestTask<AccountRangeMessage.AccountRangeData> {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(GetAccountRangeFromPeerTask.class);
 
-  private final GetAccountRangeMessage message;
+  private final Bytes32 startKeyHash;
+  private final Bytes32 endKeyHash;
   private final BlockHeader blockHeader;
 
   private GetAccountRangeFromPeerTask(
       final EthContext ethContext,
-      final GetAccountRangeMessage message,
+      final Bytes32 startKeyHash,
+      final Bytes32 endKeyHash,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
     super(ethContext, SnapV1.ACCOUNT_RANGE, metricsSystem);
-    this.message = message;
+    this.startKeyHash = startKeyHash;
+    this.endKeyHash = endKeyHash;
     this.blockHeader = blockHeader;
   }
 
   public static GetAccountRangeFromPeerTask forAccountRange(
       final EthContext ethContext,
-      final GetAccountRangeMessage message,
+      final Bytes32 startKeyHash,
+      final Bytes32 endKeyHash,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    return new GetAccountRangeFromPeerTask(ethContext, message, blockHeader, metricsSystem);
+    return new GetAccountRangeFromPeerTask(
+        ethContext, startKeyHash, endKeyHash, blockHeader, metricsSystem);
   }
 
   @Override
   protected PendingPeerRequest sendRequest() {
     return sendRequestToPeer(
         peer -> {
-          GetAccountRangeMessage.Range range = message.range(false);
-          LOG.trace(
+          LOG.info(
               "Requesting account range [{} ,{}] for state root {} from {} .",
-              range.startKeyHash(),
-              range.endKeyHash(),
+              startKeyHash,
+              endKeyHash,
               blockHeader.getStateRoot(),
               peer);
-          message.setOverrideStateRoot(Optional.of(blockHeader.getStateRoot()));
-          return peer.getSnapAccountRange(message);
+          return peer.getSnapAccountRange(blockHeader.getStateRoot(), startKeyHash, endKeyHash);
         },
         blockHeader.getNumber());
   }
 
   @Override
-  protected Optional<AccountRangeMessage> processResponse(
+  protected Optional<AccountRangeMessage.AccountRangeData> processResponse(
       final boolean streamClosed, final MessageData message, final EthPeer peer) {
+
     if (streamClosed) {
       // We don't record this as a useless response because it's impossible to know if a peer has
       // the data we're requesting.
       return Optional.empty();
     }
-    return Optional.of(AccountRangeMessage.readFrom(message));
+    final AccountRangeMessage accountRangeMessage = AccountRangeMessage.readFrom(message);
+    final AccountRangeMessage.AccountRangeData accountRangeData =
+        accountRangeMessage.accountData(true);
+    if (accountRangeData.accounts().isEmpty() && accountRangeData.proofs().isEmpty()) {
+      System.out.println("Disconnect useless peer");
+      peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+    }
+    return Optional.of(accountRangeData);
   }
 }

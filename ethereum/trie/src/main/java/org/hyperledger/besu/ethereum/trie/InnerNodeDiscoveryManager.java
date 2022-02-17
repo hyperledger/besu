@@ -16,21 +16,25 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.bytes.MutableBytes32;
+import org.immutables.value.Value;
 
 public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
 
-  public ArrayDeque<Bytes> innerNodes = new ArrayDeque<>();
+  public List<InnerNode> innerNodes = new ArrayList<>();
+  public Set<Bytes> incompleteLocation = new HashSet<>();
 
   private final Bytes startKeyHash, endKeyHash;
 
@@ -62,7 +66,11 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
     final ExtensionNode<V> vNode =
         (ExtensionNode<V>) super.decodeExtension(location, path, valueRlp, errMessage);
     if (isInRange(Bytes.concatenate(location, Bytes.of(0)))) {
-      innerNodes.add(Bytes.concatenate(location, Bytes.of(0, CompactEncoding.LEAF_TERMINATOR)));
+      innerNodes.add(
+          ImmutableInnerNode.builder()
+              .location(location)
+              .path(Bytes.of(0, CompactEncoding.LEAF_TERMINATOR))
+              .build());
     }
     return vNode;
   }
@@ -74,7 +82,11 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
     final List<Node<V>> children = vBranchNode.getChildren();
     for (int i = 0; i < children.size(); i++) {
       if (isInRange(Bytes.concatenate(location, Bytes.of(i)))) {
-        innerNodes.add(Bytes.concatenate(location, Bytes.of(i, CompactEncoding.LEAF_TERMINATOR)));
+        innerNodes.add(
+            ImmutableInnerNode.builder()
+                .location(location)
+                .path(Bytes.of(i, CompactEncoding.LEAF_TERMINATOR))
+                .build());
       }
     }
     return vBranchNode;
@@ -89,7 +101,7 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
     final LeafNode<V> vLeafNode = super.decodeLeaf(location, path, valueRlp, errMessage);
     final Bytes concatenatePath = Bytes.concatenate(location, path);
     if (isInRange(concatenatePath.slice(0, concatenatePath.size() - 1))) {
-      innerNodes.add(Bytes.concatenate(location, path));
+      innerNodes.add(ImmutableInnerNode.builder().location(location).path(path).build());
     }
     return vLeafNode;
   }
@@ -103,12 +115,20 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
               if (!allowMissingElementInRange && isInRange(location)) {
                 return Optional.empty();
               }
-              return Optional.of(new MissingNode<>(hash, location));
+              final MissingNode<V> missingNode = new MissingNode<>(hash, location);
+              if (!hash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
+                incompleteLocation.add(location.slice(0, Math.max(0, location.size() - 1)));
+              }
+              return Optional.of(missingNode);
             });
   }
 
-  public ArrayDeque<Bytes> getInnerNodes() {
-    return innerNodes;
+  public List<InnerNode> getInnerNodes() {
+    return List.copyOf(innerNodes);
+  }
+
+  public List<Bytes> getIncompleteLocation() {
+    return List.copyOf(incompleteLocation);
   }
 
   private boolean isInRange(final Bytes location) {
@@ -142,5 +162,12 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
       decoded.set(decodedPos, (byte) (high << 4 | low));
     }
     return decoded;
+  }
+
+  @Value.Immutable
+  public interface InnerNode {
+    Bytes location();
+
+    Bytes path();
   }
 }

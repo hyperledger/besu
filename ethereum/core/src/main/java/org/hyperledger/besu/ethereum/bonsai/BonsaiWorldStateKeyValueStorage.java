@@ -82,14 +82,33 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash, final boolean lazyMode) {
-    Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    Optional<Bytes> response = Optional.empty();
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       // When accessing a trie leaf we store it in accountStorage to accelerate the next time we
       // want to read it so no need to check the trie (lazy mode)
       final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+      // System.out.println(accountHash+" "+worldStateRootHash);
 
       if (worldStateRootHash.isPresent()) {
+
+        /*Optional<Bytes> accountStateTrieNode = getTrieNodeByLocation(Bytes.fromHexString("0x0c0e0f020c0f08"));
+        System.out.println("temp account" +accountStateTrieNode);
+        response =
+                new StoredMerklePatriciaTrie<>(
+                        new StoredNodeFactory<>(new NodeLoader() {
+                          @Override
+                          public Optional<Bytes> getNode(final Bytes location,final Bytes32 hash) {
+                            Optional<Bytes> accountStateTrieNode = getTrieNodeByLocation(location);
+                            if(location.toHexString().equals("0x0c0e0f020c")){
+                              System.out.println("ici "+accountStateTrieNode);
+                            }
+                            return accountStateTrieNode;
+                          }
+                        }, Function.identity(), Function.identity()),
+                        Bytes32.wrap(worldStateRootHash.get()))
+                        .get(Bytes32.fromHexString("0xcef2cf8f5a0e1e3c6f1e983e93efa1dc1c29fa69016168ba52f46c6ed5a0884c"));
+        System.out.println("temp account" +response);*/
         response =
             new StoredMerklePatriciaTrie<>(
                     new StoredNodeFactory<>(
@@ -97,7 +116,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
                     Bytes32.wrap(worldStateRootHash.get()))
                 .get(accountHash);
         if (lazyMode) {
-          response.ifPresent(bytes -> updater().putAccountInfoState(accountHash, bytes).commit());
+          response.ifPresent(
+              bytes -> {
+                // updater().putAccountInfoState(accountHash, bytes).commit()
+              });
         }
       }
     }
@@ -165,10 +187,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   public Optional<Bytes> getStorageValueBySlotHash(
       final Hash accountHash, final Hash slotHash, final boolean lazyMode) {
-    Optional<Bytes> response =
-        storageStorage
-            .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
-            .map(Bytes::wrap);
+    Optional<Bytes> response = Optional.empty();
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       // When accessing a trie leaf we store it in storageStorage to accelerate the next time we

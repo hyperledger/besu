@@ -14,71 +14,46 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 
-import java.util.Optional;
-import java.util.OptionalLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SnapSyncState extends FastSyncState {
 
-  private OptionalLong originalPivotBlockNumber;
   private boolean isHealInProgress;
-  private boolean isResettingPivotBlock;
+
+  private final AtomicInteger lock = new AtomicInteger();
 
   public SnapSyncState(final FastSyncState fastSyncState) {
     super(fastSyncState.getPivotBlockNumber(), fastSyncState.getPivotBlockHeader());
-    originalPivotBlockNumber = fastSyncState.getPivotBlockNumber();
-  }
-
-  public SnapSyncState(final long pivotBlockNumber) {
-    super(OptionalLong.of(pivotBlockNumber), Optional.empty());
-    this.originalPivotBlockNumber = OptionalLong.of(pivotBlockNumber);
-  }
-
-  public SnapSyncState(final BlockHeader pivotBlockHeader) {
-    super(OptionalLong.of(pivotBlockHeader.getNumber()), Optional.of(pivotBlockHeader));
-    this.originalPivotBlockNumber = OptionalLong.of(pivotBlockHeader.getNumber());
-  }
-
-  public OptionalLong getOriginalPivotBlockNumber() {
-    return originalPivotBlockNumber;
-  }
-
-  public boolean isPivotBlockChanged() {
-    return !originalPivotBlockNumber.equals(getPivotBlockNumber());
-  }
-
-  public void setSnapHealInProgress(final boolean isHealInProgress) {
-    this.isHealInProgress = isHealInProgress;
   }
 
   public boolean isHealInProgress() {
     return isHealInProgress;
   }
 
-  public boolean isResettingPivotBlock() {
-    return isResettingPivotBlock;
+  public void notifyStartHeal() {
+    isHealInProgress = true;
   }
 
-  public void setOriginalPivotBlockNumber(final OptionalLong originalPivotBlockNumber) {
-    this.originalPivotBlockNumber = originalPivotBlockNumber;
+  public boolean isResettingPivotBlock() {
+    return lock.get() == 1;
+  }
+
+  public boolean isValidTask(final SnapDataRequest request) {
+    return getPivotBlockHeader()
+        .map(SealableBlockHeader::getStateRoot)
+        .filter(hash -> hash.equals(request.getRootHash()))
+        .isPresent();
   }
 
   public boolean lockResettingPivotBlock() {
-    synchronized (this) {
-      if (isResettingPivotBlock) {
-        return false;
-      } else {
-        isResettingPivotBlock = true;
-        return true;
-      }
-    }
+    return lock.compareAndSet(0, 1);
   }
 
   public void unlockResettingPivotBlock() {
-    synchronized (this) {
-      isResettingPivotBlock = false;
-    }
+    lock.set(1);
   }
 }

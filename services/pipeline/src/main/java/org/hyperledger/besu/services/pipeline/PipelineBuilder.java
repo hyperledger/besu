@@ -237,7 +237,23 @@ public class PipelineBuilder<I, T> {
    * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
    */
   public PipelineBuilder<I, List<T>> inBatches(final int maximumBatchSize) {
-    checkArgument(maximumBatchSize > 0, "Maximum batch size must be greater than 0");
+    return inBatches(maximumBatchSize, ts -> maximumBatchSize - ts.size());
+  }
+
+  /**
+   * Batches items into groups of at most <i>maximumBatchSize</i>. Batches are created eagerly to
+   * minimize delay so may not be full.
+   *
+   * <p>Order of items is preserved.
+   *
+   * <p>The output buffer size is reduced to <code>bufferSize / maximumBatchSize + 1</code>.
+   *
+   * @param maximumBatchSize the maximum number of items to include in a batch.
+   * @param stopBatchCondition the condition before ending the batch
+   * @return a {@link PipelineBuilder} ready to extend the pipeline with additional stages.
+   */
+  public PipelineBuilder<I, List<T>> inBatches(
+      final int maximumBatchSize, final Function<List<T>, Integer> stopBatchCondition) {
     return new PipelineBuilder<>(
         inputPipe,
         stages,
@@ -246,7 +262,8 @@ public class PipelineBuilder<I, T> {
         new BatchingReadPipe<>(
             pipeEnd,
             maximumBatchSize,
-            outputCounter.labels(lastStageName + "_outputPipe", "batches")),
+            outputCounter.labels(lastStageName + "_outputPipe", "batches"),
+            stopBatchCondition),
         (int) Math.ceil(((double) bufferSize) / maximumBatchSize),
         outputCounter,
         tracingEnabled,

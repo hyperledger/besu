@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
+import java.math.BigInteger;
 import java.time.Clock;
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,6 +58,7 @@ import java.util.function.Consumer;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -291,26 +293,49 @@ public class EthPeer {
         requestManagers.get(protocolName).get(EthPV65.GET_POOLED_TRANSACTIONS), message);
   }
 
-  public RequestManager.ResponseStream getSnapAccountRange(final GetAccountRangeMessage message)
+  public RequestManager.ResponseStream getSnapAccountRange(
+      final Hash stateRoot, final Bytes32 startKeyHash, final Bytes32 endKeyHash)
       throws PeerNotConnected {
+    final GetAccountRangeMessage getAccountRangeMessage =
+        GetAccountRangeMessage.create(
+            stateRoot, startKeyHash, endKeyHash, BigInteger.valueOf(256 * 1024));
+    getAccountRangeMessage.setOverrideStateRoot(Optional.of(stateRoot));
     return sendRequest(
-        requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_ACCOUNT_RANGE), message);
+        requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_ACCOUNT_RANGE),
+        getAccountRangeMessage);
   }
 
-  public RequestManager.ResponseStream getSnapStorageRange(final GetStorageRangeMessage message)
+  public RequestManager.ResponseStream getSnapStorageRange(
+      final Hash stateRoot,
+      final List<Bytes32> accountHashes,
+      final Bytes32 startKeyHash,
+      final Bytes32 endKeyHash)
       throws PeerNotConnected {
+    final GetStorageRangeMessage getStorageRangeMessage =
+        GetStorageRangeMessage.create(
+            stateRoot, accountHashes, startKeyHash, endKeyHash, BigInteger.valueOf(512 * 1024));
+    getStorageRangeMessage.setOverrideStateRoot(Optional.of(stateRoot));
     return sendRequest(
-        requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_STORAGE_RANGE), message);
+        requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_STORAGE_RANGE),
+        getStorageRangeMessage);
   }
 
-  public RequestManager.ResponseStream getSnapBytecode(final GetByteCodesMessage message)
-      throws PeerNotConnected {
-    return sendRequest(requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_BYTECODES), message);
+  public RequestManager.ResponseStream getSnapBytecode(
+      final Hash stateRoot, final List<Bytes32> codeHashes) throws PeerNotConnected {
+    final GetByteCodesMessage getByteCodes =
+        GetByteCodesMessage.create(codeHashes, BigInteger.valueOf(512 * 1024));
+    getByteCodes.setOverrideStateRoot(Optional.of(stateRoot));
+    return sendRequest(
+        requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_BYTECODES), getByteCodes);
   }
 
-  public RequestManager.ResponseStream getSnapTrieNode(final GetTrieNodes message)
-      throws PeerNotConnected {
-    return sendRequest(requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_TRIE_NODES), message);
+  public RequestManager.ResponseStream getSnapTrieNode(
+      final Hash stateRoot, final List<List<Bytes>> paths) throws PeerNotConnected {
+    final GetTrieNodes getTrieNodes =
+        GetTrieNodes.create(stateRoot, paths, BigInteger.valueOf(512 * 1024));
+    getTrieNodes.setOverrideStateRoot(Optional.of(stateRoot));
+    return sendRequest(
+        requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_TRIE_NODES), getTrieNodes);
   }
 
   private RequestManager.ResponseStream sendRequest(

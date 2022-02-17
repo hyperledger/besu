@@ -18,6 +18,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipelineFrom;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.TaskQueueIterator;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -34,21 +36,34 @@ import org.hyperledger.besu.util.ExceptionUtils;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("UnusedVariable")
 public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess {
-  private static final Logger LOG = LogManager.getLogger();
-  private final Pipeline<Task<SnapDataRequest>> fetchDataPipeline;
-  private final Pipeline<Task<SnapDataRequest>> completionPipeline;
 
+  private static final Logger LOG = LoggerFactory.getLogger(SnapWorldStateDownloadProcess.class);
+  private final Pipeline<Task<SnapDataRequest>> completionPipeline;
+  private final Pipeline<Task<SnapDataRequest>> fetchAccountPipeline;
+  private final Pipeline<Task<SnapDataRequest>> fetchStorageDataPipeline;
+  private final Pipeline<Task<SnapDataRequest>> fetchBigStorageDataPipeline;
+  private final Pipeline<Task<SnapDataRequest>> fetchCodePipeline;
+  private final Pipeline<Task<SnapDataRequest>> fetchHealPipeline;
   private final WritePipe<Task<SnapDataRequest>> requestsToComplete;
 
   private SnapWorldStateDownloadProcess(
-      final Pipeline<Task<SnapDataRequest>> fetchDataPipeline,
+      final Pipeline<Task<SnapDataRequest>> fetchAccountPipeline,
+      final Pipeline<Task<SnapDataRequest>> fetchStorageDataPipeline,
+      final Pipeline<Task<SnapDataRequest>> fetchBigStorageDataPipeline,
+      final Pipeline<Task<SnapDataRequest>> fetchCodePipeline,
+      final Pipeline<Task<SnapDataRequest>> fetchHealPipeline,
       final Pipeline<Task<SnapDataRequest>> completionPipeline,
       final WritePipe<Task<SnapDataRequest>> requestsToComplete) {
-    this.fetchDataPipeline = fetchDataPipeline;
+    this.fetchStorageDataPipeline = fetchStorageDataPipeline;
+    this.fetchAccountPipeline = fetchAccountPipeline;
+    this.fetchBigStorageDataPipeline = fetchBigStorageDataPipeline;
+    this.fetchCodePipeline = fetchCodePipeline;
+    this.fetchHealPipeline = fetchHealPipeline;
     this.completionPipeline = completionPipeline;
     this.requestsToComplete = requestsToComplete;
   }
@@ -59,28 +74,46 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
 
   @Override
   public CompletableFuture<Void> start(final EthScheduler ethScheduler) {
-    final CompletableFuture<Void> fetchDataFuture = ethScheduler.startPipeline(fetchDataPipeline);
+    final CompletableFuture<Void> fetchAccountFuture =
+        ethScheduler.startPipeline(fetchAccountPipeline);
+    final CompletableFuture<Void> fetchStorageFuture =
+        ethScheduler.startPipeline(fetchStorageDataPipeline);
+    final CompletableFuture<Void> fetchBigStorageFuture =
+        ethScheduler.startPipeline(fetchBigStorageDataPipeline);
+    final CompletableFuture<Void> fetchCodeFuture = ethScheduler.startPipeline(fetchCodePipeline);
+    final CompletableFuture<Void> fetchHealFuture = ethScheduler.startPipeline(fetchHealPipeline);
     final CompletableFuture<Void> completionFuture = ethScheduler.startPipeline(completionPipeline);
 
-    fetchDataFuture.whenComplete(
-        (result, error) -> {
-          if (error != null) {
-            if (!(ExceptionUtils.rootCause(error) instanceof CancellationException)) {
-              LOG.error("Pipeline failed", error);
-            }
-            completionPipeline.abort();
-          } else {
-            // No more data to fetch, so propagate the pipe closure onto the completion pipe.
-            requestsToComplete.close();
-          }
-        });
+    fetchAccountFuture
+        .thenCombine(fetchStorageFuture, (unused, unused2) -> null)
+        .thenCombine(fetchBigStorageFuture, (unused, unused2) -> null)
+        .thenCombine(fetchCodeFuture, (unused, unused2) -> null)
+        .thenCombine(fetchHealFuture, (unused, unused2) -> null)
+        .whenComplete(
+            (result, error) -> {
+              if (error != null) {
+                if (!(ExceptionUtils.rootCause(error) instanceof CancellationException)) {
+                  LOG.error("Pipeline failed", error);
+                }
+                System.out.println("Error found " + error);
+                completionPipeline.abort();
+              } else {
+                // No more data to fetch, so propagate the pipe closure onto the completion pipe.
+                requestsToComplete.close();
+              }
+            });
 
     completionFuture.exceptionally(
         error -> {
           if (!(ExceptionUtils.rootCause(error) instanceof CancellationException)) {
             LOG.error("Pipeline failed", error);
           }
-          fetchDataPipeline.abort();
+          System.out.println("Error found " + error);
+          fetchAccountPipeline.abort();
+          fetchStorageDataPipeline.abort();
+          fetchBigStorageDataPipeline.abort();
+          fetchCodePipeline.abort();
+          fetchHealPipeline.abort();
           return null;
         });
     return completionFuture;
@@ -88,7 +121,11 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
 
   @Override
   public void abort() {
-    fetchDataPipeline.abort();
+    fetchAccountPipeline.abort();
+    fetchStorageDataPipeline.abort();
+    fetchBigStorageDataPipeline.abort();
+    fetchCodePipeline.abort();
+    fetchHealPipeline.abort();
     completionPipeline.abort();
   }
 
@@ -98,6 +135,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
     private int maxOutstandingRequests;
     private SnapWorldDownloadState downloadState;
     private MetricsSystem metricsSystem;
+    private LoadLocalDataStep loadLocalDataStep;
     private RequestDataStep requestDataStep;
     private SnapSyncState snapSyncState;
     private PersistDataStep persistDataStep;
@@ -110,6 +148,11 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
 
     public Builder maxOutstandingRequests(final int maxOutstandingRequests) {
       this.maxOutstandingRequests = maxOutstandingRequests;
+      return this;
+    }
+
+    public Builder loadLocalDataStep(final LoadLocalDataStep loadLocalDataStep) {
+      this.loadLocalDataStep = loadLocalDataStep;
       return this;
     }
 
@@ -144,6 +187,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
     }
 
     public SnapWorldStateDownloadProcess build() {
+      checkNotNull(loadLocalDataStep);
       checkNotNull(requestDataStep);
       checkNotNull(persistDataStep);
       checkNotNull(completeTaskStep);
@@ -152,7 +196,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
       checkNotNull(metricsSystem);
 
       // Room for the requests we expect to do in parallel plus some buffer but not unlimited.
-      final int bufferCapacity = hashCountPerRequest * 2;
+      final int bufferCapacity = 1000000;
       final LabelledMetric<Counter> outputCounter =
           metricsSystem.createLabelledCounter(
               BesuMetricCategory.SYNCHRONIZER,
@@ -170,30 +214,168 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                       completeTaskStep.markAsCompleteOrFailed(snapSyncState, downloadState, task));
 
       final Pipe<Task<SnapDataRequest>> requestsToComplete = completionPipeline.getInputPipe();
-      final Pipeline<Task<SnapDataRequest>> fetchDataPipeline =
+
+      final Pipeline<Task<SnapDataRequest>> fetchAccountDataPipeline =
           createPipelineFrom(
                   "requestDequeued",
-                  new TaskQueueIterator<>(downloadState),
+                  new TaskQueueIterator<>(
+                      downloadState, () -> downloadState.dequeueAccountRequestBlocking()),
                   bufferCapacity,
                   outputCounter,
                   true,
                   "world_state_download")
-              .thenProcessAsync(
-                  "batchDownloadData",
-                  requestTask ->
-                      requestDataStep.requestData(requestTask, snapSyncState, downloadState),
-                  maxOutstandingRequests)
-              .thenProcess("batchPersistData", task -> persistDataStep.persist(task))
               .thenProcess(
                   "checkNewPivotBlock",
                   task -> {
                     downloadState.checkNewPivotBlock(snapSyncState);
                     return task;
                   })
+              .thenProcessAsync(
+                  "batchDownloadData",
+                  requestTask ->
+                      requestDataStep.requestAccountData(requestTask, snapSyncState, downloadState),
+                  maxOutstandingRequests)
+              .thenProcess("batchPersistData", task -> persistDataStep.persist(task, downloadState))
               .andFinishWith("batchDataDownloaded", requestsToComplete::put);
 
+      final Pipeline<Task<SnapDataRequest>> fetchStorageDataPipeline =
+          createPipelineFrom(
+                  "requestDequeued",
+                  new TaskQueueIterator<>(
+                      downloadState, () -> downloadState.dequeueStorageRequestBlocking()),
+                  bufferCapacity,
+                  outputCounter,
+                  true,
+                  "world_state_download")
+              .inBatches(1024)
+              .thenProcess(
+                  "checkNewPivotBlock",
+                  tasks -> {
+                    downloadState.checkNewPivotBlock(snapSyncState);
+                    return tasks;
+                  })
+              .thenProcessAsync(
+                  "batchDownloadData",
+                  requestTask ->
+                      requestDataStep.requestStorage(requestTask, snapSyncState, downloadState),
+                  maxOutstandingRequests)
+              .thenProcess("batchPersistData", task -> persistDataStep.persist(task, downloadState))
+              .andFinishWith(
+                  "batchDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
+
+      final Pipeline<Task<SnapDataRequest>> fetchBigStorageDataPipeline =
+          createPipelineFrom(
+                  "requestDequeued",
+                  new TaskQueueIterator<>(
+                      downloadState, () -> downloadState.dequeueBigStorageRequestBlocking()),
+                  bufferCapacity,
+                  outputCounter,
+                  true,
+                  "world_state_download")
+              .inBatches(1)
+              .thenProcess(
+                  "checkNewPivotBlock",
+                  task -> {
+                    downloadState.checkNewPivotBlock(snapSyncState);
+                    return task;
+                  })
+              .thenProcessAsync(
+                  "batchDownloadData",
+                  requestTask ->
+                      requestDataStep.requestStorage(requestTask, snapSyncState, downloadState),
+                  maxOutstandingRequests)
+              .thenProcess(
+                  "batchPersistData",
+                  task -> {
+                    persistDataStep.persist(task, downloadState);
+                    return task;
+                  })
+              .andFinishWith(
+                  "batchDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
+
+      final Pipeline<Task<SnapDataRequest>> fetchCodePipeline =
+          createPipelineFrom(
+                  "requestDequeued",
+                  new TaskQueueIterator<>(
+                      downloadState, () -> downloadState.dequeueCodeRequestBlocking()),
+                  bufferCapacity,
+                  outputCounter,
+                  true,
+                  "code_blocks_download_pipeline")
+              .inBatches(
+                  1024,
+                  tasks ->
+                      84
+                          - (int)
+                              tasks.stream()
+                                  .map(Task::getData)
+                                  .map(BytecodeRequest.class::cast)
+                                  .map(BytecodeRequest::getCodeHash)
+                                  .distinct()
+                                  .count())
+              .thenProcess(
+                  "checkNewPivotBlock",
+                  task -> {
+                    downloadState.checkNewPivotBlock(snapSyncState);
+                    return task;
+                  })
+              .thenProcessAsync(
+                  "batchDownloadCodeBlocksData",
+                  tasks -> requestDataStep.requestCode(tasks, snapSyncState, downloadState),
+                  maxOutstandingRequests)
+              .thenProcess(
+                  "batchPersistData",
+                  task -> {
+                    persistDataStep.persist(task, downloadState);
+                    return task;
+                  })
+              .andFinishWith(
+                  "batchDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
+
+      final Pipeline<Task<SnapDataRequest>> fetchHealDataPipeline =
+          createPipelineFrom(
+                  "requestDequeued",
+                  new TaskQueueIterator<>(
+                      downloadState, () -> downloadState.dequeueTrieNodeRequestBlocking()),
+                  bufferCapacity,
+                  outputCounter,
+                  true,
+                  "world_state_download")
+              .thenFlatMapInParallel(
+                  "requestLoadLocalData",
+                  task -> loadLocalDataStep.loadLocalData(task, requestsToComplete),
+                  3,
+                  bufferCapacity)
+              .inBatches(1024)
+              .thenProcess(
+                  "checkNewPivotBlock",
+                  task -> {
+                    downloadState.checkNewPivotBlock(snapSyncState);
+                    return task;
+                  })
+              .thenProcessAsync(
+                  "batchDownloadData",
+                  requestTask ->
+                      requestDataStep.requestTrieNodeByPath(
+                          requestTask, snapSyncState, downloadState),
+                  maxOutstandingRequests)
+              .thenProcess(
+                  "batchPersistData",
+                  task -> {
+                    persistDataStep.persist(task, downloadState);
+                    return task;
+                  })
+              .andFinishWith(
+                  "batchDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
+
       return new SnapWorldStateDownloadProcess(
-          fetchDataPipeline, completionPipeline, requestsToComplete);
+          fetchAccountDataPipeline,
+          fetchStorageDataPipeline,
+          fetchBigStorageDataPipeline,
+          fetchCodePipeline,
+          fetchHealDataPipeline,
+          completionPipeline,
+          requestsToComplete);
     }
   }
 }

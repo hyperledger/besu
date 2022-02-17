@@ -382,7 +382,6 @@ public abstract class BesuControllerBuilder {
 
     final SubProtocolConfiguration subProtocolConfiguration =
         createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
-    ;
 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);

@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -31,8 +32,6 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.immutables.value.Value;
 
 public final class GetStorageRangeMessage extends AbstractSnapMessageData {
-
-  private final Optional<ArrayDeque<Bytes32>> storageRoots;
 
   public static GetStorageRangeMessage readFrom(final MessageData message) {
     if (message instanceof GetStorageRangeMessage) {
@@ -48,8 +47,7 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
 
   public static GetStorageRangeMessage create(
       final Hash worldStateRootHash,
-      final ArrayDeque<Bytes32> accountHashes,
-      final Optional<ArrayDeque<Bytes32>> storageRoots,
+      final List<Bytes32> accountHashes,
       final Bytes32 startKeyHash,
       final Bytes32 endKeyHash,
       final BigInteger responseBytes) {
@@ -57,7 +55,6 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
         Optional.empty(),
         worldStateRootHash,
         accountHashes,
-        storageRoots,
         startKeyHash,
         endKeyHash,
         responseBytes);
@@ -66,8 +63,7 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
   public static GetStorageRangeMessage create(
       final Optional<BigInteger> requestId,
       final Hash worldStateRootHash,
-      final ArrayDeque<Bytes32> accountHashes,
-      final Optional<ArrayDeque<Bytes32>> storageRoots,
+      final List<Bytes32> accountHashes,
       final Bytes32 startKeyHash,
       final Bytes32 endKeyHash,
       final BigInteger responseBytes) {
@@ -80,21 +76,11 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
     tmp.writeBytes(endKeyHash);
     tmp.writeBigIntegerScalar(responseBytes);
     tmp.endList();
-    return new GetStorageRangeMessage(tmp.encoded(), storageRoots);
+    return new GetStorageRangeMessage(tmp.encoded());
   }
 
   public GetStorageRangeMessage(final Bytes data) {
-    this(data, Optional.empty());
-  }
-
-  public GetStorageRangeMessage(
-      final Bytes data, final Optional<ArrayDeque<Bytes32>> storageRoots) {
     super(data);
-    this.storageRoots = storageRoots;
-  }
-
-  public Optional<ArrayDeque<Bytes32>> getStorageRoots() {
-    return storageRoots;
   }
 
   @Override
@@ -104,7 +90,6 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
             Optional.of(requestId),
             range.worldStateRootHash(),
             range.hashes(),
-            storageRoots,
             range.startKeyHash(),
             range.endKeyHash(),
             range.responseBytes())
@@ -147,11 +132,6 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
     range.responseBytes(input.readBigIntegerScalar());
     input.leaveList();
     return range.build();
-  }
-
-  @Override
-  public String toString() {
-    return "GetStorageRangeMessage{" + "storageRoots=" + storageRoots + ", data=" + data + '}';
   }
 
   @Value.Immutable

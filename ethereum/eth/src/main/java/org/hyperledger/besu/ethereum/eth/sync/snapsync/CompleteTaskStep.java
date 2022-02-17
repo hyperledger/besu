@@ -14,26 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.services.tasks.Task;
 
-import java.util.function.LongSupplier;
-
 public class CompleteTaskStep {
   private final WorldStateStorage worldStateStorage;
   private final Counter completedRequestsCounter;
   private final Counter retriedRequestsCounter;
-  private final LongSupplier worldStatePendingRequestsCurrentSupplier;
 
   public CompleteTaskStep(
-      final WorldStateStorage worldStateStorage,
-      final MetricsSystem metricsSystem,
-      final LongSupplier worldStatePendingRequestsCurrentSupplier) {
+      final WorldStateStorage worldStateStorage, final MetricsSystem metricsSystem) {
     this.worldStateStorage = worldStateStorage;
-    this.worldStatePendingRequestsCurrentSupplier = worldStatePendingRequestsCurrentSupplier;
     completedRequestsCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.SYNCHRONIZER,
@@ -46,12 +41,11 @@ public class CompleteTaskStep {
             "Total number of node data requests repeated as part of snap sync world state download");
   }
 
-  public void markAsCompleteOrFailed(
+  public synchronized void markAsCompleteOrFailed(
       final SnapSyncState snapSyncState,
       final SnapWorldDownloadState downloadState,
       final Task<SnapDataRequest> task) {
-    if (task.getData().getData().isPresent()) {
-      enqueueChildren(task, downloadState);
+    if (task.getData().isDataPresent()) {
       completedRequestsCounter.inc();
       task.markCompleted();
       downloadState.checkCompletion(
@@ -59,22 +53,7 @@ public class CompleteTaskStep {
     } else {
       retriedRequestsCounter.inc();
       task.markFailed();
-      // Marking the task as failed will add it back to the queue so make sure any threads
-      // waiting to read from the queue are notified.
-      downloadState.notifyTaskAvailable();
     }
-  }
-
-  public long getPendingRequests() {
-    return worldStatePendingRequestsCurrentSupplier.getAsLong();
-  }
-
-  private void enqueueChildren(
-      final Task<SnapDataRequest> task, final SnapWorldDownloadState downloadState) {
-    final SnapDataRequest request = task.getData();
-    // Only queue rootnode children if we started from scratch
-    if (!downloadState.downloadWasResumed()) {
-      downloadState.enqueueRequests(request.getChildRequests(worldStateStorage));
-    }
+    downloadState.notifyTaskAvailable();
   }
 }

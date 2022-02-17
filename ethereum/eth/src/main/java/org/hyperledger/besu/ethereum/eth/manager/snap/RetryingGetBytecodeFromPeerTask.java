@@ -19,51 +19,48 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
-import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
-import org.hyperledger.besu.ethereum.eth.messages.snap.GetByteCodesMessage;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.GetBytecodeRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDataRequest;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-public class RetryingGetBytecodeFromPeerTask extends AbstractRetryingPeerTask<ByteCodesMessage> {
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
+public class RetryingGetBytecodeFromPeerTask extends AbstractRetryingPeerTask<Map<Bytes32, Bytes>> {
 
   private final EthContext ethContext;
-  private final GetByteCodesMessage message;
+  private final List<Bytes32> codeHashes;
   private final BlockHeader blockHeader;
   private final MetricsSystem metricsSystem;
 
   private RetryingGetBytecodeFromPeerTask(
       final EthContext ethContext,
-      final GetByteCodesMessage message,
+      final List<Bytes32> codeHashes,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    super(ethContext, 3, data -> false, metricsSystem);
+    super(ethContext, 3, Map::isEmpty, metricsSystem);
     this.ethContext = ethContext;
-    this.message = message;
+    this.codeHashes = codeHashes;
     this.blockHeader = blockHeader;
     this.metricsSystem = metricsSystem;
   }
 
-  public static EthTask<ByteCodesMessage> forStorageRange(
+  public static EthTask<Map<Bytes32, Bytes>> forByteCode(
       final EthContext ethContext,
-      final SnapDataRequest request,
+      final List<Bytes32> codeHashes,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    return new RetryingGetBytecodeFromPeerTask(
-        ethContext,
-        ((GetBytecodeRequest) request).getByteCodesMessage(),
-        blockHeader,
-        metricsSystem);
+    return new RetryingGetBytecodeFromPeerTask(ethContext, codeHashes, blockHeader, metricsSystem);
   }
 
   @Override
-  protected CompletableFuture<ByteCodesMessage> executePeerTask(
+  protected CompletableFuture<Map<Bytes32, Bytes>> executePeerTask(
       final Optional<EthPeer> assignedPeer) {
     final GetBytecodeFromPeerTask task =
-        GetBytecodeFromPeerTask.forStorageRange(ethContext, message, blockHeader, metricsSystem);
+        GetBytecodeFromPeerTask.forBytecode(ethContext, codeHashes, blockHeader, metricsSystem);
     assignedPeer.ifPresent(task::assignPeer);
     return executeSubTask(task::run)
         .thenApply(

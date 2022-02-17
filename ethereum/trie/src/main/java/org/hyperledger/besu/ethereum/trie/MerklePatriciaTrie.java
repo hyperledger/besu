@@ -60,6 +60,15 @@ public interface MerklePatriciaTrie<K, V> {
   void put(K key, V value);
 
   /**
+   * Updates the value mapped to the specified key, creating the mapping if one does not already
+   * exist.
+   *
+   * @param key The key that corresponds to the value to be updated.
+   * @param putVisitor custom visitor for the addition
+   */
+  void put(K key, PutVisitor<V> putVisitor);
+
+  /**
    * Deletes the value mapped to the specified key, if such a value exists (Optional operation).
    *
    * @param key The key of the value to be deleted.

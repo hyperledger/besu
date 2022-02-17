@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     implements TaskCollection<T> {
   private final List<PriorityQueue<T>> internalQueues = new ArrayList<>(16);
-  private final Set<InMemoryTask<T>> unfinishedOutstandingTasks = new HashSet<>();
+  protected final Set<InMemoryTask<T>> unfinishedOutstandingTasks = new HashSet<>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
   public InMemoryTasksPriorityQueues() {
@@ -74,7 +74,7 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     return task;
   }
 
-  private Queue<T> findLastNonEmptyQueue() {
+  protected Queue<T> findLastNonEmptyQueue() {
     for (int i = internalQueues.size() - 1; i > 0; i--) {
       final Queue<T> queue = internalQueues.get(i);
       if (!queue.isEmpty()) {
@@ -103,7 +103,7 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
   }
 
   @Override
-  public synchronized boolean allTasksCompleted() {
+  public boolean allTasksCompleted() {
     return isEmpty() && unfinishedOutstandingTasks.isEmpty();
   }
 

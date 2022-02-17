@@ -14,15 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountRangeDataRequest;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldStateDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -32,23 +34,21 @@ import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SnapWorldStateDownloader implements WorldStateDownloader {
-  private static final Logger LOG = LogManager.getLogger();
 
+  private static final Logger LOG = LoggerFactory.getLogger(SnapWorldStateDownloader.class);
   private final long minMillisBeforeStalling;
   private final Clock clock;
   private final MetricsSystem metricsSystem;
 
   private final EthContext ethContext;
-  private final FastSyncStateStorage fastSyncStateStorage;
   private final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection;
   private final InMemoryTasksPriorityQueues<NodeDataRequest> fastTaskCollection;
   private final int hashCountPerRequest;
@@ -64,7 +64,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
   public SnapWorldStateDownloader(
       final EthContext ethContext,
-      final FastSyncStateStorage fastSyncStateStorage,
       final WorldStateStorage worldStateStorage,
       final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection,
       final InMemoryTasksPriorityQueues<NodeDataRequest> fastTaskCollection,
@@ -75,7 +74,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final Clock clock,
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
-    this.fastSyncStateStorage = fastSyncStateStorage;
     this.worldStateStorage = worldStateStorage;
     this.snapTaskCollection = snapTaskCollection;
     this.fastTaskCollection = fastTaskCollection;
@@ -122,7 +120,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final SnapSyncState snapSyncState = (SnapSyncState) fastSyncState;
       final BlockHeader header = fastSyncState.getPivotBlockHeader().get();
       final Hash stateRoot = header.getStateRoot();
-
       LOG.info(
           "Downloading world state from peers for block {} ({}). State root {} pending request "
               + snapTaskCollection.size(),
@@ -142,29 +139,21 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               healProcess,
               clock);
 
-      // snapsync already done, switch to fastsync
-      if (fastSyncStateStorage.getFastSyncStep().equals(SyncMode.X_SNAP)) {
-        AtomicLong counter = new AtomicLong(0);
-        RangeManager.generateAllRanges(16)
-            .forEach(
-                (key, value) ->
-                    newDownloadState.enqueueRequest(
-                        SnapDataRequest.createAccountRangeDataRequest(
-                            stateRoot, key, value, 0, counter.getAndIncrement())));
-      } else {
-        return healProcess.run(fastSyncActions, fastSyncState);
-      }
+      RangeManager.generateAllRanges(16)
+          .forEach(
+              (key, value) ->
+                  newDownloadState.enqueueRequest(
+                      createAccountRangeDataRequest(stateRoot, key, value)));
 
-      maybeCompleteTask =
-          Optional.of(
-              new CompleteTaskStep(worldStateStorage, metricsSystem, snapTaskCollection::size));
+      maybeCompleteTask = Optional.of(new CompleteTaskStep(worldStateStorage, metricsSystem));
 
       downloadProcess =
           SnapWorldStateDownloadProcess.builder()
               .hashCountPerRequest(hashCountPerRequest)
               .maxOutstandingRequests(maxOutstandingRequests)
+              .loadLocalDataStep(new LoadLocalDataStep(worldStateStorage, metricsSystem))
               .requestDataStep(new RequestDataStep(ethContext, worldStateStorage, metricsSystem))
-              .persistDataStep(new PersistDataStep(worldStateStorage, metricsSystem))
+              .persistDataStep(new PersistDataStep(snapSyncState, worldStateStorage, metricsSystem))
               .completeTaskStep(maybeCompleteTask.get())
               .downloadState(newDownloadState)
               .fastSyncState(snapSyncState)

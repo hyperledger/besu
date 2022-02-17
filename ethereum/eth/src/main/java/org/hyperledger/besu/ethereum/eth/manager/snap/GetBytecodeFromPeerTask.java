@@ -14,67 +14,91 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.snap;
 
+import static java.util.Collections.emptyMap;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerRequestTask;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
-import org.hyperledger.besu.ethereum.eth.messages.snap.GetByteCodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import kotlin.collections.ArrayDeque;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
 
-public class GetBytecodeFromPeerTask extends AbstractPeerRequestTask<ByteCodesMessage> {
+public class GetBytecodeFromPeerTask extends AbstractPeerRequestTask<Map<Bytes32, Bytes>> {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = getLogger(GetBytecodeFromPeerTask.class);
 
-  private final GetByteCodesMessage message;
+  private final List<Bytes32> codeHashes;
   private final BlockHeader blockHeader;
-  ;
 
   private GetBytecodeFromPeerTask(
       final EthContext ethContext,
-      final GetByteCodesMessage message,
+      final List<Bytes32> codeHashes,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
     super(ethContext, SnapV1.STORAGE_RANGE, metricsSystem);
-    this.message = message;
+    this.codeHashes = codeHashes;
     this.blockHeader = blockHeader;
   }
 
-  public static GetBytecodeFromPeerTask forStorageRange(
+  public static GetBytecodeFromPeerTask forBytecode(
       final EthContext ethContext,
-      final GetByteCodesMessage message,
+      final List<Bytes32> codeHashes,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    return new GetBytecodeFromPeerTask(ethContext, message, blockHeader, metricsSystem);
+    return new GetBytecodeFromPeerTask(ethContext, codeHashes, blockHeader, metricsSystem);
   }
 
   @Override
   protected PendingPeerRequest sendRequest() {
     return sendRequestToPeer(
         peer -> {
-          LOG.trace("Requesting Bytecodes for accounts from {} .", peer);
-          message.setOverrideStateRoot(Optional.of(blockHeader.getStateRoot()));
-          return peer.getSnapBytecode(message);
+          LOG.info("Requesting Bytecodes for accounts from {} .", peer);
+          return peer.getSnapBytecode(blockHeader.getStateRoot(), codeHashes);
         },
         blockHeader.getNumber());
   }
 
   @Override
-  protected Optional<ByteCodesMessage> processResponse(
+  protected Optional<Map<Bytes32, Bytes>> processResponse(
       final boolean streamClosed, final MessageData message, final EthPeer peer) {
+
     if (streamClosed) {
       // We don't record this as a useless response because it's impossible to know if a peer has
       // the data we're requesting.
+      return Optional.of(emptyMap());
+    }
+    final ByteCodesMessage byteCodesMessage = ByteCodesMessage.readFrom(message);
+    final ArrayDeque<Bytes> bytecodes = byteCodesMessage.bytecodes(true).codes();
+    if (bytecodes.size() > codeHashes.size()) {
+      // Can't be the response to our request
       return Optional.empty();
     }
-    return Optional.of(ByteCodesMessage.readFrom(message));
+    return mapCodeByHash(bytecodes);
+  }
+
+  private Optional<Map<Bytes32, Bytes>> mapCodeByHash(final ArrayDeque<Bytes> bytecodes) {
+    final Map<Bytes32, Bytes> codeByHash = new HashMap<>();
+    for (int i = 0; i < bytecodes.size(); i++) {
+      Hash hash = Hash.hash(bytecodes.get(i));
+      if (codeHashes.get(i).equals(hash)) {
+        codeByHash.put(hash, bytecodes.get(i));
+      }
+    }
+    return Optional.of(codeByHash);
   }
 }

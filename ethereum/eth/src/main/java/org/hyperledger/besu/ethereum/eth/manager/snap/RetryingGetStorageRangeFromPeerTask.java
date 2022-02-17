@@ -19,53 +19,58 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
-import org.hyperledger.besu.ethereum.eth.messages.snap.GetStorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.StorageRangeDataRequest;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.tuweni.bytes.Bytes32;
+
 public class RetryingGetStorageRangeFromPeerTask
-    extends AbstractRetryingPeerTask<StorageRangeMessage> {
+    extends AbstractRetryingPeerTask<StorageRangeMessage.SlotRangeData> {
 
   private final EthContext ethContext;
-  private final GetStorageRangeMessage message;
+  private final List<Bytes32> accountHashes;
+  private final Bytes32 startKeyHash;
+  private final Bytes32 endKeyHash;
   private final BlockHeader blockHeader;
   private final MetricsSystem metricsSystem;
 
   private RetryingGetStorageRangeFromPeerTask(
       final EthContext ethContext,
-      final GetStorageRangeMessage message,
+      final List<Bytes32> accountHashes,
+      final Bytes32 startKeyHash,
+      final Bytes32 endKeyHash,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    super(ethContext, 3, data -> false, metricsSystem);
+    super(ethContext, 3, data -> data.proofs().isEmpty() && data.slots().isEmpty(), metricsSystem);
     this.ethContext = ethContext;
-    this.message = message;
+    this.accountHashes = accountHashes;
+    this.startKeyHash = startKeyHash;
+    this.endKeyHash = endKeyHash;
     this.blockHeader = blockHeader;
     this.metricsSystem = metricsSystem;
   }
 
-  public static EthTask<StorageRangeMessage> forStorageRange(
+  public static EthTask<StorageRangeMessage.SlotRangeData> forStorageRange(
       final EthContext ethContext,
-      final SnapDataRequest request,
+      final List<Bytes32> accountHashes,
+      final Bytes32 startKeyHash,
+      final Bytes32 endKeyHash,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
     return new RetryingGetStorageRangeFromPeerTask(
-        ethContext,
-        ((StorageRangeDataRequest) request).getStorageRangeMessage(),
-        blockHeader,
-        metricsSystem);
+        ethContext, accountHashes, startKeyHash, endKeyHash, blockHeader, metricsSystem);
   }
 
   @Override
-  protected CompletableFuture<StorageRangeMessage> executePeerTask(
+  protected CompletableFuture<StorageRangeMessage.SlotRangeData> executePeerTask(
       final Optional<EthPeer> assignedPeer) {
     final GetStorageRangeFromPeerTask task =
         GetStorageRangeFromPeerTask.forStorageRange(
-            ethContext, message, blockHeader, metricsSystem);
+            ethContext, accountHashes, startKeyHash, endKeyHash, blockHeader, metricsSystem);
     assignedPeer.ifPresent(task::assignPeer);
     return executeSubTask(task::run)
         .thenApply(

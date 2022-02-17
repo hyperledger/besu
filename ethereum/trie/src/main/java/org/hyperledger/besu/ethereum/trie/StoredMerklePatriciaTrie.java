@@ -118,6 +118,12 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
+  public void put(final K key, final PutVisitor<V> putVisitor) {
+    checkNotNull(key);
+    this.root = root.accept(putVisitor, bytesToPath(key));
+  }
+
+  @Override
   public void remove(final K key) {
     checkNotNull(key);
     this.root = root.accept(removeVisitor, bytesToPath(key));

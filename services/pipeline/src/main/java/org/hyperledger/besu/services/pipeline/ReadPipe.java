@@ -61,6 +61,7 @@ public interface ReadPipe<T> {
    *
    * @param output the collection to transfer elements into
    * @param maxElements the maximum number of elements to transfer
+   * @return the number of elements drained in the pipe
    */
-  void drainTo(Collection<T> output, int maxElements);
+  int drainTo(Collection<T> output, int maxElements);
 }

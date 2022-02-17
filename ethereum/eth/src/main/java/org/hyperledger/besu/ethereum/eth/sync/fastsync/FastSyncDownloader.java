@@ -41,8 +41,7 @@ public class FastSyncDownloader<REQUEST> {
   private static final Duration FAST_SYNC_RETRY_DELAY = Duration.ofSeconds(5);
 
   private static final Logger LOG = LoggerFactory.getLogger(FastSyncDownloader.class);
-  private final FastSyncActions fastSyncActions;
-  private final WorldStateStorage worldStateStorage;
+  protected final FastSyncActions fastSyncActions;
 
   private final WorldStateDownloader worldStateDownloader;
   protected final FastSyncStateStorage fastSyncStateStorage;
@@ -174,7 +173,7 @@ public class FastSyncDownloader<REQUEST> {
             return null;
           });
 
-      return CompletableFuture.allOf(worldStateFuture, chainFuture)
+      return CompletableFuture.allOf(worldStateFuture)
           .thenApply(
               complete -> {
                 trailingPeerRequirements = Optional.empty();

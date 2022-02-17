@@ -19,10 +19,16 @@ import org.apache.tuweni.bytes.Bytes;
 public class PutVisitor<V> implements PathNodeVisitor<V> {
   private final NodeFactory<V> nodeFactory;
   private final V value;
+  private final boolean allowFlatten;
 
   public PutVisitor(final NodeFactory<V> nodeFactory, final V value) {
+    this(nodeFactory, value, true);
+  }
+
+  public PutVisitor(final NodeFactory<V> nodeFactory, final V value, final boolean allowFlatten) {
     this.nodeFactory = nodeFactory;
     this.value = value;
+    this.allowFlatten = allowFlatten;
   }
 
   @Override
@@ -67,7 +73,7 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
     }
 
     final Node<V> updatedChild = branchNode.child(childIndex).accept(this, path.slice(1));
-    return branchNode.replaceChild(childIndex, updatedChild);
+    return branchNode.replaceChild(childIndex, updatedChild, allowFlatten);
   }
 
   @Override

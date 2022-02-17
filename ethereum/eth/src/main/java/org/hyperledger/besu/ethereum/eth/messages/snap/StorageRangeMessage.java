@@ -114,11 +114,7 @@ public final class StorageRangeMessage extends AbstractSnapMessageData {
     input.leaveList();
 
     input.leaveList();
-    return ImmutableSlotRangeData.builder()
-        .slots(slots)
-        .proofs(proofs)
-        .validated(new ArrayDeque<>())
-        .build();
+    return ImmutableSlotRangeData.builder().slots(slots).proofs(proofs).build();
   }
 
   @Value.Immutable
@@ -127,7 +123,5 @@ public final class StorageRangeMessage extends AbstractSnapMessageData {
     ArrayDeque<TreeMap<Bytes32, Bytes>> slots();
 
     ArrayDeque<Bytes> proofs();
-
-    ArrayDeque<Boolean> validated();
   }
 }

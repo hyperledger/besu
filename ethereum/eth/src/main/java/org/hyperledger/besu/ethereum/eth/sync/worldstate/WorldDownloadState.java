@@ -205,7 +205,7 @@ public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> 
     internalFuture.completeExceptionally(e);
   }
 
-  public synchronized boolean isDownloading() {
+  public boolean isDownloading() {
     return !internalFuture.isDone();
   }
 
@@ -217,7 +217,6 @@ public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> 
       final WorldStateDownloadProcess worldStateDownloadProcess, final EthScheduler ethScheduler) {
     this.worldStateDownloadProcess = worldStateDownloadProcess;
     final CompletableFuture<Void> processFuture = worldStateDownloadProcess.start(ethScheduler);
-
     processFuture.whenComplete(
         (result, error) -> {
           if (error != null
