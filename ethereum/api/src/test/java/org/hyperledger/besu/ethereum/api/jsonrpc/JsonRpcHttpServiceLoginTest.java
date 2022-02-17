@@ -104,6 +104,8 @@ public class JsonRpcHttpServiceLoginTest {
   protected static final Collection<String> JSON_RPC_APIS =
       Arrays.asList(
           RpcApis.ETH.name(), RpcApis.NET.name(), RpcApis.WEB3.name(), RpcApis.ADMIN.name());
+  protected static final List<String> NO_AUTH_METHODS =
+      Arrays.asList(RpcMethod.NET_SERVICES.getMethodName());
   protected static JWTAuth jwtAuth;
   protected static String authPermissionsConfigFilePath = "JsonRpcHttpService/auth.toml";
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
@@ -167,6 +169,7 @@ public class JsonRpcHttpServiceLoginTest {
     final JsonRpcConfiguration config = createJsonRpcConfig();
     config.setAuthenticationEnabled(true);
     config.setAuthenticationCredentialsFile(authTomlPath);
+    config.setNoAuthRpcApis(NO_AUTH_METHODS);
 
     return new JsonRpcHttpService(
         vertx,
@@ -543,6 +546,38 @@ public class JsonRpcHttpServiceLoginTest {
       // Check result
       final String result = json.getString("result");
       assertThat(result).isEqualTo("TestClientVersion/0.1.0");
+    }
+  }
+
+  @Test
+  public void noAuthMethodSuccessfulAfterLogin() throws Exception {
+    final String token = login("user", "pegasys");
+
+    final String id = "123";
+    final RequestBody requestBody =
+        RequestBody.create(
+            JSON,
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_services\"}");
+
+    try (final Response response = client.newCall(buildPostRequest(requestBody, token)).execute()) {
+      assertThat(response.code()).isEqualTo(200);
+      final JsonObject json = new JsonObject(response.body().string());
+      testHelper.assertValidJsonRpcResult(json, id);
+    }
+  }
+
+  @Test
+  public void noAuthMethodSuccessfulWithNoToken() throws Exception {
+    final String id = "123";
+    final RequestBody requestBody =
+        RequestBody.create(
+            JSON,
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_services\"}");
+
+    try (final Response response = client.newCall(buildPostRequest(requestBody)).execute()) {
+      assertThat(response.code()).isEqualTo(200);
+      final JsonObject json = new JsonObject(response.body().string());
+      testHelper.assertValidJsonRpcResult(json, id);
     }
   }
 
