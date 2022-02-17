@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.EvictingQueue;
 
 public class PostMergeContext implements MergeContext {
@@ -48,7 +49,8 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
       new AtomicReference<>(Optional.empty());
 
-  private PostMergeContext() {
+  @VisibleForTesting
+  PostMergeContext() {
     this.terminalTotalDifficulty = new AtomicReference<>(Difficulty.ZERO);
     this.syncState = new AtomicReference<>();
   }
