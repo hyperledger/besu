@@ -97,7 +97,6 @@ public class JsonRpcWebsocketAcceptanceTest extends AcceptanceTestBase {
         nodeUsingAuthFile.execute(
             permissioningTransactions.createSuccessfulLogin("user", "pegasys"));
     nodeUsingAuthFile.useAuthenticationTokenInHeaderForJsonRpc(token);
-    nodeUsingAuthFile.verify(net.awaitPeerCount(2));
     nodeUsingAuthFile.verify(net.awaitPeerCount(3));
 
     token =
