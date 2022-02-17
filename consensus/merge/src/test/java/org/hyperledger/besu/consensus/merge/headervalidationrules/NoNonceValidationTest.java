@@ -55,11 +55,13 @@ public class NoNonceValidationTest {
     final BlockHeader parentHeader = mock(BlockHeader.class);
 
     final BlockHeader invalidHeader = mock(BlockHeader.class);
-    when(invalidHeader.getNonce()).thenReturn(Long.valueOf(42L));
+    when(invalidHeader.getNonce()).thenReturn(42L);
+    when(invalidHeader.getNumber()).thenReturn(1337L);
     assertThat(rule.validate(invalidHeader, parentHeader, protocolContext)).isFalse();
 
     final BlockHeader validHeader = mock(BlockHeader.class);
-    when(validHeader.getNonce()).thenReturn(Long.valueOf(0L));
+    when(validHeader.getNonce()).thenReturn(0L);
+    when(validHeader.getNumber()).thenReturn(1337L);
 
     assertThat(rule.validate(validHeader, parentHeader, protocolContext)).isTrue();
   }

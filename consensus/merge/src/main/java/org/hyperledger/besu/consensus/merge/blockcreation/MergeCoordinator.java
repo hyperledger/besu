@@ -243,14 +243,16 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @Override
-  public void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash) {
+  public ForkchoiceResult updateForkChoice(
+      final Hash headBlockHash, final Hash finalizedBlockHash) {
     MutableBlockchain blockchain = protocolContext.getBlockchain();
     Optional<BlockHeader> currentFinalized = mergeContext.getFinalized();
 
     final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
+
     if (newFinalized.isEmpty() && !finalizedBlockHash.equals(Hash.ZERO)) {
       // we should only fail to find when it's the special value 0x000..000
-      throw new IllegalStateException(
+      return ForkchoiceResult.withFailure(
           String.format(
               "should've been able to find block hash %s but couldn't", finalizedBlockHash));
     }
@@ -258,35 +260,35 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     if (currentFinalized.isPresent()
         && newFinalized.isPresent()
         && !isDescendantOf(currentFinalized.get(), newFinalized.get())) {
-      throw new IllegalStateException(
+      return ForkchoiceResult.withFailure(
           String.format(
               "new finalized block %s is not a descendant of current finalized block %s",
               finalizedBlockHash, currentFinalized.get().getBlockHash()));
     }
 
     // ensure we have headBlock:
-    BlockHeader newHead =
-        blockchain
-            .getBlockHeader(headBlockHash)
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        String.format("not able to find new head block %s", headBlockHash)));
+    BlockHeader newHead = blockchain.getBlockHeader(headBlockHash).orElse(null);
+
+    if (newHead == null) {
+      return ForkchoiceResult.withFailure(
+          String.format("not able to find new head block %s", headBlockHash));
+    }
 
     // ensure new head is descendant of finalized
-    newFinalized
-        .map(Optional::of)
-        .orElse(currentFinalized)
-        .ifPresent(
-            finalized -> {
-              if (!isDescendantOf(finalized, newHead)) {
-                throw new IllegalStateException(
+    Optional<String> descendantError =
+        newFinalized
+            .map(Optional::of)
+            .orElse(currentFinalized)
+            .filter(finalized -> !isDescendantOf(finalized, newHead))
+            .map(
+                finalized ->
                     String.format(
                         "new head block %s is not a descendant of current finalized block %s",
                         newHead.getBlockHash(), finalized.getBlockHash()));
-              }
-              ;
-            });
+
+    if (descendantError.isPresent()) {
+      return ForkchoiceResult.withFailure(descendantError.get());
+    }
 
     // set the new head
     blockchain.rewindToBlock(newHead.getHash());
@@ -297,10 +299,25 @@ public class MergeCoordinator implements MergeMiningCoordinator {
           blockchain.setFinalized(blockHeader.getHash());
           mergeContext.setFinalized(blockHeader);
         });
+
+    return ForkchoiceResult.withResult(newFinalized, Optional.of(newHead));
   }
 
   @Override
   public boolean latestValidAncestorDescendsFromTerminal(final BlockHeader blockHeader) {
+    if (blockHeader.getNumber() <= 1L) {
+      // parent is a genesis block, check for merge-at-genesis
+      var blockchain = protocolContext.getBlockchain();
+
+      return blockchain
+          .getTotalDifficultyByHash(blockHeader.getBlockHash())
+          .map(Optional::of)
+          .orElse(blockchain.getTotalDifficultyByHash(blockHeader.getParentHash()))
+          .filter(
+              currDiff -> currDiff.greaterOrEqualThan(mergeContext.getTerminalTotalDifficulty()))
+          .isPresent();
+    }
+
     Optional<Hash> validAncestorHash = this.getLatestValidAncestor(blockHeader);
     if (validAncestorHash.isPresent()) {
       final Optional<BlockHeader> maybeFinalized = mergeContext.getFinalized();
@@ -329,18 +346,36 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   // package visibility for testing
   boolean ancestorIsValidTerminalProofOfWork(final BlockHeader blockheader) {
-    // this should only happen during a reorg very close to the transition from PoW to PoS
+    // this should only happen very close to the transition from PoW to PoS, prior to a finalized
+    // block
     var blockchain = protocolContext.getBlockchain();
-    Optional<BlockHeader> parent;
+    Optional<BlockHeader> parent = blockchain.getBlockHeader(blockheader.getParentHash());
     do {
-      parent = blockchain.getBlockHeader(blockheader.getParentHash());
-      if (parent.isPresent()
-          && MAX_TTD_SEARCH_DEPTH < blockheader.getNumber() - parent.get().getNumber()) {
-        return false;
-      }
-    } while (parent.isPresent() && parent.get().getDifficulty().equals(Difficulty.ZERO));
 
-    return parent.filter(header -> isTerminalProofOfWorkBlock(header, protocolContext)).isPresent();
+      LOG.warn(
+          "checking ancestor {} is valid terminal PoW for {}",
+          parent.map(BlockHeader::toLogString).orElse("empty"),
+          blockheader.toLogString());
+
+      if (parent.isPresent()) {
+        if (MAX_TTD_SEARCH_DEPTH < blockheader.getNumber() - parent.get().getNumber()) {
+          return false;
+        }
+        parent = blockchain.getBlockHeader(parent.get().getParentHash());
+      }
+
+    } while (parent.isPresent()
+        && parent.get().getNumber() >= 0
+        && parent.get().getDifficulty().equals(Difficulty.ZERO));
+
+    boolean resp =
+        parent.filter(header -> isTerminalProofOfWorkBlock(header, protocolContext)).isPresent();
+    LOG.warn(
+        "checking ancestor {} is valid terminal PoW for {}\n {}",
+        parent.map(BlockHeader::toLogString).orElse("empty"),
+        blockheader.toLogString(),
+        resp);
+    return resp;
   }
 
   @Override

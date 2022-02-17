@@ -14,26 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
-
-import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ForkChoiceStatus;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus;
 
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"status", "payloadId"})
-public class EngineUpdateForkChoiceResult {
-  private final ForkChoiceStatus status;
-  private final PayloadIdentifier payloadId;
+@JsonPropertyOrder({"status", "latestValidHash", "validationError"})
+public class EnginePayloadStatusResult {
+  EngineStatus status;
+  Optional<Hash> latestValidHash;
+  Optional<String> validationError;
 
-  public EngineUpdateForkChoiceResult(
-      final ForkChoiceStatus status, final PayloadIdentifier payloadId) {
+  public EnginePayloadStatusResult(
+      final EngineStatus status, final Hash latestValidHash, final String validationError) {
     this.status = status;
-    this.payloadId = payloadId;
+    this.latestValidHash = Optional.ofNullable(latestValidHash);
+    this.validationError = Optional.ofNullable(validationError);
   }
 
   @JsonGetter(value = "status")
@@ -41,9 +40,13 @@ public class EngineUpdateForkChoiceResult {
     return status.name();
   }
 
-  @JsonGetter(value = "payloadId")
-  @JsonInclude(NON_NULL)
-  public String getPayloadId() {
-    return Optional.ofNullable(payloadId).map(PayloadIdentifier::toHexString).orElse(null);
+  @JsonGetter(value = "latestValidHash")
+  public String getLatestValidHash() {
+    return latestValidHash.map(Hash::toHexString).orElse(null);
+  }
+
+  @JsonGetter(value = "validationError")
+  public String getError() {
+    return validationError.orElse(null);
   }
 }
