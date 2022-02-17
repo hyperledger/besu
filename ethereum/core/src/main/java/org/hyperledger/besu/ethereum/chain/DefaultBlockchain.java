@@ -20,7 +20,7 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
-import org.hyperledger.besu.config.experimental.MergeConfiguration;
+import org.hyperledger.besu.config.experimental.MergeConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -145,7 +145,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     this.reorgLoggingThreshold = reorgLoggingThreshold;
     // TODO: FROMRAYONISM, need to account for fixed total difficulty
     this.blockChoiceRule =
-        MergeConfiguration.isMergeEnabled()
+        MergeConfigOptions.isMergeEnabled()
             ? // always regard the new block as "worse" because we don't reorg anymore; the
             // consensus node tells us what the head is through `setHead`
             (newBlockHeader, currentBlockHeader) -> -1

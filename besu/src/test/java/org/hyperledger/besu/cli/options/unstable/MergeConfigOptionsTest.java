@@ -16,7 +16,7 @@ package org.hyperledger.besu.cli.options.unstable;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import org.hyperledger.besu.config.experimental.MergeConfiguration;
+import org.hyperledger.besu.config.experimental.MergeConfigOptions;
 
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -27,7 +27,7 @@ import org.junit.runners.MethodSorters;
 
 @SuppressWarnings({"JdkObsolete"})
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class MergeConfigurationTest {
+public class MergeConfigOptionsTest {
 
   @Test
   public void shouldBeDisabledByDefault() {
@@ -42,21 +42,21 @@ public class MergeConfigurationTest {
     mockStack.push("true");
     new MergeOptions.MergeConfigConsumer().consumeParameters(mockStack, null, null);
 
-    assertThat(MergeConfiguration.isMergeEnabled()).isTrue();
+    assertThat(MergeConfigOptions.isMergeEnabled()).isTrue();
   }
 
   @Test
   public void shouldDoWithMergeEnabled() {
     final AtomicBoolean check = new AtomicBoolean(false);
-    MergeConfiguration.doIfMergeEnabled((() -> check.set(true)));
+    MergeConfigOptions.doIfMergeEnabled((() -> check.set(true)));
     assertThat(check.get()).isTrue();
   }
 
   @Test
   public void shouldRefuseToDisableMergeOnceSet() {
-    MergeConfiguration.setMergeEnabled(true);
-    assertThat(MergeConfiguration.isMergeEnabled()).isTrue();
-    MergeConfiguration.setMergeEnabled(false);
-    assertThat(MergeConfiguration.isMergeEnabled()).isTrue();
+    MergeConfigOptions.setMergeEnabled(true);
+    assertThat(MergeConfigOptions.isMergeEnabled()).isTrue();
+    MergeConfigOptions.setMergeEnabled(false);
+    assertThat(MergeConfigOptions.isMergeEnabled()).isTrue();
   }
 }

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
-import static org.hyperledger.besu.config.experimental.MergeConfiguration.setMergeEnabled;
+import static org.hyperledger.besu.config.experimental.MergeConfigOptions.setMergeEnabled;
 
 import java.util.Stack;
 
