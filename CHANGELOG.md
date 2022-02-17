@@ -6,6 +6,16 @@
 ### Additions and Improvements
 - Allow optional RPC methods that bypass authentication [#3382](https://github.com/hyperledger/besu/pull/3382)
 
+## 22.1.1
+
+### Additions and Improvements
+- Merge: extend block creation and mining to support The Merge [#3412](https://github.com/hyperledger/besu/pull/3412)
+- Merge: backward sync [#3410](https://github.com/hyperledger/besu/pull/3410)
+- Merge: Extend validateAndProcessBlock to return an error message in case of failure, so it can be returned to the caller of ExecutePayload API [#3411](https://github.com/hyperledger/besu/pull/3411)
+- Merge: Persist latest finalized block [#2913](https://github.com/hyperledger/besu/issues/2913)
+
+### Bug Fixes
+
 ## 22.1.0
 
 ### Breaking Changes
