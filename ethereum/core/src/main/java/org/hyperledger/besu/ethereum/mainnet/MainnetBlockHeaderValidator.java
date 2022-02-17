@@ -42,15 +42,15 @@ public final class MainnetBlockHeaderValidator {
       Bytes.fromHexString("0x94365e3a8c0b35089c1d1195081fe7489b528a84b22199c916180db8b28ade7f");
 
   public static BlockHeaderValidator.Builder create() {
-    return createLegacyFeeMarketValidator(PoWHasher.ETHASH_LIGHT);
+    return createPgaFeeMarketValidator(PoWHasher.ETHASH_LIGHT);
   }
 
   public static BlockHeaderValidator.Builder create(final PoWHasher hasher) {
-    return createLegacyFeeMarketValidator(hasher);
+    return createPgaFeeMarketValidator(hasher);
   }
 
   public static BlockHeaderValidator.Builder createDaoValidator() {
-    return createLegacyFeeMarketValidator()
+    return createPgaFeeMarketValidator()
         .addRule(
             new ConstantFieldValidationRule<>(
                 "extraData", BlockHeader::getExtraData, DAO_EXTRA_DATA));
@@ -61,7 +61,7 @@ public final class MainnetBlockHeaderValidator {
   }
 
   public static BlockHeaderValidator.Builder createClassicValidator(final PoWHasher hasher) {
-    return createLegacyFeeMarketValidator(hasher)
+    return createPgaFeeMarketValidator(hasher)
         .addRule(
             new ConstantFieldValidationRule<>(
                 "hash",
@@ -99,16 +99,15 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new ProofOfWorkValidationRule(epochCalculator, hasher, Optional.empty()));
   }
 
-  private static BlockHeaderValidator.Builder createLegacyFeeMarketValidator() {
-    return createLegacyFeeMarketValidator(PoWHasher.ETHASH_LIGHT);
+  private static BlockHeaderValidator.Builder createPgaFeeMarketValidator() {
+    return createPgaFeeMarketValidator(PoWHasher.ETHASH_LIGHT);
   }
 
-  private static BlockHeaderValidator.Builder createLegacyFeeMarketValidator(
-      final PoWHasher hasher) {
-    return createLegacyBlockHeaderValidator(new EpochCalculator.DefaultEpochCalculator(), hasher);
+  private static BlockHeaderValidator.Builder createPgaFeeMarketValidator(final PoWHasher hasher) {
+    return createPgaBlockHeaderValidator(new EpochCalculator.DefaultEpochCalculator(), hasher);
   }
 
-  static BlockHeaderValidator.Builder createLegacyBlockHeaderValidator(
+  public static BlockHeaderValidator.Builder createPgaBlockHeaderValidator(
       final EpochCalculator epochCalculator, final PoWHasher hasher) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
@@ -121,7 +120,7 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new ProofOfWorkValidationRule(epochCalculator, hasher, Optional.empty()));
   }
 
-  static BlockHeaderValidator.Builder createBaseFeeMarketValidator(
+  public static BlockHeaderValidator.Builder createBaseFeeMarketValidator(
       final BaseFeeMarket baseFeeMarket) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)

@@ -269,7 +269,7 @@ public class ClassicProtocolSpecs {
             evmConfiguration)
         .blockHeaderValidatorBuilder(
             feeMarket ->
-                MainnetBlockHeaderValidator.createLegacyBlockHeaderValidator(
+                MainnetBlockHeaderValidator.createPgaBlockHeaderValidator(
                     new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
         .ommerHeaderValidatorBuilder(
             feeMarket ->
@@ -316,7 +316,7 @@ public class ClassicProtocolSpecs {
             evmConfiguration)
         .blockHeaderValidatorBuilder(
             feeMarket ->
-                MainnetBlockHeaderValidator.createLegacyBlockHeaderValidator(
+                MainnetBlockHeaderValidator.createPgaBlockHeaderValidator(
                     new EpochCalculator.Ecip1099EpochCalculator(),
                     powHasher(PowAlgorithm.KECCAK256)))
         .ommerHeaderValidatorBuilder(
