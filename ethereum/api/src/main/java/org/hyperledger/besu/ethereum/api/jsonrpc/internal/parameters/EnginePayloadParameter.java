@@ -31,7 +31,7 @@ import org.apache.tuweni.bytes.Bytes32;
  * QUANTITY gasUsed: QUANTITY timestamp: QUANTITY baseFeePerGas: QUANTITY blockHash: DATA, 32 Bytes
  * transactions: Array of TypedTransaction
  */
-public class ExecutionPayloadParameter {
+public class EnginePayloadParameter {
   private final Hash blockHash;
   private final Hash parentHash;
   private final Address feeRecipient;
@@ -48,7 +48,7 @@ public class ExecutionPayloadParameter {
   private final List<String> transactions;
 
   @JsonCreator
-  public ExecutionPayloadParameter(
+  public EnginePayloadParameter(
       @JsonProperty("blockHash") final Hash blockHash,
       @JsonProperty("parentHash") final Hash parentHash,
       @JsonProperty("feeRecipient") final Address feeRecipient,
