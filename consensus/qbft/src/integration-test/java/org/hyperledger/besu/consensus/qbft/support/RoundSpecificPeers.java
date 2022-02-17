@@ -168,7 +168,7 @@ public class RoundSpecificPeers {
     verifyMessagesReceived(candidates, msgs);
   }
 
-  public final void verifyMessagesReceivedNonPropsing(final BftMessage<?>... msgs) {
+  public final void verifyMessagesReceivedNonProposing(final BftMessage<?>... msgs) {
     verifyMessagesReceived(nonProposingPeers, msgs);
   }
 

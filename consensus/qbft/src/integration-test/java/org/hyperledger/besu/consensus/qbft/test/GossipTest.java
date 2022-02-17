@@ -79,15 +79,15 @@ public class GossipTest {
 
     final Proposal proposal = sender.injectProposal(roundId, block);
     // sender node will have a prepare message as an effect of the proposal being sent
-    peers.verifyMessagesReceivedNonPropsing(proposal, localPrepare);
+    peers.verifyMessagesReceivedNonProposing(proposal, localPrepare);
     peers.verifyMessagesReceivedProposer(localPrepare);
 
     final Prepare prepare = sender.injectPrepare(roundId, block.getHash());
-    peers.verifyMessagesReceivedNonPropsing(prepare);
+    peers.verifyMessagesReceivedNonProposing(prepare);
     peers.verifyNoMessagesReceivedProposer();
 
     final Commit commit = sender.injectCommit(roundId, block);
-    peers.verifyMessagesReceivedNonPropsing(commit);
+    peers.verifyMessagesReceivedNonProposing(commit);
     peers.verifyNoMessagesReceivedProposer();
 
     final RoundChange roundChange = msgFactory.createRoundChange(roundId, Optional.empty());
@@ -98,18 +98,18 @@ public class GossipTest {
             Collections.singletonList(roundChange.getSignedPayload()),
             roundChange.getPrepares(),
             block);
-    peers.verifyMessagesReceivedNonPropsing(nextRoundProposal);
+    peers.verifyMessagesReceivedNonProposing(nextRoundProposal);
     peers.verifyNoMessagesReceivedProposer();
 
     sender.injectRoundChange(roundId, Optional.empty());
-    peers.verifyMessagesReceivedNonPropsing(roundChange);
+    peers.verifyMessagesReceivedNonProposing(roundChange);
     peers.verifyNoMessagesReceivedProposer();
   }
 
   @Test
   public void onlyGossipOnce() {
     final Prepare prepare = sender.injectPrepare(roundId, block.getHash());
-    peers.verifyMessagesReceivedNonPropsing(prepare);
+    peers.verifyMessagesReceivedNonProposing(prepare);
 
     sender.injectPrepare(roundId, block.getHash());
     peers.verifyNoMessagesReceivedNonProposing();
@@ -173,6 +173,6 @@ public class GossipTest {
         .getController()
         .handleNewBlockEvent(new NewChainHead(signedCurrentHeightBlock.getHeader()));
 
-    peers.verifyMessagesReceivedNonPropsing(futurePrepare);
+    peers.verifyMessagesReceivedNonProposing(futurePrepare);
   }
 }

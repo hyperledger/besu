@@ -24,6 +24,21 @@ import java.util.Optional;
 
 public interface BlockValidator {
 
+  class Result {
+    public final Optional<BlockProcessingOutputs> blockProcessingOutputs;
+    public final Optional<String> errorMessage;
+
+    public Result(final BlockProcessingOutputs blockProcessingOutputs) {
+      this.blockProcessingOutputs = Optional.of(blockProcessingOutputs);
+      this.errorMessage = Optional.empty();
+    }
+
+    public Result(final String errorMessage) {
+      this.blockProcessingOutputs = Optional.empty();
+      this.errorMessage = Optional.of(errorMessage);
+    }
+  }
+
   class BlockProcessingOutputs {
     public final MutableWorldState worldState;
     public final List<TransactionReceipt> receipts;
@@ -35,7 +50,7 @@ public interface BlockValidator {
     }
   }
 
-  Optional<BlockProcessingOutputs> validateAndProcessBlock(
+  Result validateAndProcessBlock(
       final ProtocolContext context,
       final Block block,
       final HeaderValidationMode headerValidationMode,

@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.INVALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.SYNCING;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.VALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -27,12 +27,16 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
+import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionPayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -91,7 +95,10 @@ public class EngineExecutePayloadTest {
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
-    when(mergeCoordinator.executeBlock(any())).thenReturn(Boolean.TRUE);
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+        .thenReturn(true);
+    when(mergeCoordinator.executeBlock(any()))
+        .thenReturn(new Result(new BlockProcessingOutputs(null, List.of())));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -115,6 +122,24 @@ public class EngineExecutePayloadTest {
     assertThat(res.getLatestValidHash()).isEqualTo(mockHeader.getHash().toString());
     assertThat(res.getStatus()).isEqualTo(VALID.name());
     assertThat(res.getValidationError()).isNull();
+  }
+
+  @Test
+  public void shouldReturnErrorOnInvalidTerminalBlock() {
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+
+    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.of(mockHash));
+
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+        .thenReturn(false);
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    JsonRpcErrorResponse res = ((JsonRpcErrorResponse) resp);
+    assertThat(res.getError()).isEqualTo(JsonRpcError.INVALID_TERMINAL_BLOCK);
   }
 
   @Test
@@ -186,7 +211,7 @@ public class EngineExecutePayloadTest {
   @Test
   public void shouldRespondWithSyncingDuringForwardSync() {
     when(mergeContext.isSyncing()).thenReturn(Boolean.TRUE);
-    var resp = resp(mock(ExecutionPayloadParameter.class));
+    var resp = resp(mock(EnginePayloadParameter.class));
     EngineExecutionResult res = fromSuccessResp(resp);
     assertThat(res.getValidationError()).isNull();
     assertThat(res.getStatus()).isEqualTo(SYNCING.name());
@@ -212,15 +237,15 @@ public class EngineExecutePayloadTest {
     assertThat(mergeContext.getTerminalTotalDifficulty()).isNull();
   }
 
-  private JsonRpcResponse resp(final ExecutionPayloadParameter payload) {
+  private JsonRpcResponse resp(final EnginePayloadParameter payload) {
     return method.response(
         new JsonRpcRequestContext(
             new JsonRpcRequest(
                 "2.0", RpcMethod.ENGINE_EXECUTE_PAYLOAD.getMethodName(), new Object[] {payload})));
   }
 
-  private ExecutionPayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {
-    return new ExecutionPayloadParameter(
+  private EnginePayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {
+    return new EnginePayloadParameter(
         header.getHash(),
         header.getParentHash(),
         header.getCoinbase(),
