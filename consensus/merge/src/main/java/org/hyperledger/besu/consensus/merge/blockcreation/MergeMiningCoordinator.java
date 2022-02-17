@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -31,11 +32,11 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       final Bytes32 random,
       final Address feeRecipient);
 
-  boolean executeBlock(final Block block);
+  Result executeBlock(final Block block);
 
   void updateForkChoice(final Hash headBlockHash, final Hash finalizedBlockHash);
 
-  Optional<Hash> getLatestValidAncestor(Hash blockhash);
+  Optional<Hash> getLatestValidAncestor(Hash blockHash);
 
   Optional<Hash> getLatestValidAncestor(BlockHeader blockheader);
 
