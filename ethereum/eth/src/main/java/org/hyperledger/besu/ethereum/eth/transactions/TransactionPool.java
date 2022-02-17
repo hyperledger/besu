@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -135,11 +136,6 @@ public class TransactionPool implements BlockAddedObserver {
     final ValidationResult<TransactionInvalidReason> validationResult =
         validateLocalTransaction(transaction);
     if (validationResult.isValid()) {
-      if (!miningParameters.isMiningEnabled()
-          && transaction.getType() == TransactionType.FRONTIER
-          && gasPriceIsLessThanMinGasPrice(transaction)) {
-        return ValidationResult.invalid(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
-      }
       if (!configuration.getTxFeeCap().isZero()
           && minTransactionGasPrice(transaction).compareTo(configuration.getTxFeeCap()) > 0) {
         return ValidationResult.invalid(TransactionInvalidReason.TX_FEECAP_EXCEEDED);
@@ -158,10 +154,12 @@ public class TransactionPool implements BlockAddedObserver {
     return validationResult;
   }
 
-  private boolean gasPriceIsLessThanMinGasPrice(final Transaction transaction) {
+  private boolean effectiveGasPriceIsAboveConfiguredMinGasPrice(final Transaction transaction) {
     return transaction
         .getGasPrice()
-        .map(g -> g.lessThan(miningParameters.getMinTransactionGasPrice()))
+        .map(Optional::of)
+        .orElse(transaction.getMaxFeePerGas())
+        .map(g -> g.greaterOrEqualThan(miningParameters.getMinTransactionGasPrice()))
         .orElse(false);
   }
 
@@ -248,6 +246,8 @@ public class TransactionPool implements BlockAddedObserver {
   private ValidationResult<TransactionInvalidReason> validateTransaction(
       final Transaction transaction, final boolean isLocal) {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
+    final FeeMarket feeMarket =
+        protocolSchedule.getByBlockNumber(chainHeadBlockHeader.getNumber()).getFeeMarket();
 
     // Check whether it's a GoQuorum transaction
     boolean goQuorumCompatibilityMode = getTransactionValidator().getGoQuorumCompatibilityMode();
@@ -256,6 +256,12 @@ public class TransactionPool implements BlockAddedObserver {
       if (weiValue.isPresent() && !weiValue.get().isZero()) {
         return ValidationResult.invalid(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
       }
+    }
+
+    // allow local transactions to be below minGas as long as we are mining and the transaction is executable:
+    if (effectiveGasPriceIsAboveConfiguredMinGasPrice(transaction)
+        || (miningParameters.isMiningEnabled() && feeMarket.satisfiesFloorTxCost(transaction))) {
+      return ValidationResult.invalid(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
     }
 
     final ValidationResult<TransactionInvalidReason> basicValidationResult =
@@ -282,8 +288,7 @@ public class TransactionPool implements BlockAddedObserver {
               transaction.getGasLimit(), chainHeadBlockHeader.getGasLimit()));
     }
     if (transaction.getType().equals(TransactionType.EIP1559)) {
-      final long blknum = chainHeadBlockHeader.getNumber();
-      if (!protocolSchedule.getByBlockNumber(blknum).getFeeMarket().implementsBaseFee()) {
+      if (!feeMarket.implementsBaseFee()) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
             "EIP-1559 transaction are not allowed yet");

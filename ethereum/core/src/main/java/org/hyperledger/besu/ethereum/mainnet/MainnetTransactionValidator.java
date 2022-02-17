@@ -128,6 +128,12 @@ public class MainnetTransactionValidator {
               transactionType, acceptedTransactionTypes));
     }
 
+    if (!feeMarket.satisfiesFloorTxCost(transaction)) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+          "effective gas price is too low to execute");
+    }
+
     if (baseFee.isPresent()) {
       final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, baseFee);
       if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
