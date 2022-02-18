@@ -1,0 +1,23 @@
+{
+  "comment" : "Call Precompiled contract directly",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8618081ef83fffff294000000000000000000000000000000000000000180801ca06bfb6514dc702ed8d3bcd6e31a32733a7215d574918a9e44fce67dbcffd6f91fa01b5966882a9c81a484f662634dc066c47918ac568e2d80b5ca9d3dc1fa4d6208", [ "vmTrace" ] ],
+    "id" : 156
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : null,
+      "trace" : [ ],
+      "vmTrace" : {
+        "code" : "0x",
+        "ops" : [ ]
+      }
+    },
+    "id" : 156
+  },
+  "statusCode" : 200
+}
