@@ -261,7 +261,7 @@ public final class RunnerBuilderTest {
     engineWsRpc.setEnabled(true);
     EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
-    MergeConfiguration.setMergeEnabled(true);
+    MergeConfigOptions.setMergeEnabled(true);
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
 
     final Runner runner =
