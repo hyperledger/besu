@@ -192,7 +192,7 @@ public class MiningParameters {
         + minTransactionGasPrice
         + ", extraData="
         + extraData
-        + ", enabled="
+        + ", miningEnabled="
         + miningEnabled
         + ", stratumMiningEnabled="
         + stratumMiningEnabled

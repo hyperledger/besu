@@ -289,12 +289,10 @@ public class TransactionPool implements BlockAddedObserver {
               "Transaction gas limit of %s exceeds block gas limit of %s",
               transaction.getGasLimit(), chainHeadBlockHeader.getGasLimit()));
     }
-    if (transaction.getType().equals(TransactionType.EIP1559)) {
-      if (!feeMarket.implementsBaseFee()) {
-        return ValidationResult.invalid(
-            TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-            "EIP-1559 transaction are not allowed yet");
-      }
+    if (transaction.getType().equals(TransactionType.EIP1559) && !feeMarket.implementsBaseFee()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+          "EIP-1559 transaction are not allowed yet");
     }
 
     return protocolContext
