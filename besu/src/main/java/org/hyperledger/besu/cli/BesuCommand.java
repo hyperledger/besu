@@ -1971,7 +1971,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setPort(listenPort);
     jsonRpcConfiguration.setMaxActiveConnections(rpcHttpMaxConnections);
     jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
-    // jsonRpcConfiguration.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
     jsonRpcConfiguration.setRpcApis(apiGroups.stream().distinct().collect(Collectors.toList()));
     jsonRpcConfiguration.setHostsAllowlist(allowCallsFrom);
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
