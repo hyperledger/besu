@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncException;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
@@ -34,11 +33,11 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -131,25 +130,25 @@ public class DefaultSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void start() {
+  public CompletableFuture<Void> start() {
     if (running.compareAndSet(false, true)) {
       LOG.info("Starting synchronizer.");
       blockPropagationManager.start();
+      CompletableFuture<Void> future;
       if (fastSyncDownloader.isPresent()) {
-        fastSyncDownloader
-            .get()
-            .start()
-            .whenComplete(this::handleFastSyncResult)
-            .exceptionally(
-                ex -> {
-                  LOG.warn("Exiting FastSync process");
-                  System.exit(0);
-                  return null;
-                });
+        future = fastSyncDownloader.get().start().thenCompose(this::handleFastSyncResult);
 
       } else {
-        startFullSync();
+        future = startFullSync();
       }
+      future =
+          future.thenApply(
+              unused -> {
+                blockPropagationManager.stop();
+                running.set(false);
+                return null;
+              });
+      return future;
     } else {
       throw new IllegalStateException("Attempt to start an already started synchronizer.");
     }
@@ -162,6 +161,7 @@ public class DefaultSynchronizer implements Synchronizer {
       fastSyncDownloader.ifPresent(FastSyncDownloader::stop);
       fullSyncDownloader.stop();
       maybePruner.ifPresent(Pruner::stop);
+      blockPropagationManager.stop();
     }
   }
 
@@ -172,36 +172,37 @@ public class DefaultSynchronizer implements Synchronizer {
     }
   }
 
-  private void handleFastSyncResult(final FastSyncState result, final Throwable error) {
+  private CompletableFuture<Void> handleFastSyncResult(final FastSyncState result) {
     if (!running.get()) {
       // We've been shutdown which will have triggered the fast sync future to complete
-      return;
+      return CompletableFuture.completedFuture(null);
     }
     fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);
-    final Throwable rootCause = ExceptionUtils.rootCause(error);
-    if (rootCause instanceof FastSyncException) {
-      LOG.error(
-          "Fast sync failed ({}), please try again.", ((FastSyncException) rootCause).getError());
-      throw new FastSyncException(rootCause);
-    } else if (error != null) {
-      LOG.error("Fast sync failed, please try again.", error);
-      throw new FastSyncException(error);
-    } else {
-      result
-          .getPivotBlockHeader()
-          .ifPresent(
-              blockHeader ->
-                  protocolContext.getWorldStateArchive().setArchiveStateUnSafe(blockHeader));
-      LOG.info(
-          "Fast sync completed successfully with pivot block {}",
-          result.getPivotBlockNumber().getAsLong());
-    }
-    startFullSync();
+    result
+        .getPivotBlockHeader()
+        .ifPresent(
+            blockHeader ->
+                protocolContext.getWorldStateArchive().setArchiveStateUnSafe(blockHeader));
+    LOG.info(
+        "Fast sync completed successfully with pivot block {}",
+        result.getPivotBlockNumber().getAsLong());
+    return startFullSync();
   }
 
-  private void startFullSync() {
+  private CompletableFuture<Void> startFullSync() {
     maybePruner.ifPresent(Pruner::start);
-    fullSyncDownloader.start();
+    return fullSyncDownloader
+        .start()
+        .thenCompose(
+            unused -> {
+              maybePruner.ifPresent(Pruner::stop);
+              return null;
+            })
+        .thenApply(
+            o -> {
+              maybePruner.ifPresent(Pruner::stop);
+              return null;
+            });
   }
 
   @Override

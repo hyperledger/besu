@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,9 +61,9 @@ public class FullSyncDownloader {
             terminalTotalDifficulty);
   }
 
-  public void start() {
+  public CompletableFuture<Void> start() {
     LOG.info("Starting full sync.");
-    chainDownloader.start();
+    return chainDownloader.start();
   }
 
   public void stop() {

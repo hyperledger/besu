@@ -82,6 +82,9 @@ public class BlockPropagationManager {
   private final Set<Long> requestedNonAnnouncedBlocks =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final PendingBlocksManager pendingBlocksManager;
+  private Optional<Long> onBlockAddedSId = Optional.empty();
+  private Optional<Long> newBlockSId;
+  private Optional<Long> newBlockHashesSId;
 
   BlockPropagationManager(
       final SynchronizerConfiguration config,
@@ -111,12 +114,37 @@ public class BlockPropagationManager {
     }
   }
 
+  public void stop() {
+    if (started.get()) {
+      clearListeners();
+      started.set(false);
+    } else {
+      LOG.info("Attempted to stop when we are not even running...");
+    }
+  }
+
   private void setupListeners() {
-    protocolContext.getBlockchain().observeBlockAdded(this::onBlockAdded);
-    ethContext.getEthMessages().subscribe(EthPV62.NEW_BLOCK, this::handleNewBlockFromNetwork);
-    ethContext
-        .getEthMessages()
-        .subscribe(EthPV62.NEW_BLOCK_HASHES, this::handleNewBlockHashesFromNetwork);
+    onBlockAddedSId =
+        Optional.of(protocolContext.getBlockchain().observeBlockAdded(this::onBlockAdded));
+    newBlockSId =
+        Optional.of(
+            ethContext
+                .getEthMessages()
+                .subscribe(EthPV62.NEW_BLOCK, this::handleNewBlockFromNetwork));
+    newBlockHashesSId =
+        Optional.of(
+            ethContext
+                .getEthMessages()
+                .subscribe(EthPV62.NEW_BLOCK_HASHES, this::handleNewBlockHashesFromNetwork));
+  }
+
+  private void clearListeners() {
+    onBlockAddedSId.ifPresent(id -> protocolContext.getBlockchain().removeObserver(id));
+    newBlockSId.ifPresent(id -> ethContext.getEthMessages().unsubsribe(id));
+    newBlockHashesSId.ifPresent(id -> ethContext.getEthMessages().unsubsribe(id));
+    onBlockAddedSId = Optional.empty();
+    newBlockSId = Optional.empty();
+    newBlockHashesSId = Optional.empty();
   }
 
   private void onBlockAdded(final BlockAddedEvent blockAddedEvent) {
