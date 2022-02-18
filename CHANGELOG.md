@@ -7,6 +7,7 @@
 - Merge: backward sync [#3410](https://github.com/hyperledger/besu/pull/3410)
 - Merge: Extend validateAndProcessBlock to return an error message in case of failure, so it can be returned to the caller of ExecutePayload API [#3411](https://github.com/hyperledger/besu/pull/3411)
 - Merge: Persist latest finalized block [#2913](https://github.com/hyperledger/besu/issues/2913)
+- Merge: Add PostMergeContext, and stop syncing after the switch to PoS [#3453](https://github.com/hyperledger/besu/pull/3453)
 
 ### Bug Fixes
 
