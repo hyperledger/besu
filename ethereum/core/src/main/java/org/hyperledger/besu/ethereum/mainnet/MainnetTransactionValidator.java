@@ -128,7 +128,9 @@ public class MainnetTransactionValidator {
               transactionType, acceptedTransactionTypes));
     }
 
-    if (!feeMarket.satisfiesFloorTxCost(transaction)) {
+    // transactionValidationParams.isAllowExceedingBalance() is used on eth_call
+    if (!feeMarket.satisfiesFloorTxCost(transaction)
+        && !transactionValidationParams.isAllowExceedingBalance()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
           "effective gas price is too low to execute");
