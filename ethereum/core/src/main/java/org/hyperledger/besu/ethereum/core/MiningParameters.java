@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -234,6 +234,31 @@ public class MiningParameters {
     private long remoteSealersTimeToLive = DEFAULT_REMOTE_SEALERS_TTL;
     private long powJobTimeToLive = DEFAULT_POW_JOB_TTL;
     private int maxOmmerDepth = DEFAULT_MAX_OMMERS_DEPTH;
+
+    public Builder() {
+      // zero arg
+    }
+
+    public Builder(final MiningParameters existing) {
+      existing.getCoinbase().ifPresent(cb -> this.coinbase = cb);
+      existing
+          .getTargetGasLimit()
+          .map(AtomicLong::longValue)
+          .ifPresent(gasLimit -> this.targetGasLimit = gasLimit);
+      this.minTransactionGasPrice = existing.getMinTransactionGasPrice();
+      this.extraData = existing.getExtraData();
+      this.enabled = existing.isMiningEnabled();
+      this.stratumMiningEnabled = existing.isStratumMiningEnabled();
+      this.stratumNetworkInterface = existing.getStratumNetworkInterface();
+      this.stratumPort = existing.getStratumPort();
+      this.stratumExtranonce = existing.getStratumExtranonce();
+      existing.getNonceGenerator().ifPresent(ng -> this.maybeNonceGenerator = ng);
+      this.minBlockOccupancyRatio = existing.getMinBlockOccupancyRatio();
+      this.remoteSealersLimit = existing.getRemoteSealersLimit();
+      this.remoteSealersTimeToLive = existing.getRemoteSealersTimeToLive();
+      this.powJobTimeToLive = existing.getPowJobTimeToLive();
+      this.maxOmmerDepth = existing.getMaxOmmerDepth();
+    }
 
     public Builder coinbase(final Address address) {
       this.coinbase = address;
