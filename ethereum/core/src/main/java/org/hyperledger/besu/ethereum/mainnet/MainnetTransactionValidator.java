@@ -128,14 +128,6 @@ public class MainnetTransactionValidator {
               transactionType, acceptedTransactionTypes));
     }
 
-    // transactionValidationParams.isAllowExceedingBalance() is used on eth_call
-    if (!feeMarket.satisfiesFloorTxCost(transaction)
-        && !transactionValidationParams.isAllowExceedingBalance()) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-          "effective gas price is too low to execute");
-    }
-
     if (baseFee.isPresent()) {
       final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, baseFee);
       if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
@@ -157,6 +149,14 @@ public class MainnetTransactionValidator {
             TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS,
             "max priority fee per gas cannot be greater than max fee per gas");
       }
+    }
+
+    // transactionValidationParams.isAllowExceedingBalance() is used on eth_call
+    if (!feeMarket.satisfiesFloorTxCost(transaction)
+        && !transactionValidationParams.isAllowExceedingBalance()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+          "effective gas price is too low to execute");
     }
 
     final Gas intrinsicGasCost =

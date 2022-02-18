@@ -247,7 +247,7 @@ public class MiningParameters {
           .ifPresent(gasLimit -> this.targetGasLimit = gasLimit);
       this.minTransactionGasPrice = existing.getMinTransactionGasPrice();
       this.extraData = existing.getExtraData();
-      this.enabled = existing.isMiningEnabled();
+      this.miningEnabled = existing.isMiningEnabled();
       this.stratumMiningEnabled = existing.isStratumMiningEnabled();
       this.stratumNetworkInterface = existing.getStratumNetworkInterface();
       this.stratumPort = existing.getStratumPort();
