@@ -17,10 +17,14 @@ package org.hyperledger.besu.consensus.merge;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext.NewMergeStateCallback;
+import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -50,14 +54,14 @@ public class PostMergeContextTest {
     postMergeContext = new PostMergeContext();
     postMergeContext.observeNewIsPostMergeState(mergeStateChangeCollector);
     postMergeContext.setSyncState(mockSyncState);
-    postMergeContext.setTerminalTotalDifficulty(Difficulty.of(10));
+    postMergeContext.setTerminalTotalDifficulty(Difficulty.of(10L));
   }
 
   @Test
-  public void switchFromPoWToPoS() {
+  public void switchFromPoWToPoSStopSyncAndCallsSubscribers() {
     when(mockSyncState.isStoppedAtTerminalDifficulty()).thenReturn(Optional.of(Boolean.TRUE));
 
-    postMergeContext.setIsPostMerge(Difficulty.of(10));
+    postMergeContext.setIsPostMerge(Difficulty.of(10L));
 
     verify(mockSyncState).setStoppedAtTerminalDifficulty(true);
     assertThat(postMergeContext.isPostMerge()).isTrue();
@@ -66,15 +70,33 @@ public class PostMergeContextTest {
   }
 
   @Test
-  public void setPrePoSState() {
+  public void setPrePoSStateNotStopSync() {
     when(mockSyncState.isStoppedAtTerminalDifficulty()).thenReturn(Optional.of(Boolean.FALSE));
 
-    postMergeContext.setIsPostMerge(Difficulty.of(9));
+    postMergeContext.setIsPostMerge(Difficulty.of(9L));
 
     verify(mockSyncState, never()).setStoppedAtTerminalDifficulty(false);
     assertThat(postMergeContext.isPostMerge()).isFalse();
     assertThat(postMergeContext.isSyncing()).isTrue();
     assertThat(mergeStateChangeCollector.stateChanges).containsExactly(false);
+  }
+
+  @Test
+  public void setPostPoWDifficultyAfterFinalizedBlockDoesNothing() {
+    // first simulate a switch to PoS, and reset mocks and collectors
+    postMergeContext.setIsPostMerge(Difficulty.of(11L));
+    reset(mockSyncState);
+    mergeStateChangeCollector.reset();
+
+    // then perform the actual test
+    BlockHeader mockFinalizedHeader = mock(BlockHeader.class);
+    postMergeContext.setFinalized(mockFinalizedHeader);
+
+    postMergeContext.setIsPostMerge(Difficulty.of(19L));
+
+    verifyNoInteractions(mockSyncState);
+    assertThat(postMergeContext.isPostMerge()).isTrue();
+    assertThat(mergeStateChangeCollector.stateChanges).isEmpty();
   }
 
   @Test
@@ -107,12 +129,56 @@ public class PostMergeContextTest {
     assertThat(postMergeContext.validateCandidateHead(mockHeader)).isFalse();
   }
 
+  @Test
+  public void putAndRetrieveFirstPayload() {
+    Block mockBlock = mock(Block.class);
+    PayloadIdentifier firstPayloadId = new PayloadIdentifier(1L);
+    postMergeContext.putPayloadById(firstPayloadId, mockBlock);
+
+    assertThat(postMergeContext.retrieveBlockById(firstPayloadId)).contains(mockBlock);
+  }
+
+  @Test
+  public void puttingTwoBlocksWithTheSamePayloadIdWeRetrieveTheLatter() {
+    Block mockBlock1 = mock(Block.class);
+    Block mockBlock2 = mock(Block.class);
+    PayloadIdentifier payloadId = new PayloadIdentifier(1L);
+    postMergeContext.putPayloadById(payloadId, mockBlock1);
+    postMergeContext.putPayloadById(payloadId, mockBlock2);
+
+    assertThat(postMergeContext.retrieveBlockById(payloadId)).contains(mockBlock2);
+  }
+
+  @Test
+  public void tryingToRetrieveANotYetPutPayloadIdReturnsEmpty() {
+    PayloadIdentifier payloadId = new PayloadIdentifier(1L);
+
+    assertThat(postMergeContext.retrieveBlockById(payloadId)).isEmpty();
+  }
+
+  @Test
+  public void tryingToRetrieveABlockPutButEvictedReturnsEmpty() {
+    for (long i = 0; i < PostMergeContext.MAX_BLOCKS_IN_PROGRESS + 1; i++) {
+      PayloadIdentifier payloadId = new PayloadIdentifier(i);
+      Block mockBlock = mock(Block.class);
+      postMergeContext.putPayloadById(payloadId, mockBlock);
+    }
+
+    PayloadIdentifier evictedPayloadId = new PayloadIdentifier(0L);
+
+    assertThat(postMergeContext.retrieveBlockById(evictedPayloadId)).isEmpty();
+  }
+
   private static class MergeStateChangeCollector implements NewMergeStateCallback {
     final List<Boolean> stateChanges = new ArrayList<>();
 
     @Override
     public void onNewIsPostMergeState(final boolean newIsPostMergeState) {
       stateChanges.add(newIsPostMergeState);
+    }
+
+    public void reset() {
+      stateChanges.clear();
     }
   }
 }
