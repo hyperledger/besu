@@ -82,7 +82,6 @@ public class PostMergeContextTest {
     assertThat(postMergeContext.getFinalized()).isEmpty();
 
     BlockHeader mockHeader = mock(BlockHeader.class);
-    when(mockHeader.getNumber()).thenReturn(1L);
     assertThat(postMergeContext.validateCandidateHead(mockHeader)).isTrue();
   }
 
