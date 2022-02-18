@@ -101,6 +101,6 @@ public class Block {
   }
 
   public String toLogString() {
-    return getHeader().getNumber() + " (" + getHash() + ")";
+    return getHeader().toLogString();
   }
 }
