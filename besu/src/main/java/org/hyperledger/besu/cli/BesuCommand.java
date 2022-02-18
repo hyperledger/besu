@@ -2154,7 +2154,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setMaxActiveConnections(rpcWsMaxConnections);
     webSocketConfiguration.setRpcApis(rpcWsApis);
     webSocketConfiguration.setRpcApisNoAuth(
-        rpcHttpApiMethodsNoAuth.stream().distinct().collect(Collectors.toList()));
+        rpcWsApiMethodsNoAuth.stream().distinct().collect(Collectors.toList()));
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
