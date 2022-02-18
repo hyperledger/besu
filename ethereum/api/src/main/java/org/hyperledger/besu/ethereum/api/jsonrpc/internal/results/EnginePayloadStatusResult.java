@@ -23,12 +23,12 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"status", "latestValidHash", "validationError"})
-public class EngineExecutionResult {
+public class EnginePayloadStatusResult {
   EngineStatus status;
   Optional<Hash> latestValidHash;
   Optional<String> validationError;
 
-  public EngineExecutionResult(
+  public EnginePayloadStatusResult(
       final EngineStatus status, final Hash latestValidHash, final String validationError) {
     this.status = status;
     this.latestValidHash = Optional.ofNullable(latestValidHash);
@@ -46,7 +46,7 @@ public class EngineExecutionResult {
   }
 
   @JsonGetter(value = "validationError")
-  public String getValidationError() {
+  public String getError() {
     return validationError.orElse(null);
   }
 }

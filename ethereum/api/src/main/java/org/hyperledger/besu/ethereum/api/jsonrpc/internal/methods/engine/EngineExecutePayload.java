@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.INVALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.SYNCING;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus.VALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
@@ -26,7 +26,9 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionPayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineExecutionResult;
@@ -73,8 +75,8 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    final ExecutionPayloadParameter blockParam =
-        requestContext.getRequiredParameter(0, ExecutionPayloadParameter.class);
+    final EnginePayloadParameter blockParam =
+        requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
 
     Object reqId = requestContext.getRequest().getId();
 
@@ -149,6 +151,12 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
       return respondWith(reqId, latestValidAncestor.get(), INVALID, errorMessage);
     }
 
+    // TODO: post-merge cleanup
+    if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_TERMINAL_BLOCK);
+    }
+
     final var block =
         new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
 
@@ -165,7 +173,7 @@ public class EngineExecutePayload extends ExecutionEngineJsonRpcMethod {
   JsonRpcResponse respondWith(
       final Object requestId,
       final Hash blockHash,
-      final ExecutionStatus status,
+      final EngineStatus status,
       final String errorMessage) {
     return new JsonRpcSuccessResponse(
         requestId, new EngineExecutionResult(status, blockHash, errorMessage));
