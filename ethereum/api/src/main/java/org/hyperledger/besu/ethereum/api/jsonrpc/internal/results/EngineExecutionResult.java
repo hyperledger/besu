@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.ExecutionStatus;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus;
 
 import java.util.Optional;
 
@@ -24,12 +24,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"status", "latestValidHash", "validationError"})
 public class EngineExecutionResult {
-  ExecutionStatus status;
+  EngineStatus status;
   Optional<Hash> latestValidHash;
   Optional<String> validationError;
 
   public EngineExecutionResult(
-      final ExecutionStatus status, final Hash latestValidHash, final String validationError) {
+      final EngineStatus status, final Hash latestValidHash, final String validationError) {
     this.status = status;
     this.latestValidHash = Optional.ofNullable(latestValidHash);
     this.validationError = Optional.ofNullable(validationError);

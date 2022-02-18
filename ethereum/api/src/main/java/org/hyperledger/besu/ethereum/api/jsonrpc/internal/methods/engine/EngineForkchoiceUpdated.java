@@ -14,9 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_TERMINAL_BLOCK;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -26,7 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkc
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkChoiceResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkchoiceResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
@@ -64,7 +68,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
       // if we are syncing, return SYNCING
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
-          new EngineUpdateForkChoiceResult(ForkChoiceStatus.SYNCING, null));
+          new EngineUpdateForkchoiceResult(SYNCING, null, null));
     }
 
     LOG.info(
@@ -77,44 +81,51 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
     if (currentHead.isPresent()) {
 
-      // TODO: post-merge cleanup
+      // TODO: post-merge cleanup, this should be unnecessary after merge
       if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(currentHead.get())) {
         return new JsonRpcSuccessResponse(
             requestContext.getRequest().getId(),
-            new EngineUpdateForkChoiceResult(ForkChoiceStatus.INVALID_TERMINAL_BLOCK, null));
+            new EngineUpdateForkchoiceResult(INVALID_TERMINAL_BLOCK, null, null));
       }
 
       // update fork choice
-      mergeCoordinator.updateForkChoice(
-          forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
+      ForkchoiceResult result =
+          mergeCoordinator.updateForkChoice(
+              forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
 
-      // begin preparing a block if we have a non-empty payload attributes param
-      Optional<PayloadIdentifier> payloadId =
-          optionalPayloadAttributes.map(
-              payloadAttributes ->
-                  mergeCoordinator.preparePayload(
-                      currentHead.get(),
-                      payloadAttributes.getTimestamp(),
-                      payloadAttributes.getRandom(),
-                      payloadAttributes.getSuggestedFeeRecipient()));
+      // only build a block if forkchoice was successful
+      if (result.isSuccessful()) {
+        // begin preparing a block if we have a non-empty payload attributes param
+        Optional<PayloadIdentifier> payloadId =
+            optionalPayloadAttributes.map(
+                payloadAttributes ->
+                    mergeCoordinator.preparePayload(
+                        currentHead.get(),
+                        payloadAttributes.getTimestamp(),
+                        payloadAttributes.getRandom(),
+                        payloadAttributes.getSuggestedFeeRecipient()));
 
-      payloadId.ifPresent(
-          pid ->
-              debugLambda(
-                  LOG,
-                  "returning identifier {} for requested payload {}",
-                  pid::toHexString,
-                  () ->
-                      optionalPayloadAttributes.map(EnginePayloadAttributesParameter::serialize)));
+        payloadId.ifPresent(
+            pid ->
+                debugLambda(
+                    LOG,
+                    "returning identifier {} for requested payload {}",
+                    pid::toHexString,
+                    () ->
+                        optionalPayloadAttributes.map(
+                            EnginePayloadAttributesParameter::serialize)));
 
-      return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(),
-          new EngineUpdateForkChoiceResult(ForkChoiceStatus.VALID, payloadId.orElse(null)));
+        return new JsonRpcSuccessResponse(
+            requestContext.getRequest().getId(),
+            new EngineUpdateForkchoiceResult(
+                VALID,
+                result.getNewHead().map(BlockHeader::getHash).orElse(null),
+                payloadId.orElse(null)));
+      }
     }
 
     // TODO: start sync for this head https://github.com/hyperledger/besu/issues/3268
     return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(),
-        new EngineUpdateForkChoiceResult(ForkChoiceStatus.SYNCING, null));
+        requestContext.getRequest().getId(), new EngineUpdateForkchoiceResult(SYNCING, null, null));
   }
 }

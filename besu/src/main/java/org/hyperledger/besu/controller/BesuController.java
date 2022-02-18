@@ -19,7 +19,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.config.experimental.MergeConfiguration;
+import org.hyperledger.besu.config.experimental.MergeConfigOptions;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -213,7 +213,7 @@ public class BesuController implements java.io.Closeable {
       }
 
       // use merge config if experimental merge flag is enabled:
-      if (MergeConfiguration.isMergeEnabled()) {
+      if (MergeConfigOptions.isMergeEnabled()) {
         // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
         // series of classes removed after we successfully transition to PoS
         // https://github.com/hyperledger/besu/issues/2897
