@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PipelineChainDownloader;
@@ -23,8 +22,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-
-import java.util.Optional;
 
 public class FullSyncChainDownloader {
   private FullSyncChainDownloader() {}
@@ -36,7 +33,7 @@ public class FullSyncChainDownloader {
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
-      final Optional<Difficulty> terminalTotalDifficulty) {
+      final FullSyncTerminationCondition terminationCondition) {
 
     final FullSyncTargetManager syncTargetManager =
         new FullSyncTargetManager(
@@ -45,7 +42,7 @@ public class FullSyncChainDownloader {
             protocolContext,
             ethContext,
             metricsSystem,
-            terminalTotalDifficulty);
+            terminationCondition);
 
     return new PipelineChainDownloader(
         syncState,

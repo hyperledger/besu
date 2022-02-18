@@ -35,7 +35,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Optional;
 
 import org.junit.After;
 import org.junit.Before;
@@ -99,7 +98,7 @@ public class FullSyncDownloaderTest {
         ethContext,
         syncState,
         metricsSystem,
-        Optional.empty());
+        FullSyncTerminationCondition.never());
   }
 
   @Test

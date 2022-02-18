@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -52,6 +51,7 @@ import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValida
 import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -373,7 +373,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             dataDirectory,
             clock,
             metricsSystem,
-            getTerminalTotalDifficulty());
+            getFullSyncTerminationCondition());
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -418,8 +418,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         additionalPluginServices);
   }
 
-  protected Optional<Difficulty> getTerminalTotalDifficulty() {
-    return genesisConfig.getConfigOptions().getTerminalTotalDifficulty().map(Difficulty::of);
+  protected FullSyncTerminationCondition getFullSyncTerminationCondition() {
+    return genesisConfig
+        .getConfigOptions()
+        .getTerminalTotalDifficulty()
+        .map(FullSyncTerminationCondition::difficulty)
+        .orElse(FullSyncTerminationCondition.never());
   }
 
   protected void prepForBuild() {}

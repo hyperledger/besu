@@ -19,7 +19,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.SyncTargetManager;
@@ -40,7 +39,7 @@ class FullSyncTargetManager extends SyncTargetManager {
   private static final Logger LOG = LoggerFactory.getLogger(FullSyncTargetManager.class);
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
-  private final Optional<Difficulty> terminalTotalDifficulty;
+  private final FullSyncTerminationCondition terminationCondition;
 
   FullSyncTargetManager(
       final SynchronizerConfiguration config,
@@ -48,11 +47,11 @@ class FullSyncTargetManager extends SyncTargetManager {
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
-      final Optional<Difficulty> terminalTotalDifficulty) {
+      final FullSyncTerminationCondition terminationCondition) {
     super(config, protocolSchedule, protocolContext, ethContext, metricsSystem);
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.terminalTotalDifficulty = terminalTotalDifficulty;
+    this.terminationCondition = terminationCondition;
   }
 
   @Override
@@ -109,9 +108,6 @@ class FullSyncTargetManager extends SyncTargetManager {
 
   @Override
   public boolean shouldContinueDownloading() {
-    return terminalTotalDifficulty.isEmpty()
-        || terminalTotalDifficulty
-            .get()
-            .greaterThan(protocolContext.getBlockchain().getChainHead().getTotalDifficulty());
+    return terminationCondition.test(protocolContext.getBlockchain());
   }
 }

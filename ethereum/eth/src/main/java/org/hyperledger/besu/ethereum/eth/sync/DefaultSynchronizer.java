@@ -17,13 +17,13 @@ package org.hyperledger.besu.ethereum.eth.sync;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -67,7 +67,7 @@ public class DefaultSynchronizer implements Synchronizer {
       final Path dataDirectory,
       final Clock clock,
       final MetricsSystem metricsSystem,
-      final Optional<Difficulty> terminalTotalDifficulty) {
+      final FullSyncTerminationCondition terminationCondition) {
     this.maybePruner = maybePruner;
     this.syncState = syncState;
 
@@ -98,7 +98,7 @@ public class DefaultSynchronizer implements Synchronizer {
             ethContext,
             syncState,
             metricsSystem,
-            terminalTotalDifficulty);
+            terminationCondition);
     this.fastSyncDownloader =
         FastDownloaderFactory.create(
             syncConfig,

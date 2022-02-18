@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -24,7 +23,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -45,7 +43,7 @@ public class FullSyncDownloader {
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
-      final Optional<Difficulty> terminalTotalDifficulty) {
+      final FullSyncTerminationCondition terminationCondition) {
     this.syncConfig = syncConfig;
     this.protocolContext = protocolContext;
     this.syncState = syncState;
@@ -58,7 +56,7 @@ public class FullSyncDownloader {
             ethContext,
             syncState,
             metricsSystem,
-            terminalTotalDifficulty);
+            terminationCondition);
   }
 
   public CompletableFuture<Void> start() {

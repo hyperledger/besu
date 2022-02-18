@@ -37,7 +37,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.After;
@@ -101,7 +100,7 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
 
   private ChainDownloader downloader(
       final SynchronizerConfiguration syncConfig,
-      final Optional<Difficulty> targetTerminalDifficulty1) {
+      final FullSyncTerminationCondition terminalCondition) {
     return FullSyncChainDownloader.create(
         syncConfig,
         protocolSchedule,
@@ -109,7 +108,7 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
         ethContext,
         syncState,
         metricsSystem,
-        targetTerminalDifficulty1);
+        terminalCondition);
   }
 
   private SynchronizerConfiguration.Builder syncConfigBuilder() {
@@ -131,12 +130,12 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
     final SynchronizerConfiguration syncConfig =
         syncConfigBuilder().downloaderChainSegmentSize(1).downloaderParallelism(1).build();
     final ChainDownloader downloader =
-        downloader(syncConfig, Optional.of(TARGET_TERMINAL_DIFFICULTY));
+        downloader(syncConfig, FullSyncTerminationCondition.difficulty(TARGET_TERMINAL_DIFFICULTY));
     final CompletableFuture<Void> future = downloader.start();
 
     assertThat(future.isDone()).isFalse();
 
-    peer.respondWhileOtherThreadsWork(responder, () -> !syncState.syncTarget().isPresent());
+    peer.respondWhileOtherThreadsWork(responder, () -> syncState.syncTarget().isEmpty());
     assertThat(syncState.syncTarget()).isPresent();
     assertThat(syncState.syncTarget().get().peer()).isEqualTo(peer.getEthPeer());
 
@@ -162,7 +161,7 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
 
     final SynchronizerConfiguration syncConfig =
         syncConfigBuilder().downloaderChainSegmentSize(1).downloaderParallelism(1).build();
-    final ChainDownloader downloader = downloader(syncConfig, Optional.empty());
+    final ChainDownloader downloader = downloader(syncConfig, FullSyncTerminationCondition.never());
     final CompletableFuture<Void> future = downloader.start();
 
     assertThat(future.isDone()).isFalse();

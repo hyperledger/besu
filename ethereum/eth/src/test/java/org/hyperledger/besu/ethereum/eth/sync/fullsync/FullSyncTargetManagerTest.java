@@ -40,7 +40,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.After;
@@ -99,7 +98,7 @@ public class FullSyncTargetManagerTest {
             protocolContext,
             ethContext,
             new NoOpMetricsSystem(),
-            Optional.empty());
+            FullSyncTerminationCondition.never());
   }
 
   @After
