@@ -258,9 +258,11 @@ public class TransactionPool implements BlockAddedObserver {
       }
     }
 
-    // allow local transactions to be below minGas as long as we are mining and the transaction is executable:
-    if (effectiveGasPriceIsAboveConfiguredMinGasPrice(transaction)
-        || (miningParameters.isMiningEnabled() && feeMarket.satisfiesFloorTxCost(transaction))) {
+    // allow local transactions to be below minGas as long as we are mining and the transaction is
+    // executable:
+    if ((!effectiveGasPriceIsAboveConfiguredMinGasPrice(transaction)
+            && !miningParameters.isMiningEnabled())
+        || (!feeMarket.satisfiesFloorTxCost(transaction))) {
       return ValidationResult.invalid(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
     }
 

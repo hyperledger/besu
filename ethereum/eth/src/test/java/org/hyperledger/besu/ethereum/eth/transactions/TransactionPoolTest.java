@@ -21,7 +21,6 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.ValidationResult.valid;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.NONCE_TOO_LOW;
 import static org.mockito.ArgumentMatchers.any;
@@ -429,24 +428,6 @@ public class TransactionPoolTest {
 
     assertTransactionNotPending(transaction);
     verifyNoInteractions(transactionValidator); // Reject before validation
-  }
-
-  @Test
-  public void shouldNotRejectLocalTransactionsWhenGasPriceBelowMinimum() {
-    final Transaction transaction =
-        new TransactionTestFixture()
-            .nonce(1)
-            .gasLimit(0)
-            .gasPrice(Wei.of(1))
-            .createTransaction(KEY_PAIR1);
-
-    when(transactionValidator.validate(eq(transaction), any(Optional.class), any()))
-        .thenReturn(ValidationResult.valid());
-
-    final ValidationResult<TransactionInvalidReason> result =
-        transactionPool.addLocalTransaction(transaction);
-
-    assertThat(result).isEqualTo(ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
   }
 
   @Test
@@ -1017,8 +998,6 @@ public class TransactionPoolTest {
         new TransactionTestFixture()
             .type(TransactionType.FRONTIER)
             .gasPrice(Wei.ZERO)
-            .value(Wei.ONE)
-            .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(KEY_PAIR1);
 
     givenTransactionIsValid(transaction);
