@@ -25,7 +25,7 @@ executors:
       image: ubuntu-2004:202101-01
     resource_class: xlarge
 
-  trivy_executor:
+  small_executor:
     docker:
       - image: docker:stable-git
     resource_class: small
@@ -152,7 +152,7 @@ jobs:
             build\distributions\besu\bin\besu.bat --version
 
   dockerScan:
-    executor: trivy_executor
+    executor: small_executor
     steps:
       - checkout
       - restore_gradle_cache
