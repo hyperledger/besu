@@ -332,7 +332,10 @@ workflows:
     jobs:
       - dco
       - spotless
-      - assemble
+      - assemble:
+          requires:
+            - dco
+            - spotless
       - unitTests:
           context: SonarCloud
           requires:
@@ -359,8 +362,6 @@ workflows:
                 - main
                 - /^release-.*/
           requires:
-            - dco
-            - spotless
             - assemble
             - integrationTests
             - unitTests
@@ -374,8 +375,6 @@ workflows:
                 - main
                 - /^release-.*/
           requires:
-            - dco
-            - spotless
             - assemble
             - integrationTests
             - unitTests
