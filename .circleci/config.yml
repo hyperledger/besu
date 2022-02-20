@@ -118,7 +118,8 @@ jobs:
   dco:
     executor: small_executor
     steps:
-      - prepare
+      - checkout
+      - restore_gradle_cache
       - run:
           name: DCO check
           command: |
@@ -126,7 +127,8 @@ jobs:
   spotless:
     executor: small_executor
     steps:
-      - prepare
+      - checkout
+      - restore_gradle_cache
       - run:
           name: Spotless
           command: |
