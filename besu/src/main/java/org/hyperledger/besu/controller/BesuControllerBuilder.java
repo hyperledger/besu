@@ -514,7 +514,7 @@ public abstract class BesuControllerBuilder {
     }
   }
 
-  private List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
+  protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
     final List<PeerValidator> validators = new ArrayList<>();
 
     final OptionalLong daoBlock =

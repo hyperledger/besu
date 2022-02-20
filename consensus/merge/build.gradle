@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -30,11 +30,14 @@ jar {
 repositories { mavenCentral() }
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   implementation project(':config')
   implementation project(':datatypes')
   implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
+  implementation project(':ethereum:p2p')
   implementation project(':evm')
   implementation project(':util')
 
@@ -44,6 +47,13 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
 
+  testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
+  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(':testutil')
+
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-core'
+  testImplementation project(':ethereum:core')
 }
