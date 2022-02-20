@@ -96,13 +96,9 @@ jobs:
     steps:
       - prepare
       - run:
-          name: DCO check
-          command: |
-            ./scripts/dco_check.sh
-      - run:
           name: Assemble
           command: |
-            ./gradlew --no-daemon clean spotlessCheck compileJava compileTestJava assemble
+            ./gradlew --no-daemon clean compileJava compileTestJava assemble
       - save_cache:
           name: Caching gradle dependencies
           key: deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
@@ -118,6 +114,23 @@ jobs:
           path: build/distributions
           destination: distributions
           when: always
+
+  dco:
+    executor: small_executor
+    steps:
+      - prepare
+      - run:
+          name: DCO check
+          command: |
+            ./scripts/dco_check.sh
+  spotless:
+    executor: small_executor
+    steps:
+      - prepare
+      - run:
+          name: Spotless
+          command: |
+            ./gradlew --no-daemon --parallel clean spotlessCheck
   testWindows:
     executor: win/default
     steps:
@@ -317,6 +330,8 @@ workflows:
   version: 2
   default:
     jobs:
+      - dco
+      - spotless
       - assemble
       - unitTests:
           context: SonarCloud
@@ -344,6 +359,9 @@ workflows:
                 - main
                 - /^release-.*/
           requires:
+            - dco
+            - spotless
+            - assemble
             - integrationTests
             - unitTests
             - acceptanceTests
@@ -356,6 +374,9 @@ workflows:
                 - main
                 - /^release-.*/
           requires:
+            - dco
+            - spotless
+            - assemble
             - integrationTests
             - unitTests
             - acceptanceTests
