@@ -4,6 +4,14 @@ orbs:
   win: circleci/windows@2.2.0
 
 executors:
+  besu_executor_small:
+    docker:
+      - image: cimg/openjdk:11.0
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
+
   besu_executor_med: # 2cpu, 4G ram
     docker:
       - image: cimg/openjdk:11.0
@@ -25,7 +33,7 @@ executors:
       image: ubuntu-2004:202101-01
     resource_class: xlarge
 
-  small_executor:
+  trivy_executor:
     docker:
       - image: docker:stable-git
     resource_class: small
@@ -116,7 +124,7 @@ jobs:
           when: always
 
   dco:
-    executor: small_executor
+    executor: besu_executor_small
     steps:
       - checkout
       - restore_gradle_cache
@@ -125,7 +133,7 @@ jobs:
           command: |
             ./scripts/dco_check.sh
   spotless:
-    executor: small_executor
+    executor: besu_executor_small
     steps:
       - checkout
       - restore_gradle_cache
@@ -154,7 +162,7 @@ jobs:
             build\distributions\besu\bin\besu.bat --version
 
   dockerScan:
-    executor: small_executor
+    executor: trivy_executor
     steps:
       - checkout
       - restore_gradle_cache
