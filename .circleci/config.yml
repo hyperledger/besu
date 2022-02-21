@@ -29,12 +29,10 @@ executors:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
       
   quorum_ats_executor_med:
-    docker:
-      - image: cimg/openjdk:11.0
+    machine:
+      image: ubuntu-2004:202101-01
     resource_class: med
     working_directory: ~/project
-    environment:
-      GRADLE_OPTS: -Dorg.gradle.daemon=false
 
   xl_machine_executor:
     machine:
