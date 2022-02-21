@@ -47,6 +47,7 @@ commands:
             sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools
             sudo service haveged restart
       - restore_gradle_cache
+
   restore_gradle_cache:
     description: "Restore Gradle cache"
     steps:
@@ -89,6 +90,22 @@ commands:
           destination: acceptance-tests-logs
       - store_artifacts:
           path: acceptance-tests/tests/build/jvmErrorLogs
+
+  setup_buildx:
+    description: "setup buildx"
+    steps:
+      - run:
+          name: Install Buildx base on CPU architecture
+          command: |
+            BUILDX_ARCH="linux-amd64"
+            BUILDX_VERSION="v0.7.0"
+
+            mkdir -p ~/.docker/cli-plugins
+            wget -nv -O ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.${BUILDX_ARCH}  
+            chmod a+x ~/.docker/cli-plugins/docker-buildx
+
+            curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-${BUILDX_ARCH} >regctl
+            chmod 755 regctl
 
 jobs:
   assemble:
@@ -305,13 +322,21 @@ jobs:
       - attach_workspace:
           at: ~/project
       - setup_remote_docker
+      - setup_buildx
       - run:
           name: Publish Docker
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
             # temporarily commented out because AWS credentials are broken
             # docker login "${ACR_REPO}" --username "${ACR_USER_RW}" --password "${ACR_PASSWORD_RW}"
-            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
+
+            # Create a new docker context for builder instance to use
+            docker context create builder-context
+
+            # Create a builder instance named "builderx"
+            docker buildx create --name builderx --driver docker-container --use builder-context
+
+            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerPubishMultiCPU
 
 workflows:
   version: 2
