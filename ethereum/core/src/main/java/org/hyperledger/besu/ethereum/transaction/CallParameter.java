@@ -144,6 +144,6 @@ public class CallParameter {
         Optional.of(Wei.fromQuantity(tx.getMaxPriorityFeePerGas().orElseGet(() -> Wei.ZERO))),
         tx.getMaxFeePerGas(),
         Wei.fromQuantity(tx.getValue()),
-        tx.getData().get());
+        tx.getData().orElseGet(() -> Bytes.EMPTY));
   }
 }
