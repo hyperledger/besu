@@ -106,10 +106,16 @@ public class TraceRawTransaction implements JsonRpcMethod {
             tracer.getTraceFrames());
     final Block block = blockchainQueries.getBlockchain().getChainHeadBlock();
 
-    return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(),
+    Object response =
         TraceUtils.getTraceCallResult(
-            protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block));
+            protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block);
+
+    if (response instanceof JsonRpcErrorResponse) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), ((JsonRpcErrorResponse) response).getError());
+    }
+
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }
 
   private TransactionValidationParams buildTransactionValidationParams() {

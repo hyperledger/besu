@@ -101,7 +101,6 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
             maybeSimulatorResult.get().getResult(),
             tracer.getTraceFrames());
 
-    // TODO why do we get the head of the chain here rather than use the block param
     final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
 
     return TraceUtils.getTraceCallResult(
