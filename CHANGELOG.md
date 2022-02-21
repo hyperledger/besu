@@ -5,39 +5,22 @@
 
 ### Additions and Improvements
 - Allow optional RPC methods that bypass authentication [#3382](https://github.com/hyperledger/besu/pull/3382)
-
-## 22.1.1
-
-### Additions and Improvements
-- Merge: extend block creation and mining to support The Merge [#3412](https://github.com/hyperledger/besu/pull/3412)
-- Merge: backward sync [#3410](https://github.com/hyperledger/besu/pull/3410)
-- Merge: Extend validateAndProcessBlock to return an error message in case of failure, so it can be returned to the caller of ExecutePayload API [#3411](https://github.com/hyperledger/besu/pull/3411)
-- Merge: Persist latest finalized block [#2913](https://github.com/hyperledger/besu/issues/2913)
-- Merge: Add PostMergeContext, and stop syncing after the swith to PoS [#3453](https://github.com/hyperledger/besu/pull/3453)
-- Merge: Add header validation rules needed to validate The Merge blocks [#3454](https://github.com/hyperledger/besu/pull/3454)
-- Merge: Add core components: controller builder, protocol scheduler, coordinator, block creator and processor. [#3461](https://github.com/hyperledger/besu/pull/3461)
+- Execution layer (The Merge):
+  - Extend block creation and mining to support The Merge [#3412](https://github.com/hyperledger/besu/pull/3412)
+  - Backward sync [#3410](https://github.com/hyperledger/besu/pull/3410)
+  - Extend validateAndProcessBlock to return an error message in case of failure, so it can be returned to the caller of ExecutePayload API [#3411](https://github.com/hyperledger/besu/pull/3411)
+  - Persist latest finalized block [#2913](https://github.com/hyperledger/besu/issues/2913)
+  - Add PostMergeContext, and stop syncing after the swith to PoS [#3453](https://github.com/hyperledger/besu/pull/3453)
+  - Add header validation rules needed to validate The Merge blocks [#3454](https://github.com/hyperledger/besu/pull/3454)
+  - Add core components: controller builder, protocol scheduler, coordinator, block creator and processor. [#3461](https://github.com/hyperledger/besu/pull/3461)
+  - Execution specific RPC endpoint [#2914](https://github.com/hyperledger/besu/issues/2914), [#3350](https://github.com/hyperledger/besu/pull/3350)
 
 ### Bug Fixes
 
 ## 22.1.0
 
-### 22.1.0 Breaking Changes
-
-### Additions and Improvements
-- Updated besu-native to version 0.4.3 [#3331](https://github.com/hyperledger/besu/pull/3331)
-- Adds ability to specify Engine API endpoint on its own port.
-- Refactor synchronizer to asynchronously retrieve blocks from peers, and to change peer when retrying to get a block. [#3326](https://github.com/hyperledger/besu/pull/3326)
-- Disable RocksDB TTL compactions [#3356](https://github.com/hyperledger/besu/pull/3356)
-- add a websocket frame size configuration CLI parameter [3368][https://github.com/hyperledger/besu/pull/3379]
-
-### Bug Fixes
-- Prevent node from peering to itself [#3342](https://github.com/hyperledger/besu/pull/3342)
-- Fix an `IndexOutOfBoundsException` exception when getting block from peers. [#3304](https://github.com/hyperledger/besu/issues/3304)
-
-## 22.1.0-RC3
-- Changing the order in which we traverse the word state tree during fast sync. This should improve fast sync during subsequent pivot changes.
-
-### 22.1.0-RC3 Breaking Changes
+### Breaking Changes
+- Plugin API: BlockHeader.getBaseFee() method now returns an optional Wei instead of an optional Long [#3065](https://github.com/hyperledger/besu/issues/3065)
 - Removed deprecated hash variable `protected volatile Hash hash;` which was used for private transactions [#3110](https://github.com/hyperledger/besu/pull/3110)
 
 ### Additions and Improvements
