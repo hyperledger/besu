@@ -34,6 +34,7 @@ import com.google.common.base.MoreObjects;
 public class JsonRpcConfiguration {
   private static final String DEFAULT_JSON_RPC_HOST = "127.0.0.1";
   public static final int DEFAULT_JSON_RPC_PORT = 8545;
+  public static final int DEFAULT_ENGINE_JSON_RPC_PORT = 8550;
   public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
 
   private boolean enabled;
@@ -41,6 +42,7 @@ public class JsonRpcConfiguration {
   private String host;
   private List<String> corsAllowedDomains = Collections.emptyList();
   private List<String> rpcApis;
+  private List<String> noAuthRpcApis = Collections.emptyList();
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
@@ -58,6 +60,16 @@ public class JsonRpcConfiguration {
     config.setRpcApis(DEFAULT_RPC_APIS);
     config.httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
     config.setMaxActiveConnections(DEFAULT_MAX_ACTIVE_CONNECTIONS);
+    return config;
+  }
+
+  public static JsonRpcConfiguration createEngineDefault() {
+    final JsonRpcConfiguration config = createDefault();
+    config.setPort(DEFAULT_ENGINE_JSON_RPC_PORT);
+    List<String> engineMethodGroup = new ArrayList<>();
+    engineMethodGroup.add(RpcApis.ENGINE.name());
+    engineMethodGroup.add(RpcApis.ETH.name());
+    config.setRpcApis(engineMethodGroup);
     return config;
   }
 
@@ -103,6 +115,14 @@ public class JsonRpcConfiguration {
 
   public void setRpcApis(final List<String> rpcApis) {
     this.rpcApis = rpcApis;
+  }
+
+  public Collection<String> getNoAuthRpcApis() {
+    return this.noAuthRpcApis;
+  }
+
+  public void setNoAuthRpcApis(final List<String> rpcApis) {
+    this.noAuthRpcApis = rpcApis;
   }
 
   public void addRpcApi(final String rpcApi) {

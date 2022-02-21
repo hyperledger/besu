@@ -27,6 +27,14 @@ executors:
     working_directory: ~/project
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
+      
+  quorum_ats_executor_xl: # 8cpu, 16G ram
+    docker:
+      - image: cimg/openjdk:11.0
+    resource_class: xlarge
+    working_directory: ~/project
+    environment:
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=4
 
   xl_machine_executor:
     machine:
@@ -260,15 +268,14 @@ jobs:
       - capture_test_logs
 
   acceptanceTestsQuorum:
-    parallelism: 1
-    executor: xl_machine_executor
+    executor: quorum_ats_executor_xl
     steps:
       - prepare
       - attach_workspace:
           at: ~/project
       - run:
           name: Quorum Acceptance Tests
-          no_output_timeout: 40m
+          no_output_timeout: 30m
           command: ./gradlew --no-daemon acceptanceTestsQuorum
       - store_artifacts:
           path: build/quorum-at

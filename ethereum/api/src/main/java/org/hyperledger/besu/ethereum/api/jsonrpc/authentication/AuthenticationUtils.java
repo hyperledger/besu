@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
@@ -29,16 +29,21 @@ import org.slf4j.LoggerFactory;
 public class AuthenticationUtils {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationUtils.class);
 
-  @VisibleForTesting
   public static boolean isPermitted(
       final Optional<AuthenticationService> authenticationService,
       final Optional<User> optionalUser,
-      final JsonRpcMethod jsonRpcMethod) {
+      final JsonRpcMethod jsonRpcMethod,
+      final Collection<String> noAuthMethods) {
 
     AtomicBoolean foundMatchingPermission = new AtomicBoolean();
 
     if (authenticationService.isEmpty()) {
       // no auth provider configured thus anything is permitted
+      return true;
+    }
+
+    // if the method is configured as a no auth method we skip permission check
+    if (noAuthMethods.stream().anyMatch(m -> m.equals(jsonRpcMethod.getName()))) {
       return true;
     }
 

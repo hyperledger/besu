@@ -66,7 +66,7 @@ public class Benchmarks {
           .sender(Address.ZERO)
           .value(Wei.ZERO)
           .apparentValue(Wei.ZERO)
-          .code(new Code(Bytes.EMPTY, org.hyperledger.besu.datatypes.Hash.EMPTY))
+          .code(Code.EMPTY_CODE)
           .depth(1)
           .completer(__ -> {})
           .address(Address.ZERO)
