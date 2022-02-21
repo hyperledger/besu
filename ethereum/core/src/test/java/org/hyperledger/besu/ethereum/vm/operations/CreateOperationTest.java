@@ -88,7 +88,7 @@ public class CreateOperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(new Code(SIMPLE_CREATE, Hash.hash(SIMPLE_CREATE)))
+            .code(Code.createLegacyCode(SIMPLE_CREATE, Hash.hash(SIMPLE_CREATE)))
             .depth(1)
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))

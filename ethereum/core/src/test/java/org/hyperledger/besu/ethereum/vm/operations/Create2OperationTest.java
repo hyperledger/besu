@@ -141,7 +141,7 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(sender))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(new Code(codeBytes, Hash.hash(codeBytes)))
+            .code(Code.createLegacyCode(codeBytes, Hash.hash(codeBytes)))
             .depth(1)
             .completer(__ -> {})
             .address(Address.fromHexString(sender))
