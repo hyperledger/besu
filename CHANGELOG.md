@@ -1,4 +1,10 @@
 # Changelog
+## 22.1.1
+
+### 22.1.1 Breaking Changes
+
+### Additions and Improvements
+- Allow optional RPC methods that bypass authentication [#3382](https://github.com/hyperledger/besu/pull/3382)
 
 ## 22.1.1
 
@@ -9,6 +15,7 @@
 - Merge: Persist latest finalized block [#2913](https://github.com/hyperledger/besu/issues/2913)
 - Merge: Add PostMergeContext, and stop syncing after the swith to PoS [#3453](https://github.com/hyperledger/besu/pull/3453)
 - Merge: Add header validation rules needed to validate The Merge blocks [#3454](https://github.com/hyperledger/besu/pull/3454)
+- Merge: Add core components: controller builder, protocol scheduler, coordinator, block creator and processor. [#3461](https://github.com/hyperledger/besu/pull/3461)
 
 ### Bug Fixes
 

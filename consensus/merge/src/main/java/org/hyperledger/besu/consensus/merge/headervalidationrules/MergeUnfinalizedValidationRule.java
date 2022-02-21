@@ -31,8 +31,8 @@ public class MergeUnfinalizedValidationRule implements AttachedBlockHeaderValida
 
     MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     // if we have a finalized blockheader, fail this rule if
-    //   the block number is lower than finalized
-    //   or block number is the same but hash is different
+    // the block number is lower than finalized
+    // or block number is the same but hash is different
     if (mergeContext
         .getFinalized()
         .filter(finalized -> header.getNumber() <= finalized.getNumber())

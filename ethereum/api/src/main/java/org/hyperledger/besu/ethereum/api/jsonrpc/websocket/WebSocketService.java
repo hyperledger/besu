@@ -137,7 +137,11 @@ public class WebSocketService {
                 token,
                 user ->
                     websocketRequestHandler.handle(
-                        authenticationService, websocket, buffer.toString(), user));
+                        authenticationService,
+                        websocket,
+                        buffer.toString(),
+                        user,
+                        configuration.getRpcApisNoAuth()));
           });
 
       websocket.textMessageHandler(
@@ -152,7 +156,11 @@ public class WebSocketService {
                 token,
                 user ->
                     websocketRequestHandler.handle(
-                        authenticationService, websocket, payload, user));
+                        authenticationService,
+                        websocket,
+                        payload,
+                        user,
+                        configuration.getRpcApisNoAuth()));
           });
 
       websocket.closeHandler(
