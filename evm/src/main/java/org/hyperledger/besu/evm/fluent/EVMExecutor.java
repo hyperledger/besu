@@ -73,7 +73,8 @@ public class EVMExecutor {
   private MessageCallProcessor messageCallProcessor = null;
   private ContractCreationProcessor contractCreationProcessor = null;
 
-  public EVMExecutor(final EVM evm) {
+  private EVMExecutor(final EVM evm) {
+    checkNotNull(evm, "evm must not be null");
     this.evm = evm;
   }
 
@@ -296,7 +297,6 @@ public class EVMExecutor {
   }
 
   public EVMExecutor code(final Bytes codeBytes, final Hash hash) {
-    checkNotNull(evm, "evm must be set before code bytes");
     this.code = evm.getCode(hash, codeBytes);
     return this;
   }
