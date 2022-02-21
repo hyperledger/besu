@@ -209,6 +209,19 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createWsNodeWithAuthFileAndNoAuthApi(
+      final String name, final String authFile, final List<String> noAuthApiMethods)
+      throws URISyntaxException, IOException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .jsonRpcEnabled()
+            .jsonRpcAuthenticationConfiguration(authFile)
+            .webSocketEnabled()
+            .webSocketAuthenticationEnabledWithNoAuthMethods(noAuthApiMethods)
+            .build());
+  }
+
   public BesuNode createNodeWithAuthenticationUsingRsaJwtPublicKey(final String name)
       throws IOException, URISyntaxException {
     return create(

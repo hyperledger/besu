@@ -250,6 +250,20 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder webSocketAuthenticationEnabledWithNoAuthMethods(
+      final List<String> noAuthApiMethods) throws URISyntaxException {
+    final String authTomlPath =
+        Paths.get(ClassLoader.getSystemResource("authentication/auth.toml").toURI())
+            .toAbsolutePath()
+            .toString();
+
+    this.webSocketConfiguration.setAuthenticationEnabled(true);
+    this.webSocketConfiguration.setAuthenticationCredentialsFile(authTomlPath);
+    this.webSocketConfiguration.setRpcApisNoAuth(noAuthApiMethods);
+
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder webSocketAuthenticationUsingRsaPublicKeyEnabled()
       throws URISyntaxException {
     final File jwtPublicKey =

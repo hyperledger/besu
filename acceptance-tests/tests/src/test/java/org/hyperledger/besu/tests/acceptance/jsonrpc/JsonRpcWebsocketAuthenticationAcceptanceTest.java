@@ -28,7 +28,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-public class JsonRpcWebsocketAcceptanceTest extends AcceptanceTestBase {
+public class JsonRpcWebsocketAuthenticationAcceptanceTest extends AcceptanceTestBase {
   private BesuNode nodeUsingAuthFile;
   private BesuNode nodeUsingRsaJwtPublicKey;
   private BesuNode nodeUsingEcdsaJwtPublicKey;
@@ -62,7 +62,7 @@ public class JsonRpcWebsocketAcceptanceTest extends AcceptanceTestBase {
     nodeUsingRsaJwtPublicKey = besu.createNodeWithAuthenticationUsingRsaJwtPublicKey("node2");
     nodeUsingEcdsaJwtPublicKey = besu.createNodeWithAuthenticationUsingEcdsaJwtPublicKey("node3");
     nodeUsingAuthFileWithNoAuthApi =
-        besu.createNodeWithAuthFileAndNoAuthApi("node4", AUTH_FILE, NO_AUTH_API_METHODS);
+        besu.createWsNodeWithAuthFileAndNoAuthApi("node4", AUTH_FILE, NO_AUTH_API_METHODS);
     authenticatedCluster.start(
         nodeUsingAuthFile,
         nodeUsingRsaJwtPublicKey,
