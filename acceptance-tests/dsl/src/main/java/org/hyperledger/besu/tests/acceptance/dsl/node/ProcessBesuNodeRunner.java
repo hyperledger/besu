@@ -168,6 +168,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add(node.jsonRpcListenPort().map(Object::toString).get());
       params.add("--rpc-http-api");
       params.add(apiList(node.jsonRpcConfiguration().getRpcApis()));
+      if (!node.jsonRpcConfiguration().getNoAuthRpcApis().isEmpty()) {
+        params.add("--rpc-http-api-methods-no-auth");
+        params.add(apiList(node.jsonRpcConfiguration().getNoAuthRpcApis()));
+      }
       if (node.jsonRpcConfiguration().isAuthenticationEnabled()) {
         params.add("--rpc-http-authentication-enabled");
       }
@@ -193,6 +197,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add(node.wsRpcListenPort().map(Object::toString).get());
       params.add("--rpc-ws-api");
       params.add(apiList(node.webSocketConfiguration().getRpcApis()));
+      if (!node.webSocketConfiguration().getRpcApisNoAuth().isEmpty()) {
+        params.add("--rpc-ws-api-methods-no-auth");
+        params.add(apiList(node.webSocketConfiguration().getRpcApisNoAuth()));
+      }
       if (node.webSocketConfiguration().isAuthenticationEnabled()) {
         params.add("--rpc-ws-authentication-enabled");
       }
