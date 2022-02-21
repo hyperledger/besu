@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,6 +23,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
@@ -163,6 +164,7 @@ public class WebSocketServiceLoginTest {
                     blockchainQueries,
                     synchronizer,
                     MainnetProtocolSchedule.fromConfig(genesisConfigOptions),
+                    mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(PoWMiningCoordinator.class),

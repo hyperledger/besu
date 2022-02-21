@@ -32,6 +32,10 @@ public interface NodeConfiguration {
 
   Optional<Integer> getJsonRpcWebSocketPort();
 
+  Optional<Integer> getJsonRpcPort();
+
+  Optional<Integer> getEngineJsonRpcPort();
+
   String getHostName();
 
   boolean isJsonRpcEnabled();

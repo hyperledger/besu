@@ -14,22 +14,20 @@
  */
 package org.hyperledger.besu.config.experimental;
 
-import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** For now there is a static config that is driven by a command line option. */
 public class MergeConfigOptions {
-  private static Optional<Boolean> mergeEnabled = Optional.empty();
+  private static final AtomicBoolean mergeEnabled = new AtomicBoolean(false);
 
   public static void setMergeEnabled(final boolean bool) {
-    if (!mergeEnabled.isPresent()) {
-      mergeEnabled = Optional.of(bool);
-    } else if (mergeEnabled.get() != bool) {
-      throw new RuntimeException("Refusing to re-configure already configured merge feature");
+    if (!mergeEnabled.get()) {
+      mergeEnabled.set(bool);
     }
   }
 
   public static boolean isMergeEnabled() {
-    return mergeEnabled.orElse(false);
+    return mergeEnabled.get();
   }
 
   public static void doIfMergeEnabled(final Runnable mergeDo) {
