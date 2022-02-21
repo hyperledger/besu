@@ -49,7 +49,6 @@ public class TraceRawTransaction implements JsonRpcMethod {
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule protocolSchedule;
 
-  // TODO write some tests
   public TraceRawTransaction(
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,

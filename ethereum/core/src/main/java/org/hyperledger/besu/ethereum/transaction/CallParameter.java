@@ -138,7 +138,7 @@ public class CallParameter {
   public static CallParameter fromTransaction(final Transaction tx) {
     return new CallParameter(
         tx.getSender(),
-        Address.fromPlugin(tx.getTo().orElseGet(() -> Address.ZERO)),
+        tx.getTo().orElseGet(() -> null),
         tx.getGasLimit(),
         Wei.fromQuantity(tx.getGasPrice().orElseGet(() -> Wei.ZERO)),
         Optional.of(Wei.fromQuantity(tx.getMaxPriorityFeePerGas().orElseGet(() -> Wei.ZERO))),
