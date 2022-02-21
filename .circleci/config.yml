@@ -4,6 +4,14 @@ orbs:
   win: circleci/windows@2.2.0
 
 executors:
+  besu_executor_small:
+    docker:
+      - image: cimg/openjdk:11.0
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
+
   besu_executor_med: # 2cpu, 4G ram
     docker:
       - image: cimg/openjdk:11.0
@@ -104,13 +112,9 @@ jobs:
     steps:
       - prepare
       - run:
-          name: DCO check
-          command: |
-            ./scripts/dco_check.sh
-      - run:
           name: Assemble
           command: |
-            ./gradlew --no-daemon clean spotlessCheck compileJava compileTestJava assemble
+            ./gradlew --no-daemon clean compileJava compileTestJava assemble
       - save_cache:
           name: Caching gradle dependencies
           key: deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
@@ -126,6 +130,25 @@ jobs:
           path: build/distributions
           destination: distributions
           when: always
+
+  dco:
+    executor: besu_executor_small
+    steps:
+      - checkout
+      - restore_gradle_cache
+      - run:
+          name: DCO check
+          command: |
+            ./scripts/dco_check.sh
+  spotless:
+    executor: besu_executor_small
+    steps:
+      - checkout
+      - restore_gradle_cache
+      - run:
+          name: Spotless
+          command: |
+            ./gradlew --no-daemon --parallel clean spotlessCheck
   testWindows:
     executor: win/default
     steps:
@@ -324,7 +347,12 @@ workflows:
   version: 2
   default:
     jobs:
-      - assemble
+      - dco
+      - spotless
+      - assemble:
+          requires:
+            - dco
+            - spotless
       - unitTests:
           context: SonarCloud
           requires:
@@ -351,6 +379,7 @@ workflows:
                 - main
                 - /^release-.*/
           requires:
+            - assemble
             - integrationTests
             - unitTests
             - acceptanceTests
@@ -363,6 +392,7 @@ workflows:
                 - main
                 - /^release-.*/
           requires:
+            - assemble
             - integrationTests
             - unitTests
             - acceptanceTests
