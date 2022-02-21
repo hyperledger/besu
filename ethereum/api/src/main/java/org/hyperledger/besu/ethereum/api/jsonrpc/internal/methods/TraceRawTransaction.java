@@ -104,7 +104,6 @@ public class TraceRawTransaction implements JsonRpcMethod {
             maybeSimulatorResult.get().getTransaction(),
             maybeSimulatorResult.get().getResult(),
             tracer.getTraceFrames());
-    // TODO why do we get the head of the chain here rather than use the block param
     final Block block = blockchainQueries.getBlockchain().getChainHeadBlock();
 
     return new JsonRpcSuccessResponse(
