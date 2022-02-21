@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -56,6 +57,7 @@ public class Create2OperationTest {
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final WrappedEvmAccount account = mock(WrappedEvmAccount.class);
   private final MutableAccount mutableAccount = mock(MutableAccount.class);
+  private final EVM evm = mock(EVM.class);
   private final Create2Operation operation =
       new Create2Operation(new ConstantinopleGasCalculator());
 
@@ -164,6 +166,9 @@ public class Create2OperationTest {
     when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
+    when(evm.getCode(any(), any())).thenAnswer(invocation ->
+      Code.createLegacyCode(invocation.getArgument(1), invocation.getArgument(0))
+    );
   }
 
   @Test
@@ -174,7 +179,7 @@ public class Create2OperationTest {
 
   @Test
   public void shouldCalculateGasPrice() {
-    final OperationResult result = operation.execute(messageFrame, null);
+    final OperationResult result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isEmpty();
     assertThat(result.getGasCost()).contains(Gas.of(expectedGas));
   }
