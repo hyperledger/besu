@@ -779,7 +779,7 @@ public class JsonRpcHttpService {
 
   private Optional<JsonRpcError> validateMethodAvailability(final JsonRpcRequest request) {
     final String name = request.getMethod();
-    LOG.debug("JSON-RPC request -> {}", name);
+    LOG.debug("JSON-RPC request -> {} {}", name, request.getParams());
 
     final JsonRpcMethod method = rpcMethods.get(name);
 
