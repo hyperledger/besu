@@ -15,9 +15,6 @@
 package org.hyperledger.besu.cli.options.unstable;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-
-import org.hyperledger.besu.config.experimental.MergeConfigOptions;
 
 import org.hyperledger.besu.config.experimental.MergeConfigOptions;
 
@@ -35,7 +32,7 @@ public class MergeConfigOptionsTest {
   @Test
   public void shouldBeDisabledByDefault() {
     // disabledByDefault
-    assertThat(MergeOptions.create().isMergeEnabled()).isFalse();
+    assertThat(MergeOptions.isMergeEnabled()).isFalse();
   }
 
   @Test

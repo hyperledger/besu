@@ -57,6 +57,7 @@ public class JsonRpcMethodsFactory {
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
       final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final FilterManager filterManager,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,

@@ -564,6 +564,7 @@ public class RunnerBuilder {
       final Map<String, JsonRpcMethod> allJsonRpcMethods =
           jsonRpcMethods(
               protocolSchedule,
+              context,
               besuController,
               peerNetwork,
               blockchainQueries,
@@ -677,6 +678,7 @@ public class RunnerBuilder {
       final Map<String, JsonRpcMethod> webSocketsJsonRpcMethods =
           jsonRpcMethods(
               protocolSchedule,
+              context,
               besuController,
               peerNetwork,
               blockchainQueries,
@@ -871,6 +873,7 @@ public class RunnerBuilder {
 
   private Map<String, JsonRpcMethod> jsonRpcMethods(
       final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final BesuController besuController,
       final P2PNetwork network,
       final BlockchainQueries blockchainQueries,
@@ -901,6 +904,7 @@ public class RunnerBuilder {
                 blockchainQueries,
                 synchronizer,
                 protocolSchedule,
+                protocolContext,
                 filterManager,
                 transactionPool,
                 miningCoordinator,

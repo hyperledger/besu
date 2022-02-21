@@ -23,7 +23,7 @@ public class MergeConfigOptions {
   public static void setMergeEnabled(final boolean bool) {
     if (!mergeEnabled.get()) {
       mergeEnabled.set(bool);
-      }
+    }
   }
 
   public static boolean isMergeEnabled() {
