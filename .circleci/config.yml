@@ -270,7 +270,6 @@ jobs:
   acceptanceTestsQuorum:
     executor: quorum_ats_executor_med
     steps:
-      - prepare
       - attach_workspace:
           at: ~/project
       - run:
