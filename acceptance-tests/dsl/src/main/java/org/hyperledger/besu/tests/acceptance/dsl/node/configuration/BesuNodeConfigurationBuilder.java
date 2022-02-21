@@ -169,6 +169,18 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder jsonRpcAuthenticationConfiguration(
+      final String authFile, final List<String> noAuthApiMethods) throws URISyntaxException {
+    final String authTomlPath =
+        Paths.get(ClassLoader.getSystemResource(authFile).toURI()).toAbsolutePath().toString();
+
+    this.jsonRpcConfiguration.setAuthenticationEnabled(true);
+    this.jsonRpcConfiguration.setAuthenticationCredentialsFile(authTomlPath);
+    this.jsonRpcConfiguration.setNoAuthRpcApis(noAuthApiMethods);
+
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder jsonRpcAuthenticationUsingRSA() throws URISyntaxException {
     final File jwtPublicKey =
         Paths.get(ClassLoader.getSystemResource("authentication/jwt_public_key_rsa").toURI())
@@ -234,6 +246,20 @@ public class BesuNodeConfigurationBuilder {
 
     this.webSocketConfiguration.setAuthenticationEnabled(true);
     this.webSocketConfiguration.setAuthenticationCredentialsFile(authTomlPath);
+
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder webSocketAuthenticationEnabledWithNoAuthMethods(
+      final List<String> noAuthApiMethods) throws URISyntaxException {
+    final String authTomlPath =
+        Paths.get(ClassLoader.getSystemResource("authentication/auth.toml").toURI())
+            .toAbsolutePath()
+            .toString();
+
+    this.webSocketConfiguration.setAuthenticationEnabled(true);
+    this.webSocketConfiguration.setAuthenticationCredentialsFile(authTomlPath);
+    this.webSocketConfiguration.setRpcApisNoAuth(noAuthApiMethods);
 
     return this;
   }
