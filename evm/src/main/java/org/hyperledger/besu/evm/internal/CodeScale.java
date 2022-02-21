@@ -16,12 +16,13 @@
 package org.hyperledger.besu.evm.internal;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.Code;
 
 import com.github.benmanes.caffeine.cache.Weigher;
 
-class CodeScale implements Weigher<Hash, long[]> {
+class CodeScale implements Weigher<Hash, Code> {
   @Override
-  public int weigh(final Hash key, final long[] value) {
-    return (value.length * 8) + key.size();
+  public int weigh(final Hash key, final Code code) {
+    return ((code.getSize() * 9 + 7) / 8) + key.size();
   }
 }

@@ -19,10 +19,10 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
-import org.hyperledger.besu.evm.internal.JumpDestCache;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
@@ -51,7 +51,7 @@ public class EVM {
   private final OperationRegistry operations;
   private final GasCalculator gasCalculator;
   private final Operation endOfScriptStop;
-  private final JumpDestCache jumpDestCache;
+  private final CodeCache codeCache;
 
   public EVM(
       final OperationRegistry operations,
@@ -60,7 +60,7 @@ public class EVM {
     this.operations = operations;
     this.gasCalculator = gasCalculator;
     this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
-    this.jumpDestCache = new JumpDestCache(evmConfiguration);
+    this.codeCache = new CodeCache(evmConfiguration);
   }
 
   public GasCalculator getGasCalculator() {
@@ -142,29 +142,12 @@ public class EVM {
     }
   }
 
-  /**
-   * Determine whether a specified destination is a valid jump target.
-   *
-   * @param jumpDestination The destination we're checking for validity.
-   * @param code The code within which we are looking for the destination.
-   * @return Whether or not this location is a valid jump destination.
-   */
-  public boolean isValidJumpDestination(final int jumpDestination, final Code code) {
-    if (jumpDestination < 0 || jumpDestination >= code.getSize()) return false;
-    long[] validJumpDestinations = code.getValidJumpDestinations();
-    if (validJumpDestinations == null || validJumpDestinations.length == 0) {
-      validJumpDestinations = jumpDestCache.getIfPresent(code.getCodeHash());
-      if (validJumpDestinations == null) {
-        validJumpDestinations = code.calculateJumpDests();
-        if (code.getCodeHash() != null && !code.getCodeHash().equals(Hash.EMPTY)) {
-          jumpDestCache.put(code.getCodeHash(), validJumpDestinations);
-        } else {
-          LOG.debug("not caching jumpdest for unhashed contract code");
-        }
-      }
+  public Code getCode(final Hash codeHash, final Bytes codeBytes) {
+    Code result = codeCache.getIfPresent(codeHash);
+    if (result == null) {
+      result = new Code(codeBytes, codeHash);
+      codeCache.put(codeHash, result);
     }
-    long targetLong = validJumpDestinations[jumpDestination >>> 6];
-    long targetBit = 1L << (jumpDestination & 0x3F);
-    return (targetLong & targetBit) != 0L;
+    return result;
   }
 }
