@@ -160,6 +160,7 @@ public class RunnerBuilder {
   private String ethstatsUrl;
   private String ethstatsContact;
   private JsonRpcConfiguration jsonRpcConfiguration;
+  private Optional<JsonRpcConfiguration> engineJsonRpcConfiguration = Optional.empty();
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
   private ApiConfiguration apiConfiguration;
@@ -286,6 +287,12 @@ public class RunnerBuilder {
 
   public RunnerBuilder jsonRpcConfiguration(final JsonRpcConfiguration jsonRpcConfiguration) {
     this.jsonRpcConfiguration = jsonRpcConfiguration;
+    return this;
+  }
+
+  public RunnerBuilder engineJsonRpcConfiguration(
+      final JsonRpcConfiguration engineJsonRpcConfiguration) {
+    this.engineJsonRpcConfiguration = Optional.of(engineJsonRpcConfiguration);
     return this;
   }
 
@@ -552,10 +559,12 @@ public class RunnerBuilder {
                 AccountPermissioningController::getAccountLocalConfigPermissioningController);
 
     Optional<JsonRpcHttpService> jsonRpcHttpService = Optional.empty();
+    Optional<JsonRpcHttpService> engineJsonRpcHttpService = Optional.empty();
     if (jsonRpcConfiguration.isEnabled()) {
-      final Map<String, JsonRpcMethod> jsonRpcMethods =
+      final Map<String, JsonRpcMethod> allJsonRpcMethods =
           jsonRpcMethods(
               protocolSchedule,
+              context,
               besuController,
               peerNetwork,
               blockchainQueries,
@@ -576,6 +585,12 @@ public class RunnerBuilder {
               besuPluginContext.getNamedPlugins(),
               dataDir,
               rpcEndpointServiceImpl);
+
+      final Map<String, JsonRpcMethod> nonEngineMethods =
+          allJsonRpcMethods.entrySet().stream()
+              .filter(entry -> !entry.getKey().toLowerCase().startsWith("engine"))
+              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
       jsonRpcHttpService =
           Optional.of(
               new JsonRpcHttpService(
@@ -584,9 +599,48 @@ public class RunnerBuilder {
                   jsonRpcConfiguration,
                   metricsSystem,
                   natService,
-                  jsonRpcMethods,
+                  nonEngineMethods,
                   new HealthService(new LivenessCheck()),
                   new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
+
+      if (engineJsonRpcConfiguration.isPresent()) {
+        final Map<String, JsonRpcMethod> engineMethods =
+            jsonRpcMethods(
+                protocolSchedule,
+                context,
+                besuController,
+                peerNetwork,
+                blockchainQueries,
+                synchronizer,
+                transactionPool,
+                miningCoordinator,
+                metricsSystem,
+                supportedCapabilities,
+                engineJsonRpcConfiguration.get().getRpcApis(),
+                filterManager,
+                accountLocalConfigPermissioningController,
+                nodeLocalConfigPermissioningController,
+                privacyParameters,
+                engineJsonRpcConfiguration.get(),
+                webSocketConfiguration,
+                metricsConfiguration,
+                natService,
+                besuPluginContext.getNamedPlugins(),
+                dataDir,
+                rpcEndpointServiceImpl);
+
+        engineJsonRpcHttpService =
+            Optional.of(
+                new JsonRpcHttpService(
+                    vertx,
+                    dataDir,
+                    engineJsonRpcConfiguration.orElse(JsonRpcConfiguration.createEngineDefault()),
+                    metricsSystem,
+                    natService,
+                    engineMethods,
+                    new HealthService(new LivenessCheck()),
+                    new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
+      }
     }
 
     Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();
@@ -624,6 +678,7 @@ public class RunnerBuilder {
       final Map<String, JsonRpcMethod> webSocketsJsonRpcMethods =
           jsonRpcMethods(
               protocolSchedule,
+              context,
               besuController,
               peerNetwork,
               blockchainQueries,
@@ -699,6 +754,7 @@ public class RunnerBuilder {
         networkRunner,
         natService,
         jsonRpcHttpService,
+        engineJsonRpcHttpService,
         graphQLHttpService,
         webSocketService,
         stratumServer,
@@ -817,6 +873,7 @@ public class RunnerBuilder {
 
   private Map<String, JsonRpcMethod> jsonRpcMethods(
       final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final BesuController besuController,
       final P2PNetwork network,
       final BlockchainQueries blockchainQueries,
@@ -847,6 +904,7 @@ public class RunnerBuilder {
                 blockchainQueries,
                 synchronizer,
                 protocolSchedule,
+                protocolContext,
                 filterManager,
                 transactionPool,
                 miningCoordinator,

@@ -120,7 +120,7 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
 
     final HttpService httpService =
         new HttpService(
-            "http://" + minerNode.getHostName() + ":" + minerNode.getJsonRpcSocketPort().get());
+            "http://" + minerNode.getHostName() + ":" + minerNode.getJsonRpcPort().get());
     final Web3j web3j = Web3j.build(httpService);
 
     // load the proxy contract, use it with another signer

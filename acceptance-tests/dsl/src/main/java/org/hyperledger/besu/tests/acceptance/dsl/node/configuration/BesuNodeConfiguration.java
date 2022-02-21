@@ -37,6 +37,7 @@ public class BesuNodeConfiguration {
   private final Optional<Path> dataPath;
   private final MiningParameters miningParameters;
   private final JsonRpcConfiguration jsonRpcConfiguration;
+  private final Optional<JsonRpcConfiguration> engineRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
   private final Optional<PermissioningConfiguration> permissioningConfiguration;
@@ -68,6 +69,7 @@ public class BesuNodeConfiguration {
       final Optional<Path> dataPath,
       final MiningParameters miningParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
+      final Optional<JsonRpcConfiguration> engineRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
@@ -96,6 +98,7 @@ public class BesuNodeConfiguration {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
+    this.engineRpcConfiguration = engineRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
@@ -134,6 +137,10 @@ public class BesuNodeConfiguration {
 
   public JsonRpcConfiguration getJsonRpcConfiguration() {
     return jsonRpcConfiguration;
+  }
+
+  public Optional<JsonRpcConfiguration> getEngineRpcConfiguration() {
+    return engineRpcConfiguration;
   }
 
   public WebSocketConfiguration getWebSocketConfiguration() {
