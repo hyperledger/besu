@@ -1,0 +1,102 @@
+{
+  "comment" : "'Self destruct called in constructor with balance being returned to sender (from field)'",
+  "request" : {
+    "method" : "trace_callMany",
+    "params" : [ [ [ {
+      "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+      "value" : "0x0",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0xef",
+      "data" : "0x60806040523373ffffffffffffffffffffffffffffffffffffffff16fffe"
+    }, [ "vmTrace" ] ] ], "latest" ],
+    "id" : 1,
+    "jsonrpc" : "2.0"
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : [ {
+      "output" : "0x",
+      "stateDiff" : null,
+      "trace" : [ ],
+      "vmTrace" : {
+        "code" : "0x60806040523373ffffffffffffffffffffffffffffffffffffffff16fffe",
+        "ops" : [ {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x80" ],
+            "store" : null,
+            "used" : 16723719
+          },
+          "pc" : 0,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x40" ],
+            "store" : null,
+            "used" : 16723716
+          },
+          "pc" : 2,
+          "sub" : null
+        }, {
+          "cost" : 12,
+          "ex" : {
+            "mem" : {
+              "data" : "0x0000000000000000000000000000000000000000000000000000000000000080",
+              "off" : 64
+            },
+            "push" : [ ],
+            "store" : null,
+            "used" : 16723704
+          },
+          "pc" : 4,
+          "sub" : null
+        }, {
+          "cost" : 2,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x627306090abab3a6e1400e9345bc60c78a8bef57" ],
+            "store" : null,
+            "used" : 16723702
+          },
+          "pc" : 5,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0xffffffffffffffffffffffffffffffffffffffff" ],
+            "store" : null,
+            "used" : 16723699
+          },
+          "pc" : 6,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x627306090abab3a6e1400e9345bc60c78a8bef57" ],
+            "store" : null,
+            "used" : 16723696
+          },
+          "pc" : 27,
+          "sub" : null
+        }, {
+          "cost" : 5000,
+          "ex" : {
+            "mem" : null,
+            "push" : [ ],
+            "store" : null,
+            "used" : 16718696
+          },
+          "pc" : 28,
+          "sub" : null
+        } ]
+      }
+    } ],
+    "id" : 1
+  },
+  "statusCode" : 200
+}
