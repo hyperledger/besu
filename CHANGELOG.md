@@ -1,4 +1,10 @@
 # Changelog
+## 22.1.1
+
+### 22.1.1 Breaking Changes
+
+### Additions and Improvements
+- Allow optional RPC methods that bypass authentication [#3382](https://github.com/hyperledger/besu/pull/3382)
 
 ## 22.1.1
 
