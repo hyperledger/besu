@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.fluent;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -294,9 +296,7 @@ public class EVMExecutor {
   }
 
   public EVMExecutor code(final Bytes codeBytes, final Hash hash) {
-    if (evm == null) {
-      throw new RuntimeException("evm must be set before code bytes");
-    }
+    checkNotNull(evm, "evm must be set before code bytes");
     this.code = evm.getCode(hash, codeBytes);
     return this;
   }
