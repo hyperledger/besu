@@ -166,9 +166,10 @@ public class Create2OperationTest {
     when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
-    when(evm.getCode(any(), any())).thenAnswer(invocation ->
-      Code.createLegacyCode(invocation.getArgument(1), invocation.getArgument(0))
-    );
+    when(evm.getCode(any(), any()))
+        .thenAnswer(
+            invocation ->
+                Code.createLegacyCode(invocation.getArgument(1), invocation.getArgument(0)));
   }
 
   @Test
