@@ -564,35 +564,36 @@ public class JsonRpcHttpService {
   private void handleJsonRPCRequest(final RoutingContext routingContext) {
     // first check token if authentication is required
     final String token = getAuthToken(routingContext);
-    if (authenticationService.isPresent() && token == null) {
+    // we check the no auth api methods actually match what's in the request later on
+    if (authenticationService.isPresent() && token == null && config.getNoAuthRpcApis().isEmpty()) {
       // no auth token when auth required
       handleJsonRpcUnauthorizedError(routingContext, null, JsonRpcError.UNAUTHORIZED);
-    } else {
-      // Parse json
-      try {
-        final String json = routingContext.getBodyAsString().trim();
-        if (!json.isEmpty() && json.charAt(0) == '{') {
-          final JsonObject requestBodyJsonObject =
-              ContextKey.REQUEST_BODY_AS_JSON_OBJECT.extractFrom(
-                  routingContext, () -> new JsonObject(json));
-          AuthenticationUtils.getUser(
-              authenticationService,
-              token,
-              user -> handleJsonSingleRequest(routingContext, requestBodyJsonObject, user));
-        } else {
-          final JsonArray array = new JsonArray(json);
-          if (array.size() < 1) {
-            handleJsonRpcError(routingContext, null, INVALID_REQUEST);
-            return;
-          }
-          AuthenticationUtils.getUser(
-              authenticationService,
-              token,
-              user -> handleJsonBatchRequest(routingContext, array, user));
+      return;
+    }
+    // Parse json
+    try {
+      final String json = routingContext.getBodyAsString().trim();
+      if (!json.isEmpty() && json.charAt(0) == '{') {
+        final JsonObject requestBodyJsonObject =
+            ContextKey.REQUEST_BODY_AS_JSON_OBJECT.extractFrom(
+                routingContext, () -> new JsonObject(json));
+        AuthenticationUtils.getUser(
+            authenticationService,
+            token,
+            user -> handleJsonSingleRequest(routingContext, requestBodyJsonObject, user));
+      } else {
+        final JsonArray array = new JsonArray(json);
+        if (array.size() < 1) {
+          handleJsonRpcError(routingContext, null, INVALID_REQUEST);
+          return;
         }
-      } catch (final DecodeException | NullPointerException ex) {
-        handleJsonRpcError(routingContext, null, JsonRpcError.PARSE_ERROR);
+        AuthenticationUtils.getUser(
+            authenticationService,
+            token,
+            user -> handleJsonBatchRequest(routingContext, array, user));
       }
+    } catch (final DecodeException | NullPointerException ex) {
+      handleJsonRpcError(routingContext, null, JsonRpcError.PARSE_ERROR);
     }
   }
 
@@ -744,7 +745,8 @@ public class JsonRpcHttpService {
 
       final JsonRpcMethod method = rpcMethods.get(requestBody.getMethod());
 
-      if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
+      if (AuthenticationUtils.isPermitted(
+          authenticationService, user, method, config.getNoAuthRpcApis())) {
         // Generate response
         try (final OperationTimer.TimingContext ignored =
             requestTimer.labels(requestBody.getMethod()).startTimer()) {
