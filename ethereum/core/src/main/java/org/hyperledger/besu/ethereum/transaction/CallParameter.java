@@ -16,12 +16,12 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.core.Transaction;
 
 // Represents parameters for a eth_call or eth_estimateGas JSON-RPC methods.
 public class CallParameter {
@@ -136,8 +136,14 @@ public class CallParameter {
   }
 
   public static CallParameter fromTransaction(final Transaction tx) {
-    final CallParameter callParams = new CallParameter(tx.getSender(), Address.fromPlugin(tx.getTo().get()), tx.getGasLimit(),
-        Wei.fromQuantity(tx.getGasPrice().get()), Optional.of(Wei.fromQuantity(tx.getMaxPriorityFeePerGas().get())),tx.getMaxFeePerGas(), Wei.fromQuantity(tx.getValue()), tx.getData().get());
-    return callParams;
+    return new CallParameter(
+        tx.getSender(),
+        Address.fromPlugin(tx.getTo().orElseGet(() -> Address.ZERO)),
+        tx.getGasLimit(),
+        Wei.fromQuantity(tx.getGasPrice().orElseGet(() -> Wei.ZERO)),
+        Optional.of(Wei.fromQuantity(tx.getMaxPriorityFeePerGas().orElseGet(() -> Wei.ZERO))),
+        tx.getMaxFeePerGas(),
+        Wei.fromQuantity(tx.getValue()),
+        tx.getData().get());
   }
 }
