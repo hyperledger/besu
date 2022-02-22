@@ -31,3 +31,4 @@ site/
 **/src/*/generated
 jitpack.yml
 regctl
+process.yml
