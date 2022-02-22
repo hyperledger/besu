@@ -448,7 +448,7 @@ public class TestContextBuilder {
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftBlockCreatorFactory blockCreatorFactory =
         new QbftBlockCreatorFactory(
-            pendingTransactions, // changed from IbftBesuController
+            pendingTransactions, // changed from QbftBesuController
             protocolContext,
             protocolSchedule,
             miningParams,
@@ -460,7 +460,8 @@ public class TestContextBuilder {
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockChain, blockInterface, true, validatorProvider);
 
-    final BftExecutors bftExecutors = BftExecutors.create(new NoOpMetricsSystem());
+    final BftExecutors bftExecutors =
+        BftExecutors.create(new NoOpMetricsSystem(), BftExecutors.ConsensusType.QBFT);
     final BftFinalState finalState =
         new BftFinalState(
             protocolContext.getConsensusContext(BftContext.class).getValidatorProvider(),
@@ -512,7 +513,7 @@ public class TestContextBuilder {
             BFT_EXTRA_DATA_ENCODER);
 
     final EventMultiplexer eventMultiplexer = new EventMultiplexer(qbftController);
-    //////////////////////////// END IBFT BesuController ////////////////////////////
+    //////////////////////////// END QBFT BesuController ////////////////////////////
 
     return new ControllerAndState(
         bftExecutors,
