@@ -773,6 +773,80 @@ task dockerUpload {
   }
 }
 
+task dockerPubishMultiCPU {
+  dependsOn dockerDistUntar
+  
+  def dockerBuildDir = "build/docker-besu/"
+  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+  def imageName = "hyperledger/besu"
+  def azureImageName = "hyperledger.azurecr.io/besu"
+  def image = "${imageName}:${dockerBuildVersion}"
+  def additionalTags = []
+  def targetPlatform = "linux/arm64,linux/amd64" // "linux/riscv64,linux/arm/v7"
+
+  if (project.hasProperty('branch') && project.property('branch') == 'main') {
+    additionalTags.add('develop')
+  }
+
+  if (project.hasProperty('repository')) {
+     imageName = project.property('repository') + "/besu"
+     image = "${imageName}:${dockerBuildVersion}"
+  }
+
+  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
+    additionalTags.add('latest')
+    additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
+  }
+
+  doLast {
+    for (def variant in dockerVariants) {
+      copy {
+        from file("${projectDir}/docker/${variant}/Dockerfile")
+        into(dockerBuildDir)
+      }
+      exec {
+        def variantImage = "${image}-${variant}"
+        println "variantImage: ${variantImage}"
+
+        executable "sh"
+        workingDir dockerBuildDir
+        args "-c", "docker buildx build --push --platform=${targetPlatform}  \
+                      --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} \
+                      --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${variantImage} ."
+      }
+    }
+
+    // tag the "default" (which is the variant in the zero position)
+    exec {
+      executable "sh"
+      args "-c", "./regctl image copy '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:${dockerBuildVersion}'"
+    }
+    // create a static tag for the benchmark target
+    exec {
+      executable "sh"
+      args "-c", "./regctl image copy '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:benchmark'"
+    }
+
+    for (def variant in dockerVariants) {
+      def variantImage = "${image}-${variant}"
+      additionalTags.each { tag ->
+        exec {
+          executable "sh"
+          args "-c",  "./regctl image copy '${variantImage}' '${imageName}:${tag.trim()}-${variant}'"
+        }
+      }
+    }
+
+    additionalTags.each { tag ->
+      exec {
+        executable "sh"
+        args "-c",  "./regctl image copy '${image}' '${imageName}:${tag.trim()}'"
+      }
+    }
+
+  }
+}
+
 task checkSpdxHeader(type: CheckSpdxHeader) {
   apply plugin: 'groovy'
 
