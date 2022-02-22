@@ -22,7 +22,9 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.IllegalPortException;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -912,5 +914,21 @@ public class EnodeURLImplTest {
     final Bytes nodeId = EnodeURLImpl.parseNodeId(validId);
     assertThat(nodeId.size()).isEqualTo(EnodeURLImpl.NODE_ID_SIZE);
     assertThat(nodeId.toUnprefixedHexString()).isEqualTo(validId);
+  }
+
+  @Test
+  public void toURIWithoutDiscoveryPortShouldProduceValidValue() throws UnknownHostException {
+    String enodeString = String.format("enode://%s@%s:%d", VALID_NODE_ID, "127.0.0.1", 9999);
+
+    final EnodeURL enodeA =
+        EnodeURLImpl.fromString(
+            enodeString,
+            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build());
+
+    URI expected =
+        URI.create(
+            String.format(
+                "enode://%s@%s:%d", VALID_NODE_ID, InetAddress.getLocalHost().getHostName(), 9999));
+    assertThat(enodeA.toURIWithoutDiscoveryPort()).isEqualTo(expected);
   }
 }
