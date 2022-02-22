@@ -3,7 +3,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import java.io.IOException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;

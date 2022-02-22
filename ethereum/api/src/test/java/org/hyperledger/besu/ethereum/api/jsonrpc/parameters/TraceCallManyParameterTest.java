@@ -9,9 +9,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypePa
 import java.io.IOException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.Before;
 import org.junit.Test;
 
 public class TraceCallManyParameterTest {
+  static final String emptyParamsJson = "[]";
   static final String requestParamsJson =
       "[ [ {\n"
           + "      \"from\" : \"0xfe3b557e8fb62b89f4916b721be55ceb828dbd73\",\n"
@@ -36,10 +38,23 @@ public class TraceCallManyParameterTest {
           + "      \"data\" : \"0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000\"\n"
           + "    }, [ \"trace\" ] ] ]";
 
-  @Test
-  public void testRequestParameterJsonParsedCorrectly() throws IOException {
-    final ObjectMapper mapper = new ObjectMapper();
+  private ObjectMapper mapper;
 
+  @Before
+  public void setup() {
+    mapper = new ObjectMapper();
+  }
+
+  @Test
+  public void testEmptyParamJsonParsesCorrectly() throws IOException {
+    final TraceCallManyParameter[] parameter =
+        mapper.readValue(emptyParamsJson, TraceCallManyParameter[].class);
+
+    assertThat(parameter).isNullOrEmpty();
+  }
+
+  @Test
+  public void testRequestParameterJsonParsesCorrectly() throws IOException {
     final TraceCallManyParameter[] parameter =
         mapper.readValue(requestParamsJson, TraceCallManyParameter[].class);
 
