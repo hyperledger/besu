@@ -460,7 +460,8 @@ public class TestContextBuilder {
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockChain, blockInterface, true, validatorProvider);
 
-    final BftExecutors bftExecutors = BftExecutors.create(new NoOpMetricsSystem());
+    final BftExecutors bftExecutors =
+        BftExecutors.create(new NoOpMetricsSystem(), BftExecutors.ConsensusType.QBFT);
     final BftFinalState finalState =
         new BftFinalState(
             protocolContext.getConsensusContext(BftContext.class).getValidatorProvider(),
