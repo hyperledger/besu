@@ -36,7 +36,6 @@ import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -366,13 +365,16 @@ public class MainnetTransactionProcessor {
         final Address contractAddress =
             Address.contractAddress(senderAddress, senderMutableAccount.getNonce() - 1L);
 
+        final Bytes initCodeBytes = transaction.getPayload();
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.CONTRACT_CREATION)
                 .address(contractAddress)
                 .contract(contractAddress)
                 .inputData(Bytes.EMPTY)
-                .code(new Code(transaction.getPayload(), Hash.EMPTY))
+                .code(
+                    contractCreationProcessor.getCodeFromEVM(
+                        Hash.hash(initCodeBytes), initCodeBytes))
                 .build();
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
@@ -385,9 +387,9 @@ public class MainnetTransactionProcessor {
                 .contract(to)
                 .inputData(transaction.getPayload())
                 .code(
-                    new Code(
-                        maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY),
-                        maybeContract.map(AccountState::getCodeHash).orElse(Hash.EMPTY)))
+                    maybeContract
+                        .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
+                        .orElse(Code.EMPTY_CODE))
                 .build();
       }
 

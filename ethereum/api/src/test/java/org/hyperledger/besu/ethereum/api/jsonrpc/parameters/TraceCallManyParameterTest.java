@@ -2,7 +2,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.parameters;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceCallManyParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 
 import java.io.IOException;
 
@@ -36,11 +38,19 @@ public class TraceCallManyParameterTest {
 
   @Test
   public void testRequestParameterJsonParsedCorrectly() throws IOException {
-    ObjectMapper mapper = new ObjectMapper();
+    final ObjectMapper mapper = new ObjectMapper();
 
-    TraceCallManyParameter[] parameter =
+    final TraceCallManyParameter[] parameter =
         mapper.readValue(requestParamsJson, TraceCallManyParameter[].class);
 
-    assertThat(parameter[0].getParams()).isNotNull();
+    assertThat(parameter[0].getTuple()).isNotNull();
+    assertThat(parameter[0].getTuple().getJsonCallParameter()).isNotNull();
+    assertThat(parameter[0].getTuple().getJsonCallParameter().getFrom())
+        .isEqualTo(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
+    assertThat(parameter[2].getTuple().getJsonCallParameter().getTo())
+        .isEqualTo(Address.fromHexString("0x0010000000000000000000000000000000000000"));
+    assertThat(parameter[1].getTuple().getTraceTypeParameter().getTraceTypes().size()).isEqualTo(1);
+    assertThat(parameter[1].getTuple().getTraceTypeParameter().getTraceTypes())
+        .contains(TraceTypeParameter.TraceType.TRACE);
   }
 }
