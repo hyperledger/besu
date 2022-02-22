@@ -330,7 +330,7 @@ jobs:
             docker context create builder-context
             # Create a builder instance named "builderx"
             docker buildx create --name builderx --driver docker-container --use builder-context
-            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerPubishMultiCPU
+            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerPublishMultiCPU
 
 workflows:
   version: 2

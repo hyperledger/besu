@@ -773,7 +773,7 @@ task dockerUpload {
   }
 }
 
-task dockerPubishMultiCPU {
+task dockerPublishMultiCPU {
   dependsOn dockerDistUntar
   def dockerBuildDir = "build/docker-besu/"
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
