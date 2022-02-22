@@ -75,13 +75,13 @@ public class TraceCallMany extends AbstractBlockParameterMethod implements JsonR
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    @SuppressWarnings("unchecked")
     final TraceCallManyParameter transactionsAndTraceTypeParameters =
         requestContext.getRequiredParameter(0, TraceCallManyParameter.class);
 
+    //    final StringListParameter paramStr = requestContext.getRequiredParameter(0,
+    // StringListParameter.class);
     System.out.println(
-        transactionsAndTraceTypeParameters.getList().size()
-            + protocolSchedule.getChainId().toString());
+        transactionsAndTraceTypeParameters + protocolSchedule.getChainId().toString());
 
     return null;
     //    final Optional<BlockHeader> maybeBlockHeader =
