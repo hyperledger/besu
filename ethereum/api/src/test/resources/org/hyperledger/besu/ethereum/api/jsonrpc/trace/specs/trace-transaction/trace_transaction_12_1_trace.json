@@ -3,7 +3,7 @@
   "request" : {
     "jsonrpc" : "2.0",
     "method" : "trace_transaction",
-    "params" : [ "0x2a5079cc535c429f668f13a7fb9a28bdba6831b5462bd04f781777b332a8fcbd" ],
+    "params" : [ "0xc388baa0e55e6b73e850b22dc7e9853700f6b995fd55d95dd6ccd5a13d63c566" ],
     "id" : 155
   },
   "response" : {
@@ -14,19 +14,16 @@
         "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
         "gas" : "0xffadea",
         "input" : "0x",
-        "to" : "0x0100000000000000000000000000000000000000",
+        "to" : "0x0110000000000000000000000000000000000000",
         "value" : "0x0"
       },
       "blockHash" : "0x220bc13dc4f1ed38dcca927a5be15eca16497d279f4c40d7b8fe9704eadf1464",
       "blockNumber" : 18,
-      "result" : {
-        "gasUsed" : "0x1e",
-        "output" : "0x"
-      },
+      "error" : "Reverted",
       "subtraces" : 0,
       "traceAddress" : [ ],
-      "transactionHash" : "0x2a5079cc535c429f668f13a7fb9a28bdba6831b5462bd04f781777b332a8fcbd",
-      "transactionPosition" : 0,
+      "transactionHash" : "0xc388baa0e55e6b73e850b22dc7e9853700f6b995fd55d95dd6ccd5a13d63c566",
+      "transactionPosition" : 1,
       "type" : "call"
     } ],
     "id" : 155

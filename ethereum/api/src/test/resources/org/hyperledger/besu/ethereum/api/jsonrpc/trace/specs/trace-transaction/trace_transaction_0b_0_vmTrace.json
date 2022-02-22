@@ -4,7 +4,7 @@
     "jsonrpc" : "2.0",
     "method" : "trace_transaction",
     "params" : [ "0x6f77512ee9d43474a884c0703c86712fb98dca772fa6e12252786e3e23f196c1" ],
-    "id" : 235
+    "id" : 23
   },
   "response" : {
     "jsonrpc" : "2.0",
@@ -49,7 +49,7 @@
       "transactionPosition" : 0,
       "type" : "call"
     } ],
-    "id" : 235
+    "id" : 23
   },
   "statusCode" : 200
 }

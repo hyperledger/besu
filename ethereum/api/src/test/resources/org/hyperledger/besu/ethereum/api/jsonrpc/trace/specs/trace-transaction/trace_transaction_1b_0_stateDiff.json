@@ -4,7 +4,7 @@
     "jsonrpc" : "2.0",
     "method" : "trace_transaction",
     "params" : [ "0x728abdc65550943b21eba1eef7bb9c7b594d6f629dda1be4ae01b0f3ffcc6b16" ],
-    "id" : 93
+    "id" : 305
   },
   "response" : {
     "jsonrpc" : "2.0",
@@ -43,7 +43,7 @@
       "transactionPosition" : 0,
       "type" : "suicide"
     } ],
-    "id" : 93
+    "id" : 305
   },
   "statusCode" : 200
 }
