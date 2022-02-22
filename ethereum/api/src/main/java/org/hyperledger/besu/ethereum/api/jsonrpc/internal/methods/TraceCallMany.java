@@ -14,25 +14,50 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceCallManyParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceCallResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffGenerator;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.MixInIgnoreRevertReason;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-public class TraceCallMany extends AbstractBlockParameterMethod implements JsonRpcMethod {
-  private final ProtocolSchedule protocolSchedule;
-  private final TransactionSimulator transactionSimulator;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType.VM_TRACE;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
+
+public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
   private static final ObjectMapper MAPPER_IGNORE_REVERT_REASON = new ObjectMapper();
 
@@ -40,10 +65,7 @@ public class TraceCallMany extends AbstractBlockParameterMethod implements JsonR
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionSimulator transactionSimulator) {
-    super(blockchainQueries);
-
-    this.protocolSchedule = protocolSchedule;
-    this.transactionSimulator = transactionSimulator;
+    super(blockchainQueries, protocolSchedule, transactionSimulator);
 
     // The trace_call specification does not output the revert reason, so we have to remove it
     MAPPER_IGNORE_REVERT_REASON.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
@@ -72,88 +94,55 @@ public class TraceCallMany extends AbstractBlockParameterMethod implements JsonR
 
     if (requestContext.getRequest().getParamLength() != 2) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+              requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    final TraceCallManyParameter transactionsAndTraceTypeParameters =
-        requestContext.getRequiredParameter(0, TraceCallManyParameter.class);
+    final TraceCallManyParameter[] transactionsAndTraceTypeParameters =
+            requestContext.getRequiredParameter(0, TraceCallManyParameter[].class);
 
-    //    final StringListParameter paramStr = requestContext.getRequiredParameter(0,
-    // StringListParameter.class);
-    System.out.println(
-        transactionsAndTraceTypeParameters + protocolSchedule.getChainId().toString());
+    final Optional<BlockHeader> maybeBlockHeader =
+            blockchainQueries.get().getBlockHeaderByNumber(blockNumber);
 
-    return null;
-    //    final Optional<BlockHeader> maybeBlockHeader =
-    //        blockchainQueries.get().getBlockHeaderByNumber(blockNumber);
-    //
-    //    if (maybeBlockHeader.isEmpty()) {
-    //      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), BLOCK_NOT_FOUND);
-    //    }
-    //
-    ////    final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
-    ////    final DebugOperationTracer tracer = new
-    // DebugOperationTracer(buildTraceOptions(traceTypes));
-    //    final Optional<TransactionSimulatorResult> maybeSimulatorResult =
-    //        transactionSimulator.process(
-    //            JsonCallParameterUtil.validateAndGetCallParams(requestContext),
-    //            buildTransactionValidationParams(),
-    //            tracer,
-    //            maybeBlockHeader.get());
-    //
-    //    if (maybeSimulatorResult.isEmpty()) {
-    //      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
-    //    }
-    //
-    //    final TransactionTrace transactionTrace =
-    //        new TransactionTrace(
-    //            maybeSimulatorResult.get().getTransaction(),
-    //            maybeSimulatorResult.get().getResult(),
-    //            tracer.getTraceFrames());
-    //
-    //    final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
-    //
-    //    final TraceCallResult.Builder builder = TraceCallResult.builder();
-    //
-    //    transactionTrace
-    //        .getResult()
-    //        .getRevertReason()
-    //        .ifPresentOrElse(
-    //            revertReason -> builder.output(revertReason.toHexString()),
-    //            () -> builder.output(maybeSimulatorResult.get().getOutput().toString()));
-    //
-    //    if (traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF)) {
-    //      new StateDiffGenerator()
-    //          .generateStateDiff(transactionTrace)
-    //          .forEachOrdered(stateDiff -> builder.stateDiff((StateDiffTrace) stateDiff));
-    //    }
-    //
-    //    if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
-    //      FlatTraceGenerator.generateFromTransactionTrace(
-    //              protocolSchedule, transactionTrace, block, new AtomicInteger(), false)
-    //          .forEachOrdered(trace -> builder.addTrace((FlatTrace) trace));
-    //    }
-    //
-    //    if (traceTypes.contains(VM_TRACE)) {
-    //      new VmTraceGenerator(transactionTrace)
-    //          .generateTraceStream()
-    //          .forEachOrdered(vmTrace -> builder.vmTrace((VmTrace) vmTrace));
-    //    }
-    //
-    //    return MAPPER_IGNORE_REVERT_REASON.valueToTree(builder.build());
+    if (maybeBlockHeader.isEmpty()) {
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), BLOCK_NOT_FOUND);
+    }
+
+    final List<JsonNode> traceCallResults = new ArrayList<>();
+
+    WorldUpdater updater = transactionSimulator.getWorldUpdater(maybeBlockHeader.get());
+    // we have to make sure that the updater has a parent updater (for state diff trace)
+    updater = updater.parentUpdater().isPresent() ? updater : updater.updater();
+    try {
+      final WorldUpdater finalUpdater = updater;
+      Arrays.stream(transactionsAndTraceTypeParameters).forEachOrdered(p -> {
+        executeSingleCall(p.getTuple().getJsonCallParameter(), p.getTuple().getTraceTypeParameter(), maybeBlockHeader.get(), finalUpdater,  traceCallResults);
+        finalUpdater.commit();
+      });
+    } catch (final Exception e) {
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
+    }
+
+    return traceCallResults;
   }
 
-  //  private TransactionValidationParams buildTransactionValidationParams() {
-  //    return ImmutableTransactionValidationParams.builder()
-  //        .from(TransactionValidationParams.transactionSimulator())
-  //        .build();
-  //  }
-  //
-  //  private TraceOptions buildTraceOptions(final Set<TraceTypeParameter.TraceType> traceTypes) {
-  //    return new TraceOptions(
-  //        traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF),
-  //        false,
-  //        traceTypes.contains(TraceTypeParameter.TraceType.TRACE)
-  //            || traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE));
-  //  }
+  void executeSingleCall(final JsonCallParameter callParameter, final TraceTypeParameter traceTypeParameter, final  BlockHeader header, final WorldUpdater worldUpdater, final List<JsonNode> traceCallResults) {
+    final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
+    final DebugOperationTracer tracer = new
+            DebugOperationTracer(buildTraceOptions(traceTypes));
+    final Optional<TransactionSimulatorResult> maybeSimulatorResult =
+            transactionSimulator.processWithWorldUpdater(
+                    callParameter,
+                    buildTransactionValidationParams(),
+                    tracer,
+                    header,
+                    worldUpdater);
+
+    if (maybeSimulatorResult.isEmpty()) {
+      throw new RuntimeException("Empty simulator result");
+    }
+
+    final JsonNode jsonNode = buildResult(traceTypes, tracer, maybeSimulatorResult);
+
+    traceCallResults.add(jsonNode);
+  }
 }

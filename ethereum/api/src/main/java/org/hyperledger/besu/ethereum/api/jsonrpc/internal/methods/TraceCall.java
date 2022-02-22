@@ -18,9 +18,11 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.Trac
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -43,6 +45,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,7 +54,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMethod {
   private final ProtocolSchedule protocolSchedule;
-  private final TransactionSimulator transactionSimulator;
+  final TransactionSimulator transactionSimulator;
 
   private static final ObjectMapper MAPPER_IGNORE_REVERT_REASON = new ObjectMapper();
 
@@ -111,13 +114,17 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
     }
 
+    final JsonNode jsonNode = buildResult(traceTypes, tracer, maybeSimulatorResult);
+    return jsonNode;
+  }
+
+  JsonNode buildResult(final Set<TraceTypeParameter.TraceType> traceTypes, final DebugOperationTracer tracer, final Optional<TransactionSimulatorResult> maybeSimulatorResult) {
     final TransactionTrace transactionTrace =
         new TransactionTrace(
             maybeSimulatorResult.get().getTransaction(),
             maybeSimulatorResult.get().getResult(),
             tracer.getTraceFrames());
 
-    final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
 
     final TraceCallResult.Builder builder = TraceCallResult.builder();
 
@@ -134,7 +141,9 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
           .forEachOrdered(stateDiff -> builder.stateDiff((StateDiffTrace) stateDiff));
     }
 
+
     if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
+      final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
       FlatTraceGenerator.generateFromTransactionTrace(
               protocolSchedule, transactionTrace, block, new AtomicInteger(), false)
           .forEachOrdered(trace -> builder.addTrace((FlatTrace) trace));
@@ -146,16 +155,17 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
           .forEachOrdered(vmTrace -> builder.vmTrace((VmTrace) vmTrace));
     }
 
-    return MAPPER_IGNORE_REVERT_REASON.valueToTree(builder.build());
+    final JsonNode jsonNode = MAPPER_IGNORE_REVERT_REASON.valueToTree(builder.build());
+    return jsonNode;
   }
 
-  private TransactionValidationParams buildTransactionValidationParams() {
+  TransactionValidationParams buildTransactionValidationParams() {
     return ImmutableTransactionValidationParams.builder()
         .from(TransactionValidationParams.transactionSimulator())
         .build();
   }
 
-  private TraceOptions buildTraceOptions(final Set<TraceTypeParameter.TraceType> traceTypes) {
+  TraceOptions buildTraceOptions(final Set<TraceTypeParameter.TraceType> traceTypes) {
     return new TraceOptions(
         traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF),
         false,

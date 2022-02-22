@@ -48,6 +48,7 @@ import java.util.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.jetbrains.annotations.NotNull;
 
 /*
  * Used to process transactions for eth_call and eth_estimateGas.
@@ -143,15 +144,25 @@ public class TransactionSimulator {
     if (header == null) {
       return Optional.empty();
     }
-    final MutableWorldState publicWorldState =
-        worldStateArchive.getMutable(header.getStateRoot(), header.getHash(), false).orElse(null);
 
-    if (publicWorldState == null) {
+    WorldUpdater updater;
+    try {
+      updater = getWorldUpdater(header);
+    } catch (final IllegalArgumentException e) {
       return Optional.empty();
     }
-    final WorldUpdater updater =
-        getEffectiveWorldStateUpdater(header, publicWorldState, operationTracer);
 
+    // in order to trace the state diff we need to make sure that
+    // the world updater always has a parent
+    if (operationTracer instanceof DebugOperationTracer) {
+      updater = updater.parentUpdater().isPresent() ? updater : updater.updater();
+    }
+
+    return processWithWorldUpdater(callParams, transactionValidationParams, operationTracer, header, updater);
+  }
+
+  @NotNull
+  public Optional<TransactionSimulatorResult> processWithWorldUpdater(final CallParameter callParams, final TransactionValidationParams transactionValidationParams, final OperationTracer operationTracer, final BlockHeader header, final WorldUpdater updater) {
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
 
     final Address senderAddress =
@@ -179,7 +190,7 @@ public class TransactionSimulator {
       maxPriorityFeePerGas = callParams.getMaxPriorityFeePerGas().orElse(gasPrice);
     }
 
-    final Account sender = publicWorldState.get(senderAddress);
+    final Account sender = updater.get(senderAddress);
     final long nonce = sender != null ? sender.getNonce() : 0L;
     final long gasLimit =
         callParams.getGasLimit() >= 0
@@ -223,7 +234,7 @@ public class TransactionSimulator {
     final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             blockchain,
-            updater,
+                updater,
             blockHeaderToProcess,
             transaction,
             protocolSpec
@@ -231,8 +242,8 @@ public class TransactionSimulator {
                 .calculateBeneficiary(blockHeaderToProcess),
             new BlockHashLookup(blockHeaderToProcess, blockchain),
             false,
-            transactionValidationParams,
-            operationTracer);
+                transactionValidationParams,
+                operationTracer);
 
     // If GoQuorum privacy enabled, and value = zero, get max gas possible for a PMT hash.
     // It is possible to have a data field that has a lower intrinsic value than the PMT hash.
@@ -242,11 +253,11 @@ public class TransactionSimulator {
         transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode();
 
     if (goQuorumCompatibilityMode && value.isZero()) {
-      Gas privateGasEstimateAndState =
+      final Gas privateGasEstimateAndState =
           protocolSpec.getGasCalculator().getMaximumTransactionCost(64);
       if (privateGasEstimateAndState.toLong() > result.getEstimateGasUsedByTransaction()) {
         // modify the result to have the larger estimate
-        TransactionProcessingResult resultPmt =
+        final TransactionProcessingResult resultPmt =
             TransactionProcessingResult.successful(
                 result.getLogs(),
                 privateGasEstimateAndState.toLong(),
@@ -260,11 +271,22 @@ public class TransactionSimulator {
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }
 
+  public WorldUpdater getWorldUpdater(final BlockHeader header) {
+    final MutableWorldState publicWorldState =
+        worldStateArchive.getMutable(header.getStateRoot(), header.getHash(), false).orElse(null);
+
+    if (publicWorldState == null) {
+      throw new IllegalArgumentException("Public world state not available for block " + header.getNumber());
+    }
+    final WorldUpdater updater =
+        getEffectiveWorldStateUpdater(header, publicWorldState);
+    return updater;
+  }
+
   // return combined private/public world state updater if GoQuorum mode, otherwise the public state
   private WorldUpdater getEffectiveWorldStateUpdater(
       final BlockHeader header,
-      final MutableWorldState publicWorldState,
-      final OperationTracer operationTracer) {
+      final MutableWorldState publicWorldState) {
 
     if (maybePrivacyParameters.isPresent()
         && maybePrivacyParameters.get().getGoQuorumPrivacyParameters().isPresent()) {
@@ -277,12 +299,6 @@ public class TransactionSimulator {
     }
 
     final WorldUpdater updater = publicWorldState.updater();
-
-    // in order to trace the state diff we need to make sure that
-    // the world updater always has a parent
-    if (operationTracer instanceof DebugOperationTracer) {
-      return updater.parentUpdater().isPresent() ? updater : updater.updater();
-    }
 
     return updater;
   }
