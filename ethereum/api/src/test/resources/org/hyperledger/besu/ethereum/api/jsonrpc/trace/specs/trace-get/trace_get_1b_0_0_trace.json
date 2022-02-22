@@ -1,0 +1,35 @@
+{
+  "comment" : "Self destruct and send contract balance to the same address provided in the to field.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0x728abdc65550943b21eba1eef7bb9c7b594d6f629dda1be4ae01b0f3ffcc6b16", [ ] ],
+    "id" : 366
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "callType" : "call",
+        "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+        "gas" : "0xffad82",
+        "input" : "0x0000000000000000000000000150000000000000",
+        "to" : "0x0150000000000000000000000000000000000000",
+        "value" : "0x0"
+      },
+      "blockHash" : "0xad804d4984008429f56b42be14d3d1ac9f1eaf33aa43aafb7a0fcaf2c4594f01",
+      "blockNumber" : 27,
+      "result" : {
+        "gasUsed" : "0x138e",
+        "output" : "0x"
+      },
+      "subtraces" : 1,
+      "traceAddress" : [ ],
+      "transactionHash" : "0x728abdc65550943b21eba1eef7bb9c7b594d6f629dda1be4ae01b0f3ffcc6b16",
+      "transactionPosition" : 0,
+      "type" : "call"
+    },
+    "id" : 366
+  },
+  "statusCode" : 200
+}
