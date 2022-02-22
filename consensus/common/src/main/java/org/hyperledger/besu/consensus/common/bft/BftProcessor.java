@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.common.bft;
 import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
 
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -31,7 +30,6 @@ public class BftProcessor implements Runnable {
   private final BftEventQueue incomingQueue;
   private volatile boolean shutdown = false;
   private final EventMultiplexer eventMultiplexer;
-  private final CountDownLatch shutdownLatch = new CountDownLatch(1);
 
   /**
    * Construct a new BftProcessor
@@ -49,10 +47,6 @@ public class BftProcessor implements Runnable {
     shutdown = true;
   }
 
-  public void awaitStop() throws InterruptedException {
-    shutdownLatch.await();
-  }
-
   @Override
   public void run() {
     try {
@@ -64,7 +58,6 @@ public class BftProcessor implements Runnable {
     }
     // Clean up the executor service the round timer has been utilising
     LOG.info("Shutting down BFT event processor");
-    shutdownLatch.countDown();
   }
 
   private Optional<BftEvent> nextEvent() {
