@@ -164,6 +164,7 @@ public class JsonRpcTestMethodsFactory {
             blockchainQueries,
             synchronizer,
             importer.getProtocolSchedule(),
+            context,
             filterManager,
             transactionPool,
             miningCoordinator,

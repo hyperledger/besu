@@ -21,6 +21,7 @@ import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -203,6 +204,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     blockchainQueries,
                     mock(Synchronizer.class),
                     ProtocolScheduleFixture.MAINNET,
+                    mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(PoWMiningCoordinator.class),
@@ -300,6 +302,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     blockchainQueries,
                     mock(Synchronizer.class),
                     ProtocolScheduleFixture.MAINNET,
+                    mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(PoWMiningCoordinator.class),

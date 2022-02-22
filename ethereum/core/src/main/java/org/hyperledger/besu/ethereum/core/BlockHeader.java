@@ -331,4 +331,8 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getNonce(),
         blockHeaderFunctions);
   }
+
+  public String toLogString() {
+    return getNumber() + " (" + getHash() + ")";
+  }
 }
