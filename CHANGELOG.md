@@ -14,6 +14,7 @@
   - Add header validation rules needed to validate The Merge blocks [#3454](https://github.com/hyperledger/besu/pull/3454)
   - Add core components: controller builder, protocol scheduler, coordinator, block creator and processor. [#3461](https://github.com/hyperledger/besu/pull/3461)
   - Execution specific RPC endpoint [#2914](https://github.com/hyperledger/besu/issues/2914), [#3350](https://github.com/hyperledger/besu/pull/3350)
+- QBFT consensus algorithm is production ready
 
 ### Bug Fixes
 
