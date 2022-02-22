@@ -213,6 +213,7 @@ public class EvmToolCommand implements Runnable {
       final PrecompileContractRegistry precompileContractRegistry =
           protocolSpec.getPrecompileContractRegistry();
       final EVM evm = protocolSpec.getEvm();
+      Code code = evm.getCode(Hash.hash(codeHexString), codeHexString);
       final Stopwatch stopwatch = Stopwatch.createUnstarted();
       long lastTime = 0;
       do {
@@ -242,7 +243,7 @@ public class EvmToolCommand implements Runnable {
                 .inputData(callData)
                 .value(ethValue)
                 .apparentValue(ethValue)
-                .code(new Code(codeHexString, Hash.hash(codeHexString)))
+                .code(code)
                 .blockValues(blockHeader)
                 .depth(0)
                 .completer(c -> {})

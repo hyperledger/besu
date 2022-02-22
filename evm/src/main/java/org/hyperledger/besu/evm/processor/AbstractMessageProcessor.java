@@ -15,6 +15,8 @@
 package org.hyperledger.besu.evm.processor;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
@@ -25,6 +27,8 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * A skeletal class for instantiating message processors.
@@ -192,5 +196,9 @@ public abstract class AbstractMessageProcessor {
     if (frame.getState() == MessageFrame.State.COMPLETED_FAILED) {
       completedFailed(frame);
     }
+  }
+
+  public Code getCodeFromEVM(final Hash codeHash, final Bytes codeBytes) {
+    return evm.getCode(codeHash, codeBytes);
   }
 }

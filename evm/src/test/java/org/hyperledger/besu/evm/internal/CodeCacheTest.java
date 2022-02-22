@@ -24,19 +24,18 @@ import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
-public class JumpDestCacheTest {
+public class CodeCacheTest {
 
   private final String op = Bytes.of(JumpDestOperation.OPCODE).toUnprefixedHexString();
 
   @Test
   public void testScale() {
-    Bytes contractBytes =
+    final Bytes contractBytes =
         Bytes.fromHexString("0xDEAD" + op + "BEEF" + op + "B0B0" + op + "C0DE" + op + "FACE");
-    // 3rd bit, 6th bit, 9th bit, 12th bit
-    long[] jumpDests = {4 + 32 + 256 + 2048};
-    CodeScale scale = new CodeScale();
-    Code contractCode = new Code(contractBytes, Hash.hash(contractBytes), jumpDests);
-    int weight = scale.weigh(contractCode.getCodeHash(), contractCode.getValidJumpDestinations());
-    assertThat(weight).isEqualTo(contractCode.getCodeHash().size() + jumpDests.length * 8);
+    final CodeScale scale = new CodeScale();
+    final Code contractCode = Code.createLegacyCode(contractBytes, Hash.hash(contractBytes));
+    final int weight = scale.weigh(contractCode.getCodeHash(), contractCode);
+    assertThat(weight)
+        .isEqualTo(contractCode.getCodeHash().size() + (contractBytes.size() * 9 + 7) / 8);
   }
 }
