@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 ARG VERSION="dev"
 
 RUN apt-get update && \
- apt-get install --no-install-recommends -q --assume-yes openjdk-11-jre-headless=11* apt-utils && \
+ apt-get install --no-install-recommends -q --assume-yes openjdk-11-jre-headless=11* apt-utils=2.* && \
  apt-get clean  && \
  rm -rf /var/lib/apt/lists/* 
 
