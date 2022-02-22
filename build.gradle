@@ -783,7 +783,7 @@ task dockerPubishMultiCPU {
   def image = "${imageName}:${dockerBuildVersion}"
   def additionalTags = []
   def repo = ""
-  def targetPlatform = "linux/arm64,linux/amd64,linux/riscv64,linux/arm/v7,linux/ppc64le"
+  def targetPlatform = "linux/arm64,linux/amd64" // "linux/riscv64,linux/arm/v7"
 
   if (project.hasProperty('branch') && project.property('branch') == 'main') {
     additionalTags.add('develop')

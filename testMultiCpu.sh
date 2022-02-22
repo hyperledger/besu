@@ -1,4 +1,5 @@
 #!/bin/bash
+REPO=registry.gitlab.com/consensys/client/hong-kong/infra/docker
 REPO_USER=pipeline
 REPO_PASSWORD=${GITLAB_TOKEN}
 BUILDX_ARCH="linux-amd64"
@@ -24,4 +25,4 @@ docker buildx create --name builderx --driver docker-container --use builder-con
 
 docker buildx inspect --bootstrap
 
-./gradlew --no-daemon "-Prepository=registry.gitlab.com/consensys/client/hong-kong/infra/docker" dockerPubishMultiCPU
+./gradlew --no-daemon "-Prepository=${REPO}" dockerPubishMultiCPU
