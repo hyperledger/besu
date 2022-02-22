@@ -775,7 +775,6 @@ task dockerUpload {
 
 task dockerPubishMultiCPU {
   dependsOn dockerDistUntar
-  
   def dockerBuildDir = "build/docker-besu/"
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def imageName = "hyperledger/besu"
@@ -789,8 +788,8 @@ task dockerPubishMultiCPU {
   }
 
   if (project.hasProperty('repository')) {
-     imageName = project.property('repository') + "/besu"
-     image = "${imageName}:${dockerBuildVersion}"
+    imageName = project.property('repository') + "/besu"
+    image = "${imageName}:${dockerBuildVersion}"
   }
 
   if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
