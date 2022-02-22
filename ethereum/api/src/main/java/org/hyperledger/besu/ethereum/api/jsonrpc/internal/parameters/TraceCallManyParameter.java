@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -32,6 +31,7 @@ class TraceCallParameterDeserialiser extends StdDeserializer<TraceCallParamterTu
   public TraceCallParameterDeserialiser(final Class<?> vc) {
     super(vc);
   }
+
   public TraceCallParameterDeserialiser() {
     this(null);
   }
@@ -47,4 +47,3 @@ class TraceCallParameterDeserialiser extends StdDeserializer<TraceCallParamterTu
         mapper.readValue(tupleNode.get(1).toString(), TraceTypeParameter.class));
   }
 }
-
