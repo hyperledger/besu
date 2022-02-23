@@ -100,8 +100,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             new CliqueMiningTracker(localAddress, protocolContext));
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
 
-    // Clique mining is implicitly enabled.
     miningCoordinator.enable();
+
     return miningCoordinator;
   }
 
@@ -143,5 +143,11 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             blockInterface);
     installCliqueBlockChoiceRule(blockchain, cliqueContext);
     return cliqueContext;
+  }
+
+  @Override
+  public MiningParameters getMiningParameterOverrides(final MiningParameters fromCli) {
+    // Clique mines by default, reflect that with in the mining parameters:
+    return new MiningParameters.Builder(fromCli).enabled(true).build();
   }
 }

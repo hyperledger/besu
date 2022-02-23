@@ -81,20 +81,25 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     // cast to transition schedule for explicit access to pre and post objects:
     final TransitionProtocolSchedule tps = (TransitionProtocolSchedule) protocolSchedule;
 
+    // PoA consensus mines by default, get consensus-specific mining parameters for
+    // TransitionCoordinator:
+    MiningParameters transitionMiningParameters =
+        preMergeBesuControllerBuilder.getMiningParameterOverrides(miningParameters);
+
     final TransitionCoordinator composedCoordinator =
         new TransitionCoordinator(
             preMergeBesuControllerBuilder.createMiningCoordinator(
                 tps.getPreMergeSchedule(),
                 protocolContext,
                 transactionPool,
-                new MiningParameters.Builder(miningParameters).enabled(false).build(),
+                transitionMiningParameters,
                 syncState,
                 ethProtocolManager),
             mergeBesuControllerBuilder.createMiningCoordinator(
                 tps.getPostMergeSchedule(),
                 protocolContext,
                 transactionPool,
-                miningParameters,
+                transitionMiningParameters,
                 syncState,
                 ethProtocolManager));
     initTransitionWatcher(protocolContext, composedCoordinator);
@@ -137,7 +142,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             composedCoordinator.getPreMergeObject().disable();
             composedCoordinator.getPreMergeObject().stop();
           } else if (composedCoordinator.isMiningBeforeMerge()) {
-            // if we transitioned back to pre-merge and were mining, restart mining
+            // if our merge state is set to pre-merge and we are mining, start mining
             composedCoordinator.getPreMergeObject().enable();
             composedCoordinator.getPreMergeObject().start();
           }
