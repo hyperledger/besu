@@ -624,8 +624,7 @@ def dockerVariants = [
 def targetPlatforms = [
   "linux/arm64",
   "linux/amd64"
-] // "linux/riscv64,linux/arm/v7"  
-
+] // "linux/riscv64,linux/arm/v7"
 def defaultPlatform = "linux/amd64"
 
 // rename the top level dir from besu-<version> to besu and this makes it really
@@ -669,7 +668,7 @@ task distDocker {
           args "-c", "docker buildx build --platform=${platform} --build-arg BUILD_DATE=${buildTime()} \
                     --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} \
                     -t ${image} . --output=type=docker"
-         }
+        }
       }
     }
     for (def platform in targetPlatforms) {
@@ -783,7 +782,7 @@ task dockerUpload {
         manifest += " --amend ${image}-${variant}-${platform.replace("/", "-")} "
       }
 
-      println "manifest: ${manifest}"   
+      println "manifest: ${manifest}"
       exec {
         executable "sh"
         args "-c", manifest
@@ -792,9 +791,9 @@ task dockerUpload {
       exec {
         executable "sh"
         args "-c", " docker manifest push ${image}-${variant} "
-      } 
+      }
     }
-   
+
     manifest="docker manifest create ${imageName}:${tag.trim()} "
     for (def platform in targetPlatforms) {
       exec {
@@ -810,7 +809,7 @@ task dockerUpload {
       manifest += " --amend ${imageName}:${tag.trim()}--${platform.replace("/", "-")} "
     }
 
-    println "manifest: ${manifest}"   
+    println "manifest: ${manifest}"
     exec {
       executable "sh"
       args "-c", manifest
