@@ -15,6 +15,7 @@ executors:
   besu_executor_med: # 2cpu, 4G ram
     docker:
       - image: cimg/openjdk:11.0
+        user: root
     resource_class: medium
     working_directory: ~/project
     environment:
