@@ -288,7 +288,7 @@ public class VmTraceGenerator {
     // set smart contract code
     if (currentTrace != null && "0x".equals(currentTrace.getCode())) {
       currentTrace.setCode(
-          currentTraceFrame.getMaybeCode().orElse(new Code()).getBytes().toHexString());
+          currentTraceFrame.getMaybeCode().orElse(Code.EMPTY_CODE).getBytes().toHexString());
     }
   }
 

@@ -19,7 +19,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -76,7 +75,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       if (value.compareTo(account.getBalance()) > 0 || frame.getMessageStackDepth() >= 1024) {
         fail(frame);
       } else {
-        spawnChildMessage(frame);
+        spawnChildMessage(frame, evm);
       }
     }
 
@@ -95,7 +94,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.pushStackItem(UInt256.ZERO);
   }
 
-  private void spawnChildMessage(final MessageFrame frame) {
+  private void spawnChildMessage(final MessageFrame frame, final EVM evm) {
     // memory cost needs to be calculated prior to memory expansion
     final Gas cost = cost(frame);
     frame.decrementRemainingGas(cost);
@@ -129,7 +128,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .sender(frame.getRecipientAddress())
             .value(value)
             .apparentValue(value)
-            .code(new Code(inputData, Hash.EMPTY))
+            .code(evm.getCode(Hash.hash(inputData), inputData))
             .blockValues(frame.getBlockValues())
             .depth(frame.getMessageStackDepth() + 1)
             .completer(child -> complete(frame, child))

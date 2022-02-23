@@ -31,7 +31,7 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-/** Class responsible for rebroadcasting IBFT messages to known validators */
+/** Class responsible for rebroadcasting QBFT messages to known validators */
 public class QbftGossip implements Gossiper {
 
   private final ValidatorMulticaster multicaster;
@@ -74,7 +74,7 @@ public class QbftGossip implements Gossiper {
         break;
       default:
         throw new IllegalArgumentException(
-            "Received message does not conform to any recognised IBFT message structure.");
+            "Received message does not conform to any recognised QBFT message structure.");
     }
     final List<Address> excludeAddressesList =
         Lists.newArrayList(

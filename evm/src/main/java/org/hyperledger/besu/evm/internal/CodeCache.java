@@ -16,20 +16,21 @@
 package org.hyperledger.besu.evm.internal;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.Code;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-public class JumpDestCache {
+public class CodeCache {
 
-  private final Cache<Hash, long[]> cache;
+  private final Cache<Hash, Code> cache;
   private final long weightLimit;
 
-  public JumpDestCache(final EvmConfiguration config) {
+  public CodeCache(final EvmConfiguration config) {
     this(config.getJumpDestCacheWeightBytes());
   }
 
-  private JumpDestCache(final long maxWeightBytes) {
+  private CodeCache(final long maxWeightBytes) {
     this.weightLimit = maxWeightBytes;
     this.cache =
         Caffeine.newBuilder().maximumWeight(maxWeightBytes).weigher(new CodeScale()).build();
@@ -43,11 +44,11 @@ public class JumpDestCache {
     this.cache.cleanUp();
   }
 
-  public long[] getIfPresent(final Hash codeHash) {
+  public Code getIfPresent(final Hash codeHash) {
     return cache.getIfPresent(codeHash);
   }
 
-  public void put(final Hash key, final long[] value) {
+  public void put(final Hash key, final Code value) {
     cache.put(key, value);
   }
 
