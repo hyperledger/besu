@@ -33,7 +33,7 @@ import com.google.common.collect.EvictingQueue;
 public class PostMergeContext implements MergeContext {
   static final int MAX_BLOCKS_IN_PROGRESS = 12;
 
-  private static PostMergeContext singleton;
+  private static final AtomicReference<PostMergeContext> singleton = new AtomicReference<>();
 
   private final AtomicReference<SyncState> syncState;
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
@@ -57,12 +57,11 @@ public class PostMergeContext implements MergeContext {
     this.syncState = new AtomicReference<>();
   }
 
-  public static synchronized PostMergeContext get() {
-    // TODO: get rid of singleton if possible: https://github.com/hyperledger/besu/issues/2898
-    if (singleton == null) {
-      singleton = new PostMergeContext();
+  public static PostMergeContext get() {
+    if (singleton.get() == null) {
+      singleton.set(new PostMergeContext());
     }
-    return singleton;
+    return singleton.get();
   }
 
   @Override
