@@ -662,7 +662,8 @@ task distDocker {
       }
       for (def platform in targetPlatforms) {
         exec {
-          def image = "${imageName}:${dockerBuildVersion}-${variant}-${platform.replace("/", "-")}"
+          def tagPlatform=platform.replace("/", "-")
+          def image = "${imageName}:${dockerBuildVersion}-${variant}-${tagPlatform}"
           executable "sh"
           workingDir dockerBuildDir
           args "-c", "docker buildx build --platform=${platform} --build-arg BUILD_DATE=${buildTime()} \
@@ -672,15 +673,16 @@ task distDocker {
       }
     }
     for (def platform in targetPlatforms) {
+      def tagPlatform=platform.replace("/", "-")
       // tag the "default" (which is the variant in the zero position)
       exec {
         executable "sh"
-        args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}-${platform}' '${imageName}:${dockerBuildVersion}-${platform}'"
+        args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}-${tagPlatform}' '${imageName}:${dockerBuildVersion}-${tagPlatform}'"
       }
       // create a static tag for the benchmark target
       exec {
         executable "sh"
-        args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}-${platform}' '${imageName}:benchmark-${platform}'"
+        args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}-${tagPlatform}' '${imageName}:benchmark-${tagPlatform}'"
       }
     }
 
@@ -702,10 +704,11 @@ task testDocker {
   doLast {
     for (def variant in dockerVariants) {
       exec {
+        def tagPlatform=defaultPlatform.replace("/", "-")
         def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
         workingDir "${projectDir}/docker/${variant}"
         executable "sh"
-        args "-c", "bash ../test.sh ${image}-${variant}-${defaultPlatform.replace("/", "-")}"
+        args "-c", "bash ../test.sh ${image}-${variant}-${tagPlatform}"
       }
     }
   }
@@ -770,16 +773,17 @@ task dockerUpload {
     for (def variant in dockerVariants) {
       manifest += " ${image}-${variant} "
       for (def platform in targetPlatforms) {
-        def variantImage = "${image}-${variant}-${platform.replace("/", "-")}"
+        def tagPlatform=platform.replace("/", "-")
+        def variantImage = "${image}-${variant}-${tagPlatform}"
         exec {
           def cmd = "docker push '${variantImage}'"
           additionalTags.each { tag ->
-            cmd += " && docker tag '${variantImage}' '${imageName}:${tag.trim()}-${variant}-${platform.replace("/", "-")}' && docker push '${imageName}:${tag.trim()}-${variant}-${platform.replace("/", "-")}'"
+            cmd += " && docker tag '${variantImage}' '${imageName}:${tag.trim()}-${variant}-${tagPlatform}' && docker push '${imageName}:${tag.trim()}-${variant}-${tagPlatform}'"
           }
           executable "sh"
           args "-c", cmd
         }
-        manifest += " --amend ${image}-${variant}-${platform.replace("/", "-")} "
+        manifest += " --amend ${image}-${variant}-${tagPlatform} "
       }
 
       println "manifest: ${manifest}"
@@ -796,17 +800,18 @@ task dockerUpload {
 
     manifest="docker manifest create ${imageName}:${tag.trim()} "
     for (def platform in targetPlatforms) {
+      def tagPlatform=platform.replace("/", "-")
       exec {
-        def cmd = "docker push '${image}-${platform.replace("/", "-")}'"
+        def cmd = "docker push '${image}-${tagPlatform}'"
         additionalTags.each { tag ->
-          cmd += " && docker tag '${image}-${platform.replace("/", "-")}' '${imageName}:${tag.trim()}-${platform.replace("/", "-")}' && docker push '${imageName}:${tag.trim()}--${platform.replace("/", "-")}'"
+          cmd += " && docker tag '${image}-${tagPlatform}' '${imageName}:${tag.trim()}-${tagPlatform}' && docker push '${imageName}:${tag.trim()}--${tagPlatform}'"
           // temporarily commented out because AWS credentials are broken
           // cmd += " && docker tag '${image}' '${azureImageName}:${tag.trim()}' && docker push '${azureImageName}:${tag.trim()}'"
         }
         executable "sh"
         args "-c", cmd
       }
-      manifest += " --amend ${imageName}:${tag.trim()}--${platform.replace("/", "-")} "
+      manifest += " --amend ${imageName}:${tag.trim()}--${tagPlatform} "
     }
 
     println "manifest: ${manifest}"
