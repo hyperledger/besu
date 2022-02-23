@@ -1982,6 +1982,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Integer listenPort, final List<String> allowCallsFrom) {
     JsonRpcConfiguration engineConfig =
         jsonRpcConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
+    engineConfig.setAuthenticationEnabled(true);
+    engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
     return engineConfig;
   }
 

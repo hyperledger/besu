@@ -23,28 +23,33 @@ import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Provides authentication handlers for use in the http and websocket services */
 public class AuthenticationService {
 
+  public static final String USERNAME = "username";
   private final JWTAuth jwtAuthProvider;
   @VisibleForTesting public final JWTAuthOptions jwtAuthOptions;
-  private final Optional<AuthProvider> credentialAuthProvider;
+  private final Optional<AuthenticationProvider> credentialAuthProvider;
   private static final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
+  private static final Logger LOG = LoggerFactory.getLogger(AuthenticationService.class);
 
   private AuthenticationService(
       final JWTAuth jwtAuthProvider,
       final JWTAuthOptions jwtAuthOptions,
-      final Optional<AuthProvider> credentialAuthProvider) {
+      final Optional<AuthenticationProvider> credentialAuthProvider) {
     this.jwtAuthProvider = jwtAuthProvider;
     this.jwtAuthOptions = jwtAuthOptions;
     this.credentialAuthProvider = credentialAuthProvider;
@@ -108,9 +113,9 @@ public class AuthenticationService {
           authenticationAlgorithm == null
               ? jwtAuthOptionsFactory.createForExternalPublicKey(authenticationPublicKeyFile)
               : jwtAuthOptionsFactory.createForExternalPublicKeyWithAlgorithm(
-                  authenticationPublicKeyFile, authenticationAlgorithm.toString());
+                  authenticationPublicKeyFile, authenticationAlgorithm);
     }
-    final Optional<AuthProvider> credentialAuthProvider =
+    final Optional<AuthenticationProvider> credentialAuthProvider =
         makeCredentialAuthProvider(vertx, authenticationEnabled, authenticationCredentialsFile);
 
     return Optional.of(
@@ -118,7 +123,15 @@ public class AuthenticationService {
             JWTAuth.create(vertx, jwtAuthOptions), jwtAuthOptions, credentialAuthProvider));
   }
 
-  private static Optional<AuthProvider> makeCredentialAuthProvider(
+  public static Optional<AuthenticationService> createEngineAuth(final Vertx vertx) {
+    final JWTAuthOptions jwtAuthOptions =
+        jwtAuthOptionsFactory.engineApiJWTOptions(JwtAlgorithm.HS256);
+    return Optional.of(
+        new AuthenticationService(
+            JWTAuth.create(vertx, jwtAuthOptions), jwtAuthOptions, Optional.empty()));
+  }
+
+  private static Optional<AuthenticationProvider> makeCredentialAuthProvider(
       final Vertx vertx,
       final boolean authenticationEnabled,
       @Nullable final String authenticationCredentialsFile) {
@@ -158,7 +171,7 @@ public class AuthenticationService {
   }
 
   private void login(
-      final RoutingContext routingContext, final AuthProvider credentialAuthProvider) {
+      final RoutingContext routingContext, final AuthenticationProvider credentialAuthProvider) {
     final JsonObject requestBody = routingContext.getBodyAsJson();
 
     if (requestBody == null) {
@@ -172,11 +185,11 @@ public class AuthenticationService {
 
     // Check user
     final JsonObject authParams = new JsonObject();
-    authParams.put("username", requestBody.getValue("username"));
+    authParams.put(USERNAME, requestBody.getValue(USERNAME));
     authParams.put("password", requestBody.getValue("password"));
     credentialAuthProvider.authenticate(
         authParams,
-        (r) -> {
+        r -> {
           if (r.failed()) {
             routingContext
                 .response()
@@ -191,7 +204,7 @@ public class AuthenticationService {
             final JsonObject jwtContents =
                 new JsonObject()
                     .put("permissions", user.principal().getValue("permissions"))
-                    .put("username", user.principal().getValue("username"));
+                    .put(USERNAME, user.principal().getValue(USERNAME));
             final String privacyPublicKey = user.principal().getString("privacyPublicKey");
             if (privacyPublicKey != null) {
               jwtContents.put("privacyPublicKey", privacyPublicKey);
@@ -212,5 +225,33 @@ public class AuthenticationService {
 
   public JWTAuth getJwtAuthProvider() {
     return jwtAuthProvider;
+  }
+
+  public void getUser(final String token, final Handler<Optional<User>> handler) {
+    try {
+      getJwtAuthProvider()
+          .authenticate(
+              new JsonObject().put("token", token),
+              r -> {
+                if (r.succeeded()) {
+                  final Optional<User> user = Optional.ofNullable(r.result());
+                  validateExpiryExists(user);
+                  handler.handle(user);
+                } else {
+                  LOG.debug("Invalid JWT token {}", r.cause().toString());
+                  handler.handle(Optional.empty());
+                }
+              });
+
+    } catch (Exception e) {
+      LOG.debug("exception validating JWT ", e);
+      handler.handle(Optional.empty());
+    }
+  }
+
+  private void validateExpiryExists(final Optional<User> user) {
+    if (!user.map(User::attributes).map(a -> a.containsKey("exp")).orElse(false)) {
+      throw new IllegalStateException("Invalid JWT doesn't have expiry");
+    }
   }
 }

@@ -132,16 +132,18 @@ public class WebSocketService {
                 buffer.toString(),
                 socketAddressAsString(socketAddress));
 
-            AuthenticationUtils.getUser(
-                authenticationService,
-                token,
-                user ->
-                    websocketRequestHandler.handle(
-                        authenticationService,
-                        websocket,
-                        buffer.toString(),
-                        user,
-                        configuration.getRpcApisNoAuth()));
+            if (authenticationService.isPresent()) {
+              authenticationService
+                  .get()
+                  .getUser(
+                      token,
+                      user ->
+                          websocketRequestHandler.handle(
+                              authenticationService, websocket, buffer.toString(), user, configuration.getRpcApisNoAuth()));
+            } else {
+              websocketRequestHandler.handle(
+                  Optional.empty(), websocket, buffer.toString(), Optional.empty(), configuration.getRpcApisNoAuth());
+            }
           });
 
       websocket.textMessageHandler(
@@ -151,16 +153,18 @@ public class WebSocketService {
                 payload,
                 socketAddressAsString(socketAddress));
 
-            AuthenticationUtils.getUser(
-                authenticationService,
-                token,
-                user ->
-                    websocketRequestHandler.handle(
-                        authenticationService,
-                        websocket,
-                        payload,
-                        user,
-                        configuration.getRpcApisNoAuth()));
+            if (authenticationService.isPresent()) {
+              authenticationService
+                  .get()
+                  .getUser(
+                      token,
+                      user ->
+                          websocketRequestHandler.handle(
+                              authenticationService, websocket, payload, user, configuration.getRpcApisNoAuth()));
+            } else {
+              websocketRequestHandler.handle(
+                  Optional.empty(), websocket, payload, Optional.empty(), configuration.getRpcApisNoAuth());
+            }
           });
 
       websocket.closeHandler(

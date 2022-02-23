@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.ReadinessCheck;
@@ -645,6 +646,7 @@ public class RunnerBuilder {
                     metricsSystem,
                     natService,
                     engineMethods,
+                    AuthenticationService.createEngineAuth(vertx),
                     new HealthService(new LivenessCheck()),
                     new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
       }

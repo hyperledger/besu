@@ -20,6 +20,7 @@ public enum JwtAlgorithm {
   RS512,
   ES256,
   ES384,
+  HS256,
   ES512;
 
   public static JwtAlgorithm fromString(final String str) {

@@ -235,7 +235,7 @@ public final class RunnerTest {
     try {
       runnerAhead.startExternalServices();
       runnerAhead.startEthereumMainLoop();
-      assertThat(pidPath.toFile().exists()).isTrue();
+      assertThat(pidPath.toFile()).exists();
 
       final SynchronizerConfiguration syncConfigBehind =
           SynchronizerConfiguration.builder()
