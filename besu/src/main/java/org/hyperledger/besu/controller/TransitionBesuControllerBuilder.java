@@ -141,6 +141,11 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             // if we transitioned to post-merge, stop and disable any mining
             composedCoordinator.getPreMergeObject().disable();
             composedCoordinator.getPreMergeObject().stop();
+            // set the blockchoiceRule to never reorg, rely on forkchoiceUpdated instead
+            protocolContext
+                .getBlockchain()
+                .setBlockChoiceRule((newBlockHeader, currentBlockHeader) -> -1);
+
           } else if (composedCoordinator.isMiningBeforeMerge()) {
             // if our merge state is set to pre-merge and we are mining, start mining
             composedCoordinator.getPreMergeObject().enable();
