@@ -328,6 +328,13 @@ jobs:
           name: build image
           command: |
             export DOCKER_CLI_EXPERIMENTAL=enabled
+            ssh remote-docker \<<EOF
+              sudo bash -c 'echo "{\"experimental\": true}" > /etc/docker/daemon.json'
+              sudo systemctl restart docker
+              sudo docker info
+            EOF
+
+            docker run --privileged --rm tonistiigi/binfmt --install all
             docker context create builder-context
             docker buildx create --name builderx --driver docker-container --use builder-context
             ./gradlew --no-daemon distDocker
