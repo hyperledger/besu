@@ -305,7 +305,8 @@ jobs:
       - prepare
       - attach_workspace:
           at: ~/project
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 19.03.14
       - setup_buildx
       - run:
           name: hadoLint_openjdk_11
@@ -326,6 +327,7 @@ jobs:
       - run:
           name: build image
           command: |
+            export DOCKER_CLI_EXPERIMENTAL=enabled
             docker context create builder-context
             docker buildx create --name builderx --driver docker-container --use builder-context
             ./gradlew --no-daemon distDocker
@@ -354,7 +356,8 @@ jobs:
       - prepare
       - attach_workspace:
           at: ~/project
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 19.03.14
       - setup_buildx
       - run:
           name: Publish Docker
@@ -363,6 +366,7 @@ jobs:
             # temporarily commented out because AWS credentials are broken
             # docker login "${ACR_REPO}" --username "${ACR_USER_RW}" --password "${ACR_PASSWORD_RW}"
 
+            export DOCKER_CLI_EXPERIMENTAL=enabled
             docker context create builder-context
             docker buildx create --name builderx --driver docker-container --use builder-context
             ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
