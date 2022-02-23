@@ -48,7 +48,12 @@ public class FullSyncChainDownloader {
         syncState,
         syncTargetManager,
         new FullSyncDownloadPipelineFactory(
-            config, protocolSchedule, protocolContext, ethContext, metricsSystem),
+            config,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            metricsSystem,
+            terminationCondition),
         ethContext.getScheduler(),
         metricsSystem);
   }

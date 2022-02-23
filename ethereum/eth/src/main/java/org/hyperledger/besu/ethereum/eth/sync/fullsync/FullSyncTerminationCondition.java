@@ -22,21 +22,60 @@ import java.util.function.BooleanSupplier;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** return true when termination condition is fullfilled and the full sync should stop */
 public interface FullSyncTerminationCondition extends BooleanSupplier {
+
+  default boolean shouldContinueDownload() {
+    return !shouldStopDownload();
+  }
+
+  default boolean shouldStopDownload() {
+    return getAsBoolean();
+  }
+
+  /**
+   * When we want full sync to continue forever (for instance when we don't want to merge)
+   *
+   * @return always false therefore continues forever *
+   */
   static FullSyncTerminationCondition never() {
-    return () -> true;
+    return () -> false;
   }
 
+  /**
+   * When we want full sync to finish after reaching a difficulty. For instance when we merge on
+   * total terminal difficulty.
+   *
+   * @param targetDifficulty target difficulty to reach
+   * @param blockchain blockchain to reach the difficulty on
+   * @return true when blockchain reaches difficulty
+   */
   static FullSyncTerminationCondition difficulty(
-      final UInt256 difficulty, final Blockchain blockchain) {
-    return difficulty(Difficulty.of(difficulty), blockchain);
+      final UInt256 targetDifficulty, final Blockchain blockchain) {
+    return difficulty(Difficulty.of(targetDifficulty), blockchain);
   }
 
+  /**
+   * When we want full sync to finish after reaching a difficulty. For instance when we merge on
+   * total terminal difficulty.
+   *
+   * @param targetDifficulty target difficulty to reach
+   * @param blockchain blockchain to reach the difficulty on*
+   * @return true when blockchain reaches difficulty
+   */
   static FullSyncTerminationCondition difficulty(
-      final Difficulty difficulty, final Blockchain blockchain) {
-    return () -> difficulty.greaterThan(blockchain.getChainHead().getTotalDifficulty());
+      final Difficulty targetDifficulty, final Blockchain blockchain) {
+    return () -> blockchain.getChainHead().getTotalDifficulty().greaterThan(targetDifficulty);
   }
 
+  /**
+   * When we want the full sync to finish on a target hash. For instance when we reach a merge
+   * checkpoint.
+   *
+   * @param blockHash target hash to look for
+   * @param blockchain blockchain to reach the difficulty on
+   * @return true when blockchain contains target hash (target hash can be changed)
+   */
   static FlexibleBlockHashTerminalCondition blockHash(
       final Hash blockHash, final Blockchain blockchain) {
     return new FlexibleBlockHashTerminalCondition(blockHash, blockchain);

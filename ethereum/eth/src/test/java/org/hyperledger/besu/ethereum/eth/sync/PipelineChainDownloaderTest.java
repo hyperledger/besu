@@ -158,7 +158,6 @@ public class PipelineChainDownloaderTest {
 
     verify(syncTargetManager).findSyncTarget();
 
-    when(syncTargetManager.shouldContinueDownloading()).thenReturn(false);
     pipelineFuture.complete(null);
 
     verify(syncTargetManager, Mockito.times(2)).shouldContinueDownloading();

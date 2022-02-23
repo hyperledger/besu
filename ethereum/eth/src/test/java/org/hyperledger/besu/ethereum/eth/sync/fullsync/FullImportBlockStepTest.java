@@ -50,7 +50,9 @@ public class FullImportBlockStepTest {
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
 
-    importBlocksStep = new FullImportBlockStep(protocolSchedule, protocolContext, null);
+    importBlocksStep =
+        new FullImportBlockStep(
+            protocolSchedule, protocolContext, null, FullSyncTerminationCondition.never());
   }
 
   @Test
