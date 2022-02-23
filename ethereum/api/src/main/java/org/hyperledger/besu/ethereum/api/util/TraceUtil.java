@@ -4,7 +4,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 public class TraceUtil {
-  public static Stream<Trace> resultByTransactionHash(
+  public static Stream<FlatTrace> resultByTransactionHash(
       final Hash transactionHash,
       final BlockchainQueries blockchainQueries,
       final Supplier<BlockTracer> blockTracerSupplier,
@@ -31,11 +31,12 @@ public class TraceUtil {
         .transactionByHash(transactionHash)
         .flatMap(TransactionWithMetadata::getBlockNumber)
         .flatMap(blockNumber -> blockchainQueries.getBlockchain().getBlockByNumber(blockNumber))
-        .map((block) -> traceBlock(block, transactionHash, blockTracerSupplier, protocolSchedule))
+        .map(
+            (block) -> getTraceBlock(block, transactionHash, blockTracerSupplier, protocolSchedule))
         .orElse(Stream.empty());
   }
 
-  private static Stream<Trace> traceBlock(
+  private static Stream<FlatTrace> getTraceBlock(
       final Block block,
       final Hash transactionHash,
       final Supplier<BlockTracer> blockTracerSupplier,
@@ -63,15 +64,16 @@ public class TraceUtil {
         .orElseThrow();
   }
 
-  private static Stream<Trace> getTraceStream(
+  private static Stream<FlatTrace> getTraceStream(
       final ProtocolSchedule protocolSchedule,
       final TransactionTrace transactionTrace,
       final Block block) {
     return FlatTraceGenerator.generateFromTransactionTraceAndBlock(
-        protocolSchedule, transactionTrace, block);
+            protocolSchedule, transactionTrace, block)
+        .map(trace -> (FlatTrace) trace);
   }
 
-  public static JsonNode arrayNodeFromTraceStream(final Stream<Trace> traceStream) {
+  public static JsonNode arrayNodeFromTraceStream(final Stream<FlatTrace> traceStream) {
     final ObjectMapper mapper = new ObjectMapper();
     final ArrayNode resultArrayNode = mapper.createArrayNode();
     traceStream.forEachOrdered(resultArrayNode::addPOJO);
