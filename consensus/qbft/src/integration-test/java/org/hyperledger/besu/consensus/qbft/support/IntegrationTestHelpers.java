@@ -32,12 +32,12 @@ public class IntegrationTestHelpers {
   public static SignedData<CommitPayload> createSignedCommitPayload(
       final ConsensusRoundIdentifier roundId, final Block block, final NodeKey nodeKey) {
 
-    final QbftExtraDataCodec ibftExtraDataEncoder = new QbftExtraDataCodec();
+    final QbftExtraDataCodec qbftExtraDataEncoder = new QbftExtraDataCodec();
 
     final Block commitBlock = createCommitBlockFromProposalBlock(block, roundId.getRoundNumber());
     final SECPSignature commitSeal =
         nodeKey.sign(
-            new BftBlockHashing(ibftExtraDataEncoder)
+            new BftBlockHashing(qbftExtraDataEncoder)
                 .calculateDataHashForCommittedSeal(commitBlock.getHeader()));
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey);

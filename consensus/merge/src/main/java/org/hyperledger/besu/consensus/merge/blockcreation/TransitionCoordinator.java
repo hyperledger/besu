@@ -155,6 +155,11 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
+  public boolean isBackwardSyncing(final Block block) {
+    return isBackwardSyncing();
+  }
+
+  @Override
   public boolean isMiningBeforeMerge() {
     return mergeCoordinator.isMiningBeforeMerge();
   }
