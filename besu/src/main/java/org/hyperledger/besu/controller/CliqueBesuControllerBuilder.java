@@ -100,8 +100,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             new CliqueMiningTracker(localAddress, protocolContext));
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
 
+    // Clique mining is implicitly enabled.
     miningCoordinator.enable();
-
     return miningCoordinator;
   }
 
