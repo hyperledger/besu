@@ -25,4 +25,4 @@ docker buildx create --name builderx --driver docker-container --use builder-con
 
 docker buildx inspect --bootstrap
 
-./gradlew --no-daemon "-Prepository=${REPO}" dockerPublishMultiCPU
+./gradlew --no-daemon "-Prepository=${REPO}" dockerUpload

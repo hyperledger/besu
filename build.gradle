@@ -621,6 +621,13 @@ def dockerVariants = [
   "openjdk-latest"
 ]
 
+def targetPlatforms = [
+  "linux/arm64",
+  "linux/amd64"
+] // "linux/riscv64,linux/arm/v7"  
+
+def defaultPlatform = "linux/amd64"
+
 // rename the top level dir from besu-<version> to besu and this makes it really
 // simple for use in docker
 tasks.register("dockerDistUntar") {
@@ -654,22 +661,33 @@ task distDocker {
         from file("${projectDir}/docker/${variant}/Dockerfile")
         into(dockerBuildDir)
       }
-      exec {
-        def image = "${imageName}:${dockerBuildVersion}-${variant}"
-        executable "sh"
-        workingDir dockerBuildDir
-        args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+      for (def platform in targetPlatforms) {
+        exec {
+          def image = "${imageName}:${dockerBuildVersion}-${variant}-${platform.replace("/", "-")}"
+          executable "sh"
+          workingDir dockerBuildDir
+          args "-c", "docker buildx build --platform=${platform} --build-arg BUILD_DATE=${buildTime()} \
+                    --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} \
+                    -t ${image} . --output=type=docker"
+         }
       }
     }
-    // tag the "default" (which is the variant in the zero position)
-    exec {
-      executable "sh"
-      args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:${dockerBuildVersion}'"
+    for (def platform in targetPlatforms) {
+      // tag the "default" (which is the variant in the zero position)
+      exec {
+        executable "sh"
+        args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}-${platform}' '${imageName}:${dockerBuildVersion}-${platform}'"
+      }
+      // create a static tag for the benchmark target
+      exec {
+        executable "sh"
+        args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}-${platform}' '${imageName}:benchmark-${platform}'"
+      }
     }
-    // create a static tag for the benchmark target
+
     exec {
       executable "sh"
-      args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:benchmark'"
+      args "-c", "docker image ls"
     }
   }
 }
@@ -688,7 +706,7 @@ task testDocker {
         def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
         workingDir "${projectDir}/docker/${variant}"
         executable "sh"
-        args "-c", "bash ../test.sh ${image}-${variant}"
+        args "-c", "bash ../test.sh ${image}-${variant}-${defaultPlatform.replace("/", "-")}"
       }
     }
   }
@@ -722,7 +740,7 @@ task acceptanceTestsQuorum {
       new File(reportsDirectory).mkdirs()
 
       def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
-      def dockerEnv = "--env LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG --env TF_VAR_besu_docker_image='{name=\"${image}-${variant}\",local=true}'"
+      def dockerEnv = "--env LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG --env TF_VAR_besu_docker_image='{name=\"${image}-${variant}${defaultPlatform.replace("/", "-")}\",local=true}'"
       def dockerVolumes = "-v ${reportsDirectory}:/workspace/target/gauge/reports/ -v /var/run/docker.sock:/var/run/docker.sock -v ${dataDirectory}:${dataDirectory}"
       executable "sh"
       args "-c", "docker run ${dockerEnv} --rm --network host ${dockerVolumes} quorumengineering/acctests:latest test -PgaugeFailSafe -Pauto -Dtags=\"${tags}\" -Dauto.outputDir=${dataDirectory} -Dnetwork.forceDestroy=true -Dauto.jobid=${variant}"
@@ -732,64 +750,15 @@ task acceptanceTestsQuorum {
 
 task dockerUpload {
   dependsOn distDocker
-  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def imageName = "hyperledger/besu"
-  def azureImageName = "hyperledger.azurecr.io/besu"
-  def image = "${imageName}:${dockerBuildVersion}"
-  def additionalTags = []
-
-  if (project.hasProperty('branch') && project.property('branch') == 'main') {
-    additionalTags.add('develop')
-  }
-
-  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
-    additionalTags.add('latest')
-    additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
-  }
-
-  doLast {
-    for (def variant in dockerVariants) {
-      def variantImage = "${image}-${variant}"
-      exec {
-        def cmd = "docker push '${variantImage}'"
-        additionalTags.each { tag ->
-          cmd += " && docker tag '${variantImage}' '${imageName}:${tag.trim()}-${variant}' && docker push '${imageName}:${tag.trim()}-${variant}'"
-        }
-        executable "sh"
-        args "-c", cmd
-      }
-    }
-
-    exec {
-      def cmd = "docker push '${image}'"
-      additionalTags.each { tag ->
-        cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'"
-        // temporarily commented out because AWS credentials are broken
-        // cmd += " && docker tag '${image}' '${azureImageName}:${tag.trim()}' && docker push '${azureImageName}:${tag.trim()}'"
-      }
-      executable "sh"
-      args "-c", cmd
-    }
-  }
-}
-
-task dockerPublishMultiCPU {
-  dependsOn dockerDistUntar
   def dockerBuildDir = "build/docker-besu/"
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def imageName = "hyperledger/besu"
   def azureImageName = "hyperledger.azurecr.io/besu"
   def image = "${imageName}:${dockerBuildVersion}"
   def additionalTags = []
-  def targetPlatform = "linux/arm64,linux/amd64" // "linux/riscv64,linux/arm/v7"
 
   if (project.hasProperty('branch') && project.property('branch') == 'main') {
     additionalTags.add('develop')
-  }
-
-  if (project.hasProperty('repository')) {
-    imageName = project.property('repository') + "/besu"
-    image = "${imageName}:${dockerBuildVersion}"
   }
 
   if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
@@ -798,52 +767,56 @@ task dockerPublishMultiCPU {
   }
 
   doLast {
+    def manifest="docker manifest create "
     for (def variant in dockerVariants) {
-      copy {
-        from file("${projectDir}/docker/${variant}/Dockerfile")
-        into(dockerBuildDir)
-      }
-      exec {
-        def variantImage = "${image}-${variant}"
-        println "variantImage: ${variantImage}"
-
-        executable "sh"
-        workingDir dockerBuildDir
-        args "-c", "docker buildx build --push --platform=${targetPlatform}  \
-                      --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} \
-                      --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${variantImage} ."
-      }
-    }
-
-    // tag the "default" (which is the variant in the zero position)
-    exec {
-      executable "sh"
-      args "-c", "./regctl image copy '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:${dockerBuildVersion}'"
-    }
-    // create a static tag for the benchmark target
-    exec {
-      executable "sh"
-      args "-c", "./regctl image copy '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:benchmark'"
-    }
-
-    for (def variant in dockerVariants) {
-      def variantImage = "${image}-${variant}"
-      additionalTags.each { tag ->
+      manifest += " ${image}-${variant} "
+      for (def platform in targetPlatforms) {
+        def variantImage = "${image}-${variant}-${platform.replace("/", "-")}"
         exec {
+          def cmd = "docker push '${variantImage}'"
+          additionalTags.each { tag ->
+            cmd += " && docker tag '${variantImage}' '${imageName}:${tag.trim()}-${variant}-${platform.replace("/", "-")}' && docker push '${imageName}:${tag.trim()}-${variant}-${platform.replace("/", "-")}'"
+          }
           executable "sh"
-          args "-c",  "./regctl image copy '${variantImage}' '${imageName}:${tag.trim()}-${variant}'"
+          args "-c", cmd
         }
+        manifest += " --amend ${image}-${variant}-${platform.replace("/", "-")} "
       }
-    }
 
-    additionalTags.each { tag ->
+      println "manifest: ${manifest}"   
       exec {
         executable "sh"
-        args "-c",  "./regctl image copy '${image}' '${imageName}:${tag.trim()}'"
+        args "-c", manifest
       }
+
+      exec {
+        executable "sh"
+        args "-c", " docker manifest push ${image}-${variant} "
+      } 
+    }
+   
+    manifest="docker manifest create ${imageName}:${tag.trim()} "
+    for (def platform in targetPlatforms) {
+      exec {
+        def cmd = "docker push '${image}-${platform.replace("/", "-")}'"
+        additionalTags.each { tag ->
+          cmd += " && docker tag '${image}-${platform.replace("/", "-")}' '${imageName}:${tag.trim()}-${platform.replace("/", "-")}' && docker push '${imageName}:${tag.trim()}--${platform.replace("/", "-")}'"
+          // temporarily commented out because AWS credentials are broken
+          // cmd += " && docker tag '${image}' '${azureImageName}:${tag.trim()}' && docker push '${azureImageName}:${tag.trim()}'"
+        }
+        executable "sh"
+        args "-c", cmd
+      }
+      manifest += " --amend ${imageName}:${tag.trim()}--${platform.replace("/", "-")} "
     }
 
+    println "manifest: ${manifest}"   
+    exec {
+      executable "sh"
+      args "-c", manifest
+    }
   }
+
 }
 
 task checkSpdxHeader(type: CheckSpdxHeader) {
