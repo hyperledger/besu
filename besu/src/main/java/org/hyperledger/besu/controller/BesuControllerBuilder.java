@@ -373,7 +373,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             dataDirectory,
             clock,
             metricsSystem,
-            getFullSyncTerminationCondition());
+            getFullSyncTerminationCondition(protocolContext.getBlockchain()));
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -418,11 +418,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         additionalPluginServices);
   }
 
-  protected FullSyncTerminationCondition getFullSyncTerminationCondition() {
+  protected FullSyncTerminationCondition getFullSyncTerminationCondition(
+      final Blockchain blockchain) {
     return genesisConfig
         .getConfigOptions()
         .getTerminalTotalDifficulty()
-        .map(FullSyncTerminationCondition::difficulty)
+        .map(difficulty -> FullSyncTerminationCondition.difficulty(difficulty, blockchain))
         .orElse(FullSyncTerminationCondition.never());
   }
 

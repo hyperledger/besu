@@ -130,7 +130,9 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
     final SynchronizerConfiguration syncConfig =
         syncConfigBuilder().downloaderChainSegmentSize(1).downloaderParallelism(1).build();
     final ChainDownloader downloader =
-        downloader(syncConfig, FullSyncTerminationCondition.difficulty(TARGET_TERMINAL_DIFFICULTY));
+        downloader(
+            syncConfig,
+            FullSyncTerminationCondition.difficulty(TARGET_TERMINAL_DIFFICULTY, localBlockchain));
     final CompletableFuture<Void> future = downloader.start();
 
     assertThat(future.isDone()).isFalse();

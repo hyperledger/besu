@@ -14,23 +14,31 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
-import java.util.function.Predicate;
+import java.util.function.BooleanSupplier;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public interface FullSyncTerminationCondition extends Predicate<Blockchain> {
+public interface FullSyncTerminationCondition extends BooleanSupplier {
   static FullSyncTerminationCondition never() {
-    return blockchain -> false;
+    return () -> true;
   }
 
-  static FullSyncTerminationCondition difficulty(final UInt256 difficulty) {
-    return difficulty(Difficulty.of(difficulty));
+  static FullSyncTerminationCondition difficulty(
+      final UInt256 difficulty, final Blockchain blockchain) {
+    return difficulty(Difficulty.of(difficulty), blockchain);
   }
 
-  static FullSyncTerminationCondition difficulty(final Difficulty difficulty) {
-    return blockchain -> difficulty.greaterThan(blockchain.getChainHead().getTotalDifficulty());
+  static FullSyncTerminationCondition difficulty(
+      final Difficulty difficulty, final Blockchain blockchain) {
+    return () -> difficulty.greaterThan(blockchain.getChainHead().getTotalDifficulty());
+  }
+
+  static FlexibleBlockHashTerminalCondition blockHash(
+      final Hash blockHash, final Blockchain blockchain) {
+    return new FlexibleBlockHashTerminalCondition(blockHash, blockchain);
   }
 }

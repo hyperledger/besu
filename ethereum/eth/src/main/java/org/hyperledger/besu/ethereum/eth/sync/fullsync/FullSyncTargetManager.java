@@ -108,6 +108,6 @@ class FullSyncTargetManager extends SyncTargetManager {
 
   @Override
   public boolean shouldContinueDownloading() {
-    return terminationCondition.test(protocolContext.getBlockchain());
+    return terminationCondition.getAsBoolean();
   }
 }
