@@ -263,7 +263,7 @@ public class BlocksSubCommand implements Runnable {
           .coinbase(coinbase)
           .minTransactionGasPrice(minTransactionGasPrice)
           .extraData(extraData)
-          .enabled(false)
+          .miningEnabled(false)
           .stratumMiningEnabled(false)
           .stratumNetworkInterface("0.0.0.0")
           .stratumPort(8008)
