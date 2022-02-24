@@ -46,6 +46,7 @@ public enum RpcMethod {
 
   ENGINE_GET_PAYLOAD("engine_getPayloadV1"),
   ENGINE_EXECUTE_PAYLOAD("engine_executePayloadV1"),
+  ENGINE_NEW_PAYLOAD("engine_newPayloadV1"),
   ENGINE_FORKCHOICE_UPDATED("engine_forkchoiceUpdatedV1"),
 
   GOQUORUM_ETH_GET_QUORUM_PAYLOAD("eth_getQuorumPayload"),

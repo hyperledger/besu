@@ -361,12 +361,13 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         if (MAX_TTD_SEARCH_DEPTH < blockheader.getNumber() - parent.get().getNumber()) {
           return false;
         }
+        if (!parent.get().getDifficulty().equals(Difficulty.ZERO)) {
+          break;
+        }
         parent = blockchain.getBlockHeader(parent.get().getParentHash());
       }
 
-    } while (parent.isPresent()
-        && parent.get().getNumber() >= 0
-        && parent.get().getDifficulty().equals(Difficulty.ZERO));
+    } while (parent.isPresent());
 
     boolean resp =
         parent.filter(header -> isTerminalProofOfWorkBlock(header, protocolContext)).isPresent();
@@ -402,6 +403,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   @Override
   public boolean isBackwardSyncing() {
     return backwardsSyncContext.isSyncing();
+  }
+
+  @Override
+  public boolean isBackwardSyncing(final Block block) {
+    return isBackwardSyncing();
   }
 
   @Override
