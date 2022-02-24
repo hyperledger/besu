@@ -354,7 +354,7 @@ public final class RunnerTest {
       final Promise<String> promise = Promise.promise();
       final HttpClient httpClient = vertx.createHttpClient();
       httpClient.webSocket(
-          runnerBehind.getWebsocketPort().get(),
+          runnerBehind.getWebSocketPort().get(),
           WebSocketConfiguration.DEFAULT_WEBSOCKET_HOST,
           "/",
           ws -> {

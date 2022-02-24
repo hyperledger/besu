@@ -59,6 +59,8 @@ public class BesuNodeConfigurationBuilder {
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
+  private WebSocketConfiguration engineWebSocketConfiguration =
+      WebSocketConfiguration.createDefault();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private String keyFilePath = null;
@@ -89,6 +91,7 @@ public class BesuNodeConfigurationBuilder {
     // intermittent failures due to the fact that we're running over a real network
     networkingConfiguration.setInitiateConnectionsFrequency(5);
     engineRpcConfiguration.setPort(JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT);
+    engineWebSocketConfiguration.setPort(WebSocketConfiguration.DEFAULT_WEBSOCKET_ENGINE_PORT);
   }
 
   public BesuNodeConfigurationBuilder name(final String name) {
@@ -131,6 +134,12 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder engineJsonRpcConfiguration(
       final JsonRpcConfiguration engineConfig) {
     this.engineRpcConfiguration = engineConfig;
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder engineWebSocketConfiguration(
+      final WebSocketConfiguration engineConfig) {
+    this.engineWebSocketConfiguration = engineConfig;
     return this;
   }
 
@@ -470,6 +479,7 @@ public class BesuNodeConfigurationBuilder {
         jsonRpcConfiguration,
         Optional.of(engineRpcConfiguration),
         webSocketConfiguration,
+        Optional.of(engineWebSocketConfiguration),
         metricsConfiguration,
         permissioningConfiguration,
         Optional.ofNullable(keyFilePath),
