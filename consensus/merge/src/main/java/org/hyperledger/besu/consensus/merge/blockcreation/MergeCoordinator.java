@@ -405,6 +405,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @Override
+  public boolean isBackwardSyncing(final Block block) {
+    return isBackwardSyncing();
+  }
+
+  @Override
   public boolean isMiningBeforeMerge() {
     return miningParameters.isMiningEnabled();
   }
