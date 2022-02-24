@@ -339,7 +339,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             clock,
             metricsSystem,
             syncState,
-            miningParameters.getMinTransactionGasPrice(),
+            miningParameters,
             transactionPoolConfiguration);
 
     final List<PeerValidator> peerValidators = createPeerValidators(protocolSchedule);

@@ -419,7 +419,10 @@ public abstract class JsonBlockImporterTest {
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.valueOf(10))
         .miningParameters(
-            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).enabled(true).build())
+            new MiningParameters.Builder()
+                .minTransactionGasPrice(Wei.ZERO)
+                .miningEnabled(true)
+                .build())
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .privacyParameters(PrivacyParameters.DEFAULT)
