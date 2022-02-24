@@ -107,12 +107,7 @@ public class RpcEndpointServicePluginTest extends AcceptanceTestBase {
             .newCall(
                 new Request.Builder()
                     .post(body)
-                    .url(
-                        "http://"
-                            + node.getHostName()
-                            + ":"
-                            + node.getJsonRpcSocketPort().get()
-                            + "/")
+                    .url("http://" + node.getHostName() + ":" + node.getJsonRpcPort().get() + "/")
                     .build())
             .execute()
             .body()

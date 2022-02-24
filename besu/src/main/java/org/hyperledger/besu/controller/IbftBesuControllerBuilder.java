@@ -137,7 +137,8 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
-    final BftExecutors bftExecutors = BftExecutors.create(metricsSystem);
+    final BftExecutors bftExecutors =
+        BftExecutors.create(metricsSystem, BftExecutors.ConsensusType.IBFT);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftBlockCreatorFactory blockCreatorFactory =

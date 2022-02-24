@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,6 +20,7 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
+import org.hyperledger.besu.config.experimental.MergeConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -142,7 +143,13 @@ public class DefaultBlockchain implements MutableBlockchain {
         () -> chainHeadOmmerCount);
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
-    this.blockChoiceRule = heaviestChainBlockChoiceRule;
+    // TODO: FROMRAYONISM, need to account for fixed total difficulty
+    this.blockChoiceRule =
+        MergeConfigOptions.isMergeEnabled()
+            ? // always regard the new block as "worse" because we don't reorg anymore; the
+            // consensus node tells us what the head is through `setHead`
+            (newBlockHeader, currentBlockHeader) -> -1
+            : heaviestChainBlockChoiceRule;
   }
 
   public static MutableBlockchain createMutable(
@@ -192,6 +199,11 @@ public class DefaultBlockchain implements MutableBlockchain {
   @Override
   public ChainHead getChainHead() {
     return new ChainHead(chainHeader.getHash(), totalDifficulty, chainHeader.getNumber());
+  }
+
+  @Override
+  public Optional<Hash> getFinalized() {
+    return blockchainStorage.getFinalized();
   }
 
   @Override
@@ -375,7 +387,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private BlockAddedEvent handleChainReorg(
       final BlockchainStorage.Updater updater, final BlockWithReceipts newChainHeadWithReceipts) {
-    BlockWithReceipts oldChainWithReceipts = getBlockWithReceipts(chainHeader).get();
+    final BlockWithReceipts oldChainWithReceipts = getBlockWithReceipts(chainHeader).get();
     BlockWithReceipts currentOldChainWithReceipts = oldChainWithReceipts;
     BlockWithReceipts currentNewChainWithReceipts = newChainHeadWithReceipts;
 
@@ -494,14 +506,14 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public boolean rewindToBlock(final long blockNumber) {
-    final Optional<Hash> blockHash = blockchainStorage.getBlockHash(blockNumber);
-    if (blockHash.isEmpty()) {
-      return false;
-    }
+    return blockchainStorage.getBlockHash(blockNumber).map(this::rewindToBlock).orElse(false);
+  }
 
+  @Override
+  public boolean rewindToBlock(final Hash blockHash) {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
     try {
-      final BlockHeader oldBlockHeader = blockchainStorage.getBlockHeader(blockHash.get()).get();
+      final BlockHeader oldBlockHeader = blockchainStorage.getBlockHeader(blockHash).get();
       final BlockWithReceipts blockWithReceipts = getBlockWithReceipts(oldBlockHeader).get();
       final Block block = blockWithReceipts.getBlock();
 
@@ -516,6 +528,13 @@ public class DefaultBlockchain implements MutableBlockchain {
       updater.rollback();
       throw new IllegalStateException("Blockchain is missing data that should be present.", e);
     }
+  }
+
+  @Override
+  public void setFinalized(final Hash blockHash) {
+    final var updater = blockchainStorage.updater();
+    updater.setFinalized(blockHash);
+    updater.commit();
   }
 
   private void updateCacheForNewCanonicalHead(final Block block, final Difficulty uInt256) {

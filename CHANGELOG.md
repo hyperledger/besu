@@ -1,61 +1,62 @@
 # Changelog
-## 22.1.0
+## 22.1.1
 
-### 22.1.0 Breaking Changes
+### 22.1.1 Breaking Changes
 
 ### Additions and Improvements
-- Updated besu-native to version 0.4.3 [#3331](https://github.com/hyperledger/besu/pull/3331)
-- Refactor synchronizer to asynchronously retrieve blocks from peers, and to change peer when retrying to get a block. [#3326](https://github.com/hyperledger/besu/pull/3326)
-- Disable RocksDB TTL compactions [#3356](https://github.com/hyperledger/besu/pull/3356)
-- Add a websocket frame size configuration CLI parameter [#3368](https://github.com/hyperledger/besu/pull/3379)
-- Add `--ec-curve` parameter to export/export-address public-key subcommands [#3333](https://github.com/hyperledger/besu/pull/3333)
-- Merge: extend block creation and mining to support The Merge [#3412](https://github.com/hyperledger/besu/pull/3412)
-- Merge: backward sync [#3410](https://github.com/hyperledger/besu/pull/3410)
-- Merge: Extend validateAndProcessBlock to return an error message in case of failure, so it can be returned to the caller of ExecutePayload API [#3411](https://github.com/hyperledger/besu/pull/3411)
+- Allow optional RPC methods that bypass authentication [#3382](https://github.com/hyperledger/besu/pull/3382)
+- Execution layer (The Merge):
+  - Extend block creation and mining to support The Merge [#3412](https://github.com/hyperledger/besu/pull/3412)
+  - Backward sync [#3410](https://github.com/hyperledger/besu/pull/3410)
+  - Extend validateAndProcessBlock to return an error message in case of failure, so it can be returned to the caller of ExecutePayload API [#3411](https://github.com/hyperledger/besu/pull/3411)
+  - Persist latest finalized block [#2913](https://github.com/hyperledger/besu/issues/2913)
+  - Add PostMergeContext, and stop syncing after the swith to PoS [#3453](https://github.com/hyperledger/besu/pull/3453)
+  - Add header validation rules needed to validate The Merge blocks [#3454](https://github.com/hyperledger/besu/pull/3454)
+  - Add core components: controller builder, protocol scheduler, coordinator, block creator and processor. [#3461](https://github.com/hyperledger/besu/pull/3461)
+  - Execution specific RPC endpoint [#2914](https://github.com/hyperledger/besu/issues/2914), [#3350](https://github.com/hyperledger/besu/pull/3350)
+- QBFT consensus algorithm is production ready
 
 ### Bug Fixes
-- Prevent node from peering to itself [#3342](https://github.com/hyperledger/besu/pull/3342)
-- Fix an `IndexOutOfBoundsException` exception when getting block from peers. [#3304](https://github.com/hyperledger/besu/issues/3304)
-- Handle legacy eth64 without throwing null pointer exceptions [#3343](https://github.com/hyperledger/besu/pull/3343)
 
-## 22.1.0-RC3
-- Changing the order in which we traverse the word state tree during fast sync. This should improve fast sync during subsequent pivot changes.
+## 22.1.0
 
-### 22.1.0-RC3 Breaking Changes
+### Breaking Changes
+- Plugin API: BlockHeader.getBaseFee() method now returns an optional Wei instead of an optional Long [#3065](https://github.com/hyperledger/besu/issues/3065)
 - Removed deprecated hash variable `protected volatile Hash hash;` which was used for private transactions [#3110](https://github.com/hyperledger/besu/pull/3110)
 
 ### Additions and Improvements
+- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
+- Represent baseFee as Wei instead of long accordingly to the spec [#2785](https://github.com/hyperledger/besu/issues/2785)
+- Implements [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) to repurpose DIFFICULTY opcode after the merge as a source of entropy from the Beacon chain. [#3081](https://github.com/hyperledger/besu/issues/3081)
+- Re-order external services (e.g JsonRpcHttpService) to start before blocks start processing [#3118](https://github.com/hyperledger/besu/pull/3118)
+- Stream JSON RPC responses to avoid creating big JSON strings in memory [#3076](https://github.com/hyperledger/besu/pull/3076)
+- Ethereum Classic Mystique Hard Fork [#3256](https://github.com/hyperledger/besu/pull/3256)
 - Genesis file parameter `blockperiodseconds` is validated as a positive integer on startup to prevent unexpected runtime behaviour [#3186](https://github.com/hyperledger/besu/pull/3186)
 - Add option to require replay protection for locally submitted transactions [\#1975](https://github.com/hyperledger/besu/issues/1975)
 - Update to block header validation for IBFT and QBFT to support London fork EIP-1559 [#3251](https://github.com/hyperledger/besu/pull/3251)
 - Move into SLF4J as logging facade [#3285](https://github.com/hyperledger/besu/pull/3285)
+- Changing the order in which we traverse the word state tree during fast sync. This should improve fast sync during subsequent pivot changes.
+- Updated besu-native to version 0.4.3 [#3331](https://github.com/hyperledger/besu/pull/3331)
+- Refactor synchronizer to asynchronously retrieve blocks from peers, and to change peer when retrying to get a block. [#3326](https://github.com/hyperledger/besu/pull/3326)
+- Disable RocksDB TTL compactions [#3356](https://github.com/hyperledger/besu/pull/3356)
+- add a websocket frame size configuration CLI parameter [3368][https://github.com/hyperledger/besu/pull/3379]
+- Add `--ec-curve` parameter to export/export-address public-key subcommands [#3333](https://github.com/hyperledger/besu/pull/3333)
 
 ### Bug Fixes
+- Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
+- Make 'to' field optional in eth_call method according to the spec [#3177](https://github.com/hyperledger/besu/pull/3177)
+- Update to log4j 2.17.1. Resolves potential vulnerability only exploitable when using custom log4j configurations that are writable by untrusted users.
 - Fix regression on cors-origin star value
 - Fix for ethFeeHistory accepting hex values for blockCount
 - Fix a sync issue, when the chain downloader incorrectly shutdown when a task in the pipeline is cancelled. [#3319](https://github.com/hyperledger/besu/pull/3319)
+- add a websocket frame size configuration CLI parameter [3368][https://github.com/hyperledger/besu/pull/3379]
+- Prevent node from peering to itself [#3342](https://github.com/hyperledger/besu/pull/3342)
+- Fix an `IndexOutOfBoundsException` exception when getting block from peers. [#3304](https://github.com/hyperledger/besu/issues/3304)
+- Handle legacy eth64 without throwing null pointer exceptions [#3343](https://github.com/hyperledger/besu/pull/3343)
 
 ### Download Links
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC3/besu-22.1.0-RC3.tar.gz \ SHA256 fb521c64529b5d19cc8121f91a14087a89a814a83ea1f372f15c0ebdba01bb3a
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC3/besu-22.1.0-RC3.zip \ SHA256 f0bcad0275f15078dad1dcb87f49e7c86d754e4346a06e8ac2f9a690c4b8c088
-
-## 22.1.0-RC2
-
-### 22.1.0-RC2 Breaking Changes
-- Removed deprecated hash variable `protected volatile Hash hash;` which was used for private transactions [#3110](https://github.com/hyperledger/besu/pull/3110)
-
-### Additions and Improvements
-- Re-order external services (e.g JsonRpcHttpService) to start before blocks start processing [#3118](https://github.com/hyperledger/besu/pull/3118)
-- Stream JSON RPC responses to avoid creating big JSON strings in memory [#3076](https://github.com/hyperledger/besu/pull/3076)
-- Ethereum Classic Mystique Hard Fork [#3256](https://github.com/hyperledger/besu/pull/3256)
-
-### Bug Fixes
-- Make 'to' field optional in eth_call method according to the spec [#3177](https://github.com/hyperledger/besu/pull/3177)
-- Update to log4j 2.17.1. Resolves potential vulnerability only exploitable when using custom log4j configurations that are writable by untrusted users.
-
-### Download Links
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC2/besu-22.1.0-RC2.zip \ SHA256: 86c97c935d70857d210016eb73f518fddd5dcef0c7928c5ede4622bf62c69d17
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC2/besu-22.1.0-RC2.tar.gz \ SHA256 327c14e1829d39e65f822478b166519e781ac4714f54da39ba26d21ba5729a1e
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0/besu-22.1.0.tar.gz \ SHA256 232bd7f274691ca14c26289fdc289d3fcdf69426dd96e2fa1601f4d079645c2f
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0/besu-22.1.0.zip \ SHA256 1b701ff5b647b64aff3d73d6f1fe3fdf73f14adbe31504011eff1660ab56ad2b
 
 ## 21.10.9
 
@@ -107,24 +108,6 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.6/besu-21.10.6
 ### Download Links
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.tar.gz \ SHA256 0d1b6ed8f3e1325ad0d4acabad63c192385e6dcbefe40dc6b647e8ad106445a8
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.10.5/besu-21.10.5.zip \ SHA256 a1689a8a65c4c6f633b686983a6a1653e7ac86e742ad2ec6351176482d6e0c57
-
-## 22.1.0-RC1
-
-### 22.1.0-RC1 Breaking Changes
-- Plugin API: BlockHeader.getBaseFee() method now returns an optional Wei instead of an optional Long [#3065](https://github.com/hyperledger/besu/issues/3065)
-
-### Additions and Improvements
-- Add support for additional JWT authentication algorithms [#3017](https://github.com/hyperledger/besu/pull/3017)
-- Represent baseFee as Wei instead of long accordingly to the spec [#2785](https://github.com/hyperledger/besu/issues/2785)
-- Implements [EIP-4399](https://eips.ethereum.org/EIPS/eip-4399) to repurpose DIFFICULTY opcode after the merge as a source of entropy from the Beacon chain. [#3081](https://github.com/hyperledger/besu/issues/3081)
-
-### Bug Fixes
-- Update log4j to 2.16.0.
-- Change the base docker image from Debian Buster to Ubuntu 20.04 [#3171](https://github.com/hyperledger/besu/issues/3171) fixes [#3045](https://github.com/hyperledger/besu/issues/3045)
-
-### Download Links
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC1/besu-22.1.0-RC1.zip \ SHA256: 8f471a30a7d22a6830c5f7ed87d1f2110bdaeb6751007ffa0fb44783a7c80850
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.0-RC1/besu-22.1.0-RC1.tar.gz \ SHA256 302ead51c85bf282047104974968ce88ce626df609082700e6e187b26180e0fd
 
 ## 21.10.4
 

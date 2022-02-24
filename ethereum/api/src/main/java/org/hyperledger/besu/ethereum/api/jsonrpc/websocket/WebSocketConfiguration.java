@@ -38,6 +38,7 @@ public class WebSocketConfiguration {
   private int port;
   private String host;
   private List<String> rpcApis;
+  private List<String> rpcApisNoAuth = Collections.emptyList();
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
@@ -91,6 +92,14 @@ public class WebSocketConfiguration {
 
   public void setRpcApis(final List<String> rpcApis) {
     this.rpcApis = rpcApis;
+  }
+
+  public Collection<String> getRpcApisNoAuth() {
+    return rpcApisNoAuth;
+  }
+
+  public void setRpcApisNoAuth(final List<String> rpcApis) {
+    this.rpcApisNoAuth = rpcApis;
   }
 
   public boolean isAuthenticationEnabled() {

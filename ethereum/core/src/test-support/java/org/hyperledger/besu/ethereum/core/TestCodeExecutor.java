@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -49,14 +50,19 @@ public class TestCodeExecutor {
   }
 
   public MessageFrame executeCode(
-      final String code, final long gasLimit, final Consumer<MutableAccount> accountSetup) {
+      final String codeHexString,
+      final long gasLimit,
+      final Consumer<MutableAccount> accountSetup) {
     final ProtocolSpec protocolSpec = fixture.getProtocolSchedule().getByBlockNumber(0);
     final WorldUpdater worldUpdater =
         createInitialWorldState(accountSetup, fixture.getStateArchive());
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
 
+    final EVM evm = protocolSpec.getEvm();
     final MessageCallProcessor messageCallProcessor =
-        new MessageCallProcessor(protocolSpec.getEvm(), new PrecompileContractRegistry());
+        new MessageCallProcessor(evm, new PrecompileContractRegistry());
+    final Bytes codeBytes = Bytes.fromHexString(codeHexString);
+    final Code code = evm.getCode(Hash.hash(codeBytes), codeBytes);
 
     final Transaction transaction =
         Transaction.builder()
@@ -85,7 +91,7 @@ public class TestCodeExecutor {
             .inputData(transaction.getPayload())
             .sender(SENDER_ADDRESS)
             .value(transaction.getValue())
-            .code(new Code(Bytes.fromHexString(code), Hash.EMPTY))
+            .code(code)
             .blockHeader(blockHeader)
             .depth(0)
             .build();

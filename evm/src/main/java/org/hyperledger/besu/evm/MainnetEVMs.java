@@ -80,8 +80,8 @@ import org.hyperledger.besu.evm.operation.OrOperation;
 import org.hyperledger.besu.evm.operation.OriginOperation;
 import org.hyperledger.besu.evm.operation.PCOperation;
 import org.hyperledger.besu.evm.operation.PopOperation;
+import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
-import org.hyperledger.besu.evm.operation.RandomOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataCopyOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataSizeOperation;
 import org.hyperledger.besu.evm.operation.ReturnOperation;
@@ -393,6 +393,6 @@ public abstract class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerLondonOperations(registry, gasCalculator, chainID);
-    registry.put(new RandomOperation(gasCalculator));
+    registry.put(new PrevRanDaoOperation(gasCalculator));
   }
 }

@@ -53,7 +53,7 @@ public class JumpiOperation extends AbstractFixedCostOperation {
         return invalidJumpResponse;
       }
       final Code code = frame.getCode();
-      if (!evm.isValidJumpDestination(jumpDestination, code)) {
+      if (code.isJumpDestInvalid(jumpDestination)) {
         return invalidJumpResponse;
       }
       frame.setPC(jumpDestination);
