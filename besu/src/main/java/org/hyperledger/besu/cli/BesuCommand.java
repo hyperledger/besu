@@ -699,10 +699,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer rpcWsPort = DEFAULT_WEBSOCKET_PORT;
 
   @Option(
-          names = {"--engine-rpc-ws-port"},
-          paramLabel = MANDATORY_PORT_FORMAT_HELP,
-          description = "Port for Execution Engine JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
-          arity = "1")
+      names = {"--engine-rpc-ws-port"},
+      paramLabel = MANDATORY_PORT_FORMAT_HELP,
+      description =
+          "Port for Execution Engine JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
+      arity = "1")
   private final Integer engineRpcWsPort = DEFAULT_WEBSOCKET_ENGINE_PORT;
 
   @Option(
@@ -1200,6 +1201,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private JsonRpcConfiguration engineJsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
+  private WebSocketConfiguration engineWebSocketConfiguration;
   private ApiConfiguration apiConfiguration;
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
@@ -1503,6 +1505,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRpcConfiguration,
         engineJsonRpcConfiguration,
         webSocketConfiguration,
+        engineWebSocketConfiguration,
         apiConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
@@ -1794,11 +1797,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     checkGoQuorumCompatibilityConfig(ethNetworkConfig);
 
-    jsonRpcConfiguration = jsonRpcConfiguration();
-    engineJsonRpcConfiguration = engineJsonRpcConfiguration();
+    jsonRpcConfiguration = jsonRpcConfiguration(rpcHttpPort, rpcHttpApis, hostsAllowlist);
+    engineJsonRpcConfiguration =
+        createEngineJsonRpcConfiguration(engineRpcHttpPort, engineHostsAllowlist);
     p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration = graphQLConfiguration();
-    webSocketConfiguration = webSocketConfiguration();
+    webSocketConfiguration = webSocketConfiguration(rpcWsPort, rpcWsApis, hostsAllowlist);
+    engineWebSocketConfiguration =
+        webSocketConfiguration(
+            engineRpcWsPort, Arrays.asList("ENGINE", "ETH"), engineHostsAllowlist);
     apiConfiguration = apiConfiguration();
     // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
     if (!hostsWhitelist.isEmpty()) {
@@ -1959,25 +1966,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return graphQLConfiguration;
   }
 
-  private JsonRpcConfiguration engineJsonRpcConfiguration() {
-    final JsonRpcConfiguration engineConfig = JsonRpcConfiguration.createDefault();
-    engineConfig.setEnabled(isRpcHttpEnabled);
-    engineConfig.setHost(rpcHttpHost);
-    engineConfig.setPort(engineRpcHttpPort);
-    engineConfig.setMaxActiveConnections(rpcHttpMaxConnections);
-    engineConfig.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
-    engineConfig.setRpcApis(Arrays.asList("ENGINE", "ETH"));
-    engineConfig.setHostsAllowlist(engineHostsAllowlist);
-    engineConfig.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
-    engineConfig.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
-    engineConfig.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
-    engineConfig.setAuthenticationAlgorithm(rpcHttpAuthenticationAlgorithm);
-    engineConfig.setTlsConfiguration(rpcHttpTlsConfiguration());
-    engineConfig.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
+  private JsonRpcConfiguration createEngineJsonRpcConfiguration(
+      final Integer listenPort, final List<String> allowCallsFrom) {
+    JsonRpcConfiguration engineConfig =
+        jsonRpcConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
     return engineConfig;
   }
 
-  private JsonRpcConfiguration jsonRpcConfiguration() {
+  private JsonRpcConfiguration jsonRpcConfiguration(
+      final Integer listenPort, final List<String> apiGroups, final List<String> allowCallsFrom) {
     checkRpcTlsClientAuthOptionsDependencies();
     checkRpcTlsOptionsDependencies();
     checkRpcHttpOptionsDependencies();
@@ -2002,13 +1999,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
     jsonRpcConfiguration.setHost(rpcHttpHost);
-    jsonRpcConfiguration.setPort(rpcHttpPort);
+    jsonRpcConfiguration.setPort(listenPort);
     jsonRpcConfiguration.setMaxActiveConnections(rpcHttpMaxConnections);
     jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
-    jsonRpcConfiguration.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
+    jsonRpcConfiguration.setRpcApis(apiGroups.stream().distinct().collect(Collectors.toList()));
     jsonRpcConfiguration.setNoAuthRpcApis(
         rpcHttpApiMethodsNoAuth.stream().distinct().collect(Collectors.toList()));
-    jsonRpcConfiguration.setHostsAllowlist(hostsAllowlist);
+    jsonRpcConfiguration.setHostsAllowlist(allowCallsFrom);
     jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
@@ -2154,7 +2151,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return isRpcHttpEnabled && isRpcHttpTlsEnabled;
   }
 
-  private WebSocketConfiguration webSocketConfiguration() {
+  private WebSocketConfiguration webSocketConfiguration(
+      final Integer listenPort, final List<String> apiGroups, final List<String> allowCallsFrom) {
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -2195,15 +2193,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
     webSocketConfiguration.setEnabled(isRpcWsEnabled);
     webSocketConfiguration.setHost(rpcWsHost);
-    webSocketConfiguration.setPort(rpcWsPort);
+    webSocketConfiguration.setPort(listenPort);
     webSocketConfiguration.setMaxFrameSize(rpcWsMaxFrameSize);
     webSocketConfiguration.setMaxActiveConnections(rpcWsMaxConnections);
-    webSocketConfiguration.setRpcApis(rpcWsApis);
+    webSocketConfiguration.setRpcApis(apiGroups);
     webSocketConfiguration.setRpcApisNoAuth(
         rpcWsApiMethodsNoAuth.stream().distinct().collect(Collectors.toList()));
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
-    webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
+    webSocketConfiguration.setHostsAllowlist(allowCallsFrom);
     webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
     webSocketConfiguration.setAuthenticationAlgorithm(rpcWebsocketsAuthenticationAlgorithm);
     webSocketConfiguration.setTimeoutSec(unstableRPCOptions.getWsTimeoutSec());
@@ -2574,6 +2572,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final JsonRpcConfiguration engineJsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
+      final WebSocketConfiguration engineWebSocketConfiguration,
       final ApiConfiguration apiConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
@@ -2609,6 +2608,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .engineJsonRpcConfiguration(engineJsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
+            .engineWebSocketConfiguration(engineWebSocketConfiguration)
             .apiConfiguration(apiConfiguration)
             .pidPath(pidPath)
             .dataDir(dataDir())
