@@ -46,6 +46,7 @@ import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -2568,7 +2569,9 @@ public class BesuCommandTest extends CommandTestAbstract {
         String.valueOf(port),
         "--rpc-http-tls-cipher-suite",
         cipherSuites);
-    verify(mockLogger)
+    verify(
+            mockLogger,
+            times(2)) // this is verified for both the full suite of apis, and the engine group.
         .warn(
             "{} has been ignored because {} was not defined on the command line.",
             "--rpc-http-tls-cipher-suite",
@@ -3031,8 +3034,9 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void rpcWsApiPropertyMustBeUsed() {
-    parseCommand("--rpc-ws-enabled", "--rpc-ws-api", "ETH, NET");
+    TestBesuCommand command = parseCommand("--rpc-ws-enabled", "--rpc-ws-api", "ETH, NET");
 
+    assertThat(command).isNotNull();
     verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
