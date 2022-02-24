@@ -30,7 +30,7 @@ public class PrevRanDaoOperation extends AbstractFixedCostOperation {
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     if (frame.getBlockValues().getDifficultyBytes() == null
         || frame.getBlockValues().getDifficultyBytes().equals(UInt256.ZERO)) {
-      frame.pushStackItem(frame.getBlockValues().getMixHashOrRandom());
+      frame.pushStackItem(frame.getBlockValues().getMixHashOrPrevRandao());
     } else {
       frame.pushStackItem(frame.getBlockValues().getDifficultyBytes());
     }

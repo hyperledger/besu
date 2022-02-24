@@ -87,8 +87,8 @@ public class EngineGetPayloadTest {
               assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResult.class);
               EngineGetPayloadResult res = (EngineGetPayloadResult) r.getResult();
               assertThat(res.getHash()).isEqualTo(mockHeader.getHash().toString());
-              assertThat(res.getRandom())
-                  .isEqualTo(mockHeader.getRandom().map(Bytes32::toString).orElse(""));
+              assertThat(res.getPrevRandao())
+                  .isEqualTo(mockHeader.getPrevRandao().map(Bytes32::toString).orElse(""));
             });
   }
 
