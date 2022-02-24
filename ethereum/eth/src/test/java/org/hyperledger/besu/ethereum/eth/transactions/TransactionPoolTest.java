@@ -21,7 +21,6 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.ValidationResult.valid;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.NONCE_TOO_LOW;
 import static org.mockito.ArgumentMatchers.any;
@@ -48,6 +47,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -100,6 +100,7 @@ public class TransactionPoolTest {
   @Mock private PendingTransactionListener listener;
   @Mock private TransactionPool.TransactionBatchAddedListener batchAddedListener;
   @Mock private TransactionPool.TransactionBatchAddedListener pendingBatchAddedListener;
+  @Mock private MiningParameters miningParameters;
 
   @SuppressWarnings("unchecked")
   @Mock
@@ -150,6 +151,7 @@ public class TransactionPoolTest {
     peerPendingTransactionTracker = mock(PeerPendingTransactionTracker.class);
     transactionPool = createTransactionPool();
     blockchain.observeBlockAdded(transactionPool);
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.of(2));
   }
 
   private TransactionPool createTransactionPool() {
@@ -173,7 +175,7 @@ public class TransactionPoolTest {
         ethContext,
         peerTransactionTracker,
         peerPendingTransactionTracker,
-        Wei.of(2),
+        miningParameters,
         metricsSystem,
         config);
   }
@@ -429,24 +431,6 @@ public class TransactionPoolTest {
   }
 
   @Test
-  public void shouldNotRejectLocalTransactionsWhenGasPriceBelowMinimum() {
-    final Transaction transaction =
-        new TransactionTestFixture()
-            .nonce(1)
-            .gasLimit(0)
-            .gasPrice(Wei.of(1))
-            .createTransaction(KEY_PAIR1);
-
-    when(transactionValidator.validate(eq(transaction), any(Optional.class), any()))
-        .thenReturn(ValidationResult.valid());
-
-    final ValidationResult<TransactionInvalidReason> result =
-        transactionPool.addLocalTransaction(transaction);
-
-    assertThat(result).isEqualTo(ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
-  }
-
-  @Test
   public void shouldNotAddRemoteTransactionsThatAreInvalidAccordingToInvariantChecks() {
     givenTransactionIsValid(transaction2);
     when(transactionValidator.validate(eq(transaction1), any(Optional.class), any()))
@@ -551,7 +535,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);
 
@@ -690,7 +674,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);
 
@@ -749,7 +733,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);
 
@@ -811,7 +795,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ZERO).build());
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
@@ -848,7 +832,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ONE).build());
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
@@ -885,7 +869,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ONE).build());
     // pre-London feemarket
@@ -925,7 +909,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
 
@@ -966,7 +950,7 @@ public class TransactionPoolTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
 
@@ -984,6 +968,44 @@ public class TransactionPoolTest {
         .isEqualTo(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
     assertThat(result38.getInvalidReason())
         .isEqualTo(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
+  }
+
+  @Test
+  public void shouldAcceptZeroGasPriceFrontierTransactionsWhenMining() {
+    when(miningParameters.isMiningEnabled()).thenReturn(true);
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .type(TransactionType.FRONTIER)
+            .gasPrice(Wei.ZERO)
+            .value(Wei.ONE)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction);
+
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transaction);
+
+    assertThat(result).isEqualTo(ValidationResult.valid());
+  }
+
+  @Test
+  public void shouldRejectZeroGasPriceFrontierTransactionsWhenNotMining() {
+    when(miningParameters.isMiningEnabled()).thenReturn(false);
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .type(TransactionType.FRONTIER)
+            .gasPrice(Wei.ZERO)
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction);
+
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transaction);
+
+    assertThat(result.getInvalidReason()).isEqualTo(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
   }
 
   private void assertTransactionPending(final Transaction t) {

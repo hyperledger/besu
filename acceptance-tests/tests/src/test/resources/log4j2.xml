@@ -81,8 +81,6 @@
       <AppenderRef ref="SubProcessConsole" />
       <AppenderRef ref="PerTestSubprocessFile" />
     </Logger>
-    <Logger name="net.consensys.orion" level="OFF" additivity="false">
-    </Logger>
     <Root level="${sys:root.log.level}">
       <AppenderRef ref="Console" />
       <AppenderRef ref="PerTestFile" />

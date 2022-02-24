@@ -44,6 +44,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -878,7 +879,7 @@ public class BesuCommandTest extends CommandTestAbstract {
                 .coinbase(Address.fromHexString(expectedCoinbase))
                 .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
                 .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
-                .enabled(false)
+                .miningEnabled(false)
                 .build());
   }
 
@@ -895,7 +896,7 @@ public class BesuCommandTest extends CommandTestAbstract {
                 .coinbase(Address.fromHexString(expectedCoinbase))
                 .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
                 .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
-                .enabled(false)
+                .miningEnabled(false)
                 .build());
   }
 
@@ -3339,7 +3340,20 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void miningOptionsRequiresServiceToBeEnabled() {
+  public void stratumMiningOptionsRequiresServiceToBeEnabled() {
+
+    parseCommand("--miner-stratum-enabled");
+
+    verifyOptionsConstraintLoggerCall("--miner-enabled", "--miner-stratum-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith(
+            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
+  }
+
+  @Test
+  public void blockProducingOptionsWarnsMinerShouldBeEnabled() {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
     parseCommand(
@@ -3348,16 +3362,37 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--min-gas-price",
         "42",
         "--miner-extra-data",
-        "0x1122334455667788990011223344556677889900112233445566778899001122",
-        "--miner-stratum-enabled");
+        "0x1122334455667788990011223344556677889900112233445566778899001122");
 
     verifyOptionsConstraintLoggerCall(
-        "--miner-enabled", "--miner-coinbase", "--miner-extra-data", "--miner-stratum-enabled");
+        "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith(
-            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void blockProducingOptionsDoNotWarnWhenMergeEnabled() {
+
+    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
+    parseCommand(
+        "--Xmerge-support",
+        "true",
+        "--miner-coinbase",
+        requestedCoinbase.toString(),
+        "--min-gas-price",
+        "42",
+        "--miner-extra-data",
+        "0x1122334455667788990011223344556677889900112233445566778899001122");
+
+    verify(mockLogger, atMost(0))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
