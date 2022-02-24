@@ -59,11 +59,11 @@ public class PostMergeContextTest {
 
   @Test
   public void switchFromPoWToPoSStopSyncAndCallsSubscribers() {
-    when(mockSyncState.isStoppedAtTerminalDifficulty()).thenReturn(Optional.of(Boolean.TRUE));
+    when(mockSyncState.hasReachedTerminalDifficulty()).thenReturn(Optional.of(Boolean.TRUE));
 
     postMergeContext.setIsPostMerge(Difficulty.of(10L));
 
-    verify(mockSyncState).setStoppedAtTerminalDifficulty(true);
+    verify(mockSyncState).setReachedTerminalDifficulty(true);
     assertThat(postMergeContext.isPostMerge()).isTrue();
     assertThat(postMergeContext.isSyncing()).isFalse();
     assertThat(mergeStateChangeCollector.stateChanges).containsExactly(true);
@@ -71,11 +71,11 @@ public class PostMergeContextTest {
 
   @Test
   public void setPrePoSStateNotStopSync() {
-    when(mockSyncState.isStoppedAtTerminalDifficulty()).thenReturn(Optional.of(Boolean.FALSE));
+    when(mockSyncState.hasReachedTerminalDifficulty()).thenReturn(Optional.of(Boolean.FALSE));
 
     postMergeContext.setIsPostMerge(Difficulty.of(9L));
 
-    verify(mockSyncState, never()).setStoppedAtTerminalDifficulty(false);
+    verify(mockSyncState, never()).setReachedTerminalDifficulty(false);
     assertThat(postMergeContext.isPostMerge()).isFalse();
     assertThat(postMergeContext.isSyncing()).isTrue();
     assertThat(mergeStateChangeCollector.stateChanges).containsExactly(false);

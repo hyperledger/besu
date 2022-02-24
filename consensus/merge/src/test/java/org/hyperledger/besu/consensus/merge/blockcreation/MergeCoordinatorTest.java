@@ -326,17 +326,27 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void ancestorIsValidTerminalProofOfWork() {
     final long howDeep = 100L;
     assertThat(
-            terminalAncestorMock(howDeep)
+            terminalAncestorMock(howDeep, true)
                 .ancestorIsValidTerminalProofOfWork(
                     new BlockHeaderTestFixture().number(howDeep).buildHeader()))
         .isTrue();
   }
 
   @Test
-  public void ancestorNotFoundValidTerminalProofOfWork() {
+  public void ancestorExceedsDepthValidTerminalProofOfWork() {
     final long howDeep = MergeCoordinator.MAX_TTD_SEARCH_DEPTH + 2;
     assertThat(
-            terminalAncestorMock(howDeep)
+            terminalAncestorMock(howDeep, true)
+                .ancestorIsValidTerminalProofOfWork(
+                    new BlockHeaderTestFixture().number(howDeep).buildHeader()))
+        .isFalse();
+  }
+
+  @Test
+  public void ancestorNotFoundValidTerminalProofOfWork() {
+    final long howDeep = 10L;
+    assertThat(
+            terminalAncestorMock(howDeep, false)
                 .ancestorIsValidTerminalProofOfWork(
                     new BlockHeaderTestFixture().number(howDeep).buildHeader()))
         .isFalse();
@@ -435,15 +445,21 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .buildHeader();
   }
 
-  MergeCoordinator terminalAncestorMock(final long howDeepBeforeTerminal) {
+  MergeCoordinator terminalAncestorMock(final long chainDepth, final boolean hasTerminalPoW) {
     final Difficulty mockTTD = Difficulty.of(1000);
     BlockHeaderTestFixture builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
-
-    BlockHeader terminal = builder.number(0L).difficulty(mockTTD).buildHeader();
     MutableBlockchain mockBlockchain = mock(MutableBlockchain.class);
 
+    BlockHeader terminal =
+        spy(
+            builder
+                .number(0L)
+                .difficulty(hasTerminalPoW ? mockTTD : Difficulty.ZERO)
+                .buildHeader());
+    when(terminal.getParentHash()).thenReturn(Hash.ZERO);
+
     // return decreasing numbered blocks:
-    final var invocations = new AtomicLong(howDeepBeforeTerminal);
+    final var invocations = new AtomicLong(chainDepth);
     when(mockBlockchain.getBlockHeader(any()))
         .thenAnswer(
             z ->
@@ -457,6 +473,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     // mock total difficulty for isTerminalProofOfWorkBlock invocation:
     when(mockBlockchain.getTotalDifficultyByHash(any())).thenReturn(Optional.of(Difficulty.ZERO));
+    when(mockBlockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.empty());
 
     var mockContext = mock(MergeContext.class);
     when(mockContext.getTerminalTotalDifficulty()).thenReturn(mockTTD);
