@@ -251,17 +251,21 @@ public class Runner implements AutoCloseable {
               });
     }
 
-    if (getJsonRpcPort().isPresent()) {
-      properties.setProperty("json-rpc", String.valueOf(getJsonRpcPort().get()));
+    Optional<Integer> port = getJsonRpcPort();
+    if (port.isPresent()) {
+      properties.setProperty("json-rpc", String.valueOf(port.get()));
     }
-    if (getGraphQLHttpPort().isPresent()) {
-      properties.setProperty("graphql-http", String.valueOf(getGraphQLHttpPort().get()));
+    port = getGraphQLHttpPort();
+    if (port.isPresent()) {
+      properties.setProperty("graphql-http", String.valueOf(port.get()));
     }
-    if (getWebSocketPort().isPresent()) {
-      properties.setProperty("ws-rpc", String.valueOf(getWebSocketPort().get()));
+    port = getWebSocketPort();
+    if (port.isPresent()) {
+      properties.setProperty("ws-rpc", String.valueOf(port.get()));
     }
-    if (getMetricsPort().isPresent()) {
-      properties.setProperty("metrics", String.valueOf(getMetricsPort().get()));
+    port = getMetricsPort();
+    if (port.isPresent()) {
+      properties.setProperty("metrics", String.valueOf(port.get()));
     }
     // create besu.ports file
     createBesuFile(
