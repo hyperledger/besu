@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
+import static org.hyperledger.besu.ethereum.api.util.TraceUtils.buildTraceOptions;
+import static org.hyperledger.besu.ethereum.api.util.TraceUtils.buildTransactionValidationParams;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
@@ -27,10 +31,7 @@ import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
 import org.hyperledger.besu.ethereum.api.util.TraceUtils;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -75,14 +76,12 @@ public class TraceRawTransaction implements JsonRpcMethod {
     final Transaction transaction;
     try {
       transaction = DomainObjectDecodeUtils.decodeRawTransaction(rawTransaction);
+      LOG.trace("Received raw transaction {}", transaction);
     } catch (final RLPException | IllegalArgumentException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    LOG.trace("Received local transaction {}", transaction);
-
-    // second param is the trace type/s
     final TraceTypeParameter traceTypeParameter =
         requestContext.getRequiredParameter(1, TraceTypeParameter.class);
 
@@ -96,7 +95,7 @@ public class TraceRawTransaction implements JsonRpcMethod {
             blockchainQueries.headBlockNumber());
 
     if (maybeSimulatorResult.isEmpty()) {
-      throw new IllegalStateException("Invalid transaction simulator result.");
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
     }
 
     final TransactionTrace transactionTrace =
@@ -110,25 +109,6 @@ public class TraceRawTransaction implements JsonRpcMethod {
         TraceUtils.getTraceCallResult(
             protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block);
 
-    if (response instanceof JsonRpcErrorResponse) {
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), ((JsonRpcErrorResponse) response).getError());
-    }
-
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
-  }
-
-  private TransactionValidationParams buildTransactionValidationParams() {
-    return ImmutableTransactionValidationParams.builder()
-        .from(TransactionValidationParams.transactionSimulator())
-        .build();
-  }
-
-  private TraceOptions buildTraceOptions(final Set<TraceTypeParameter.TraceType> traceTypes) {
-    return new TraceOptions(
-        traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF),
-        false,
-        traceTypes.contains(TraceTypeParameter.TraceType.TRACE)
-            || traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE));
   }
 }

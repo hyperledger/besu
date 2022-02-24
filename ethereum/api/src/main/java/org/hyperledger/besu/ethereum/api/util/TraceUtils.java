@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.util;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType.VM_TRACE;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceCallResult;
@@ -27,7 +28,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.M
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 
 import java.util.Optional;
@@ -75,5 +79,19 @@ public class TraceUtils {
     }
 
     return MAPPER_IGNORE_REVERT_REASON.valueToTree(builder.build());
+  }
+
+  public static TransactionValidationParams buildTransactionValidationParams() {
+    return ImmutableTransactionValidationParams.builder()
+        .from(TransactionValidationParams.transactionSimulator())
+        .build();
+  }
+
+  public static TraceOptions buildTraceOptions(final Set<TraceTypeParameter.TraceType> traceTypes) {
+    return new TraceOptions(
+        traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF),
+        false,
+        traceTypes.contains(TraceTypeParameter.TraceType.TRACE)
+            || traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE));
   }
 }
