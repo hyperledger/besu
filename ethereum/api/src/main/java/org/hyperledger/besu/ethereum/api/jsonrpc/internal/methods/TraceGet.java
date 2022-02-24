@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.ethereum.api.util.TraceUtil.arrayNodeFromTraceStream;
 import static org.hyperledger.besu.ethereum.api.util.TraceUtil.resultByTransactionHash;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -26,8 +25,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class TraceGet implements JsonRpcMethod {
   private final Supplier<BlockTracer> blockTracerSupplier;
@@ -51,13 +51,17 @@ public class TraceGet implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Hash transactionHash = requestContext.getRequiredParameter(0, Hash.class);
-    final Integer[] traceNumbers = requestContext.getRequiredParameter(1, Integer[].class);
+    final List<?> traceNumbersAsStrings = requestContext.getRequiredParameter(1, List.class);
+    final List<Integer> traceNumbers =
+        traceNumbersAsStrings.stream()
+            .map(t -> Integer.parseInt(((String) t).substring(2), 16))
+            .collect(Collectors.toList());
 
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
-        arrayNodeFromTraceStream(
-            resultByTransactionHash(
-                    transactionHash, blockchainQueries, blockTracerSupplier, protocolSchedule)
-                .filter(trace -> trace.getTraceAddress().equals(Arrays.asList(traceNumbers)))));
+        resultByTransactionHash(
+                transactionHash, blockchainQueries, blockTracerSupplier, protocolSchedule)
+            .filter(trace -> trace.getTraceAddress().equals(traceNumbers))
+            .findFirst());
   }
 }

@@ -48,7 +48,6 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   @Override
   protected String getApiGroup() {
-    // Disable TRACE functionality while under development
     return RpcApis.TRACE.name();
   }
 
