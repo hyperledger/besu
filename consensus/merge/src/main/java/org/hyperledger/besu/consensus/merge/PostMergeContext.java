@@ -59,7 +59,7 @@ public class PostMergeContext implements MergeContext {
 
   public static PostMergeContext get() {
     if (singleton.get() == null) {
-      singleton.set(new PostMergeContext());
+      singleton.compareAndSet(null, new PostMergeContext());
     }
     return singleton.get();
   }
