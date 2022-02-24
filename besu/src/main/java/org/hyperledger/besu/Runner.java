@@ -257,8 +257,8 @@ public class Runner implements AutoCloseable {
     if (getGraphQLHttpPort().isPresent()) {
       properties.setProperty("graphql-http", String.valueOf(getGraphQLHttpPort().get()));
     }
-    if (getWebsocketPort().isPresent()) {
-      properties.setProperty("ws-rpc", String.valueOf(getWebsocketPort().get()));
+    if (getWebSocketPort().isPresent()) {
+      properties.setProperty("ws-rpc", String.valueOf(getWebSocketPort().get()));
     }
     if (getMetricsPort().isPresent()) {
       properties.setProperty("metrics", String.valueOf(getMetricsPort().get()));
@@ -324,7 +324,7 @@ public class Runner implements AutoCloseable {
     return graphQLHttp.map(service -> service.socketAddress().getPort());
   }
 
-  public Optional<Integer> getWebsocketPort() {
+  public Optional<Integer> getWebSocketPort() {
     return webSocketRpc.map(service -> service.socketAddress().getPort());
   }
 

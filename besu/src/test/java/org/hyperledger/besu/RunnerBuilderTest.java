@@ -289,7 +289,7 @@ public final class RunnerBuilderTest {
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .build();
 
-    assertThat(runner.getWebsocketPort()).isPresent();
+    assertThat(runner.getWebSocketPort()).isPresent();
     assertThat(runner.getEngineWebsocketPort()).isPresent();
   }
 
