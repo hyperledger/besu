@@ -327,7 +327,7 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getTimestamp(),
         pluginBlockHeader.getExtraData(),
         pluginBlockHeader.getBaseFee().map(Wei::fromQuantity).orElse(null),
-        pluginBlockHeader.getRandom().orElse(null),
+        pluginBlockHeader.getPrevRandao().orElse(null),
         pluginBlockHeader.getNonce(),
         blockHeaderFunctions);
   }

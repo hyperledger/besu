@@ -55,7 +55,7 @@ public class EngineGetPayloadTest {
   private static final PayloadIdentifier mockPid =
       PayloadIdentifier.forPayloadParams(Hash.ZERO, 1337L);
   private static final BlockHeader mockHeader =
-      new BlockHeaderTestFixture().random(Bytes32.random()).buildHeader();
+      new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
   private static final Block mockBlock =
       new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
 

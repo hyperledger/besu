@@ -90,7 +90,7 @@ public class BlockHeaderBuilder {
         .baseFee(header.getBaseFee().orElse(null))
         .mixHash(header.getMixHash())
         .nonce(header.getNonce())
-        .random(header.getPrevRandao().orElse(null));
+        .prevRandao(header.getPrevRandao().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -110,7 +110,7 @@ public class BlockHeaderBuilder {
             .timestamp(fromBuilder.timestamp)
             .extraData(fromBuilder.extraData)
             .baseFee(fromBuilder.baseFee)
-            .random(fromBuilder.mixHashOrPrevRandao)
+            .prevRandao(fromBuilder.mixHashOrPrevRandao)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -176,7 +176,7 @@ public class BlockHeaderBuilder {
 
   private void validateBlockHeader() {
     validateSealableBlockHeader();
-    checkState(this.mixHashOrPrevRandao != null, "Missing mixHash or random");
+    checkState(this.mixHashOrPrevRandao != null, "Missing mixHash or prevRandao");
     checkState(this.nonce.isPresent(), "Missing nonce");
     checkState(this.blockHeaderFunctions != null, "Missing blockHeaderFunctions");
   }
@@ -210,7 +210,7 @@ public class BlockHeaderBuilder {
     gasLimit(processableBlockHeader.getGasLimit());
     timestamp(processableBlockHeader.getTimestamp());
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
-    processableBlockHeader.getPrevRandao().ifPresent(this::random);
+    processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     return this;
   }
 
@@ -230,7 +230,7 @@ public class BlockHeaderBuilder {
     timestamp(sealableBlockHeader.getTimestamp());
     extraData(sealableBlockHeader.getExtraData());
     baseFee(sealableBlockHeader.getBaseFee().orElse(null));
-    sealableBlockHeader.getPrevRandao().ifPresent(this::random);
+    sealableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     return this;
   }
 
@@ -334,9 +334,9 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder random(final Bytes32 random) {
-    if (random != null) {
-      this.mixHashOrPrevRandao = random;
+  public BlockHeaderBuilder prevRandao(final Bytes32 prevRandao) {
+    if (prevRandao != null) {
+      this.mixHashOrPrevRandao = prevRandao;
     }
     return this;
   }
