@@ -1,4 +1,11 @@
 # Changelog
+
+## 22.1.2
+
+### Additions and Improvements
+
+### Bug Fixes
+
 ## 22.1.1
 
 ### Additions and Improvements
@@ -13,6 +20,10 @@
   - Add core components: controller builder, protocol scheduler, coordinator, block creator and processor. [#3461](https://github.com/hyperledger/besu/pull/3461)
   - Execution specific RPC endpoint [#2914](https://github.com/hyperledger/besu/issues/2914), [#3350](https://github.com/hyperledger/besu/pull/3350)
 - QBFT consensus algorithm is production ready
+
+## Download Links
+ - https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.1/besu-22.1.1.zip /  SHA256 cfff79e19e5f9a184d0b62886990698b77d019a0745ea63b5f9373870518173e
+ - https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.1/besu-22.1.1.tar.gz / SHA256 51cc9d35215f977ac7338e5c611c60f225fd6a8c1c26f188e661624a039e83f3
 
 ## 22.1.0
 
