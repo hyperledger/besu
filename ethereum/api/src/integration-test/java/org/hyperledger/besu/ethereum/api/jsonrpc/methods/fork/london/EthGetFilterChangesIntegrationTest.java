@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -125,7 +126,7 @@ public class EthGetFilterChangesIntegrationTest {
             ethContext,
             peerTransactionTracker,
             peerPendingTransactionTracker,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);
     final BlockchainQueries blockchainQueries =

@@ -265,6 +265,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.natMethodFallbackEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.jsonRpcConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.engineJsonRpcConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.engineWebSocketConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.graphQLConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.webSocketConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.apiConfiguration(any())).thenReturn(mockRunnerBuilder);
