@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -60,7 +60,7 @@ public class BlockHeaderBuilder {
 
   private Wei baseFee = null;
 
-  private Bytes32 mixHashOrRandom = null;
+  private Bytes32 mixHashOrPrevRandao = null;
 
   private BlockHeaderFunctions blockHeaderFunctions;
 
@@ -90,7 +90,7 @@ public class BlockHeaderBuilder {
         .baseFee(header.getBaseFee().orElse(null))
         .mixHash(header.getMixHash())
         .nonce(header.getNonce())
-        .random(header.getRandom().orElse(null));
+        .prevRandao(header.getPrevRandao().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -110,7 +110,7 @@ public class BlockHeaderBuilder {
             .timestamp(fromBuilder.timestamp)
             .extraData(fromBuilder.extraData)
             .baseFee(fromBuilder.baseFee)
-            .random(fromBuilder.mixHashOrRandom)
+            .prevRandao(fromBuilder.mixHashOrPrevRandao)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -134,7 +134,7 @@ public class BlockHeaderBuilder {
         timestamp < 0 ? Instant.now().getEpochSecond() : timestamp,
         extraData,
         baseFee,
-        mixHashOrRandom,
+        mixHashOrPrevRandao,
         nonce.getAsLong(),
         blockHeaderFunctions);
   }
@@ -143,7 +143,14 @@ public class BlockHeaderBuilder {
     validateProcessableBlockHeader();
 
     return new ProcessableBlockHeader(
-        parentHash, coinbase, difficulty, number, gasLimit, timestamp, baseFee, mixHashOrRandom);
+        parentHash,
+        coinbase,
+        difficulty,
+        number,
+        gasLimit,
+        timestamp,
+        baseFee,
+        mixHashOrPrevRandao);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -164,12 +171,12 @@ public class BlockHeaderBuilder {
         timestamp,
         extraData,
         baseFee,
-        mixHashOrRandom);
+        mixHashOrPrevRandao);
   }
 
   private void validateBlockHeader() {
     validateSealableBlockHeader();
-    checkState(this.mixHashOrRandom != null, "Missing mixHash or random");
+    checkState(this.mixHashOrPrevRandao != null, "Missing mixHash or prevRandao");
     checkState(this.nonce.isPresent(), "Missing nonce");
     checkState(this.blockHeaderFunctions != null, "Missing blockHeaderFunctions");
   }
@@ -203,7 +210,7 @@ public class BlockHeaderBuilder {
     gasLimit(processableBlockHeader.getGasLimit());
     timestamp(processableBlockHeader.getTimestamp());
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
-    processableBlockHeader.getRandom().ifPresent(this::random);
+    processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     return this;
   }
 
@@ -223,7 +230,7 @@ public class BlockHeaderBuilder {
     timestamp(sealableBlockHeader.getTimestamp());
     extraData(sealableBlockHeader.getExtraData());
     baseFee(sealableBlockHeader.getBaseFee().orElse(null));
-    sealableBlockHeader.getRandom().ifPresent(this::random);
+    sealableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     return this;
   }
 
@@ -308,7 +315,7 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder mixHash(final Hash mixHash) {
     checkNotNull(mixHash);
-    this.mixHashOrRandom = mixHash;
+    this.mixHashOrPrevRandao = mixHash;
     return this;
   }
 
@@ -327,9 +334,9 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder random(final Bytes32 random) {
-    if (random != null) {
-      this.mixHashOrRandom = random;
+  public BlockHeaderBuilder prevRandao(final Bytes32 prevRandao) {
+    if (prevRandao != null) {
+      this.mixHashOrPrevRandao = prevRandao;
     }
     return this;
   }

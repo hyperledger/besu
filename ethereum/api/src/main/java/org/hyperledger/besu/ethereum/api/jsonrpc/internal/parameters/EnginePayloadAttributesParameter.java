@@ -24,16 +24,16 @@ import org.apache.tuweni.bytes.Bytes32;
 public class EnginePayloadAttributesParameter {
 
   final Long timestamp;
-  final Bytes32 random;
+  final Bytes32 prevRandao;
   final Address suggestedFeeRecipient;
 
   @JsonCreator
   public EnginePayloadAttributesParameter(
       @JsonProperty("timestamp") final String timestamp,
-      @JsonProperty("random") final String random,
+      @JsonProperty("prevRandao") final String prevRandao,
       @JsonProperty("suggestedFeeRecipient") final String suggestedFeeRecipient) {
     this.timestamp = Long.decode(timestamp);
-    this.random = Bytes32.fromHexString(random);
+    this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.suggestedFeeRecipient = Address.fromHexString(suggestedFeeRecipient);
   }
 
@@ -41,8 +41,8 @@ public class EnginePayloadAttributesParameter {
     return timestamp;
   }
 
-  public Bytes32 getRandom() {
-    return random;
+  public Bytes32 getPrevRandao() {
+    return prevRandao;
   }
 
   public Address getSuggestedFeeRecipient() {
@@ -52,7 +52,7 @@ public class EnginePayloadAttributesParameter {
   public String serialize() {
     return new JsonObject()
         .put("timestamp", timestamp)
-        .put("random", random.toHexString())
+        .put("prevRandao", prevRandao.toHexString())
         .put("suggestedFeeRecipient", suggestedFeeRecipient.toHexString())
         .encode();
   }

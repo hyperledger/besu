@@ -120,7 +120,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
             blockParam.getTimestamp(),
             Bytes.fromHexString(blockParam.getExtraData()),
             blockParam.getBaseFeePerGas(),
-            blockParam.getRandom(),
+            blockParam.getPrevRandao(),
             0,
             headerFunctions);
 
