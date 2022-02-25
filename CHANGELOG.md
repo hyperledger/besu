@@ -1,7 +1,15 @@
 # Changelog
-## 22.1.1
 
-### 22.1.1 Breaking Changes
+## 22.1.2
+
+### Additions and Improvements
+- Execution layer (The Merge):
+  - Execution specific RPC endpoint [[#3378](https://github.com/hyperledger/besu/issues/3378)
+
+### Bug Fixes
+- Reject locally-sourced transactions below the minimum gas price when not mining. [#3397](https://github.com/hyperledger/besu/pull/3397)
+
+## 22.1.1
 
 ### Additions and Improvements
 - Allow optional RPC methods that bypass authentication [#3382](https://github.com/hyperledger/besu/pull/3382)
@@ -13,11 +21,12 @@
   - Add PostMergeContext, and stop syncing after the swith to PoS [#3453](https://github.com/hyperledger/besu/pull/3453)
   - Add header validation rules needed to validate The Merge blocks [#3454](https://github.com/hyperledger/besu/pull/3454)
   - Add core components: controller builder, protocol scheduler, coordinator, block creator and processor. [#3461](https://github.com/hyperledger/besu/pull/3461)
-  - Execution specific RPC endpoint [#2914](https://github.com/hyperledger/besu/issues/2914), [#3350](https://github.com/hyperledger/besu/pull/3350), [#3378](https://github.com/hyperledger/besu/issues/3378)
+  - Execution specific RPC endpoint [#2914](https://github.com/hyperledger/besu/issues/2914), [#3350](https://github.com/hyperledger/besu/pull/3350)
 - QBFT consensus algorithm is production ready
 
-### Bug Fixes
-- Reject locally-sourced transactions below the minimum gas price when not mining. [#3397](https://github.com/hyperledger/besu/pull/3397)
+## Download Links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.1/besu-22.1.1.zip /  SHA256 cfff79e19e5f9a184d0b62886990698b77d019a0745ea63b5f9373870518173e
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.1/besu-22.1.1.tar.gz / SHA256 51cc9d35215f977ac7338e5c611c60f225fd6a8c1c26f188e661624a039e83f3
 
 ## 22.1.0
 
