@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.MixInIgnoreRevertReason;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
@@ -29,10 +31,14 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class TraceGet implements JsonRpcMethod {
   private final Supplier<BlockTracer> blockTracerSupplier;
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule protocolSchedule;
+
+  private static final ObjectMapper MAPPER_IGNORE_REVERT_REASON = new ObjectMapper();
 
   public TraceGet(
       final Supplier<BlockTracer> blockTracerSupplier,
@@ -41,6 +47,9 @@ public class TraceGet implements JsonRpcMethod {
     this.blockTracerSupplier = blockTracerSupplier;
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
+
+    // The trace_get specification does not output the revert reason, so we have to remove it
+    MAPPER_IGNORE_REVERT_REASON.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
   }
 
   @Override
@@ -59,9 +68,11 @@ public class TraceGet implements JsonRpcMethod {
 
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
-        resultByTransactionHash(
-                transactionHash, blockchainQueries, blockTracerSupplier, protocolSchedule)
-            .filter(trace -> trace.getTraceAddress().equals(traceNumbers))
-            .findFirst());
+        MAPPER_IGNORE_REVERT_REASON.valueToTree(
+            resultByTransactionHash(
+                    transactionHash, blockchainQueries, blockTracerSupplier, protocolSchedule)
+                .filter(trace -> trace.getTraceAddress().equals(traceNumbers))
+                .findFirst()
+                .orElse(null)));
   }
 }
