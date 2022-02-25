@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -41,8 +41,8 @@ public class ProcessableBlockHeader implements BlockValues {
   protected final long timestamp;
   // base fee is included for post EIP-1559 blocks
   protected final Wei baseFee;
-  // random is included for post-merge blocks
-  protected final Bytes32 mixHashOrRandom;
+  // prevRandao is included for post-merge blocks
+  protected final Bytes32 mixHashOrPrevRandao;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -52,7 +52,7 @@ public class ProcessableBlockHeader implements BlockValues {
       final long gasLimit,
       final long timestamp,
       final Wei baseFee,
-      final Bytes32 mixHashOrRandom) {
+      final Bytes32 mixHashOrPrevRandao) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
@@ -60,7 +60,7 @@ public class ProcessableBlockHeader implements BlockValues {
     this.gasLimit = gasLimit;
     this.timestamp = timestamp;
     this.baseFee = baseFee;
-    this.mixHashOrRandom = mixHashOrRandom;
+    this.mixHashOrPrevRandao = mixHashOrPrevRandao;
   }
 
   /**
@@ -141,11 +141,11 @@ public class ProcessableBlockHeader implements BlockValues {
   }
 
   /**
-   * Returns the random of the block.
+   * Returns the prevRandao of the block.
    *
-   * @return the raw bytes of the random field
+   * @return the raw bytes of the prevRandao field
    */
-  public Optional<Bytes32> getRandom() {
-    return Optional.ofNullable(mixHashOrRandom);
+  public Optional<Bytes32> getPrevRandao() {
+    return Optional.ofNullable(mixHashOrPrevRandao);
   }
 }

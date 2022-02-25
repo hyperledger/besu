@@ -284,7 +284,7 @@ public class EngineNewPayloadTest {
         header.getExtraData() == null ? null : header.getExtraData().toHexString(),
         header.getReceiptsRoot(),
         header.getLogsBloom(),
-        header.getRandom().map(Bytes32::toHexString).orElse("0x0"),
+        header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs);
   }
 
