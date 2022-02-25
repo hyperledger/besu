@@ -15,10 +15,13 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -222,7 +225,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
   }
 
   @Override
-  public void getUser(final String token, final Handler<Optional<User>> handler) {
+  public void authenticate(final String token, final Handler<Optional<User>> handler) {
     try {
       getJwtAuthProvider()
           .authenticate(
@@ -242,6 +245,42 @@ public class DefaultAuthenticationService implements AuthenticationService {
       LOG.debug("exception validating JWT ", e);
       handler.handle(Optional.empty());
     }
+  }
+
+  @Override
+  public boolean isPermitted(final Optional<User> optionalUser, final JsonRpcMethod jsonRpcMethod, final Collection<String> noAuthMethods) {
+    AtomicBoolean foundMatchingPermission = new AtomicBoolean();
+    // if the method is configured as a no auth method we skip permission check
+    if (noAuthMethods.stream().anyMatch(m -> m.equals(jsonRpcMethod.getName()))) {
+      return true;
+    }
+
+    if (optionalUser.isPresent()) {
+      User user = optionalUser.get();
+      for (String perm : jsonRpcMethod.getPermissions()) {
+        user.isAuthorized(
+                perm,
+                (authed) -> {
+                  if (authed.result()) {
+                    LOG.trace(
+                            "user {} authorized : {} via permission {}",
+                            user,
+                            jsonRpcMethod.getName(),
+                            perm);
+                    foundMatchingPermission.set(true);
+                  }
+                });
+        // exit if a matching permission was found, no need to keep checking
+        if (foundMatchingPermission.get()) {
+          return foundMatchingPermission.get();
+        }
+      }
+    }
+
+    if (!foundMatchingPermission.get()) {
+      LOG.trace("user NOT authorized : {}", jsonRpcMethod.getName());
+    }
+    return foundMatchingPermission.get();
   }
 
   private void validateExpiryExists(final Optional<User> user) {

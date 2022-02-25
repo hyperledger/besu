@@ -74,7 +74,7 @@ public class WebSocketService {
         DefaultAuthenticationService.create(vertx, configuration));
   }
 
-  private WebSocketService(
+  public WebSocketService(
       final Vertx vertx,
       final WebSocketConfiguration configuration,
       final WebSocketRequestHandler websocketRequestHandler,
@@ -136,7 +136,7 @@ public class WebSocketService {
             if (authenticationService.isPresent()) {
               authenticationService
                   .get()
-                  .getUser(
+                  .authenticate(
                       token,
                       user ->
                           websocketRequestHandler.handle(
@@ -165,7 +165,7 @@ public class WebSocketService {
             if (authenticationService.isPresent()) {
               authenticationService
                   .get()
-                  .getUser(
+                  .authenticate(
                       token,
                       user ->
                           websocketRequestHandler.handle(

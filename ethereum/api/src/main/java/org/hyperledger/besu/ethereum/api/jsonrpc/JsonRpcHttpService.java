@@ -580,7 +580,7 @@ public class JsonRpcHttpService {
           if (authenticationService.isPresent()) {
             authenticationService
                 .get()
-                .getUser(
+                .authenticate(
                     token,
                     user -> handleJsonSingleRequest(routingContext, requestBodyJsonObject, user));
           } else {
@@ -596,7 +596,7 @@ public class JsonRpcHttpService {
           if (authenticationService.isPresent()) {
             authenticationService
                 .get()
-                .getUser(token, user -> handleJsonBatchRequest(routingContext, array, user));
+                .authenticate(token, user -> handleJsonBatchRequest(routingContext, array, user));
           } else {
             handleJsonBatchRequest(routingContext, array, Optional.empty());
           }
@@ -756,8 +756,7 @@ public class JsonRpcHttpService {
 
       final JsonRpcMethod method = rpcMethods.get(requestBody.getMethod());
 
-      if (AuthenticationUtils.isPermitted(
-          authenticationService, user, method, config.getNoAuthRpcApis())) {
+      if (authenticationService.isPresent() && authenticationService.get().isPermitted(user, method, config.getNoAuthRpcApis())) {
         // Generate response
         try (final OperationTimer.TimingContext ignored =
             requestTimer.labels(requestBody.getMethod()).startTimer()) {

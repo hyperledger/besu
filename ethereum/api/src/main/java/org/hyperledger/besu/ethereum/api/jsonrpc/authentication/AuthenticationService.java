@@ -16,17 +16,24 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
+import java.util.Collection;
 import java.util.Optional;
 
 import io.vertx.core.Handler;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.web.RoutingContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 
 public interface AuthenticationService {
   void handleLogin(RoutingContext routingContext);
 
   JWTAuth getJwtAuthProvider();
 
-  void getUser(String token, Handler<Optional<User>> handler);
+  void authenticate(String token, Handler<Optional<User>> handler);
+
+  boolean isPermitted(
+          final Optional<User> optionalUser,
+          final JsonRpcMethod jsonRpcMethod,
+          final Collection<String> noAuthMethods);
 }

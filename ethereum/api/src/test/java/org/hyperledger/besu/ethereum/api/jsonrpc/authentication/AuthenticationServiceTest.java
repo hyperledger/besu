@@ -146,7 +146,7 @@ public class AuthenticationServiceTest {
         DefaultAuthenticationService.create(vertx, webSocketConfiguration).get();
     final StubUserHandler handler = new StubUserHandler();
 
-    authenticationService.getUser(INVALID_TOKEN_WITHOUT_EXP, handler);
+    authenticationService.authenticate(INVALID_TOKEN_WITHOUT_EXP, handler);
 
     assertThat(handler.getEvent()).isEmpty();
   }
@@ -166,7 +166,7 @@ public class AuthenticationServiceTest {
     final JWTOptions options = new JWTOptions().setExpiresInMinutes(5).setAlgorithm("RS256");
     final String token =
         authenticationService.getJwtAuthProvider().generateToken(jwtContents, options);
-    authenticationService.getUser(token, handler);
+    authenticationService.authenticate(token, handler);
 
     User successKid = handler.getEvent().get();
     assertThat(successKid.attributes().getLong("exp")).isNotNull();

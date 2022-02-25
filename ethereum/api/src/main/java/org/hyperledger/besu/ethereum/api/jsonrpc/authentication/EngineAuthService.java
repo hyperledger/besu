@@ -16,6 +16,7 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
+import java.util.Collection;
 import java.util.Optional;
 
 import io.vertx.core.Handler;
@@ -26,10 +27,12 @@ import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.Codec;
+import io.vertx.ext.auth.impl.jose.JWT;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +49,7 @@ public class EngineAuthService implements AuthenticationService {
         Codec.base16Encode(jwtAuthOptions.getPubSecKeys().get(0).getBuffer().getBytes()));
   }
 
-  public JWTAuthOptions engineApiJWTOptions(final JwtAlgorithm jwtAlgorithm) {
+  private JWTAuthOptions engineApiJWTOptions(final JwtAlgorithm jwtAlgorithm) {
     byte[] ephemeralKey = Bytes32.random().toArray();
     return new JWTAuthOptions()
         .setJWTOptions(new JWTOptions().setIgnoreExpiration(true).setLeeway(5))
@@ -67,17 +70,24 @@ public class EngineAuthService implements AuthenticationService {
   }
 
   @Override
-  public void getUser(final String token, final Handler<Optional<User>> handler) {
+  public void authenticate(final String token, final Handler<Optional<User>> handler) {
     try {
+      JsonObject jwt = new JsonObject().put("token", token);
       getJwtAuthProvider()
           .authenticate(
-              new JsonObject().put("token", token),
+              jwt,
               r -> {
                 if (r.succeeded()) {
-                  final Optional<User> user = Optional.ofNullable(r.result());
-                  handler.handle(user);
+                  if(issuedRecently(r.result().attributes().getLong("iat"))) {
+                    final Optional<User> user = Optional.ofNullable(r.result());
+                    handler.handle(user);
+                  } else {
+                    LOG.warn("Client sent stale token: {}", r.result().attributes());
+                    handler.handle(Optional.empty());
+                  }
+
                 } else {
-                  LOG.debug("Invalid JWT token {}", r.cause().toString());
+                  LOG.debug("Authentication failed: {}", r.cause().toString());
                   handler.handle(Optional.empty());
                 }
               });
@@ -86,5 +96,16 @@ public class EngineAuthService implements AuthenticationService {
       LOG.debug("exception validating JWT ", e);
       handler.handle(Optional.empty());
     }
+  }
+
+  @Override
+  public boolean isPermitted(final Optional<User> optionalUser, final JsonRpcMethod jsonRpcMethod, final Collection<String> noAuthMethods) {
+    return true; //no AuthZ for engine APIs
+  }
+
+  private boolean issuedRecently(final long iat) {
+    long iatSecondsSinceEpoch = iat;
+    long nowSecondsSinceEpoch = System.currentTimeMillis()/1000;
+    return (Math.abs((nowSecondsSinceEpoch - iatSecondsSinceEpoch)) <= 5);
   }
 }
