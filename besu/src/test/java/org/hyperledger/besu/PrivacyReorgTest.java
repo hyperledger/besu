@@ -196,7 +196,7 @@ public class PrivacyReorgTest {
             .miningParameters(
                 new MiningParameters.Builder()
                     .minTransactionGasPrice(Wei.of(1000))
-                    .enabled(false)
+                    .miningEnabled(false)
                     .build())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())

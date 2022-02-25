@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
@@ -40,7 +40,7 @@ public class TransactionPoolFactory {
       final Clock clock,
       final MetricsSystem metricsSystem,
       final SyncState syncState,
-      final Wei minTransactionGasPrice,
+      final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration) {
 
     final AbstractPendingTransactionsSorter pendingTransactions =
@@ -62,7 +62,7 @@ public class TransactionPoolFactory {
         ethContext,
         metricsSystem,
         syncState,
-        minTransactionGasPrice,
+        miningParameters,
         transactionPoolConfiguration,
         pendingTransactions,
         transactionTracker,
@@ -77,7 +77,7 @@ public class TransactionPoolFactory {
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final SyncState syncState,
-      final Wei minTransactionGasPrice,
+      final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final AbstractPendingTransactionsSorter pendingTransactions,
       final PeerTransactionTracker transactionTracker,
@@ -96,7 +96,7 @@ public class TransactionPoolFactory {
             ethContext,
             transactionTracker,
             pendingTransactionTracker,
-            minTransactionGasPrice,
+            miningParameters,
             metricsSystem,
             transactionPoolConfiguration);
     final TransactionsMessageHandler transactionsMessageHandler =

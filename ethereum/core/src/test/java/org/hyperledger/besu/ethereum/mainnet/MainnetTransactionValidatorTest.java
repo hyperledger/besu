@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
 import static org.mockito.ArgumentMatchers.any;
@@ -283,6 +284,39 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
+  public void shouldRejectTransactionWhenEffectiveGasPriceIsTooLow() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator,
+            FeeMarket.london(0L),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.values()),
+            defaultGoQuorumCompatibilityMode);
+    validator.setTransactionFilter(transactionFilter(true));
+
+    final Transaction transaction =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.ZERO)
+            .maxFeePerGas(Wei.of(4))
+            .gasLimit(15)
+            .to(Address.ZERO)
+            .value(Wei.of(0))
+            .payload(Bytes.EMPTY)
+            .chainId(BigInteger.ONE)
+            .signAndBuild(new SECP256K1().generateKeyPair());
+
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(transaction, Optional.of(Wei.ONE), transactionValidationParams);
+
+    assertThat(validationResult).isEqualTo(ValidationResult.invalid(INVALID_TRANSACTION_FORMAT));
+    assertThat(validationResult.getErrorMessage())
+        .isEqualTo("effective gas price is too low to execute");
+  }
+
+  @Test
   public void shouldPropagateCorrectStateChangeParamToTransactionFilter() {
     final ArgumentCaptor<Boolean> stateChangeLocalParamCaptor =
         ArgumentCaptor.forClass(Boolean.class);
@@ -363,7 +397,7 @@ public class MainnetTransactionValidatorTest {
 
     assertThat(
             frontierValidator.validate(transaction, Optional.empty(), transactionValidationParams))
-        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
+        .isEqualTo(ValidationResult.invalid(INVALID_TRANSACTION_FORMAT));
 
     when(gasCalculator.transactionIntrinsicGasCost(any(), anyBoolean())).thenReturn(Gas.of(0));
 
@@ -392,7 +426,7 @@ public class MainnetTransactionValidatorTest {
             .createTransaction(senderKeys);
     final Optional<Wei> basefee = Optional.of(Wei.of(150000L));
     assertThat(validator.validate(transaction, basefee, transactionValidationParams))
-        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
+        .isEqualTo(ValidationResult.invalid(INVALID_TRANSACTION_FORMAT));
   }
 
   @Test

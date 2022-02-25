@@ -55,8 +55,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
 
-    // TODO: revisit how we stop/manage the synchronizer
-    // https://github.com/hyperledger/besu/issues/2898
     this.syncState.set(syncState);
 
     return new MergeCoordinator(

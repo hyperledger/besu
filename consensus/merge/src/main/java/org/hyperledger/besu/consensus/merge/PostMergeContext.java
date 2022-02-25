@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,13 +33,13 @@ import com.google.common.collect.EvictingQueue;
 public class PostMergeContext implements MergeContext {
   static final int MAX_BLOCKS_IN_PROGRESS = 12;
 
-  private static PostMergeContext singleton;
+  private static final AtomicReference<PostMergeContext> singleton = new AtomicReference<>();
 
   private final AtomicReference<SyncState> syncState;
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
-  // transition miners are created disabled by default, so reflect that default:
-  private final AtomicBoolean isPostMerge = new AtomicBoolean(true);
-  private final AtomicBoolean isAtGenesis = new AtomicBoolean(true);
+  // initial postMerge state is indeterminate until it is set:
+  private final AtomicReference<Optional<Boolean>> isPostMerge =
+      new AtomicReference<>(Optional.empty());
   private final Subscribers<NewMergeStateCallback> newMergeStateCallbackSubscribers =
       Subscribers.create();
 
@@ -58,12 +57,11 @@ public class PostMergeContext implements MergeContext {
     this.syncState = new AtomicReference<>();
   }
 
-  public static synchronized PostMergeContext get() {
-    // TODO: get rid of singleton if possible: https://github.com/hyperledger/besu/issues/2898
-    if (singleton == null) {
-      singleton = new PostMergeContext();
+  public static PostMergeContext get() {
+    if (singleton.get() == null) {
+      singleton.compareAndSet(null, new PostMergeContext());
     }
-    return singleton;
+    return singleton.get();
   }
 
   @Override
@@ -73,27 +71,28 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public PostMergeContext setTerminalTotalDifficulty(final Difficulty newTerminalTotalDifficulty) {
+    if (newTerminalTotalDifficulty == null) {
+      throw new IllegalStateException("cannot set null terminal total difficulty");
+    }
     terminalTotalDifficulty.set(newTerminalTotalDifficulty);
     return this;
   }
 
   @Override
   public void setIsPostMerge(final Difficulty totalDifficulty) {
-    if (Optional.ofNullable(lastFinalized.get()).isPresent()) {
-      // we check this condition because if we've received a finalized block, we never want to
-      // switch back to a pre-merge
+    if (isPostMerge.get().orElse(Boolean.FALSE)) {
+      // we never switch back to a pre-merge once we have transitioned post-TTD.
       return;
     }
     final boolean newState = terminalTotalDifficulty.get().lessOrEqualThan(totalDifficulty);
-    final boolean oldState = isPostMerge.getAndSet(newState);
-    final boolean atGenesis = isAtGenesis.getAndSet(Boolean.FALSE);
+    final Optional<Boolean> oldState = isPostMerge.getAndSet(Optional.of(newState));
 
     // if we are past TTD, set it:
     if (newState)
       Optional.ofNullable(syncState.get())
-          .ifPresent(ss -> ss.setStoppedAtTerminalDifficulty(newState));
+          .ifPresent(ss -> ss.setReachedTerminalDifficulty(newState));
 
-    if (oldState != newState || atGenesis) {
+    if (oldState.isEmpty() || oldState.get() != newState) {
       newMergeStateCallbackSubscribers.forEach(
           newMergeStateCallback -> newMergeStateCallback.onNewIsPostMergeState(newState));
     }
@@ -101,7 +100,7 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public boolean isPostMerge() {
-    return isPostMerge.get();
+    return isPostMerge.get().orElse(Boolean.FALSE);
   }
 
   @Override
@@ -115,7 +114,7 @@ public class PostMergeContext implements MergeContext {
     return Optional.ofNullable(syncState.get()).map(s -> !s.isInSync()).orElse(Boolean.TRUE)
         // this is necessary for when we do not have a sync target yet, like at startup.
         // not being stopped at ttd implies we are syncing.
-        && !syncState.get().isStoppedAtTerminalDifficulty().orElse(Boolean.FALSE);
+        && !syncState.get().hasReachedTerminalDifficulty().orElse(Boolean.FALSE);
   }
 
   @Override
