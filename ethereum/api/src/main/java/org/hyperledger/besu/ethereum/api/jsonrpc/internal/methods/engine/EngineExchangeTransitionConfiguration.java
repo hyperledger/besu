@@ -67,17 +67,17 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
       return respondWithError(reqId, INVALID_PARAMS);
     }
 
-    final Optional<BlockHeader> maybeFinalizedBlockHeader = mergeContext.getFinalized();
+    final Optional<BlockHeader> maybeTerminalPoWBlockHeader = mergeContext.getTerminalPoWBlock();
 
-    if (maybeFinalizedBlockHeader.isEmpty()) {
+    if (maybeTerminalPoWBlockHeader.isEmpty()) {
       return respondWithError(reqId, INTERNAL_ERROR);
     }
 
     final EngineExchangeTransitionConfigurationResult localTransitionConfiguration =
         new EngineExchangeTransitionConfigurationResult(
             mergeContext.getTerminalTotalDifficulty(),
-            maybeFinalizedBlockHeader.get().getHash(),
-            maybeFinalizedBlockHeader.get().getNumber());
+            maybeTerminalPoWBlockHeader.get().getHash(),
+            maybeTerminalPoWBlockHeader.get().getNumber());
 
     if (!localTransitionConfiguration
         .getTerminalTotalDifficulty()

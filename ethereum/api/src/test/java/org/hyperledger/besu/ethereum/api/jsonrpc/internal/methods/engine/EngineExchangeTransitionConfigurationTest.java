@@ -82,8 +82,8 @@ public class EngineExchangeTransitionConfigurationTest {
   }
 
   @Test
-  public void shouldReturnInternalErrorOnFinalizedBlockHeaderEmpty() {
-    when(mergeContext.getFinalized()).thenReturn(Optional.empty());
+  public void shouldReturnInternalErrorOnTerminalPoWBlockHeaderEmpty() {
+    when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.empty());
 
     var response =
         resp(new EngineExchangeTransitionConfigurationParameter("0", Hash.ZERO.toHexString(), 0));
@@ -96,7 +96,7 @@ public class EngineExchangeTransitionConfigurationTest {
   @Test
   public void shouldReturnConfigurationOnConfigurationMisMatch() {
     final BlockHeader fakeBlockHeader = createBlockHeader(Hash.fromHexStringLenient("0x01"), 42);
-    when(mergeContext.getFinalized()).thenReturn(Optional.of(fakeBlockHeader));
+    when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.of(fakeBlockHeader));
     when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(24));
 
     var response =
@@ -113,7 +113,7 @@ public class EngineExchangeTransitionConfigurationTest {
   @Test
   public void shouldReturnConfigurationOnConfigurationMatch() {
     final BlockHeader fakeBlockHeader = createBlockHeader(Hash.fromHexStringLenient("0x01"), 42);
-    when(mergeContext.getFinalized()).thenReturn(Optional.of(fakeBlockHeader));
+    when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.of(fakeBlockHeader));
     when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(24));
 
     var response =
