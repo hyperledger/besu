@@ -22,6 +22,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -125,6 +126,11 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     }
 
     // TODO: start sync for this head https://github.com/hyperledger/besu/issues/3268
+    //       for now use backward sync:
+    Optional.ofNullable(forkChoice.getFinalizedBlockHash())
+        .filter(hash -> !hash.equals(Hash.ZERO))
+        .ifPresent(mergeCoordinator::syncIfMissingHash);
+
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(), new EngineUpdateForkchoiceResult(SYNCING, null, null));
   }

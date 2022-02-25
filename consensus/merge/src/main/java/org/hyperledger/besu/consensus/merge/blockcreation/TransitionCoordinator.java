@@ -160,6 +160,11 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
+  public void syncIfMissingHash(final Hash blockhash) {
+    mergeCoordinator.syncIfMissingHash(blockhash);
+  }
+
+  @Override
   public boolean isMiningBeforeMerge() {
     return mergeCoordinator.isMiningBeforeMerge();
   }
