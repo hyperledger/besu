@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -206,7 +207,7 @@ public class RetestethContext {
             retestethClock,
             metricsSystem,
             syncState,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             transactionPoolConfiguration);
 
     if (LOG.isTraceEnabled()) {
