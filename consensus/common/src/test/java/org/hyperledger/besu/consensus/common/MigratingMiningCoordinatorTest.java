@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.common;
 
 import static java.util.Collections.emptyList;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatNoException;
 import static org.hyperledger.besu.ethereum.core.BlockHeader.GENESIS_BLOCK_NUMBER;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
