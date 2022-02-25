@@ -143,17 +143,20 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       }
     }
 
+    final var block =
+        new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
+
+    if (mergeContext.isSyncing() || mergeCoordinator.isBackwardSyncing()
+        || mergeCoordinator.getOrSyncHeaderByHash(newBlockHeader.getParentHash())
+        .isEmpty()) {
+      return respondWith(reqId, null, SYNCING);
+    }
+
     // TODO: post-merge cleanup
     if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
       return respondWith(requestContext.getRequest().getId(), null, INVALID_TERMINAL_BLOCK);
     }
 
-    final var block =
-        new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
-
-    if (mergeContext.isSyncing() || mergeCoordinator.isBackwardSyncing(block)) {
-      return respondWith(reqId, null, SYNCING);
-    }
 
     final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(newBlockHeader);
 

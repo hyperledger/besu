@@ -66,7 +66,7 @@ public class BackwardsSyncContext {
         .orElse(Boolean.FALSE);
   }
 
-  public void syncBackwardsUntil(final Hash newBlockhash) {
+  public CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockhash) {
     if (Optional.ofNullable(currentChain.get())
         .flatMap(
             chain ->
@@ -77,11 +77,11 @@ public class BackwardsSyncContext {
         .isPresent()) {
       LOG.debug(
           "not fetching and appending hash {} to backwards sync since it is present in successors");
-      return;
+      return CompletableFuture.completedFuture(null);
     }
 
     // kick off async process to fetch this block by hash then delegate to syncBackwardsUntil
-    GetHeadersFromPeerByHashTask.forSingleHash(
+    return GetHeadersFromPeerByHashTask.forSingleHash(
             protocolSchedule, ethContext, newBlockhash, 0L, metricsSystem)
         .run()
         .thenCompose(
@@ -89,11 +89,11 @@ public class BackwardsSyncContext {
                 GetBodiesFromPeerTask.forHeaders(
                         protocolSchedule, ethContext, headers.getResult(), metricsSystem)
                     .run()
-                    .thenApply(blocks -> syncBackwardsUntil(blocks.getResult().get(0))))
+                    .thenCompose(blocks -> syncBackwardsUntil(blocks.getResult().get(0))))
         .exceptionally(
             ex -> {
               LOG.error("Failed to fetch block by hash {}", ex, newBlockhash.toHexString());
-              return CompletableFuture.failedFuture(ex);
+              throw new BackwardSyncException(ex);
             });
   }
 

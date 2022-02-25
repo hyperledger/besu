@@ -129,7 +129,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     //       for now use backward sync:
     Optional.ofNullable(forkChoice.getFinalizedBlockHash())
         .filter(hash -> !hash.equals(Hash.ZERO))
-        .ifPresent(mergeCoordinator::syncIfMissingHash);
+        .ifPresent(mergeCoordinator::getOrSyncHeaderByHash);
 
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(), new EngineUpdateForkchoiceResult(SYNCING, null, null));

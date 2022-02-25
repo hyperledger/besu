@@ -95,6 +95,8 @@ public class EngineNewPayloadTest {
         .thenReturn(Optional.of(mockHash));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(true);
+    when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
+        .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.executeBlock(any()))
         .thenReturn(new Result(new BlockProcessingOutputs(null, List.of())));
 
@@ -114,6 +116,8 @@ public class EngineNewPayloadTest {
         .thenReturn(Optional.of(mockHash));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(true);
+    when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
+        .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.executeBlock(any())).thenReturn(new Result("error 42"));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
@@ -132,6 +136,8 @@ public class EngineNewPayloadTest {
         .thenReturn(Optional.empty());
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(true);
+    when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
+        .thenReturn(Optional.of(mockHeader));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -165,6 +171,8 @@ public class EngineNewPayloadTest {
 
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(false);
+    when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
+        .thenReturn(Optional.of(mockHeader));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -215,8 +223,6 @@ public class EngineNewPayloadTest {
   public void shouldRespondWithSyncingDuringForwardSync() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
-        .thenReturn(true);
     when(mergeContext.isSyncing()).thenReturn(Boolean.TRUE);
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
@@ -229,9 +235,7 @@ public class EngineNewPayloadTest {
 
   @Test
   public void shouldRespondWithSyncingDuringBackwardsSync() {
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
-        .thenReturn(true);
-    when(mergeCoordinator.isBackwardSyncing(any(Block.class))).thenReturn(Boolean.TRUE);
+    when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class))).thenReturn(Optional.empty());
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));

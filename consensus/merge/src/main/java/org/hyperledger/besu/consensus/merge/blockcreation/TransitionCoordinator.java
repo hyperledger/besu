@@ -155,13 +155,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public boolean isBackwardSyncing(final Block block) {
-    return isBackwardSyncing();
-  }
-
-  @Override
-  public void syncIfMissingHash(final Hash blockhash) {
-    mergeCoordinator.syncIfMissingHash(blockhash);
+  public Optional<BlockHeader> getOrSyncHeaderByHash(final Hash blockhash) {
+    return mergeCoordinator.getOrSyncHeaderByHash(blockhash);
   }
 
   @Override
