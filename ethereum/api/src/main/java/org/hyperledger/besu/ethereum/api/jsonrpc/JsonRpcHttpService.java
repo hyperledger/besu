@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -192,7 +193,7 @@ public class JsonRpcHttpService {
         metricsSystem,
         natService,
         methods,
-        AuthenticationService.create(vertx, config),
+        DefaultAuthenticationService.create(vertx, config),
         livenessService,
         readinessService);
   }
@@ -363,7 +364,7 @@ public class JsonRpcHttpService {
           .route("/login")
           .method(HttpMethod.POST)
           .produces(APPLICATION_JSON)
-          .handler(AuthenticationService::handleDisabledLogin);
+          .handler(DefaultAuthenticationService::handleDisabledLogin);
     }
     return router;
   }

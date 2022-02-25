@@ -45,7 +45,7 @@ public class AuthenticationServiceTest {
     jsonRpcConfiguration.setAuthenticationCredentialsFile("some/file/path");
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, jsonRpcConfiguration);
+        DefaultAuthenticationService.create(vertx, jsonRpcConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -58,7 +58,7 @@ public class AuthenticationServiceTest {
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(publicKeyFile);
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, jsonRpcConfiguration);
+        DefaultAuthenticationService.create(vertx, jsonRpcConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -73,7 +73,7 @@ public class AuthenticationServiceTest {
     jsonRpcConfiguration.setAuthenticationCredentialsFile("some/file/path");
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, jsonRpcConfiguration);
+        DefaultAuthenticationService.create(vertx, jsonRpcConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -84,7 +84,7 @@ public class AuthenticationServiceTest {
     webSocketConfiguration.setAuthenticationCredentialsFile("some/file/path");
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, webSocketConfiguration);
+        DefaultAuthenticationService.create(vertx, webSocketConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -97,7 +97,7 @@ public class AuthenticationServiceTest {
     webSocketConfiguration.setAuthenticationPublicKeyFile(publicKeyFile);
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, webSocketConfiguration);
+        DefaultAuthenticationService.create(vertx, webSocketConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -112,7 +112,7 @@ public class AuthenticationServiceTest {
     webSocketConfiguration.setAuthenticationCredentialsFile("some/file/path");
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, webSocketConfiguration);
+        DefaultAuthenticationService.create(vertx, webSocketConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -123,7 +123,7 @@ public class AuthenticationServiceTest {
     jsonRpcConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.RS256);
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, jsonRpcConfiguration);
+        DefaultAuthenticationService.create(vertx, jsonRpcConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -134,7 +134,7 @@ public class AuthenticationServiceTest {
     webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.RS256);
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, webSocketConfiguration);
+        DefaultAuthenticationService.create(vertx, webSocketConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -143,7 +143,7 @@ public class AuthenticationServiceTest {
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
     webSocketConfiguration.setAuthenticationEnabled(true);
     final AuthenticationService authenticationService =
-        AuthenticationService.create(vertx, webSocketConfiguration).get();
+        DefaultAuthenticationService.create(vertx, webSocketConfiguration).get();
     final StubUserHandler handler = new StubUserHandler();
 
     authenticationService.getUser(INVALID_TOKEN_WITHOUT_EXP, handler);
@@ -157,7 +157,7 @@ public class AuthenticationServiceTest {
     webSocketConfiguration.setAuthenticationEnabled(true);
     webSocketConfiguration.setAuthenticationPublicKeyFile(null);
     final AuthenticationService authenticationService =
-        AuthenticationService.create(vertx, webSocketConfiguration).get();
+        DefaultAuthenticationService.create(vertx, webSocketConfiguration).get();
     final StubUserHandler handler = new StubUserHandler();
     final JsonObject jwtContents =
         new JsonObject()
