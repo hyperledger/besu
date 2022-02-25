@@ -123,19 +123,6 @@ public class MigratingMiningCoordinatorTest {
   }
 
   @Test
-  public void onBlockAddedShouldNotThrowExceptionWhenMigrating() {
-    when(blockHeader.getNumber()).thenReturn(MIGRATION_BLOCK_NUMBER - 1);
-
-    // The async methods can't be tested without significant rework of onBlockAdded
-    // although this is a poor assertion, this migration code path will have acceptance tests
-    assertThatNoException()
-        .isThrownBy(
-            () ->
-                new MigratingMiningCoordinator(coordinatorSchedule, blockchain)
-                    .onBlockAdded(blockEvent));
-  }
-
-  @Test
   public void onBlockAddedShouldNotDelegateWhenDelegateIsNoop() {
     NoopMiningCoordinator mockNoopCoordinator = mock(NoopMiningCoordinator.class);
     coordinatorSchedule = createCoordinatorSchedule(mockNoopCoordinator, coordinator2);
