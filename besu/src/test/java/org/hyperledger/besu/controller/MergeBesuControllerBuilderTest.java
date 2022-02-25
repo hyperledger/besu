@@ -23,10 +23,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.EthashConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.Keccak256ConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -83,8 +81,6 @@ public class MergeBesuControllerBuilderTest {
 
   @Mock GenesisConfigFile genesisConfigFile;
   @Mock GenesisConfigOptions genesisConfigOptions;
-  @Mock EthashConfigOptions ethashConfigOptions;
-  @Mock Keccak256ConfigOptions keccak256ConfigOptions;
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
   @Mock MiningParameters miningParameters;

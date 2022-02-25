@@ -39,4 +39,9 @@ public class LegacyFeeMarket implements FeeMarket {
       final Transaction transaction, final Supplier<Optional<Wei>> baseFeeSupplier) {
     return txPriceCalculator.price(transaction, Optional.empty());
   }
+
+  @Override
+  public boolean satisfiesFloorTxCost(final Transaction txn) {
+    return true;
+  }
 }
