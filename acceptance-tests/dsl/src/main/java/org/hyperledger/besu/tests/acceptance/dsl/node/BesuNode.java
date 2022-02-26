@@ -325,9 +325,28 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     }
   }
 
-  public Optional<Integer> getJsonRpcSocketPort() {
+  @Override
+  public Optional<Integer> getJsonRpcPort() {
     if (isJsonRpcEnabled()) {
       return Optional.of(Integer.valueOf(portsProperties.getProperty("json-rpc")));
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  @Override
+  public Optional<Integer> getEngineJsonRpcPort() {
+    if (isJsonRpcEnabled()) {
+      return Optional.of(Integer.valueOf(portsProperties.getProperty("engine-json-rpc")));
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  @Override
+  public Optional<Integer> getEngineJsonRpcWebSocketPort() {
+    if (isWebSocketsRpcEnabled()) {
+      return Optional.of(Integer.valueOf(portsProperties.getProperty("engine-ws-rpc")));
     } else {
       return Optional.empty();
     }

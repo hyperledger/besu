@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
-import static org.hyperledger.besu.config.experimental.MergeOptions.setMergeEnabled;
+import static org.hyperledger.besu.config.experimental.MergeConfigOptions.setMergeEnabled;
 
 import java.util.Stack;
 
@@ -40,7 +40,7 @@ public class MergeOptions implements Options {
     return new MergeOptions();
   }
 
-  public Boolean isMergeEnabled() {
+  static Boolean isMergeEnabled() {
     return mergeEnabled;
   }
 

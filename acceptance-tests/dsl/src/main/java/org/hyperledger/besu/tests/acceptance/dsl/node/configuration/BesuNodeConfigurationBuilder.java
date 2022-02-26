@@ -52,12 +52,15 @@ public class BesuNodeConfigurationBuilder {
   private Optional<Path> dataPath = Optional.empty();
   private MiningParameters miningParameters =
       new MiningParameters.Builder()
-          .enabled(false)
+          .miningEnabled(false)
           .coinbase(AddressHelpers.ofValue(1))
           .minTransactionGasPrice(Wei.of(1000))
           .build();
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
+  private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
+  private WebSocketConfiguration engineWebSocketConfiguration =
+      WebSocketConfiguration.createDefault();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private String keyFilePath = null;
@@ -87,6 +90,8 @@ public class BesuNodeConfigurationBuilder {
     // Check connections more frequently during acceptance tests to cut down on
     // intermittent failures due to the fact that we're running over a real network
     networkingConfiguration.setInitiateConnectionsFrequency(5);
+    engineRpcConfiguration.setPort(JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT);
+    engineWebSocketConfiguration.setPort(WebSocketConfiguration.DEFAULT_WEBSOCKET_ENGINE_PORT);
   }
 
   public BesuNodeConfigurationBuilder name(final String name) {
@@ -106,7 +111,10 @@ public class BesuNodeConfigurationBuilder {
 
   public BesuNodeConfigurationBuilder miningEnabled(final boolean enabled) {
     this.miningParameters =
-        new MiningParameters.Builder().enabled(enabled).coinbase(AddressHelpers.ofValue(1)).build();
+        new MiningParameters.Builder()
+            .miningEnabled(enabled)
+            .coinbase(AddressHelpers.ofValue(1))
+            .build();
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER.name());
     return this;
   }
@@ -120,6 +128,18 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder jsonRpcConfiguration(
       final JsonRpcConfiguration jsonRpcConfiguration) {
     this.jsonRpcConfiguration = jsonRpcConfiguration;
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder engineJsonRpcConfiguration(
+      final JsonRpcConfiguration engineConfig) {
+    this.engineRpcConfiguration = engineConfig;
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder engineWebSocketConfiguration(
+      final WebSocketConfiguration engineConfig) {
+    this.engineWebSocketConfiguration = engineConfig;
     return this;
   }
 
@@ -165,6 +185,18 @@ public class BesuNodeConfigurationBuilder {
 
     this.jsonRpcConfiguration.setAuthenticationEnabled(true);
     this.jsonRpcConfiguration.setAuthenticationCredentialsFile(authTomlPath);
+
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder jsonRpcAuthenticationConfiguration(
+      final String authFile, final List<String> noAuthApiMethods) throws URISyntaxException {
+    final String authTomlPath =
+        Paths.get(ClassLoader.getSystemResource(authFile).toURI()).toAbsolutePath().toString();
+
+    this.jsonRpcConfiguration.setAuthenticationEnabled(true);
+    this.jsonRpcConfiguration.setAuthenticationCredentialsFile(authTomlPath);
+    this.jsonRpcConfiguration.setNoAuthRpcApis(noAuthApiMethods);
 
     return this;
   }
@@ -234,6 +266,20 @@ public class BesuNodeConfigurationBuilder {
 
     this.webSocketConfiguration.setAuthenticationEnabled(true);
     this.webSocketConfiguration.setAuthenticationCredentialsFile(authTomlPath);
+
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder webSocketAuthenticationEnabledWithNoAuthMethods(
+      final List<String> noAuthApiMethods) throws URISyntaxException {
+    final String authTomlPath =
+        Paths.get(ClassLoader.getSystemResource("authentication/auth.toml").toURI())
+            .toAbsolutePath()
+            .toString();
+
+    this.webSocketConfiguration.setAuthenticationEnabled(true);
+    this.webSocketConfiguration.setAuthenticationCredentialsFile(authTomlPath);
+    this.webSocketConfiguration.setRpcApisNoAuth(noAuthApiMethods);
 
     return this;
   }
@@ -431,7 +477,9 @@ public class BesuNodeConfigurationBuilder {
         dataPath,
         miningParameters,
         jsonRpcConfiguration,
+        Optional.of(engineRpcConfiguration),
         webSocketConfiguration,
+        Optional.of(engineWebSocketConfiguration),
         metricsConfiguration,
         permissioningConfiguration,
         Optional.ofNullable(keyFilePath),

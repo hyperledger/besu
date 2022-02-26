@@ -122,31 +122,6 @@ public class MigratingMiningCoordinatorTest {
   }
 
   @Test
-  public void onBlockAddedShouldMigrateToNextDelegateAndRemoveItAsObserver() {
-    final BftMiningCoordinator delegateCoordinator = createDelegateCoordinator();
-    when(blockHeader.getNumber()).thenReturn(MIGRATION_BLOCK_NUMBER - 1);
-    when(blockchain.observeBlockAdded(delegateCoordinator)).thenReturn(2L);
-
-    new MigratingMiningCoordinator(
-            createCoordinatorSchedule(coordinator1, delegateCoordinator), blockchain)
-        .onBlockAdded(blockEvent);
-
-    verify(blockchain).observeBlockAdded(delegateCoordinator);
-    verify(blockchain).removeObserver(2L);
-  }
-
-  @Test
-  public void onBlockAddedShouldMigrateToNextMiningCoordinatorAndDelegate() {
-    when(blockHeader.getNumber()).thenReturn(MIGRATION_BLOCK_NUMBER - 1);
-
-    new MigratingMiningCoordinator(coordinatorSchedule, blockchain).onBlockAdded(blockEvent);
-
-    verify(coordinator1).stop();
-    verify(coordinator2).start();
-    verify(coordinator2).onBlockAdded(blockEvent);
-  }
-
-  @Test
   public void onBlockAddedShouldNotDelegateWhenDelegateIsNoop() {
     NoopMiningCoordinator mockNoopCoordinator = mock(NoopMiningCoordinator.class);
     coordinatorSchedule = createCoordinatorSchedule(mockNoopCoordinator, coordinator2);

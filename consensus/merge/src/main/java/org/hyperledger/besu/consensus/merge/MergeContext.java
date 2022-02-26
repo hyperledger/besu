@@ -43,11 +43,13 @@ public interface MergeContext extends ConsensusContext {
 
   Optional<BlockHeader> getFinalized();
 
+  Optional<BlockHeader> getTerminalPoWBlock();
+
+  void setTerminalPoWBlock(Optional<BlockHeader> hashAndNumber);
+
   boolean validateCandidateHead(final BlockHeader candidateHeader);
 
   void putPayloadById(final PayloadIdentifier payloadId, final Block block);
-
-  void replacePayloadById(final PayloadIdentifier payloadId, final Block block);
 
   Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId);
 

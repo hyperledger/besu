@@ -37,7 +37,9 @@ public class BesuNodeConfiguration {
   private final Optional<Path> dataPath;
   private final MiningParameters miningParameters;
   private final JsonRpcConfiguration jsonRpcConfiguration;
+  private final Optional<JsonRpcConfiguration> engineRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
+  private final Optional<WebSocketConfiguration> engineWebSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
   private final Optional<PermissioningConfiguration> permissioningConfiguration;
   private final Optional<String> keyFilePath;
@@ -68,7 +70,9 @@ public class BesuNodeConfiguration {
       final Optional<Path> dataPath,
       final MiningParameters miningParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
+      final Optional<JsonRpcConfiguration> engineRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
+      final Optional<WebSocketConfiguration> engineWebSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final Optional<String> keyFilePath,
@@ -96,7 +100,9 @@ public class BesuNodeConfiguration {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
+    this.engineRpcConfiguration = engineRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
+    this.engineWebSocketConfiguration = engineWebSocketConfiguration;
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
     this.keyFilePath = keyFilePath;
@@ -136,8 +142,16 @@ public class BesuNodeConfiguration {
     return jsonRpcConfiguration;
   }
 
+  public Optional<JsonRpcConfiguration> getEngineRpcConfiguration() {
+    return engineRpcConfiguration;
+  }
+
   public WebSocketConfiguration getWebSocketConfiguration() {
     return webSocketConfiguration;
+  }
+
+  public Optional<WebSocketConfiguration> getEngineWebSocketConfiguration() {
+    return engineWebSocketConfiguration;
   }
 
   public MetricsConfiguration getMetricsConfiguration() {

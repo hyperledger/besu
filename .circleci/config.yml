@@ -4,6 +4,14 @@ orbs:
   win: circleci/windows@2.2.0
 
 executors:
+  besu_executor_small:
+    docker:
+      - image: cimg/openjdk:11.0
+    resource_class: small
+    working_directory: ~/project
+    environment:
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
+
   besu_executor_med: # 2cpu, 4G ram
     docker:
       - image: cimg/openjdk:11.0
@@ -19,6 +27,12 @@ executors:
     working_directory: ~/project
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
+      
+  quorum_ats_executor_med:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: med
+    working_directory: ~/project
 
   xl_machine_executor:
     machine:
@@ -96,13 +110,9 @@ jobs:
     steps:
       - prepare
       - run:
-          name: DCO check
-          command: |
-            ./scripts/dco_check.sh
-      - run:
           name: Assemble
           command: |
-            ./gradlew --no-daemon clean spotlessCheck compileJava compileTestJava assemble
+            ./gradlew --no-daemon clean compileJava compileTestJava assemble
       - save_cache:
           name: Caching gradle dependencies
           key: deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
@@ -118,6 +128,25 @@ jobs:
           path: build/distributions
           destination: distributions
           when: always
+
+  dco:
+    executor: besu_executor_small
+    steps:
+      - checkout
+      - restore_gradle_cache
+      - run:
+          name: DCO check
+          command: |
+            ./scripts/dco_check.sh
+  spotless:
+    executor: besu_executor_small
+    steps:
+      - checkout
+      - restore_gradle_cache
+      - run:
+          name: Spotless
+          command: |
+            ./gradlew --no-daemon --parallel clean spotlessCheck
   testWindows:
     executor: win/default
     steps:
@@ -156,6 +185,9 @@ jobs:
           command: |
             for FILE in $(ls docker)
             do
+              if [[ $FILE == "test.sh" || $FILE == "tests" ]]; then
+                continue
+              fi
               docker pull -q "hyperledger/besu:develop-$FILE"
               trivy -q image --exit-code 1 --no-progress --severity HIGH,CRITICAL "hyperledger/besu:develop-$FILE"
             done
@@ -234,15 +266,13 @@ jobs:
       - capture_test_logs
 
   acceptanceTestsQuorum:
-    parallelism: 1
-    executor: xl_machine_executor
+    executor: quorum_ats_executor_med
     steps:
-      - prepare
       - attach_workspace:
           at: ~/project
       - run:
           name: Quorum Acceptance Tests
-          no_output_timeout: 40m
+          no_output_timeout: 30m
           command: ./gradlew --no-daemon acceptanceTestsQuorum
       - store_artifacts:
           path: build/quorum-at
@@ -314,7 +344,12 @@ workflows:
   version: 2
   default:
     jobs:
-      - assemble
+      - dco
+      - spotless
+      - assemble:
+          requires:
+            - dco
+            - spotless
       - unitTests:
           context: SonarCloud
           requires:
@@ -331,9 +366,6 @@ workflows:
       - acceptanceTests:
           requires:
             - assemble
-      - acceptanceTestsQuorum:
-          requires:
-            - assemble
       - buildDocker:
           requires:
             - assemble
@@ -344,10 +376,10 @@ workflows:
                 - main
                 - /^release-.*/
           requires:
+            - assemble
             - integrationTests
             - unitTests
             - acceptanceTests
-            - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
       - publishDocker:
@@ -357,10 +389,10 @@ workflows:
                 - main
                 - /^release-.*/
           requires:
+            - assemble
             - integrationTests
             - unitTests
             - acceptanceTests
-            - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
           context:
@@ -376,4 +408,8 @@ workflows:
               only:
                 - main
     jobs:
+      - assemble
+      - acceptanceTestsQuorum:
+          requires:
+            - assemble
       - dockerScan

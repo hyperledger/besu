@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -41,7 +41,7 @@ public class BlockHeaderTestFixture {
 
   private long gasLimit = 0;
   private Optional<Wei> baseFee = Optional.empty();
-  private Optional<Bytes32> random = Optional.empty();
+  private Optional<Bytes32> prevRandao = Optional.empty();
   private long gasUsed = 0;
   private long timestamp = 0;
   private Bytes extraData = Bytes.EMPTY;
@@ -64,7 +64,7 @@ public class BlockHeaderTestFixture {
     builder.gasLimit(gasLimit);
     builder.gasUsed(gasUsed);
     baseFee.ifPresent(builder::baseFee);
-    random.ifPresent((builder::random));
+    prevRandao.ifPresent((builder::prevRandao));
     builder.timestamp(timestamp);
     builder.extraData(extraData);
     builder.mixHash(mixHash);
@@ -134,8 +134,8 @@ public class BlockHeaderTestFixture {
     return this;
   }
 
-  public BlockHeaderTestFixture random(final Bytes32 random) {
-    this.random = Optional.ofNullable(random);
+  public BlockHeaderTestFixture prevRandao(final Bytes32 prevRandao) {
+    this.prevRandao = Optional.ofNullable(prevRandao);
     return this;
   }
 

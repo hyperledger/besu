@@ -86,7 +86,7 @@ import java.util.OptionalLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class BesuControllerBuilder {
+public abstract class BesuControllerBuilder implements MiningParameterOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
   protected GenesisConfigFile genesisConfig;
@@ -339,7 +339,7 @@ public abstract class BesuControllerBuilder {
             clock,
             metricsSystem,
             syncState,
-            miningParameters.getMinTransactionGasPrice(),
+            miningParameters,
             transactionPoolConfiguration);
 
     final List<PeerValidator> peerValidators = createPeerValidators(protocolSchedule);
@@ -514,7 +514,7 @@ public abstract class BesuControllerBuilder {
     }
   }
 
-  private List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
+  protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
     final List<PeerValidator> validators = new ArrayList<>();
 
     final OptionalLong daoBlock =
