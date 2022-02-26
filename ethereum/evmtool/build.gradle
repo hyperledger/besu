@@ -108,7 +108,7 @@ task distDocker() {
   def imageName = "hyperledger/besu-evmtool"
   def image = "${imageName}:${dockerBuildVersion}"
   def dockerBuildDir = "${buildDir}/docker-besu-evmtool/"
-  
+
   doFirst {
     copy {
       from file("${projectDir}/src/main/docker/Dockerfile")
@@ -147,7 +147,7 @@ task dockerUpload() {
     additionalTags.add('latest')
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
-  
+
 
   doLast {
     def manifest="docker manifest create ${image} "
