@@ -807,7 +807,7 @@ task dockerUpload {
 
       exec {
         executable "sh"
-        args "-c", cmd 
+        args "-c", cmd
       }
 
       exec {
