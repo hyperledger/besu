@@ -67,6 +67,11 @@ dependencies {
 
 mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
 
+def targetPlatforms = [
+  "linux/arm64",
+  "linux/amd64"
+]
+
 startScripts {
   applicationName = 'evm'
   defaultJvmOpts = [
@@ -97,31 +102,41 @@ tasks.register("dockerDistUntar") {
   }
 }
 
-task distDocker(type: Exec) {
+task distDocker() {
   dependsOn dockerDistUntar
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def imageName = "hyperledger/besu-evmtool"
   def image = "${imageName}:${dockerBuildVersion}"
   def dockerBuildDir = "${buildDir}/docker-besu-evmtool/"
-  workingDir "${dockerBuildDir}"
-
+  
   doFirst {
     copy {
       from file("${projectDir}/src/main/docker/Dockerfile")
-      into(workingDir)
+      into(dockerBuildDir)
     }
   }
 
-  executable "sh"
-  args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+  doLast {
+    for (def platform in targetPlatforms) {
+      def tagPlatform=platform.replace("/", "-")
+      def cmd="docker buildx build --platform=${platform} "
+      cmd += "--build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} "
+      cmd += "--build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image}-${tagPlatform} . --output=type=docker"
+
+      exec {
+        workingDir dockerBuildDir
+        executable "sh"
+        args "-c", cmd
+      }
+    }
+  }
 }
 
-task dockerUpload(type: Exec) {
+task dockerUpload() {
   dependsOn distDocker
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def imageName = "hyperledger/besu-evmtool"
   def image = "${imageName}:${dockerBuildVersion}"
-  def cmd = "docker push '${image}'"
   def additionalTags = []
 
   if (project.hasProperty('branch') && project.property('branch') == 'main') {
@@ -132,10 +147,50 @@ task dockerUpload(type: Exec) {
     additionalTags.add('latest')
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
+  
 
-  additionalTags.each { tag ->
-    cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'"
+  doLast {
+    def manifest="docker manifest create ${image} "
+    for (def platform in targetPlatforms) {
+      def tagPlatform=platform.replace("/", "-")
+      def cmd="docker push '${image}-${tagPlatform}'"
+      exec {
+        executable "sh"
+        args "-c", cmd
+      }
+
+      manifest += " --amend ${image}-${tagPlatform} "
+    }
+
+    exec {
+      executable "sh"
+      args "-c", manifest
+    }
+
+    exec {
+      executable "sh"
+      args "-c", "docker manifest push ${image}"
+    }
+
+    additionalTags.each { tag ->
+      def cmd = "docker push '${image}-${tagPlatform}' "
+      manifest="docker manifest create ${imageName}:${tag.trim()} "
+      for (def platform in targetPlatforms) {
+        def tagPlatform=platform.replace("/", "-")
+        cmd += " && docker tag '${image}-${tagPlatform}' '${imageName}:${tag.trim()}-${tagPlatform}' "
+        cmd += " && docker push '${imageName}:${tag.trim()}--${tagPlatform}'"
+        manifest += " --amend ${imageName}:${tag.trim()}-${tagPlatform} "
+      }
+
+      exec {
+        executable "sh"
+        args "-c", cmd
+      }
+
+      exec {
+        executable "sh"
+        args "-c", manifest
+      }
+    }
   }
-  executable "sh"
-  args "-c", cmd
 }

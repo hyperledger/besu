@@ -769,9 +769,8 @@ task dockerUpload {
   }
 
   doLast {
-    def manifest="docker manifest create "
     for (def variant in dockerVariants) {
-      manifest += " ${image}-${variant} "
+      def manifest="docker manifest create ${image}-${variant} "
       for (def platform in targetPlatforms) {
         def tagPlatform=platform.replace("/", "-")
         def variantImage = "${image}-${variant}-${tagPlatform}"
@@ -786,7 +785,6 @@ task dockerUpload {
         manifest += " --amend ${image}-${variant}-${tagPlatform} "
       }
 
-      println "manifest: ${manifest}"
       exec {
         executable "sh"
         args "-c", manifest
@@ -794,31 +792,30 @@ task dockerUpload {
 
       exec {
         executable "sh"
-        args "-c", " docker manifest push ${image}-${variant} "
+        args "-c", "docker manifest push ${image}-${variant}"
       }
     }
 
-    manifest="docker manifest create ${imageName}:${tag.trim()} "
-    for (def platform in targetPlatforms) {
-      def tagPlatform=platform.replace("/", "-")
+    additionalTags.each { tag ->
+      def cmd = "docker push '${image}-${tagPlatform}'"
+      def manifest="docker manifest create ${imageName}:${tag.trim()} "
+      for (def platform in targetPlatforms) {
+        def tagPlatform=platform.replace("/", "-")
+        cmd += " && docker tag '${image}-${tagPlatform}' '${imageName}:${tag.trim()}-${tagPlatform}' && docker push '${imageName}:${tag.trim()}--${tagPlatform}'"
+        manifest += " --amend ${imageName}:${tag.trim()}--${tagPlatform} "
+      }
+
       exec {
-        def cmd = "docker push '${image}-${tagPlatform}'"
-        additionalTags.each { tag ->
-          cmd += " && docker tag '${image}-${tagPlatform}' '${imageName}:${tag.trim()}-${tagPlatform}' && docker push '${imageName}:${tag.trim()}--${tagPlatform}'"
-          // temporarily commented out because AWS credentials are broken
-          // cmd += " && docker tag '${image}' '${azureImageName}:${tag.trim()}' && docker push '${azureImageName}:${tag.trim()}'"
-        }
         executable "sh"
-        args "-c", cmd
+        args "-c", cmd 
       }
-      manifest += " --amend ${imageName}:${tag.trim()}--${tagPlatform} "
+
+      exec {
+        executable "sh"
+        args "-c", manifest
+      }
     }
 
-    println "manifest: ${manifest}"
-    exec {
-      executable "sh"
-      args "-c", manifest
-    }
   }
 
 }

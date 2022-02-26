@@ -378,10 +378,12 @@ jobs:
           name: Publish Docker
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
+                       
             # temporarily commented out because AWS credentials are broken
             # docker login "${ACR_REPO}" --username "${ACR_USER_RW}" --password "${ACR_PASSWORD_RW}"
 
             export DOCKER_CLI_EXPERIMENTAL=enabled
+            docker run --privileged --rm tonistiigi/binfmt --install all
             docker context create builder-context
             docker buildx create --name builderx --driver docker-container --use builder-context
             ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
