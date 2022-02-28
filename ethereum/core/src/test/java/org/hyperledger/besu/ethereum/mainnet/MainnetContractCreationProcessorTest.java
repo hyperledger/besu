@@ -32,7 +32,6 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Collections;
 
-import com.google.common.base.Strings;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
