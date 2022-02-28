@@ -31,15 +31,12 @@ public class PrefixCodeRule implements ContractValidationRule {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-3541
   public Optional<ExceptionalHaltReason> validate(final MessageFrame frame) {
-    if (!frame.getOutputData().isEmpty()) {
-      if (frame.getOutputData().get(0) == FORMAT_RESERVED) {
-        LOG.trace("Contract creation error: code cannot start with {}", FORMAT_RESERVED);
-        return Optional.of(ExceptionalHaltReason.INVALID_CODE);
-      } else {
-        Optional.empty();
-      }
+    if (!frame.getOutputData().isEmpty() && frame.getOutputData().get(0) == FORMAT_RESERVED) {
+      LOG.trace("Contract creation error: code cannot start with {}", FORMAT_RESERVED);
+      return Optional.of(ExceptionalHaltReason.INVALID_CODE);
+    } else {
+      return Optional.empty();
     }
-    return Optional.empty();
   }
 
   public static ContractValidationRule of() {
