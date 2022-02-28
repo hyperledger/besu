@@ -74,6 +74,10 @@ public class BftFork {
         .map(Address::fromHexStringStrict);
   }
 
+  public boolean isMiningBeneficiaryConfigured() {
+    return JsonUtil.hasKey(forkConfigRoot, MINING_BENEFICIARY_KEY);
+  }
+
   public Optional<List<String>> getValidators() throws IllegalArgumentException {
     final Optional<ArrayNode> validatorNode = JsonUtil.getArrayNode(forkConfigRoot, VALIDATORS_KEY);
 

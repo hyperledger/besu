@@ -60,7 +60,8 @@ public abstract class BaseForksSchedulesFactoryTest<
                 BftFork.MINING_BENEFICIARY_KEY,
                 beneficiaryAddress.toHexString()));
     final ObjectNode forkWithNoBeneficiary =
-        JsonUtil.objectNodeFromMap(Map.of(BftFork.FORK_BLOCK_KEY, 2));
+        JsonUtil.objectNodeFromMap(
+            Map.of(BftFork.FORK_BLOCK_KEY, 2, BftFork.MINING_BENEFICIARY_KEY, ""));
 
     final GenesisConfigOptions genesisConfigOptions =
         createGenesisConfig(qbftConfigOptions, forkWithBeneficiary, forkWithNoBeneficiary);
@@ -99,6 +100,53 @@ public abstract class BaseForksSchedulesFactoryTest<
         .contains(beneficiaryAddress);
     assertThat(forksSchedule.getFork(1).getValue().getMiningBeneficiary()).isEmpty();
     assertThat(forksSchedule.getFork(2).getValue().getMiningBeneficiary())
+        .contains(beneficiaryAddress2);
+  }
+
+  @Test
+  public void
+      createsScheduleThatChangesMiningBeneficiary_shouldNotModifyBeneficiaryUnlessExplicitlyConfigured() {
+    final Address initialBeneficiaryAddress =
+        Address.fromHexString("0x1111111111111111111111111111111111111111");
+    final Address beneficiaryAddress2 = Address.fromHexString("0x02");
+    final C qbftConfigOptions =
+        createBftOptions(o -> o.setMiningBeneficiary(Optional.of(initialBeneficiaryAddress)));
+
+    ObjectNode[] forks = {
+      // No change to beneficiary
+      JsonUtil.objectNodeFromMap(
+          Map.of(BftFork.FORK_BLOCK_KEY, 1, BftFork.BLOCK_PERIOD_SECONDS_KEY, 2)),
+      // Clear beneficiary
+      JsonUtil.objectNodeFromMap(
+          Map.of(BftFork.FORK_BLOCK_KEY, 3, BftFork.MINING_BENEFICIARY_KEY, "")),
+      // No change to beneficiary
+      JsonUtil.objectNodeFromMap(
+          Map.of(BftFork.FORK_BLOCK_KEY, 5, BftFork.BLOCK_PERIOD_SECONDS_KEY, 4)),
+      // Set beneficiary
+      JsonUtil.objectNodeFromMap(
+          Map.of(
+              BftFork.FORK_BLOCK_KEY,
+              7,
+              BftFork.MINING_BENEFICIARY_KEY,
+              beneficiaryAddress2.toUnprefixedHexString()))
+    };
+
+    final GenesisConfigOptions genesisConfigOptions = createGenesisConfig(qbftConfigOptions, forks);
+    final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfigOptions);
+
+    assertThat(forksSchedule.getFork(0).getValue().getMiningBeneficiary())
+        .contains(initialBeneficiaryAddress);
+    assertThat(forksSchedule.getFork(1).getValue().getMiningBeneficiary())
+        .contains(initialBeneficiaryAddress);
+    assertThat(forksSchedule.getFork(2).getValue().getMiningBeneficiary())
+        .contains(initialBeneficiaryAddress);
+    assertThat(forksSchedule.getFork(3).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(forksSchedule.getFork(4).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(forksSchedule.getFork(5).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(forksSchedule.getFork(6).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(forksSchedule.getFork(7).getValue().getMiningBeneficiary())
+        .contains(beneficiaryAddress2);
+    assertThat(forksSchedule.getFork(8).getValue().getMiningBeneficiary())
         .contains(beneficiaryAddress2);
   }
 

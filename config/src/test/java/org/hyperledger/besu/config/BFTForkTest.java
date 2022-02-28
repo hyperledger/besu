@@ -113,4 +113,31 @@ public class BFTForkTest {
     final BftFork bftFork = new BftFork(config);
     assertThat(bftFork.getMiningBeneficiary()).isEmpty();
   }
+
+  @Test
+  public void isMiningBeneficiaryConfigured_noKeySet() {
+    final String jsonStr = "{}";
+    final ObjectNode config = JsonUtil.objectNodeFromString(jsonStr);
+    final BftFork bftFork = new BftFork(config);
+
+    assertThat(bftFork.isMiningBeneficiaryConfigured()).isFalse();
+  }
+
+  @Test
+  public void isMiningBeneficiaryConfigured_whenEmptyValueIsProvided() {
+    ObjectNode config = JsonUtil.objectNodeFromMap(Map.of(BftFork.MINING_BENEFICIARY_KEY, ""));
+
+    final BftFork bftFork = new BftFork(config);
+    assertThat(bftFork.isMiningBeneficiaryConfigured()).isTrue();
+  }
+
+  @Test
+  public void isMiningBeneficiaryConfigured_whenNonEmptyValueIsProvided() {
+    final String beneficiary = "0x11111111111111111111111111111111111111";
+    ObjectNode config =
+        JsonUtil.objectNodeFromMap(Map.of(BftFork.MINING_BENEFICIARY_KEY, beneficiary));
+
+    final BftFork bftFork = new BftFork(config);
+    assertThat(bftFork.isMiningBeneficiaryConfigured()).isTrue();
+  }
 }
