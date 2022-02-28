@@ -114,7 +114,7 @@ public class MainnetContractCreationProcessorTest {
             Collections.singletonList(MaxCodeSizeRule.of(24 * 1024)),
             1,
             Collections.emptyList());
-    final Bytes contractCode = Bytes.fromHexString(Strings.repeat("00", 24 * 1024 + 1));
+    final Bytes contractCode = Bytes.fromHexString("00".repeat(24 * 1024 + 1));
     final MessageFrame messageFrame = new MessageFrameTestFixture().build();
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(Gas.of(100));
@@ -136,7 +136,7 @@ public class MainnetContractCreationProcessorTest {
             Collections.singletonList(MaxCodeSizeRule.of(24 * 1024)),
             1,
             Collections.emptyList());
-    final Bytes contractCode = Bytes.fromHexString(Strings.repeat("00", 24 * 1024));
+    final Bytes contractCode = Bytes.fromHexString("00".repeat(24 * 1024));
     final MessageFrame messageFrame = new MessageFrameTestFixture().build();
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(Gas.of(100));
@@ -151,7 +151,7 @@ public class MainnetContractCreationProcessorTest {
     processor =
         new ContractCreationProcessor(
             gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
-    final Bytes contractCode = Bytes.fromHexString(Strings.repeat("00", 24 * 1024 + 1));
+    final Bytes contractCode = Bytes.fromHexString("00".repeat(24 * 1024 + 1));
     final MessageFrame messageFrame = new MessageFrameTestFixture().build();
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(Gas.of(100));
