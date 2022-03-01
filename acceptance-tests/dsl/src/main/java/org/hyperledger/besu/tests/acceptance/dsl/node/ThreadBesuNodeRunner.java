@@ -20,6 +20,7 @@ import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -161,27 +162,30 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final int maxPeers = 25;
 
-    final BesuController besuController =
-        builder
-            .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
-            .dataDirectory(node.homeDirectory())
-            .miningParameters(node.getMiningParameters())
-            .privacyParameters(node.getPrivacyParameters())
-            .nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))))
-            .metricsSystem(metricsSystem)
-            .transactionPoolConfiguration(txPoolConfig)
-            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-            .clock(Clock.systemUTC())
-            .isRevertReasonEnabled(node.isRevertReasonEnabled())
-            .storageProvider(storageProvider)
-            .gasLimitCalculator(GasLimitCalculator.constant())
-            .pkiBlockCreationConfiguration(
-                node.getPkiKeyStoreConfiguration()
-                    .map(
-                        (pkiConfig) -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
-            .evmConfiguration(EvmConfiguration.DEFAULT)
-            .maxPeers(maxPeers)
-            .build();
+    builder
+        .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
+        .dataDirectory(node.homeDirectory())
+        .miningParameters(node.getMiningParameters())
+        .privacyParameters(node.getPrivacyParameters())
+        .nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))))
+        .metricsSystem(metricsSystem)
+        .transactionPoolConfiguration(txPoolConfig)
+        .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+        .clock(Clock.systemUTC())
+        .isRevertReasonEnabled(node.isRevertReasonEnabled())
+        .storageProvider(storageProvider)
+        .gasLimitCalculator(GasLimitCalculator.constant())
+        .pkiBlockCreationConfiguration(
+            node.getPkiKeyStoreConfiguration()
+                .map((pkiConfig) -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
+        .evmConfiguration(EvmConfiguration.DEFAULT)
+        .maxPeers(maxPeers);
+
+    node.getGenesisConfig()
+        .map(GenesisConfigFile::fromConfig)
+        .ifPresent(builder::genesisConfigFile);
+
+    final BesuController besuController = builder.build();
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
     runnerBuilder.permissioningConfiguration(node.getPermissioningConfiguration());
