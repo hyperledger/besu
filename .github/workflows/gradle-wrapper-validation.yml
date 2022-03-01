@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   validation:
-    name: "Validation"
+    name: "Gradle Wrapper Validation"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
