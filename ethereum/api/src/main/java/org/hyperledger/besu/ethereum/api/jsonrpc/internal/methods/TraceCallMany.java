@@ -104,13 +104,16 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
       Arrays.stream(transactionsAndTraceTypeParameters)
           .forEachOrdered(
               p -> {
-                executeSingleCall(
-                    p.getTuple().getJsonCallParameter(),
-                    p.getTuple().getTraceTypeParameter(),
-                    maybeBlockHeader.get(),
-                    finalUpdater,
-                    traceCallResults);
-                // TODO we probably do not want to commit when Tx is not success
+                try {
+                  executeSingleCall(
+                      p.getTuple().getJsonCallParameter(),
+                      p.getTuple().getTraceTypeParameter(),
+                      maybeBlockHeader.get(),
+                      finalUpdater,
+                      traceCallResults);
+                } catch (final TransactioInvalidException e) {
+                  return; // TODO: check what OpenEthereum does when on of the calls fails
+                }
                 finalUpdater.commit();
               });
     } catch (final Exception e) {
@@ -134,10 +137,18 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
     if (maybeSimulatorResult.isEmpty()) {
       throw new RuntimeException("Empty simulator result");
+    } else {
+      if (maybeSimulatorResult.get().isInvalid()) {
+        throw new TransactioInvalidException();
+      }
+      final JsonNode jsonNode = buildResult(traceTypes, tracer, maybeSimulatorResult);
+      traceCallResults.add(jsonNode);
     }
+  }
 
-    final JsonNode jsonNode = buildResult(traceTypes, tracer, maybeSimulatorResult);
-
-    traceCallResults.add(jsonNode);
+  private class TransactioInvalidException extends RuntimeException {
+    TransactioInvalidException() {
+      super();
+    }
   }
 }
