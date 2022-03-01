@@ -98,7 +98,7 @@ public class FullSyncDownloaderTest {
         ethContext,
         syncState,
         metricsSystem,
-        FullSyncTerminationCondition.never());
+        SyncTerminationCondition.never());
   }
 
   @Test

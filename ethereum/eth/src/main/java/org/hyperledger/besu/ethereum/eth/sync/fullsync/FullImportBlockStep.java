@@ -35,17 +35,17 @@ public class FullImportBlockStep implements Consumer<Block> {
   private final EthContext ethContext;
   private long gasAccumulator = 0;
   private long lastReportMillis = 0;
-  private final FullSyncTerminationCondition fullSyncTerminationCondition;
+  private final SyncTerminationCondition fullSyncTerminationCondition;
 
   public FullImportBlockStep(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final FullSyncTerminationCondition fullSyncTerminationCondition) {
+      final SyncTerminationCondition syncTerminationCondition) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.fullSyncTerminationCondition = fullSyncTerminationCondition;
+    this.fullSyncTerminationCondition = syncTerminationCondition;
   }
 
   @Override

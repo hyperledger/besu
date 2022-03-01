@@ -86,7 +86,7 @@ public class FullSyncChainDownloaderForkTest {
         ethContext,
         syncState,
         metricsSystem,
-        FullSyncTerminationCondition.never());
+        SyncTerminationCondition.never());
   }
 
   private ChainDownloader downloader() {

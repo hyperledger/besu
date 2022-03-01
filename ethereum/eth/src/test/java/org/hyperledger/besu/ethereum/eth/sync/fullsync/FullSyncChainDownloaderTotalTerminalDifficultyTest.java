@@ -100,7 +100,7 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
 
   private ChainDownloader downloader(
       final SynchronizerConfiguration syncConfig,
-      final FullSyncTerminationCondition terminalCondition) {
+      final SyncTerminationCondition terminalCondition) {
     return FullSyncChainDownloader.create(
         syncConfig,
         protocolSchedule,
@@ -132,7 +132,7 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
     final ChainDownloader downloader =
         downloader(
             syncConfig,
-            FullSyncTerminationCondition.difficulty(TARGET_TERMINAL_DIFFICULTY, localBlockchain));
+            SyncTerminationCondition.difficulty(TARGET_TERMINAL_DIFFICULTY, localBlockchain));
     final CompletableFuture<Void> future = downloader.start();
 
     assertThat(future.isDone()).isFalse();
@@ -141,10 +141,10 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
     assertThat(syncState.syncTarget()).isPresent();
     assertThat(syncState.syncTarget().get().peer()).isEqualTo(peer.getEthPeer());
 
-    peer.respondWhileOtherThreadsWork(
-        responder, () -> localBlockchain.getChainHeadBlockNumber() < targetBlock);
+    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
 
-    assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(targetBlock);
+    assertThat(localBlockchain.getChainHead().getTotalDifficulty())
+        .isGreaterThan(TARGET_TERMINAL_DIFFICULTY);
 
     assertThat(future.isDone()).isTrue();
   }
@@ -163,7 +163,7 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
 
     final SynchronizerConfiguration syncConfig =
         syncConfigBuilder().downloaderChainSegmentSize(1).downloaderParallelism(1).build();
-    final ChainDownloader downloader = downloader(syncConfig, FullSyncTerminationCondition.never());
+    final ChainDownloader downloader = downloader(syncConfig, SyncTerminationCondition.never());
     final CompletableFuture<Void> future = downloader.start();
 
     assertThat(future.isDone()).isFalse();

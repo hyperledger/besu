@@ -33,7 +33,7 @@ public class FullSyncChainDownloader {
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
-      final FullSyncTerminationCondition terminationCondition) {
+      final SyncTerminationCondition terminationCondition) {
 
     final FullSyncTargetManager syncTargetManager =
         new FullSyncTargetManager(

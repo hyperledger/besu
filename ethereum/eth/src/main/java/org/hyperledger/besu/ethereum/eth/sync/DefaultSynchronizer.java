@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncTerminationCondition;
+import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -67,7 +67,7 @@ public class DefaultSynchronizer implements Synchronizer {
       final Path dataDirectory,
       final Clock clock,
       final MetricsSystem metricsSystem,
-      final FullSyncTerminationCondition terminationCondition) {
+      final SyncTerminationCondition terminationCondition) {
     this.maybePruner = maybePruner;
     this.syncState = syncState;
 

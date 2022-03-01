@@ -23,7 +23,7 @@ import java.util.function.BooleanSupplier;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** return true when termination condition is fullfilled and the full sync should stop */
-public interface FullSyncTerminationCondition extends BooleanSupplier {
+public interface SyncTerminationCondition extends BooleanSupplier {
 
   default boolean shouldContinueDownload() {
     return !shouldStopDownload();
@@ -38,7 +38,7 @@ public interface FullSyncTerminationCondition extends BooleanSupplier {
    *
    * @return always false therefore continues forever *
    */
-  static FullSyncTerminationCondition never() {
+  static SyncTerminationCondition never() {
     return () -> false;
   }
 
@@ -50,7 +50,7 @@ public interface FullSyncTerminationCondition extends BooleanSupplier {
    * @param blockchain blockchain to reach the difficulty on
    * @return true when blockchain reaches difficulty
    */
-  static FullSyncTerminationCondition difficulty(
+  static SyncTerminationCondition difficulty(
       final UInt256 targetDifficulty, final Blockchain blockchain) {
     return difficulty(Difficulty.of(targetDifficulty), blockchain);
   }
@@ -63,7 +63,7 @@ public interface FullSyncTerminationCondition extends BooleanSupplier {
    * @param blockchain blockchain to reach the difficulty on*
    * @return true when blockchain reaches difficulty
    */
-  static FullSyncTerminationCondition difficulty(
+  static SyncTerminationCondition difficulty(
       final Difficulty targetDifficulty, final Blockchain blockchain) {
     return () -> blockchain.getChainHead().getTotalDifficulty().greaterThan(targetDifficulty);
   }

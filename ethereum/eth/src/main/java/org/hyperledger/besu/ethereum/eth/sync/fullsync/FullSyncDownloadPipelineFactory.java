@@ -48,7 +48,7 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   private final ValidationPolicy detachedValidationPolicy =
       () -> HeaderValidationMode.DETACHED_ONLY;
   private final BetterSyncTargetEvaluator betterSyncTargetEvaluator;
-  private final FullSyncTerminationCondition fullSyncTerminationCondition;
+  private final SyncTerminationCondition fullSyncTerminationCondition;
 
   public FullSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
@@ -56,13 +56,13 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
-      final FullSyncTerminationCondition fullSyncTerminationCondition) {
+      final SyncTerminationCondition syncTerminationCondition) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
-    this.fullSyncTerminationCondition = fullSyncTerminationCondition;
+    this.fullSyncTerminationCondition = syncTerminationCondition;
     betterSyncTargetEvaluator = new BetterSyncTargetEvaluator(syncConfig, ethContext.getEthPeers());
   }
 
@@ -78,7 +78,8 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             ethContext.getScheduler(),
             target.peer(),
             target.commonAncestor(),
-            syncConfig.getDownloaderCheckpointTimeoutsPermitted());
+            syncConfig.getDownloaderCheckpointTimeoutsPermitted(),
+            fullSyncTerminationCondition);
     final DownloadHeadersStep downloadHeadersStep =
         new DownloadHeadersStep(
             protocolSchedule,
@@ -119,7 +120,7 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
   private boolean shouldContinueDownloadingFromPeer(
       final EthPeer peer, final BlockHeader lastCheckpointHeader) {
-    final boolean shouldTerminate = fullSyncTerminationCondition.getAsBoolean();
+    final boolean shouldTerminate = fullSyncTerminationCondition.shouldStopDownload();
     final boolean caughtUpToPeer =
         peer.chainState().getEstimatedHeight() <= lastCheckpointHeader.getNumber();
     final boolean isDisconnected = peer.isDisconnected();

@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 
-public class FlexibleBlockHashTerminalCondition implements FullSyncTerminationCondition {
+public class FlexibleBlockHashTerminalCondition implements SyncTerminationCondition {
   private Hash blockHash;
   private final Blockchain blockchain;
 

@@ -52,7 +52,7 @@ public class FullImportBlockStepTest {
 
     importBlocksStep =
         new FullImportBlockStep(
-            protocolSchedule, protocolContext, null, FullSyncTerminationCondition.never());
+            protocolSchedule, protocolContext, null, SyncTerminationCondition.never());
   }
 
   @Test

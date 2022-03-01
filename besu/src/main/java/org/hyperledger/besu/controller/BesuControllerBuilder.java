@@ -51,7 +51,7 @@ import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValida
 import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncTerminationCondition;
+import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -418,13 +418,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         additionalPluginServices);
   }
 
-  protected FullSyncTerminationCondition getFullSyncTerminationCondition(
-      final Blockchain blockchain) {
+  protected SyncTerminationCondition getFullSyncTerminationCondition(final Blockchain blockchain) {
     return genesisConfig
         .getConfigOptions()
         .getTerminalTotalDifficulty()
-        .map(difficulty -> FullSyncTerminationCondition.difficulty(difficulty, blockchain))
-        .orElse(FullSyncTerminationCondition.never());
+        .map(difficulty -> SyncTerminationCondition.difficulty(difficulty, blockchain))
+        .orElse(SyncTerminationCondition.never());
   }
 
   protected void prepForBuild() {}

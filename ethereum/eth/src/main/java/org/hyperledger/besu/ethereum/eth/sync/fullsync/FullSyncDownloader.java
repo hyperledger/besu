@@ -43,7 +43,7 @@ public class FullSyncDownloader {
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
-      final FullSyncTerminationCondition terminationCondition) {
+      final SyncTerminationCondition terminationCondition) {
     this.syncConfig = syncConfig;
     this.protocolContext = protocolContext;
     this.syncState = syncState;

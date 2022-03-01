@@ -123,7 +123,7 @@ public class FullSyncChainDownloaderTest {
         ethContext,
         syncState,
         metricsSystem,
-        FullSyncTerminationCondition.never());
+        SyncTerminationCondition.never());
   }
 
   private ChainDownloader downloader() {
