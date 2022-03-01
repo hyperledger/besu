@@ -119,7 +119,7 @@ public class BlockPropagationManager {
       clearListeners();
       started.set(false);
     } else {
-      LOG.info("Attempted to stop when we are not even running...");
+      LOG.warn("Attempted to stop when we are not even running...");
     }
   }
 

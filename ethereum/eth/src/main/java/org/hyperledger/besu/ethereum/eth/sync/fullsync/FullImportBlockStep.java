@@ -51,7 +51,7 @@ public class FullImportBlockStep implements Consumer<Block> {
   @Override
   public void accept(final Block block) {
     if (fullSyncTerminationCondition.shouldStopDownload()) {
-      LOG.info("Not importing another block, because terminal condition was reached.");
+      LOG.debug("Not importing another block, because terminal condition was reached.");
       return;
     }
     final long blockNumber = block.getHeader().getNumber();
