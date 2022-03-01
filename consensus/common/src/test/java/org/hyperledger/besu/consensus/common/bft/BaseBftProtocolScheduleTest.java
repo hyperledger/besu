@@ -103,7 +103,6 @@ public class BaseBftProtocolScheduleTest {
     final BlockHeader header = mock(BlockHeader.class);
     when(header.getCoinbase()).thenReturn(headerCoinbase);
 
-    final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
     // Alternate empty and non-empty mining beneficiary config
     final BftConfigOptions initialConfig =
         createBftConfig(
