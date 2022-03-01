@@ -248,7 +248,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
   }
 
   @Override
-  public boolean isPermitted(final Optional<User> optionalUser, final JsonRpcMethod jsonRpcMethod, final Collection<String> noAuthMethods) {
+  public boolean isPermitted(
+      final Optional<User> optionalUser,
+      final JsonRpcMethod jsonRpcMethod,
+      final Collection<String> noAuthMethods) {
     AtomicBoolean foundMatchingPermission = new AtomicBoolean();
     // if the method is configured as a no auth method we skip permission check
     if (noAuthMethods.stream().anyMatch(m -> m.equals(jsonRpcMethod.getName()))) {
@@ -259,17 +262,17 @@ public class DefaultAuthenticationService implements AuthenticationService {
       User user = optionalUser.get();
       for (String perm : jsonRpcMethod.getPermissions()) {
         user.isAuthorized(
-                perm,
-                (authed) -> {
-                  if (authed.result()) {
-                    LOG.trace(
-                            "user {} authorized : {} via permission {}",
-                            user,
-                            jsonRpcMethod.getName(),
-                            perm);
-                    foundMatchingPermission.set(true);
-                  }
-                });
+            perm,
+            (authed) -> {
+              if (authed.result()) {
+                LOG.trace(
+                    "user {} authorized : {} via permission {}",
+                    user,
+                    jsonRpcMethod.getName(),
+                    perm);
+                foundMatchingPermission.set(true);
+              }
+            });
         // exit if a matching permission was found, no need to keep checking
         if (foundMatchingPermission.get()) {
           return foundMatchingPermission.get();

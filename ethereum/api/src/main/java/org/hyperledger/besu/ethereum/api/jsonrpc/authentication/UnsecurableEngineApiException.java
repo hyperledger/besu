@@ -16,25 +16,8 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-
-import java.util.Collection;
-import java.util.Optional;
-
-import io.vertx.core.Handler;
-import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.web.RoutingContext;
-
-public interface AuthenticationService {
-  void handleLogin(RoutingContext routingContext);
-
-  JWTAuth getJwtAuthProvider();
-
-  void authenticate(String token, Handler<Optional<User>> handler);
-
-  boolean isPermitted(
-      final Optional<User> optionalUser,
-      final JsonRpcMethod jsonRpcMethod,
-      final Collection<String> noAuthMethods);
+public class UnsecurableEngineApiException extends RuntimeException {
+  public UnsecurableEngineApiException(final String reason) {
+    super(reason);
+  }
 }

@@ -613,7 +613,7 @@ public class RunnerBuilder {
                   new HealthService(new LivenessCheck()),
                   new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
 
-      if (engineJsonRpcConfiguration.isPresent()) {
+      if (engineJsonRpcConfiguration.isPresent() && engineJsonRpcConfiguration.get().isEnabled()) {
         final Map<String, JsonRpcMethod> engineMethods =
             jsonRpcMethods(
                 protocolSchedule,
@@ -648,7 +648,12 @@ public class RunnerBuilder {
                     metricsSystem,
                     natService,
                     engineMethods,
-                    Optional.of(new EngineAuthService(vertx)),
+                    Optional.of(
+                        new EngineAuthService(
+                            vertx,
+                            Optional.ofNullable(
+                                engineJsonRpcConfiguration.get().getAuthenticationPublicKeyFile()),
+                            dataDir)),
                     new HealthService(new LivenessCheck()),
                     new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
       }
@@ -736,7 +741,7 @@ public class RunnerBuilder {
                   privacyParameters,
                   protocolSchedule,
                   blockchainQueries,
-                      DefaultAuthenticationService.create(vertx, webSocketConfiguration)));
+                  DefaultAuthenticationService.create(vertx, webSocketConfiguration)));
 
       createPrivateTransactionObserver(subscriptionManager, privacyParameters);
 
@@ -776,7 +781,14 @@ public class RunnerBuilder {
                     privacyParameters,
                     protocolSchedule,
                     blockchainQueries,
-                    Optional.of(new EngineAuthService(vertx))));
+                    Optional.of(
+                        new EngineAuthService(
+                            vertx,
+                            Optional.ofNullable(
+                                engineWebSocketConfiguration
+                                    .get()
+                                    .getAuthenticationPublicKeyFile()),
+                            dataDir))));
       }
     }
 
@@ -1067,14 +1079,14 @@ public class RunnerBuilder {
   }
 
   private WebSocketService createWebsocketService(
-          final Vertx vertx,
-          final WebSocketConfiguration configuration,
-          final SubscriptionManager subscriptionManager,
-          final Map<String, JsonRpcMethod> jsonRpcMethods,
-          final PrivacyParameters privacyParameters,
-          final ProtocolSchedule protocolSchedule,
-          final BlockchainQueries blockchainQueries,
-          final Optional<AuthenticationService> authenticationService) {
+      final Vertx vertx,
+      final WebSocketConfiguration configuration,
+      final SubscriptionManager subscriptionManager,
+      final Map<String, JsonRpcMethod> jsonRpcMethods,
+      final PrivacyParameters privacyParameters,
+      final ProtocolSchedule protocolSchedule,
+      final BlockchainQueries blockchainQueries,
+      final Optional<AuthenticationService> authenticationService) {
 
     final WebSocketMethodsFactory websocketMethodsFactory =
         new WebSocketMethodsFactory(subscriptionManager, jsonRpcMethods);
@@ -1099,7 +1111,8 @@ public class RunnerBuilder {
             besuController.getProtocolManager().ethContext().getScheduler(),
             webSocketConfiguration.getTimeoutSec());
 
-    return new WebSocketService(vertx, configuration, websocketRequestHandler, authenticationService);
+    return new WebSocketService(
+        vertx, configuration, websocketRequestHandler, authenticationService);
   }
 
   private Optional<MetricsService> createMetricsService(

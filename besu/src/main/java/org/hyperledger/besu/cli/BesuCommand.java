@@ -708,6 +708,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer engineRpcWsPort = DEFAULT_WEBSOCKET_ENGINE_PORT;
 
   @Option(
+      names = {"--engine-jwt-secret"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "Path to file containing shared secret key for JWT signature verification")
+  private final Path engineJwtKeyFile = null;
+
+  @Option(
       names = {"--rpc-ws-max-frame-size"},
       description =
           "Maximum size in bytes for JSON-RPC WebSocket frames (default: ${DEFAULT-VALUE}). If this limit is exceeded, the websocket will be disconnected.",
@@ -869,7 +875,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--engine-host-allowlist"},
       paramLabel = "<hostname>[,<hostname>...]... or * or all",
       description =
-          "Comma separated list of hostnames to allow for ENGINE API access, or * to accept any host (default: ${DEFAULT-VALUE})",
+          "Comma separated list of hostnames to allow for ENGINE API access (applies to both RPC and websockets), or * to accept any host (default: ${DEFAULT-VALUE})",
       defaultValue = "localhost,127.0.0.1")
   private final JsonRPCAllowlistHostsProperty engineHostsAllowlist =
       new JsonRPCAllowlistHostsProperty();
@@ -1816,8 +1822,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration(rpcWsPort, rpcWsApis, hostsAllowlist);
     engineWebSocketConfiguration =
-        webSocketConfiguration(
-            engineRpcWsPort, Arrays.asList("ENGINE", "ETH"), engineHostsAllowlist);
+        engineWebSocketConfiguration(engineRpcWsPort, engineHostsAllowlist);
     apiConfiguration = apiConfiguration();
     // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
     if (!hostsWhitelist.isEmpty()) {
@@ -1982,9 +1987,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Integer listenPort, final List<String> allowCallsFrom) {
     JsonRpcConfiguration engineConfig =
         jsonRpcConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
+    engineConfig.setEnabled(isMergeEnabled());
     engineConfig.setAuthenticationEnabled(true);
     engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
+    if (engineJwtKeyFile != null && java.nio.file.Files.exists(engineJwtKeyFile)) {
+      engineConfig.setAuthenticationPublicKeyFile(engineJwtKeyFile.toFile());
+    }
     return engineConfig;
+  }
+
+  private WebSocketConfiguration engineWebSocketConfiguration(
+      final Integer listenPort, final List<String> allowCallsFrom) {
+
+    final WebSocketConfiguration webSocketConfiguration =
+        webSocketConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
+    webSocketConfiguration.setEnabled(isMergeEnabled());
+    webSocketConfiguration.setAuthenticationEnabled(true);
+    webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
+    if (engineJwtKeyFile != null && java.nio.file.Files.exists(engineJwtKeyFile)) {
+      webSocketConfiguration.setAuthenticationPublicKeyFile(engineJwtKeyFile.toFile());
+    }
+    return webSocketConfiguration;
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration(

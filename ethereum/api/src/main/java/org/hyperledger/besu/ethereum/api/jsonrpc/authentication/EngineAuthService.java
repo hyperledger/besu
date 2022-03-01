@@ -16,6 +16,12 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -27,12 +33,10 @@ import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.Codec;
-import io.vertx.ext.auth.impl.jose.JWT;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,22 +45,68 @@ public class EngineAuthService implements AuthenticationService {
   private static final Logger LOG = LoggerFactory.getLogger(EngineAuthService.class);
   private final JWTAuth jwtAuthProvider;
 
-  public EngineAuthService(final Vertx vertx) {
-    final JWTAuthOptions jwtAuthOptions = engineApiJWTOptions(JwtAlgorithm.HS256);
+  public EngineAuthService(final Vertx vertx, final Optional<File> signingKey, final Path datadir) {
+    final JWTAuthOptions jwtAuthOptions =
+        engineApiJWTOptions(JwtAlgorithm.HS256, signingKey, datadir);
     this.jwtAuthProvider = JWTAuth.create(vertx, jwtAuthOptions);
-    LOG.info(
-        "ENGINE API JWT EPHEMERAL KEY: {}",
-        Codec.base16Encode(jwtAuthOptions.getPubSecKeys().get(0).getBuffer().getBytes()));
   }
 
-  private JWTAuthOptions engineApiJWTOptions(final JwtAlgorithm jwtAlgorithm) {
-    byte[] ephemeralKey = Bytes32.random().toArray();
+  private JWTAuthOptions engineApiJWTOptions(
+      final JwtAlgorithm jwtAlgorithm, final Optional<File> keyFile, final Path datadir) {
+    byte[] signingKey = null;
+    if (!keyFile.isPresent()) {
+      final File jwtFile = new File(datadir.toFile(), "jwt.hex");
+      jwtFile.deleteOnExit();
+      final byte[] ephemeralKey = Bytes32.random().toArray();
+      try {
+        Files.writeString(jwtFile.toPath(), Codec.base16Encode(ephemeralKey));
+      } catch (IOException ioe) {
+        LOG.warn("Unable to write ephemeral jwt key file to {}", jwtFile.toPath().toString());
+        LOG.info("JWT KEY: {}", Codec.base16Encode(ephemeralKey));
+      }
+      signingKey = ephemeralKey;
+    } else { // user configured option to use a specified file
+      if (keyFile.get().exists()) {
+        try {
+          final String keyHex = Files.readAllLines(keyFile.get().toPath()).get(0);
+          if (keyHex.length() >= 64) {
+            signingKey = Codec.base16Decode(keyHex);
+          } else {
+            UnsecurableEngineApiException e =
+                new UnsecurableEngineApiException("signing key too short, 256bits required");
+            e.fillInStackTrace();
+            throw e;
+          }
+        } catch (IOException ioe) {
+          UnsecurableEngineApiException e =
+              new UnsecurableEngineApiException(
+                  "Could not read key from " + keyFile.get().toString());
+          e.fillInStackTrace();
+          e.initCause(ioe);
+          throw e;
+        }
+      } else { // user configured for a non-existing file, generate new key and write to it
+        UnsecurableEngineApiException e =
+            new UnsecurableEngineApiException(
+                "Could not read key from " + keyFile.get().toString());
+        e.fillInStackTrace();
+        throw e;
+      }
+    }
+    if (signingKey == null || signingKey.length < 32) {
+      UnsecurableEngineApiException e =
+          new UnsecurableEngineApiException(
+              "Could not read at least 256 bits pf key from " + keyFile.get().toString());
+      e.fillInStackTrace();
+      throw e;
+    }
+
     return new JWTAuthOptions()
         .setJWTOptions(new JWTOptions().setIgnoreExpiration(true).setLeeway(5))
         .addPubSecKey(
             new PubSecKeyOptions()
                 .setAlgorithm(jwtAlgorithm.toString())
-                .setBuffer(Buffer.buffer(ephemeralKey)));
+                .setBuffer(Buffer.buffer(signingKey)));
   }
 
   @Override
@@ -78,7 +128,7 @@ public class EngineAuthService implements AuthenticationService {
               jwt,
               r -> {
                 if (r.succeeded()) {
-                  if(issuedRecently(r.result().attributes().getLong("iat"))) {
+                  if (issuedRecently(r.result().attributes().getLong("iat"))) {
                     final Optional<User> user = Optional.ofNullable(r.result());
                     handler.handle(user);
                   } else {
@@ -99,13 +149,16 @@ public class EngineAuthService implements AuthenticationService {
   }
 
   @Override
-  public boolean isPermitted(final Optional<User> optionalUser, final JsonRpcMethod jsonRpcMethod, final Collection<String> noAuthMethods) {
-    return true; //no AuthZ for engine APIs
+  public boolean isPermitted(
+      final Optional<User> optionalUser,
+      final JsonRpcMethod jsonRpcMethod,
+      final Collection<String> noAuthMethods) {
+    return true; // no AuthZ for engine APIs
   }
 
   private boolean issuedRecently(final long iat) {
     long iatSecondsSinceEpoch = iat;
-    long nowSecondsSinceEpoch = System.currentTimeMillis()/1000;
+    long nowSecondsSinceEpoch = System.currentTimeMillis() / 1000;
     return (Math.abs((nowSecondsSinceEpoch - iatSecondsSinceEpoch)) <= 5);
   }
 }

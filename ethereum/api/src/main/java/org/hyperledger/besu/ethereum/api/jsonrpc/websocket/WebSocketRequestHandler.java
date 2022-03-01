@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRp
 import org.hyperledger.besu.ethereum.api.handlers.IsAliveHandler;
 import org.hyperledger.besu.ethereum.api.handlers.RpcMethodTimeoutException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
-import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -154,7 +153,8 @@ public class WebSocketRequestHandler {
     try {
       LOG.debug("WS-RPC request -> {}", requestBody.getMethod());
       requestBody.setConnectionId(websocket.textHandlerID());
-      if (authenticationService.isPresent() && authenticationService.get().isPermitted(user, method, noAuthApiMethods)) {
+      if (authenticationService.isPresent()
+          && authenticationService.get().isPermitted(user, method, noAuthApiMethods)) {
         final JsonRpcRequestContext requestContext =
             new JsonRpcRequestContext(
                 requestBody, user, new IsAliveHandler(ethScheduler, timeoutSec));

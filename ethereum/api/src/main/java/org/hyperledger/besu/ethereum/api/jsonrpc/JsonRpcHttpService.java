@@ -756,7 +756,8 @@ public class JsonRpcHttpService {
 
       final JsonRpcMethod method = rpcMethods.get(requestBody.getMethod());
 
-      if (authenticationService.isPresent() && authenticationService.get().isPermitted(user, method, config.getNoAuthRpcApis())) {
+      if (authenticationService.isPresent()
+          && authenticationService.get().isPermitted(user, method, config.getNoAuthRpcApis())) {
         // Generate response
         try (final OperationTimer.TimingContext ignored =
             requestTimer.labels(requestBody.getMethod()).startTimer()) {
