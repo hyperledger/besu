@@ -16,6 +16,9 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
+/*
+ * Thrown when config options are insufficient to secure the Engine API
+ */
 public class UnsecurableEngineApiException extends RuntimeException {
   public UnsecurableEngineApiException(final String reason) {
     super(reason);
