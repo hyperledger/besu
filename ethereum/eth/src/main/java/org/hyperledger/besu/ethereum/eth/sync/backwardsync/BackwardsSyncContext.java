@@ -76,7 +76,8 @@ public class BackwardsSyncContext {
                     .findAny())
         .isPresent()) {
       LOG.debug(
-          "not fetching and appending hash {} to backwards sync since it is present in successors");
+          "not fetching and appending hash {} to backwards sync since it is present in successors",
+          newBlockhash.toHexString());
       return CompletableFuture.completedFuture(null);
     }
 
@@ -92,7 +93,7 @@ public class BackwardsSyncContext {
                     .thenCompose(blocks -> syncBackwardsUntil(blocks.getResult().get(0))))
         .exceptionally(
             ex -> {
-              LOG.error("Failed to fetch block by hash {}", ex, newBlockhash.toHexString());
+              LOG.error("Failed to fetch block by hash " + newBlockhash.toHexString(), ex);
               throw new BackwardSyncException(ex);
             });
   }

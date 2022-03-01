@@ -121,6 +121,17 @@ public class BackwardsSyncContextTest {
   }
 
   @Test
+  public void shouldSyncUntilHash() throws Exception {
+    final CompletableFuture<Void> future =
+        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT).getHash());
+
+    respondUntilFutureIsDone(future);
+
+    future.get();
+    assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
+  }
+
+  @Test
   public void shouldSyncUntilRemoteBranch() throws Exception {
 
     final CompletableFuture<Void> future =
