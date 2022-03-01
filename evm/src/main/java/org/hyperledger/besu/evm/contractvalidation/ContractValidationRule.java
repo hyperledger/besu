@@ -14,10 +14,13 @@
  */
 package org.hyperledger.besu.evm.contractvalidation;
 
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+
+import java.util.Optional;
 
 @FunctionalInterface
 public interface ContractValidationRule {
 
-  boolean validate(MessageFrame frame);
+  Optional<ExceptionalHaltReason> validate(MessageFrame frame);
 }
