@@ -158,11 +158,17 @@ public class TransactionSimulator {
       updater = updater.parentUpdater().isPresent() ? updater : updater.updater();
     }
 
-    return processWithWorldUpdater(callParams, transactionValidationParams, operationTracer, header, updater);
+    return processWithWorldUpdater(
+        callParams, transactionValidationParams, operationTracer, header, updater);
   }
 
   @NotNull
-  public Optional<TransactionSimulatorResult> processWithWorldUpdater(final CallParameter callParams, final TransactionValidationParams transactionValidationParams, final OperationTracer operationTracer, final BlockHeader header, final WorldUpdater updater) {
+  public Optional<TransactionSimulatorResult> processWithWorldUpdater(
+      final CallParameter callParams,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer,
+      final BlockHeader header,
+      final WorldUpdater updater) {
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
 
     final Address senderAddress =
@@ -234,7 +240,7 @@ public class TransactionSimulator {
     final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             blockchain,
-                updater,
+            updater,
             blockHeaderToProcess,
             transaction,
             protocolSpec
@@ -242,8 +248,8 @@ public class TransactionSimulator {
                 .calculateBeneficiary(blockHeaderToProcess),
             new BlockHashLookup(blockHeaderToProcess, blockchain),
             false,
-                transactionValidationParams,
-                operationTracer);
+            transactionValidationParams,
+            operationTracer);
 
     // If GoQuorum privacy enabled, and value = zero, get max gas possible for a PMT hash.
     // It is possible to have a data field that has a lower intrinsic value than the PMT hash.
@@ -276,17 +282,16 @@ public class TransactionSimulator {
         worldStateArchive.getMutable(header.getStateRoot(), header.getHash(), false).orElse(null);
 
     if (publicWorldState == null) {
-      throw new IllegalArgumentException("Public world state not available for block " + header.getNumber());
+      throw new IllegalArgumentException(
+          "Public world state not available for block " + header.getNumber());
     }
-    final WorldUpdater updater =
-        getEffectiveWorldStateUpdater(header, publicWorldState);
+    final WorldUpdater updater = getEffectiveWorldStateUpdater(header, publicWorldState);
     return updater;
   }
 
   // return combined private/public world state updater if GoQuorum mode, otherwise the public state
   private WorldUpdater getEffectiveWorldStateUpdater(
-      final BlockHeader header,
-      final MutableWorldState publicWorldState) {
+      final BlockHeader header, final MutableWorldState publicWorldState) {
 
     if (maybePrivacyParameters.isPresent()
         && maybePrivacyParameters.get().getGoQuorumPrivacyParameters().isPresent()) {

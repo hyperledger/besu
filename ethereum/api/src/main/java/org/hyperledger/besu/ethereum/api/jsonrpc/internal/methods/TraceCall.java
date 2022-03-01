@@ -18,11 +18,9 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.Trac
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -45,11 +43,11 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMethod {
@@ -118,13 +116,15 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
     return jsonNode;
   }
 
-  JsonNode buildResult(final Set<TraceTypeParameter.TraceType> traceTypes, final DebugOperationTracer tracer, final Optional<TransactionSimulatorResult> maybeSimulatorResult) {
+  JsonNode buildResult(
+      final Set<TraceTypeParameter.TraceType> traceTypes,
+      final DebugOperationTracer tracer,
+      final Optional<TransactionSimulatorResult> maybeSimulatorResult) {
     final TransactionTrace transactionTrace =
         new TransactionTrace(
             maybeSimulatorResult.get().getTransaction(),
             maybeSimulatorResult.get().getResult(),
             tracer.getTraceFrames());
-
 
     final TraceCallResult.Builder builder = TraceCallResult.builder();
 
@@ -140,7 +140,6 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
           .generateStateDiff(transactionTrace)
           .forEachOrdered(stateDiff -> builder.stateDiff((StateDiffTrace) stateDiff));
     }
-
 
     if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
       final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();

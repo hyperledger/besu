@@ -14,48 +14,35 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceCallManyParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceCallResult;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffGenerator;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.MixInIgnoreRevertReason;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType.VM_TRACE;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
 
 public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
@@ -94,14 +81,14 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
     if (requestContext.getRequest().getParamLength() != 2) {
       return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
     final TraceCallManyParameter[] transactionsAndTraceTypeParameters =
-            requestContext.getRequiredParameter(0, TraceCallManyParameter[].class);
+        requestContext.getRequiredParameter(0, TraceCallManyParameter[].class);
 
     final Optional<BlockHeader> maybeBlockHeader =
-            blockchainQueries.get().getBlockHeaderByNumber(blockNumber);
+        blockchainQueries.get().getBlockHeaderByNumber(blockNumber);
 
     if (maybeBlockHeader.isEmpty()) {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), BLOCK_NOT_FOUND);
@@ -114,10 +101,18 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     updater = updater.parentUpdater().isPresent() ? updater : updater.updater();
     try {
       final WorldUpdater finalUpdater = updater;
-      Arrays.stream(transactionsAndTraceTypeParameters).forEachOrdered(p -> {
-        executeSingleCall(p.getTuple().getJsonCallParameter(), p.getTuple().getTraceTypeParameter(), maybeBlockHeader.get(), finalUpdater,  traceCallResults);
-        finalUpdater.commit();
-      });
+      Arrays.stream(transactionsAndTraceTypeParameters)
+          .forEachOrdered(
+              p -> {
+                executeSingleCall(
+                    p.getTuple().getJsonCallParameter(),
+                    p.getTuple().getTraceTypeParameter(),
+                    maybeBlockHeader.get(),
+                    finalUpdater,
+                    traceCallResults);
+                // TODO we probably do not want to commit when Tx is not success
+                finalUpdater.commit();
+              });
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
     }
@@ -125,17 +120,17 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     return traceCallResults;
   }
 
-  void executeSingleCall(final JsonCallParameter callParameter, final TraceTypeParameter traceTypeParameter, final  BlockHeader header, final WorldUpdater worldUpdater, final List<JsonNode> traceCallResults) {
+  void executeSingleCall(
+      final JsonCallParameter callParameter,
+      final TraceTypeParameter traceTypeParameter,
+      final BlockHeader header,
+      final WorldUpdater worldUpdater,
+      final List<JsonNode> traceCallResults) {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
-    final DebugOperationTracer tracer = new
-            DebugOperationTracer(buildTraceOptions(traceTypes));
+    final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
-            transactionSimulator.processWithWorldUpdater(
-                    callParameter,
-                    buildTransactionValidationParams(),
-                    tracer,
-                    header,
-                    worldUpdater);
+        transactionSimulator.processWithWorldUpdater(
+            callParameter, buildTransactionValidationParams(), tracer, header, worldUpdater);
 
     if (maybeSimulatorResult.isEmpty()) {
       throw new RuntimeException("Empty simulator result");
