@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.common.bft;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
@@ -148,6 +149,23 @@ public abstract class BaseForksSchedulesFactoryTest<
         .contains(beneficiaryAddress2);
     assertThat(forksSchedule.getFork(8).getValue().getMiningBeneficiary())
         .contains(beneficiaryAddress2);
+  }
+
+  @Test
+  public void createsScheduleWithInvalidMiningBeneficiary_shouldThrow() {
+    final C qbftConfigOptions = createBftOptions();
+
+    final ObjectNode invalidFork =
+        JsonUtil.objectNodeFromMap(
+            Map.of(BftFork.FORK_BLOCK_KEY, 1, BftFork.MINING_BENEFICIARY_KEY, "bla"));
+
+    final GenesisConfigOptions genesisConfigOptions =
+        createGenesisConfig(qbftConfigOptions, invalidFork);
+
+    assertThatThrownBy(() -> createForkSchedule(genesisConfigOptions))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            "Mining beneficiary in transition config is not a valid ethereum address");
   }
 
   protected abstract C createBftOptions(final Consumer<M> optionModifier);

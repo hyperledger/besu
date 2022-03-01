@@ -71,39 +71,32 @@ public class BFTForkTest {
   public void getMiningBeneficiary_withInvalidValue() {
     // Address is only 19 bytes
     final String beneficiary = "random";
-    ObjectNode config =
-        JsonUtil.objectNodeFromMap(Map.of(BftFork.MINING_BENEFICIARY_KEY, beneficiary));
-
-    final BftFork bftFork = new BftFork(config);
-    assertThatThrownBy(bftFork::getMiningBeneficiary)
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Illegal character");
+    testGetMiningBeneficiaryWithInvalidAddress(beneficiary);
   }
 
   @Test
   public void getMiningBeneficiary_withInvalidAddress() {
     // Address is only 19 bytes
     final String beneficiary = "0x11111111111111111111111111111111111111";
-    ObjectNode config =
-        JsonUtil.objectNodeFromMap(Map.of(BftFork.MINING_BENEFICIARY_KEY, beneficiary));
-
-    final BftFork bftFork = new BftFork(config);
-    assertThatThrownBy(bftFork::getMiningBeneficiary)
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("An account address must be be 20 bytes long");
+    testGetMiningBeneficiaryWithInvalidAddress(beneficiary);
   }
 
   @Test
   public void getMiningBeneficiary_withInvalidAddressAndWhitespace() {
     // Address is only 19 bytes
     final String beneficiary = "0x11111111111111111111111111111111111111  ";
+    testGetMiningBeneficiaryWithInvalidAddress(beneficiary);
+  }
+
+  private void testGetMiningBeneficiaryWithInvalidAddress(final String beneficiary) {
     ObjectNode config =
         JsonUtil.objectNodeFromMap(Map.of(BftFork.MINING_BENEFICIARY_KEY, beneficiary));
 
     final BftFork bftFork = new BftFork(config);
     assertThatThrownBy(bftFork::getMiningBeneficiary)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("An account address must be be 20 bytes long");
+        .hasMessageContaining(
+            "Mining beneficiary in transition config is not a valid ethereum address");
   }
 
   @Test

@@ -68,10 +68,15 @@ public class BftFork {
   }
 
   public Optional<Address> getMiningBeneficiary() {
-    return JsonUtil.getString(forkConfigRoot, MINING_BENEFICIARY_KEY)
-        .map(String::trim)
-        .filter(s -> !s.isEmpty())
-        .map(Address::fromHexStringStrict);
+    try {
+      return JsonUtil.getString(forkConfigRoot, MINING_BENEFICIARY_KEY)
+          .map(String::trim)
+          .filter(s -> !s.isEmpty())
+          .map(Address::fromHexStringStrict);
+    } catch (final IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+          "Mining beneficiary in transition config is not a valid ethereum address", e);
+    }
   }
 
   public boolean isMiningBeneficiaryConfigured() {
