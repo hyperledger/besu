@@ -43,9 +43,12 @@ import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
+  private static final Logger LOG = LoggerFactory.getLogger(TraceCallMany.class);
   private static final ObjectMapper MAPPER_IGNORE_REVERT_REASON = new ObjectMapper();
 
   public TraceCallMany(
@@ -84,8 +87,15 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    final TraceCallManyParameter[] transactionsAndTraceTypeParameters =
-        requestContext.getRequiredParameter(0, TraceCallManyParameter[].class);
+    final TraceCallManyParameter[] transactionsAndTraceTypeParameters;
+    try {
+      transactionsAndTraceTypeParameters =
+          requestContext.getRequiredParameter(0, TraceCallManyParameter[].class);
+    } catch (Exception e) {
+      LOG.error("Error parsing trace call many parameter: " + e.getLocalizedMessage());
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+    }
 
     final Optional<BlockHeader> maybeBlockHeader =
         blockchainQueries.get().getBlockHeaderByNumber(blockNumber);
@@ -135,6 +145,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
         transactionSimulator.processWithWorldUpdater(
             callParameter, buildTransactionValidationParams(), tracer, header, worldUpdater);
 
+    LOG.trace("Executing {} call for transaction {}", traceTypeParameter, callParameter);
     if (maybeSimulatorResult.isEmpty()) {
       throw new RuntimeException("Empty simulator result");
     } else {
