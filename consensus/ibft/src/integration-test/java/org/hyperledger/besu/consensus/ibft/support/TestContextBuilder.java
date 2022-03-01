@@ -341,7 +341,7 @@ public class TestContextBuilder {
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
-    final BftBlockCreatorFactory<BftConfigOptions> blockCreatorFactory =
+    final BftBlockCreatorFactory<?> blockCreatorFactory =
         new BftBlockCreatorFactory<>(
             pendingTransactions, // changed from IbftBesuController
             protocolContext,

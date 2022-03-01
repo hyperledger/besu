@@ -177,7 +177,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .gasLimitCalculator(GasLimitCalculator.constant())
         .pkiBlockCreationConfiguration(
             node.getPkiKeyStoreConfiguration()
-                .map((pkiConfig) -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
+                .map(pkiConfig -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .maxPeers(maxPeers);
 

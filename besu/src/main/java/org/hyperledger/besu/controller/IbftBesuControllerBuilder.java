@@ -141,7 +141,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
         BftExecutors.create(metricsSystem, BftExecutors.ConsensusType.IBFT);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
-    final BftBlockCreatorFactory<BftConfigOptions> blockCreatorFactory =
+    final BftBlockCreatorFactory<?> blockCreatorFactory =
         new BftBlockCreatorFactory<>(
             transactionPool.getPendingTransactions(),
             protocolContext,
