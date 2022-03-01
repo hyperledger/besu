@@ -219,6 +219,7 @@ public final class RunnerBuilderTest {
     JsonRpcConfiguration jrpc = JsonRpcConfiguration.createDefault();
     jrpc.setEnabled(true);
     JsonRpcConfiguration engine = JsonRpcConfiguration.createEngineDefault();
+    engine.setEnabled(true);
     EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
     MergeConfigOptions.setMergeEnabled(true);

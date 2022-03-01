@@ -714,6 +714,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path engineJwtKeyFile = null;
 
   @Option(
+      names = {"--engine-jwt-enabled"},
+      description = "Require authentication for Engine APIs (default: ${DEFAULT-VALUE})")
+  private final Boolean isEngineAuthEnabled = false;
+
+  @Option(
       names = {"--rpc-ws-max-frame-size"},
       description =
           "Maximum size in bytes for JSON-RPC WebSocket frames (default: ${DEFAULT-VALUE}). If this limit is exceeded, the websocket will be disconnected.",
@@ -1988,10 +1993,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     JsonRpcConfiguration engineConfig =
         jsonRpcConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
     engineConfig.setEnabled(isMergeEnabled());
-    engineConfig.setAuthenticationEnabled(true);
-    engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
-    if (engineJwtKeyFile != null && java.nio.file.Files.exists(engineJwtKeyFile)) {
-      engineConfig.setAuthenticationPublicKeyFile(engineJwtKeyFile.toFile());
+    if (isEngineAuthEnabled) {
+      engineConfig.setAuthenticationEnabled(true);
+      engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
+      if (engineJwtKeyFile != null && java.nio.file.Files.exists(engineJwtKeyFile)) {
+        engineConfig.setAuthenticationPublicKeyFile(engineJwtKeyFile.toFile());
+      }
     }
     return engineConfig;
   }
@@ -2002,10 +2009,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final WebSocketConfiguration webSocketConfiguration =
         webSocketConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
     webSocketConfiguration.setEnabled(isMergeEnabled());
-    webSocketConfiguration.setAuthenticationEnabled(true);
-    webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
-    if (engineJwtKeyFile != null && java.nio.file.Files.exists(engineJwtKeyFile)) {
-      webSocketConfiguration.setAuthenticationPublicKeyFile(engineJwtKeyFile.toFile());
+    if (isEngineAuthEnabled) {
+      webSocketConfiguration.setAuthenticationEnabled(true);
+      webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
+      if (engineJwtKeyFile != null && java.nio.file.Files.exists(engineJwtKeyFile)) {
+        webSocketConfiguration.setAuthenticationPublicKeyFile(engineJwtKeyFile.toFile());
+      }
     }
     return webSocketConfiguration;
   }

@@ -153,8 +153,9 @@ public class WebSocketRequestHandler {
     try {
       LOG.debug("WS-RPC request -> {}", requestBody.getMethod());
       requestBody.setConnectionId(websocket.textHandlerID());
-      if (authenticationService.isPresent()
-          && authenticationService.get().isPermitted(user, method, noAuthApiMethods)) {
+      if (authenticationService.isEmpty()
+          || (authenticationService.isPresent()
+              && authenticationService.get().isPermitted(user, method, noAuthApiMethods))) {
         final JsonRpcRequestContext requestContext =
             new JsonRpcRequestContext(
                 requestBody, user, new IsAliveHandler(ethScheduler, timeoutSec));
