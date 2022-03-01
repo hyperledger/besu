@@ -67,7 +67,7 @@ public class BackwardsSyncContext {
   }
 
   public CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockhash) {
-    if (Optional.ofNullable(currentChain.get())
+    if (Optional.ofNullable(getCurrentChain().get())
         .flatMap(
             chain ->
                 chain.getSuccessors().stream()
@@ -169,7 +169,7 @@ public class BackwardsSyncContext {
   }
 
   public Optional<BackwardChain> getCurrentChain() {
-    return Optional.of(currentChain.get());
+    return Optional.ofNullable(currentChain.get());
   }
 
   public ProtocolSchedule getProtocolSchedule() {

@@ -21,6 +21,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
@@ -42,6 +43,7 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +119,7 @@ public class BackwardsSyncContextTest {
             });
 
     context =
-        new BackwardsSyncContext(protocolContext, protocolSchedule, metricsSystem, ethContext);
+        spy(new BackwardsSyncContext(protocolContext, protocolSchedule, metricsSystem, ethContext));
   }
 
   @Test
@@ -129,6 +131,17 @@ public class BackwardsSyncContextTest {
 
     future.get();
     assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
+  }
+
+  @Test
+  public void shouldNotAppendWhenAlreadySyncingHash() throws Exception {
+    when(context.getCurrentChain())
+        .thenReturn(Optional.of(new BackwardChain(getBlockByNumber(REMOTE_HEIGHT))));
+
+    final CompletableFuture<Void> fut2 =
+        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT).getHash());
+    assertThat(fut2).isCompleted();
+    assertThat(fut2.get()).isNull();
   }
 
   @Test
