@@ -171,11 +171,11 @@ public interface BlockHeader {
   }
 
   /**
-   * Optional 32 bytes of random data.
+   * Optional 32 bytes of prevRandao data.
    *
-   * @return Optional random bytes from this header.
+   * @return Optional prevRandao bytes from this header.
    */
-  default Optional<Bytes32> getRandom() {
+  default Optional<Bytes32> getPrevRandao() {
     return Optional.empty();
   }
 }

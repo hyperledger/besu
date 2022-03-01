@@ -55,7 +55,7 @@ public class EngineGetPayloadTest {
   private static final PayloadIdentifier mockPid =
       PayloadIdentifier.forPayloadParams(Hash.ZERO, 1337L);
   private static final BlockHeader mockHeader =
-      new BlockHeaderTestFixture().random(Bytes32.random()).buildHeader();
+      new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
   private static final Block mockBlock =
       new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
 
@@ -87,8 +87,8 @@ public class EngineGetPayloadTest {
               assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResult.class);
               EngineGetPayloadResult res = (EngineGetPayloadResult) r.getResult();
               assertThat(res.getHash()).isEqualTo(mockHeader.getHash().toString());
-              assertThat(res.getRandom())
-                  .isEqualTo(mockHeader.getRandom().map(Bytes32::toString).orElse(""));
+              assertThat(res.getPrevRandao())
+                  .isEqualTo(mockHeader.getPrevRandao().map(Bytes32::toString).orElse(""));
             });
   }
 

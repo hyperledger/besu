@@ -27,9 +27,9 @@ import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * parentHash: DATA, 32 Bytes feeRecipient: DATA, 20 Bytes stateRoot: DATA, 32 Bytes receiptsRoot:
- * DATA, 32 Bytes logsBloom: DATA, 256 Bytes random: DATA, 32 Bytes blockNumber: QUANTITY gasLimit:
- * QUANTITY gasUsed: QUANTITY timestamp: QUANTITY baseFeePerGas: QUANTITY blockHash: DATA, 32 Bytes
- * transactions: Array of TypedTransaction
+ * DATA, 32 Bytes logsBloom: DATA, 256 Bytes prevRandao: DATA, 32 Bytes blockNumber: QUANTITY
+ * gasLimit: QUANTITY gasUsed: QUANTITY timestamp: QUANTITY baseFeePerGas: QUANTITY blockHash: DATA,
+ * 32 Bytes transactions: Array of TypedTransaction
  */
 public class EnginePayloadParameter {
   private final Hash blockHash;
@@ -37,7 +37,7 @@ public class EnginePayloadParameter {
   private final Address feeRecipient;
   private final Hash stateRoot;
   private final long blockNumber;
-  private final Bytes32 random;
+  private final Bytes32 prevRandao;
   private final Wei baseFeePerGas;
   private final long gasLimit;
   private final long gasUsed;
@@ -61,7 +61,7 @@ public class EnginePayloadParameter {
       @JsonProperty("extraData") final String extraData,
       @JsonProperty("receiptRoot") final Hash receiptsRoot,
       @JsonProperty("logsBloom") final LogsBloomFilter logsBloom,
-      @JsonProperty("random") final String random,
+      @JsonProperty("prevRandao") final String prevRandao,
       @JsonProperty("transactions") final List<String> transactions) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
@@ -75,7 +75,7 @@ public class EnginePayloadParameter {
     this.extraData = extraData;
     this.receiptsRoot = receiptsRoot;
     this.logsBloom = logsBloom;
-    this.random = Bytes32.fromHexString(random);
+    this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.transactions = transactions;
   }
 
@@ -127,8 +127,8 @@ public class EnginePayloadParameter {
     return logsBloom;
   }
 
-  public Bytes32 getRandom() {
-    return random;
+  public Bytes32 getPrevRandao() {
+    return prevRandao;
   }
 
   public List<String> getTransactions() {

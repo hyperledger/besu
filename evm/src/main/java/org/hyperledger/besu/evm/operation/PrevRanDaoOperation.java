@@ -20,17 +20,17 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class RandomOperation extends AbstractFixedCostOperation {
+public class PrevRanDaoOperation extends AbstractFixedCostOperation {
 
-  public RandomOperation(final GasCalculator gasCalculator) {
-    super(0x44, "RANDOM", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+  public PrevRanDaoOperation(final GasCalculator gasCalculator) {
+    super(0x44, "PREVRANDAO", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     if (frame.getBlockValues().getDifficultyBytes() == null
         || frame.getBlockValues().getDifficultyBytes().equals(UInt256.ZERO)) {
-      frame.pushStackItem(frame.getBlockValues().getMixHashOrRandom());
+      frame.pushStackItem(frame.getBlockValues().getMixHashOrPrevRandao());
     } else {
       frame.pushStackItem(frame.getBlockValues().getDifficultyBytes());
     }

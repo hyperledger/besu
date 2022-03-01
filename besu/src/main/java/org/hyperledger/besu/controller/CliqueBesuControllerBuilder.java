@@ -144,4 +144,10 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
     installCliqueBlockChoiceRule(blockchain, cliqueContext);
     return cliqueContext;
   }
+
+  @Override
+  public MiningParameters getMiningParameterOverrides(final MiningParameters fromCli) {
+    // Clique mines by default, reflect that with in the mining parameters:
+    return new MiningParameters.Builder(fromCli).miningEnabled(true).build();
+  }
 }

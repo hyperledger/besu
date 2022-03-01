@@ -24,39 +24,39 @@ import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.operation.Operation;
-import org.hyperledger.besu.evm.operation.RandomOperation;
+import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
-public class RandomOperationTest {
+public class PrevRanDaoOperationTest {
 
   @Test
-  public void pushesRandWhenDifficultyZero() {
-    RandomOperation op = new RandomOperation(new LondonGasCalculator());
+  public void pushesPrevRandaoWhenDifficultyZero() {
+    PrevRanDaoOperation op = new PrevRanDaoOperation(new LondonGasCalculator());
     MessageFrame messageFrame = mock(MessageFrame.class);
     BlockValues blockHeader = mock(BlockValues.class);
-    Bytes32 rand = Bytes32.fromHexString("0xb0b0face");
+    Bytes32 prevRandao = Bytes32.fromHexString("0xb0b0face");
     when(blockHeader.getDifficultyBytes()).thenReturn(UInt256.ZERO);
-    when(blockHeader.getMixHashOrRandom()).thenReturn(rand);
+    when(blockHeader.getMixHashOrPrevRandao()).thenReturn(prevRandao);
     when(messageFrame.getBlockValues()).thenReturn(blockHeader);
     EVM evm = mock(EVM.class);
     Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
     assertThat(r.getHaltReason()).isNotPresent();
-    verify(messageFrame).pushStackItem(rand);
+    verify(messageFrame).pushStackItem(prevRandao);
   }
 
   @Test
   public void pushesDifficultyWhenPresent() {
-    RandomOperation op = new RandomOperation(new LondonGasCalculator());
+    PrevRanDaoOperation op = new PrevRanDaoOperation(new LondonGasCalculator());
     MessageFrame messageFrame = mock(MessageFrame.class);
     BlockValues blockHeader = mock(BlockValues.class);
-    Bytes32 rand = Bytes32.fromHexString("0xb0b0face");
+    Bytes32 prevRandao = Bytes32.fromHexString("0xb0b0face");
     Bytes difficulty = Bytes.random(32);
     when(blockHeader.getDifficultyBytes()).thenReturn(difficulty);
-    when(blockHeader.getMixHashOrRandom()).thenReturn(rand);
+    when(blockHeader.getMixHashOrPrevRandao()).thenReturn(prevRandao);
     when(messageFrame.getBlockValues()).thenReturn(blockHeader);
     EVM evm = mock(EVM.class);
     Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
