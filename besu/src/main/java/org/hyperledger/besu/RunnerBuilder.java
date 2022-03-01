@@ -163,6 +163,7 @@ public class RunnerBuilder {
   private Optional<JsonRpcConfiguration> engineJsonRpcConfiguration = Optional.empty();
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
+  private Optional<WebSocketConfiguration> engineWebSocketConfiguration = Optional.empty();
   private ApiConfiguration apiConfiguration;
   private Path dataDir;
   private Optional<Path> pidPath = Optional.empty();
@@ -303,6 +304,12 @@ public class RunnerBuilder {
 
   public RunnerBuilder webSocketConfiguration(final WebSocketConfiguration webSocketConfiguration) {
     this.webSocketConfiguration = webSocketConfiguration;
+    return this;
+  }
+
+  public RunnerBuilder engineWebSocketConfiguration(
+      final WebSocketConfiguration engineWebSocketConfig) {
+    this.engineWebSocketConfiguration = Optional.of(engineWebSocketConfig);
     return this;
   }
 
@@ -674,6 +681,7 @@ public class RunnerBuilder {
     }
 
     Optional<WebSocketService> webSocketService = Optional.empty();
+    Optional<WebSocketService> engineWebSocketService = Optional.empty();
     if (webSocketConfiguration.isEnabled()) {
       final Map<String, JsonRpcMethod> webSocketsJsonRpcMethods =
           jsonRpcMethods(
@@ -726,6 +734,44 @@ public class RunnerBuilder {
                   blockchainQueries));
 
       createPrivateTransactionObserver(subscriptionManager, privacyParameters);
+
+      if (engineWebSocketConfiguration.isPresent()) {
+        final Map<String, JsonRpcMethod> engineMethods =
+            jsonRpcMethods(
+                protocolSchedule,
+                context,
+                besuController,
+                peerNetwork,
+                blockchainQueries,
+                synchronizer,
+                transactionPool,
+                miningCoordinator,
+                metricsSystem,
+                supportedCapabilities,
+                engineWebSocketConfiguration.get().getRpcApis(),
+                filterManager,
+                accountLocalConfigPermissioningController,
+                nodeLocalConfigPermissioningController,
+                privacyParameters,
+                jsonRpcConfiguration,
+                engineWebSocketConfiguration.get(),
+                metricsConfiguration,
+                natService,
+                besuPluginContext.getNamedPlugins(),
+                dataDir,
+                rpcEndpointServiceImpl);
+
+        engineWebSocketService =
+            Optional.of(
+                createWebsocketService(
+                    vertx,
+                    engineWebSocketConfiguration.get(),
+                    subscriptionManager,
+                    engineMethods,
+                    privacyParameters,
+                    protocolSchedule,
+                    blockchainQueries));
+      }
     }
 
     Optional<MetricsService> metricsService = createMetricsService(vertx, metricsConfiguration);
@@ -757,6 +803,7 @@ public class RunnerBuilder {
         engineJsonRpcHttpService,
         graphQLHttpService,
         webSocketService,
+        engineWebSocketService,
         stratumServer,
         metricsService,
         ethStatsService,

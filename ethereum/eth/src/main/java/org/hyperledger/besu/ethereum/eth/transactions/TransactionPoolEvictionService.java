@@ -39,7 +39,9 @@ public class TransactionPoolEvictionService {
   }
 
   public void stop() {
-    vertx.cancelTimer(timerId.get());
-    timerId = Optional.empty();
+    if (timerId.isPresent()) {
+      vertx.cancelTimer(timerId.get());
+      timerId = Optional.empty();
+    }
   }
 }

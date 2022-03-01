@@ -52,10 +52,12 @@ import org.junit.runners.Parameterized;
 public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpServiceTest {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
-  private static final Pattern MATCH_FOR_STATE_DIFF = Pattern.compile("\"balance\":(?!\"=\").*?},");
-  private static final Pattern MATCH_FOR_VM_TRACE =
+  private static final Pattern GAS_MATCH_FOR_STATE_DIFF =
+      Pattern.compile("\"balance\":(?!\"=\").*?},");
+  private static final Pattern GAS_MATCH_FOR_VM_TRACE =
       Pattern.compile(",*\"cost\":[0-9a-fA-F]+,*|,\"used\":[0-9a-fA-F]+");
-  private static final Pattern MATCH_FOR_TRACE = Pattern.compile("\"gasUsed\":\"[x0-9a-fA-F]+\",");
+  private static final Pattern GAS_MATCH_FOR_TRACE =
+      Pattern.compile("\"gasUsed\":\"[x0-9a-fA-F]+\",");
 
   private final URL specURL;
 
@@ -218,7 +220,9 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       if (method.equals(Method.TRACE_CALL_MANY)) {
         // TODO: There are differences in gas cost (causing different balances as well). These are
         // caused by
-        // OpenEthereum not implementing "Istanbul" correctly. This should be fixed, e.g. by using
+        // OpenEthereum not implementing "Istanbul" correctly. Specially the SSTORE to dirty storage
+        // Slots should cost 800 gas rather than 5000
+        // This should be fixed, e.g. by using
         // Erigon to
         // create the expected output, or by making OpenEthereum work correctly.
         switch (traceType) {
@@ -261,17 +265,17 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
   }
 
   private String filterStringStateDiff(final String expectedResult) {
-    final Matcher m = MATCH_FOR_STATE_DIFF.matcher(expectedResult);
+    final Matcher m = GAS_MATCH_FOR_STATE_DIFF.matcher(expectedResult);
     return m.replaceAll("");
   }
 
   private String filterStringVmTrace(final String expectedResult) {
-    final Matcher m = MATCH_FOR_VM_TRACE.matcher(expectedResult);
+    final Matcher m = GAS_MATCH_FOR_VM_TRACE.matcher(expectedResult);
     return m.replaceAll("");
   }
 
   private String filterStringTrace(final String expectedResult) {
-    final Matcher m = MATCH_FOR_TRACE.matcher(expectedResult);
+    final Matcher m = GAS_MATCH_FOR_TRACE.matcher(expectedResult);
     return m.replaceAll("");
   }
 }

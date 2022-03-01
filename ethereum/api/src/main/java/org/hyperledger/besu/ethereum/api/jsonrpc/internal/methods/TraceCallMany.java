@@ -123,7 +123,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     return traceCallResults;
   }
 
-  void executeSingleCall(
+  private void executeSingleCall(
       final JsonCallParameter callParameter,
       final TraceTypeParameter traceTypeParameter,
       final BlockHeader header,

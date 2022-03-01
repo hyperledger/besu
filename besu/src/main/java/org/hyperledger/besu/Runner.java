@@ -65,7 +65,8 @@ public class Runner implements AutoCloseable {
   private final Optional<JsonRpcHttpService> engineJsonRpc;
   private final Optional<MetricsService> metrics;
   private final Optional<Path> pidPath;
-  private final Optional<WebSocketService> websocketRpc;
+  private final Optional<WebSocketService> webSocketRpc;
+  private final Optional<WebSocketService> engineWebSocketRpc;
   private final TransactionPoolEvictionService transactionPoolEvictionService;
 
   private final BesuController besuController;
@@ -81,7 +82,8 @@ public class Runner implements AutoCloseable {
       final Optional<JsonRpcHttpService> jsonRpc,
       final Optional<JsonRpcHttpService> engineJsonRpc,
       final Optional<GraphQLHttpService> graphQLHttp,
-      final Optional<WebSocketService> websocketRpc,
+      final Optional<WebSocketService> webSocketRpc,
+      final Optional<WebSocketService> engineWebSocketRpc,
       final Optional<StratumServer> stratumServer,
       final Optional<MetricsService> metrics,
       final Optional<EthStatsService> ethStatsService,
@@ -97,7 +99,8 @@ public class Runner implements AutoCloseable {
     this.pidPath = pidPath;
     this.jsonRpc = jsonRpc;
     this.engineJsonRpc = engineJsonRpc;
-    this.websocketRpc = websocketRpc;
+    this.webSocketRpc = webSocketRpc;
+    this.engineWebSocketRpc = engineWebSocketRpc;
     this.metrics = metrics;
     this.ethStatsService = ethStatsService;
     this.besuController = besuController;
@@ -117,7 +120,9 @@ public class Runner implements AutoCloseable {
     jsonRpc.ifPresent(service -> waitForServiceToStart("jsonRpc", service.start()));
     engineJsonRpc.ifPresent(service -> waitForServiceToStart("engineJsonRpc", service.start()));
     graphQLHttp.ifPresent(service -> waitForServiceToStart("graphQLHttp", service.start()));
-    websocketRpc.ifPresent(service -> waitForServiceToStart("websocketRpc", service.start()));
+    webSocketRpc.ifPresent(service -> waitForServiceToStart("websocketRpc", service.start()));
+    engineWebSocketRpc.ifPresent(
+        service -> waitForServiceToStart("engineWebsocketRpc", service.start()));
     stratumServer.ifPresent(server -> waitForServiceToStart("stratum", server.start()));
     autoTransactionLogBloomCachingService.ifPresent(AutoTransactionLogBloomCachingService::start);
     ethStatsService.ifPresent(EthStatsService::start);
@@ -148,7 +153,9 @@ public class Runner implements AutoCloseable {
     jsonRpc.ifPresent(service -> waitForServiceToStop("jsonRpc", service.stop()));
     engineJsonRpc.ifPresent(service -> waitForServiceToStop("engineJsonRpc", service.stop()));
     graphQLHttp.ifPresent(service -> waitForServiceToStop("graphQLHttp", service.stop()));
-    websocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
+    webSocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
+    engineWebSocketRpc.ifPresent(
+        service -> waitForServiceToStop("engineWebsocketRpc", service.stop()));
     metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
     ethStatsService.ifPresent(EthStatsService::stop);
     besuController.getMiningCoordinator().stop();
@@ -244,17 +251,21 @@ public class Runner implements AutoCloseable {
               });
     }
 
-    if (getJsonRpcPort().isPresent()) {
-      properties.setProperty("json-rpc", String.valueOf(getJsonRpcPort().get()));
+    Optional<Integer> port = getJsonRpcPort();
+    if (port.isPresent()) {
+      properties.setProperty("json-rpc", String.valueOf(port.get()));
     }
-    if (getGraphQLHttpPort().isPresent()) {
-      properties.setProperty("graphql-http", String.valueOf(getGraphQLHttpPort().get()));
+    port = getGraphQLHttpPort();
+    if (port.isPresent()) {
+      properties.setProperty("graphql-http", String.valueOf(port.get()));
     }
-    if (getWebsocketPort().isPresent()) {
-      properties.setProperty("ws-rpc", String.valueOf(getWebsocketPort().get()));
+    port = getWebSocketPort();
+    if (port.isPresent()) {
+      properties.setProperty("ws-rpc", String.valueOf(port.get()));
     }
-    if (getMetricsPort().isPresent()) {
-      properties.setProperty("metrics", String.valueOf(getMetricsPort().get()));
+    port = getMetricsPort();
+    if (port.isPresent()) {
+      properties.setProperty("metrics", String.valueOf(port.get()));
     }
     // create besu.ports file
     createBesuFile(
@@ -317,8 +328,12 @@ public class Runner implements AutoCloseable {
     return graphQLHttp.map(service -> service.socketAddress().getPort());
   }
 
-  public Optional<Integer> getWebsocketPort() {
-    return websocketRpc.map(service -> service.socketAddress().getPort());
+  public Optional<Integer> getWebSocketPort() {
+    return webSocketRpc.map(service -> service.socketAddress().getPort());
+  }
+
+  public Optional<Integer> getEngineWebsocketPort() {
+    return engineWebSocketRpc.map(service -> service.socketAddress().getPort());
   }
 
   public Optional<Integer> getMetricsPort() {

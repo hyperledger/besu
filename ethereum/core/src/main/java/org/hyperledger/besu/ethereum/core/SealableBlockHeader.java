@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -53,8 +53,16 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final long timestamp,
       final Bytes extraData,
       final Wei baseFee,
-      final Bytes32 mixHashOrRandom) {
-    super(parentHash, coinbase, difficulty, number, gasLimit, timestamp, baseFee, mixHashOrRandom);
+      final Bytes32 mixHashOrPrevRandao) {
+    super(
+        parentHash,
+        coinbase,
+        difficulty,
+        number,
+        gasLimit,
+        timestamp,
+        baseFee,
+        mixHashOrPrevRandao);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;
