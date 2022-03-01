@@ -28,6 +28,8 @@ public interface ExceptionalHaltReason {
   ExceptionalHaltReason TOO_MANY_STACK_ITEMS = DefaultExceptionalHaltReason.TOO_MANY_STACK_ITEMS;
   ExceptionalHaltReason ILLEGAL_STATE_CHANGE = DefaultExceptionalHaltReason.ILLEGAL_STATE_CHANGE;
   ExceptionalHaltReason OUT_OF_BOUNDS = DefaultExceptionalHaltReason.OUT_OF_BOUNDS;
+  ExceptionalHaltReason CODE_TOO_LARGE = DefaultExceptionalHaltReason.CODE_TOO_LARGE;
+  ExceptionalHaltReason INVALID_CODE = DefaultExceptionalHaltReason.INVALID_CODE;
 
   String name();
 
@@ -42,7 +44,9 @@ public interface ExceptionalHaltReason {
     INVALID_RETURN_DATA_BUFFER_ACCESS("Out of bounds"),
     TOO_MANY_STACK_ITEMS("Out of stack"),
     ILLEGAL_STATE_CHANGE("Illegal state change"),
-    OUT_OF_BOUNDS("Out of bounds");
+    OUT_OF_BOUNDS("Out of bounds"),
+    CODE_TOO_LARGE("Code is too large"),
+    INVALID_CODE("Code is invalid");
 
     String description;
 

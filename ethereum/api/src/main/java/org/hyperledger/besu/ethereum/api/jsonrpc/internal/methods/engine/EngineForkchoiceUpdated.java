@@ -102,7 +102,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
                     mergeCoordinator.preparePayload(
                         currentHead.get(),
                         payloadAttributes.getTimestamp(),
-                        payloadAttributes.getRandom(),
+                        payloadAttributes.getPrevRandao(),
                         payloadAttributes.getSuggestedFeeRecipient()));
 
         payloadId.ifPresent(

@@ -344,6 +344,15 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   }
 
   @Override
+  public Optional<Integer> getEngineJsonRpcWebSocketPort() {
+    if (isWebSocketsRpcEnabled()) {
+      return Optional.of(Integer.valueOf(portsProperties.getProperty("engine-ws-rpc")));
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  @Override
   public String getHostName() {
     return LOCALHOST;
   }

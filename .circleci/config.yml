@@ -29,13 +29,11 @@ executors:
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
       
-  quorum_ats_executor_xl: # 8cpu, 16G ram
-    docker:
-      - image: cimg/openjdk:11.0
-    resource_class: xlarge
+  quorum_ats_executor_med:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: med
     working_directory: ~/project
-    environment:
-      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=4
 
   xl_machine_executor:
     machine:
@@ -296,9 +294,8 @@ jobs:
       - capture_test_logs
 
   acceptanceTestsQuorum:
-    executor: quorum_ats_executor_xl
+    executor: quorum_ats_executor_med
     steps:
-      - prepare
       - attach_workspace:
           at: ~/project
       - run:
