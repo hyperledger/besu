@@ -146,7 +146,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     }
   }
 
-  private class TransactioInvalidException extends RuntimeException {
+  private static class TransactioInvalidException extends RuntimeException {
     TransactioInvalidException() {
       super();
     }
