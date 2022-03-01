@@ -38,7 +38,6 @@ class TraceCallParameterDeserialiser extends StdDeserializer<TraceCallParamterTu
   @Override
   public TraceCallParamterTuple deserialize(final JsonParser p, final DeserializationContext ctxt)
       throws IOException {
-    @SuppressWarnings("unused")
     final ObjectMapper mapper = new ObjectMapper();
     final JsonNode tupleNode = p.getCodec().readTree(p);
     return new TraceCallParamterTuple(
