@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.ethereum.api.util.TraceUtil.resultByTransactionHash;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -33,20 +31,14 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class TraceGet implements JsonRpcMethod {
-  private final Supplier<BlockTracer> blockTracerSupplier;
-  private final BlockchainQueries blockchainQueries;
-  private final ProtocolSchedule protocolSchedule;
-
+public class TraceGet extends AbstractTraceByHash implements JsonRpcMethod {
   private static final ObjectMapper MAPPER_IGNORE_REVERT_REASON = new ObjectMapper();
 
   public TraceGet(
       final Supplier<BlockTracer> blockTracerSupplier,
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule) {
-    this.blockTracerSupplier = blockTracerSupplier;
-    this.blockchainQueries = blockchainQueries;
-    this.protocolSchedule = protocolSchedule;
+    super(blockTracerSupplier, blockchainQueries, protocolSchedule);
 
     // The trace_get specification does not output the revert reason, so we have to remove it
     MAPPER_IGNORE_REVERT_REASON.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
@@ -69,8 +61,7 @@ public class TraceGet implements JsonRpcMethod {
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
         MAPPER_IGNORE_REVERT_REASON.valueToTree(
-            resultByTransactionHash(
-                    transactionHash, blockchainQueries, blockTracerSupplier, protocolSchedule)
+            resultByTransactionHash(transactionHash)
                 .filter(trace -> trace.getTraceAddress().equals(traceNumbers))
                 .findFirst()
                 .orElse(null)));
