@@ -112,19 +112,16 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
     }
 
-    final JsonNode jsonNode = buildResult(traceTypes, tracer, maybeSimulatorResult);
-    return jsonNode;
+    return buildResult(traceTypes, tracer, maybeSimulatorResult.get());
   }
 
   JsonNode buildResult(
       final Set<TraceTypeParameter.TraceType> traceTypes,
       final DebugOperationTracer tracer,
-      final Optional<TransactionSimulatorResult> maybeSimulatorResult) {
+      final TransactionSimulatorResult simulatorResult) {
     final TransactionTrace transactionTrace =
         new TransactionTrace(
-            maybeSimulatorResult.get().getTransaction(),
-            maybeSimulatorResult.get().getResult(),
-            tracer.getTraceFrames());
+            simulatorResult.getTransaction(), simulatorResult.getResult(), tracer.getTraceFrames());
 
     final TraceCallResult.Builder builder = TraceCallResult.builder();
 
@@ -133,7 +130,7 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
         .getRevertReason()
         .ifPresentOrElse(
             revertReason -> builder.output(revertReason.toHexString()),
-            () -> builder.output(maybeSimulatorResult.get().getOutput().toString()));
+            () -> builder.output(simulatorResult.getOutput().toString()));
 
     if (traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF)) {
       new StateDiffGenerator()
@@ -154,8 +151,7 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
           .forEachOrdered(vmTrace -> builder.vmTrace((VmTrace) vmTrace));
     }
 
-    final JsonNode jsonNode = MAPPER_IGNORE_REVERT_REASON.valueToTree(builder.build());
-    return jsonNode;
+    return MAPPER_IGNORE_REVERT_REASON.valueToTree(builder.build());
   }
 
   TransactionValidationParams buildTransactionValidationParams() {

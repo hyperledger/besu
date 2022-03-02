@@ -78,7 +78,7 @@ public class TraceCallManyParameterTest {
         .isEqualTo(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
     assertThat(parameter[2].getTuple().getJsonCallParameter().getTo())
         .isEqualTo(Address.fromHexString("0x0010000000000000000000000000000000000000"));
-    assertThat(parameter[1].getTuple().getTraceTypeParameter().getTraceTypes().size()).isEqualTo(1);
+    assertThat(parameter[1].getTuple().getTraceTypeParameter().getTraceTypes()).hasSize(1);
     assertThat(parameter[1].getTuple().getTraceTypeParameter().getTraceTypes())
         .contains(TraceTypeParameter.TraceType.TRACE);
   }

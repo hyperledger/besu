@@ -91,8 +91,8 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     try {
       transactionsAndTraceTypeParameters =
           requestContext.getRequiredParameter(0, TraceCallManyParameter[].class);
-    } catch (Exception e) {
-      LOG.error("Error parsing trace call many parameter: " + e.getLocalizedMessage());
+    } catch (final Exception e) {
+      LOG.error("Error parsing trace call many parameter: {}", e.getLocalizedMessage());
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
@@ -106,23 +106,21 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
     final List<JsonNode> traceCallResults = new ArrayList<>();
 
-    WorldUpdater updater = transactionSimulator.getWorldUpdater(maybeBlockHeader.get());
-    // we have to make sure that the updater has a parent updater (for state diff trace)
-    updater = updater.parentUpdater().isPresent() ? updater : updater.updater();
+    final WorldUpdater updater = transactionSimulator.getWorldUpdater(maybeBlockHeader.get());
     try {
-      final WorldUpdater finalUpdater = updater;
       Arrays.stream(transactionsAndTraceTypeParameters)
           .forEachOrdered(
-              p -> {
+              param -> {
+                final WorldUpdater finalUpdater = updater.updater();
                 try {
                   executeSingleCall(
-                      p.getTuple().getJsonCallParameter(),
-                      p.getTuple().getTraceTypeParameter(),
+                      param.getTuple().getJsonCallParameter(),
+                      param.getTuple().getTraceTypeParameter(),
                       maybeBlockHeader.get(),
                       finalUpdater,
                       traceCallResults);
-                } catch (final TransactioInvalidException e) {
-                  return; // TODO: check what OpenEthereum does when on of the calls fails
+                } catch (final TransactionInvalidException e) {
+                  return; // TODO: check what OpenEthereum does when one of the calls is invalid
                 }
                 finalUpdater.commit();
               });
@@ -147,18 +145,25 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
     LOG.trace("Executing {} call for transaction {}", traceTypeParameter, callParameter);
     if (maybeSimulatorResult.isEmpty()) {
-      throw new RuntimeException("Empty simulator result");
-    } else {
-      if (maybeSimulatorResult.get().isInvalid()) {
-        throw new TransactioInvalidException();
-      }
-      final JsonNode jsonNode = buildResult(traceTypes, tracer, maybeSimulatorResult);
-      traceCallResults.add(jsonNode);
+      throw new EmptySimulatorResultException();
+    }
+
+    final TransactionSimulatorResult simulatorResult = maybeSimulatorResult.get();
+    if (simulatorResult.isInvalid()) {
+      throw new TransactionInvalidException();
+    }
+    final JsonNode jsonNode = buildResult(traceTypes, tracer, simulatorResult);
+    traceCallResults.add(jsonNode);
+  }
+
+  private static class TransactionInvalidException extends RuntimeException {
+    TransactionInvalidException() {
+      super();
     }
   }
 
-  private static class TransactioInvalidException extends RuntimeException {
-    TransactioInvalidException() {
+  private static class EmptySimulatorResultException extends RuntimeException {
+    EmptySimulatorResultException() {
       super();
     }
   }
