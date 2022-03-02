@@ -89,16 +89,13 @@ public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
     }
 
-    return buildResult(traceTypes, tracer, maybeSimulatorResult.get());
-  }
-
-  JsonNode buildResult(
-      final Set<TraceTypeParameter.TraceType> traceTypes,
-      final DebugOperationTracer tracer,
-      final TransactionSimulatorResult simulatorResult) {
     final TransactionTrace transactionTrace =
         new TransactionTrace(
-            simulatorResult.getTransaction(), simulatorResult.getResult(), tracer.getTraceFrames());
+            maybeSimulatorResult.get().getTransaction(),
+            maybeSimulatorResult.get().getResult(),
+            tracer.getTraceFrames());
+
+    final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
 
     return getTraceCallResult(
         protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block);

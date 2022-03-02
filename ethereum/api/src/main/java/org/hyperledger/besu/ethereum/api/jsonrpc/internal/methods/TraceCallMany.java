@@ -23,11 +23,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceCallManyParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.MixInIgnoreRevertReason;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -147,13 +149,21 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     if (maybeSimulatorResult.isEmpty()) {
       throw new EmptySimulatorResultException();
     }
-
-    final TransactionSimulatorResult simulatorResult = maybeSimulatorResult.get();
-    if (simulatorResult.isInvalid()) {
+    if (maybeSimulatorResult.get().isInvalid()) {
       throw new TransactionInvalidException();
     }
-    final JsonNode jsonNode = buildResult(traceTypes, tracer, simulatorResult);
-    traceCallResults.add(jsonNode);
+
+    final TransactionTrace transactionTrace =
+        new TransactionTrace(
+            maybeSimulatorResult.get().getTransaction(),
+            maybeSimulatorResult.get().getResult(),
+            tracer.getTraceFrames());
+
+    final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
+
+    traceCallResults.add(
+        getTraceCallResult(
+            protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block));
   }
 
   private static class TransactionInvalidException extends RuntimeException {
