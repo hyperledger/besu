@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType.VM_TRACE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
 
@@ -24,48 +23,27 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceCallResult;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffGenerator;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.MixInIgnoreRevertReason;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMethod {
-  private final ProtocolSchedule protocolSchedule;
-  private final TransactionSimulator transactionSimulator;
-
-  private static final ObjectMapper MAPPER_IGNORE_REVERT_REASON = new ObjectMapper();
-
+public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
   public TraceCall(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionSimulator transactionSimulator) {
-    super(blockchainQueries);
-
-    this.protocolSchedule = protocolSchedule;
-    this.transactionSimulator = transactionSimulator;
-
+    super(blockchainQueries, protocolSchedule, transactionSimulator);
     // The trace_call specification does not output the revert reason, so we have to remove it
-    MAPPER_IGNORE_REVERT_REASON.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
+    mapper.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
   }
 
   @Override
@@ -119,47 +97,7 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
 
     final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
 
-    final TraceCallResult.Builder builder = TraceCallResult.builder();
-
-    transactionTrace
-        .getResult()
-        .getRevertReason()
-        .ifPresentOrElse(
-            revertReason -> builder.output(revertReason.toHexString()),
-            () -> builder.output(maybeSimulatorResult.get().getOutput().toString()));
-
-    if (traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF)) {
-      new StateDiffGenerator()
-          .generateStateDiff(transactionTrace)
-          .forEachOrdered(stateDiff -> builder.stateDiff((StateDiffTrace) stateDiff));
-    }
-
-    if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
-      FlatTraceGenerator.generateFromTransactionTrace(
-              protocolSchedule, transactionTrace, block, new AtomicInteger(), false)
-          .forEachOrdered(trace -> builder.addTrace((FlatTrace) trace));
-    }
-
-    if (traceTypes.contains(VM_TRACE)) {
-      new VmTraceGenerator(transactionTrace)
-          .generateTraceStream()
-          .forEachOrdered(vmTrace -> builder.vmTrace((VmTrace) vmTrace));
-    }
-
-    return MAPPER_IGNORE_REVERT_REASON.valueToTree(builder.build());
-  }
-
-  private TransactionValidationParams buildTransactionValidationParams() {
-    return ImmutableTransactionValidationParams.builder()
-        .from(TransactionValidationParams.transactionSimulator())
-        .build();
-  }
-
-  private TraceOptions buildTraceOptions(final Set<TraceTypeParameter.TraceType> traceTypes) {
-    return new TraceOptions(
-        traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF),
-        false,
-        traceTypes.contains(TraceTypeParameter.TraceType.TRACE)
-            || traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE));
+    return getTraceCallResult(
+        protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block);
   }
 }

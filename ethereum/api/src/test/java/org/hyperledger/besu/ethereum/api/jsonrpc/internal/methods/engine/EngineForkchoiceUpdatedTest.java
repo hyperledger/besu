@@ -155,7 +155,7 @@ public class EngineForkchoiceUpdatedTest {
         PayloadIdentifier.forPayloadParams(mockHeader.getHash(), payloadParams.getTimestamp());
 
     when(mergeCoordinator.preparePayload(
-            mockHeader, payloadParams.getTimestamp(), payloadParams.getRandom(), Address.ECREC))
+            mockHeader, payloadParams.getTimestamp(), payloadParams.getPrevRandao(), Address.ECREC))
         .thenReturn(mockPayloadId);
 
     var res =
