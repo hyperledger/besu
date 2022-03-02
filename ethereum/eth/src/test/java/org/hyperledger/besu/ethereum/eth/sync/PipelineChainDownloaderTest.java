@@ -46,6 +46,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -91,6 +92,7 @@ public class PipelineChainDownloaderTest {
   public void shouldStartChainDownloadWhenTargetSelected() {
     final CompletableFuture<SyncTarget> selectTargetFuture = new CompletableFuture<>();
     when(syncTargetManager.findSyncTarget()).thenReturn(selectTargetFuture);
+    when(syncTargetManager.shouldContinueDownloading()).thenReturn(true);
     expectPipelineCreation(syncTarget, downloadPipeline);
     when(scheduler.startPipeline(downloadPipeline)).thenReturn(new CompletableFuture<>());
     chainDownloader.start();
@@ -106,11 +108,11 @@ public class PipelineChainDownloaderTest {
   public void shouldUpdateSyncStateWhenTargetSelected() {
     final CompletableFuture<SyncTarget> selectTargetFuture = new CompletableFuture<>();
     when(syncTargetManager.findSyncTarget()).thenReturn(selectTargetFuture);
+    when(syncTargetManager.shouldContinueDownloading()).thenReturn(true);
     expectPipelineCreation(syncTarget, downloadPipeline);
     when(scheduler.startPipeline(downloadPipeline)).thenReturn(new CompletableFuture<>());
     chainDownloader.start();
     verifyNoInteractions(downloadPipelineFactory);
-
     selectTargetFuture.complete(syncTarget);
 
     verify(syncState).setSyncTarget(peer1, commonAncestor);
@@ -156,10 +158,9 @@ public class PipelineChainDownloaderTest {
 
     verify(syncTargetManager).findSyncTarget();
 
-    when(syncTargetManager.shouldContinueDownloading()).thenReturn(false);
     pipelineFuture.complete(null);
 
-    verify(syncTargetManager).shouldContinueDownloading();
+    verify(syncTargetManager, Mockito.times(2)).shouldContinueDownloading();
     verify(syncState).clearSyncTarget();
     verifyNoMoreInteractions(syncTargetManager);
     assertThat(result).isCompleted();
@@ -187,6 +188,7 @@ public class PipelineChainDownloaderTest {
   @Test
   public void shouldNotNestExceptionHandling() {
     when(syncTargetManager.shouldContinueDownloading())
+        .thenReturn(true)
         .thenReturn(true) // Allow continuing after first successful download
         .thenReturn(false); // But not after finding the second sync target fails
 
@@ -213,7 +215,7 @@ public class PipelineChainDownloaderTest {
     // Should only need to check if it should continue twice.
     // We'll wind up doing this check more than necessary if we keep wrapping additional exception
     // handlers when restarting the sequence which wastes memory.
-    verify(syncTargetManager, times(2)).shouldContinueDownloading();
+    verify(syncTargetManager, times(3)).shouldContinueDownloading();
   }
 
   @Test
