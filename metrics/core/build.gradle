@@ -41,6 +41,7 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.grpc:grpc-netty'
   implementation 'io.grpc:grpc-core'
+  implementation 'io.jaegertracing:jaeger-proto'
   implementation 'io.netty:netty-tcnative-boringssl-static'
   implementation 'io.netty:netty-transport-native-epoll'
   implementation 'io.netty:netty-all'
@@ -50,7 +51,7 @@ dependencies {
   implementation 'io.opentelemetry:opentelemetry-sdk-trace'
   implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
   implementation 'io.opentelemetry:opentelemetry-exporter-otlp-metrics'
-  implementation 'io.opentelemetry:opentelemetry-proto'
+  implementation 'io.opentelemetry.proto:opentelemetry-proto'
 
   implementation 'io.prometheus:simpleclient'
   implementation 'io.prometheus:simpleclient_common'

@@ -92,7 +92,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 tps.getPreMergeSchedule(),
                 protocolContext,
                 transactionPool,
-                transitionMiningParameters,
+                new MiningParameters.Builder(miningParameters).miningEnabled(false).build(),
                 syncState,
                 ethProtocolManager),
             mergeBesuControllerBuilder.createMiningCoordinator(

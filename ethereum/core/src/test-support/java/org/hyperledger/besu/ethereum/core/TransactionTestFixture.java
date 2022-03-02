@@ -30,7 +30,7 @@ public class TransactionTestFixture {
 
   private long nonce = 0;
 
-  private Wei gasPrice = Wei.of(5);
+  private Wei gasPrice = Wei.of(5000);
 
   private long gasLimit = 5000;
 
