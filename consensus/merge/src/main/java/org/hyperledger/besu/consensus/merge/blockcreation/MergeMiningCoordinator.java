@@ -44,7 +44,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
   boolean isBackwardSyncing();
 
-  boolean isBackwardSyncing(final Block block);
+  Optional<BlockHeader> getOrSyncHeaderByHash(Hash blockhash);
 
   boolean isMiningBeforeMerge();
 
