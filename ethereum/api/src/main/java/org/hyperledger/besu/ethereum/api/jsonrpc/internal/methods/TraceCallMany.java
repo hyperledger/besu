@@ -122,7 +122,14 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
                       finalUpdater,
                       traceCallResults);
                 } catch (final TransactionInvalidException e) {
-                  return; // TODO: check what OpenEthereum does when one of the calls is invalid
+                  LOG.error("Invalid transaction simulator result");
+                  throw new RuntimeException();
+                } catch (final EmptySimulatorResultException e) {
+                  LOG.error(
+                      "Empty simulator result, call params: {}, blockHeader: {} ",
+                      JsonCallParameterUtil.validateAndGetCallParams(requestContext),
+                      maybeBlockHeader.get());
+                  throw new RuntimeException();
                 }
                 finalUpdater.commit();
               });

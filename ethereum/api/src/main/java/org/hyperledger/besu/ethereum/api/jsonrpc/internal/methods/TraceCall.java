@@ -36,7 +36,12 @@ import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import java.util.Optional;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
+  private static final Logger LOG = LoggerFactory.getLogger(TraceCall.class);
+
   public TraceCall(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
@@ -86,6 +91,15 @@ public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
             maybeBlockHeader.get());
 
     if (maybeSimulatorResult.isEmpty()) {
+      LOG.error(
+          "Empty simulator result, call params: {}, blockHeader: {} ",
+          JsonCallParameterUtil.validateAndGetCallParams(requestContext),
+          maybeBlockHeader.get());
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
+    }
+
+    if (maybeSimulatorResult.get().isInvalid()) {
+      LOG.error("Invalid simulator result: " + maybeSimulatorResult);
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
     }
 
