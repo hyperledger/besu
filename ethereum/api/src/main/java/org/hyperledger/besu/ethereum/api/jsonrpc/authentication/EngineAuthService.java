@@ -73,7 +73,7 @@ public class EngineAuthService implements AuthenticationService {
             signingKey = Codec.base16Decode(keyHex);
           } else {
             UnsecurableEngineApiException e =
-                new UnsecurableEngineApiException("signing key too short, 256bits required");
+                new UnsecurableEngineApiException("signing key too short, 256 bits required");
             e.fillInStackTrace();
             throw e;
           }
@@ -85,7 +85,7 @@ public class EngineAuthService implements AuthenticationService {
           e.initCause(ioe);
           throw e;
         }
-      } else { // user configured for a non-existing file, generate new key and write to it
+      } else {
         UnsecurableEngineApiException e =
             new UnsecurableEngineApiException(
                 "Could not read key from " + keyFile.get().toString());
@@ -96,7 +96,7 @@ public class EngineAuthService implements AuthenticationService {
     if (signingKey == null || signingKey.length < 32) {
       UnsecurableEngineApiException e =
           new UnsecurableEngineApiException(
-              "Could not read at least 256 bits pf key from " + keyFile.get().toString());
+              "Could not read at least 256 bits of key from " + (keyFile.isPresent() ? keyFile.get().toString() : "undefined"));
       e.fillInStackTrace();
       throw e;
     }

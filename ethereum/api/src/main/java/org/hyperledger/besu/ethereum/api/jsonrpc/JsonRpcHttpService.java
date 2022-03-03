@@ -602,7 +602,6 @@ public class JsonRpcHttpService {
           }
         }
       } catch (final DecodeException | NullPointerException ex) {
-        LOG.debug("Exception handling request", ex);
         handleJsonRpcError(routingContext, null, JsonRpcError.PARSE_ERROR);
       }
     }
