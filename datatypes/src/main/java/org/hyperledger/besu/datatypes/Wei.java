@@ -73,6 +73,7 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
     return Wei.of(BigInteger.valueOf(eth).multiply(BigInteger.TEN.pow(18)));
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public Number getValue() {
     return getAsBigInteger();

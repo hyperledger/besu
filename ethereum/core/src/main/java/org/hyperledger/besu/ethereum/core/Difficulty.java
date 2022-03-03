@@ -67,6 +67,7 @@ public final class Difficulty extends BaseUInt256Value<Difficulty> implements Qu
     return new Difficulty(str);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public Number getValue() {
     return getAsBigInteger();

@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import java.util.Map;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -76,6 +77,7 @@ public class PrivxJsonRpcMethodsTest {
 
   @Deprecated
   @Test
+  @Ignore("Ignoring deprecated test.")
   public void privxFindOnchainPrivacyGroupMethodIsStillEnabled() {
     when(privacyParameters.isFlexiblePrivacyGroupsEnabled()).thenReturn(true);
     final Map<String, JsonRpcMethod> rpcMethods = privxJsonRpcMethods.create();

@@ -61,7 +61,7 @@ public class PrivateStaticFinalLoggers extends BugChecker implements VariableTre
       return NO_MATCH;
     }
     return buildDescription(tree)
-        .addFix(addModifiers(tree, state, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL))
+        .addFix(addModifiers(tree, state, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL).get())
         .build();
   }
 }
