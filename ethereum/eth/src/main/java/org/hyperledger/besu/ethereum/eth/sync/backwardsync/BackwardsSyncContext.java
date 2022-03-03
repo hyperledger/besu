@@ -16,10 +16,13 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -61,6 +64,38 @@ public class BackwardsSyncContext {
     return Optional.ofNullable(currentBackwardSyncFuture.get())
         .map(CompletableFuture::isDone)
         .orElse(Boolean.FALSE);
+  }
+
+  public CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockhash) {
+    if (getCurrentChain()
+        .flatMap(
+            chain ->
+                chain.getSuccessors().stream()
+                    .map(Block::getHash)
+                    .filter(hash -> hash.equals(newBlockhash))
+                    .findAny())
+        .isPresent()) {
+      LOG.debug(
+          "not fetching and appending hash {} to backwards sync since it is present in successors",
+          newBlockhash.toHexString());
+      return CompletableFuture.completedFuture(null);
+    }
+
+    // kick off async process to fetch this block by hash then delegate to syncBackwardsUntil
+    return GetHeadersFromPeerByHashTask.forSingleHash(
+            protocolSchedule, ethContext, newBlockhash, 0L, metricsSystem)
+        .run()
+        .thenCompose(
+            headers ->
+                GetBodiesFromPeerTask.forHeaders(
+                        protocolSchedule, ethContext, headers.getResult(), metricsSystem)
+                    .run()
+                    .thenCompose(blocks -> syncBackwardsUntil(blocks.getResult().get(0))))
+        .exceptionally(
+            ex -> {
+              LOG.error("Failed to fetch block by hash " + newBlockhash.toHexString(), ex);
+              throw new BackwardSyncException(ex);
+            });
   }
 
   public CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
@@ -134,7 +169,7 @@ public class BackwardsSyncContext {
   }
 
   public Optional<BackwardChain> getCurrentChain() {
-    return Optional.of(currentChain.get());
+    return Optional.ofNullable(currentChain.get());
   }
 
   public ProtocolSchedule getProtocolSchedule() {
