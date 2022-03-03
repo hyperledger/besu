@@ -32,17 +32,28 @@ public class FullSyncChainDownloader {
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final SyncTerminationCondition terminationCondition) {
 
     final FullSyncTargetManager syncTargetManager =
         new FullSyncTargetManager(
-            config, protocolSchedule, protocolContext, ethContext, metricsSystem);
+            config,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            metricsSystem,
+            terminationCondition);
 
     return new PipelineChainDownloader(
         syncState,
         syncTargetManager,
         new FullSyncDownloadPipelineFactory(
-            config, protocolSchedule, protocolContext, ethContext, metricsSystem),
+            config,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            metricsSystem,
+            terminationCondition),
         ethContext.getScheduler(),
         metricsSystem);
   }

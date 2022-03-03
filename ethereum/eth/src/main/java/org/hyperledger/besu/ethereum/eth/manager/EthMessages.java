@@ -41,8 +41,16 @@ public class EthMessages {
                 messageResponseConstructor.response(ethMessage.getData()));
   }
 
-  public void subscribe(final int messageCode, final MessageCallback callback) {
-    listenersByCode.computeIfAbsent(messageCode, key -> Subscribers.create()).subscribe(callback);
+  public long subscribe(final int messageCode, final MessageCallback callback) {
+    return listenersByCode
+        .computeIfAbsent(messageCode, key -> Subscribers.create())
+        .subscribe(callback);
+  }
+
+  public void unsubsribe(final long id) {
+    for (Subscribers<MessageCallback> subscribers : listenersByCode.values()) {
+      subscribers.unsubscribe(id);
+    }
   }
 
   public void registerResponseConstructor(

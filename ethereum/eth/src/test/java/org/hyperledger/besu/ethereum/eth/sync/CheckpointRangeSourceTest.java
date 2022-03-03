@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
+import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 
 import java.time.Duration;
 import java.util.List;
@@ -60,7 +61,8 @@ public class CheckpointRangeSourceTest {
           peer,
           commonAncestor,
           CHECKPOINT_TIMEOUTS_PERMITTED,
-          Duration.ofMillis(1));
+          Duration.ofMillis(1),
+          SyncTerminationCondition.never());
 
   @Test
   public void shouldHaveNextWhenNoCheckpointsLoadedButSyncTargetCheckerSaysToContinue() {

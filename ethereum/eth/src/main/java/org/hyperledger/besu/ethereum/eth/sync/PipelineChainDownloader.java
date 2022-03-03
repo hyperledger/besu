@@ -153,6 +153,9 @@ public class PipelineChainDownloader implements ChainDownloader {
       return CompletableFuture.failedFuture(
           new CancellationException("Chain download was cancelled"));
     }
+    if (!syncTargetManager.shouldContinueDownloading()) {
+      return CompletableFuture.completedFuture(null);
+    }
     syncState.setSyncTarget(target.peer(), target.commonAncestor());
     currentDownloadPipeline = downloadPipelineFactory.createDownloadPipelineForSyncTarget(target);
     debugLambda(

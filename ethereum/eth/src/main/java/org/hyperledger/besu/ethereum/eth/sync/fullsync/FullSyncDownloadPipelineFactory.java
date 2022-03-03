@@ -48,18 +48,21 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   private final ValidationPolicy detachedValidationPolicy =
       () -> HeaderValidationMode.DETACHED_ONLY;
   private final BetterSyncTargetEvaluator betterSyncTargetEvaluator;
+  private final SyncTerminationCondition fullSyncTerminationCondition;
 
   public FullSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final SyncTerminationCondition syncTerminationCondition) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
+    this.fullSyncTerminationCondition = syncTerminationCondition;
     betterSyncTargetEvaluator = new BetterSyncTargetEvaluator(syncConfig, ethContext.getEthPeers());
   }
 
@@ -75,7 +78,8 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             ethContext.getScheduler(),
             target.peer(),
             target.commonAncestor(),
-            syncConfig.getDownloaderCheckpointTimeoutsPermitted());
+            syncConfig.getDownloaderCheckpointTimeoutsPermitted(),
+            fullSyncTerminationCondition);
     final DownloadHeadersStep downloadHeadersStep =
         new DownloadHeadersStep(
             protocolSchedule,
@@ -91,7 +95,8 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new DownloadBodiesStep(protocolSchedule, ethContext, metricsSystem);
     final ExtractTxSignaturesStep extractTxSignaturesStep = new ExtractTxSignaturesStep();
     final FullImportBlockStep importBlockStep =
-        new FullImportBlockStep(protocolSchedule, protocolContext, ethContext);
+        new FullImportBlockStep(
+            protocolSchedule, protocolContext, ethContext, fullSyncTerminationCondition);
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",
@@ -115,18 +120,19 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
   private boolean shouldContinueDownloadingFromPeer(
       final EthPeer peer, final BlockHeader lastCheckpointHeader) {
+    final boolean shouldTerminate = fullSyncTerminationCondition.shouldStopDownload();
     final boolean caughtUpToPeer =
         peer.chainState().getEstimatedHeight() <= lastCheckpointHeader.getNumber();
     final boolean isDisconnected = peer.isDisconnected();
     final boolean shouldSwitchSyncTarget = betterSyncTargetEvaluator.shouldSwitchSyncTarget(peer);
-
     LOG.debug(
-        "shouldContinueDownloadingFromPeer? {}, disconnected {}, caughtUp {}, shouldSwitchSyncTarget {}",
+        "shouldTerminate {}, shouldContinueDownloadingFromPeer? {}, disconnected {}, caughtUp {}, shouldSwitchSyncTarget {}",
+        shouldTerminate,
         peer,
         isDisconnected,
         caughtUpToPeer,
         shouldSwitchSyncTarget);
 
-    return !isDisconnected && !caughtUpToPeer && !shouldSwitchSyncTarget;
+    return !shouldTerminate && !isDisconnected && !caughtUpToPeer && !shouldSwitchSyncTarget;
   }
 }
