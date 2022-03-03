@@ -128,7 +128,7 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
   protected ImmutableDebugAccountAtResult debugAccountAtResult(
       final Bytes code, final String nonce, final String balance, final String codeHash) {
     return ImmutableDebugAccountAtResult.builder()
-        .code(code.toHexString())
+        .code(code.isEmpty() ? "0x0" : code.toHexString())
         .nonce(nonce)
         .balance(balance)
         .codehash(codeHash)
