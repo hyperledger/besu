@@ -117,8 +117,11 @@ commands:
             mkdir -p ~/.docker/cli-plugins
             wget -nv -O ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.${BUILDX_ARCH}  
             chmod a+x ~/.docker/cli-plugins/docker-buildx
-            #curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-${BUILDX_ARCH} >regctl
-            #chmod 755 regctl
+
+            docker run --privileged --rm tonistiigi/binfmt --install all
+
+            docker context create builder-context
+            docker buildx create --name builderx --driver docker-container --use builder-context
 
   enable_experimental:
     description: "enable docker experimental feature"
@@ -337,11 +340,6 @@ jobs:
       - run:
           name: build image
           command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
-
-            docker run --privileged --rm tonistiigi/binfmt --install all
-            docker context create builder-context
-            docker buildx create --name builderx --driver docker-container --use builder-context
             ./gradlew --no-daemon distDocker
       - run:
           name: test image
@@ -375,14 +373,9 @@ jobs:
           name: Publish Docker
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
-                       
             # temporarily commented out because AWS credentials are broken
             # docker login "${ACR_REPO}" --username "${ACR_USER_RW}" --password "${ACR_PASSWORD_RW}"
 
-            export DOCKER_CLI_EXPERIMENTAL=enabled
-            docker run --privileged --rm tonistiigi/binfmt --install all
-            docker context create builder-context
-            docker buildx create --name builderx --driver docker-container --use builder-context
             ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
 
 workflows:

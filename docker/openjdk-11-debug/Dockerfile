@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 
 ARG VERSION="dev"
 RUN apt-get update  && \
- apt-get install --no-install-recommends -q --assume-yes curl=7* wget=1.20* jq=1.6* net-tools=1.60* openjdk-11-jre-headless=11* apt-utils=2.* && \
+ apt-get install --no-install-recommends -q --assume-yes curl=7* wget=1.20* jq=1.6* net-tools=1.60* openjdk-11-jre-headless=11* && \
  apt-get clean  && \
  rm -rf /var/lib/apt/lists/* 
 
