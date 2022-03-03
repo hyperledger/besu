@@ -232,7 +232,6 @@ public class Runner implements AutoCloseable {
   }
 
   private void writeBesuPortsToFile() {
-    LOG.info("starting to write ports file");
     final Properties properties = new Properties();
     if (networkRunner.getNetwork().isP2pEnabled()) {
       networkRunner
@@ -251,9 +250,6 @@ public class Runner implements AutoCloseable {
                         listeningPort ->
                             properties.setProperty("p2p", String.valueOf(listeningPort)));
               });
-      LOG.info("network runner setup");
-    } else {
-      LOG.info("p2p not enabled");
     }
 
     Optional<Integer> port = getJsonRpcPort();
@@ -273,7 +269,6 @@ public class Runner implements AutoCloseable {
       properties.setProperty("metrics", String.valueOf(port.get()));
     }
     // create besu.ports file
-    LOG.info("properties map done {}", properties);
     createBesuFile(
         properties, "ports", "This file contains the ports used by the running instance of Besu");
   }
@@ -362,15 +357,12 @@ public class Runner implements AutoCloseable {
 
   private void createBesuFile(
       final Properties properties, final String fileName, final String fileHeader) {
-    LOG.info("writing {} to file {}", properties, fileName);
     final File file = new File(dataDir.toFile(), String.format("besu.%s", fileName));
     file.deleteOnExit();
-    LOG.info("about to write to stream");
     try (final FileOutputStream fileOutputStream = new FileOutputStream(file)) {
       properties.store(
           fileOutputStream,
           String.format("%s. This file will be deleted after the node is shutdown.", fileHeader));
-      LOG.info("wrote out file");
     } catch (final Exception e) {
       LOG.warn(String.format("Error writing %s file", fileName), e);
     }
