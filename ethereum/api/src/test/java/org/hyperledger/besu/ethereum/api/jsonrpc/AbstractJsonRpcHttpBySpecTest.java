@@ -239,7 +239,8 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
             actualResult = filterStringStateDiff(actualResult);
             break;
           default:
-            throw new RuntimeException("Found OTHER where it should not be possible");
+            throw new RuntimeException(
+                "Unrecognized trace type (expected trace | vmTrace | stateDiff)");
         }
       }
 

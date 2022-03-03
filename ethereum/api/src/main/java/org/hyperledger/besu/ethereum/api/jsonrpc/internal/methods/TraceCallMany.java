@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -115,12 +115,12 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
               param -> {
                 final WorldUpdater finalUpdater = updater.updater();
                 try {
-                  executeSingleCall(
-                      param.getTuple().getJsonCallParameter(),
-                      param.getTuple().getTraceTypeParameter(),
-                      maybeBlockHeader.get(),
-                      finalUpdater,
-                      traceCallResults);
+                  traceCallResults.add(
+                      getSingleCallResult(
+                          param.getTuple().getJsonCallParameter(),
+                          param.getTuple().getTraceTypeParameter(),
+                          maybeBlockHeader.get(),
+                          finalUpdater));
                 } catch (final TransactionInvalidException e) {
                   LOG.error("Invalid transaction simulator result");
                   throw new RuntimeException();
@@ -140,12 +140,11 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     return traceCallResults;
   }
 
-  private void executeSingleCall(
+  private JsonNode getSingleCallResult(
       final JsonCallParameter callParameter,
       final TraceTypeParameter traceTypeParameter,
       final BlockHeader header,
-      final WorldUpdater worldUpdater,
-      final List<JsonNode> traceCallResults) {
+      final WorldUpdater worldUpdater) {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
     final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
@@ -168,9 +167,8 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
     final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
 
-    traceCallResults.add(
-        getTraceCallResult(
-            protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block));
+    return getTraceCallResult(
+        protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block);
   }
 
   private static class TransactionInvalidException extends RuntimeException {

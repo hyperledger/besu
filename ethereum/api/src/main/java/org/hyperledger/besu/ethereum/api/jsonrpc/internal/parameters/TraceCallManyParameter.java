@@ -29,7 +29,7 @@ public class TraceCallManyParameter {
 
   @JsonCreator
   public TraceCallManyParameter(
-      @JsonDeserialize(using = TraceCallParameterDeserialiser.class)
+      @JsonDeserialize(using = TraceCallParameterDeserializer.class)
           final TraceCallParamterTuple parameters) {
     this.params = parameters;
   }
@@ -39,13 +39,13 @@ public class TraceCallManyParameter {
   }
 }
 
-class TraceCallParameterDeserialiser extends StdDeserializer<TraceCallParamterTuple> {
+class TraceCallParameterDeserializer extends StdDeserializer<TraceCallParamterTuple> {
 
-  public TraceCallParameterDeserialiser(final Class<?> vc) {
+  public TraceCallParameterDeserializer(final Class<?> vc) {
     super(vc);
   }
 
-  public TraceCallParameterDeserialiser() {
+  public TraceCallParameterDeserializer() {
     this(null);
   }
 

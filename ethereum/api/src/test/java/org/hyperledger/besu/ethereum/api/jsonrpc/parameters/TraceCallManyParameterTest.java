@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.parameters;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceCallManyParameter;
@@ -23,11 +24,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypePa
 import java.io.IOException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import org.junit.Before;
 import org.junit.Test;
 
 public class TraceCallManyParameterTest {
   static final String emptyParamsJson = "[]";
+  static final String invalidJson = "[[\"invalid\"],[\"invalid\"]]";
   static final String requestParamsJson =
       "[ [ {\n"
           + "      \"from\" : \"0xfe3b557e8fb62b89f4916b721be55ceb828dbd73\",\n"
@@ -81,5 +84,11 @@ public class TraceCallManyParameterTest {
     assertThat(parameter[1].getTuple().getTraceTypeParameter().getTraceTypes()).hasSize(1);
     assertThat(parameter[1].getTuple().getTraceTypeParameter().getTraceTypes())
         .contains(TraceTypeParameter.TraceType.TRACE);
+  }
+
+  @Test
+  public void testInvalidJsonDoesNotParse() throws IOException {
+    assertThatExceptionOfType(MismatchedInputException.class)
+        .isThrownBy(() -> mapper.readValue(invalidJson, TraceCallManyParameter[].class));
   }
 }
