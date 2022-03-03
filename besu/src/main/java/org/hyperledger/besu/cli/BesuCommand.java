@@ -880,7 +880,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--engine-host-allowlist"},
       paramLabel = "<hostname>[,<hostname>...]... or * or all",
       description =
-          "Comma separated list of hostnames to allow for ENGINE API access (applies to both RPC and websockets), or * to accept any host (default: ${DEFAULT-VALUE})",
+          "Comma separated list of hostnames to allow for ENGINE API access (applies to both HTTP and websockets), or * to accept any host (default: ${DEFAULT-VALUE})",
       defaultValue = "localhost,127.0.0.1")
   private final JsonRPCAllowlistHostsProperty engineHostsAllowlist =
       new JsonRPCAllowlistHostsProperty();
@@ -1998,6 +1998,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
       if (engineJwtKeyFile != null && java.nio.file.Files.exists(engineJwtKeyFile)) {
         engineConfig.setAuthenticationPublicKeyFile(engineJwtKeyFile.toFile());
+      } else {
+        logger.info("Engine API authentication enabled without key file. Expect ephemeral jwt.hex dile in datadir");
       }
     }
     return engineConfig;
