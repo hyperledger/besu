@@ -639,6 +639,15 @@ public class RunnerBuilder {
                 dataDir,
                 rpcEndpointServiceImpl);
 
+        Optional<AuthenticationService> authToUse =
+            engineJsonRpcConfiguration.get().isAuthenticationEnabled()
+                ? Optional.of(
+                    new EngineAuthService(
+                        vertx,
+                        Optional.ofNullable(
+                            engineJsonRpcConfiguration.get().getAuthenticationPublicKeyFile()),
+                        dataDir))
+                : Optional.empty();
         engineJsonRpcHttpService =
             Optional.of(
                 new JsonRpcHttpService(
@@ -648,12 +657,7 @@ public class RunnerBuilder {
                     metricsSystem,
                     natService,
                     engineMethods,
-                    Optional.of(
-                        new EngineAuthService(
-                            vertx,
-                            Optional.ofNullable(
-                                engineJsonRpcConfiguration.get().getAuthenticationPublicKeyFile()),
-                            dataDir)),
+                    authToUse,
                     new HealthService(new LivenessCheck()),
                     new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
       }
@@ -745,7 +749,8 @@ public class RunnerBuilder {
 
       createPrivateTransactionObserver(subscriptionManager, privacyParameters);
 
-      if (engineWebSocketConfiguration.isPresent()) {
+      if (engineWebSocketConfiguration.isPresent()
+          && engineWebSocketConfiguration.get().isEnabled()) {
         final Map<String, JsonRpcMethod> engineMethods =
             jsonRpcMethods(
                 protocolSchedule,
@@ -771,6 +776,16 @@ public class RunnerBuilder {
                 dataDir,
                 rpcEndpointServiceImpl);
 
+        Optional<AuthenticationService> authToUse =
+            engineWebSocketConfiguration.get().isAuthenticationEnabled()
+                ? Optional.of(
+                    new EngineAuthService(
+                        vertx,
+                        Optional.ofNullable(
+                            engineWebSocketConfiguration.get().getAuthenticationPublicKeyFile()),
+                        dataDir))
+                : Optional.empty();
+
         engineWebSocketService =
             Optional.of(
                 createWebsocketService(
@@ -781,14 +796,7 @@ public class RunnerBuilder {
                     privacyParameters,
                     protocolSchedule,
                     blockchainQueries,
-                    Optional.of(
-                        new EngineAuthService(
-                            vertx,
-                            Optional.ofNullable(
-                                engineWebSocketConfiguration
-                                    .get()
-                                    .getAuthenticationPublicKeyFile()),
-                            dataDir))));
+                    authToUse));
       }
     }
 
