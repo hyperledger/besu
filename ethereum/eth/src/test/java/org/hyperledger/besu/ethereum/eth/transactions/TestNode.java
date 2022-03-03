@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -123,7 +124,7 @@ public class TestNode implements Closeable {
 
     final EthMessages ethMessages = new EthMessages();
 
-    final EthPeers ethPeers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem);
+    final EthPeers ethPeers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem, 25);
 
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
@@ -136,7 +137,7 @@ public class TestNode implements Closeable {
             TestClock.fixed(),
             metricsSystem,
             syncState,
-            Wei.ZERO,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             TransactionPoolConfiguration.DEFAULT);
 
     final EthProtocolManager ethProtocolManager =

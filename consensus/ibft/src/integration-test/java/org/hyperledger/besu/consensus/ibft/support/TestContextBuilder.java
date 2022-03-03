@@ -300,7 +300,7 @@ public class TestContextBuilder {
             .coinbase(AddressHelpers.ofValue(1))
             .minTransactionGasPrice(Wei.ZERO)
             .extraData(Bytes.wrap("Ibft Int tests".getBytes(UTF_8)))
-            .enabled(true)
+            .miningEnabled(true)
             .build();
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
@@ -354,7 +354,8 @@ public class TestContextBuilder {
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockChain, blockInterface, true, validatorProvider);
 
-    final BftExecutors bftExecutors = BftExecutors.create(new NoOpMetricsSystem());
+    final BftExecutors bftExecutors =
+        BftExecutors.create(new NoOpMetricsSystem(), BftExecutors.ConsensusType.IBFT);
     final BftFinalState finalState =
         new BftFinalState(
             protocolContext.getConsensusContext(BftContext.class).getValidatorProvider(),

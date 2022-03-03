@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValida
 import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -86,7 +87,7 @@ import java.util.OptionalLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class BesuControllerBuilder {
+public abstract class BesuControllerBuilder implements MiningParameterOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
   protected GenesisConfigFile genesisConfig;
@@ -115,6 +116,7 @@ public abstract class BesuControllerBuilder {
   protected List<NodeMessagePermissioningProvider> messagePermissioningProviders =
       Collections.emptyList();
   protected EvmConfiguration evmConfiguration;
+  protected int maxPeers;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -238,6 +240,11 @@ public abstract class BesuControllerBuilder {
     return this;
   }
 
+  public BesuControllerBuilder maxPeers(final int maxPeers) {
+    this.maxPeers = maxPeers;
+    return this;
+  }
+
   public BesuController build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -309,7 +316,8 @@ public abstract class BesuControllerBuilder {
       }
     }
     final EthPeers ethPeers =
-        new EthPeers(getSupportedProtocol(), clock, metricsSystem, messagePermissioningProviders);
+        new EthPeers(
+            getSupportedProtocol(), clock, metricsSystem, maxPeers, messagePermissioningProviders);
 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();
@@ -334,7 +342,7 @@ public abstract class BesuControllerBuilder {
             clock,
             metricsSystem,
             syncState,
-            miningParameters.getMinTransactionGasPrice(),
+            miningParameters,
             transactionPoolConfiguration);
 
     final List<PeerValidator> peerValidators = createPeerValidators(protocolSchedule);
@@ -366,7 +374,8 @@ public abstract class BesuControllerBuilder {
             syncState,
             dataDirectory,
             clock,
-            metricsSystem);
+            metricsSystem,
+            getFullSyncTerminationCondition(protocolContext.getBlockchain()));
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -408,6 +417,14 @@ public abstract class BesuControllerBuilder {
         nodeKey,
         closeables,
         additionalPluginServices);
+  }
+
+  protected SyncTerminationCondition getFullSyncTerminationCondition(final Blockchain blockchain) {
+    return genesisConfig
+        .getConfigOptions()
+        .getTerminalTotalDifficulty()
+        .map(difficulty -> SyncTerminationCondition.difficulty(difficulty, blockchain))
+        .orElse(SyncTerminationCondition.never());
   }
 
   protected void prepForBuild() {}
@@ -507,7 +524,7 @@ public abstract class BesuControllerBuilder {
     }
   }
 
-  private List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
+  protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
     final List<PeerValidator> validators = new ArrayList<>();
 
     final OptionalLong daoBlock =

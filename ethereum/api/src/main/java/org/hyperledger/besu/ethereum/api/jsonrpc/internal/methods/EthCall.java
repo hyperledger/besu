@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -62,7 +61,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
 
   @Override
   protected Object resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
-    JsonCallParameter callParams = validateAndGetCallParams(request);
+    JsonCallParameter callParams = JsonCallParameterUtil.validateAndGetCallParams(request);
     final BlockHeader header = blockchainQueries.get().getBlockHeaderByHash(blockHash).orElse(null);
 
     if (header == null) {
@@ -122,17 +121,6 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   private JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
     return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
-  }
-
-  private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
-    final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
-    if (callParams.getGasPrice() != null
-        && (callParams.getMaxFeePerGas().isPresent()
-            || callParams.getMaxPriorityFeePerGas().isPresent())) {
-      throw new InvalidJsonRpcParameters(
-          "gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas");
-    }
-    return callParams;
   }
 
   private TransactionValidationParams buildTransactionValidationParams(

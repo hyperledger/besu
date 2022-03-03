@@ -18,6 +18,7 @@ import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /** Provides an interface to block synchronization processes. */
 public interface Synchronizer {
@@ -25,7 +26,7 @@ public interface Synchronizer {
   // Default tolerance used to determine whether or not this node is "in sync"
   long DEFAULT_IN_SYNC_TOLERANCE = 5;
 
-  void start();
+  CompletableFuture<Void> start();
 
   void stop();
 

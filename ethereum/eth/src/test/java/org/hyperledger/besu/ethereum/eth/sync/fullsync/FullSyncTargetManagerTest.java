@@ -40,7 +40,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.After;
@@ -98,7 +97,8 @@ public class FullSyncTargetManagerTest {
             protocolSchedule,
             protocolContext,
             ethContext,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            SyncTerminationCondition.never());
   }
 
   @After
@@ -115,7 +115,7 @@ public class FullSyncTargetManagerTest {
     final RespondingEthPeer bestPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.MAX_VALUE, 4);
 
-    final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget(Optional.empty());
+    final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget();
     bestPeer.respond(responder);
 
     assertThat(result)
@@ -132,7 +132,7 @@ public class FullSyncTargetManagerTest {
     final RespondingEthPeer bestPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.MAX_VALUE, 0);
 
-    final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget(Optional.empty());
+    final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget();
     bestPeer.respond(responder);
 
     assertThat(result).isNotCompleted();
@@ -147,7 +147,7 @@ public class FullSyncTargetManagerTest {
     final RespondingEthPeer bestPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 20);
 
-    final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget(Optional.empty());
+    final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget();
 
     bestPeer.respond(responder);
 
@@ -164,7 +164,7 @@ public class FullSyncTargetManagerTest {
     final RespondingEthPeer bestPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 20);
 
-    final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget(Optional.empty());
+    final CompletableFuture<SyncTarget> result = syncTargetManager.findSyncTarget();
 
     bestPeer.respond(responder);
 

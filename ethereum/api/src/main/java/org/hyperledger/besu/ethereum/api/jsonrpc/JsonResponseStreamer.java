@@ -16,10 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.net.SocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,12 +29,21 @@ class JsonResponseStreamer extends OutputStream {
   private static final Logger LOG = LoggerFactory.getLogger(JsonResponseStreamer.class);
 
   private final HttpServerResponse response;
-  private final Semaphore paused = new Semaphore(0);
+  private final SocketAddress remoteAddress;
   private final byte[] singleByteBuf = new byte[1];
   private boolean chunked = false;
+  private boolean closed = false;
+  private final AtomicReference<Throwable> failure = new AtomicReference<>();
 
-  public JsonResponseStreamer(final HttpServerResponse response) {
+  public JsonResponseStreamer(
+      final HttpServerResponse response, final SocketAddress socketAddress) {
     this.response = response;
+    this.remoteAddress = socketAddress;
+    this.response.exceptionHandler(
+        event -> {
+          LOG.debug("Write to remote address {} failed", remoteAddress, event);
+          failure.set(event);
+        });
   }
 
   @Override
@@ -44,31 +54,40 @@ class JsonResponseStreamer extends OutputStream {
 
   @Override
   public void write(final byte[] bbuf, final int off, final int len) throws IOException {
+    stopOnFailureOrClosed();
+
     if (!chunked) {
       response.setChunked(true);
       chunked = true;
     }
 
-    if (response.writeQueueFull()) {
-      LOG.debug("HttpResponse write queue is full pausing streaming");
-      response.drainHandler(e -> paused.release());
-      try {
-        paused.acquire();
-        LOG.debug("HttpResponse write queue is not accepting more data, resuming streaming");
-      } catch (InterruptedException ex) {
-        Thread.currentThread().interrupt();
-        throw new IOException(
-            "Interrupted while waiting for HttpServerResponse to drain the write queue", ex);
-      }
-    }
-
     Buffer buf = Buffer.buffer(len);
     buf.appendBytes(bbuf, off, len);
-    response.write(buf);
+    response.write(buf).onFailure(this::handleFailure);
   }
 
   @Override
   public void close() throws IOException {
-    response.end();
+    if (!closed) {
+      response.end();
+      closed = true;
+    }
+  }
+
+  private void stopOnFailureOrClosed() throws IOException {
+    if (closed) {
+      throw new IOException("Stream closed");
+    }
+
+    Throwable t = failure.get();
+    if (t != null) {
+      LOG.debug("Stop writing to remote address {} due to a failure", remoteAddress, t);
+      throw (t instanceof IOException) ? (IOException) t : new IOException(t);
+    }
+  }
+
+  private void handleFailure(final Throwable t) {
+    LOG.debug("Write to remote address {} failed", remoteAddress, t);
+    failure.set(t);
   }
 }

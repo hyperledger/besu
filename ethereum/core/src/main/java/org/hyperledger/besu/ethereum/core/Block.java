@@ -99,4 +99,8 @@ public class Block {
     sb.append("body=").append(body);
     return sb.append("}").toString();
   }
+
+  public String toLogString() {
+    return getHeader().toLogString();
+  }
 }

@@ -33,7 +33,12 @@ public enum RpcApis {
   GOQUORUM,
   CLIQUE,
   IBFT,
+  ENGINE,
   QBFT;
 
   public static final List<String> DEFAULT_RPC_APIS = Arrays.asList("ETH", "NET", "WEB3");
+
+  @SuppressWarnings("unused")
+  public static final List<RpcApis> ALL_JSON_RPC_APIS =
+      Arrays.asList(ETH, DEBUG, MINER, NET, PERM, WEB3, ADMIN, EEA, PRIV, TXPOOL, TRACE, PLUGINS);
 }

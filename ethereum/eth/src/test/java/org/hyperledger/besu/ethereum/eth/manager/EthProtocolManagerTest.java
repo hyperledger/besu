@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -1025,7 +1026,7 @@ public final class EthProtocolManagerTest {
           TestClock.fixed(),
           metricsSystem,
           mock(SyncState.class),
-          Wei.ZERO,
+          new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
           TransactionPoolConfiguration.DEFAULT);
 
       // Send just a transaction message.
@@ -1036,6 +1037,22 @@ public final class EthProtocolManagerTest {
       verifyNoInteractions(worker, scheduled);
       // Verify our transactions executor got something to execute.
       verify(transactions).execute(any());
+    }
+  }
+
+  @Test
+  public void forkIdForChainHeadMayBeNull() {
+    EthScheduler ethScheduler = mock(EthScheduler.class);
+    try (final EthProtocolManager ethManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            ethScheduler,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig(),
+            new ForkIdManager(blockchain, Collections.emptyList(), true))) {
+
+      assertThat(ethManager.getForkIdAsBytesList()).isEmpty();
     }
   }
 }

@@ -50,8 +50,11 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link BlockExporter}. */
+@RunWith(MockitoJUnitRunner.class)
 public final class RlpBlockExporterTest {
 
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
@@ -85,7 +88,7 @@ public final class RlpBlockExporterTest {
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.ONE)
-        .miningParameters(new MiningParameters.Builder().enabled(false).build())
+        .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .privacyParameters(PrivacyParameters.DEFAULT)

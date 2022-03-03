@@ -45,8 +45,11 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link RlpBlockImporter}. */
+@RunWith(MockitoJUnitRunner.class)
 public final class RlpBlockImporterTest {
 
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
@@ -65,7 +68,7 @@ public final class RlpBlockImporterTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
-            .miningParameters(new MiningParameters.Builder().enabled(false).build())
+            .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .privacyParameters(PrivacyParameters.DEFAULT)
@@ -94,7 +97,7 @@ public final class RlpBlockImporterTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
-            .miningParameters(new MiningParameters.Builder().enabled(false).build())
+            .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .privacyParameters(PrivacyParameters.DEFAULT)
@@ -123,7 +126,7 @@ public final class RlpBlockImporterTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
-            .miningParameters(new MiningParameters.Builder().enabled(false).build())
+            .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .privacyParameters(PrivacyParameters.DEFAULT)
@@ -164,7 +167,7 @@ public final class RlpBlockImporterTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.valueOf(10))
-            .miningParameters(new MiningParameters.Builder().enabled(false).build())
+            .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
             .nodeKey(NodeKeyUtils.generate())
             .metricsSystem(new NoOpMetricsSystem())
             .privacyParameters(PrivacyParameters.DEFAULT)

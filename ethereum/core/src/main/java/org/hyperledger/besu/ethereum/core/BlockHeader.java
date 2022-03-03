@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -60,7 +60,7 @@ public class BlockHeader extends SealableBlockHeader
       final long timestamp,
       final Bytes extraData,
       final Wei baseFee,
-      final Bytes32 mixHashOrRandom,
+      final Bytes32 mixHashOrPrevRandao,
       final long nonce,
       final BlockHeaderFunctions blockHeaderFunctions,
       final Optional<LogsBloomFilter> privateLogsBloom) {
@@ -79,7 +79,7 @@ public class BlockHeader extends SealableBlockHeader
         timestamp,
         extraData,
         baseFee,
-        mixHashOrRandom);
+        mixHashOrPrevRandao);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -101,7 +101,7 @@ public class BlockHeader extends SealableBlockHeader
       final long timestamp,
       final Bytes extraData,
       final Wei baseFee,
-      final Bytes32 mixHashOrRandom,
+      final Bytes32 mixHashOrPrevRandao,
       final long nonce,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
@@ -119,7 +119,7 @@ public class BlockHeader extends SealableBlockHeader
         timestamp,
         extraData,
         baseFee,
-        mixHashOrRandom);
+        mixHashOrPrevRandao);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -133,12 +133,12 @@ public class BlockHeader extends SealableBlockHeader
    */
   @Override
   public Hash getMixHash() {
-    return Hash.wrap(mixHashOrRandom);
+    return Hash.wrap(mixHashOrPrevRandao);
   }
 
   @Override
-  public Bytes32 getMixHashOrRandom() {
-    return mixHashOrRandom;
+  public Bytes32 getMixHashOrPrevRandao() {
+    return mixHashOrPrevRandao;
   }
 
   /**
@@ -220,7 +220,7 @@ public class BlockHeader extends SealableBlockHeader
     out.writeLongScalar(gasUsed);
     out.writeLongScalar(timestamp);
     out.writeBytes(extraData);
-    out.writeBytes(mixHashOrRandom);
+    out.writeBytes(mixHashOrPrevRandao);
     out.writeLong(nonce);
     if (baseFee != null) {
       out.writeUInt256Scalar(baseFee);
@@ -244,7 +244,7 @@ public class BlockHeader extends SealableBlockHeader
     final long gasUsed = input.readLongScalar();
     final long timestamp = input.readLongScalar();
     final Bytes extraData = input.readBytes();
-    final Bytes32 mixHashOrRandom = input.readBytes32();
+    final Bytes32 mixHashOrPrevRandao = input.readBytes32();
     final long nonce = input.readLong();
     final Wei baseFee = !input.isEndOfCurrentList() ? Wei.of(input.readUInt256Scalar()) : null;
     input.leaveList();
@@ -263,7 +263,7 @@ public class BlockHeader extends SealableBlockHeader
         timestamp,
         extraData,
         baseFee,
-        mixHashOrRandom,
+        mixHashOrPrevRandao,
         nonce,
         blockHeaderFunctions);
   }
@@ -304,7 +304,7 @@ public class BlockHeader extends SealableBlockHeader
     sb.append("timestamp=").append(timestamp).append(", ");
     sb.append("extraData=").append(extraData).append(", ");
     sb.append("baseFee=").append(baseFee).append(", ");
-    sb.append("mixHashOrRandom=").append(mixHashOrRandom).append(", ");
+    sb.append("mixHashOrPrevRandao=").append(mixHashOrPrevRandao).append(", ");
     sb.append("nonce=").append(nonce);
     return sb.append("}").toString();
   }
@@ -327,8 +327,12 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getTimestamp(),
         pluginBlockHeader.getExtraData(),
         pluginBlockHeader.getBaseFee().map(Wei::fromQuantity).orElse(null),
-        pluginBlockHeader.getRandom().orElse(null),
+        pluginBlockHeader.getPrevRandao().orElse(null),
         pluginBlockHeader.getNonce(),
         blockHeaderFunctions);
+  }
+
+  public String toLogString() {
+    return getNumber() + " (" + getHash() + ")";
   }
 }

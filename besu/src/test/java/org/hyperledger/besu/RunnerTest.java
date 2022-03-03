@@ -93,8 +93,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link Runner}. */
+@RunWith(MockitoJUnitRunner.class)
 public final class RunnerTest {
 
   private static final int MAX_OPEN_FILES = 1024;
@@ -163,7 +166,7 @@ public final class RunnerTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .dataDirectory(dataDirAhead)
             .networkId(networkId)
-            .miningParameters(new MiningParameters.Builder().enabled(false).build())
+            .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
             .nodeKey(aheadDbNodeKey)
             .metricsSystem(noOpMetricsSystem)
             .privacyParameters(PrivacyParameters.DEFAULT)
@@ -184,7 +187,7 @@ public final class RunnerTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .dataDirectory(dataDirAhead)
             .networkId(networkId)
-            .miningParameters(new MiningParameters.Builder().enabled(false).build())
+            .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
             .nodeKey(aheadDbNodeKey)
             .metricsSystem(noOpMetricsSystem)
             .privacyParameters(PrivacyParameters.DEFAULT)
@@ -254,7 +257,7 @@ public final class RunnerTest {
               .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
               .dataDirectory(dataDirBehind)
               .networkId(networkId)
-              .miningParameters(new MiningParameters.Builder().enabled(false).build())
+              .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
               .nodeKey(NodeKeyUtils.generate())
               .storageProvider(new InMemoryKeyValueStorageProvider())
               .metricsSystem(noOpMetricsSystem)
@@ -351,7 +354,7 @@ public final class RunnerTest {
       final Promise<String> promise = Promise.promise();
       final HttpClient httpClient = vertx.createHttpClient();
       httpClient.webSocket(
-          runnerBehind.getWebsocketPort().get(),
+          runnerBehind.getWebSocketPort().get(),
           WebSocketConfiguration.DEFAULT_WEBSOCKET_HOST,
           "/",
           ws -> {

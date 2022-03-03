@@ -29,19 +29,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
-  public enum ExecutionStatus {
+  public enum EngineStatus {
     VALID,
     INVALID,
-    SYNCING;
-  }
-
-  public enum ForkChoiceStatus {
-    SUCCESS,
-    SYNCING;
-
-    public boolean equalsIgnoreCase(final String status) {
-      return name().equalsIgnoreCase(status);
-    }
+    SYNCING,
+    ACCEPTED,
+    INVALID_BLOCK_HASH,
+    INVALID_TERMINAL_BLOCK;
   }
 
   private final Vertx syncVertx;

@@ -46,6 +46,7 @@ public enum RpcMethod {
 
   ENGINE_GET_PAYLOAD("engine_getPayloadV1"),
   ENGINE_EXECUTE_PAYLOAD("engine_executePayloadV1"),
+  ENGINE_NEW_PAYLOAD("engine_newPayloadV1"),
   ENGINE_FORKCHOICE_UPDATED("engine_forkchoiceUpdatedV1"),
 
   GOQUORUM_ETH_GET_QUORUM_PAYLOAD("eth_getQuorumPayload"),
@@ -156,6 +157,7 @@ public enum RpcMethod {
   RPC_MODULES("rpc_modules"),
   TRACE_REPLAY_BLOCK_TRANSACTIONS("trace_replayBlockTransactions"),
   TRACE_BLOCK("trace_block"),
+  TRACE_CALL("trace_call"),
   TRACE_TRANSACTION("trace_transaction"),
   TRACE_FILTER("trace_filter"),
   TX_POOL_BESU_STATISTICS("txpool_besuStatistics"),

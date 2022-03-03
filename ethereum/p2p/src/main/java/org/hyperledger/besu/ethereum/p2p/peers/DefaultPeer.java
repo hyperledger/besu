@@ -22,11 +22,11 @@ import java.util.Objects;
 /** The default, basic representation of an Ethereum {@link Peer}. */
 public class DefaultPeer extends DefaultPeerId implements Peer {
 
-  private final EnodeURL enode;
+  private final EnodeURL enodeURL;
 
-  protected DefaultPeer(final EnodeURL enode) {
-    super(enode.getNodeId());
-    this.enode = enode;
+  protected DefaultPeer(final EnodeURL enodeURL) {
+    super(enodeURL.getNodeId());
+    this.enodeURL = enodeURL;
   }
 
   public static DefaultPeer fromEnodeURL(final EnodeURL enodeURL) {
@@ -57,7 +57,7 @@ public class DefaultPeer extends DefaultPeerId implements Peer {
 
   @Override
   public EnodeURL getEnodeURL() {
-    return enode;
+    return enodeURL;
   }
 
   @Override
@@ -72,19 +72,19 @@ public class DefaultPeer extends DefaultPeerId implements Peer {
       return false;
     }
     final DefaultPeer other = (DefaultPeer) obj;
-    return id.equals(other.id) && enode.equals(other.enode);
+    return id.equals(other.id) && enodeURL.equals(other.enodeURL);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, enode);
+    return Objects.hash(id, enodeURL);
   }
 
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("DefaultPeer{");
     sb.append("id=").append(id);
-    sb.append(", enode=").append(enode);
+    sb.append(", enode=").append(enodeURL);
     sb.append('}');
     return sb.toString();
   }

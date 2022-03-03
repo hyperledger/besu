@@ -23,8 +23,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,21 +38,29 @@ public class BftExecutors {
     STOPPED
   }
 
+  public enum ConsensusType {
+    IBFT,
+    QBFT
+  }
+
   private static final Logger LOG = LoggerFactory.getLogger(BftExecutors.class);
 
   private final Duration shutdownTimeout = Duration.ofSeconds(30);
   private final MetricsSystem metricsSystem;
+  private final ConsensusType consensusType;
 
   private volatile ScheduledExecutorService timerExecutor;
   private volatile ExecutorService bftProcessorExecutor;
   private volatile State state = State.IDLE;
 
-  private BftExecutors(final MetricsSystem metricsSystem) {
+  private BftExecutors(final MetricsSystem metricsSystem, final ConsensusType consensusType) {
     this.metricsSystem = metricsSystem;
+    this.consensusType = consensusType;
   }
 
-  public static BftExecutors create(final MetricsSystem metricsSystem) {
-    return new BftExecutors(metricsSystem);
+  public static BftExecutors create(
+      final MetricsSystem metricsSystem, final ConsensusType consensusType) {
+    return new BftExecutors(metricsSystem, consensusType);
   }
 
   public synchronized void start() {
@@ -59,8 +69,14 @@ public class BftExecutors {
       return;
     }
     state = State.RUNNING;
-    bftProcessorExecutor = Executors.newSingleThreadExecutor();
-    timerExecutor = MonitoredExecutors.newScheduledThreadPool("BftTimerExecutor", 1, metricsSystem);
+    final ThreadFactory namedThreadFactory =
+        new ThreadFactoryBuilder()
+            .setNameFormat("BftProcessorExecutor-" + consensusType.name() + "-%d")
+            .build();
+    bftProcessorExecutor = Executors.newSingleThreadExecutor(namedThreadFactory);
+    timerExecutor =
+        MonitoredExecutors.newScheduledThreadPool(
+            "BftTimerExecutor-" + consensusType.name(), 1, metricsSystem);
   }
 
   public void stop() {
@@ -70,7 +86,6 @@ public class BftExecutors {
       }
       state = State.STOPPED;
     }
-
     timerExecutor.shutdownNow();
     bftProcessorExecutor.shutdownNow();
   }

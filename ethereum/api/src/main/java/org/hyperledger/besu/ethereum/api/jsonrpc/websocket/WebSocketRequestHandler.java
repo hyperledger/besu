@@ -33,11 +33,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcR
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -63,7 +65,8 @@ public class WebSocketRequestHandler {
       new ObjectMapper()
           .registerModule(new Jdk8Module()) // Handle JDK8 Optionals (de)serialization
           .writer()
-          .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
+          .without(Feature.FLUSH_PASSED_TO_STREAM)
+          .with(Feature.AUTO_CLOSE_TARGET);
 
   private final Vertx vertx;
   private final Map<String, JsonRpcMethod> methods;
@@ -81,17 +84,19 @@ public class WebSocketRequestHandler {
     this.timeoutSec = timeoutSec;
   }
 
+  // Only for testing
   public void handle(final ServerWebSocket websocket, final String payload) {
-    handle(Optional.empty(), websocket, payload, Optional.empty());
+    handle(Optional.empty(), websocket, payload, Optional.empty(), Collections.emptyList());
   }
 
   public void handle(
       final Optional<AuthenticationService> authenticationService,
       final ServerWebSocket websocket,
       final String payload,
-      final Optional<User> user) {
+      final Optional<User> user,
+      final Collection<String> noAuthApiMethods) {
     vertx.executeBlocking(
-        executeHandler(authenticationService, websocket, payload, user),
+        executeHandler(authenticationService, websocket, payload, user, noAuthApiMethods),
         false,
         resultHandler(websocket));
   }
@@ -100,12 +105,19 @@ public class WebSocketRequestHandler {
       final Optional<AuthenticationService> authenticationService,
       final ServerWebSocket websocket,
       final String payload,
-      final Optional<User> user) {
+      final Optional<User> user,
+      final Collection<String> noAuthApiMethods) {
     return future -> {
       final String json = payload.trim();
       if (!json.isEmpty() && json.charAt(0) == '{') {
         try {
-          handleSingleRequest(authenticationService, websocket, user, future, getRequest(payload));
+          handleSingleRequest(
+              authenticationService,
+              websocket,
+              user,
+              future,
+              getRequest(payload),
+              noAuthApiMethods);
         } catch (final IllegalArgumentException | DecodeException e) {
           LOG.debug("Error mapping json to WebSocketRpcRequest", e);
           future.complete(new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST));
@@ -122,7 +134,7 @@ public class WebSocketRequestHandler {
         }
         // handle batch request
         LOG.debug("batch request size {}", jsonArray.size());
-        handleJsonBatchRequest(authenticationService, websocket, jsonArray, user);
+        handleJsonBatchRequest(authenticationService, websocket, jsonArray, user, noAuthApiMethods);
       }
     };
   }
@@ -131,7 +143,8 @@ public class WebSocketRequestHandler {
       final Optional<AuthenticationService> authenticationService,
       final ServerWebSocket websocket,
       final Optional<User> user,
-      final WebSocketRpcRequest requestBody) {
+      final WebSocketRpcRequest requestBody,
+      final Collection<String> noAuthApiMethods) {
 
     if (!methods.containsKey(requestBody.getMethod())) {
       LOG.debug("Can't find method {}", requestBody.getMethod());
@@ -141,7 +154,7 @@ public class WebSocketRequestHandler {
     try {
       LOG.debug("WS-RPC request -> {}", requestBody.getMethod());
       requestBody.setConnectionId(websocket.textHandlerID());
-      if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
+      if (AuthenticationUtils.isPermitted(authenticationService, user, method, noAuthApiMethods)) {
         final JsonRpcRequestContext requestContext =
             new JsonRpcRequestContext(
                 requestBody, user, new IsAliveHandler(ethScheduler, timeoutSec));
@@ -166,8 +179,9 @@ public class WebSocketRequestHandler {
       final ServerWebSocket websocket,
       final Optional<User> user,
       final Promise<Object> future,
-      final WebSocketRpcRequest requestBody) {
-    future.complete(process(authenticationService, websocket, user, requestBody));
+      final WebSocketRpcRequest requestBody,
+      final Collection<String> noAuthApiMethods) {
+    future.complete(process(authenticationService, websocket, user, requestBody, noAuthApiMethods));
   }
 
   @SuppressWarnings("rawtypes")
@@ -175,7 +189,8 @@ public class WebSocketRequestHandler {
       final Optional<AuthenticationService> authenticationService,
       final ServerWebSocket websocket,
       final JsonArray jsonArray,
-      final Optional<User> user) {
+      final Optional<User> user,
+      final Collection<String> noAuthApiMethods) {
     // Interpret json as rpc request
     final List<Future> responses =
         jsonArray.stream()
@@ -193,7 +208,8 @@ public class WebSocketRequestHandler {
                                   authenticationService,
                                   websocket,
                                   user,
-                                  getRequest(req.toString()))));
+                                  getRequest(req.toString()),
+                                  noAuthApiMethods)));
                 })
             .collect(toList());
 
@@ -226,6 +242,7 @@ public class WebSocketRequestHandler {
 
   private void replyToClient(final ServerWebSocket websocket, final Object result) {
     try {
+      // underlying output stream lifecycle is managed by the json object writer
       JSON_OBJECT_WRITER.writeValue(new JsonResponseStreamer(websocket), result);
     } catch (IOException ex) {
       LOG.error("Error streaming JSON-RPC response", ex);

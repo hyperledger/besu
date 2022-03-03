@@ -55,7 +55,10 @@ import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class PrivacyTest {
 
   private static final int MAX_OPEN_FILES = 1024;
@@ -108,7 +111,7 @@ public class PrivacyTest {
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.ONE)
-        .miningParameters(new MiningParameters.Builder().enabled(false).build())
+        .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .dataDirectory(dataDir)

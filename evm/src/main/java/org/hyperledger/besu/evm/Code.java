@@ -19,10 +19,13 @@ import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
 
 import com.google.common.base.MoreObjects;
+import com.google.errorprone.annotations.RestrictedApi;
 import org.apache.tuweni.bytes.Bytes;
 
 /** Represents EVM code associated with an account. */
 public class Code {
+
+  public static final Code EMPTY_CODE = new Code(Bytes.EMPTY, Hash.EMPTY);
 
   /** The bytes representing the code. */
   private final Bytes bytes;
@@ -42,19 +45,17 @@ public class Code {
    * @param bytes The byte representation of the code.
    * @param codeHash the Hash of the bytes in the code.
    */
-  public Code(final Bytes bytes, final Hash codeHash) {
+  protected Code(final Bytes bytes, final Hash codeHash) {
     this.bytes = bytes;
     this.codeHash = codeHash;
   }
 
-  public Code(final Bytes bytecode, final Hash codeHash, final long[] validJumpDestinations) {
-    this.bytes = bytecode;
-    this.validJumpDestinations = validJumpDestinations;
-    this.codeHash = codeHash;
-  }
-
-  public Code() {
-    this(Bytes.EMPTY, Hash.EMPTY);
+  @RestrictedApi(
+      explanation = "To be used for testing purpose only",
+      link = "",
+      allowedOnPath = ".*/src/test/.*")
+  public static Code createLegacyCode(final Bytes bytes, final Hash codeHash) {
+    return new Code(bytes, codeHash);
   }
 
   /**
@@ -88,24 +89,24 @@ public class Code {
   }
 
   public long[] calculateJumpDests() {
-    int size = getSize();
-    long[] bitmap = new long[(size >> 6) + 1];
-    byte[] rawCode = getBytes().toArrayUnsafe();
-    int length = rawCode.length;
+    final int size = getSize();
+    final long[] bitmap = new long[(size >> 6) + 1];
+    final byte[] rawCode = getBytes().toArrayUnsafe();
+    final int length = rawCode.length;
     for (int i = 0; i < length; ) {
       long thisEntry = 0L;
-      int entryPos = i >> 6;
-      int max = Math.min(64, length - (entryPos << 6));
+      final int entryPos = i >> 6;
+      final int max = Math.min(64, length - (entryPos << 6));
       int j = i & 0x3F;
       for (; j < max; i++, j++) {
-        byte operationNum = rawCode[i];
+        final byte operationNum = rawCode[i];
         if (operationNum == JumpDestOperation.OPCODE) {
           thisEntry |= 1L << j;
         } else if (operationNum > PushOperation.PUSH_BASE) {
           // not needed - && operationNum <= PushOperation.PUSH_MAX
           // Java quirk, all bytes are signed, and PUSH32 is 127, which is Byte.MAX_VALUE
           // so we don't need to check the upper bound as it will never be violated
-          int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
+          final int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
           j += multiByteDataLen;
           i += multiByteDataLen;
         }
@@ -129,7 +130,16 @@ public class Code {
     return codeHash;
   }
 
-  public long[] getValidJumpDestinations() {
-    return validJumpDestinations;
+  public boolean isJumpDestInvalid(final int jumpDestination) {
+    if (jumpDestination < 0 || jumpDestination >= getSize()) {
+      return true;
+    }
+    if (validJumpDestinations == null || validJumpDestinations.length == 0) {
+      validJumpDestinations = calculateJumpDests();
+    }
+
+    final long targetLong = validJumpDestinations[jumpDestination >>> 6];
+    final long targetBit = 1L << (jumpDestination & 0x3F);
+    return (targetLong & targetBit) == 0L;
   }
 }

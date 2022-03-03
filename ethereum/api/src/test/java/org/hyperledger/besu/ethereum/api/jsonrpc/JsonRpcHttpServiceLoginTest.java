@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -104,6 +105,8 @@ public class JsonRpcHttpServiceLoginTest {
   protected static final Collection<String> JSON_RPC_APIS =
       Arrays.asList(
           RpcApis.ETH.name(), RpcApis.NET.name(), RpcApis.WEB3.name(), RpcApis.ADMIN.name());
+  protected static final List<String> NO_AUTH_METHODS =
+      Arrays.asList(RpcMethod.NET_SERVICES.getMethodName());
   protected static JWTAuth jwtAuth;
   protected static String authPermissionsConfigFilePath = "JsonRpcHttpService/auth.toml";
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
@@ -133,6 +136,7 @@ public class JsonRpcHttpServiceLoginTest {
                     blockchainQueries,
                     synchronizer,
                     MainnetProtocolSchedule.fromConfig(genesisConfigOptions),
+                    mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(PoWMiningCoordinator.class),
@@ -167,6 +171,7 @@ public class JsonRpcHttpServiceLoginTest {
     final JsonRpcConfiguration config = createJsonRpcConfig();
     config.setAuthenticationEnabled(true);
     config.setAuthenticationCredentialsFile(authTomlPath);
+    config.setNoAuthRpcApis(NO_AUTH_METHODS);
 
     return new JsonRpcHttpService(
         vertx,
@@ -395,26 +400,41 @@ public class JsonRpcHttpServiceLoginTest {
             // single eth/blockNumber method permitted
             Assertions.assertThat(
                     AuthenticationUtils.isPermitted(
-                        service.authenticationService, Optional.of(user), ethBlockNumber))
+                        service.authenticationService,
+                        Optional.of(user),
+                        ethBlockNumber,
+                        Collections.emptyList()))
                 .isTrue();
             // eth/accounts NOT permitted
             assertThat(
                     AuthenticationUtils.isPermitted(
-                        service.authenticationService, Optional.of(user), ethAccounts))
+                        service.authenticationService,
+                        Optional.of(user),
+                        ethAccounts,
+                        Collections.emptyList()))
                 .isFalse();
             // allowed by web3/*
             assertThat(
                     AuthenticationUtils.isPermitted(
-                        service.authenticationService, Optional.of(user), web3ClientVersion))
+                        service.authenticationService,
+                        Optional.of(user),
+                        web3ClientVersion,
+                        Collections.emptyList()))
                 .isTrue();
             assertThat(
                     AuthenticationUtils.isPermitted(
-                        service.authenticationService, Optional.of(user), web3Sha3))
+                        service.authenticationService,
+                        Optional.of(user),
+                        web3Sha3,
+                        Collections.emptyList()))
                 .isTrue();
             // NO net permissions
             assertThat(
                     AuthenticationUtils.isPermitted(
-                        service.authenticationService, Optional.of(user), netVersion))
+                        service.authenticationService,
+                        Optional.of(user),
+                        netVersion,
+                        Collections.emptyList()))
                 .isFalse();
           });
     }
@@ -455,26 +475,41 @@ public class JsonRpcHttpServiceLoginTest {
             // single eth/blockNumber method permitted
             Assertions.assertThat(
                     AuthenticationUtils.isPermitted(
-                        service.authenticationService, Optional.of(user), ethBlockNumber))
+                        service.authenticationService,
+                        Optional.of(user),
+                        ethBlockNumber,
+                        Collections.emptyList()))
                 .isTrue();
             // eth/accounts IS permitted
             assertThat(
                     AuthenticationUtils.isPermitted(
-                        service.authenticationService, Optional.of(user), ethAccounts))
+                        service.authenticationService,
+                        Optional.of(user),
+                        ethAccounts,
+                        Collections.emptyList()))
                 .isTrue();
             // allowed by *:*
             assertThat(
                     AuthenticationUtils.isPermitted(
-                        service.authenticationService, Optional.of(user), web3ClientVersion))
+                        service.authenticationService,
+                        Optional.of(user),
+                        web3ClientVersion,
+                        Collections.emptyList()))
                 .isTrue();
             assertThat(
                     AuthenticationUtils.isPermitted(
-                        service.authenticationService, Optional.of(user), web3Sha3))
+                        service.authenticationService,
+                        Optional.of(user),
+                        web3Sha3,
+                        Collections.emptyList()))
                 .isTrue();
             // YES net permissions
             assertThat(
                     AuthenticationUtils.isPermitted(
-                        service.authenticationService, Optional.of(user), netVersion))
+                        service.authenticationService,
+                        Optional.of(user),
+                        netVersion,
+                        Collections.emptyList()))
                 .isTrue();
           });
     }
@@ -486,7 +521,10 @@ public class JsonRpcHttpServiceLoginTest {
 
     assertThat(
             AuthenticationUtils.isPermitted(
-                service.authenticationService, Optional.empty(), ethAccounts))
+                service.authenticationService,
+                Optional.empty(),
+                ethAccounts,
+                Collections.emptyList()))
         .isFalse();
   }
 
@@ -543,6 +581,38 @@ public class JsonRpcHttpServiceLoginTest {
       // Check result
       final String result = json.getString("result");
       assertThat(result).isEqualTo("TestClientVersion/0.1.0");
+    }
+  }
+
+  @Test
+  public void noAuthMethodSuccessfulAfterLogin() throws Exception {
+    final String token = login("user", "pegasys");
+
+    final String id = "123";
+    final RequestBody requestBody =
+        RequestBody.create(
+            JSON,
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_services\"}");
+
+    try (final Response response = client.newCall(buildPostRequest(requestBody, token)).execute()) {
+      assertThat(response.code()).isEqualTo(200);
+      final JsonObject json = new JsonObject(response.body().string());
+      testHelper.assertValidJsonRpcResult(json, id);
+    }
+  }
+
+  @Test
+  public void noAuthMethodSuccessfulWithNoToken() throws Exception {
+    final String id = "123";
+    final RequestBody requestBody =
+        RequestBody.create(
+            JSON,
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_services\"}");
+
+    try (final Response response = client.newCall(buildPostRequest(requestBody)).execute()) {
+      assertThat(response.code()).isEqualTo(200);
+      final JsonObject json = new JsonObject(response.body().string());
+      testHelper.assertValidJsonRpcResult(json, id);
     }
   }
 

@@ -30,7 +30,7 @@ public class RequiredBlocksPeerValidator extends AbstractPeerBlockValidator {
 
   private final Hash hash;
 
-  RequiredBlocksPeerValidator(
+  public RequiredBlocksPeerValidator(
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
       final long blockNumber,

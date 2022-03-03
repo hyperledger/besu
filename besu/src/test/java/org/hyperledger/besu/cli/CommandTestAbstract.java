@@ -227,7 +227,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.reorgLoggingThreshold(anyLong())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.dataStorageConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.evmConfiguration(any())).thenReturn(mockControllerBuilder);
-
+    when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);
@@ -264,6 +264,8 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.natManagerServiceName(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natMethodFallbackEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.jsonRpcConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.engineJsonRpcConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.engineWebSocketConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.graphQLConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.webSocketConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.apiConfiguration(any())).thenReturn(mockRunnerBuilder);

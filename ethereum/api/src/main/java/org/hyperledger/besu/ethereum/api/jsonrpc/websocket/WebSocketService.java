@@ -99,7 +99,9 @@ public class WebSocketService {
                     .setPort(configuration.getPort())
                     .setHandle100ContinueAutomatically(true)
                     .setCompressionSupported(true)
-                    .addWebSocketSubProtocol("undefined"))
+                    .addWebSocketSubProtocol("undefined")
+                    .setMaxWebSocketFrameSize(configuration.getMaxFrameSize())
+                    .setMaxWebSocketMessageSize(configuration.getMaxFrameSize() * 4))
             .webSocketHandler(websocketHandler())
             .connectionHandler(connectionHandler())
             .requestHandler(httpHandler())
@@ -135,7 +137,11 @@ public class WebSocketService {
                 token,
                 user ->
                     websocketRequestHandler.handle(
-                        authenticationService, websocket, buffer.toString(), user));
+                        authenticationService,
+                        websocket,
+                        buffer.toString(),
+                        user,
+                        configuration.getRpcApisNoAuth()));
           });
 
       websocket.textMessageHandler(
@@ -150,7 +156,11 @@ public class WebSocketService {
                 token,
                 user ->
                     websocketRequestHandler.handle(
-                        authenticationService, websocket, payload, user));
+                        authenticationService,
+                        websocket,
+                        payload,
+                        user,
+                        configuration.getRpcApisNoAuth()));
           });
 
       websocket.closeHandler(

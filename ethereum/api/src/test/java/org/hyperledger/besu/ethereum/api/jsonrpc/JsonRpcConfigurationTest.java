@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
+
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
@@ -33,8 +35,10 @@ public class JsonRpcConfigurationTest {
     assertThat(configuration.getPort()).isEqualTo(8545);
     assertThat(configuration.getCorsAllowedDomains()).isEmpty();
     assertThat(configuration.getRpcApis()).containsExactlyInAnyOrderElementsOf(DEFAULT_RPC_APIS);
+    assertThat(configuration.getNoAuthRpcApis()).isEmpty();
     assertThat(configuration.getMaxActiveConnections())
         .isEqualTo(JsonRpcConfiguration.DEFAULT_MAX_ACTIVE_CONNECTIONS);
+    assertThat(configuration.getAuthenticationAlgorithm()).isEqualTo(JwtAlgorithm.RS256);
   }
 
   @Test
@@ -70,6 +74,20 @@ public class JsonRpcConfigurationTest {
 
     configuration.setRpcApis(Lists.newArrayList(RpcApis.DEBUG.name()));
     assertThat(configuration.getRpcApis()).containsExactly(RpcApis.DEBUG.name());
+  }
+
+  @Test
+  public void settingNoAuthRpcApisShouldOverridePreviousValues() {
+    final JsonRpcConfiguration configuration = JsonRpcConfiguration.createDefault();
+
+    configuration.setNoAuthRpcApis(
+        Lists.newArrayList(RpcMethod.ADMIN_ADD_PEER.name(), RpcMethod.ADMIN_PEERS.name()));
+    assertThat(configuration.getNoAuthRpcApis())
+        .containsExactly(RpcMethod.ADMIN_ADD_PEER.name(), RpcMethod.ADMIN_PEERS.name());
+
+    configuration.setNoAuthRpcApis(Lists.newArrayList(RpcMethod.MINER_SET_COINBASE.name()));
+    assertThat(configuration.getNoAuthRpcApis())
+        .containsExactly(RpcMethod.MINER_SET_COINBASE.name());
   }
 
   @Test

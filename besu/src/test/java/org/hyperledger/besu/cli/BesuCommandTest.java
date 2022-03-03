@@ -27,6 +27,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
@@ -43,7 +44,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -59,6 +62,8 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -203,6 +208,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void callingBesuCommandWithoutOptionsMustSyncWithDefaultValues() throws Exception {
     parseCommand();
 
+    final int maxPeers = 25;
+
     final ArgumentCaptor<EthNetworkConfig> ethNetworkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
     verify(mockRunnerBuilder).discovery(eq(true));
@@ -215,7 +222,7 @@ public class BesuCommandTest extends CommandTestAbstract {
                 MAINNET_DISCOVERY_URL));
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
     verify(mockRunnerBuilder).p2pListenPort(eq(30303));
-    verify(mockRunnerBuilder).maxPeers(eq(25));
+    verify(mockRunnerBuilder).maxPeers(eq(maxPeers));
     verify(mockRunnerBuilder).fractionRemoteConnectionsAllowed(eq(0.6f));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(DEFAULT_JSON_RPC_CONFIGURATION));
     verify(mockRunnerBuilder).graphQLConfiguration(eq(DEFAULT_GRAPH_QL_CONFIGURATION));
@@ -234,6 +241,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).nodeKey(isNotNull());
     verify(mockControllerBuilder).storageProvider(storageProviderArgumentCaptor.capture());
     verify(mockControllerBuilder).gasLimitCalculator(eq(GasLimitCalculator.constant()));
+    verify(mockControllerBuilder).maxPeers(eq(maxPeers));
     verify(mockControllerBuilder).build();
 
     assertThat(storageProviderArgumentCaptor.getValue()).isNotNull();
@@ -871,7 +879,7 @@ public class BesuCommandTest extends CommandTestAbstract {
                 .coinbase(Address.fromHexString(expectedCoinbase))
                 .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
                 .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
-                .enabled(false)
+                .miningEnabled(false)
                 .build());
   }
 
@@ -888,7 +896,7 @@ public class BesuCommandTest extends CommandTestAbstract {
                 .coinbase(Address.fromHexString(expectedCoinbase))
                 .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
                 .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
-                .enabled(false)
+                .miningEnabled(false)
                 .build());
   }
 
@@ -1924,6 +1932,20 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcApisSupportsEngine() {
+    parseCommand("--rpc-http-api", "ENGINE", "--rpc-http-enabled");
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
+        .containsExactlyInAnyOrder(ENGINE.name());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void rpcApisPropertyIgnoresDuplicatesAndMustBeUsed() {
     parseCommand("--rpc-http-api", "ETH,NET,NET", "--rpc-http-enabled");
 
@@ -1935,6 +1957,48 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcApiNoAuthMethodsIgnoresDuplicatesAndMustBeUsed() {
+    parseCommand(
+        "--rpc-http-api-methods-no-auth",
+        "admin_peers, admin_peers, eth_getWork",
+        "--rpc-http-enabled");
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getNoAuthRpcApis())
+        .containsExactlyInAnyOrder(
+            RpcMethod.ADMIN_PEERS.getMethodName(), RpcMethod.ETH_GET_WORK.getMethodName());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpNoAuthApiMethodsCannotBeInvalid() {
+    parseCommand("--rpc-http-enabled", "--rpc-http-api-method-no-auth", "invalid");
+
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Invalid value for option '--rpc-http-api-methods-no-auth', options must be valid RPC methods");
+  }
+
+  @Test
+  public void rpcWsNoAuthApiMethodsCannotBeInvalid() {
+    parseCommand("--rpc-ws-enabled", "--rpc-ws-api-methods-no-auth", "invalid");
+
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Invalid value for option '--rpc-ws-api-methods-no-auth', options must be valid RPC methods");
   }
 
   @Test
@@ -2097,6 +2161,20 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getMaxActiveConnections())
         .isEqualTo(maxConnections);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcWsMaxFrameSizePropertyMustBeUsed() {
+    final int maxFrameSize = 65535;
+    parseCommand("--rpc-ws-max-frame-size", String.valueOf(maxFrameSize));
+
+    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(wsRpcConfigArgumentCaptor.getValue().getMaxFrameSize()).isEqualTo(maxFrameSize);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -2491,7 +2569,9 @@ public class BesuCommandTest extends CommandTestAbstract {
         String.valueOf(port),
         "--rpc-http-tls-cipher-suite",
         cipherSuites);
-    verify(mockLogger)
+    verify(
+            mockLogger,
+            times(2)) // this is verified for both the full suite of apis, and the engine group.
         .warn(
             "{} has been ignored because {} was not defined on the command line.",
             "--rpc-http-tls-cipher-suite",
@@ -2936,14 +3016,17 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--rpc-ws-port",
         "1234",
         "--rpc-ws-max-active-connections",
-        "77");
+        "77",
+        "--rpc-ws-max-frame-size",
+        "65535");
 
     verifyOptionsConstraintLoggerCall(
         "--rpc-ws-enabled",
         "--rpc-ws-host",
         "--rpc-ws-port",
         "--rpc-ws-api",
-        "--rpc-ws-max-active-connections");
+        "--rpc-ws-max-active-connections",
+        "--rpc-ws-max-frame-size");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -2951,8 +3034,9 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void rpcWsApiPropertyMustBeUsed() {
-    parseCommand("--rpc-ws-enabled", "--rpc-ws-api", "ETH, NET");
+    TestBesuCommand command = parseCommand("--rpc-ws-enabled", "--rpc-ws-api", "ETH, NET");
 
+    assertThat(command).isNotNull();
     verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
@@ -3256,7 +3340,20 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void miningOptionsRequiresServiceToBeEnabled() {
+  public void stratumMiningOptionsRequiresServiceToBeEnabled() {
+
+    parseCommand("--miner-stratum-enabled");
+
+    verifyOptionsConstraintLoggerCall("--miner-enabled", "--miner-stratum-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith(
+            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
+  }
+
+  @Test
+  public void blockProducingOptionsWarnsMinerShouldBeEnabled() {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
     parseCommand(
@@ -3265,16 +3362,37 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--min-gas-price",
         "42",
         "--miner-extra-data",
-        "0x1122334455667788990011223344556677889900112233445566778899001122",
-        "--miner-stratum-enabled");
+        "0x1122334455667788990011223344556677889900112233445566778899001122");
 
     verifyOptionsConstraintLoggerCall(
-        "--miner-enabled", "--miner-coinbase", "--miner-extra-data", "--miner-stratum-enabled");
+        "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith(
-            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void blockProducingOptionsDoNotWarnWhenMergeEnabled() {
+
+    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
+    parseCommand(
+        "--Xmerge-support",
+        "true",
+        "--miner-coinbase",
+        requestedCoinbase.toString(),
+        "--min-gas-price",
+        "42",
+        "--miner-extra-data",
+        "0x1122334455667788990011223344556677889900112233445566778899001122");
+
+    verify(mockLogger, atMost(0))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -4210,6 +4328,28 @@ public class BesuCommandTest extends CommandTestAbstract {
         .containsEntry(block1, Hash.fromHexStringLenient(hash1));
     assertThat(requiredBlocksArg.getValue())
         .containsEntry(block2, Hash.fromHexStringLenient(hash2));
+  }
+
+  @Test
+  public void httpAuthenticationAlgorithIsConfigured() {
+    parseCommand("--rpc-http-authentication-jwt-algorithm", "ES256");
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getAuthenticationAlgorithm())
+        .isEqualTo(JwtAlgorithm.ES256);
+  }
+
+  @Test
+  public void webSocketAuthenticationAlgorithIsConfigured() {
+    parseCommand("--rpc-ws-authentication-jwt-algorithm", "ES256");
+
+    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(wsRpcConfigArgumentCaptor.getValue().getAuthenticationAlgorithm())
+        .isEqualTo(JwtAlgorithm.ES256);
   }
 
   @Test

@@ -26,6 +26,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -60,7 +61,7 @@ public class TransactionPoolFactoryTest {
     when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.of(mock(Block.class)));
     when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(mock(Hash.class)));
     when(context.getBlockchain()).thenReturn(blockchain);
-    final EthPeers ethPeers = new EthPeers("ETH", TestClock.fixed(), new NoOpMetricsSystem());
+    final EthPeers ethPeers = new EthPeers("ETH", TestClock.fixed(), new NoOpMetricsSystem(), 25);
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthMessages()).thenReturn(mock(EthMessages.class));
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
@@ -81,7 +82,7 @@ public class TransactionPoolFactoryTest {
             ethContext,
             new NoOpMetricsSystem(),
             state,
-            Wei.of(1),
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.of(
                 1,
                 1,

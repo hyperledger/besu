@@ -55,13 +55,14 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.6.2'
 
-    dependencySet(group: 'io.grpc', version: '1.43.1') {
+    dependencySet(group: 'io.grpc', version: '1.44.1') {
       entry'grpc-core'
       entry'grpc-netty'
       entry'grpc-stub'
     }
 
     dependency 'io.jaegertracing:jaeger-client:1.6.0'
+    dependency 'io.jaegertracing:jaeger-proto:0.7.0'
 
     dependency 'io.kubernetes:client-java:14.0.0'
 
@@ -69,14 +70,14 @@ dependencyManagement {
     dependency 'io.netty:netty-tcnative-boringssl-static:2.0.46.Final'
     dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.72.Final', classifier: 'linux-x86_64'
 
-    dependency 'io.opentelemetry:opentelemetry-api:1.5.0'
-    dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.5.0-alpha'
-    dependency 'io.opentelemetry:opentelemetry-exporter-otlp:1.5.0'
-    dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.5.0'
-    dependency 'io.opentelemetry:opentelemetry-proto:1.5.0-alpha'
-    dependency 'io.opentelemetry:opentelemetry-sdk-trace:1.5.0'
-    dependency 'io.opentelemetry:opentelemetry-sdk:1.5.0'
-    dependency 'io.opentelemetry:opentelemetry-semconv:1.5.0-alpha'
+    dependency 'io.opentelemetry:opentelemetry-api:1.6.0'
+    dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.6.0-alpha'
+    dependency 'io.opentelemetry:opentelemetry-exporter-otlp:1.6.0'
+    dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.6.0'
+    dependency 'io.opentelemetry:opentelemetry-sdk-trace:1.6.0'
+    dependency 'io.opentelemetry:opentelemetry-sdk:1.6.0'
+    dependency 'io.opentelemetry:opentelemetry-semconv:1.6.0-alpha'
+    dependency 'io.opentelemetry.proto:opentelemetry-proto:0.13.0-alpha'
 
     dependency 'io.opentracing.contrib:opentracing-okhttp3:3.0.0'
     dependency 'io.opentracing:opentracing-api:0.33.0'
@@ -178,6 +179,6 @@ dependencyManagement {
 
     dependency 'org.yaml:snakeyaml:1.26'
 
-    dependency 'tech.pegasys.discovery:discovery:21.12.1'
+    dependency 'tech.pegasys.discovery:discovery:22.2.0'
   }
 }

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.config.experimental.MergeConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -84,7 +85,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     final Function<BlockHeader, PoWBlockCreator> blockCreator =
         (header) ->
             new PoWBlockCreator(
-                coinbase.get(),
+                coinbase.orElseGet(() -> MergeConfigOptions.isMergeEnabled() ? Address.ZERO : null),
                 () -> targetGasLimit.map(AtomicLong::longValue),
                 parent -> extraData,
                 pendingTransactions,
