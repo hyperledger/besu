@@ -28,6 +28,20 @@ public class Slf4jLambdaHelper {
   // sonar code smell
   private Slf4jLambdaHelper() {}
 
+  public static void warnLambda(
+      final Logger log, final String message, final Supplier<?>... params) {
+    if (log.isWarnEnabled()) {
+      log.warn(message, Arrays.stream(params).map(Supplier::get).toArray());
+    }
+  }
+
+  public static void infoLambda(
+      final Logger log, final String message, final Supplier<?>... params) {
+    if (log.isInfoEnabled()) {
+      log.info(message, Arrays.stream(params).map(Supplier::get).toArray());
+    }
+  }
+
   public static void debugLambda(
       final Logger log, final String message, final Supplier<?>... params) {
     if (log.isDebugEnabled()) {
@@ -39,13 +53,6 @@ public class Slf4jLambdaHelper {
       final Logger log, final String message, final Supplier<?>... params) {
     if (log.isTraceEnabled()) {
       log.trace(message, Arrays.stream(params).map(Supplier::get).toArray());
-    }
-  }
-
-  public static void warnLambda(
-      final Logger log, final String message, final Supplier<?>... params) {
-    if (log.isWarnEnabled()) {
-      log.warn(message, Arrays.stream(params).map(Supplier::get).toArray());
     }
   }
 }

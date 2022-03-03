@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 public class BackwardSyncStep extends BackwardSyncTask {
   private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncStep.class);
+  private static final int BATCH_SIZE = 200;
 
   public BackwardSyncStep(final BackwardsSyncContext context, final BackwardChain backwardChain) {
     super(context, backwardChain);
@@ -40,6 +41,15 @@ public class BackwardSyncStep extends BackwardSyncTask {
     return CompletableFuture.supplyAsync(this::earliestUnprocessedHash)
         .thenCompose(this::requestHeader)
         .thenApply(this::saveHeader)
+        .thenApply(this::possibleMerge)
+        .thenCompose(this::possiblyMoreBackwardSteps);
+  }
+
+  @Override
+  public CompletableFuture<Void> executeBatchStep() {
+    return CompletableFuture.supplyAsync(this::earliestUnprocessedHash)
+        .thenCompose(this::requestHeaders)
+        .thenApply(this::saveHeaders)
         .thenApply(this::possibleMerge)
         .thenCompose(this::possiblyMoreBackwardSteps);
   }
@@ -90,9 +100,46 @@ public class BackwardSyncStep extends BackwardSyncTask {
   }
 
   @VisibleForTesting
+  protected CompletableFuture<List<BlockHeader>> requestHeaders(final Hash hash) {
+    debugLambda(LOG, "Requesting header for hash {}", () -> hash.toString().substring(0, 20));
+    return GetHeadersFromPeerByHashTask.endingAtHash(
+            context.getProtocolSchedule(),
+            context.getEthContext(),
+            hash,
+            context.getProtocolContext().getBlockchain().getChainHead().getHeight(),
+            BATCH_SIZE,
+            context.getMetricsSystem())
+        .run()
+        .thenApply(
+            peerResult -> {
+              final List<BlockHeader> result = peerResult.getResult();
+              if (result.isEmpty()) {
+                throw new BackwardSyncException(
+                    "Did not receive a header for hash {}" + hash.toString().substring(0, 20));
+              }
+              debugLambda(
+                  LOG,
+                  "Got headers {} from height {} to {} height {}",
+                  () -> result.get(0).getHash().toHexString(),
+                  result.get(0)::getNumber,
+                  () -> result.get(result.size() - 1).getHash().toHexString(),
+                  result.get(result.size() - 1)::getNumber);
+              return result;
+            });
+  }
+
+  @VisibleForTesting
   protected Void saveHeader(final BlockHeader blockHeader) {
     backwardChain.saveHeader(blockHeader);
     context.putCurrentChainToHeight(blockHeader.getNumber(), backwardChain);
+    return null;
+  }
+
+  @VisibleForTesting
+  protected Void saveHeaders(final List<BlockHeader> blockHeaders) {
+    for (BlockHeader blockHeader : blockHeaders) {
+      saveHeader(blockHeader);
+    }
     return null;
   }
 

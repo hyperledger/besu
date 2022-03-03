@@ -15,13 +15,17 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -32,6 +36,7 @@ import org.slf4j.LoggerFactory;
 public class ForwardSyncStep extends BackwardSyncTask {
 
   private static final Logger LOG = LoggerFactory.getLogger(ForwardSyncStep.class);
+  private static final int BATCH_SIZE = 200;
 
   public ForwardSyncStep(final BackwardsSyncContext context, final BackwardChain backwardChain) {
     super(context, backwardChain);
@@ -41,6 +46,14 @@ public class ForwardSyncStep extends BackwardSyncTask {
   public CompletableFuture<Void> executeStep() {
     return CompletableFuture.supplyAsync(() -> processKnownAncestors(null))
         .thenCompose(this::possibleRequestBlock)
+        .thenApply(this::processKnownAncestors)
+        .thenCompose(this::possiblyMoreForwardSteps);
+  }
+
+  @Override
+  public CompletableFuture<Void> executeBatchStep() {
+    return CompletableFuture.supplyAsync(() -> processEnoughKnownAncestors(null))
+        .thenCompose(this::possibleRequestBodies)
         .thenApply(this::processKnownAncestors)
         .thenCompose(this::possiblyMoreForwardSteps);
   }
@@ -69,6 +82,31 @@ public class ForwardSyncStep extends BackwardSyncTask {
   }
 
   @VisibleForTesting
+  protected List<BlockHeader> processEnoughKnownAncestors(final Void unused) {
+    List<BlockHeader> blockHeadersToLookup = new ArrayList<>(BATCH_SIZE);
+    while (backwardChain.getFirstAncestorHeader().isPresent()
+        || blockHeadersToLookup.size() >= BATCH_SIZE) {
+      BlockHeader header = backwardChain.getFirstAncestorHeader().orElseThrow();
+      if (context.getProtocolContext().getBlockchain().contains(header.getHash())) {
+        debugLambda(
+            LOG,
+            "Block {} is already imported, we can ignore it for the sync process",
+            () -> header.getHash().toString().substring(0, 20));
+        backwardChain.dropFirstHeader();
+      } else if (backwardChain.isTrusted(header.getHash())) {
+        debugLambda(
+            LOG,
+            "Block {} was added by consensus layer, we can trust it and should therefore import it.",
+            () -> header.getHash().toString().substring(0, 20));
+        saveBlock(backwardChain.getTrustedBlock(header.getHash()));
+      } else {
+        blockHeadersToLookup.add(header);
+      }
+    }
+    return blockHeadersToLookup;
+  }
+
+  @VisibleForTesting
   public CompletableFuture<Void> possibleRequestBlock(final BlockHeader blockHeader) {
     if (blockHeader == null) {
       return CompletableFuture.completedFuture(null);
@@ -78,6 +116,20 @@ public class ForwardSyncStep extends BackwardSyncTask {
           "We don't have body of block {}, going to request it",
           () -> blockHeader.getHash().toString().substring(0, 20));
       return requestBlock(blockHeader).thenApply(this::saveBlock);
+    }
+  }
+
+  @VisibleForTesting
+  public CompletableFuture<Void> possibleRequestBodies(final List<BlockHeader> blockHeaders) {
+    if (blockHeaders.isEmpty()) {
+      return CompletableFuture.completedFuture(null);
+    } else {
+      debugLambda(
+          LOG,
+          "We don't have body of {} blocks starting from {}, going to request it",
+          blockHeaders::size,
+          () -> blockHeaders.get(0).getHash().toString().substring(0, 20));
+      return requestBodies(blockHeaders).thenApply(this::saveBlocks);
     }
   }
 
@@ -92,6 +144,20 @@ public class ForwardSyncStep extends BackwardSyncTask {
             context.getMetricsSystem());
     final CompletableFuture<AbstractPeerTask.PeerTaskResult<Block>> run =
         getBlockFromPeerTask.run();
+    return run.thenApply(AbstractPeerTask.PeerTaskResult::getResult);
+  }
+
+  @VisibleForTesting
+  protected CompletableFuture<List<Block>> requestBodies(final List<BlockHeader> blockHeaders) {
+    final GetBodiesFromPeerTask getBodiesFromPeerTask =
+        GetBodiesFromPeerTask.forHeaders(
+            context.getProtocolSchedule(),
+            context.getEthContext(),
+            blockHeaders,
+            context.getMetricsSystem());
+
+    final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<Block>>> run =
+        getBodiesFromPeerTask.run();
     return run.thenApply(AbstractPeerTask.PeerTaskResult::getResult);
   }
 
@@ -119,6 +185,21 @@ public class ForwardSyncStep extends BackwardSyncTask {
           result.worldState.persist(block.getHeader());
           context.getProtocolContext().getBlockchain().appendBlock(block, result.receipts);
         });
+    return null;
+  }
+
+  @VisibleForTesting
+  protected Void saveBlocks(final List<Block> blocks) {
+    for (Block block : blocks) {
+      saveBlock(block);
+    }
+    infoLambda(
+        LOG,
+        "Saved blocks from {} (height {}) to {} (height {})",
+        () -> blocks.get(0).getHeader().getHash().toHexString(),
+        () -> blocks.get(0).getHeader().getNumber(),
+        () -> blocks.get(blocks.size() - 1).getHeader().getHash().toHexString(),
+        () -> blocks.get(blocks.size() - 1).getHeader().getNumber());
     return null;
   }
 
