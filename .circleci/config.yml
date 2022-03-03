@@ -31,7 +31,7 @@ executors:
   quorum_ats_executor_med:
     machine:
       image: ubuntu-2004:202101-01
-    resource_class: med
+    resource_class: medium
     working_directory: ~/project
 
   xl_machine_executor:
