@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -34,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import java.util.Collections;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -170,7 +170,8 @@ public class DebugAccountAtTest {
 
   @Test
   public void testResult() {
-    final String codeString = "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063b27b880414610030575b";
+    final String codeString =
+        "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063b27b880414610030575b";
     final Bytes code = Bytes.fromHexString(codeString);
     final String nonce = "0x1";
     final String balance = "0xffff";
