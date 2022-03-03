@@ -170,8 +170,8 @@ public class DebugAccountAtTest {
 
   @Test
   public void testResult() {
-    final Bytes code = Bytes.fromHexString(
-        "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063b27b880414610030575b");
+    final String codeString = "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063b27b880414610030575b";
+    final Bytes code = Bytes.fromHexString(codeString);
     final String nonce = "0x1";
     final String balance = "0xffff";
     final String codeHash = "0xf5f334d41776ed2828fc910d488a05c57fe7c2352aab2d16e30539d7726e1562";
@@ -179,7 +179,7 @@ public class DebugAccountAtTest {
         debugAccountAt.debugAccountAtResult(code, nonce, balance, codeHash);
     Assertions.assertThat(result.getBalance()).isEqualTo(balance);
     Assertions.assertThat(result.getNonce()).isEqualTo(nonce);
-    Assertions.assertThat(result.getCode()).isEqualTo(code);
+    Assertions.assertThat(result.getCode()).isEqualTo(codeString);
     Assertions.assertThat(result.getCodehash()).isEqualTo(codeHash);
   }
 }
