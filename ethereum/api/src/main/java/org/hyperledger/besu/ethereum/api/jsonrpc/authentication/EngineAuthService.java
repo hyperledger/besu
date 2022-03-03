@@ -96,7 +96,8 @@ public class EngineAuthService implements AuthenticationService {
     if (signingKey == null || signingKey.length < 32) {
       UnsecurableEngineApiException e =
           new UnsecurableEngineApiException(
-              "Could not read at least 256 bits of key from " + (keyFile.isPresent() ? keyFile.get().toString() : "undefined"));
+              "Could not read at least 256 bits of key from "
+                  + (keyFile.isPresent() ? keyFile.get().toString() : "undefined"));
       e.fillInStackTrace();
       throw e;
     }

@@ -1996,10 +1996,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isEngineAuthEnabled) {
       engineConfig.setAuthenticationEnabled(true);
       engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
-      if (engineJwtKeyFile != null && java.nio.file.Files.exists(engineJwtKeyFile)) { //NOSONAR
+      if (engineJwtKeyFile != null && java.nio.file.Files.exists(engineJwtKeyFile)) { // NOSONAR
         engineConfig.setAuthenticationPublicKeyFile(engineJwtKeyFile.toFile());
       } else {
-        logger.info("Engine API authentication enabled without key file. Expect ephemeral jwt.hex dile in datadir");
+        logger.info(
+            "Engine API authentication enabled without key file. Expect ephemeral jwt.hex dile in datadir");
       }
     }
     return engineConfig;
@@ -2014,7 +2015,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isEngineAuthEnabled) {
       webSocketConfiguration.setAuthenticationEnabled(true);
       webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
-      if (engineJwtKeyFile != null && java.nio.file.Files.exists(engineJwtKeyFile)) { //NOSONAR
+      if (engineJwtKeyFile != null && java.nio.file.Files.exists(engineJwtKeyFile)) { // NOSONAR
         webSocketConfiguration.setAuthenticationPublicKeyFile(engineJwtKeyFile.toFile());
       }
     }
