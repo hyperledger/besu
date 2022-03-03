@@ -97,7 +97,8 @@ public class FullSyncTargetManagerTest {
             protocolSchedule,
             protocolContext,
             ethContext,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            SyncTerminationCondition.never());
   }
 
   @After

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,15 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm.contractvalidation;
+package org.hyperledger.besu.controller;
 
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
-import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 
-import java.util.Optional;
-
-@FunctionalInterface
-public interface ContractValidationRule {
-
-  Optional<ExceptionalHaltReason> validate(MessageFrame frame);
+/**
+ * This interface wraps the provided MiningParameters to enable controller-specific parameter
+ * overrides.
+ */
+public interface MiningParameterOverrides {
+  default MiningParameters getMiningParameterOverrides(final MiningParameters fromCli) {
+    return fromCli;
+  }
 }

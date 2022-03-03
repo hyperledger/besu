@@ -206,20 +206,29 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @Override
-  public Result executeBlock(final Block block) {
+  public Optional<BlockHeader> getOrSyncHeaderByHash(final Hash blockhash) {
     final var chain = protocolContext.getBlockchain();
+    final var optHeader = chain.getBlockHeader(blockhash);
 
-    // TODO: if we are missing the parentHash, attempt backwards sync
-    // https://github.com/hyperledger/besu/issues/2912
+    if (optHeader.isPresent()) {
+      debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
+    } else {
+      debugLambda(LOG, "appending block hash {} to backward sync", () -> blockhash.toHexString());
+      backwardsSyncContext.syncBackwardsUntil(blockhash);
+    }
+    return optHeader;
+  }
 
+  @Override
+  public Result executeBlock(final Block block) {
+
+    final var chain = protocolContext.getBlockchain();
     chain
         .getBlockHeader(block.getHeader().getParentHash())
         .ifPresentOrElse(
             blockHeader ->
                 debugLambda(LOG, "Parent of block {} is already present", block::toLogString),
             () -> backwardsSyncContext.syncBackwardsUntil(block));
-
-    // TODO: End Jiri
 
     final var validationResult =
         protocolSchedule
@@ -361,12 +370,13 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         if (MAX_TTD_SEARCH_DEPTH < blockheader.getNumber() - parent.get().getNumber()) {
           return false;
         }
+        if (!parent.get().getDifficulty().equals(Difficulty.ZERO)) {
+          break;
+        }
         parent = blockchain.getBlockHeader(parent.get().getParentHash());
       }
 
-    } while (parent.isPresent()
-        && parent.get().getNumber() >= 0
-        && parent.get().getDifficulty().equals(Difficulty.ZERO));
+    } while (parent.isPresent());
 
     boolean resp =
         parent.filter(header -> isTerminalProofOfWorkBlock(header, protocolContext)).isPresent();

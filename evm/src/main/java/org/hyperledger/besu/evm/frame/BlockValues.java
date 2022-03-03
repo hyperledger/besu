@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -37,11 +37,11 @@ public interface BlockValues {
   }
 
   /**
-   * Returns the mixHash before merge, and the randao value after
+   * Returns the mixHash before merge, and the prevRandao value after
    *
-   * @return the mixHash before merge, and the randao value after
+   * @return the mixHash before merge, and the prevRandao value after
    */
-  default Bytes32 getMixHashOrRandom() {
+  default Bytes32 getMixHashOrPrevRandao() {
     return null;
   }
 

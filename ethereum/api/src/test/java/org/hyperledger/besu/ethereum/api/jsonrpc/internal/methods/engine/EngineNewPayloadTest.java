@@ -15,11 +15,13 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.ACCEPTED;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_TERMINAL_BLOCK;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -35,19 +37,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineExecutionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadStatusResult;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 
 import java.util.Collections;
 import java.util.List;
@@ -63,8 +61,8 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class EngineExecutePayloadTest {
-  private EngineExecutePayload method;
+public class EngineNewPayloadTest {
+  private EngineNewPayload method;
   private static final Vertx vertx = Vertx.vertx();
   private static final Hash mockHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
 
@@ -80,13 +78,13 @@ public class EngineExecutePayloadTest {
   public void before() {
     when(protocolContext.getConsensusContext(Mockito.any())).thenReturn(mergeContext);
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
-    this.method = new EngineExecutePayload(vertx, protocolContext, mergeCoordinator);
+    this.method = new EngineNewPayload(vertx, protocolContext, mergeCoordinator);
   }
 
   @Test
   public void shouldReturnExpectedMethodName() {
     // will break as specs change, intentional:
-    assertThat(method.getName()).isEqualTo("engine_executePayloadV1");
+    assertThat(method.getName()).isEqualTo("engine_newPayloadV1");
   }
 
   @Test
@@ -97,15 +95,56 @@ public class EngineExecutePayloadTest {
         .thenReturn(Optional.of(mockHash));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(true);
+    when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
+        .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.executeBlock(any()))
         .thenReturn(new Result(new BlockProcessingOutputs(null, List.of())));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
-    EngineExecutionResult res = fromSuccessResp(resp);
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEqualTo(mockHeader.getHash().toString());
     assertThat(res.getStatus()).isEqualTo(VALID.name());
-    assertThat(res.getValidationError()).isNull();
+    assertThat(res.getError()).isNull();
+  }
+
+  @Test
+  public void shouldReturnInvalidOnBlockExecutionError() {
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.of(mockHash));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+        .thenReturn(true);
+    when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
+        .thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.executeBlock(any())).thenReturn(new Result("error 42"));
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).isEqualTo(mockHash.toString());
+    assertThat(res.getStatus()).isEqualTo(INVALID.name());
+    assertThat(res.getError()).isEqualTo("error 42");
+  }
+
+  @Test
+  public void shouldReturnAcceptedOnLatestValidAncestorEmpty() {
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.empty());
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+        .thenReturn(true);
+    when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
+        .thenReturn(Optional.of(mockHeader));
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).isNull();
+    assertThat(res.getStatus()).isEqualTo(ACCEPTED.name());
+    assertThat(res.getError()).isNull();
   }
 
   @Test
@@ -118,56 +157,39 @@ public class EngineExecutePayloadTest {
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
-    EngineExecutionResult res = fromSuccessResp(resp);
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEqualTo(mockHeader.getHash().toString());
     assertThat(res.getStatus()).isEqualTo(VALID.name());
-    assertThat(res.getValidationError()).isNull();
+    assertThat(res.getError()).isNull();
   }
 
   @Test
-  public void shouldReturnErrorOnInvalidTerminalBlock() {
+  public void shouldReturnInvalidTerminalBlock() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
 
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
-    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
-        .thenReturn(Optional.of(mockHash));
 
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(false);
+    when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
+        .thenReturn(Optional.of(mockHeader));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
-    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
-    JsonRpcErrorResponse res = ((JsonRpcErrorResponse) resp);
-    assertThat(res.getError()).isEqualTo(JsonRpcError.INVALID_TERMINAL_BLOCK);
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).isNull();
+    assertThat(res.getStatus()).isEqualTo(INVALID_TERMINAL_BLOCK.name());
   }
 
   @Test
-  public void shouldReturnInvalidOnBadHashParameter() {
+  public void shouldReturnInvalidBlockHashOnBadHashParameter() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
-    // exploit the hash difference between basefee of Optional.empty vs Wei.ZERO (deserialized
-    // value):
-    BlockHeader realHeader =
-        BlockHeaderBuilder.fromHeader(mockHeader)
-            .baseFee(Wei.ZERO)
-            .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
-            .buildBlockHeader();
-
-    //    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
-    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
-        .thenReturn(Optional.of(mockHash));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
-    EngineExecutionResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEqualTo(mockHash.toString());
-    assertThat(res.getStatus()).isEqualTo(INVALID.name());
-
-    assertThat(res.getValidationError())
-        .isEqualTo(
-            String.format(
-                "Computed block hash %s does not match block hash parameter %s",
-                realHeader.getBlockHash(), mockHeader.getBlockHash()));
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).isNull();
+    assertThat(res.getStatus()).isEqualTo(INVALID_BLOCK_HASH.name());
   }
 
   @Test
@@ -175,66 +197,74 @@ public class EngineExecutePayloadTest {
     BlockHeader realHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     BlockHeader paramHeader = spy(realHeader);
     when(paramHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
-    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
-        .thenReturn(Optional.of(mockHash));
 
     var resp = resp(mockPayload(paramHeader, Collections.emptyList()));
 
-    EngineExecutionResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEqualTo(mockHash.toString());
-    assertThat(res.getStatus()).isEqualTo(INVALID.name());
-
-    assertThat(res.getValidationError())
-        .isEqualTo(
-            String.format(
-                "Computed block hash %s does not match block hash parameter %s",
-                realHeader.getBlockHash(), paramHeader.getHash()));
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).isNull();
+    assertThat(res.getStatus()).isEqualTo(INVALID_BLOCK_HASH.name());
   }
 
   @Test
   public void shouldReturnInvalidOnMalformedTransactions() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
-    //    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeCoordinator.getLatestValidAncestor(any(Hash.class)))
         .thenReturn(Optional.of(mockHash));
 
     var resp = resp(mockPayload(mockHeader, List.of("0xDEAD", "0xBEEF")));
 
-    EngineExecutionResult res = fromSuccessResp(resp);
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEqualTo(mockHash.toString());
     assertThat(res.getStatus()).isEqualTo(INVALID.name());
-
-    assertThat(res.getValidationError())
-        .isEqualTo("Failed to decode transactions from block parameter");
+    assertThat(res.getError()).isEqualTo("Failed to decode transactions from block parameter");
   }
 
   @Test
   public void shouldRespondWithSyncingDuringForwardSync() {
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeContext.isSyncing()).thenReturn(Boolean.TRUE);
-    var resp = resp(mock(EnginePayloadParameter.class));
-    EngineExecutionResult res = fromSuccessResp(resp);
-    assertThat(res.getValidationError()).isNull();
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getError()).isNull();
     assertThat(res.getStatus()).isEqualTo(SYNCING.name());
     assertThat(res.getLatestValidHash()).isNull();
   }
 
   @Test
   public void shouldRespondWithSyncingDuringBackwardsSync() {
-    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
-        .thenReturn(Optional.empty());
-    BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
+    when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class))).thenReturn(Optional.empty());
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
-    EngineExecutionResult res = fromSuccessResp(resp);
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isNull();
     assertThat(res.getStatus()).isEqualTo(SYNCING.name());
-    assertThat(res.getValidationError()).isNull();
+    assertThat(res.getError()).isNull();
   }
 
   @Test
   public void shouldRespondWithInvalidTerminalPowBlock() {
     // TODO: implement this as part of https://github.com/hyperledger/besu/issues/3141
     assertThat(mergeContext.getTerminalTotalDifficulty()).isNull();
+  }
+
+  @Test
+  public void shouldRespondWithInvalidIfExtraDataIsNull() {
+    BlockHeader realHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader paramHeader = spy(realHeader);
+    when(paramHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
+    when(paramHeader.getExtraData().toHexString()).thenReturn(null);
+
+    var resp = resp(mockPayload(paramHeader, Collections.emptyList()));
+
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).isNull();
+    assertThat(res.getStatus()).isEqualTo(INVALID.name());
+    assertThat(res.getError()).isEqualTo("Field extraData must not be null");
   }
 
   private JsonRpcResponse resp(final EnginePayloadParameter payload) {
@@ -255,19 +285,19 @@ public class EngineExecutePayloadTest {
         new UnsignedLongParameter(header.getGasLimit()),
         new UnsignedLongParameter(header.getGasUsed()),
         new UnsignedLongParameter(header.getTimestamp()),
-        header.getExtraData().toHexString(),
+        header.getExtraData() == null ? null : header.getExtraData().toHexString(),
         header.getReceiptsRoot(),
         header.getLogsBloom(),
-        header.getRandom().map(Bytes32::toHexString).orElse("0x0"),
+        header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs);
   }
 
-  private EngineExecutionResult fromSuccessResp(final JsonRpcResponse resp) {
+  private EnginePayloadStatusResult fromSuccessResp(final JsonRpcResponse resp) {
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     return Optional.of(resp)
         .map(JsonRpcSuccessResponse.class::cast)
         .map(JsonRpcSuccessResponse::getResult)
-        .map(EngineExecutionResult.class::cast)
+        .map(EnginePayloadStatusResult.class::cast)
         .get();
   }
 }

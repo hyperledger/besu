@@ -39,16 +39,19 @@ class FullSyncTargetManager extends SyncTargetManager {
   private static final Logger LOG = LoggerFactory.getLogger(FullSyncTargetManager.class);
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
+  private final SyncTerminationCondition terminationCondition;
 
   FullSyncTargetManager(
       final SynchronizerConfiguration config,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final SyncTerminationCondition terminationCondition) {
     super(config, protocolSchedule, protocolContext, ethContext, metricsSystem);
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
+    this.terminationCondition = terminationCondition;
   }
 
   @Override
@@ -105,6 +108,6 @@ class FullSyncTargetManager extends SyncTargetManager {
 
   @Override
   public boolean shouldContinueDownloading() {
-    return true;
+    return terminationCondition.shouldContinueDownload();
   }
 }

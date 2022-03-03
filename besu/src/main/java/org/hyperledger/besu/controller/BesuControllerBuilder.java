@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValida
 import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -86,7 +87,7 @@ import java.util.OptionalLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class BesuControllerBuilder {
+public abstract class BesuControllerBuilder implements MiningParameterOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
   protected GenesisConfigFile genesisConfig;
@@ -339,7 +340,7 @@ public abstract class BesuControllerBuilder {
             clock,
             metricsSystem,
             syncState,
-            miningParameters.getMinTransactionGasPrice(),
+            miningParameters,
             transactionPoolConfiguration);
 
     final List<PeerValidator> peerValidators = createPeerValidators(protocolSchedule);
@@ -371,7 +372,8 @@ public abstract class BesuControllerBuilder {
             syncState,
             dataDirectory,
             clock,
-            metricsSystem);
+            metricsSystem,
+            getFullSyncTerminationCondition(protocolContext.getBlockchain()));
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -414,6 +416,14 @@ public abstract class BesuControllerBuilder {
         nodeKey,
         closeables,
         additionalPluginServices);
+  }
+
+  protected SyncTerminationCondition getFullSyncTerminationCondition(final Blockchain blockchain) {
+    return genesisConfig
+        .getConfigOptions()
+        .getTerminalTotalDifficulty()
+        .map(difficulty -> SyncTerminationCondition.difficulty(difficulty, blockchain))
+        .orElse(SyncTerminationCondition.never());
   }
 
   protected void prepForBuild() {}
