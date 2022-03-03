@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -24,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableDebugAccountAtResult;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
@@ -164,5 +166,20 @@ public class DebugAccountAtTest {
     Assertions.assertThat(response instanceof JsonRpcErrorResponse).isTrue();
     Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
         .isEqualByComparingTo(JsonRpcError.NO_ACCOUNT_FOUND);
+  }
+
+  @Test
+  public void testResult() {
+    final Bytes code = Bytes.fromHexString(
+        "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063b27b880414610030575b");
+    final String nonce = "0x1";
+    final String balance = "0xffff";
+    final String codeHash = "0xf5f334d41776ed2828fc910d488a05c57fe7c2352aab2d16e30539d7726e1562";
+    ImmutableDebugAccountAtResult result =
+        debugAccountAt.debugAccountAtResult(code, nonce, balance, codeHash);
+    Assertions.assertThat(result.getBalance()).isEqualTo(balance);
+    Assertions.assertThat(result.getNonce()).isEqualTo(nonce);
+    Assertions.assertThat(result.getCode()).isEqualTo(code);
+    Assertions.assertThat(result.getCodehash()).isEqualTo(codeHash);
   }
 }

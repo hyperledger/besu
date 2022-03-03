@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -116,11 +117,20 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
           requestContext.getRequest().getId(), JsonRpcError.NO_ACCOUNT_FOUND);
     }
 
+    return debugAccountAtResult(
+        account.get().getCode(),
+        Quantity.create(account.get().getNonce()),
+        Quantity.create(account.get().getBalance()),
+        Quantity.create(account.get().getCodeHash()));
+  }
+
+  protected ImmutableDebugAccountAtResult debugAccountAtResult(
+      final Bytes code, final String nonce, final String balance, final String codeHash) {
     return ImmutableDebugAccountAtResult.builder()
-        .code(Quantity.create(account.get().getCode()))
-        .nonce(Quantity.create(account.get().getNonce()))
-        .balance(Quantity.create(account.get().getBalance()))
-        .codehash(Quantity.create(account.get().getCodeHash()))
+        .code(Quantity.create(code))
+        .nonce(nonce)
+        .balance(balance)
+        .codehash(codeHash)
         .build();
   }
 }
