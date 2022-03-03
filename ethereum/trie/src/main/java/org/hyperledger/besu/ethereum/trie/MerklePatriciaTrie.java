@@ -98,6 +98,14 @@ public interface MerklePatriciaTrie<K, V> {
   void commit(NodeUpdater nodeUpdater);
 
   /**
+   * Commits any pending changes to the underlying storage.
+   *
+   * @param nodeUpdater used to store the node values
+   * @param commitVisitor custom visitor for the commit
+   */
+  void commit(NodeUpdater nodeUpdater, CommitVisitor<V> commitVisitor);
+
+  /**
    * Retrieve up to {@code limit} storage entries beginning from the first entry with hash equal to
    * or greater than {@code startKeyHash}.
    *

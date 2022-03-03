@@ -114,6 +114,7 @@ public class FastDownloaderFactory {
         new FastSyncDownloader<>(
             new FastSyncActions(
                 syncConfig,
+                worldStateStorage,
                 protocolSchedule,
                 protocolContext,
                 ethContext,

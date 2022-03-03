@@ -16,13 +16,11 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 import com.google.common.io.Files;
@@ -41,14 +39,11 @@ import org.slf4j.LoggerFactory;
 public class FastSyncStateStorage {
   private static final Logger LOG = LoggerFactory.getLogger(FastSyncStateStorage.class);
   private static final String PIVOT_BLOCK_HEADER_FILENAME = "pivotBlockHeader.rlp";
-  private static final String SYNC_STEP_FILENAME = "syncStep.txt";
 
   private final File pivotBlockHeaderFile;
-  private final File fastSyncStepFile;
 
   public FastSyncStateStorage(final Path fastSyncDataDir) {
     pivotBlockHeaderFile = fastSyncDataDir.resolve(PIVOT_BLOCK_HEADER_FILENAME).toFile();
-    fastSyncStepFile = fastSyncDataDir.resolve(SYNC_STEP_FILENAME).toFile();
   }
 
   public boolean isFastSyncInProgress() {
@@ -84,24 +79,6 @@ public class FastSyncStateStorage {
     } catch (final IOException e) {
       throw new IllegalStateException(
           "Unable to store fast sync status file: " + pivotBlockHeaderFile.getAbsolutePath());
-    }
-  }
-
-  public void notifyFastSyncStepChanged(final SyncMode syncMode) {
-    try {
-      Files.write(syncMode.name().getBytes(StandardCharsets.UTF_8), fastSyncStepFile);
-    } catch (IOException e) {
-      throw new IllegalStateException(
-          "Unable to store step fast sync" + " file: " + fastSyncStepFile.getAbsolutePath());
-    }
-  }
-
-  public SyncMode getFastSyncStep() {
-    try {
-      return SyncMode.fromString(
-          new String(Files.toByteArray(fastSyncStepFile), StandardCharsets.UTF_8));
-    } catch (final IOException e) {
-      return SyncMode.X_SNAP;
     }
   }
 }

@@ -70,7 +70,6 @@ public class DefaultSynchronizer implements Synchronizer {
       final MetricsSystem metricsSystem) {
     this.maybePruner = maybePruner;
     this.syncState = syncState;
-
     this.protocolContext = protocolContext;
     ChainHeadTracker.trackChainHeadForPeers(
         ethContext,

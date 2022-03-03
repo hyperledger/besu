@@ -35,7 +35,7 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     clearInternalQueues();
   }
 
-  private void clearInternalQueues() {
+  public void clearInternalQueues() {
     internalQueues.clear();
     for (int i = 0; i < 16; i++) {
       internalQueues.add(newEmptyQueue());
@@ -82,6 +82,10 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
       }
     }
     return internalQueues.get(0);
+  }
+
+  public int getUnfinishedOutstandingTasks() {
+    return unfinishedOutstandingTasks.size();
   }
 
   @Override

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.RunnableCounter;
@@ -34,19 +33,20 @@ public class PersistDataStep {
   private static final int DISPLAY_PROGRESS_STEP = 100000;
 
   private final SnapSyncState snapSyncState;
-
   private final WorldStateStorage worldStateStorage;
+  private final SnapWorldDownloadState downloadState;
 
   private final RunnableCounter generatedNodes;
-
   private final RunnableCounter healedNodes;
 
   public PersistDataStep(
       final SnapSyncState snapSyncState,
       final WorldStateStorage worldStateStorage,
+      final SnapWorldDownloadState downloadState,
       final MetricsSystem metricsSystem) {
     this.snapSyncState = snapSyncState;
     this.worldStateStorage = worldStateStorage;
+    this.downloadState = downloadState;
 
     this.generatedNodes =
         new RunnableCounter(
@@ -66,14 +66,20 @@ public class PersistDataStep {
             DISPLAY_PROGRESS_STEP);
   }
 
-  public List<Task<SnapDataRequest>> persist(
-      final List<Task<SnapDataRequest>> tasks,
-      final WorldDownloadState<SnapDataRequest> downloadState) {
-    final WorldStateStorage.Updater updater = worldStateStorage.updater();
+  public List<Task<SnapDataRequest>> persist(final List<Task<SnapDataRequest>> tasks) {
+    WorldStateStorage.Updater updater = worldStateStorage.updater();
+    long batchNodeToSave = 0;
     for (Task<SnapDataRequest> task : tasks) {
       if (task.getData().isDataPresent()) {
-        enqueueChildren(task, downloadState);
-        final int persistedNodes = task.getData().persist(worldStateStorage, updater);
+        enqueueChildren(task);
+        final int persistedNodes =
+            task.getData().persist(worldStateStorage, updater, downloadState);
+        batchNodeToSave += persistedNodes;
+        if (batchNodeToSave > 512) {
+          batchNodeToSave = 0;
+          updater.commit();
+          updater = worldStateStorage.updater();
+        }
         if (persistedNodes > 0) {
           if (snapSyncState.isHealInProgress()) {
             healedNodes.inc(persistedNodes);
@@ -87,12 +93,11 @@ public class PersistDataStep {
     return tasks;
   }
 
-  public Task<SnapDataRequest> persist(
-      final Task<SnapDataRequest> task, final WorldDownloadState<SnapDataRequest> downloadState) {
+  public Task<SnapDataRequest> persist(final Task<SnapDataRequest> task) {
     final WorldStateStorage.Updater updater = worldStateStorage.updater();
     if (task.getData().isDataPresent()) {
-      enqueueChildren(task, downloadState);
-      final int persistedNodes = task.getData().persist(worldStateStorage, updater);
+      enqueueChildren(task);
+      final int persistedNodes = task.getData().persist(worldStateStorage, updater, downloadState);
       if (persistedNodes > 0) {
         if (snapSyncState.isHealInProgress()) {
           healedNodes.inc(persistedNodes);
@@ -105,12 +110,11 @@ public class PersistDataStep {
     return task;
   }
 
-  private void enqueueChildren(
-      final Task<SnapDataRequest> task, final WorldDownloadState<SnapDataRequest> downloadState) {
+  private void enqueueChildren(final Task<SnapDataRequest> task) {
     final SnapDataRequest request = task.getData();
     // Only queue rootnode children if we started from scratch
     if (!downloadState.downloadWasResumed()) {
-      downloadState.enqueueRequests(request.getChildRequests(worldStateStorage));
+      downloadState.enqueueRequests(request.getChildRequests(worldStateStorage, snapSyncState));
     }
   }
 

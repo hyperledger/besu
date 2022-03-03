@@ -137,7 +137,11 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
 
   @Override
   public void commit(final NodeUpdater nodeUpdater) {
-    final CommitVisitor<V> commitVisitor = new CommitVisitor<>(nodeUpdater);
+    commit(nodeUpdater, new CommitVisitor<>(nodeUpdater));
+  }
+
+  @Override
+  public void commit(final NodeUpdater nodeUpdater, final CommitVisitor<V> commitVisitor) {
     root.accept(Bytes.EMPTY, commitVisitor);
     // Make sure root node was stored
     if (root.isDirty() && root.getRlpRef().size() < 32) {

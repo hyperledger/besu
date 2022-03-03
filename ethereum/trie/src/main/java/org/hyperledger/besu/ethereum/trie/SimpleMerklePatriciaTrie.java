@@ -110,6 +110,11 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
+  public void commit(final NodeUpdater nodeUpdater, final CommitVisitor<V> commitVisitor) {
+    // Nothing to do here
+  }
+
+  @Override
   public Map<Bytes32, V> entriesFrom(final Bytes32 startKeyHash, final int limit) {
     return StorageEntriesCollector.collectEntries(root, startKeyHash, limit);
   }

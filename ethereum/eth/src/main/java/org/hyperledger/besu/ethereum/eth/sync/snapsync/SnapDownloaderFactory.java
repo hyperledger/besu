@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
@@ -70,25 +69,14 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
             fastSyncStateStorage.loadState(
                 ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
     worldStateStorage.clear();
-    /*if (snapSyncState.getPivotBlockHeader().isEmpty()
-        && protocolContext.getBlockchain().getChainHeadBlockNumber()
-            != BlockHeader.GENESIS_BLOCK_NUMBER) {
-      LOG.info(
-          "Fast sync was requested, but cannot be enabled because the local blockchain is not empty.");
-      return Optional.empty();
-    }*/
 
     final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
         createSnapWorldStateDownloaderTaskCollection(metricsSystem);
-    final InMemoryTasksPriorityQueues<NodeDataRequest> fastTaskCollection =
-        createWorldStateDownloaderTaskCollection(
-            metricsSystem, syncConfig.getWorldStateTaskCacheSize());
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(
             ethContext,
             worldStateStorage,
             snapTaskCollection,
-            fastTaskCollection,
             syncConfig.getWorldStateHashCountPerRequest(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
@@ -99,6 +87,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
         new SnapSyncDownloader(
             new FastSyncActions(
                 syncConfig,
+                worldStateStorage,
                 protocolSchedule,
                 protocolContext,
                 ethContext,

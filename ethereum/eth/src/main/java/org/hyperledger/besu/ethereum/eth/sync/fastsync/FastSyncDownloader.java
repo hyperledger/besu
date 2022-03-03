@@ -173,7 +173,7 @@ public class FastSyncDownloader<REQUEST> {
             return null;
           });
 
-      return CompletableFuture.allOf(worldStateFuture)
+      return CompletableFuture.allOf(worldStateFuture, chainFuture)
           .thenApply(
               complete -> {
                 trailingPeerRequirements = Optional.empty();

@@ -90,7 +90,6 @@ public class GetAccountRangeFromPeerTask
     final AccountRangeMessage.AccountRangeData accountRangeData =
         accountRangeMessage.accountData(true);
     if (accountRangeData.accounts().isEmpty() && accountRangeData.proofs().isEmpty()) {
-      System.out.println("Disconnect useless peer");
       peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
     }
     return Optional.of(accountRangeData);

@@ -159,6 +159,17 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
     }
 
     @Override
+    public boolean isNeedHeal() {
+      return false;
+    }
+
+    @Override
+    public void markNeedHeal() {
+      throw new UnsupportedOperationException(
+          "A persisted node cannot ever be dirty since it's loaded from storage");
+    }
+
+    @Override
     public Node<V> accept(final PathNodeVisitor<V> visitor, final Bytes path) {
       // do nothing
       return this;

@@ -18,13 +18,9 @@ import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class SnapSyncState extends FastSyncState {
 
   private boolean isHealInProgress;
-
-  private final AtomicInteger lock = new AtomicInteger();
 
   public SnapSyncState(final FastSyncState fastSyncState) {
     super(fastSyncState.getPivotBlockNumber(), fastSyncState.getPivotBlockHeader());
@@ -34,12 +30,8 @@ public class SnapSyncState extends FastSyncState {
     return isHealInProgress;
   }
 
-  public void notifyStartHeal() {
-    isHealInProgress = true;
-  }
-
-  public boolean isResettingPivotBlock() {
-    return lock.get() == 1;
+  public void setHealStatus(final boolean healStatus) {
+    isHealInProgress = healStatus;
   }
 
   public boolean isValidTask(final SnapDataRequest request) {
@@ -47,13 +39,5 @@ public class SnapSyncState extends FastSyncState {
         .map(SealableBlockHeader::getStateRoot)
         .filter(hash -> hash.equals(request.getRootHash()))
         .isPresent();
-  }
-
-  public boolean lockResettingPivotBlock() {
-    return lock.compareAndSet(0, 1);
-  }
-
-  public void unlockResettingPivotBlock() {
-    lock.set(1);
   }
 }

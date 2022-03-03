@@ -45,7 +45,7 @@ public class CompleteTaskStep {
       final SnapSyncState snapSyncState,
       final SnapWorldDownloadState downloadState,
       final Task<SnapDataRequest> task) {
-    if (task.getData().isDataPresent()) {
+    if (task.getData().isDataPresent() || !snapSyncState.isValidTask(task.getData())) {
       completedRequestsCounter.inc();
       task.markCompleted();
       downloadState.checkCompletion(

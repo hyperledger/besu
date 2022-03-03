@@ -14,30 +14,31 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
+
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldStateDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountHealRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataHealRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.services.tasks.Task;
+import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.time.Clock;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("unused")
 public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapWorldDownloadState.class);
@@ -51,25 +52,19 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       new InMemoryTaskQueue<>();
   protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingTrieNodeRequests =
       new InMemoryTasksPriorityQueues<>();
-  protected final InMemoryTaskQueue<SnapDataRequest> futureHealRequests = new InMemoryTaskQueue<>();
+  protected final InMemoryTaskQueue<SnapDataRequest> pendingAccountHealRequests =
+      new InMemoryTaskQueue<>();
 
-  private final FastSyncActions fastSyncActions;
   private final SnapSyncState snapSyncState;
-  private final FastWorldStateDownloader healProcess;
-  private BlockHeader nextPivotBlock;
 
   public SnapWorldDownloadState(
-      final FastSyncActions fastSyncActions,
       final SnapSyncState snapSyncState,
       final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
-      final FastWorldStateDownloader healProcess,
       final Clock clock) {
     super(pendingRequests, maxRequestsWithoutProgress, minMillisBeforeStalling, clock);
-    this.fastSyncActions = fastSyncActions;
     this.snapSyncState = snapSyncState;
-    this.healProcess = healProcess;
   }
 
   @Override
@@ -79,9 +74,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   @Override
   protected synchronized void markAsStalled(final int maxNodeRequestRetries) {
-    if (!snapSyncState.isResettingPivotBlock()) {
+    /*if (!snapSyncState.isResettingPivotBlock()) {
       super.markAsStalled(maxNodeRequestRetries);
-    }
+    }*/
   }
 
   @Override
@@ -92,29 +87,19 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingAccountRequests.allTasksCompleted()
         && pendingCodeRequests.allTasksCompleted()
         && pendingStorageRequests.allTasksCompleted()
-        && pendingTrieNodeRequests.allTasksCompleted()
-        && !snapSyncState.isResettingPivotBlock()) {
+        && pendingBigStorageRequests.allTasksCompleted()
+        && pendingTrieNodeRequests.allTasksCompleted()) {
       if (!snapSyncState.isHealInProgress()) {
-        snapSyncState.notifyStartHeal();
-        LOG.info("Starting heal process on state root " + header.getStateRoot());
-        Task<SnapDataRequest> remove = futureHealRequests.remove();
-        while (remove != null) {
-          final SnapDataRequest data = remove.getData();
-          enqueueRequest(data);
-          System.out.println("Enque " + ((TrieNodeDataHealRequest) data).getTrieNodePath());
-          remove = futureHealRequests.remove();
-        }
-        /*healProcess
-        .run(fastSyncActions, snapSyncState)
-        .whenComplete(
-            (unused, throwable) -> {
-              if (throwable == null) {
-                internalFuture.complete(null);
-              } else {
-                internalFuture.completeExceptionally(throwable);
-              }
-            });*/
-      } else if (!snapSyncState.isResettingPivotBlock()) {
+        snapSyncState.setHealStatus(true);
+        enqueueRequest(
+            createAccountTrieNodeDataRequest(
+                snapSyncState.getPivotBlockHeader().orElseThrow().getStateRoot(), Bytes.EMPTY));
+      } else {
+
+        final WorldStateStorage.Updater updater = worldStateStorage.updater();
+        updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
+        updater.commit();
+
         LOG.info("Finished downloading world state from peers");
         internalFuture.complete(null);
         return true;
@@ -126,8 +111,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized void enqueueFutureHealRequest(final SnapDataRequest request) {
     if (!internalFuture.isDone()) {
-      futureHealRequests.add(request);
-      System.out.println("NB heal account request " + futureHealRequests.size());
+      pendingAccountHealRequests.add(request);
+      System.out.println("NB heal account request " + pendingAccountHealRequests.size());
     }
   }
 
@@ -138,19 +123,16 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         pendingCodeRequests.add(request);
       } else if (request instanceof StorageRangeDataRequest) {
         if (!((StorageRangeDataRequest) request).getStartKeyHash().equals(RangeManager.MIN_RANGE)) {
-          // pendingBigStorageRequests.add(request);
+          pendingBigStorageRequests.add(request);
         } else {
           pendingStorageRequests.add(request);
         }
-      } else if (request instanceof TrieNodeDataHealRequest) {
-        if (!snapSyncState.isHealInProgress()) {
-          enqueueFutureHealRequest(request);
-        }
-        if (snapSyncState.isValidTask(request)) {
-          pendingTrieNodeRequests.add(request);
-        }
-      } else {
+      } else if (request instanceof AccountRangeDataRequest) {
         pendingAccountRequests.add(request);
+      } else if (request instanceof AccountHealRequest) {
+        pendingAccountHealRequests.add(request);
+      } else {
+        pendingTrieNodeRequests.add(request);
       }
       notifyAll();
     }
@@ -163,11 +145,13 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     }
   }
 
-  public synchronized Task<SnapDataRequest> dequeueAccountRequestBlocking() {
+  public synchronized Task<SnapDataRequest> dequeueRequestBlocking(
+      final List<InMemoryTaskQueue<SnapDataRequest>> queueDependencies,
+      final TaskCollection<SnapDataRequest> queue) {
     while (!internalFuture.isDone()) {
-      while (!pendingStorageRequests.allTasksCompleted()
-          || !pendingBigStorageRequests.allTasksCompleted()
-          || !pendingCodeRequests.allTasksCompleted()) {
+      while (queueDependencies.stream()
+          .map(InMemoryTaskQueue::allTasksCompleted)
+          .anyMatch(Predicate.isEqual(false))) {
         try {
           wait();
         } catch (final InterruptedException e) {
@@ -175,7 +159,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           return null;
         }
       }
-      Task<SnapDataRequest> task = pendingAccountRequests.remove();
+      Task<SnapDataRequest> task = queue.remove();
       if (task != null) {
         return task;
       }
@@ -187,161 +171,34 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       }
     }
     return null;
+  }
+
+  public synchronized Task<SnapDataRequest> dequeueAccountRequestBlocking() {
+    return dequeueRequestBlocking(
+        List.of(pendingStorageRequests, pendingCodeRequests), pendingAccountRequests);
   }
 
   public synchronized Task<SnapDataRequest> dequeueBigStorageRequestBlocking() {
-    while (!internalFuture.isDone()) {
-      while (!pendingStorageRequests.allTasksCompleted()) {
-        try {
-          wait();
-        } catch (final InterruptedException e) {
-          Thread.currentThread().interrupt();
-          return null;
-        }
-      }
-      Task<SnapDataRequest> task = pendingBigStorageRequests.remove();
-      if (task != null) {
-        return task;
-      }
-      try {
-        wait();
-      } catch (final InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return null;
-      }
-    }
-    return null;
+    return dequeueRequestBlocking(Collections.emptyList(), pendingBigStorageRequests);
   }
 
   public synchronized Task<SnapDataRequest> dequeueStorageRequestBlocking() {
-    while (!internalFuture.isDone()) {
-      Task<SnapDataRequest> task = pendingStorageRequests.remove();
-      if (task != null) {
-        return task;
-      }
-      try {
-        wait();
-      } catch (final InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return null;
-      }
-    }
-    return null;
+    return dequeueRequestBlocking(Collections.emptyList(), pendingStorageRequests);
   }
 
   public synchronized Task<SnapDataRequest> dequeueCodeRequestBlocking() {
-    while (!internalFuture.isDone()) {
-      while (!pendingStorageRequests.allTasksCompleted()
-          || !pendingBigStorageRequests.allTasksCompleted()) {
-        try {
-          wait();
-        } catch (final InterruptedException e) {
-          Thread.currentThread().interrupt();
-          return null;
-        }
-      }
-      Task<SnapDataRequest> task = pendingCodeRequests.remove();
-      if (task != null) {
-        return task;
-      }
-      try {
-        wait();
-      } catch (final InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return null;
-      }
-    }
-    return null;
+    return dequeueRequestBlocking(List.of(pendingStorageRequests), pendingCodeRequests);
   }
 
   public synchronized Task<SnapDataRequest> dequeueTrieNodeRequestBlocking() {
-    while (!internalFuture.isDone()) {
-      while (!pendingStorageRequests.allTasksCompleted()
-          || !pendingBigStorageRequests.allTasksCompleted()
-          || !pendingAccountRequests.allTasksCompleted()) {
-        try {
-          wait();
-        } catch (final InterruptedException e) {
-          Thread.currentThread().interrupt();
-          return null;
-        }
-      }
-      Task<SnapDataRequest> task = pendingTrieNodeRequests.remove();
-      if (task != null) {
-        return task;
-      }
-      try {
-        wait();
-      } catch (final InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return null;
-      }
-    }
-    return null;
+    return dequeueRequestBlocking(
+        List.of(pendingAccountRequests, pendingStorageRequests, pendingBigStorageRequests),
+        pendingTrieNodeRequests);
   }
 
-  public int getNbRequestsInProgress() {
-    return pendingAccountRequests.getNbUnfinishedOutstandingTasks()
-        + pendingBigStorageRequests.getNbUnfinishedOutstandingTasks()
-        + pendingStorageRequests.getNbUnfinishedOutstandingTasks()
-        + pendingCodeRequests.getNbUnfinishedOutstandingTasks();
-  }
-
-  public void checkNewPivotBlock(final SnapSyncState currentPivotBlock) {
-    final long currentPivotBlockNumber = currentPivotBlock.getPivotBlockNumber().orElseThrow();
-    final long distance =
-        fastSyncActions.getSyncState().bestChainHeight() - currentPivotBlockNumber;
-    System.out.println("Distance " + distance);
-    if (distance > 70) {
-      final long distanceNextPivotBlock =
-          fastSyncActions.getSyncState().bestChainHeight()
-              - Optional.ofNullable(nextPivotBlock)
-                  .map(ProcessableBlockHeader::getNumber)
-                  .orElse(0L);
-      if (distanceNextPivotBlock > 60) {
-        System.out.println(
-            "Distance pivot block "
-                + fastSyncActions.getSyncState().bestChainHeight()
-                + " "
-                + Optional.ofNullable(nextPivotBlock)
-                    .map(ProcessableBlockHeader::getNumber)
-                    .orElse(0L));
-        if (snapSyncState.lockResettingPivotBlock()) {
-          fastSyncActions
-              .waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)
-              .thenCompose(fastSyncActions::selectPivotBlock)
-              .thenCompose(fastSyncActions::downloadPivotBlockHeader)
-              .thenAccept(
-                  fss ->
-                      fss.getPivotBlockHeader()
-                          .ifPresent(
-                              newPivotBlockHeader -> {
-                                LOG.info(
-                                    "Found new next pivot block {} {}",
-                                    newPivotBlockHeader.getNumber(),
-                                    newPivotBlockHeader.getStateRoot());
-                                nextPivotBlock = newPivotBlockHeader;
-                                snapSyncState.unlockResettingPivotBlock();
-                              }))
-              .orTimeout(5, TimeUnit.MINUTES)
-              .whenComplete(
-                  (unused, throwable) -> {
-                    snapSyncState.unlockResettingPivotBlock();
-                  });
-          ;
-        }
-      }
-    }
-    if (distance > 126) {
-      if (nextPivotBlock != null && currentPivotBlockNumber != nextPivotBlock.getNumber()) {
-        LOG.info(
-            "Select new pivot block {} {}",
-            nextPivotBlock.getNumber(),
-            nextPivotBlock.getStateRoot());
-        snapSyncState.setCurrentHeader(nextPivotBlock);
-      }
-      requestComplete(true);
-      notifyTaskAvailable();
-    }
+  public void clearTrieNodes() {
+    pendingTrieNodeRequests.clearInternalQueues();
+    pendingCodeRequests.clearInternalQueue();
+    snapSyncState.setHealStatus(false);
   }
 }

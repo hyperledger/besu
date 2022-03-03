@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.snap.GetTrieNodeFromPeerTask;
@@ -28,7 +27,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataR
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataHealRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
@@ -50,6 +49,8 @@ import org.immutables.value.Value;
 
 public class RequestDataStep {
 
+  private final SnapSyncState fastSyncState;
+  private final WorldDownloadState<SnapDataRequest> downloadState;
   private final MetricsSystem metricsSystem;
   private final EthContext ethContext;
   private final WorldStateProofProvider worldStateProofProvider;
@@ -57,16 +58,18 @@ public class RequestDataStep {
   public RequestDataStep(
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
+      final SnapSyncState fastSyncState,
+      final WorldDownloadState<SnapDataRequest> downloadState,
       final MetricsSystem metricsSystem) {
+    this.fastSyncState = fastSyncState;
+    this.downloadState = downloadState;
     this.metricsSystem = metricsSystem;
     this.ethContext = ethContext;
     this.worldStateProofProvider = new WorldStateProofProvider(worldStateStorage);
   }
 
   public CompletableFuture<List<Task<SnapDataRequest>>> requestStorage(
-      final List<Task<SnapDataRequest>> requestTasks,
-      final SnapSyncState fastSyncState,
-      final WorldDownloadState<SnapDataRequest> downloadState) {
+      final List<Task<SnapDataRequest>> requestTasks) {
     final List<Bytes32> accountHashes =
         requestTasks.stream()
             .map(Task::getData)
@@ -87,6 +90,8 @@ public class RequestDataStep {
             RangeManager.MAX_RANGE,
             blockHeader,
             metricsSystem);
+
+    System.out.println("Storage size " + requestTasks.size());
     downloadState.addOutstandingTask(getStorageRangeTask);
     return getStorageRangeTask
         .run()
@@ -109,9 +114,7 @@ public class RequestDataStep {
   }
 
   public CompletableFuture<List<Task<SnapDataRequest>>> requestCode(
-      final List<Task<SnapDataRequest>> requestTasks,
-      final SnapSyncState fastSyncState,
-      final WorldDownloadState<SnapDataRequest> downloadState) {
+      final List<Task<SnapDataRequest>> requestTasks) {
     final List<Bytes32> codeHashes =
         requestTasks.stream()
             .map(Task::getData)
@@ -144,9 +147,7 @@ public class RequestDataStep {
   }
 
   public CompletableFuture<Task<SnapDataRequest>> requestAccountData(
-      final Task<SnapDataRequest> requestTask,
-      final SnapSyncState fastSyncState,
-      final WorldDownloadState<SnapDataRequest> downloadState) {
+      final Task<SnapDataRequest> requestTask) {
 
     final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
     final AccountRangeDataRequest accountDataRequest =
@@ -175,16 +176,14 @@ public class RequestDataStep {
   }
 
   public CompletableFuture<List<Task<SnapDataRequest>>> requestTrieNodeByPath(
-      final List<Task<SnapDataRequest>> requestTasks,
-      final SnapSyncState fastSyncState,
-      final WorldDownloadState<SnapDataRequest> downloadState) {
+      final List<Task<SnapDataRequest>> requestTasks) {
 
     final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
     final Map<Bytes, List<Bytes>> message = new HashMap<>();
     requestTasks.stream()
         .map(Task::getData)
-        .map(TrieNodeDataHealRequest.class::cast)
-        .map(TrieNodeDataHealRequest::getTrieNodePath)
+        .map(TrieNodeDataRequest.class::cast)
+        .map(TrieNodeDataRequest::getTrieNodePath)
         .forEach(
             path -> {
               List<Bytes> bytes = message.computeIfAbsent(path.get(0), k -> Lists.newArrayList());
@@ -192,8 +191,6 @@ public class RequestDataStep {
                 bytes.add(path.get(1));
               }
             });
-
-    System.out.println("message " + message);
 
     final GetTrieNodeFromPeerTask getTrieNodeFromPeerTask =
         GetTrieNodeFromPeerTask.forTrieNodes(ethContext, message, blockHeader, metricsSystem);
@@ -203,24 +200,14 @@ public class RequestDataStep {
         .handle(
             (response, error) -> {
               if (response != null) {
-                int counter = 0;
                 downloadState.removeOutstandingTask(getTrieNodeFromPeerTask);
                 for (final Task<SnapDataRequest> task : requestTasks) {
-                  final TrieNodeDataHealRequest request = (TrieNodeDataHealRequest) task.getData();
+                  final TrieNodeDataRequest request = (TrieNodeDataRequest) task.getData();
                   final Bytes matchingData = response.getResult().get(request.getPathId());
-                  if (matchingData != null
-                      && Hash.hash(matchingData).equals(request.getNodeHash())) {
+                  if (matchingData != null) {
                     request.setData(matchingData);
-                    counter++;
                   }
                 }
-                System.out.println(
-                    "Found "
-                        + requestTasks.size()
-                        + " "
-                        + counter
-                        + " "
-                        + response.getResult().size());
               }
               return requestTasks;
             });

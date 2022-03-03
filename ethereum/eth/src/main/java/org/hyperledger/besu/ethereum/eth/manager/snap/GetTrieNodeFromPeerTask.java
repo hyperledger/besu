@@ -17,14 +17,13 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 import static java.util.Collections.emptyMap;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerRequestTask;
-import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
+import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodes;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -32,73 +31,84 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import com.google.common.collect.Lists;
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 
-public class GetBytecodeFromPeerTask extends AbstractPeerRequestTask<Map<Bytes32, Bytes>> {
+public class GetTrieNodeFromPeerTask extends AbstractPeerRequestTask<Map<Bytes, Bytes>> {
 
-  private static final Logger LOG = getLogger(GetBytecodeFromPeerTask.class);
+  private static final Logger LOG = getLogger(GetTrieNodeFromPeerTask.class);
 
-  private final List<Bytes32> codeHashes;
+  private final List<List<Bytes>> paths;
   private final BlockHeader blockHeader;
 
-  private GetBytecodeFromPeerTask(
+  private GetTrieNodeFromPeerTask(
       final EthContext ethContext,
-      final List<Bytes32> codeHashes,
+      final List<List<Bytes>> paths,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    super(ethContext, SnapV1.STORAGE_RANGE, metricsSystem);
-    this.codeHashes = codeHashes;
+    super(ethContext, SnapV1.TRIE_NODES, metricsSystem);
+    this.paths = paths;
     this.blockHeader = blockHeader;
   }
 
-  public static GetBytecodeFromPeerTask forBytecode(
+  public static GetTrieNodeFromPeerTask forTrieNodes(
       final EthContext ethContext,
-      final List<Bytes32> codeHashes,
+      final Map<Bytes, List<Bytes>> paths,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    return new GetBytecodeFromPeerTask(ethContext, codeHashes, blockHeader, metricsSystem);
+    return new GetTrieNodeFromPeerTask(
+        ethContext,
+        paths.entrySet().stream()
+            .map(entry -> Lists.asList(entry.getKey(), entry.getValue().toArray(new Bytes[0])))
+            .collect(Collectors.toList()),
+        blockHeader,
+        metricsSystem);
   }
 
   @Override
   protected PendingPeerRequest sendRequest() {
     return sendRequestToPeer(
         peer -> {
-          LOG.info("Requesting Bytecodes for accounts from {} .", peer);
-          return peer.getSnapBytecode(blockHeader.getStateRoot(), codeHashes);
+          LOG.info(
+              "Requesting trie nodes from {} {}", peer, (paths.size() > 1 ? paths.size() : paths));
+          return peer.getSnapTrieNode(blockHeader.getStateRoot(), paths);
         },
         blockHeader.getNumber());
   }
 
   @Override
-  protected Optional<Map<Bytes32, Bytes>> processResponse(
+  protected Optional<Map<Bytes, Bytes>> processResponse(
       final boolean streamClosed, final MessageData message, final EthPeer peer) {
-
     if (streamClosed) {
       // We don't record this as a useless response because it's impossible to know if a peer has
       // the data we're requesting.
       return Optional.of(emptyMap());
     }
-    final ByteCodesMessage byteCodesMessage = ByteCodesMessage.readFrom(message);
-    final ArrayDeque<Bytes> bytecodes = byteCodesMessage.bytecodes(true).codes();
-    if (bytecodes.size() > codeHashes.size()) {
-      // Can't be the response to our request
-      return Optional.empty();
-    }
-    return mapCodeByHash(bytecodes);
+    final TrieNodes trieNodes = TrieNodes.readFrom(message);
+    final ArrayDeque<Bytes> nodes = trieNodes.nodes(true);
+    return mapNodeDataByPath(nodes);
   }
 
-  private Optional<Map<Bytes32, Bytes>> mapCodeByHash(final ArrayDeque<Bytes> bytecodes) {
-    final Map<Bytes32, Bytes> codeByHash = new HashMap<>();
-    for (int i = 0; i < bytecodes.size(); i++) {
-      final Hash hash = Hash.hash(bytecodes.get(i));
-      if (codeHashes.get(i).equals(hash)) {
-        codeByHash.put(hash, bytecodes.get(i));
-      }
-    }
-    return Optional.of(codeByHash);
+  private Optional<Map<Bytes, Bytes>> mapNodeDataByPath(final ArrayDeque<Bytes> nodeData) {
+    final Map<Bytes, Bytes> nodeDataByPath = new HashMap<>();
+    paths.forEach(
+        list -> {
+          int i = 1;
+          if (!nodeData.isEmpty() && i == list.size()) {
+            Bytes bytes = nodeData.removeFirst();
+            nodeDataByPath.put(list.get(0), bytes);
+          } else {
+            while (!nodeData.isEmpty() && i < list.size()) {
+              Bytes bytes = nodeData.removeFirst();
+              nodeDataByPath.put(Bytes.concatenate(list.get(0), list.get(i)), bytes);
+              i++;
+            }
+          }
+        });
+    return Optional.of(nodeDataByPath);
   }
 }

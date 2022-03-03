@@ -71,9 +71,10 @@ public class GetStorageRangeFromPeerTask
     return sendRequestToPeer(
         peer -> {
           LOG.info(
-              "Requesting storage range [{} ,{}] for accounts from {} .",
+              "Requesting storage range [{} ,{}] for account {} from {} .",
               startKeyHash,
               endKeyHash,
+              ((accountHashes.size() > 1) ? "..." : accountHashes.get(0).toHexString()),
               peer);
           return peer.getSnapStorageRange(
               blockHeader.getStateRoot(), accountHashes, startKeyHash, endKeyHash);

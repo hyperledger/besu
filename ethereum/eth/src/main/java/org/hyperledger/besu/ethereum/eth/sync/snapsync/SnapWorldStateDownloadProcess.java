@@ -33,13 +33,13 @@ import org.hyperledger.besu.services.pipeline.WritePipe;
 import org.hyperledger.besu.services.tasks.Task;
 import org.hyperledger.besu.util.ExceptionUtils;
 
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("UnusedVariable")
 public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapWorldStateDownloadProcess.class);
@@ -131,7 +131,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
 
   public static class Builder {
 
-    private int hashCountPerRequest;
+    private int taskCountPerRequest;
     private int maxOutstandingRequests;
     private SnapWorldDownloadState downloadState;
     private MetricsSystem metricsSystem;
@@ -140,9 +140,15 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
     private SnapSyncState snapSyncState;
     private PersistDataStep persistDataStep;
     private CompleteTaskStep completeTaskStep;
+    private PivotBlockManager<SnapDataRequest> pivotBlockManager;
 
-    public Builder hashCountPerRequest(final int hashCountPerRequest) {
-      this.hashCountPerRequest = hashCountPerRequest;
+    public Builder taskCountPerRequest(final int taskCountPerRequest) {
+      this.taskCountPerRequest = taskCountPerRequest;
+      return this;
+    }
+
+    public Builder pivotBlockManager(final PivotBlockManager<SnapDataRequest> pivotBlockManager) {
+      this.pivotBlockManager = pivotBlockManager;
       return this;
     }
 
@@ -196,7 +202,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
       checkNotNull(metricsSystem);
 
       // Room for the requests we expect to do in parallel plus some buffer but not unlimited.
-      final int bufferCapacity = 1000000;
+      final int bufferCapacity = taskCountPerRequest * 2;
       final LabelledMetric<Counter> outputCounter =
           metricsSystem.createLabelledCounter(
               BesuMetricCategory.SYNCHRONIZER,
@@ -226,16 +232,15 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   "world_state_download")
               .thenProcess(
                   "checkNewPivotBlock",
-                  task -> {
-                    downloadState.checkNewPivotBlock(snapSyncState);
-                    return task;
+                  tasks -> {
+                    pivotBlockManager.check(__ -> {});
+                    return tasks;
                   })
               .thenProcessAsync(
                   "batchDownloadData",
-                  requestTask ->
-                      requestDataStep.requestAccountData(requestTask, snapSyncState, downloadState),
+                  requestTask -> requestDataStep.requestAccountData(requestTask),
                   maxOutstandingRequests)
-              .thenProcess("batchPersistData", task -> persistDataStep.persist(task, downloadState))
+              .thenProcess("batchPersistData", task -> persistDataStep.persist(task))
               .andFinishWith("batchDataDownloaded", requestsToComplete::put);
 
       final Pipeline<Task<SnapDataRequest>> fetchStorageDataPipeline =
@@ -247,19 +252,18 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   outputCounter,
                   true,
                   "world_state_download")
-              .inBatches(1024)
+              .inBatches(taskCountPerRequest)
               .thenProcess(
                   "checkNewPivotBlock",
                   tasks -> {
-                    downloadState.checkNewPivotBlock(snapSyncState);
+                    pivotBlockManager.check(__ -> {});
                     return tasks;
                   })
               .thenProcessAsync(
                   "batchDownloadData",
-                  requestTask ->
-                      requestDataStep.requestStorage(requestTask, snapSyncState, downloadState),
+                  requestTask -> requestDataStep.requestStorage(requestTask),
                   maxOutstandingRequests)
-              .thenProcess("batchPersistData", task -> persistDataStep.persist(task, downloadState))
+              .thenProcess("batchPersistData", task -> persistDataStep.persist(task))
               .andFinishWith(
                   "batchDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
 
@@ -272,22 +276,20 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   outputCounter,
                   true,
                   "world_state_download")
-              .inBatches(1)
               .thenProcess(
                   "checkNewPivotBlock",
-                  task -> {
-                    downloadState.checkNewPivotBlock(snapSyncState);
-                    return task;
+                  tasks -> {
+                    pivotBlockManager.check(__ -> {});
+                    return tasks;
                   })
               .thenProcessAsync(
                   "batchDownloadData",
-                  requestTask ->
-                      requestDataStep.requestStorage(requestTask, snapSyncState, downloadState),
+                  requestTask -> requestDataStep.requestStorage(List.of(requestTask)),
                   maxOutstandingRequests)
               .thenProcess(
                   "batchPersistData",
                   task -> {
-                    persistDataStep.persist(task, downloadState);
+                    persistDataStep.persist(task);
                     return task;
                   })
               .andFinishWith(
@@ -303,7 +305,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   true,
                   "code_blocks_download_pipeline")
               .inBatches(
-                  1024,
+                  taskCountPerRequest,
                   tasks ->
                       84
                           - (int)
@@ -315,18 +317,18 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                                   .count())
               .thenProcess(
                   "checkNewPivotBlock",
-                  task -> {
-                    downloadState.checkNewPivotBlock(snapSyncState);
-                    return task;
+                  tasks -> {
+                    pivotBlockManager.check(blockHeader -> downloadState.clearTrieNodes());
+                    return tasks;
                   })
               .thenProcessAsync(
                   "batchDownloadCodeBlocksData",
-                  tasks -> requestDataStep.requestCode(tasks, snapSyncState, downloadState),
+                  tasks -> requestDataStep.requestCode(tasks),
                   maxOutstandingRequests)
               .thenProcess(
                   "batchPersistData",
                   task -> {
-                    persistDataStep.persist(task, downloadState);
+                    persistDataStep.persist(task);
                     return task;
                   })
               .andFinishWith(
@@ -346,24 +348,22 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   task -> loadLocalDataStep.loadLocalData(task, requestsToComplete),
                   3,
                   bufferCapacity)
-              .inBatches(1024)
+              .inBatches(taskCountPerRequest)
               .thenProcess(
                   "checkNewPivotBlock",
-                  task -> {
-                    downloadState.checkNewPivotBlock(snapSyncState);
-                    return task;
+                  tasks -> {
+                    pivotBlockManager.check(blockHeader -> downloadState.clearTrieNodes());
+                    return tasks;
                   })
               .thenProcessAsync(
                   "batchDownloadData",
-                  requestTask ->
-                      requestDataStep.requestTrieNodeByPath(
-                          requestTask, snapSyncState, downloadState),
+                  tasks -> requestDataStep.requestTrieNodeByPath(tasks),
                   maxOutstandingRequests)
               .thenProcess(
                   "batchPersistData",
-                  task -> {
-                    persistDataStep.persist(task, downloadState);
-                    return task;
+                  tasks -> {
+                    persistDataStep.persist(tasks);
+                    return tasks;
                   })
               .andFinishWith(
                   "batchDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));

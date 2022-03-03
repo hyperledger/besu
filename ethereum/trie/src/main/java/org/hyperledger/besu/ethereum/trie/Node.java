@@ -71,4 +71,8 @@ public interface Node<V> {
 
   /** Unloads the node if it is, for example, a StoredNode. */
   default void unload() {}
+
+  boolean isNeedHeal();
+
+  void markNeedHeal();
 }
