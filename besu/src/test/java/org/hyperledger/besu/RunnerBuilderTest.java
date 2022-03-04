@@ -254,9 +254,11 @@ public final class RunnerBuilderTest {
   }
 
   @Test
-  public void noEngineApiNoServiceForMethods() {
-    JsonRpcConfiguration defaultPlusEng = JsonRpcConfiguration.createDefault();
-    defaultPlusEng.setEnabled(true);
+  public void whenEngineApiAddedWebSocketReadyOnDefaultPort() {
+    WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
+    wsRpc.setEnabled(true);
+    WebSocketConfiguration engineWsRpc = WebSocketConfiguration.createEngineDefault();
+    engineWsRpc.setEnabled(true);
     EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
     MergeConfigOptions.setMergeEnabled(true);
@@ -274,9 +276,49 @@ public final class RunnerBuilderTest {
             .ethNetworkConfig(mockMainnet)
             .metricsSystem(mock(ObservableMetricsSystem.class))
             .permissioningService(mock(PermissioningServiceImpl.class))
-            .jsonRpcConfiguration(defaultPlusEng)
+            .jsonRpcConfiguration(JsonRpcConfiguration.createDefault())
+            .webSocketConfiguration(wsRpc)
+            .engineWebSocketConfiguration(engineWsRpc)
             .graphQLConfiguration(mock(GraphQLConfiguration.class))
-            .webSocketConfiguration(mock(WebSocketConfiguration.class))
+            .metricsConfiguration(mock(MetricsConfiguration.class))
+            .vertx(Vertx.vertx())
+            .dataDir(dataDir.getRoot().toPath())
+            .storageProvider(mock(KeyValueStorageProvider.class))
+            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
+            .rpcEndpointService(new RpcEndpointServiceImpl())
+            .besuPluginContext(mock(BesuPluginContextImpl.class))
+            .build();
+
+    assertThat(runner.getWebSocketPort()).isPresent();
+    assertThat(runner.getEngineWebsocketPort()).isPresent();
+  }
+
+  @Test
+  public void noEngineApiNoServiceForMethods() {
+    JsonRpcConfiguration defaultRpcConfig = JsonRpcConfiguration.createDefault();
+    defaultRpcConfig.setEnabled(true);
+    WebSocketConfiguration defaultWebSockConfig = WebSocketConfiguration.createDefault();
+    defaultWebSockConfig.setEnabled(true);
+    EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
+    when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
+    MergeConfigOptions.setMergeEnabled(true);
+    when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
+
+    final Runner runner =
+        new RunnerBuilder()
+            .discovery(true)
+            .p2pListenInterface("0.0.0.0")
+            .p2pListenPort(30303)
+            .p2pAdvertisedHost("127.0.0.1")
+            .p2pEnabled(true)
+            .natMethod(NatMethod.NONE)
+            .besuController(besuController)
+            .ethNetworkConfig(mockMainnet)
+            .metricsSystem(mock(ObservableMetricsSystem.class))
+            .permissioningService(mock(PermissioningServiceImpl.class))
+            .jsonRpcConfiguration(defaultRpcConfig)
+            .graphQLConfiguration(mock(GraphQLConfiguration.class))
+            .webSocketConfiguration(defaultWebSockConfig)
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
             .dataDir(dataDir.getRoot().toPath())
@@ -288,5 +330,6 @@ public final class RunnerBuilderTest {
 
     assertThat(runner.getJsonRpcPort()).isPresent();
     assertThat(runner.getEngineJsonRpcPort()).isEmpty();
+    assertThat(runner.getEngineWebsocketPort()).isEmpty();
   }
 }

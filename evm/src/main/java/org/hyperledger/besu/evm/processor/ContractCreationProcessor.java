@@ -139,7 +139,12 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
       }
     } else {
-      if (contractValidationRules.stream().allMatch(rule -> rule.validate(frame))) {
+      final var invalidReason =
+          contractValidationRules.stream()
+              .map(rule -> rule.validate(frame))
+              .filter(Optional::isPresent)
+              .findFirst();
+      if (invalidReason.isEmpty()) {
         frame.decrementRemainingGas(depositFee);
 
         // Finalize contract creation, setting the contract code.
@@ -153,10 +158,10 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
             frame.getRemainingGas());
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
       } else {
-        frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+        Optional<ExceptionalHaltReason> exceptionalHaltReason = invalidReason.get();
+        frame.setExceptionalHaltReason(exceptionalHaltReason);
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
-        operationTracer.traceAccountCreationResult(
-            frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+        operationTracer.traceAccountCreationResult(frame, exceptionalHaltReason);
       }
     }
   }

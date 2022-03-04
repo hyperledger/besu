@@ -300,7 +300,7 @@ public class TestContextBuilder {
             .coinbase(AddressHelpers.ofValue(1))
             .minTransactionGasPrice(Wei.ZERO)
             .extraData(Bytes.wrap("Ibft Int tests".getBytes(UTF_8)))
-            .enabled(true)
+            .miningEnabled(true)
             .build();
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();

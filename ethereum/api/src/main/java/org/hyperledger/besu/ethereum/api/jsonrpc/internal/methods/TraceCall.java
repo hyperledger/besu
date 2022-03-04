@@ -23,14 +23,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.MixInIgnoreRevertReason;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.api.util.TraceUtils;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -38,18 +36,14 @@ import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import java.util.Optional;
 import java.util.Set;
 
-public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMethod {
-  private final ProtocolSchedule protocolSchedule;
-  private final TransactionSimulator transactionSimulator;
-
+public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
   public TraceCall(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionSimulator transactionSimulator) {
-    super(blockchainQueries);
-
-    this.protocolSchedule = protocolSchedule;
-    this.transactionSimulator = transactionSimulator;
+    super(blockchainQueries, protocolSchedule, transactionSimulator);
+    // The trace_call specification does not output the revert reason, so we have to remove it
+    mapper.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
   }
 
   @Override
@@ -103,21 +97,7 @@ public class TraceCall extends AbstractBlockParameterMethod implements JsonRpcMe
 
     final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
 
-    return TraceUtils.getTraceCallResult(
+    return getTraceCallResult(
         protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block);
-  }
-
-  private TransactionValidationParams buildTransactionValidationParams() {
-    return ImmutableTransactionValidationParams.builder()
-        .from(TransactionValidationParams.transactionSimulator())
-        .build();
-  }
-
-  private TraceOptions buildTraceOptions(final Set<TraceTypeParameter.TraceType> traceTypes) {
-    return new TraceOptions(
-        traceTypes.contains(TraceTypeParameter.TraceType.STATE_DIFF),
-        false,
-        traceTypes.contains(TraceTypeParameter.TraceType.TRACE)
-            || traceTypes.contains(TraceTypeParameter.TraceType.VM_TRACE));
   }
 }

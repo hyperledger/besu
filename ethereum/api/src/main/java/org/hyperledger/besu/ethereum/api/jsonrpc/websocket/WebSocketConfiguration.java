@@ -31,6 +31,7 @@ import com.google.common.base.MoreObjects;
 public class WebSocketConfiguration {
   public static final String DEFAULT_WEBSOCKET_HOST = "127.0.0.1";
   public static final int DEFAULT_WEBSOCKET_PORT = 8546;
+  public static final int DEFAULT_WEBSOCKET_ENGINE_PORT = 8551;
   public static final int DEFAULT_WEBSOCKET_MAX_FRAME_SIZE = 1024 * 1024;
   public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
 
@@ -57,6 +58,14 @@ public class WebSocketConfiguration {
     config.setTimeoutSec(TimeoutOptions.defaultOptions().getTimeoutSeconds());
     config.setMaxActiveConnections(DEFAULT_MAX_ACTIVE_CONNECTIONS);
     config.setMaxFrameSize(DEFAULT_WEBSOCKET_MAX_FRAME_SIZE);
+    return config;
+  }
+
+  public static WebSocketConfiguration createEngineDefault() {
+    final WebSocketConfiguration config = createDefault();
+    config.setPort(DEFAULT_WEBSOCKET_ENGINE_PORT);
+    config.setRpcApis(Arrays.asList("ENGINE", "ETH"));
+    config.setHostsAllowlist(Arrays.asList("localhost", "127.0.0.1"));
     return config;
   }
 

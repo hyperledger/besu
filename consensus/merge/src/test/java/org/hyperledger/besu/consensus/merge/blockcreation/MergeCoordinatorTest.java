@@ -23,6 +23,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -64,6 +65,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   @Mock AbstractPendingTransactionsSorter mockSorter;
   @Mock MergeContext mergeContext;
+  @Mock BackwardsSyncContext backwardsSyncContext;
 
   private MergeCoordinator coordinator;
   private ProtocolContext protocolContext;
@@ -102,7 +104,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             mockProtocolSchedule,
             mockSorter,
             new MiningParameters.Builder().coinbase(coinbase).build(),
-            mock(BackwardsSyncContext.class));
+            backwardsSyncContext);
   }
 
   @Test
@@ -320,6 +322,26 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     verify(blockchain, never()).setFinalized(lastFinalizedBlock.getHash());
     verify(mergeContext, never()).setFinalized(lastFinalizedHeader);
+  }
+
+  @Test
+  public void assertGetOrSyncForBlockAlreadyPresent() {
+    BlockHeader mockHeader =
+        headerGenerator.parentHash(Hash.fromHexStringLenient("0xdead")).buildHeader();
+    when(blockchain.getBlockHeader(mockHeader.getHash())).thenReturn(Optional.of(mockHeader));
+    var res = coordinator.getOrSyncHeaderByHash(mockHeader.getHash());
+
+    assertThat(res).isPresent();
+  }
+
+  @Test
+  public void assertGetOrSyncForBlockNotPresent() {
+    BlockHeader mockHeader =
+        headerGenerator.parentHash(Hash.fromHexStringLenient("0xbeef")).buildHeader();
+    var res = coordinator.getOrSyncHeaderByHash(mockHeader.getHash());
+
+    assertThat(res).isNotPresent();
+    verify(backwardsSyncContext, times(1)).syncBackwardsUntil(mockHeader.getHash());
   }
 
   @Test

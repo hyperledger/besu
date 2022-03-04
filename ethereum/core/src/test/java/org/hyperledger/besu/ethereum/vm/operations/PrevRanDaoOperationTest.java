@@ -34,18 +34,18 @@ import org.junit.Test;
 public class PrevRanDaoOperationTest {
 
   @Test
-  public void pushesRandWhenDifficultyZero() {
+  public void pushesPrevRandaoWhenDifficultyZero() {
     PrevRanDaoOperation op = new PrevRanDaoOperation(new LondonGasCalculator());
     MessageFrame messageFrame = mock(MessageFrame.class);
     BlockValues blockHeader = mock(BlockValues.class);
-    Bytes32 rand = Bytes32.fromHexString("0xb0b0face");
+    Bytes32 prevRandao = Bytes32.fromHexString("0xb0b0face");
     when(blockHeader.getDifficultyBytes()).thenReturn(UInt256.ZERO);
-    when(blockHeader.getMixHashOrRandom()).thenReturn(rand);
+    when(blockHeader.getMixHashOrPrevRandao()).thenReturn(prevRandao);
     when(messageFrame.getBlockValues()).thenReturn(blockHeader);
     EVM evm = mock(EVM.class);
     Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
     assertThat(r.getHaltReason()).isNotPresent();
-    verify(messageFrame).pushStackItem(rand);
+    verify(messageFrame).pushStackItem(prevRandao);
   }
 
   @Test
@@ -53,10 +53,10 @@ public class PrevRanDaoOperationTest {
     PrevRanDaoOperation op = new PrevRanDaoOperation(new LondonGasCalculator());
     MessageFrame messageFrame = mock(MessageFrame.class);
     BlockValues blockHeader = mock(BlockValues.class);
-    Bytes32 rand = Bytes32.fromHexString("0xb0b0face");
+    Bytes32 prevRandao = Bytes32.fromHexString("0xb0b0face");
     Bytes difficulty = Bytes.random(32);
     when(blockHeader.getDifficultyBytes()).thenReturn(difficulty);
-    when(blockHeader.getMixHashOrRandom()).thenReturn(rand);
+    when(blockHeader.getMixHashOrPrevRandao()).thenReturn(prevRandao);
     when(messageFrame.getBlockValues()).thenReturn(blockHeader);
     EVM evm = mock(EVM.class);
     Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
