@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockExcep
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -36,6 +37,8 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   private final ValidationPolicy headerValidationPolicy;
   private final ValidationPolicy ommerValidationPolicy;
   private final EthContext ethContext;
+  private long accumulatedTime = 0L;
+  private OptionalLong logStartBlock = OptionalLong.empty();
 
   public FastImportBlocksStep(
       final ProtocolSchedule protocolSchedule,
@@ -61,20 +64,28 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
             blockWithReceipts.getHash());
       }
     }
-    final long firstBlock = blocksWithReceipts.get(0).getNumber();
+    if (logStartBlock.isEmpty()) {
+      logStartBlock = OptionalLong.of(blocksWithReceipts.get(0).getNumber());
+    }
     final long lastBlock = blocksWithReceipts.get(blocksWithReceipts.size() - 1).getNumber();
     int peerCount = -1; // ethContext is not available in tests
     if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
       peerCount = ethContext.getEthPeers().peerCount();
     }
     final long endTime = System.nanoTime();
-    LOG.info(
-        "Completed importing chain segment {} to {} ({} blocks in {}ms), Peers: {}",
-        firstBlock,
-        lastBlock,
-        blocksWithReceipts.size(),
-        TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS),
-        peerCount);
+
+    accumulatedTime += TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS);
+    if (accumulatedTime > 10 * 1000L) {
+      LOG.info(
+          "Completed importing chain segment {} to {} ({} blocks in {}ms), Peers: {}",
+          logStartBlock.getAsLong(),
+          lastBlock,
+          lastBlock - logStartBlock.getAsLong() + 1,
+          accumulatedTime,
+          peerCount);
+      accumulatedTime = 0L;
+      logStartBlock = OptionalLong.empty();
+    }
   }
 
   private boolean importBlock(final BlockWithReceipts blockWithReceipts) {
