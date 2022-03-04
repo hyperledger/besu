@@ -31,15 +31,23 @@ import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-public class FullSyncChainDownloaderForkTest {
+@RunWith(Parameterized.class)
+public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
 
   protected ProtocolSchedule protocolSchedule;
   protected EthProtocolManager ethProtocolManager;
@@ -52,12 +60,24 @@ public class FullSyncChainDownloaderForkTest {
   private BlockchainSetupUtil otherBlockchainSetup;
   protected Blockchain otherBlockchain;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+  private static final Difficulty TARGET_TERMINAL_DIFFICULTY = Difficulty.of(1_000_000L);
+
+  @Parameters
+  public static Collection<Object[]> data() {
+    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+  }
+
+  private final DataStorageFormat storageFormat;
+
+  public FullSyncChainDownloaderTotalTerminalDifficultyTest(final DataStorageFormat storageFormat) {
+    this.storageFormat = storageFormat;
+  }
 
   @Before
   public void setupTest() {
-    localBlockchainSetup = BlockchainSetupUtil.forUpgradedFork();
+    localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();
-    otherBlockchainSetup = BlockchainSetupUtil.forOutdatedFork();
+    otherBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     otherBlockchain = otherBlockchainSetup.getBlockchain();
 
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
@@ -78,7 +98,9 @@ public class FullSyncChainDownloaderForkTest {
     ethProtocolManager.stop();
   }
 
-  private ChainDownloader downloader(final SynchronizerConfiguration syncConfig) {
+  private ChainDownloader downloader(
+      final SynchronizerConfiguration syncConfig,
+      final SyncTerminationCondition terminalCondition) {
     return FullSyncChainDownloader.create(
         syncConfig,
         protocolSchedule,
@@ -86,12 +108,7 @@ public class FullSyncChainDownloaderForkTest {
         ethContext,
         syncState,
         metricsSystem,
-        SyncTerminationCondition.never());
-  }
-
-  private ChainDownloader downloader() {
-    final SynchronizerConfiguration syncConfig = syncConfigBuilder().build();
-    return downloader(syncConfig);
+        terminalCondition);
   }
 
   private SynchronizerConfiguration.Builder syncConfigBuilder() {
@@ -99,32 +116,67 @@ public class FullSyncChainDownloaderForkTest {
   }
 
   @Test
-  public void disconnectsFromPeerOnBadFork() {
-    otherBlockchainSetup.importAllBlocks();
-    final Difficulty localTd = localBlockchain.getChainHead().getTotalDifficulty();
+  public void syncsFullyAndStopsWhenTTDReached() {
+    otherBlockchainSetup.importFirstBlocks(30);
+    final long targetBlock = otherBlockchain.getChainHeadBlockNumber();
+    // Sanity check
+    assertThat(targetBlock).isGreaterThan(localBlockchain.getChainHeadBlockNumber());
 
+    final RespondingEthPeer peer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, otherBlockchain);
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(otherBlockchain);
-    final RespondingEthPeer peer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, localTd.add(100), 100);
 
-    final ChainDownloader downloader = downloader();
-    downloader.start();
+    final SynchronizerConfiguration syncConfig =
+        syncConfigBuilder().downloaderChainSegmentSize(1).downloaderParallelism(1).build();
+    final ChainDownloader downloader =
+        downloader(
+            syncConfig,
+            SyncTerminationCondition.difficulty(TARGET_TERMINAL_DIFFICULTY, localBlockchain));
+    final CompletableFuture<Void> future = downloader.start();
 
-    // Process until the sync target is selected
+    assertThat(future.isDone()).isFalse();
+
     peer.respondWhileOtherThreadsWork(responder, () -> syncState.syncTarget().isEmpty());
-
-    // Check that we picked our peer
     assertThat(syncState.syncTarget()).isPresent();
     assertThat(syncState.syncTarget().get().peer()).isEqualTo(peer.getEthPeer());
 
-    // Process until the sync target is cleared
-    peer.respondWhileOtherThreadsWork(responder, () -> syncState.syncTarget().isPresent());
+    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
 
-    // We should have disconnected from our peer on the invalid chain
-    assertThat(peer.getEthPeer().isDisconnected()).isTrue();
-    assertThat(peer.getPeerConnection().getDisconnectReason())
-        .contains(DisconnectReason.BREACH_OF_PROTOCOL);
-    assertThat(syncState.syncTarget()).isEmpty();
+    assertThat(localBlockchain.getChainHead().getTotalDifficulty())
+        .isGreaterThan(TARGET_TERMINAL_DIFFICULTY);
+
+    assertThat(future.isDone()).isTrue();
+  }
+
+  @Test
+  public void syncsFullyAndContinuesWhenTTDNotSpecified() {
+    otherBlockchainSetup.importFirstBlocks(30);
+    final long targetBlock = otherBlockchain.getChainHeadBlockNumber();
+    // Sanity check
+    assertThat(targetBlock).isGreaterThan(localBlockchain.getChainHeadBlockNumber());
+
+    final RespondingEthPeer peer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, otherBlockchain);
+    final RespondingEthPeer.Responder responder =
+        RespondingEthPeer.blockchainResponder(otherBlockchain);
+
+    final SynchronizerConfiguration syncConfig =
+        syncConfigBuilder().downloaderChainSegmentSize(1).downloaderParallelism(1).build();
+    final ChainDownloader downloader = downloader(syncConfig, SyncTerminationCondition.never());
+    final CompletableFuture<Void> future = downloader.start();
+
+    assertThat(future.isDone()).isFalse();
+
+    peer.respondWhileOtherThreadsWork(responder, () -> !syncState.syncTarget().isPresent());
+    assertThat(syncState.syncTarget()).isPresent();
+    assertThat(syncState.syncTarget().get().peer()).isEqualTo(peer.getEthPeer());
+
+    peer.respondWhileOtherThreadsWork(
+        responder, () -> localBlockchain.getChainHeadBlockNumber() < targetBlock);
+
+    assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(targetBlock);
+
+    assertThat(future.isDone()).isFalse();
   }
 }
