@@ -1,0 +1,35 @@
+{
+  "comment" : "Self destruct called in constructor with balance being returned to sender (from field)",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0xbe1b55619f540ea8a7d7e9330ea642a195afe0d6d60ced6f463da67b46d3f503", [ ] ],
+    "id" : 370
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "creationMethod":"create",
+        "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+        "gas" : "0xff2f0a",
+        "init" : "0x60806040523373ffffffffffffffffffffffffffffffffffffffff16fffe",
+        "value" : "0x0"
+      },
+      "blockHash" : "0x96a82625443a337a5bfb912fd96977156f380c68b0d33040afffdb09c4cdbd52",
+      "blockNumber" : 28,
+      "result" : {
+        "address" : "0xa4392264a2d8c998901d10c154c91725b1bf0158",
+        "code" : "0x",
+        "gasUsed" : "0x13a2"
+      },
+      "subtraces" : 1,
+      "traceAddress" : [ ],
+      "transactionHash" : "0xbe1b55619f540ea8a7d7e9330ea642a195afe0d6d60ced6f463da67b46d3f503",
+      "transactionPosition" : 0,
+      "type" : "create"
+    },
+    "id" : 370
+  },
+  "statusCode" : 200
+}
