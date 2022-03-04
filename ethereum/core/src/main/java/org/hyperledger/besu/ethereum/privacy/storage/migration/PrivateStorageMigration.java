@@ -40,7 +40,6 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("deprecation")
 public class PrivateStorageMigration {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivateStorageMigration.class);

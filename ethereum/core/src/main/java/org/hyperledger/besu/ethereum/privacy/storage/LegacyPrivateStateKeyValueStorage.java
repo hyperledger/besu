@@ -29,7 +29,6 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-@SuppressWarnings("deprecation")
 @Deprecated
 public class LegacyPrivateStateKeyValueStorage implements LegacyPrivateStateStorage {
 

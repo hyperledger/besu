@@ -61,7 +61,6 @@ public class PrivacyKeyValueStorageProvider implements PrivacyStorageProvider {
     return new PrivateStateKeyValueStorage(privateStateKeyValueStorage);
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public LegacyPrivateStateStorage createLegacyPrivateStateStorage() {
     return new LegacyPrivateStateKeyValueStorage(privateStateKeyValueStorage);

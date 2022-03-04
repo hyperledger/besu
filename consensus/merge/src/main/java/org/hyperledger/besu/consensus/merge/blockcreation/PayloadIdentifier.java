@@ -40,7 +40,6 @@ public class PayloadIdentifier implements Quantity {
     return new PayloadIdentifier(((long) parentHash.toHexString().hashCode()) ^ timestamp);
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public Number getValue() {
     return getAsBigInteger();
