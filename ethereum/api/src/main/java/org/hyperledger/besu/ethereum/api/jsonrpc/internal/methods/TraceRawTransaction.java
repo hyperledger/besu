@@ -56,10 +56,10 @@ public class TraceRawTransaction extends AbstractTraceByBlock implements JsonRpc
     return transactionSimulator != null ? RpcMethod.TRACE_RAW_TRANSACTION.getMethodName() : null;
   }
 
-  // TODO: remove this
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
+    // this method does not get called because response() does the work
     return null;
   }
 
