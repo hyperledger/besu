@@ -34,7 +34,6 @@
 | Simon Dudley     | siladu           | siladu           |
 | Taccat Isid      | taccatisid       | taccatisid       |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
-| Vijay Michalik   | vmichalik        | VijayMichalik    |
 
 ## Emeritus Maintainers
 
@@ -48,6 +47,7 @@
 | Trent Mohay      | rain-on          | trent.mohay      |
 | Rob Dawson       | rojotek          | RobDawson        |
 | Tim Beiko        | timbeiko         | timbeiko         |
+| Vijay Michalik   | vmichalik        | VijayMichalik    |
 
 ## Becoming a Maintainer
 

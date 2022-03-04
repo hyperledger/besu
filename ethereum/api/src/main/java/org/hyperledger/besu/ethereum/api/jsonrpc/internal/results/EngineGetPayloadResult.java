@@ -30,7 +30,7 @@ import org.apache.tuweni.bytes.Bytes32;
   "stateRoot",
   "receiptsRoot",
   "logsBloom",
-  "random",
+  "prevRandao",
   "blockNumber",
   "gasLimit",
   "gasUsed",
@@ -46,7 +46,7 @@ public class EngineGetPayloadResult {
   private final String stateRoot;
   private final String receiptsRoot;
   private final String logsBloom;
-  private final String random;
+  private final String prevRandao;
   private final String blockNumber;
   private final String gasLimit;
   private final String gasUsed;
@@ -69,7 +69,7 @@ public class EngineGetPayloadResult {
     this.timestamp = Quantity.create(header.getTimestamp());
     this.transactions = transactions;
     this.feeRecipient = header.getCoinbase().toString();
-    this.random = header.getRandom().map(Bytes32::toHexString).orElse(null);
+    this.prevRandao = header.getPrevRandao().map(Bytes32::toHexString).orElse(null);
   }
 
   @JsonGetter(value = "blockNumber")
@@ -92,9 +92,9 @@ public class EngineGetPayloadResult {
     return logsBloom;
   }
 
-  @JsonGetter(value = "random")
-  public String getRandom() {
-    return random;
+  @JsonGetter(value = "prevRandao")
+  public String getPrevRandao() {
+    return prevRandao;
   }
 
   @JsonGetter(value = "stateRoot")

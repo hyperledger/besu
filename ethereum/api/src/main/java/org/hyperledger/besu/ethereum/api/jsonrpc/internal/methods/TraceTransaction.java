@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.ethereum.api.util.TraceUtil.arrayNodeFromTraceStream;
-import static org.hyperledger.besu.ethereum.api.util.TraceUtil.resultByTransactionHash;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -28,19 +25,12 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.function.Supplier;
 
-public class TraceTransaction implements JsonRpcMethod {
-  private final Supplier<BlockTracer> blockTracerSupplier;
-
-  private final BlockchainQueries blockchainQueries;
-  private final ProtocolSchedule protocolSchedule;
-
+public class TraceTransaction extends AbstractTraceByHash implements JsonRpcMethod {
   public TraceTransaction(
       final Supplier<BlockTracer> blockTracerSupplier,
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries) {
-    this.blockTracerSupplier = blockTracerSupplier;
-    this.blockchainQueries = blockchainQueries;
-    this.protocolSchedule = protocolSchedule;
+    super(blockTracerSupplier, blockchainQueries, protocolSchedule);
   }
 
   @Override
@@ -51,11 +41,8 @@ public class TraceTransaction implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Hash transactionHash = requestContext.getRequiredParameter(0, Hash.class);
-
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
-        arrayNodeFromTraceStream(
-            resultByTransactionHash(
-                transactionHash, blockchainQueries, blockTracerSupplier, protocolSchedule)));
+        arrayNodeFromTraceStream(resultByTransactionHash(transactionHash)));
   }
 }

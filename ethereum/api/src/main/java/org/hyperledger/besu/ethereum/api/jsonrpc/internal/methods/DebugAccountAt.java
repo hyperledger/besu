@@ -39,6 +39,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
   private final Supplier<BlockTracer> blockTracerSupplier;
 
@@ -116,11 +118,20 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
           requestContext.getRequest().getId(), JsonRpcError.NO_ACCOUNT_FOUND);
     }
 
+    return debugAccountAtResult(
+        account.get().getCode(),
+        Quantity.create(account.get().getNonce()),
+        Quantity.create(account.get().getBalance()),
+        Quantity.create(account.get().getCodeHash()));
+  }
+
+  protected ImmutableDebugAccountAtResult debugAccountAtResult(
+      final Bytes code, final String nonce, final String balance, final String codeHash) {
     return ImmutableDebugAccountAtResult.builder()
-        .code(Quantity.create(account.get().getCode()))
-        .nonce(Quantity.create(account.get().getNonce()))
-        .balance(Quantity.create(account.get().getBalance()))
-        .codehash(Quantity.create(account.get().getCodeHash()))
+        .code(code.isEmpty() ? "0x0" : code.toHexString())
+        .nonce(nonce)
+        .balance(balance)
+        .codehash(codeHash)
         .build();
   }
 }

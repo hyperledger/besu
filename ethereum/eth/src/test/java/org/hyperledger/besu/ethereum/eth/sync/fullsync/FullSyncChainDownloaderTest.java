@@ -117,7 +117,13 @@ public class FullSyncChainDownloaderTest {
 
   private ChainDownloader downloader(final SynchronizerConfiguration syncConfig) {
     return FullSyncChainDownloader.create(
-        syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
+        syncConfig,
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        syncState,
+        metricsSystem,
+        SyncTerminationCondition.never());
   }
 
   private ChainDownloader downloader() {
