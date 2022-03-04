@@ -36,6 +36,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 public class TraceUtil {
+
+  private TraceUtil() {
+    throw new IllegalStateException("Utility class");
+  }
+
   public static Stream<FlatTrace> resultByTransactionHash(
       final Hash transactionHash,
       final BlockchainQueries blockchainQueries,
@@ -45,8 +50,7 @@ public class TraceUtil {
         .transactionByHash(transactionHash)
         .flatMap(TransactionWithMetadata::getBlockNumber)
         .flatMap(blockNumber -> blockchainQueries.getBlockchain().getBlockByNumber(blockNumber))
-        .map(
-            (block) -> getTraceBlock(block, transactionHash, blockTracerSupplier, protocolSchedule))
+        .map(block -> getTraceBlock(block, transactionHash, blockTracerSupplier, protocolSchedule))
         .orElse(Stream.empty());
   }
 
@@ -84,7 +88,7 @@ public class TraceUtil {
       final Block block) {
     return FlatTraceGenerator.generateFromTransactionTraceAndBlock(
             protocolSchedule, transactionTrace, block)
-        .map(trace -> (FlatTrace) trace);
+        .map(FlatTrace.class::cast);
   }
 
   public static JsonNode arrayNodeFromTraceStream(final Stream<FlatTrace> traceStream) {
