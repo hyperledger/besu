@@ -1,0 +1,35 @@
+{
+  "comment" : "CREATE",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0xd32c538fd1b3ef854c04ae39925dc9e849b568b92ea388f778b794851ab37f7c", [ "0x0" ] ],
+    "id" : 307
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "creationMethod": "create",
+        "from" : "0x0130000000000000000000000000000000000000",
+        "gas" : "0xfb3412",
+        "init" : "0x600160015560015460025561ffff6000526002601ef3",
+        "value" : "0x0"
+      },
+      "blockHash" : "0x82066eb29b4f58f6ee0f8190e45efb31b3708397f0c147bf7a9bd3d1cae94e9b",
+      "blockNumber" : 20,
+      "result" : {
+        "address" : "0xaac0627078c038eb3d06e04b57d020fe212be97d",
+        "code" : "0xffff",
+        "gasUsed" : "0xa10e"
+      },
+      "subtraces" : 0,
+      "traceAddress" : [ 0 ],
+      "transactionHash" : "0xd32c538fd1b3ef854c04ae39925dc9e849b568b92ea388f778b794851ab37f7c",
+      "transactionPosition" : 0,
+      "type" : "create"
+    },
+    "id" : 307
+  },
+  "statusCode" : 200
+}
