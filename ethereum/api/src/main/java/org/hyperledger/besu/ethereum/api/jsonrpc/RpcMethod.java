@@ -157,6 +157,7 @@ public enum RpcMethod {
   RPC_MODULES("rpc_modules"),
   TRACE_BLOCK("trace_block"),
   TRACE_CALL("trace_call"),
+  TRACE_GET("trace_get"),
   TRACE_FILTER("trace_filter"),
   TRACE_RAW_TRANSACTION("trace_rawTransaction"),
   TRACE_REPLAY_BLOCK_TRANSACTIONS("trace_replayBlockTransactions"),
