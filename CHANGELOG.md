@@ -5,6 +5,7 @@
 ### Additions and Improvements
 - Execution layer (The Merge):
   - Execution specific RPC endpoint [[#3378](https://github.com/hyperledger/besu/issues/3378)
+- Tracing APIs: trace_rawTransaction, trace_get
 
 ### Bug Fixes
 - Reject locally-sourced transactions below the minimum gas price when not mining. [#3397](https://github.com/hyperledger/besu/pull/3397)
@@ -24,7 +25,6 @@
   - Add core components: controller builder, protocol scheduler, coordinator, block creator and processor. [#3461](https://github.com/hyperledger/besu/pull/3461)
   - Execution specific RPC endpoint [#2914](https://github.com/hyperledger/besu/issues/2914), [#3350](https://github.com/hyperledger/besu/pull/3350)
 - QBFT consensus algorithm is production ready
-- Tracing APIs: trace_rawTransaction
 
 ## Download Links
 - https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.1/besu-22.1.1.zip /  SHA256 cfff79e19e5f9a184d0b62886990698b77d019a0745ea63b5f9373870518173e
