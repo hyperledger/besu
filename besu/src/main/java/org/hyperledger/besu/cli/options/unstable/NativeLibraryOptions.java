@@ -22,8 +22,8 @@ public class NativeLibraryOptions {
       hidden = true,
       names = {"--Xsecp-native-enabled", "--Xsecp256k1-native-enabled"},
       description =
-          "Per default a native library is used for the signature algorithm."
-              + "If the Java implementation should be used instead, the parameter of this option has to be set to false",
+          "Per default a native library is used for the signature algorithm. "
+              + "If the Java implementation should be used instead, this option must be set to false",
       arity = "1")
   private final Boolean nativeSecp = Boolean.TRUE;
 
@@ -31,8 +31,8 @@ public class NativeLibraryOptions {
       hidden = true,
       names = {"--Xaltbn128-native-enabled"},
       description =
-          "Per default a native library is used for altbn128."
-              + "If the Java implementation should be used instead, the parameter of this option has to be set to false",
+          "Per default a native library is used for altbn128. "
+              + "If the Java implementation should be used instead, this option must be set to false",
       arity = "1")
   private final Boolean nativeAltbn128 = Boolean.TRUE;
 

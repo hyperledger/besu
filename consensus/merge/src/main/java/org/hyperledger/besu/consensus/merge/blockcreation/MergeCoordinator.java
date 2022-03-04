@@ -213,7 +213,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     if (optHeader.isPresent()) {
       debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
     } else {
-      debugLambda(LOG, "appending block hash {} to backward sync", () -> blockhash.toHexString());
+      debugLambda(LOG, "appending block hash {} to backward sync", blockhash::toHexString);
       backwardsSyncContext.syncBackwardsUntil(blockhash);
     }
     return optHeader;
