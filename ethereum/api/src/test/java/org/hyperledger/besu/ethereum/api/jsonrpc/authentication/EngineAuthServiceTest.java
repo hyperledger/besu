@@ -73,7 +73,48 @@ public class EngineAuthServiceTest {
             assertThat(event.get()).isNotNull();
           }
         };
+    auth.authenticate(token, authHandler);
+  }
 
+  @Test(expected = UnsecurableEngineApiException.class)
+  public void throwsOnShortKey() throws IOException, URISyntaxException {
+    Vertx vertx = mock(Vertx.class);
+    final Path userKey =
+        Paths.get(
+            ClassLoader.getSystemResource("authentication/ee-jwt-secret-too-short.hex").toURI());
+    Path dataDir = Files.createTempDirectory("besuUnitTest");
+    EngineAuthService auth = new EngineAuthService(vertx, Optional.of(userKey.toFile()), dataDir);
+    assertThat(auth).isNotNull();
+  }
+
+  @Test(expected = UnsecurableEngineApiException.class)
+  public void throwsKeyFileMissing() throws IOException, URISyntaxException {
+    Vertx vertx = mock(Vertx.class);
+    final Path userKey = Paths.get("no-such-file.hex");
+    Path dataDir = Files.createTempDirectory("besuUnitTest");
+    EngineAuthService auth = new EngineAuthService(vertx, Optional.of(userKey.toFile()), dataDir);
+    assertThat(auth).isNotNull();
+  }
+
+  @Test
+  public void denyExpired() throws IOException, URISyntaxException {
+    Vertx vertx = mock(Vertx.class);
+    final Path userKey =
+        Paths.get(ClassLoader.getSystemResource("authentication/ee-jwt-secret.hex").toURI());
+    Path dataDir = Files.createTempDirectory("besuUnitTest");
+    EngineAuthService auth = new EngineAuthService(vertx, Optional.of(userKey.toFile()), dataDir);
+    assertThat(auth).isNotNull();
+    JWTAuth jwtAuth = auth.getJwtAuthProvider();
+    String token =
+        jwtAuth.generateToken(new JsonObject().put("iat", (System.currentTimeMillis() / 1000) - 6));
+
+    Handler<Optional<User>> authHandler =
+        new Handler<Optional<User>>() {
+          @Override
+          public void handle(final Optional<User> event) {
+            assertThat(event).isEmpty();
+          }
+        };
     auth.authenticate(token, authHandler);
   }
 }
