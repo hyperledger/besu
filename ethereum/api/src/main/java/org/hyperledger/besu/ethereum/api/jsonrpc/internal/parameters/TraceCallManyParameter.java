@@ -25,21 +25,21 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
 public class TraceCallManyParameter {
-  TraceCallParamterTuple params;
+  TraceCallParameterTuple params;
 
   @JsonCreator
   public TraceCallManyParameter(
       @JsonDeserialize(using = TraceCallParameterDeserializer.class)
-          final TraceCallParamterTuple parameters) {
+          final TraceCallParameterTuple parameters) {
     this.params = parameters;
   }
 
-  public TraceCallParamterTuple getTuple() {
+  public TraceCallParameterTuple getTuple() {
     return this.params;
   }
 }
 
-class TraceCallParameterDeserializer extends StdDeserializer<TraceCallParamterTuple> {
+class TraceCallParameterDeserializer extends StdDeserializer<TraceCallParameterTuple> {
 
   public TraceCallParameterDeserializer(final Class<?> vc) {
     super(vc);
@@ -50,11 +50,11 @@ class TraceCallParameterDeserializer extends StdDeserializer<TraceCallParamterTu
   }
 
   @Override
-  public TraceCallParamterTuple deserialize(final JsonParser p, final DeserializationContext ctxt)
+  public TraceCallParameterTuple deserialize(final JsonParser p, final DeserializationContext ctxt)
       throws IOException {
     final ObjectMapper mapper = new ObjectMapper();
     final JsonNode tupleNode = p.getCodec().readTree(p);
-    return new TraceCallParamterTuple(
+    return new TraceCallParameterTuple(
         mapper.readValue(tupleNode.get(0).toString(), JsonCallParameter.class),
         mapper.readValue(tupleNode.get(1).toString(), TraceTypeParameter.class));
   }

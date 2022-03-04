@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-public class TraceCallParamterTuple {
+public class TraceCallParameterTuple {
   private final JsonCallParameter jsonCallParameter;
   private final TraceTypeParameter traceTypeParameter;
 
-  public TraceCallParamterTuple(
+  public TraceCallParameterTuple(
       final JsonCallParameter callParameter, final TraceTypeParameter traceTypeParameter) {
     this.jsonCallParameter = callParameter;
     this.traceTypeParameter = traceTypeParameter;
