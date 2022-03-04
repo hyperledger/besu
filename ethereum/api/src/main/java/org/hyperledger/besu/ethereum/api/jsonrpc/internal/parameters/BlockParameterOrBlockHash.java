@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.JsonNode;
  * number formatted as a hex string or a block hash.
  *
  * <p>When distinguishing between a hash and a number it is presumed that a hash won't have three
- * quarters of the leading bytes as zero. This is fined for block hashes but not for precompiled
+ * quarters of the leading bytes as zero. This is fine for block hashes but not for precompiled
  * contracts.
  */
 public class BlockParameterOrBlockHash {
