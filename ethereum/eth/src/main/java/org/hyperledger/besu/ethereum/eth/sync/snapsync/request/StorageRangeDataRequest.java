@@ -160,7 +160,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   }
 
   @Override
-  public boolean isDataPresent() {
+  public boolean isValid() {
     return !slots.isEmpty() || !proofs.isEmpty();
   }
 

@@ -109,7 +109,11 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
       WorldDownloadState<SnapDataRequest> downloadState,
       WorldStateProofProvider worldStateProofProvider);
 
-  public abstract boolean isDataPresent();
+  public abstract boolean isValid();
+
+  public boolean isExpired(final SnapSyncState snapSyncState) {
+    return false;
+  }
 
   public abstract Stream<SnapDataRequest> getChildRequests(
       final WorldStateStorage worldStateStorage, final SnapSyncState snapSyncState);

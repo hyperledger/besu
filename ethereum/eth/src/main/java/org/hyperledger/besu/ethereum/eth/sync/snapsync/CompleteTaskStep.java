@@ -15,20 +15,16 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.services.tasks.Task;
 
 public class CompleteTaskStep {
-  private final WorldStateStorage worldStateStorage;
   private final Counter completedRequestsCounter;
   private final Counter retriedRequestsCounter;
 
-  public CompleteTaskStep(
-      final WorldStateStorage worldStateStorage, final MetricsSystem metricsSystem) {
-    this.worldStateStorage = worldStateStorage;
+  public CompleteTaskStep(final MetricsSystem metricsSystem) {
     completedRequestsCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.SYNCHRONIZER,
@@ -45,11 +41,10 @@ public class CompleteTaskStep {
       final SnapSyncState snapSyncState,
       final SnapWorldDownloadState downloadState,
       final Task<SnapDataRequest> task) {
-    if (task.getData().isDataPresent() || !snapSyncState.isValidTask(task.getData())) {
+    if (task.getData().isValid() || task.getData().isExpired(snapSyncState)) {
       completedRequestsCounter.inc();
       task.markCompleted();
-      downloadState.checkCompletion(
-          worldStateStorage, snapSyncState.getPivotBlockHeader().orElseThrow());
+      downloadState.checkCompletion(snapSyncState.getPivotBlockHeader().orElseThrow());
     } else {
       retriedRequestsCounter.inc();
       task.markFailed();

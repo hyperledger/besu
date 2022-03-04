@@ -175,7 +175,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
   }
 
   @Override
-  public boolean isDataPresent() {
+  public boolean isValid() {
     return !accounts.isEmpty() || !proofs.isEmpty();
   }
 

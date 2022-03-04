@@ -58,12 +58,18 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   private final SnapSyncState snapSyncState;
 
   public SnapWorldDownloadState(
+      final WorldStateStorage worldStateStorage,
       final SnapSyncState snapSyncState,
       final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final Clock clock) {
-    super(pendingRequests, maxRequestsWithoutProgress, minMillisBeforeStalling, clock);
+    super(
+        worldStateStorage,
+        pendingRequests,
+        maxRequestsWithoutProgress,
+        minMillisBeforeStalling,
+        clock);
     this.snapSyncState = snapSyncState;
   }
 
@@ -80,8 +86,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   @Override
-  public synchronized boolean checkCompletion(
-      final WorldStateStorage worldStateStorage, final BlockHeader header) {
+  public synchronized boolean checkCompletion(final BlockHeader header) {
 
     if (!internalFuture.isDone()
         && pendingAccountRequests.allTasksCompleted()
@@ -146,11 +151,11 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   public synchronized Task<SnapDataRequest> dequeueRequestBlocking(
-      final List<InMemoryTaskQueue<SnapDataRequest>> queueDependencies,
-      final TaskCollection<SnapDataRequest> queue) {
+      final List<TaskCollection<SnapDataRequest>> queueDependencies,
+      final List<TaskCollection<SnapDataRequest>> queues) {
     while (!internalFuture.isDone()) {
       while (queueDependencies.stream()
-          .map(InMemoryTaskQueue::allTasksCompleted)
+          .map(TaskCollection::allTasksCompleted)
           .anyMatch(Predicate.isEqual(false))) {
         try {
           wait();
@@ -159,10 +164,14 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           return null;
         }
       }
-      Task<SnapDataRequest> task = queue.remove();
-      if (task != null) {
-        return task;
+
+      for (TaskCollection<SnapDataRequest> queue : queues) {
+        Task<SnapDataRequest> task = queue.remove();
+        if (task != null) {
+          return task;
+        }
       }
+
       try {
         wait();
       } catch (final InterruptedException e) {
@@ -175,28 +184,29 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized Task<SnapDataRequest> dequeueAccountRequestBlocking() {
     return dequeueRequestBlocking(
-        List.of(pendingStorageRequests, pendingCodeRequests), pendingAccountRequests);
+        List.of(pendingStorageRequests, pendingCodeRequests), List.of(pendingAccountRequests));
   }
 
   public synchronized Task<SnapDataRequest> dequeueBigStorageRequestBlocking() {
-    return dequeueRequestBlocking(Collections.emptyList(), pendingBigStorageRequests);
+    return dequeueRequestBlocking(Collections.emptyList(), List.of(pendingBigStorageRequests));
   }
 
   public synchronized Task<SnapDataRequest> dequeueStorageRequestBlocking() {
-    return dequeueRequestBlocking(Collections.emptyList(), pendingStorageRequests);
+    return dequeueRequestBlocking(Collections.emptyList(), List.of(pendingStorageRequests));
   }
 
   public synchronized Task<SnapDataRequest> dequeueCodeRequestBlocking() {
-    return dequeueRequestBlocking(List.of(pendingStorageRequests), pendingCodeRequests);
+    return dequeueRequestBlocking(List.of(pendingStorageRequests), List.of(pendingCodeRequests));
   }
 
   public synchronized Task<SnapDataRequest> dequeueTrieNodeRequestBlocking() {
     return dequeueRequestBlocking(
         List.of(pendingAccountRequests, pendingStorageRequests, pendingBigStorageRequests),
-        pendingTrieNodeRequests);
+        List.of(pendingAccountHealRequests, pendingTrieNodeRequests));
   }
 
   public void clearTrieNodes() {
+    worldStateStorage.clearReadAccessDatabase();
     pendingTrieNodeRequests.clearInternalQueues();
     pendingCodeRequests.clearInternalQueue();
     snapSyncState.setHealStatus(false);

@@ -105,6 +105,11 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
+  public void clearReadAccessDatabase() {
+    // nothing to do for forest
+  }
+
+  @Override
   public void clear() {
     keyValueStorage.clear();
   }

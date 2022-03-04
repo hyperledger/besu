@@ -31,16 +31,21 @@ public class FastWorldDownloadState extends WorldDownloadState<NodeDataRequest> 
   private static final Logger LOG = LoggerFactory.getLogger(FastWorldDownloadState.class);
 
   public FastWorldDownloadState(
+      final WorldStateStorage worldStateStorage,
       final InMemoryTasksPriorityQueues<NodeDataRequest> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final Clock clock) {
-    super(pendingRequests, maxRequestsWithoutProgress, minMillisBeforeStalling, clock);
+    super(
+        worldStateStorage,
+        pendingRequests,
+        maxRequestsWithoutProgress,
+        minMillisBeforeStalling,
+        clock);
   }
 
   @Override
-  public synchronized boolean checkCompletion(
-      final WorldStateStorage worldStateStorage, final BlockHeader header) {
+  public synchronized boolean checkCompletion(final BlockHeader header) {
     if (!internalFuture.isDone() && pendingRequests.allTasksCompleted()) {
       if (rootNodeData == null) {
         enqueueRequest(

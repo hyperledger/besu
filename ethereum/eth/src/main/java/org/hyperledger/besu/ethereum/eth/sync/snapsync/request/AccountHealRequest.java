@@ -15,11 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-
-import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -31,36 +26,7 @@ public class AccountHealRequest extends StorageTrieNodeDataRequest {
   }
 
   @Override
-  public boolean isDataPresent() {
-    return !data.isEmpty();
-  }
-
-  public boolean isValidNodeHash() {
-    return isDataPresent() && Hash.hash(data).equals(getNodeHash());
-  }
-
-  @Override
-  public int persist(
-      final WorldStateStorage worldStateStorage,
-      final WorldStateStorage.Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState) {
-    if (isValidNodeHash()) {
-      return super.persist(worldStateStorage, updater, downloadState);
-    }
-    return 0;
-  }
-
-  @Override
   protected SnapDataRequest createChildNodeDataRequest(final Hash childHash, final Bytes location) {
     return new AccountHealRequest(childHash, getAccountHash(), getRootHash(), location);
-  }
-
-  @Override
-  public Stream<SnapDataRequest> getChildRequests(
-      final WorldStateStorage worldStateStorage, final SnapSyncState snapSyncState) {
-    if (isValidNodeHash()) {
-      return super.getChildRequests(worldStateStorage, snapSyncState);
-    }
-    return Stream.empty();
   }
 }

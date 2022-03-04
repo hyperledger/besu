@@ -123,6 +123,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       final SnapWorldDownloadState newDownloadState =
           new SnapWorldDownloadState(
+              worldStateStorage,
               snapSyncState,
               snapTaskCollection,
               maxNodeRequestsWithoutProgress,
@@ -138,7 +139,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       newDownloadState.enqueueRequest(
           createAccountTrieNodeDataRequest(header.getStateRoot(), Bytes.EMPTY));
 
-      maybeCompleteTask = Optional.of(new CompleteTaskStep(worldStateStorage, metricsSystem));
+      maybeCompleteTask = Optional.of(new CompleteTaskStep(metricsSystem));
 
       downloadProcess =
           SnapWorldStateDownloadProcess.builder()
@@ -163,8 +164,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               .fastSyncState(snapSyncState)
               .metricsSystem(metricsSystem)
               .build();
-
-      newDownloadState.setWorldStateDownloadProcess(downloadProcess);
 
       return newDownloadState.startDownload(downloadProcess, ethContext.getScheduler());
     }

@@ -46,6 +46,8 @@ public interface WorldStateStorage {
     return getNodeData(null, hash).isPresent();
   }
 
+  void clearReadAccessDatabase();
+
   void clear();
 
   Updater updater();

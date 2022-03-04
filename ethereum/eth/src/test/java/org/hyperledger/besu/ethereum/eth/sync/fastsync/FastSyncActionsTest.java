@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
@@ -62,6 +63,7 @@ public class FastSyncActionsTest {
   private final FastSyncStateStorage fastSyncStateStorage = mock(FastSyncStateStorage.class);
   private final AtomicInteger timeoutCount = new AtomicInteger(0);
   private SynchronizerConfiguration syncConfig = syncConfigBuilder.build();
+  private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
   private FastSyncActions fastSyncActions;
   private EthProtocolManager ethProtocolManager;
   private MutableBlockchain blockchain;
@@ -412,6 +414,7 @@ public class FastSyncActionsTest {
     final EthContext ethContext = ethProtocolManager.ethContext();
     return new FastSyncActions(
         syncConfig,
+        worldStateStorage,
         protocolSchedule,
         protocolContext,
         ethContext,

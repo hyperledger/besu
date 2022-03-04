@@ -70,7 +70,7 @@ public class BytecodeRequest extends SnapDataRequest {
   }
 
   @Override
-  public boolean isDataPresent() {
+  public boolean isValid() {
     return !code.isEmpty();
   }
 

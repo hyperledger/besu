@@ -34,7 +34,7 @@ public class SnapSyncState extends FastSyncState {
     isHealInProgress = healStatus;
   }
 
-  public boolean isValidTask(final SnapDataRequest request) {
+  public boolean isExpired(final SnapDataRequest request) {
     return getPivotBlockHeader()
         .map(SealableBlockHeader::getStateRoot)
         .filter(hash -> hash.equals(request.getRootHash()))

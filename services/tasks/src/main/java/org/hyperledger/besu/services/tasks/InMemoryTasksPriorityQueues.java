@@ -35,7 +35,7 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     clearInternalQueues();
   }
 
-  public void clearInternalQueues() {
+  public synchronized void clearInternalQueues() {
     internalQueues.clear();
     for (int i = 0; i < 16; i++) {
       internalQueues.add(newEmptyQueue());
@@ -74,7 +74,7 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     return task;
   }
 
-  protected Queue<T> findLastNonEmptyQueue() {
+  protected synchronized Queue<T> findLastNonEmptyQueue() {
     for (int i = internalQueues.size() - 1; i > 0; i--) {
       final Queue<T> queue = internalQueues.get(i);
       if (!queue.isEmpty()) {
@@ -82,10 +82,6 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
       }
     }
     return internalQueues.get(0);
-  }
-
-  public int getUnfinishedOutstandingTasks() {
-    return unfinishedOutstandingTasks.size();
   }
 
   @Override

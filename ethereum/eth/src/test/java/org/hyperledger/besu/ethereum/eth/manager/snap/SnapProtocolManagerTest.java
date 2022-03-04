@@ -60,7 +60,7 @@ public final class SnapProtocolManagerTest {
   }
 
   public static SnapProtocolManager create(final WorldStateArchive worldStateArchive) {
-    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem());
+    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem(), 1);
     EthMessages snapMessages = new EthMessages();
     return new SnapProtocolManager(Collections.emptyList(), peers, snapMessages, worldStateArchive);
   }

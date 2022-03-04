@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.RunnableCounter;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -31,16 +30,13 @@ import org.slf4j.LoggerFactory;
 public class CompleteTaskStep {
   private static final Logger LOG = LoggerFactory.getLogger(CompleteTaskStep.class);
   private static final int DISPLAY_PROGRESS_STEP = 100000;
-  private final WorldStateStorage worldStateStorage;
   private final RunnableCounter completedRequestsCounter;
   private final Counter retriedRequestsCounter;
   private final LongSupplier worldStatePendingRequestsCurrentSupplier;
 
   public CompleteTaskStep(
-      final WorldStateStorage worldStateStorage,
       final MetricsSystem metricsSystem,
       final LongSupplier worldStatePendingRequestsCurrentSupplier) {
-    this.worldStateStorage = worldStateStorage;
     this.worldStatePendingRequestsCurrentSupplier = worldStatePendingRequestsCurrentSupplier;
     completedRequestsCounter =
         new RunnableCounter(
@@ -64,7 +60,7 @@ public class CompleteTaskStep {
     if (task.getData().getData() != null) {
       completedRequestsCounter.inc();
       task.markCompleted();
-      downloadState.checkCompletion(worldStateStorage, header);
+      downloadState.checkCompletion(header);
     } else {
       retriedRequestsCounter.inc();
       task.markFailed();

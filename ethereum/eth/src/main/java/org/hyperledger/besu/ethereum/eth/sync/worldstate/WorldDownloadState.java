@@ -49,16 +49,21 @@ public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> 
   private CompletableFuture<Void> downloadFuture;
   // Volatile so monitoring can access it without having to synchronize.
   protected volatile int requestsSinceLastProgress = 0;
+
   private final long minMillisBeforeStalling;
   private volatile long timestampOfLastProgress;
   protected Bytes rootNodeData;
+
+  protected final WorldStateStorage worldStateStorage;
   protected WorldStateDownloadProcess worldStateDownloadProcess;
 
   public WorldDownloadState(
+      final WorldStateStorage worldStateStorage,
       final InMemoryTasksPriorityQueues<REQUEST> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final Clock clock) {
+    this.worldStateStorage = worldStateStorage;
     this.minMillisBeforeStalling = minMillisBeforeStalling;
     this.timestampOfLastProgress = clock.millis();
     this.downloadWasResumed = !pendingRequests.isEmpty();
@@ -236,6 +241,5 @@ public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> 
     this.worldStateDownloadProcess = worldStateDownloadProcess;
   }
 
-  public abstract boolean checkCompletion(
-      final WorldStateStorage worldStateStorage, final BlockHeader header);
+  public abstract boolean checkCompletion(final BlockHeader header);
 }

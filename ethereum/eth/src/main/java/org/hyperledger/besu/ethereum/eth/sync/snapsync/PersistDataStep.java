@@ -70,7 +70,7 @@ public class PersistDataStep {
     WorldStateStorage.Updater updater = worldStateStorage.updater();
     long batchNodeToSave = 0;
     for (Task<SnapDataRequest> task : tasks) {
-      if (task.getData().isDataPresent()) {
+      if (task.getData().isValid()) {
         enqueueChildren(task);
         final int persistedNodes =
             task.getData().persist(worldStateStorage, updater, downloadState);
@@ -95,7 +95,7 @@ public class PersistDataStep {
 
   public Task<SnapDataRequest> persist(final Task<SnapDataRequest> task) {
     final WorldStateStorage.Updater updater = worldStateStorage.updater();
-    if (task.getData().isDataPresent()) {
+    if (task.getData().isValid()) {
       enqueueChildren(task);
       final int persistedNodes = task.getData().persist(worldStateStorage, updater, downloadState);
       if (persistedNodes > 0) {
