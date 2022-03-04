@@ -15,8 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
-import static org.hyperledger.besu.ethereum.api.util.TraceUtils.buildTraceOptions;
-import static org.hyperledger.besu.ethereum.api.util.TraceUtils.buildTransactionValidationParams;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -28,7 +26,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
-import org.hyperledger.besu.ethereum.api.util.TraceUtils;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -44,24 +41,26 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TraceRawTransaction implements JsonRpcMethod {
+public class TraceRawTransaction extends AbstractTraceByBlock implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceRawTransaction.class);
-  private final TransactionSimulator transactionSimulator;
-  private final BlockchainQueries blockchainQueries;
-  private final ProtocolSchedule protocolSchedule;
 
   public TraceRawTransaction(
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
       final TransactionSimulator transactionSimulator) {
-    this.transactionSimulator = transactionSimulator;
-    this.protocolSchedule = protocolSchedule;
-    this.blockchainQueries = blockchainQueries;
+    super(blockchainQueries, protocolSchedule, transactionSimulator);
   }
 
   @Override
   public String getName() {
     return transactionSimulator != null ? RpcMethod.TRACE_RAW_TRANSACTION.getMethodName() : null;
+  }
+
+  // TODO: remove this
+  @Override
+  protected Object resultByBlockNumber(
+      final JsonRpcRequestContext request, final long blockNumber) {
+    return null;
   }
 
   @Override
@@ -92,7 +91,7 @@ public class TraceRawTransaction implements JsonRpcMethod {
             CallParameter.fromTransaction(transaction),
             buildTransactionValidationParams(),
             tracer,
-            blockchainQueries.headBlockNumber());
+            blockchainQueries.get().headBlockNumber());
 
     if (maybeSimulatorResult.isEmpty()) {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
@@ -103,10 +102,10 @@ public class TraceRawTransaction implements JsonRpcMethod {
             maybeSimulatorResult.get().getTransaction(),
             maybeSimulatorResult.get().getResult(),
             tracer.getTraceFrames());
-    final Block block = blockchainQueries.getBlockchain().getChainHeadBlock();
+    final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
 
     Object response =
-        TraceUtils.getTraceCallResult(
+        getTraceCallResult(
             protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block);
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
