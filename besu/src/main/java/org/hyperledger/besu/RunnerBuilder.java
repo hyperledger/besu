@@ -34,6 +34,9 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.ReadinessCheck;
@@ -610,7 +613,7 @@ public class RunnerBuilder {
                   new HealthService(new LivenessCheck()),
                   new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
 
-      if (engineJsonRpcConfiguration.isPresent()) {
+      if (engineJsonRpcConfiguration.isPresent() && engineJsonRpcConfiguration.get().isEnabled()) {
         final Map<String, JsonRpcMethod> engineMethods =
             jsonRpcMethods(
                 protocolSchedule,
@@ -636,6 +639,15 @@ public class RunnerBuilder {
                 dataDir,
                 rpcEndpointServiceImpl);
 
+        Optional<AuthenticationService> authToUse =
+            engineJsonRpcConfiguration.get().isAuthenticationEnabled()
+                ? Optional.of(
+                    new EngineAuthService(
+                        vertx,
+                        Optional.ofNullable(
+                            engineJsonRpcConfiguration.get().getAuthenticationPublicKeyFile()),
+                        dataDir))
+                : Optional.empty();
         engineJsonRpcHttpService =
             Optional.of(
                 new JsonRpcHttpService(
@@ -645,6 +657,7 @@ public class RunnerBuilder {
                     metricsSystem,
                     natService,
                     engineMethods,
+                    authToUse,
                     new HealthService(new LivenessCheck()),
                     new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
       }
@@ -731,11 +744,13 @@ public class RunnerBuilder {
                   webSocketsJsonRpcMethods,
                   privacyParameters,
                   protocolSchedule,
-                  blockchainQueries));
+                  blockchainQueries,
+                  DefaultAuthenticationService.create(vertx, webSocketConfiguration)));
 
       createPrivateTransactionObserver(subscriptionManager, privacyParameters);
 
-      if (engineWebSocketConfiguration.isPresent()) {
+      if (engineWebSocketConfiguration.isPresent()
+          && engineWebSocketConfiguration.get().isEnabled()) {
         final Map<String, JsonRpcMethod> engineMethods =
             jsonRpcMethods(
                 protocolSchedule,
@@ -761,6 +776,16 @@ public class RunnerBuilder {
                 dataDir,
                 rpcEndpointServiceImpl);
 
+        Optional<AuthenticationService> authToUse =
+            engineWebSocketConfiguration.get().isAuthenticationEnabled()
+                ? Optional.of(
+                    new EngineAuthService(
+                        vertx,
+                        Optional.ofNullable(
+                            engineWebSocketConfiguration.get().getAuthenticationPublicKeyFile()),
+                        dataDir))
+                : Optional.empty();
+
         engineWebSocketService =
             Optional.of(
                 createWebsocketService(
@@ -770,7 +795,8 @@ public class RunnerBuilder {
                     engineMethods,
                     privacyParameters,
                     protocolSchedule,
-                    blockchainQueries));
+                    blockchainQueries,
+                    authToUse));
       }
     }
 
@@ -1067,7 +1093,8 @@ public class RunnerBuilder {
       final Map<String, JsonRpcMethod> jsonRpcMethods,
       final PrivacyParameters privacyParameters,
       final ProtocolSchedule protocolSchedule,
-      final BlockchainQueries blockchainQueries) {
+      final BlockchainQueries blockchainQueries,
+      final Optional<AuthenticationService> authenticationService) {
 
     final WebSocketMethodsFactory websocketMethodsFactory =
         new WebSocketMethodsFactory(subscriptionManager, jsonRpcMethods);
@@ -1092,7 +1119,8 @@ public class RunnerBuilder {
             besuController.getProtocolManager().ethContext().getScheduler(),
             webSocketConfiguration.getTimeoutSec());
 
-    return new WebSocketService(vertx, configuration, websocketRequestHandler);
+    return new WebSocketService(
+        vertx, configuration, websocketRequestHandler, authenticationService);
   }
 
   private Optional<MetricsService> createMetricsService(

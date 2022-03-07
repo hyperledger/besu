@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -24,41 +24,62 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 
+import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.impl.Codec;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
 
 public class JWTAuthOptionsFactory {
 
-  private static final String DEFAULT_ALGORITHM = "RS256";
+  private static final JwtAlgorithm DEFAULT = JwtAlgorithm.RS256;
 
   public JWTAuthOptions createForExternalPublicKey(final File externalPublicKeyFile) {
-    return createForExternalPublicKeyWithAlgorithm(externalPublicKeyFile, DEFAULT_ALGORITHM);
+    return createForExternalPublicKeyWithAlgorithm(externalPublicKeyFile, DEFAULT);
   }
 
   public JWTAuthOptions createForExternalPublicKeyWithAlgorithm(
-      final File externalPublicKeyFile, final String algorithm) {
+      final File externalPublicKeyFile, final JwtAlgorithm algorithm) {
     final byte[] externalJwtPublicKey = readPublicKey(externalPublicKeyFile);
     return new JWTAuthOptions()
         .addPubSecKey(
             new PubSecKeyOptions()
-                .setAlgorithm(algorithm)
+                .setAlgorithm(algorithm.toString())
                 .setBuffer(keyPairToPublicPemString(externalJwtPublicKey)));
   }
 
-  public JWTAuthOptions createWithGeneratedKeyPair() {
-    final KeyPair keypair = generateJwtKeyPair();
+  public JWTAuthOptions createWithGeneratedKeyPair(final JwtAlgorithm jwtAlgorithm) {
+    if (jwtAlgorithm.toString().startsWith("H")) {
+      throw new IllegalArgumentException(
+          "Cannot use keypairs with HMAC tokens, please call createWithGeneratedKey");
+    }
+    final KeyPair keypair = generateRsaKeyPair();
     return new JWTAuthOptions()
         .addPubSecKey(
             new PubSecKeyOptions()
-                .setAlgorithm(DEFAULT_ALGORITHM)
+                .setAlgorithm(jwtAlgorithm.toString())
                 .setBuffer(keyPairToPublicPemString(keypair.getPublic().getEncoded())))
         .addPubSecKey(
             new PubSecKeyOptions()
-                .setAlgorithm(DEFAULT_ALGORITHM)
+                .setAlgorithm(jwtAlgorithm.toString())
                 .setBuffer(keyPairToPrivatePemString(keypair)));
+  }
+
+  public JWTAuthOptions engineApiJWTOptions(final JwtAlgorithm jwtAlgorithm) {
+    byte[] ephemeralKey = Bytes32.random().toArray();
+    return new JWTAuthOptions()
+        .setJWTOptions(new JWTOptions().setIgnoreExpiration(true).setLeeway(5))
+        .addPubSecKey(
+            new PubSecKeyOptions()
+                .setAlgorithm(jwtAlgorithm.toString())
+                .setBuffer(Buffer.buffer(ephemeralKey)));
+  }
+
+  public JWTAuthOptions createWithGeneratedKeyPair() {
+    return createWithGeneratedKeyPair(JwtAlgorithm.RS256);
   }
 
   private byte[] readPublicKey(final File publicKeyFile) {
@@ -74,7 +95,7 @@ public class JWTAuthOptionsFactory {
     }
   }
 
-  private KeyPair generateJwtKeyPair() {
+  private KeyPair generateRsaKeyPair() {
     final KeyPairGenerator keyGenerator;
     try {
       keyGenerator = KeyPairGenerator.getInstance("RSA");

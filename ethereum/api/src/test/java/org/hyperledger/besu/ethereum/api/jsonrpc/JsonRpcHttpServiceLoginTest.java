@@ -23,7 +23,6 @@ import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthAccounts;
@@ -399,42 +398,37 @@ public class JsonRpcHttpServiceLoginTest {
             final User user = r.result();
             // single eth/blockNumber method permitted
             Assertions.assertThat(
-                    AuthenticationUtils.isPermitted(
-                        service.authenticationService,
-                        Optional.of(user),
-                        ethBlockNumber,
-                        Collections.emptyList()))
+                    service
+                        .authenticationService
+                        .get()
+                        .isPermitted(Optional.of(user), ethBlockNumber, Collections.emptyList()))
                 .isTrue();
             // eth/accounts NOT permitted
             assertThat(
-                    AuthenticationUtils.isPermitted(
-                        service.authenticationService,
-                        Optional.of(user),
-                        ethAccounts,
-                        Collections.emptyList()))
+                    service
+                        .authenticationService
+                        .get()
+                        .isPermitted(Optional.of(user), ethAccounts, Collections.emptyList()))
                 .isFalse();
             // allowed by web3/*
             assertThat(
-                    AuthenticationUtils.isPermitted(
-                        service.authenticationService,
-                        Optional.of(user),
-                        web3ClientVersion,
-                        Collections.emptyList()))
+                    service
+                        .authenticationService
+                        .get()
+                        .isPermitted(Optional.of(user), web3ClientVersion, Collections.emptyList()))
                 .isTrue();
             assertThat(
-                    AuthenticationUtils.isPermitted(
-                        service.authenticationService,
-                        Optional.of(user),
-                        web3Sha3,
-                        Collections.emptyList()))
+                    service
+                        .authenticationService
+                        .get()
+                        .isPermitted(Optional.of(user), web3Sha3, Collections.emptyList()))
                 .isTrue();
             // NO net permissions
             assertThat(
-                    AuthenticationUtils.isPermitted(
-                        service.authenticationService,
-                        Optional.of(user),
-                        netVersion,
-                        Collections.emptyList()))
+                    service
+                        .authenticationService
+                        .get()
+                        .isPermitted(Optional.of(user), netVersion, Collections.emptyList()))
                 .isFalse();
           });
     }
@@ -474,42 +468,37 @@ public class JsonRpcHttpServiceLoginTest {
             final User user = r.result();
             // single eth/blockNumber method permitted
             Assertions.assertThat(
-                    AuthenticationUtils.isPermitted(
-                        service.authenticationService,
-                        Optional.of(user),
-                        ethBlockNumber,
-                        Collections.emptyList()))
+                    service
+                        .authenticationService
+                        .get()
+                        .isPermitted(Optional.of(user), ethBlockNumber, Collections.emptyList()))
                 .isTrue();
             // eth/accounts IS permitted
             assertThat(
-                    AuthenticationUtils.isPermitted(
-                        service.authenticationService,
-                        Optional.of(user),
-                        ethAccounts,
-                        Collections.emptyList()))
+                    service
+                        .authenticationService
+                        .get()
+                        .isPermitted(Optional.of(user), ethAccounts, Collections.emptyList()))
                 .isTrue();
             // allowed by *:*
             assertThat(
-                    AuthenticationUtils.isPermitted(
-                        service.authenticationService,
-                        Optional.of(user),
-                        web3ClientVersion,
-                        Collections.emptyList()))
+                    service
+                        .authenticationService
+                        .get()
+                        .isPermitted(Optional.of(user), web3ClientVersion, Collections.emptyList()))
                 .isTrue();
             assertThat(
-                    AuthenticationUtils.isPermitted(
-                        service.authenticationService,
-                        Optional.of(user),
-                        web3Sha3,
-                        Collections.emptyList()))
+                    service
+                        .authenticationService
+                        .get()
+                        .isPermitted(Optional.of(user), web3Sha3, Collections.emptyList()))
                 .isTrue();
             // YES net permissions
             assertThat(
-                    AuthenticationUtils.isPermitted(
-                        service.authenticationService,
-                        Optional.of(user),
-                        netVersion,
-                        Collections.emptyList()))
+                    service
+                        .authenticationService
+                        .get()
+                        .isPermitted(Optional.of(user), netVersion, Collections.emptyList()))
                 .isTrue();
           });
     }
@@ -520,11 +509,10 @@ public class JsonRpcHttpServiceLoginTest {
     final JsonRpcMethod ethAccounts = new EthAccounts();
 
     assertThat(
-            AuthenticationUtils.isPermitted(
-                service.authenticationService,
-                Optional.empty(),
-                ethAccounts,
-                Collections.emptyList()))
+            service
+                .authenticationService
+                .get()
+                .isPermitted(Optional.empty(), ethAccounts, Collections.emptyList()))
         .isFalse();
   }
 
