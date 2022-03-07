@@ -39,6 +39,10 @@ public class TransactionSimulatorResult {
     return result.isSuccessful();
   }
 
+  public boolean isInvalid() {
+    return result.isInvalid();
+  }
+
   public long getGasEstimate() {
     return transaction.getGasLimit() - result.getGasRemaining();
   }
