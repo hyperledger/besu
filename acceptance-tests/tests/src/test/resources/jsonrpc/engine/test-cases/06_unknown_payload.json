@@ -1,0 +1,19 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "engine_getPayloadV1",
+    "params": [
+      "0x0000000000000000"
+    ],
+    "id": 67
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 67,
+    "error": {
+      "code": -32001,
+      "message": "Payload does not exist / is not available"
+    }
+  },
+  "statusCode": 200
+}

@@ -52,7 +52,13 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
-    final PayloadIdentifier payloadId = request.getRequiredParameter(0, PayloadIdentifier.class);
+    PayloadIdentifier payloadId;
+
+    try {
+      payloadId = request.getRequiredParameter(0, PayloadIdentifier.class);
+    } catch (IllegalArgumentException e) {
+      return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+    }
 
     final Optional<Block> block = mergeContext.retrieveBlockById(payloadId);
     if (block.isPresent()) {
