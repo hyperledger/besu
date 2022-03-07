@@ -26,6 +26,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
 
 public class BFTForkTest {
+  private final String BENEFICIARY = "0x1111111111111111111111111111111111111111";
+  private final String TRUNCATED_BENEFICIARY = BENEFICIARY.substring(0, BENEFICIARY.length() - 2);
 
   @Test
   public void getMiningBeneficiary_fromEmptyConfig() {
@@ -37,54 +39,47 @@ public class BFTForkTest {
 
   @Test
   public void getMiningBeneficiary_withValidAddress() {
-    final String beneficiary = "0x1111111111111111111111111111111111111111";
     ObjectNode config =
-        JsonUtil.objectNodeFromMap(Map.of(BftFork.MINING_BENEFICIARY_KEY, beneficiary));
+        JsonUtil.objectNodeFromMap(Map.of(BftFork.MINING_BENEFICIARY_KEY, BENEFICIARY));
 
     final BftFork bftFork = new BftFork(config);
-    assertThat(bftFork.getMiningBeneficiary().map(Address::toHexString)).contains(beneficiary);
+    assertThat(bftFork.getMiningBeneficiary().map(Address::toHexString)).contains(BENEFICIARY);
   }
 
   @Test
   public void getMiningBeneficiary_withValidAddressMissingPrefix() {
-    final String beneficiary = "0x1111111111111111111111111111111111111111";
     ObjectNode config =
         JsonUtil.objectNodeFromMap(
-            Map.of(BftFork.MINING_BENEFICIARY_KEY, beneficiary.substring(2)));
+            Map.of(BftFork.MINING_BENEFICIARY_KEY, BENEFICIARY.substring(2)));
 
     final BftFork bftFork = new BftFork(config);
-    assertThat(bftFork.getMiningBeneficiary().map(Address::toHexString)).contains(beneficiary);
+    assertThat(bftFork.getMiningBeneficiary().map(Address::toHexString)).contains(BENEFICIARY);
   }
 
   @Test
   public void getMiningBeneficiary_withValidAddressAndEmptySpace() {
-    final String beneficiary = "0x1111111111111111111111111111111111111111";
     ObjectNode config =
         JsonUtil.objectNodeFromMap(
-            Map.of(BftFork.MINING_BENEFICIARY_KEY, "\t" + beneficiary + "  "));
+            Map.of(BftFork.MINING_BENEFICIARY_KEY, "\t" + BENEFICIARY + "  "));
 
     final BftFork bftFork = new BftFork(config);
-    assertThat(bftFork.getMiningBeneficiary().map(Address::toHexString)).contains(beneficiary);
+    assertThat(bftFork.getMiningBeneficiary().map(Address::toHexString)).contains(BENEFICIARY);
   }
 
   @Test
   public void getMiningBeneficiary_withInvalidValue() {
-    // Address is only 19 bytes
     final String beneficiary = "random";
     testGetMiningBeneficiaryWithInvalidAddress(beneficiary);
   }
 
   @Test
   public void getMiningBeneficiary_withInvalidAddress() {
-    // Address is only 19 bytes
-    final String beneficiary = "0x11111111111111111111111111111111111111";
-    testGetMiningBeneficiaryWithInvalidAddress(beneficiary);
+    testGetMiningBeneficiaryWithInvalidAddress(TRUNCATED_BENEFICIARY);
   }
 
   @Test
   public void getMiningBeneficiary_withInvalidAddressAndWhitespace() {
-    // Address is only 19 bytes
-    final String beneficiary = "0x11111111111111111111111111111111111111  ";
+    final String beneficiary = TRUNCATED_BENEFICIARY + "  ";
     testGetMiningBeneficiaryWithInvalidAddress(beneficiary);
   }
 
@@ -126,9 +121,8 @@ public class BFTForkTest {
 
   @Test
   public void isMiningBeneficiaryConfigured_whenNonEmptyValueIsProvided() {
-    final String beneficiary = "0x11111111111111111111111111111111111111";
     ObjectNode config =
-        JsonUtil.objectNodeFromMap(Map.of(BftFork.MINING_BENEFICIARY_KEY, beneficiary));
+        JsonUtil.objectNodeFromMap(Map.of(BftFork.MINING_BENEFICIARY_KEY, BENEFICIARY));
 
     final BftFork bftFork = new BftFork(config);
     assertThat(bftFork.isMiningBeneficiaryConfigured()).isTrue();
