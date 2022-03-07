@@ -1,0 +1,35 @@
+{
+  "comment" : "Transfert ERC20 tokens (with contract created 0xbaaa2a3237035a2c7fa2a33c76b44a8c6fe18e87)",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0x752c025084f7cd0dae7fc6193db319e6931873780b3ee8c6f5835515c9c24110", [ ] ],
+    "id" : 359
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "callType" : "call",
+        "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+        "gas" : "0xffab66",
+        "input" : "0xa9059cbb0000000000000000000000000a13aa5589f0dd8dd3bd5055b31add5ca0f2f8e400000000000000000000000000000000000000000000003635c9adc5dea00000",
+        "to" : "0xbaaa2a3237035a2c7fa2a33c76b44a8c6fe18e87",
+        "value" : "0x0"
+      },
+      "blockHash" : "0xa7793ae6664b092057122795ad3ec0d4f6095dc3fa51903675cae89ac778a6ac",
+      "blockNumber" : 25,
+      "result" : {
+        "gasUsed" : "0x7e42",
+        "output" : "0x"
+      },
+      "subtraces" : 0,
+      "traceAddress" : [ ],
+      "transactionHash" : "0x752c025084f7cd0dae7fc6193db319e6931873780b3ee8c6f5835515c9c24110",
+      "transactionPosition" : 1,
+      "type" : "call"
+    },
+    "id" : 359
+  },
+  "statusCode" : 200
+}

@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Stat
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -494,13 +495,17 @@ public class TransactionSimulatorTest {
     when(account.getNonce()).thenReturn(nonce);
     when(worldStateArchive.getMutable(eq(stateRoot), any(), anyBoolean()))
         .thenReturn(Optional.of(worldState));
-    when(worldState.get(eq(address))).thenReturn(account);
+    final WorldUpdater updater = mock(WorldUpdater.class);
+    when(updater.get(address)).thenReturn(account);
+    when(worldState.updater()).thenReturn(updater);
   }
 
   private void mockWorldStateForAbsentAccount(final Hash stateRoot) {
     when(worldStateArchive.getMutable(eq(stateRoot), any(), anyBoolean()))
         .thenReturn(Optional.of(worldState));
-    when(worldState.get(any())).thenReturn(null);
+    final WorldUpdater updater = mock(WorldUpdater.class);
+    when(updater.get(any())).thenReturn(null);
+    when(worldState.updater()).thenReturn(updater);
   }
 
   private void mockBlockchainForBlockHeader(final Hash stateRoot, final long blockNumber) {
@@ -545,7 +550,6 @@ public class TransactionSimulatorTest {
         when(result.isSuccessful()).thenReturn(false);
         break;
     }
-
     when(transactionProcessor.processTransaction(
             any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), any(), any()))
         .thenReturn(result);

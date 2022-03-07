@@ -1,0 +1,35 @@
+{
+  "comment" : "Proxy call to another contract - several levels deep. Using CALL and STATICCALL.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0x2f92ad4d4433cd8f78214c1ba3b3d3d8a2b1e993b6cf336eb9200c8d9ac3b94d", [ "0x0", "0x0", "0x0" ] ],
+    "id" : 353
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "callType" : "staticcall",
+        "from" : "0x0120000000000000000000000000000000000000",
+        "gas" : "0xf3d2f9",
+        "input" : "0x",
+        "to" : "0x0000000000000000000000000000000000000010",
+        "value" : "0x0"
+      },
+      "blockHash" : "0x2773bc8754290aa9e4e1e82ef200e3a00e3255f02ddc3aef9c551c089ef9a8cd",
+      "blockNumber" : 24,
+      "result" : {
+        "gasUsed" : "0x0",
+        "output" : "0x"
+      },
+      "subtraces" : 0,
+      "traceAddress" : [ 0, 0, 0 ],
+      "transactionHash" : "0x2f92ad4d4433cd8f78214c1ba3b3d3d8a2b1e993b6cf336eb9200c8d9ac3b94d",
+      "transactionPosition" : 0,
+      "type" : "call"
+    },
+    "id" : 353
+  },
+  "statusCode" : 200
+}

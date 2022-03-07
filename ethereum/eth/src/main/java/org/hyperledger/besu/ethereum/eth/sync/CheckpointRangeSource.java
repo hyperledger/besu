@@ -21,6 +21,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 
 import java.time.Duration;
 import java.util.ArrayDeque;
@@ -45,6 +46,7 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
   private final EthScheduler ethScheduler;
   private final int checkpointTimeoutsPermitted;
   private final Duration newHeaderWaitDuration;
+  private final SyncTerminationCondition terminationCondition;
 
   private final Queue<CheckpointRange> retrievedRanges = new ArrayDeque<>();
   private BlockHeader lastRangeEnd;
@@ -59,7 +61,8 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
       final EthScheduler ethScheduler,
       final EthPeer peer,
       final BlockHeader commonAncestor,
-      final int checkpointTimeoutsPermitted) {
+      final int checkpointTimeoutsPermitted,
+      final SyncTerminationCondition terminationCondition) {
     this(
         checkpointFetcher,
         syncTargetChecker,
@@ -67,7 +70,8 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
         peer,
         commonAncestor,
         checkpointTimeoutsPermitted,
-        Duration.ofSeconds(5));
+        Duration.ofSeconds(5),
+        terminationCondition);
   }
 
   CheckpointRangeSource(
@@ -77,7 +81,8 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
       final EthPeer peer,
       final BlockHeader commonAncestor,
       final int checkpointTimeoutsPermitted,
-      final Duration newHeaderWaitDuration) {
+      final Duration newHeaderWaitDuration,
+      final SyncTerminationCondition terminationCondition) {
     this.checkpointFetcher = checkpointFetcher;
     this.syncTargetChecker = syncTargetChecker;
     this.ethScheduler = ethScheduler;
@@ -85,14 +90,16 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
     this.lastRangeEnd = commonAncestor;
     this.checkpointTimeoutsPermitted = checkpointTimeoutsPermitted;
     this.newHeaderWaitDuration = newHeaderWaitDuration;
+    this.terminationCondition = terminationCondition;
   }
 
   @Override
   public boolean hasNext() {
-    return !retrievedRanges.isEmpty()
-        || (requestFailureCount < checkpointTimeoutsPermitted
-            && syncTargetChecker.shouldContinueDownloadingFromSyncTarget(peer, lastRangeEnd)
-            && !reachedEndOfCheckpoints);
+    return terminationCondition.shouldContinueDownload()
+        && (!retrievedRanges.isEmpty()
+            || (requestFailureCount < checkpointTimeoutsPermitted
+                && syncTargetChecker.shouldContinueDownloadingFromSyncTarget(peer, lastRangeEnd)
+                && !reachedEndOfCheckpoints));
   }
 
   @Override

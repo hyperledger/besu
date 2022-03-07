@@ -302,16 +302,16 @@ public class MainnetTransactionProcessor {
           previousBalance,
           sender.getBalance());
 
-      List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
+      final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
       // we need to keep a separate hash set of addresses in case they specify no storage.
       // No-storage is a common pattern, especially for Externally Owned Accounts
-      Set<Address> addressList = new HashSet<>();
-      Multimap<Address, Bytes32> storageList = HashMultimap.create();
+      final Set<Address> addressList = new HashSet<>();
+      final Multimap<Address, Bytes32> storageList = HashMultimap.create();
       int accessListStorageCount = 0;
-      for (var entry : accessListEntries) {
-        Address address = entry.getAddress();
+      for (final var entry : accessListEntries) {
+        final Address address = entry.getAddress();
         addressList.add(address);
-        List<Bytes32> storageKeys = entry.getStorageKeys();
+        final List<Bytes32> storageKeys = entry.getStorageKeys();
         storageList.putAll(address, storageKeys);
         accessListStorageCount += storageKeys.size();
       }

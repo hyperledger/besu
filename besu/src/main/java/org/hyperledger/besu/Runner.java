@@ -144,6 +144,7 @@ public class Runner implements AutoCloseable {
       writeBesuNetworksToFile();
       writePidFile();
     } catch (final Exception ex) {
+      LOG.error("unable to start main loop", ex);
       throw new IllegalStateException("Startup failed", ex);
     }
   }
@@ -358,7 +359,6 @@ public class Runner implements AutoCloseable {
       final Properties properties, final String fileName, final String fileHeader) {
     final File file = new File(dataDir.toFile(), String.format("besu.%s", fileName));
     file.deleteOnExit();
-
     try (final FileOutputStream fileOutputStream = new FileOutputStream(file)) {
       properties.store(
           fileOutputStream,
