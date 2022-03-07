@@ -1,0 +1,29 @@
+{
+  "comment" : "call the prior contract then callcode log contract 00a0..00.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0x4c253746668dca6ac3f7b9bc18248b558a95b5fc881d140872c2dff984d344a7", [ "0x0", "0x0" ] ],
+    "id" : 293
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "address" : "0x30753e4a8aad7f8597332e813735def5dd395028",
+        "balance" : "0x0",
+        "refundAddress" : "0x0000000000000000000000000000000000000000"
+      },
+      "blockHash" : "0x425ea2cf9bb89c09f131ab531958c4d189b5d047fd924d74f25d49cf47a5a8f1",
+      "blockNumber" : 19,
+      "result" : null,
+      "subtraces" : 0,
+      "traceAddress" : [ 0, 0 ],
+      "transactionHash" : "0x4c253746668dca6ac3f7b9bc18248b558a95b5fc881d140872c2dff984d344a7",
+      "transactionPosition" : 3,
+      "type" : "suicide"
+    },
+    "id" : 293
+  },
+  "statusCode" : 200
+}
