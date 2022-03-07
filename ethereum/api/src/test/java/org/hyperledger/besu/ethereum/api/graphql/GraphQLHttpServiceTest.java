@@ -33,6 +33,7 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -69,7 +70,8 @@ public class GraphQLHttpServiceTest {
   protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
   private static BlockchainQueries blockchainQueries;
   private static GraphQL graphQL;
-  private static GraphQLDataFetcherContextImpl dataFetcherContext;
+  //  private static GraphQLDataFetcherContextImpl dataFetcherContext;
+  private static Map<GraphQLContextType, Object> graphQlContextMap;
   private static PoWMiningCoordinator miningCoordinatorMock;
 
   private final GraphQLTestHelper testHelper = new GraphQLTestHelper();
@@ -81,14 +83,16 @@ public class GraphQLHttpServiceTest {
     graphQL = Mockito.mock(GraphQL.class);
 
     miningCoordinatorMock = Mockito.mock(PoWMiningCoordinator.class);
-
-    dataFetcherContext = Mockito.mock(GraphQLDataFetcherContextImpl.class);
-    Mockito.when(dataFetcherContext.getBlockchainQueries()).thenReturn(blockchainQueries);
-    Mockito.when(dataFetcherContext.getMiningCoordinator()).thenReturn(miningCoordinatorMock);
-
-    Mockito.when(dataFetcherContext.getTransactionPool())
-        .thenReturn(Mockito.mock(TransactionPool.class));
-    Mockito.when(dataFetcherContext.getSynchronizer()).thenReturn(synchronizer);
+    graphQlContextMap =
+        Map.of(
+            GraphQLContextType.BLOCKCHAIN_QUERIES,
+            blockchainQueries,
+            GraphQLContextType.TRANSACTION_POOL,
+            Mockito.mock(TransactionPool.class),
+            GraphQLContextType.MINING_COORDINATOR,
+            miningCoordinatorMock,
+            GraphQLContextType.SYNCHRONIZER,
+            synchronizer);
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
@@ -110,7 +114,7 @@ public class GraphQLHttpServiceTest {
         folder.newFolder().toPath(),
         config,
         graphQL,
-        dataFetcherContext,
+        graphQlContextMap,
         Mockito.mock(EthScheduler.class));
   }
 
@@ -120,7 +124,7 @@ public class GraphQLHttpServiceTest {
         folder.newFolder().toPath(),
         createGraphQLConfig(),
         graphQL,
-        dataFetcherContext,
+        graphQlContextMap,
         Mockito.mock(EthScheduler.class));
   }
 
@@ -217,6 +221,7 @@ public class GraphQLHttpServiceTest {
   @Test
   public void query_get() throws Exception {
     final Wei price = Wei.of(16);
+    Mockito.when(blockchainQueries.gasPrice()).thenReturn(Optional.of(price.toLong()));
     Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
 
     try (final Response resp = client.newCall(buildGetRequest("?query={gasPrice}")).execute()) {

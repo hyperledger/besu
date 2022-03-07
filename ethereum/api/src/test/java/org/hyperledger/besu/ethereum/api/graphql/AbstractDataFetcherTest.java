@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import java.util.Optional;
 import java.util.Set;
 
+import graphql.GraphQLContext;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import org.junit.Before;
@@ -37,9 +38,9 @@ public abstract class AbstractDataFetcherTest {
 
   @Mock protected DataFetchingEnvironment environment;
 
-  @Mock protected GraphQLDataFetcherContextImpl context;
-
   @Mock protected BlockchainQueries query;
+
+  @Mock protected GraphQLContext graphQLContext;
 
   @Mock protected BlockHeader header;
 
@@ -49,7 +50,7 @@ public abstract class AbstractDataFetcherTest {
   public void before() {
     final GraphQLDataFetchers fetchers = new GraphQLDataFetchers(supportedCapabilities);
     fetcher = fetchers.getBlockDataFetcher();
-    Mockito.when(environment.getContext()).thenReturn(context);
-    Mockito.when(context.getBlockchainQueries()).thenReturn(query);
+    graphQLContext.put(GraphQLContextType.BLOCKCHAIN_QUERIES, query);
+    Mockito.when(environment.getGraphQlContext()).thenReturn(graphQLContext);
   }
 }

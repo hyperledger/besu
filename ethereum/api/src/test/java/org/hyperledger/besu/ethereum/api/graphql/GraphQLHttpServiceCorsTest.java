@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Lists;
@@ -212,14 +213,17 @@ public class GraphQLHttpServiceCorsTest {
 
     final PoWMiningCoordinator miningCoordinatorMock = Mockito.mock(PoWMiningCoordinator.class);
 
-    final GraphQLDataFetcherContextImpl dataFetcherContext =
-        Mockito.mock(GraphQLDataFetcherContextImpl.class);
-    Mockito.when(dataFetcherContext.getBlockchainQueries()).thenReturn(blockchainQueries);
-    Mockito.when(dataFetcherContext.getMiningCoordinator()).thenReturn(miningCoordinatorMock);
-
-    Mockito.when(dataFetcherContext.getTransactionPool())
-        .thenReturn(Mockito.mock(TransactionPool.class));
-    Mockito.when(dataFetcherContext.getSynchronizer()).thenReturn(synchronizer);
+    // mock graphql context
+    final Map<GraphQLContextType, Object> graphQLContextMap =
+        Map.of(
+            GraphQLContextType.BLOCKCHAIN_QUERIES,
+            blockchainQueries,
+            GraphQLContextType.TRANSACTION_POOL,
+            Mockito.mock(TransactionPool.class),
+            GraphQLContextType.MINING_COORDINATOR,
+            miningCoordinatorMock,
+            GraphQLContextType.SYNCHRONIZER,
+            synchronizer);
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
@@ -233,7 +237,7 @@ public class GraphQLHttpServiceCorsTest {
             folder.newFolder().toPath(),
             config,
             graphQL,
-            dataFetcherContext,
+            graphQLContextMap,
             Mockito.mock(EthScheduler.class));
     graphQLHttpService.start().join();
 
