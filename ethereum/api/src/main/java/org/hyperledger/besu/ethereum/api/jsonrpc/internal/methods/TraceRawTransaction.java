@@ -103,10 +103,15 @@ public class TraceRawTransaction extends AbstractTraceByBlock implements JsonRpc
             maybeSimulatorResult.get().getTransaction(),
             maybeSimulatorResult.get().getResult(),
             tracer.getTraceFrames());
-    final Block block =
-        blockchainQueries.get().getBlockchain().getBlockByNumber(headBlockNumber).get();
+    final Optional<Block> maybeBlock =
+        blockchainQueries.get().getBlockchain().getBlockByNumber(headBlockNumber);
 
-    Object response =
+    if (maybeBlock.isEmpty()) {
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
+    }
+
+    final Block block = maybeBlock.get();
+    final Object response =
         getTraceCallResult(
             protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block);
 
