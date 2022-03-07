@@ -86,7 +86,7 @@ public class TraceRawTransaction extends AbstractTraceByBlock implements JsonRpc
 
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
     final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
-    final long headBlockNumber = blockchainQueries.get().headBlockNumber();
+    final long headBlockNumber = blockchainQueriesSupplier.get().headBlockNumber();
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
         transactionSimulator.process(
             CallParameter.fromTransaction(transaction),
@@ -104,7 +104,7 @@ public class TraceRawTransaction extends AbstractTraceByBlock implements JsonRpc
             maybeSimulatorResult.get().getResult(),
             tracer.getTraceFrames());
     final Optional<Block> maybeBlock =
-        blockchainQueries.get().getBlockchain().getBlockByNumber(headBlockNumber);
+        blockchainQueriesSupplier.get().getBlockchain().getBlockByNumber(headBlockNumber);
 
     if (maybeBlock.isEmpty()) {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);

@@ -71,7 +71,7 @@ public class TraceFilter extends TraceBlock {
     long currentBlockNumber = fromBlock;
     while (currentBlockNumber <= toBlock && !resultArrayNode.isFull()) {
       Optional<Block> blockByNumber =
-          blockchainQueries.get().getBlockchain().getBlockByNumber(currentBlockNumber);
+          blockchainQueriesSupplier.get().getBlockchain().getBlockByNumber(currentBlockNumber);
       blockByNumber.ifPresent(
           block -> resultArrayNode.addAll(traceBlock(block, Optional.of(filterParameter))));
       currentBlockNumber++;
@@ -150,7 +150,7 @@ public class TraceFilter extends TraceBlock {
     if (param.getNumber().isPresent()) {
       return param.getNumber().get();
     } else if (param.isLatest()) {
-      return blockchainQueries.get().headBlockNumber();
+      return blockchainQueriesSupplier.get().headBlockNumber();
     } else {
       throw new IllegalStateException("Unknown block parameter type.");
     }
