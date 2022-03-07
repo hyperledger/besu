@@ -51,6 +51,14 @@ public class BackwardChain { // TODO: this class now stores everything in memory
     return Optional.of(ancestors.get(ancestors.size() - 1));
   }
 
+  public List<BlockHeader> getFirstNAncestorHeaders(final int size) {
+    List<BlockHeader> headers = new ArrayList<>(size);
+    for (int i = 0; i < ancestors.size() && i < size; ++i) {
+      headers.add(ancestors.get(ancestors.size() - 1 - i));
+    }
+    return headers;
+  }
+
   public void saveHeader(final BlockHeader blockHeader) {
     BlockHeader firstHeader =
         getFirstAncestorHeader()

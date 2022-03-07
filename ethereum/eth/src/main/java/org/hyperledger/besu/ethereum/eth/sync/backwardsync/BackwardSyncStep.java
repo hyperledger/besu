@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -117,7 +118,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
                 throw new BackwardSyncException(
                     "Did not receive a header for hash {}" + hash.toString().substring(0, 20));
               }
-              debugLambda(
+              infoLambda(
                   LOG,
                   "Got headers {} from height {} to {} height {}",
                   () -> result.get(0).getHash().toHexString(),

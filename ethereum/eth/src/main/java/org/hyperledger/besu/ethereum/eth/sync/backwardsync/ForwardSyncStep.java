@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -43,8 +43,7 @@ public class ForwardSyncStep extends BackwardSyncTask {
   }
 
   @Override
-  public CompletableFuture<Void> executeBatchStep() {
-    //    public CompletableFuture<Void> executeOneStep() {
+  public CompletableFuture<Void> executeOneStep() {
     return CompletableFuture.supplyAsync(() -> processKnownAncestors(null))
         .thenCompose(this::possibleRequestBlock)
         .thenApply(this::processKnownAncestors)
@@ -52,9 +51,8 @@ public class ForwardSyncStep extends BackwardSyncTask {
   }
 
   @Override
-  public CompletableFuture<Void> executeOneStep() {
-    //    public CompletableFuture<Void> executeBatchStep() {
-    return CompletableFuture.supplyAsync(() -> processEnoughKnownAncestors(null))
+  public CompletableFuture<Void> executeBatchStep() {
+    return CompletableFuture.supplyAsync(() -> returnFirstNUnknownHeaders(null))
         .thenCompose(this::possibleRequestBodies)
         .thenApply(this::processKnownAncestors)
         .thenCompose(this::possiblyMoreForwardSteps);
@@ -84,10 +82,8 @@ public class ForwardSyncStep extends BackwardSyncTask {
   }
 
   @VisibleForTesting
-  protected List<BlockHeader> processEnoughKnownAncestors(final Void unused) {
-    List<BlockHeader> blockHeadersToLookup = new ArrayList<>(BATCH_SIZE);
-    while (backwardChain.getFirstAncestorHeader().isPresent()
-        || blockHeadersToLookup.size() >= BATCH_SIZE) {
+  protected List<BlockHeader> returnFirstNUnknownHeaders(final Void unused) {
+    while (backwardChain.getFirstAncestorHeader().isPresent()) {
       BlockHeader header = backwardChain.getFirstAncestorHeader().orElseThrow();
       if (context.getProtocolContext().getBlockchain().contains(header.getHash())) {
         debugLambda(
@@ -102,10 +98,10 @@ public class ForwardSyncStep extends BackwardSyncTask {
             () -> header.getHash().toString().substring(0, 20));
         saveBlock(backwardChain.getTrustedBlock(header.getHash()));
       } else {
-        blockHeadersToLookup.add(header);
+        return backwardChain.getFirstNAncestorHeaders(BATCH_SIZE);
       }
     }
-    return blockHeadersToLookup;
+    return Collections.emptyList();
   }
 
   @VisibleForTesting

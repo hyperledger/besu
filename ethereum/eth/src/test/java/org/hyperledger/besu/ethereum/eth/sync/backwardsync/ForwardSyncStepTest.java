@@ -42,7 +42,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.jetbrains.annotations.NotNull;
@@ -113,7 +112,6 @@ public class ForwardSyncStepTest {
   public void shouldExecuteForwardSyncWhenPossible() throws Exception {
     final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 3);
     ForwardSyncStep step = new ForwardSyncStep(context, backwardChain);
-    when(context.getCurrentChain()).thenReturn(Optional.of(backwardChain));
 
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
@@ -141,7 +139,7 @@ public class ForwardSyncStepTest {
 
     assertThat(backwardChain.getFirstAncestorHeader().orElseThrow())
         .isEqualTo(getBlockByNumber(LOCAL_HEIGHT - 5).getHeader());
-    step.processKnownAncestors(null);
+    step.returnFirstNUnknownHeaders(null);
     assertThat(backwardChain.getFirstAncestorHeader().orElseThrow())
         .isEqualTo(getBlockByNumber(LOCAL_HEIGHT + 1).getHeader());
   }
