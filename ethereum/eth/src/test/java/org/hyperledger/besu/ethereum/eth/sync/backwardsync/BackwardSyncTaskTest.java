@@ -66,7 +66,7 @@ public class BackwardSyncTaskTest {
   private BackwardSyncTask createBackwardSyncTask(final BackwardChain backwardChain) {
     return new BackwardSyncTask(context, backwardChain) {
       @Override
-      CompletableFuture<Void> executeStep() {
+      CompletableFuture<Void> executeOneStep() {
         return CompletableFuture.completedFuture(null);
       }
     };

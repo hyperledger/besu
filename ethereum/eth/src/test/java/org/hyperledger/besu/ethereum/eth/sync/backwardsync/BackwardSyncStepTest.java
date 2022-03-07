@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +98,6 @@ public class BackwardSyncStepTest {
     final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 3);
     BackwardSyncStep step = new BackwardSyncStep(context, backwardChain);
 
-    when(context.getCurrentChain()).thenReturn(Optional.of(backwardChain));
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
 

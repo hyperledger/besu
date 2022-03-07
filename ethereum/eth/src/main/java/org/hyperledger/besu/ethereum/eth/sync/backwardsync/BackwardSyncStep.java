@@ -37,7 +37,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
   }
 
   @Override
-  public CompletableFuture<Void> executeStep() {
+  public CompletableFuture<Void> executeOneStep() {
     return CompletableFuture.supplyAsync(this::earliestUnprocessedHash)
         .thenCompose(this::requestHeader)
         .thenApply(this::saveHeader)
