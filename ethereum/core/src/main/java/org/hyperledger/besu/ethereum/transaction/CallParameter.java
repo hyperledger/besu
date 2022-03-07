@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -132,5 +133,17 @@ public class CallParameter {
   public int hashCode() {
     return Objects.hash(
         from, to, gasLimit, gasPrice, maxPriorityFeePerGas, maxFeePerGas, value, payload);
+  }
+
+  public static CallParameter fromTransaction(final Transaction tx) {
+    return new CallParameter(
+        tx.getSender(),
+        tx.getTo().orElseGet(() -> null),
+        tx.getGasLimit(),
+        Wei.fromQuantity(tx.getGasPrice().orElseGet(() -> Wei.ZERO)),
+        Optional.of(Wei.fromQuantity(tx.getMaxPriorityFeePerGas().orElseGet(() -> Wei.ZERO))),
+        tx.getMaxFeePerGas(),
+        Wei.fromQuantity(tx.getValue()),
+        tx.getPayload());
   }
 }

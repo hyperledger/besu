@@ -1,0 +1,36 @@
+{
+  "comment" : "Simple value transfer",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8618081ef83fffff294000000000000000000000000000000000000099901801ca06aeaaaac3375bb814d36f8c5fb941dae51b55dffc22a6fd3b5b3dd30a9a489d6a05a07dd9d31a1b78fed59812496306fd9e17446cbb456e4e68f1d15b186567302", [ "trace" ] ],
+    "id" : 53
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : null,
+      "trace" : [ {
+        "action" : {
+          "callType" : "call",
+          "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+          "gas" : "0xffadea",
+          "input" : "0x",
+          "to" : "0x0000000000000000000000000000000000000999",
+          "value" : "0x1"
+        },
+        "result" : {
+          "gasUsed" : "0x0",
+          "output" : "0x"
+        },
+        "subtraces" : 0,
+        "traceAddress" : [ ],
+        "type" : "call"
+      } ],
+      "vmTrace" : null
+    },
+    "id" : 53
+  },
+  "statusCode" : 200
+}

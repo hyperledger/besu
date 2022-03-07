@@ -1,0 +1,48 @@
+{
+  "comment" : "Various exceptional halt cases. INSUFFICIENT_STACK_ITEMS.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8618081ef83fffff29400d000000000000000000000000000000000000080801ca07a612f4e688476ec724ca1b43bf42554fbb6fe7e23b9e11f266fb02d943fa0d7a06dc7585f54af231d7127f4461f0e12175582c106c890f34d5d0f9eeef76896a9", [ "stateDiff" ] ],
+    "id" : 20
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18385c0b29e",
+              "to" : "0x393f0f18474c0a58c"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xffffffffffffffffffffffffffffffffd27fb671b",
+              "to" : "0xffffffffffffffffffffffffffffffffc38fb742d"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1e",
+              "to" : "0x1f"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    },
+    "id" : 20
+  },
+  "statusCode" : 200
+}
