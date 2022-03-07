@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceCallResult;
@@ -57,6 +59,18 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
 
     this.protocolSchedule = protocolSchedule;
     this.transactionSimulator = transactionSimulator;
+  }
+
+  @Override
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
+    final Optional<BlockParameter> maybeBlockParameter =
+        request.getOptionalParameter(2, BlockParameter.class);
+
+    if (maybeBlockParameter.isPresent()) {
+      return maybeBlockParameter.get();
+    }
+
+    return BlockParameter.LATEST;
   }
 
   protected JsonNode getTraceCallResult(

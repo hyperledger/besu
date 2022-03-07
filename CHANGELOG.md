@@ -3,6 +3,9 @@
 ## 22.1.2
 
 ### Additions and Improvements
+- Execution layer (The Merge):
+  - Execution specific RPC endpoint [[#3378](https://github.com/hyperledger/besu/issues/3378)
+- Tracing APIs: trace_rawTransaction, trace_get
 
 ### Bug Fixes
 - Reject locally-sourced transactions below the minimum gas price when not mining. [#3397](https://github.com/hyperledger/besu/pull/3397)

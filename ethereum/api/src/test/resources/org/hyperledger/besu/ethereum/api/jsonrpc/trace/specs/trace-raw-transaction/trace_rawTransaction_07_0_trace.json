@@ -1,0 +1,36 @@
+{
+  "comment" : "Increment 32 bytes provided in data field and return the value.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8818081ef83fffff294003000000000000000000000000000000000000080a0f0000000000000000000000000000000000000000000000000000000000000011ca0acbf3999783a6ff94ce42e07c959af589bfe860436243152ae90bf3b97d07c62a009f992840128573e7473e22b5329eb063e0d35ed2b36765813da92aeb344cb92", [ "trace" ] ],
+    "id" : 60
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0xf000000000000000000000000000000000000000000000000000000000000002",
+      "stateDiff" : null,
+      "trace" : [ {
+        "action" : {
+          "callType" : "call",
+          "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas" : "0xffad52",
+          "input" : "0xf000000000000000000000000000000000000000000000000000000000000001",
+          "to" : "0x0030000000000000000000000000000000000000",
+          "value" : "0x0"
+        },
+        "result" : {
+          "gasUsed" : "0x1b",
+          "output" : "0xf000000000000000000000000000000000000000000000000000000000000002"
+        },
+        "subtraces" : 0,
+        "traceAddress" : [ ],
+        "type" : "call"
+      } ],
+      "vmTrace" : null
+    },
+    "id" : 60
+  },
+  "statusCode" : 200
+}

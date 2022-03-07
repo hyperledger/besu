@@ -188,7 +188,7 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
                 })));
   }
 
-  public static Address fromPlugin(final org.hyperledger.besu.plugin.data.Address logger) {
-    return logger instanceof Address ? (Address) logger : wrap(logger.copy());
+  public static Address fromPlugin(final org.hyperledger.besu.plugin.data.Address address) {
+    return address instanceof Address ? (Address) address : wrap(address.copy());
   }
 }

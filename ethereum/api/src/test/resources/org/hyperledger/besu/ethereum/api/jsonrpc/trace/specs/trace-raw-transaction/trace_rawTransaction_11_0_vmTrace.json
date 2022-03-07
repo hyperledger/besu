@@ -1,0 +1,73 @@
+{
+  "comment" : "Pushes 1, 2, 3, then SWAP2 and SWAP1.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8618081ef83fffff29400f000000000000000000000000000000000000080801ca0b8b3fb6e8fcd85310a5a1fa9af5e2cfa90ba245e9328296cfc20a3880b26d390a079a15ed4130ec373e0f8fd897482fd4545891f5398f934254060085e4edc51c6", [ "vmTrace" ] ],
+    "id" : 128
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : null,
+      "trace" : [ ],
+      "vmTrace" : {
+        "code" : "0x6001600260039190",
+        "ops" : [ {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x1" ],
+            "store" : null,
+            "used" : 16756199
+          },
+          "pc" : 0,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x2" ],
+            "store" : null,
+            "used" : 16756196
+          },
+          "pc" : 2,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x3" ],
+            "store" : null,
+            "used" : 16756193
+          },
+          "pc" : 4,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x3", "0x2", "0x1" ],
+            "store" : null,
+            "used" : 16756190
+          },
+          "pc" : 6,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x1", "0x2" ],
+            "store" : null,
+            "used" : 16756187
+          },
+          "pc" : 7,
+          "sub" : null
+        } ]
+      }
+    },
+    "id" : 128
+  },
+  "statusCode" : 200
+}
