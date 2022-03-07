@@ -75,9 +75,10 @@ public class BackwardsSyncContext {
                     .filter(hash -> hash.equals(newBlockhash))
                     .findAny())
         .isPresent()) {
-      LOG.debug(
+      debugLambda(
+          LOG,
           "not fetching and appending hash {} to backwards sync since it is present in successors",
-          newBlockhash.toHexString());
+          () -> newBlockhash.toHexString());
       return CompletableFuture.completedFuture(null);
     }
 
