@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExchangeTransitionConfigurationParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -74,7 +75,7 @@ public class EngineExchangeTransitionConfigurationTest {
   @Test
   public void shouldReturnInvalidParamsOnTerminalBlockNumberNotZero() {
     var response =
-        resp(new EngineExchangeTransitionConfigurationParameter("0", Hash.ZERO.toHexString(), 1));
+        resp(new EngineExchangeTransitionConfigurationParameter("0", Hash.ZERO.toHexString(), new UnsignedLongParameter(1L)));
 
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     JsonRpcErrorResponse res = ((JsonRpcErrorResponse) response);
@@ -86,7 +87,7 @@ public class EngineExchangeTransitionConfigurationTest {
     when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.empty());
 
     var response =
-        resp(new EngineExchangeTransitionConfigurationParameter("0", Hash.ZERO.toHexString(), 0));
+        resp(new EngineExchangeTransitionConfigurationParameter("0", Hash.ZERO.toHexString(), new UnsignedLongParameter(0L)));
 
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     JsonRpcErrorResponse res = ((JsonRpcErrorResponse) response);
@@ -102,7 +103,7 @@ public class EngineExchangeTransitionConfigurationTest {
     var response =
         resp(
             new EngineExchangeTransitionConfigurationParameter(
-                "1", Hash.fromHexStringLenient("0xff").toHexString(), 0));
+                "1", Hash.fromHexStringLenient("0xff").toHexString(), new UnsignedLongParameter(0L)));
 
     var result = fromSuccessResp(response);
     assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(24));
@@ -119,7 +120,7 @@ public class EngineExchangeTransitionConfigurationTest {
     var response =
         resp(
             new EngineExchangeTransitionConfigurationParameter(
-                "24", Hash.fromHexStringLenient("0x01").toHexString(), 0));
+                "24", Hash.fromHexStringLenient("0x01").toHexString(), new UnsignedLongParameter(0)));
 
     var result = fromSuccessResp(response);
     assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(24));

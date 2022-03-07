@@ -29,10 +29,10 @@ public class EngineExchangeTransitionConfigurationParameter {
   public EngineExchangeTransitionConfigurationParameter(
       @JsonProperty("terminalTotalDifficulty") final String terminalTotalDifficulty,
       @JsonProperty("terminalBlockHash") final String terminalBlockHash,
-      @JsonProperty("terminalBlockNumber") final long terminalBlockNumber) {
+      @JsonProperty("terminalBlockNumber") final UnsignedLongParameter terminalBlockNumber) {
     this.terminalTotalDifficulty = Difficulty.fromHexString(terminalTotalDifficulty);
     this.terminalBlockHash = Hash.fromHexString(terminalBlockHash);
-    this.terminalBlockNumber = terminalBlockNumber;
+    this.terminalBlockNumber = terminalBlockNumber.getValue();
   }
 
   public Difficulty getTerminalTotalDifficulty() {
