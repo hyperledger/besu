@@ -110,7 +110,7 @@ public class PipelineChainDownloader implements ChainDownloader {
         && !syncState.hasReachedTerminalDifficulty().orElse(false)) {
       return performDownload();
     } else {
-      LOG.info("Chain download complete");
+      LOG.info("PipelineChain download complete");
       return completedFuture(null);
     }
   }
