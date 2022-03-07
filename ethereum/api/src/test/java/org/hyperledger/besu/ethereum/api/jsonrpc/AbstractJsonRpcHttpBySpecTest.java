@@ -167,10 +167,12 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       assertThat(
               mapper
                   .writerWithDefaultPrettyPrinter()
+                  .withoutAttribute("creationMethod")
                   .writeValueAsString(mapper.readTree(actualResult)))
           .isEqualTo(
               mapper
                   .writerWithDefaultPrettyPrinter()
+                  .withoutAttribute("creationMethod")
                   .writeValueAsString(mapper.readTree(expectedResult)));
     }
 

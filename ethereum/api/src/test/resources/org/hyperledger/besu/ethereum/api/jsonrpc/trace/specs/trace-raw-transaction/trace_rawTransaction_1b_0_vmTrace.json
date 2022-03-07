@@ -1,0 +1,23 @@
+{
+  "comment" : "Self destruct and send contract balance to the same address provided in the to field.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8758081ef83fffff2940150000000000000000000000000000000000000809400000000000000000000000001500000000000001ca0d4e0bc58b66988dbda935ddbbd86947e82ab33eff8a8f2601a8662f012641dd9a05f96e65ab05bfceadd224172895f85c1ffedc514eb8ad496675736f0e8a6f1f6", [ "vmTrace" ] ],
+    "id" : 152
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : null,
+      "trace" : [ ],
+      "vmTrace" : {
+        "code" : "0x",
+        "ops" : [ ]
+      }
+    },
+    "id" : 152
+  },
+  "statusCode" : 200
+}
