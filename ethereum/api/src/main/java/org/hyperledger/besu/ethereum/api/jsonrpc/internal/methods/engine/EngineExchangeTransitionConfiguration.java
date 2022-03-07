@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -69,15 +69,11 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
 
     final Optional<BlockHeader> maybeTerminalPoWBlockHeader = mergeContext.getTerminalPoWBlock();
 
-    if (maybeTerminalPoWBlockHeader.isEmpty()) {
-      return respondWithError(reqId, INTERNAL_ERROR);
-    }
-
     final EngineExchangeTransitionConfigurationResult localTransitionConfiguration =
         new EngineExchangeTransitionConfigurationResult(
             mergeContext.getTerminalTotalDifficulty(),
-            maybeTerminalPoWBlockHeader.get().getHash(),
-            maybeTerminalPoWBlockHeader.get().getNumber());
+            maybeTerminalPoWBlockHeader.map(BlockHeader::getHash).orElse(Hash.ZERO),
+            maybeTerminalPoWBlockHeader.map(BlockHeader::getNumber).orElse(0L));
 
     if (!localTransitionConfiguration
         .getTerminalTotalDifficulty()

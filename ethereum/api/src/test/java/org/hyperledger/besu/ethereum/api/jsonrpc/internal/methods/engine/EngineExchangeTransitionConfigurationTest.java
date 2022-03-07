@@ -75,7 +75,9 @@ public class EngineExchangeTransitionConfigurationTest {
   @Test
   public void shouldReturnInvalidParamsOnTerminalBlockNumberNotZero() {
     var response =
-        resp(new EngineExchangeTransitionConfigurationParameter("0", Hash.ZERO.toHexString(), new UnsignedLongParameter(1L)));
+        resp(
+            new EngineExchangeTransitionConfigurationParameter(
+                "0", Hash.ZERO.toHexString(), new UnsignedLongParameter(1L)));
 
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     JsonRpcErrorResponse res = ((JsonRpcErrorResponse) response);
@@ -87,7 +89,9 @@ public class EngineExchangeTransitionConfigurationTest {
     when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.empty());
 
     var response =
-        resp(new EngineExchangeTransitionConfigurationParameter("0", Hash.ZERO.toHexString(), new UnsignedLongParameter(0L)));
+        resp(
+            new EngineExchangeTransitionConfigurationParameter(
+                "0", Hash.ZERO.toHexString(), new UnsignedLongParameter(0L)));
 
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     JsonRpcErrorResponse res = ((JsonRpcErrorResponse) response);
@@ -103,7 +107,9 @@ public class EngineExchangeTransitionConfigurationTest {
     var response =
         resp(
             new EngineExchangeTransitionConfigurationParameter(
-                "1", Hash.fromHexStringLenient("0xff").toHexString(), new UnsignedLongParameter(0L)));
+                "1",
+                Hash.fromHexStringLenient("0xff").toHexString(),
+                new UnsignedLongParameter(0L)));
 
     var result = fromSuccessResp(response);
     assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(24));
@@ -120,7 +126,9 @@ public class EngineExchangeTransitionConfigurationTest {
     var response =
         resp(
             new EngineExchangeTransitionConfigurationParameter(
-                "24", Hash.fromHexStringLenient("0x01").toHexString(), new UnsignedLongParameter(0)));
+                "24",
+                Hash.fromHexStringLenient("0x01").toHexString(),
+                new UnsignedLongParameter(0)));
 
     var result = fromSuccessResp(response);
     assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(24));
