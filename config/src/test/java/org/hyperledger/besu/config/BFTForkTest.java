@@ -83,9 +83,9 @@ public class BFTForkTest {
     testGetMiningBeneficiaryWithInvalidAddress(beneficiary);
   }
 
-  private void testGetMiningBeneficiaryWithInvalidAddress(final String beneficiary) {
+  private void testGetMiningBeneficiaryWithInvalidAddress(final String miningBeneficiary) {
     ObjectNode config =
-        JsonUtil.objectNodeFromMap(Map.of(BftFork.MINING_BENEFICIARY_KEY, beneficiary));
+        JsonUtil.objectNodeFromMap(Map.of(BftFork.MINING_BENEFICIARY_KEY, miningBeneficiary));
 
     final BftFork bftFork = new BftFork(config);
     assertThatThrownBy(bftFork::getMiningBeneficiary)
