@@ -28,14 +28,15 @@ import com.google.common.base.Suppliers;
 
 public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
 
-  protected final Supplier<BlockchainQueries> blockchainQueries;
+  protected final Supplier<BlockchainQueries> blockchainQueriesSupplier;
 
   protected AbstractBlockParameterMethod(final BlockchainQueries blockchainQueries) {
     this(Suppliers.ofInstance(blockchainQueries));
   }
 
-  protected AbstractBlockParameterMethod(final Supplier<BlockchainQueries> blockchainQueries) {
-    this.blockchainQueries = blockchainQueries;
+  protected AbstractBlockParameterMethod(
+      final Supplier<BlockchainQueries> blockchainQueriesSupplier) {
+    this.blockchainQueriesSupplier = blockchainQueriesSupplier;
   }
 
   protected abstract BlockParameter blockParameter(JsonRpcRequestContext request);
@@ -43,7 +44,7 @@ public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
   protected abstract Object resultByBlockNumber(JsonRpcRequestContext request, long blockNumber);
 
   protected BlockchainQueries getBlockchainQueries() {
-    return blockchainQueries.get();
+    return blockchainQueriesSupplier.get();
   }
 
   protected Object pendingResult(final JsonRpcRequestContext request) {
@@ -53,7 +54,7 @@ public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
   }
 
   protected Object latestResult(final JsonRpcRequestContext request) {
-    return resultByBlockNumber(request, blockchainQueries.get().headBlockNumber());
+    return resultByBlockNumber(request, blockchainQueriesSupplier.get().headBlockNumber());
   }
 
   protected Object findResultByParamType(final JsonRpcRequestContext request) {

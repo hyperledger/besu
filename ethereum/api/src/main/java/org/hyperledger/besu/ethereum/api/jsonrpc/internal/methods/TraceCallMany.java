@@ -59,7 +59,6 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
       final TransactionSimulator transactionSimulator) {
     super(blockchainQueries, protocolSchedule, transactionSimulator);
 
-    // The trace_call specification does not output the revert reason, so we have to remove it
     MAPPER_IGNORE_REVERT_REASON.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
   }
 
@@ -100,27 +99,27 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     }
 
     final Optional<BlockHeader> maybeBlockHeader =
-        blockchainQueries.get().getBlockHeaderByNumber(blockNumber);
+        blockchainQueriesSupplier.get().getBlockHeaderByNumber(blockNumber);
 
     if (maybeBlockHeader.isEmpty()) {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), BLOCK_NOT_FOUND);
     }
+    final BlockHeader blockHeader = maybeBlockHeader.get();
 
     final List<JsonNode> traceCallResults = new ArrayList<>();
-
-    final WorldUpdater updater = transactionSimulator.getWorldUpdater(maybeBlockHeader.get());
+    final WorldUpdater updater = transactionSimulator.getWorldUpdater(blockHeader);
     try {
       Arrays.stream(transactionsAndTraceTypeParameters)
           .forEachOrdered(
               param -> {
-                final WorldUpdater finalUpdater = updater.updater();
+                final WorldUpdater localUpdater = updater.updater();
                 traceCallResults.add(
                     getSingleCallResult(
                         param.getTuple().getJsonCallParameter(),
                         param.getTuple().getTraceTypeParameter(),
-                        maybeBlockHeader.get(),
-                        finalUpdater));
-                finalUpdater.commit();
+                        blockHeader,
+                        localUpdater));
+                localUpdater.commit();
               });
     } catch (final TransactionInvalidException e) {
       LOG.error("Invalid transaction simulator result");
@@ -129,7 +128,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
       LOG.error(
           "Empty simulator result, call params: {}, blockHeader: {} ",
           JsonCallParameterUtil.validateAndGetCallParams(requestContext),
-          maybeBlockHeader.get());
+          blockHeader);
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
@@ -152,17 +151,16 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     if (maybeSimulatorResult.isEmpty()) {
       throw new EmptySimulatorResultException();
     }
-    if (maybeSimulatorResult.get().isInvalid()) {
+    final TransactionSimulatorResult simulatorResult = maybeSimulatorResult.get();
+    if (simulatorResult.isInvalid()) {
       throw new TransactionInvalidException();
     }
 
     final TransactionTrace transactionTrace =
         new TransactionTrace(
-            maybeSimulatorResult.get().getTransaction(),
-            maybeSimulatorResult.get().getResult(),
-            tracer.getTraceFrames());
+            simulatorResult.getTransaction(), simulatorResult.getResult(), tracer.getTraceFrames());
 
-    final Block block = blockchainQueries.get().getBlockchain().getChainHeadBlock();
+    final Block block = blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
 
     return getTraceCallResult(
         protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block);
