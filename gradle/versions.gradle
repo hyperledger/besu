@@ -32,14 +32,14 @@ dependencyManagement {
       entry'dagger'
     }
 
-    dependencySet(group: 'com.google.errorprone', version: '2.11.0') {
+    dependencySet(group: 'com.google.errorprone', version: '2.10.0') {
       entry 'error_prone_annotation'
       entry 'error_prone_check_api'
       entry 'error_prone_core'
       entry 'error_prone_test_helpers'
     }
 
-    dependency 'com.google.guava:guava:31.1.1-jre'
+    dependency 'com.google.guava:guava:31.1-jre'
 
     dependency 'com.graphql-java:graphql-java:17.3'
 
