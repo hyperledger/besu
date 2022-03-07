@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 public class ForwardSyncStep extends BackwardSyncTask {
 
   private static final Logger LOG = LoggerFactory.getLogger(ForwardSyncStep.class);
-  private static final int BATCH_SIZE = 200;
 
   public ForwardSyncStep(final BackwardsSyncContext context, final BackwardChain backwardChain) {
     super(context, backwardChain);
@@ -98,7 +97,7 @@ public class ForwardSyncStep extends BackwardSyncTask {
             () -> header.getHash().toString().substring(0, 20));
         saveBlock(backwardChain.getTrustedBlock(header.getHash()));
       } else {
-        return backwardChain.getFirstNAncestorHeaders(BATCH_SIZE);
+        return backwardChain.getFirstNAncestorHeaders(BackwardsSyncContext.BATCH_SIZE);
       }
     }
     return Collections.emptyList();

@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 public class BackwardsSyncContext {
   private static final Logger LOG = LoggerFactory.getLogger(BackwardsSyncContext.class);
+  public static final int BATCH_SIZE = 200;
 
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;

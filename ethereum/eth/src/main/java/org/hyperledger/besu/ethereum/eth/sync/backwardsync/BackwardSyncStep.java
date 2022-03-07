@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 public class BackwardSyncStep extends BackwardSyncTask {
   private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncStep.class);
-  private static final int BATCH_SIZE = 200;
 
   public BackwardSyncStep(final BackwardsSyncContext context, final BackwardChain backwardChain) {
     super(context, backwardChain);
@@ -108,7 +107,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
             context.getEthContext(),
             hash,
             context.getProtocolContext().getBlockchain().getChainHead().getHeight(),
-            BATCH_SIZE,
+            BackwardsSyncContext.BATCH_SIZE,
             context.getMetricsSystem())
         .run()
         .thenApply(
