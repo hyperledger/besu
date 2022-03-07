@@ -1,0 +1,33 @@
+{
+  "comment" : "Various exceptional halt cases. Invalid OPCODE (0x1F).",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8618081ef83fffff29400c000000000000000000000000000000000000080801ba0d91c27daad8e1eb6b4063bd4300aa75310bbd0eb5cdbde908bcb20f5335f891ea0326703eb5dab4aea5451b387c8ca0e6546f4446efd5383f0ba7efbd2af3801ef", [ "vmTrace" ] ],
+    "id" : 125
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : null,
+      "trace" : [ ],
+      "vmTrace" : {
+        "code" : "0x60011f",
+        "ops" : [ {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x1" ],
+            "store" : null,
+            "used" : 16756199
+          },
+          "pc" : 0,
+          "sub" : null
+        } ]
+      }
+    },
+    "id" : 125
+  },
+  "statusCode" : 200
+}

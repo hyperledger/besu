@@ -79,14 +79,17 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
   @Override
   protected Object latestResult(final JsonRpcRequestContext request) {
 
-    final long headBlockNumber = blockchainQueries.get().headBlockNumber();
-    Blockchain chain = blockchainQueries.get().getBlockchain();
+    final long headBlockNumber = blockchainQueriesSupplier.get().headBlockNumber();
+    Blockchain chain = blockchainQueriesSupplier.get().getBlockchain();
     BlockHeader headHeader = chain.getBlockHeader(headBlockNumber).orElse(null);
 
     Hash block = headHeader.getHash();
     Hash stateRoot = headHeader.getStateRoot();
 
-    if (blockchainQueries.get().getWorldStateArchive().isWorldStateAvailable(stateRoot, block)) {
+    if (blockchainQueriesSupplier
+        .get()
+        .getWorldStateArchive()
+        .isWorldStateAvailable(stateRoot, block)) {
       if (this.synchronizer.getSyncStatus().isEmpty()) { // we are already in sync
         return resultByBlockNumber(request, headBlockNumber);
       } else { // out of sync, return highest pulled block
@@ -97,7 +100,8 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
 
     LOGGER.trace("no world state available for block {} returning genesis", headBlockNumber);
     return resultByBlockNumber(
-        request, blockchainQueries.get().getBlockchain().getGenesisBlock().getHeader().getNumber());
+        request,
+        blockchainQueriesSupplier.get().getBlockchain().getGenesisBlock().getHeader().getNumber());
   }
 
   private BlockResult transactionComplete(final long blockNumber) {

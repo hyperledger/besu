@@ -1,0 +1,148 @@
+{
+  "comment" : "'CREATE', 'CREATE2'",
+  "request" : {
+    "method" : "trace_callMany",
+    "params" : [ [ [ {
+      "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+      "value" : "0x0",
+      "to" : "0x0130000000000000000000000000000000000000",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0xef"
+    }, [ "stateDiff" ] ], [ {
+      "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+      "value" : "0x0",
+      "to" : "0x0140000000000000000000000000000000000000",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0xef"
+    }, [ "stateDiff" ] ] ], "latest" ],
+    "id" : 1,
+    "jsonrpc" : "2.0"
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : [ {
+      "output" : "0x",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18385c0b29e",
+              "to" : "0x393f0f183872aa988"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x0130000000000000000000000000000000000000" : {
+          "balance" : "=",
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1",
+              "to" : "0x2"
+            }
+          },
+          "storage" : {
+            "0x0000000000000000000000000000000000000000000000000000000000000000" : {
+              "*" : {
+                "from" : "0x000000000000000000000000aac0627078c038eb3d06e04b57d020fe212be97d",
+                "to" : "0x0000000000000000000000002e615edd62acdfeb8ce3270b30fb36f0dbb8779d"
+              }
+            }
+          }
+        },
+        "0x2e615edd62acdfeb8ce3270b30fb36f0dbb8779d" : {
+          "balance" : {
+            "+" : "0x0"
+          },
+          "code" : {
+            "+" : "0xffff"
+          },
+          "nonce" : {
+            "+" : "0x1"
+          },
+          "storage" : {
+            "0x0000000000000000000000000000000000000000000000000000000000000001" : {
+              "+" : "0x0000000000000000000000000000000000000000000000000000000000000001"
+            },
+            "0x0000000000000000000000000000000000000000000000000000000000000002" : {
+              "+" : "0x0000000000000000000000000000000000000000000000000000000000000001"
+            }
+          }
+        },
+        "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xffffffffffffffffffffffffffffffffd27fb671b",
+              "to" : "0xffffffffffffffffffffffffffffffffd26917031"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1e",
+              "to" : "0x1f"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    }, {
+      "output" : "0x",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f183872aa988",
+              "to" : "0x393f0f184724d2d46"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x0140000000000000000000000000000000000000" : {
+          "balance" : "=",
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1",
+              "to" : "0x2"
+            }
+          },
+          "storage" : {
+            "0x0000000000000000000000000000000000000000000000000000000000000000" : {
+              "*" : {
+                "from" : "0x0000000000000000000000000deea5bd06fb86553643c1e94a2f5aac632b9ec9",
+                "to" : "0x0000000000000000000000000000000000000000000000000000000000000000"
+              }
+            }
+          }
+        },
+        "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xffffffffffffffffffffffffffffffffd26917031",
+              "to" : "0xffffffffffffffffffffffffffffffffc3b6eec73"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1f",
+              "to" : "0x20"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    } ],
+    "id" : 1
+  },
+  "statusCode" : 200
+}

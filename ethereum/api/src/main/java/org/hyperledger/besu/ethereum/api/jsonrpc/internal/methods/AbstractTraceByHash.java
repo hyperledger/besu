@@ -54,7 +54,7 @@ public abstract class AbstractTraceByHash implements JsonRpcMethod {
         .transactionByHash(transactionHash)
         .flatMap(TransactionWithMetadata::getBlockNumber)
         .flatMap(blockNumber -> blockchainQueries.getBlockchain().getBlockByNumber(blockNumber))
-        .map((block) -> getTraceBlock(block, transactionHash))
+        .map(block -> getTraceBlock(block, transactionHash))
         .orElse(Stream.empty());
   }
 
@@ -82,7 +82,7 @@ public abstract class AbstractTraceByHash implements JsonRpcMethod {
       final TransactionTrace transactionTrace, final Block block) {
     return FlatTraceGenerator.generateFromTransactionTraceAndBlock(
             this.protocolSchedule, transactionTrace, block)
-        .map(trace -> (FlatTrace) trace);
+        .map(FlatTrace.class::cast);
   }
 
   protected JsonNode arrayNodeFromTraceStream(final Stream<FlatTrace> traceStream) {
