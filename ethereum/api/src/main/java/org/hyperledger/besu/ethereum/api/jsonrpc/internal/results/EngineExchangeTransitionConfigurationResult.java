@@ -36,17 +36,29 @@ public class EngineExchangeTransitionConfigurationResult {
   }
 
   @JsonGetter(value = "terminalTotalDifficulty")
+  public String getTerminalTotalDifficultyAsString() {
+    return terminalTotalDifficulty.toHexString();
+  }
+
   public Difficulty getTerminalTotalDifficulty() {
     return terminalTotalDifficulty;
   }
 
   @JsonGetter(value = "terminalBlockHash")
+  public String getTerminalBlockHashAsString() {
+    return terminalBlockHash.toHexString();
+  }
+
   public Hash getTerminalBlockHash() {
     return terminalBlockHash;
   }
 
   @JsonGetter(value = "terminalBlockNumber")
-  public long getTerminalBlockNumber() {
+  public String getTerminalBlockNumberAsString() {
+    return Long.toHexString(terminalBlockNumber);
+  }
+
+  public Long getTerminalBlockNumber() {
     return terminalBlockNumber;
   }
 }

@@ -63,7 +63,7 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
         "received transitionConfiguration: {}",
         () -> Json.encodePrettily(remoteTransitionConfiguration));
 
-    if (remoteTransitionConfiguration.getTerminalBlockNumber() != 0) {
+    if (remoteTransitionConfiguration.getTerminalBlockNumber() != 0L) {
       return respondWithError(reqId, INVALID_PARAMS);
     }
 
@@ -80,8 +80,8 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
         .equals(remoteTransitionConfiguration.getTerminalTotalDifficulty())) {
       LOG.warn(
           "Configured terminal total difficulty {} does not match value of consensus client {}",
-          localTransitionConfiguration.getTerminalTotalDifficulty().toInt(),
-          remoteTransitionConfiguration.getTerminalTotalDifficulty().toInt());
+          localTransitionConfiguration.getTerminalTotalDifficulty(),
+          remoteTransitionConfiguration.getTerminalTotalDifficulty());
     }
 
     if (!localTransitionConfiguration
@@ -89,13 +89,13 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
         .equals(remoteTransitionConfiguration.getTerminalBlockHash())) {
       LOG.warn(
           "Configured terminal block hash {} does not match value of consensus client {}",
-          localTransitionConfiguration.getTerminalBlockHash().toHexString(),
-          remoteTransitionConfiguration.getTerminalBlockHash().toHexString());
+          localTransitionConfiguration.getTerminalBlockHash(),
+          remoteTransitionConfiguration.getTerminalBlockHash());
     }
 
     if (localTransitionConfiguration.getTerminalBlockNumber()
         != remoteTransitionConfiguration.getTerminalBlockNumber()) {
-      LOG.warn(
+      LOG.debug(
           "Configured terminal block number {} does not match value of consensus client {}",
           localTransitionConfiguration.getTerminalBlockNumber(),
           remoteTransitionConfiguration.getTerminalBlockNumber());
