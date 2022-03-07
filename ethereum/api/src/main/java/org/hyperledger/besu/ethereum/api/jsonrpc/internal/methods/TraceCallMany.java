@@ -114,29 +114,26 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
           .forEachOrdered(
               param -> {
                 final WorldUpdater finalUpdater = updater.updater();
-                try {
-                  traceCallResults.add(
-                      getSingleCallResult(
-                          param.getTuple().getJsonCallParameter(),
-                          param.getTuple().getTraceTypeParameter(),
-                          maybeBlockHeader.get(),
-                          finalUpdater));
-                } catch (final TransactionInvalidException e) {
-                  LOG.error("Invalid transaction simulator result");
-                  throw new RuntimeException();
-                } catch (final EmptySimulatorResultException e) {
-                  LOG.error(
-                      "Empty simulator result, call params: {}, blockHeader: {} ",
-                      JsonCallParameterUtil.validateAndGetCallParams(requestContext),
-                      maybeBlockHeader.get());
-                  throw new RuntimeException();
-                }
+                traceCallResults.add(
+                    getSingleCallResult(
+                        param.getTuple().getJsonCallParameter(),
+                        param.getTuple().getTraceTypeParameter(),
+                        maybeBlockHeader.get(),
+                        finalUpdater));
                 finalUpdater.commit();
               });
+    } catch (final TransactionInvalidException e) {
+      LOG.error("Invalid transaction simulator result");
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
+    } catch (final EmptySimulatorResultException e) {
+      LOG.error(
+          "Empty simulator result, call params: {}, blockHeader: {} ",
+          JsonCallParameterUtil.validateAndGetCallParams(requestContext),
+          maybeBlockHeader.get());
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
     }
-
     return traceCallResults;
   }
 

@@ -99,7 +99,7 @@ public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
     }
 
     if (maybeSimulatorResult.get().isInvalid()) {
-      LOG.error("Invalid simulator result: " + maybeSimulatorResult);
+      LOG.error(String.format("Invalid simulator result %s", maybeSimulatorResult));
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
     }
 

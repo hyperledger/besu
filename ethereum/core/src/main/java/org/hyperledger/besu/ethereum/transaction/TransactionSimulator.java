@@ -176,14 +176,12 @@ public class TransactionSimulator {
 
     BlockHeader blockHeaderToProcess = header;
 
-    if (transactionValidationParams.isAllowExceedingBalance()) {
-      if (header.getBaseFee().isPresent()) {
-        blockHeaderToProcess =
-            BlockHeaderBuilder.fromHeader(header)
-                .baseFee(Wei.ZERO)
-                .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions())
-                .buildBlockHeader();
-      }
+    if (transactionValidationParams.isAllowExceedingBalance() && header.getBaseFee().isPresent()) {
+      blockHeaderToProcess =
+          BlockHeaderBuilder.fromHeader(header)
+              .baseFee(Wei.ZERO)
+              .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions())
+              .buildBlockHeader();
     }
 
     final Account sender = updater.get(senderAddress);
