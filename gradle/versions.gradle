@@ -15,31 +15,31 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.1'
-    dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.13.1'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.2'
+    dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.13.2'
 
     dependency 'com.github.ben-manes.caffeine:caffeine:3.0.5'
 
-    dependencySet(group: 'com.github.tomakehurst', version: '2.29.1') {
+    dependencySet(group: 'com.github.tomakehurst', version: '2.32.1') {
       entry'wiremock-jre8-standalone'
       entry'wiremock-jre8'
     }
 
     dependency 'com.google.auto.service:auto-service:1.0.1'
 
-    dependencySet(group: 'com.google.dagger', version: '2.40.5') {
+    dependencySet(group: 'com.google.dagger', version: '2.41') {
       entry'dagger-compiler'
       entry'dagger'
     }
 
-    dependencySet(group: 'com.google.errorprone', version: '2.10.0') {
+    dependencySet(group: 'com.google.errorprone', version: '2.11.0') {
       entry 'error_prone_annotation'
       entry 'error_prone_check_api'
       entry 'error_prone_core'
       entry 'error_prone_test_helpers'
     }
 
-    dependency 'com.google.guava:guava:31.0.1-jre'
+    dependency 'com.google.guava:guava:31.1.1-jre'
 
     dependency 'com.graphql-java:graphql-java:17.3'
 
@@ -61,7 +61,7 @@ dependencyManagement {
       entry'grpc-stub'
     }
 
-    dependency 'io.jaegertracing:jaeger-client:1.6.0'
+    dependency 'io.jaegertracing:jaeger-client:1.8.0'
     dependency 'io.jaegertracing:jaeger-proto:0.7.0'
 
     dependency 'io.kubernetes:client-java:14.0.0'
@@ -112,10 +112,10 @@ dependencyManagement {
     dependency 'org.apache.commons:commons-compress:1.21'
     dependency 'org.apache.commons:commons-text:1.9'
 
-    dependency 'org.apache.logging.log4j:log4j-api:2.17.1'
-    dependency 'org.apache.logging.log4j:log4j-core:2.17.1'
-    dependency 'org.apache.logging.log4j:log4j-jul:2.17.1'
-    dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.1'
+    dependency 'org.apache.logging.log4j:log4j-api:2.17.2'
+    dependency 'org.apache.logging.log4j:log4j-core:2.17.2'
+    dependency 'org.apache.logging.log4j:log4j-jul:2.17.2'
+    dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
 
     dependency 'org.apache.tuweni:tuweni-bytes:2.1.0'
     dependency 'org.apache.tuweni:tuweni-config:2.1.0'
@@ -131,7 +131,7 @@ dependencyManagement {
 
     dependency 'org.assertj:assertj-core:3.22.0'
 
-    dependency 'org.awaitility:awaitility:4.1.1'
+    dependency 'org.awaitility:awaitility:4.2.0'
 
     dependencySet(group: 'org.bouncycastle', version: '1.70') {
       entry'bcpkix-jdk15on'
