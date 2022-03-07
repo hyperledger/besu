@@ -1,8 +1,8 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ *  the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -11,24 +11,16 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
+
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
-public enum JwtAlgorithm {
-  RS256,
-  RS384,
-  RS512,
-  ES256,
-  ES384,
-  HS256,
-  ES512;
-
-  public static JwtAlgorithm fromString(final String str) {
-    for (final JwtAlgorithm alg : JwtAlgorithm.values()) {
-      if (alg.name().equalsIgnoreCase(str)) {
-        return alg;
-      }
-    }
-    return null;
+/*
+ * Thrown when config options are insufficient to secure the Engine API
+ */
+public class UnsecurableEngineApiException extends RuntimeException {
+  public UnsecurableEngineApiException(final String reason) {
+    super(reason);
   }
 }
