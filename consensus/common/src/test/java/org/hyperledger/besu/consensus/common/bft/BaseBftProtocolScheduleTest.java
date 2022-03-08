@@ -49,11 +49,9 @@ public class BaseBftProtocolScheduleTest {
   @Test
   public void ensureBlockRewardAndMiningBeneficiaryInProtocolSpecMatchConfig() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(5);
-    final String miningBeneficiary = Address.fromHexString("0x1").toString();
-    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
-    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
-    when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(configOptions.getEpochLength()).thenReturn(3000L);
+    final Address miningBeneficiary = Address.fromHexString("0x1");
+    final BftConfigOptions configOptions =
+        createBftConfig(arbitraryBlockReward, Optional.of(miningBeneficiary));
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
@@ -63,31 +61,14 @@ public class BaseBftProtocolScheduleTest {
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
     assertThat(spec.getBlockReward()).isEqualTo(Wei.of(arbitraryBlockReward));
-    assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(null))
-        .isEqualTo(Address.fromHexString(miningBeneficiary));
-  }
-
-  @Test
-  public void illegalMiningBeneficiaryStringThrowsException() {
-    final String miningBeneficiary = "notHexStringOfTwentyBytes";
-    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
-    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
-    when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
-    when(configOptions.getEpochLength()).thenReturn(3000L);
-    when(configOptions.getBlockRewardWei()).thenReturn(BigInteger.ZERO);
-    when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
-    assertThatThrownBy(() -> createProtocolSchedule(List.of(new ForkSpec<>(0, configOptions))))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Mining beneficiary in config is not a valid ethereum address");
+    assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(mock(BlockHeader.class)))
+        .isEqualTo(miningBeneficiary);
   }
 
   @Test
   public void missingMiningBeneficiaryInConfigWillPayCoinbaseInHeader() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
-    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
-    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
-    when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(configOptions.getEpochLength()).thenReturn(3000L);
+    final BftConfigOptions configOptions = createBftConfig(arbitraryBlockReward);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
@@ -105,12 +86,79 @@ public class BaseBftProtocolScheduleTest {
   }
 
   @Test
+  public void ensureForksAreRespected_beginWithNonEmptyMiningBeneficiary() {
+    ensureForksAreRespected(false);
+  }
+
+  @Test
+  public void ensureForksAreRespected_beginWithEmptyMiningBeneficiary() {
+    ensureForksAreRespected(true);
+  }
+
+  private void ensureForksAreRespected(final boolean initialBeneficiaryIsEmpty) {
+    final Address headerCoinbase = Address.fromHexString("0x123");
+    final Address beneficiary1 = Address.fromHexString("0x01");
+    final Address beneficiary2 = Address.fromHexString("0x02");
+    final Address beneficiary3 = Address.fromHexString("0x03");
+    final BlockHeader header = mock(BlockHeader.class);
+    when(header.getCoinbase()).thenReturn(headerCoinbase);
+
+    // Alternate empty and non-empty mining beneficiary config
+    final BftConfigOptions initialConfig =
+        createBftConfig(
+            BigInteger.valueOf(3),
+            Optional.of(beneficiary1).filter(__ -> !initialBeneficiaryIsEmpty));
+    final BftConfigOptions fork1 =
+        createBftConfig(
+            BigInteger.valueOf(2),
+            Optional.of(beneficiary2).filter(__ -> initialBeneficiaryIsEmpty));
+    final BftConfigOptions fork2 =
+        createBftConfig(
+            BigInteger.valueOf(1),
+            Optional.of(beneficiary3).filter(__ -> !initialBeneficiaryIsEmpty));
+
+    when(genesisConfig.getBftConfigOptions()).thenReturn(initialConfig);
+    when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
+
+    final ProtocolSchedule schedule =
+        createProtocolSchedule(
+            List.of(
+                new ForkSpec<>(0, initialConfig),
+                new ForkSpec<>(2, fork1),
+                new ForkSpec<>(5, fork2)));
+
+    // Check initial config
+    for (int i = 0; i < 2; i++) {
+      final ProtocolSpec spec = schedule.getByBlockNumber(i);
+      final Address expectedBeneficiary = initialBeneficiaryIsEmpty ? headerCoinbase : beneficiary1;
+      assertThat(spec.getBlockReward()).isEqualTo(Wei.of(BigInteger.valueOf(3)));
+      assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header))
+          .isEqualTo(expectedBeneficiary);
+    }
+
+    // Check fork1
+    for (int i = 2; i < 5; i++) {
+      final ProtocolSpec spec = schedule.getByBlockNumber(i);
+      final Address expectedBeneficiary = initialBeneficiaryIsEmpty ? beneficiary2 : headerCoinbase;
+      assertThat(spec.getBlockReward()).isEqualTo(Wei.of(BigInteger.valueOf(2)));
+      assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header))
+          .isEqualTo(expectedBeneficiary);
+    }
+
+    // Check fork2
+    for (int i = 5; i < 8; i++) {
+      final ProtocolSpec spec = schedule.getByBlockNumber(i);
+      final Address expectedBeneficiary = initialBeneficiaryIsEmpty ? headerCoinbase : beneficiary3;
+      assertThat(spec.getBlockReward()).isEqualTo(Wei.of(BigInteger.valueOf(1)));
+      assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header))
+          .isEqualTo(expectedBeneficiary);
+    }
+  }
+
+  @Test
   public void negativeBlockRewardThrowsException() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(-3);
-    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
-    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
-    when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(configOptions.getEpochLength()).thenReturn(3000L);
+    final BftConfigOptions configOptions = createBftConfig(arbitraryBlockReward);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
@@ -122,10 +170,8 @@ public class BaseBftProtocolScheduleTest {
   @Test
   public void zeroEpochLengthThrowsException() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
-    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
-    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
+    final BftConfigOptions configOptions = createBftConfig(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(0L);
-    when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
@@ -137,10 +183,8 @@ public class BaseBftProtocolScheduleTest {
   @Test
   public void negativeEpochLengthThrowsException() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
-    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
-    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
+    final BftConfigOptions configOptions = createBftConfig(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(-3000L);
-    when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
@@ -152,11 +196,9 @@ public class BaseBftProtocolScheduleTest {
   @Test
   public void blockRewardSpecifiedInTransitionCreatesNewMilestone() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(5);
-    final String miningBeneficiary = Address.fromHexString("0x1").toString();
-    final BftConfigOptions configOptions = mock(JsonBftConfigOptions.class);
-    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
-    when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(configOptions.getEpochLength()).thenReturn(3000L);
+    final Address miningBeneficiary = Address.fromHexString("0x1");
+    final BftConfigOptions configOptions =
+        createBftConfig(arbitraryBlockReward, Optional.of(miningBeneficiary));
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
     when(genesisConfig.isIbft2()).thenReturn(true);
 
@@ -195,5 +237,19 @@ public class BaseBftProtocolScheduleTest {
         false,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT);
+  }
+
+  private BftConfigOptions createBftConfig(final BigInteger blockReward) {
+    return createBftConfig(blockReward, Optional.empty());
+  }
+
+  private BftConfigOptions createBftConfig(
+      final BigInteger blockReward, final Optional<Address> miningBeneficiary) {
+    final BftConfigOptions bftConfig = mock(JsonBftConfigOptions.class);
+    when(bftConfig.getMiningBeneficiary()).thenReturn(miningBeneficiary);
+    when(bftConfig.getBlockRewardWei()).thenReturn(blockReward);
+    when(bftConfig.getEpochLength()).thenReturn(3000L);
+
+    return bftConfig;
   }
 }

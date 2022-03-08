@@ -59,13 +59,13 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
       final EpochManager epochManager) {
     super(
         coinbase,
+        __ -> Util.publicKeyToAddress(nodeKey.getPublicKey()),
         targetGasLimitSupplier,
         extraDataCalculator,
         pendingTransactions,
         protocolContext,
         protocolSchedule,
         minTransactionGasPrice,
-        Util.publicKeyToAddress(nodeKey.getPublicKey()),
         minBlockOccupancyRatio,
         parentHeader);
     this.nodeKey = nodeKey;

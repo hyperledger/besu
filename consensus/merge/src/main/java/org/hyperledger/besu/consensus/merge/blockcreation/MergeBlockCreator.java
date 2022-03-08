@@ -49,13 +49,13 @@ public class MergeBlockCreator extends AbstractBlockCreator {
       final BlockHeader parentHeader) {
     super(
         miningBeneficiary,
+        __ -> miningBeneficiary,
         targetGasLimitSupplier,
         extraDataCalculator,
         pendingTransactions,
         protocolContext,
         protocolSchedule,
         minTransactionGasPrice,
-        miningBeneficiary,
         minBlockOccupancyRatio,
         parentHeader);
   }
