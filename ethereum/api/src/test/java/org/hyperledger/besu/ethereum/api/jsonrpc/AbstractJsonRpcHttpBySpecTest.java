@@ -246,7 +246,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
         }
       }
       expectedResult = filterRevertReason(expectedResult);
-//      actualResult = filterRevertReason(actualResult);
+      //      actualResult = filterRevertReason(actualResult);
 
       final ObjectMapper mapper = new ObjectMapper();
       mapper.configure(INDENT_OUTPUT, true);
