@@ -22,8 +22,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.MixInIgnoreRevertReason;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
@@ -31,19 +29,13 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 public class TraceGet extends AbstractTraceByHash implements JsonRpcMethod {
-  private static final ObjectMapper MAPPER_IGNORE_REVERT_REASON = new ObjectMapper();
 
   public TraceGet(
       final Supplier<BlockTracer> blockTracerSupplier,
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule) {
     super(blockTracerSupplier, blockchainQueries, protocolSchedule);
-
-    // The trace_get specification does not output the revert reason, so we have to remove it
-    MAPPER_IGNORE_REVERT_REASON.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
   }
 
   @Override
@@ -67,10 +59,9 @@ public class TraceGet extends AbstractTraceByHash implements JsonRpcMethod {
 
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
-        MAPPER_IGNORE_REVERT_REASON.valueToTree(
-            resultByTransactionHash(transactionHash)
-                .filter(trace -> trace.getTraceAddress().equals(traceNumbers))
-                .findFirst()
-                .orElse(null)));
+        resultByTransactionHash(transactionHash)
+            .filter(trace -> trace.getTraceAddress().equals(traceNumbers))
+            .findFirst()
+            .orElse(null));
   }
 }

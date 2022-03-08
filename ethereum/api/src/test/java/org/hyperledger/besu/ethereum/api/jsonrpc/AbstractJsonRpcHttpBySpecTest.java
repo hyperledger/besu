@@ -58,6 +58,8 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       Pattern.compile(",*\"cost\":[0-9a-fA-F]+,*|,\"used\":[0-9a-fA-F]+");
   private static final Pattern GAS_MATCH_FOR_TRACE =
       Pattern.compile("\"gasUsed\":\"[x0-9a-fA-F]+\",");
+  private static final Pattern REVERT_REASON_MATCH =
+      Pattern.compile("\"revertReason\":\"[x0-9a-fA-F]+\",");
 
   private final URL specURL;
 
@@ -243,6 +245,8 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
                 "Unrecognized trace type (expected trace | vmTrace | stateDiff)");
         }
       }
+      expectedResult = filterRevertReason(expectedResult);
+      actualResult = filterRevertReason(actualResult);
 
       final ObjectMapper mapper = new ObjectMapper();
       mapper.configure(INDENT_OUTPUT, true);
@@ -279,6 +283,11 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
 
   private String filterStringTrace(final String expectedResult) {
     final Matcher m = GAS_MATCH_FOR_TRACE.matcher(expectedResult);
+    return m.replaceAll("");
+  }
+
+  private String filterRevertReason(final String expectedResult) {
+    final Matcher m = REVERT_REASON_MATCH.matcher(expectedResult);
     return m.replaceAll("");
   }
 }
