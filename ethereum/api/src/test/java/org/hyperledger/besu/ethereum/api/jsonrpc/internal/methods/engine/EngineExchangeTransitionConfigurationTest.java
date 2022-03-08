@@ -88,17 +88,19 @@ public class EngineExchangeTransitionConfigurationTest {
   }
 
   @Test
-  public void shouldReturnInternalErrorOnTerminalPoWBlockHeaderEmpty() {
+  public void shouldReturnZerosOnTerminalPoWBlockHeaderEmpty() {
     when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.empty());
+    when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(1337L));
 
     var response =
         resp(
             new EngineExchangeTransitionConfigurationParameter(
                 "0", Hash.ZERO.toHexString(), new UnsignedLongParameter(0L)));
 
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
-    JsonRpcErrorResponse res = ((JsonRpcErrorResponse) response);
-    assertThat(res.getError()).isEqualTo(JsonRpcError.INTERNAL_ERROR);
+    var result = fromSuccessResp(response);
+    assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(1337L));
+    assertThat(result.getTerminalBlockHash()).isEqualTo(Hash.ZERO);
+    assertThat(result.getTerminalBlockNumber()).isEqualTo(0L);
   }
 
   @Test
