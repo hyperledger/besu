@@ -18,22 +18,18 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.data.Quantity;
 
 import java.math.BigInteger;
-import java.security.InvalidParameterException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.tuweni.units.bigints.UInt64;
 
 public class PayloadIdentifier implements Quantity {
+
   private final UInt64 val;
 
   @JsonCreator
   public PayloadIdentifier(final String payloadId) {
     this(Long.decode(payloadId));
-
-    if (!payloadId.startsWith("0x") || payloadId.length() != 18) {
-      throw new InvalidParameterException(payloadId + " is not a valid 8 byte hex string");
-    }
   }
 
   public PayloadIdentifier(final Long payloadId) {
