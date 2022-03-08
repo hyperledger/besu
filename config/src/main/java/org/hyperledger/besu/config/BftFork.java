@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.datatypes.Address;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +33,7 @@ public class BftFork {
   public static final String VALIDATORS_KEY = "validators";
   public static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
   public static final String BLOCK_REWARD_KEY = "blockreward";
+  public static final String MINING_BENEFICIARY_KEY = "miningbeneficiary";
 
   protected final ObjectNode forkConfigRoot;
 
@@ -62,6 +65,22 @@ public class BftFork {
       return Optional.of(new BigInteger(1, Bytes.fromHexStringLenient(weiStr).toArrayUnsafe()));
     }
     return Optional.of(new BigInteger(weiStr));
+  }
+
+  public Optional<Address> getMiningBeneficiary() {
+    try {
+      return JsonUtil.getString(forkConfigRoot, MINING_BENEFICIARY_KEY)
+          .map(String::trim)
+          .filter(s -> !s.isEmpty())
+          .map(Address::fromHexStringStrict);
+    } catch (final IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+          "Mining beneficiary in transition config is not a valid ethereum address", e);
+    }
+  }
+
+  public boolean isMiningBeneficiaryConfigured() {
+    return JsonUtil.hasKey(forkConfigRoot, MINING_BENEFICIARY_KEY);
   }
 
   public Optional<List<String>> getValidators() throws IllegalArgumentException {

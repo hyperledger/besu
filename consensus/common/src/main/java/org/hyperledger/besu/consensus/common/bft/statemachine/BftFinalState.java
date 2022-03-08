@@ -36,7 +36,7 @@ public class BftFinalState {
   private final ProposerSelector proposerSelector;
   private final RoundTimer roundTimer;
   private final BlockTimer blockTimer;
-  private final BftBlockCreatorFactory blockCreatorFactory;
+  private final BftBlockCreatorFactory<?> blockCreatorFactory;
   private final Clock clock;
   private final ValidatorMulticaster validatorMulticaster;
 
@@ -48,7 +48,7 @@ public class BftFinalState {
       final ValidatorMulticaster validatorMulticaster,
       final RoundTimer roundTimer,
       final BlockTimer blockTimer,
-      final BftBlockCreatorFactory blockCreatorFactory,
+      final BftBlockCreatorFactory<?> blockCreatorFactory,
       final Clock clock) {
     this.validatorProvider = validatorProvider;
     this.nodeKey = nodeKey;
@@ -93,7 +93,7 @@ public class BftFinalState {
     return blockTimer;
   }
 
-  public BftBlockCreatorFactory getBlockCreatorFactory() {
+  public BftBlockCreatorFactory<?> getBlockCreatorFactory() {
     return blockCreatorFactory;
   }
 

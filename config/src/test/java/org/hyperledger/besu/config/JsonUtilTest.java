@@ -749,4 +749,36 @@ public class JsonUtilTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Expected array value but got string");
   }
+
+  @Test
+  public void hasKey_noMatchingKey() {
+    final String jsonStr = "{\"test\": \"bla\" }";
+    final ObjectNode rootNode = JsonUtil.objectNodeFromString(jsonStr);
+
+    assertThat(JsonUtil.hasKey(rootNode, "target")).isFalse();
+  }
+
+  @Test
+  public void hasKey_nullMatchingKey() {
+    final String jsonStr = "{\"target\": null }";
+    final ObjectNode rootNode = JsonUtil.objectNodeFromString(jsonStr);
+
+    assertThat(JsonUtil.hasKey(rootNode, "target")).isTrue();
+  }
+
+  @Test
+  public void hasKey_emptyStringMatchingKey() {
+    final String jsonStr = "{\"target\": \"\" }";
+    final ObjectNode rootNode = JsonUtil.objectNodeFromString(jsonStr);
+
+    assertThat(JsonUtil.hasKey(rootNode, "target")).isTrue();
+  }
+
+  @Test
+  public void hasKey_nonEmptyMatchingKey() {
+    final String jsonStr = "{\"target\": \"bla\" }";
+    final ObjectNode rootNode = JsonUtil.objectNodeFromString(jsonStr);
+
+    assertThat(JsonUtil.hasKey(rootNode, "target")).isTrue();
+  }
 }

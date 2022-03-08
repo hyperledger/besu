@@ -103,6 +103,17 @@ public class JsonUtil {
   }
 
   /**
+   * Checks whether an {@code ObjectNode} contains the given key.
+   *
+   * @param node The {@code ObjectNode} to inspect.
+   * @param key The key to check.
+   * @return Returns true if the given key is set.
+   */
+  public static boolean hasKey(final ObjectNode node, final String key) {
+    return node.has(key);
+  }
+
+  /**
    * Returns textual (string) value at {@code key}. See {@link #getValueAsString} for retrieving
    * non-textual values in string form.
    *

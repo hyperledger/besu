@@ -31,7 +31,7 @@ import org.hyperledger.besu.util.Subscribers;
 public class IbftRoundFactory {
 
   private final BftFinalState finalState;
-  private final BftBlockCreatorFactory blockCreatorFactory;
+  private final BftBlockCreatorFactory<?> blockCreatorFactory;
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
   private final Subscribers<MinedBlockObserver> minedBlockObservers;

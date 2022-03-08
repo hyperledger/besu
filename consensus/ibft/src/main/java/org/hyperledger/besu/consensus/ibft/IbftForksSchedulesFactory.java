@@ -39,6 +39,11 @@ public class IbftForksSchedulesFactory {
     fork.getBlockPeriodSeconds().ifPresent(bftConfigOptions::setBlockPeriodSeconds);
     fork.getBlockRewardWei().ifPresent(bftConfigOptions::setBlockRewardWei);
 
+    if (fork.isMiningBeneficiaryConfigured()) {
+      // Only override if mining beneficiary is explicitly configured
+      bftConfigOptions.setMiningBeneficiary(fork.getMiningBeneficiary());
+    }
+
     return bftConfigOptions;
   }
 }

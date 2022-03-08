@@ -19,42 +19,30 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.JsonQbftConfigOptions;
+import org.hyperledger.besu.config.JsonBftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.BaseForksSchedulesFactoryTest;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
 
-public class IbftForksSchedulesFactoryTest {
-
-  @Test
-  public void createsScheduleForJustGenesisConfig() {
-    final MutableBftConfigOptions bftConfigOptions =
-        new MutableBftConfigOptions(JsonQbftConfigOptions.DEFAULT);
-    final ForkSpec<BftConfigOptions> expectedForkSpec = new ForkSpec<>(0, bftConfigOptions);
-    final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
-    genesisConfigOptions.bftConfigOptions(bftConfigOptions);
-
-    final ForksSchedule<BftConfigOptions> forksSchedule =
-        IbftForksSchedulesFactory.create(genesisConfigOptions);
-    assertThat(forksSchedule.getFork(0)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
-    assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
-    assertThat(forksSchedule.getFork(2)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
-  }
+public class IbftForksSchedulesFactoryTest
+    extends BaseForksSchedulesFactoryTest<BftConfigOptions, MutableBftConfigOptions> {
 
   @Test
   public void createsScheduleWithForkThatOverridesGenesisValues() {
     final MutableBftConfigOptions configOptions =
-        new MutableBftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+        new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
 
     final ObjectNode fork =
         JsonUtil.objectNodeFromMap(
@@ -78,19 +66,36 @@ public class IbftForksSchedulesFactoryTest {
 
     final BftConfigOptions expectedForkConfig =
         new MutableBftConfigOptions(
-            new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(forkOptions)));
+            new JsonBftConfigOptions(JsonUtil.objectNodeFromMap(forkOptions)));
 
     final ForkSpec<BftConfigOptions> expectedFork = new ForkSpec<>(1, expectedForkConfig);
     assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedFork);
     assertThat(forksSchedule.getFork(2)).usingRecursiveComparison().isEqualTo(expectedFork);
   }
 
-  private GenesisConfigOptions createGenesisConfig(
-      final BftConfigOptions configOptions, final ObjectNode fork) {
+  @Override
+  protected GenesisConfigOptions createGenesisConfig(
+      final BftConfigOptions configOptions, final ObjectNode... fork) {
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.bftConfigOptions(configOptions);
     genesisConfigOptions.transitions(
-        new TransitionsConfigOptions(JsonUtil.objectNodeFromMap(Map.of("ibft2", List.of(fork)))));
+        new TransitionsConfigOptions(
+            JsonUtil.objectNodeFromMap(Map.of("ibft2", Arrays.asList(fork)))));
     return genesisConfigOptions;
+  }
+
+  @Override
+  protected ForksSchedule<BftConfigOptions> createForkSchedule(
+      final GenesisConfigOptions genesisConfigOptions) {
+    return IbftForksSchedulesFactory.create(genesisConfigOptions);
+  }
+
+  @Override
+  protected BftConfigOptions createBftOptions(
+      final Consumer<MutableBftConfigOptions> optionModifier) {
+    final MutableBftConfigOptions options =
+        new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
+    optionModifier.accept(options);
+    return options;
   }
 }
