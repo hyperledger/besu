@@ -7,6 +7,7 @@
   - Execution specific RPC endpoint [[#3378](https://github.com/hyperledger/besu/issues/3378)
   - Adds JWT authentication to Engine APIs
 - Tracing APIs: trace_rawTransaction, trace_get, trace_callMany
+- Allow mining beneficiary to transition at specific blocks for ibft2 and qbft consensus mechanisms.  [#3115](https://github.com/hyperledger/besu/issues/3115)
 
 ### Bug Fixes
 - Reject locally-sourced transactions below the minimum gas price when not mining. [#3397](https://github.com/hyperledger/besu/pull/3397)

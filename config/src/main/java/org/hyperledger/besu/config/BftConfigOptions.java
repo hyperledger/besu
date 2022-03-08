@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.datatypes.Address;
+
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
@@ -36,7 +38,7 @@ public interface BftConfigOptions {
 
   int getFutureMessagesMaxDistance();
 
-  Optional<String> getMiningBeneficiary();
+  Optional<Address> getMiningBeneficiary();
 
   BigInteger getBlockRewardWei();
 
