@@ -16,7 +16,9 @@ package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
@@ -42,14 +44,13 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class BftBlockCreatorFactory {
-
+public class BftBlockCreatorFactory<T extends BftConfigOptions> {
+  protected final ForksSchedule<T> forksSchedule;
   private final AbstractPendingTransactionsSorter pendingTransactions;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
   protected final BftExtraDataCodec bftExtraDataCodec;
   private final Address localAddress;
-  final Address miningBeneficiary;
 
   protected volatile Bytes vanityData;
   private volatile Wei minTransactionGasPrice;
@@ -60,24 +61,25 @@ public class BftBlockCreatorFactory {
       final AbstractPendingTransactionsSorter pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
+      final ForksSchedule<T> forksSchedule,
       final MiningParameters miningParams,
       final Address localAddress,
-      final Address miningBeneficiary,
       final BftExtraDataCodec bftExtraDataCodec) {
     this.pendingTransactions = pendingTransactions;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
+    this.forksSchedule = forksSchedule;
     this.localAddress = localAddress;
     this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
     this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
     this.vanityData = miningParams.getExtraData();
-    this.miningBeneficiary = miningBeneficiary;
     this.bftExtraDataCodec = bftExtraDataCodec;
     this.targetGasLimit = miningParams.getTargetGasLimit();
   }
 
   public BlockCreator create(final BlockHeader parentHeader, final int round) {
     return new BftBlockCreator(
+        forksSchedule,
         localAddress,
         () -> targetGasLimit.map(AtomicLong::longValue),
         ph -> createExtraData(round, ph),
@@ -87,7 +89,6 @@ public class BftBlockCreatorFactory {
         minTransactionGasPrice,
         minBlockOccupancyRatio,
         parentHeader,
-        miningBeneficiary,
         bftExtraDataCodec);
   }
 

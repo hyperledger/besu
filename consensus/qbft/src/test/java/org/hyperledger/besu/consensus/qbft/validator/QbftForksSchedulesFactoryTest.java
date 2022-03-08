@@ -28,37 +28,26 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.BaseForksSchedulesFactoryTest;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.Test;
 
-public class QbftForksSchedulesFactoryTest {
-
-  @Test
-  public void createsScheduleForJustGenesisConfig() {
-    final MutableQbftConfigOptions qbftConfigOptions =
-        new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
-    final ForkSpec<QbftConfigOptions> expectedForkSpec = new ForkSpec<>(0, qbftConfigOptions);
-    final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
-    genesisConfigOptions.qbftConfigOptions(qbftConfigOptions);
-
-    final ForksSchedule<QbftConfigOptions> forksSchedule =
-        QbftForksSchedulesFactory.create(genesisConfigOptions);
-    assertThat(forksSchedule.getFork(0)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
-    assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
-    assertThat(forksSchedule.getFork(2)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
-  }
+public class QbftForksSchedulesFactoryTest
+    extends BaseForksSchedulesFactoryTest<QbftConfigOptions, MutableQbftConfigOptions> {
 
   @Test
   public void createsScheduleWithForkThatOverridesGenesisValues() {
@@ -189,12 +178,29 @@ public class QbftForksSchedulesFactoryTest {
             "QBFT transition to blockheader mode requires a validators list containing at least one validator");
   }
 
-  private GenesisConfigOptions createGenesisConfig(
-      final QbftConfigOptions configOptions, final ObjectNode fork) {
+  @Override
+  protected GenesisConfigOptions createGenesisConfig(
+      final QbftConfigOptions configOptions, final ObjectNode... forks) {
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.qbftConfigOptions(configOptions);
     genesisConfigOptions.transitions(
-        new TransitionsConfigOptions(JsonUtil.objectNodeFromMap(Map.of("qbft", List.of(fork)))));
+        new TransitionsConfigOptions(
+            JsonUtil.objectNodeFromMap(Map.of("qbft", Arrays.asList(forks)))));
     return genesisConfigOptions;
+  }
+
+  @Override
+  protected ForksSchedule<QbftConfigOptions> createForkSchedule(
+      final GenesisConfigOptions genesisConfigOptions) {
+    return QbftForksSchedulesFactory.create(genesisConfigOptions);
+  }
+
+  @Override
+  protected QbftConfigOptions createBftOptions(
+      final Consumer<MutableQbftConfigOptions> optionModifier) {
+    final MutableQbftConfigOptions options =
+        new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+    optionModifier.accept(options);
+    return options;
   }
 }

@@ -19,6 +19,8 @@ import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.hyperledger.besu.datatypes.Address;
+
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -187,6 +189,35 @@ public class JsonBftConfigOptionsTest {
   public void shouldGetDefaultFutureMessagesMaxDistanceFromDefaultConfig() {
     assertThat(JsonBftConfigOptions.DEFAULT.getFutureMessagesMaxDistance())
         .isEqualTo(EXPECTED_DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE);
+  }
+
+  @Test
+  public void shouldGetMiningBeneficiaryFromConfig() {
+    final Address miningBeneficiary =
+        Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
+    final BftConfigOptions config =
+        fromConfigOptions(singletonMap("miningbeneficiary", miningBeneficiary.toString()));
+    assertThat(config.getMiningBeneficiary()).contains(miningBeneficiary);
+  }
+
+  @Test
+  public void shouldGetEmptyMiningBeneficiaryFromConfig() {
+    final BftConfigOptions config = fromConfigOptions(singletonMap("miningbeneficiary", " "));
+    assertThat(config.getMiningBeneficiary()).isEmpty();
+  }
+
+  @Test
+  public void shouldFallbackToDefaultEmptyMiningBeneficiary() {
+    final BftConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getMiningBeneficiary()).isEmpty();
+  }
+
+  @Test
+  public void shouldThrowOnInvalidMiningBeneficiary() {
+    final BftConfigOptions config = fromConfigOptions(singletonMap("miningbeneficiary", "bla"));
+    assertThatThrownBy(config::getMiningBeneficiary)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Mining beneficiary in config is not a valid ethereum address");
   }
 
   private BftConfigOptions fromConfigOptions(final Map<String, Object> ibftConfigOptions) {
