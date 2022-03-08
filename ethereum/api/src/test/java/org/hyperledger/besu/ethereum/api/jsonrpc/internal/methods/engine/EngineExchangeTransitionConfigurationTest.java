@@ -39,8 +39,11 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
+import java.util.Map;
 import java.util.Optional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -134,6 +137,24 @@ public class EngineExchangeTransitionConfigurationTest {
     assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(24));
     assertThat(result.getTerminalBlockHash()).isEqualTo(Hash.fromHexStringLenient("0x01"));
     assertThat(result.getTerminalBlockNumber()).isEqualTo(42);
+  }
+
+  @Test
+  public void shouldAlwaysReturnResultsInHex() throws JsonProcessingException {
+    var mapper = new ObjectMapper();
+    var mockResult = new EngineExchangeTransitionConfigurationResult(Difficulty.ZERO, Hash.ZERO, 0L);
+
+    assertThat(mockResult.getTerminalBlockNumberAsString()).isEqualTo("0x0");
+    assertThat(mockResult.getTerminalTotalDifficultyAsString()).isEqualTo(Difficulty.ZERO.toHexString());
+    assertThat(mockResult.getTerminalBlockHashAsString()).isEqualTo(Hash.ZERO.toHexString());
+
+    String json = mapper.writeValueAsString(mockResult);
+    var res = mapper.readValue(json, Map.class);
+    assertThat(res.get("terminalBlockNumber")).isEqualTo("0x0");
+    assertThat(res.get("terminalBlockHash"))
+        .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000000");
+    assertThat(res.get("terminalTotalDifficulty"))
+        .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000000");
   }
 
   private JsonRpcResponse resp(final EngineExchangeTransitionConfigurationParameter param) {
