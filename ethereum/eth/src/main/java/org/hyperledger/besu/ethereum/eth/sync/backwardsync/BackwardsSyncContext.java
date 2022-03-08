@@ -167,7 +167,11 @@ public class BackwardsSyncContext {
   private CompletableFuture<Void> prepareBackwardSyncFuture(final BackwardChain backwardChain) {
     return new BackwardSyncStep(this, backwardChain)
         .executeAsync(null)
-        .thenCompose(new ForwardSyncStep(this, backwardChain)::executeAsync);
+        .thenCompose(new ForwardSyncStep(this, backwardChain)::executeAsync)
+            .exceptionally(throwable -> {
+              LOG.warn("A backward sync task failed because of: {}", throwable.getMessage());
+              return null;
+            });
   }
 
   public Optional<BackwardChain> getCurrentChain() {
