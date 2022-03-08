@@ -142,10 +142,12 @@ public class EngineExchangeTransitionConfigurationTest {
   @Test
   public void shouldAlwaysReturnResultsInHex() throws JsonProcessingException {
     var mapper = new ObjectMapper();
-    var mockResult = new EngineExchangeTransitionConfigurationResult(Difficulty.ZERO, Hash.ZERO, 0L);
+    var mockResult =
+        new EngineExchangeTransitionConfigurationResult(Difficulty.ZERO, Hash.ZERO, 0L);
 
     assertThat(mockResult.getTerminalBlockNumberAsString()).isEqualTo("0x0");
-    assertThat(mockResult.getTerminalTotalDifficultyAsString()).isEqualTo(Difficulty.ZERO.toHexString());
+    assertThat(mockResult.getTerminalTotalDifficultyAsString())
+        .isEqualTo(Difficulty.ZERO.toHexString());
     assertThat(mockResult.getTerminalBlockHashAsString()).isEqualTo(Hash.ZERO.toHexString());
 
     String json = mapper.writeValueAsString(mockResult);

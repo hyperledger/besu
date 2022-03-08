@@ -243,7 +243,7 @@ public class JsonRpcHttpService {
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     try {
       // Create the HTTP server and a router object.
-      httpServer = vertx.createHttpServer(getHttpServerOptions().setCompressionSupported(false));
+      httpServer = vertx.createHttpServer(getHttpServerOptions());
 
       httpServer.connectionHandler(connectionHandler());
 
