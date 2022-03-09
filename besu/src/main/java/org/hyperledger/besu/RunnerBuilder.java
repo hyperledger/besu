@@ -28,7 +28,7 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContextImpl;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetchers;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
@@ -124,6 +124,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -668,13 +669,12 @@ public class RunnerBuilder {
       final GraphQLDataFetchers fetchers =
           new GraphQLDataFetchers(
               supportedCapabilities, privacyParameters.getGoQuorumPrivacyParameters());
-      final GraphQLDataFetcherContextImpl dataFetcherContext =
-          new GraphQLDataFetcherContextImpl(
-              blockchainQueries,
-              protocolSchedule,
-              transactionPool,
-              miningCoordinator,
-              synchronizer);
+      final Map<GraphQLContextType, Object> graphQlContextMap = new ConcurrentHashMap<>();
+      graphQlContextMap.putIfAbsent(GraphQLContextType.BLOCKCHAIN_QUERIES, blockchainQueries);
+      graphQlContextMap.putIfAbsent(GraphQLContextType.PROTOCOL_SCHEDULE, protocolSchedule);
+      graphQlContextMap.putIfAbsent(GraphQLContextType.TRANSACTION_POOL, transactionPool);
+      graphQlContextMap.putIfAbsent(GraphQLContextType.MINING_COORDINATOR, miningCoordinator);
+      graphQlContextMap.putIfAbsent(GraphQLContextType.SYNCHRONIZER, synchronizer);
       final GraphQL graphQL;
       try {
         graphQL = GraphQLProvider.buildGraphQL(fetchers);
@@ -689,7 +689,7 @@ public class RunnerBuilder {
                   dataDir,
                   graphQLConfiguration,
                   graphQL,
-                  dataFetcherContext,
+                  graphQlContextMap,
                   besuController.getProtocolManager().ethContext().getScheduler()));
     }
 

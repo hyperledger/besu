@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,15 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
+package org.hyperledger.besu.ethereum.api.graphql;
 
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-
-import graphql.schema.DataFetchingEnvironment;
-
-abstract class AdapterBase {
-  BlockchainQueries getBlockchainQueries(final DataFetchingEnvironment environment) {
-    return environment.getGraphQlContext().get(GraphQLContextType.BLOCKCHAIN_QUERIES);
-  }
+/** Internal GraphQL Context */
+public enum GraphQLContextType {
+  BLOCKCHAIN_QUERIES,
+  PROTOCOL_SCHEDULE,
+  TRANSACTION_POOL,
+  MINING_COORDINATOR,
+  SYNCHRONIZER,
+  IS_ALIVE_HANDLER
 }

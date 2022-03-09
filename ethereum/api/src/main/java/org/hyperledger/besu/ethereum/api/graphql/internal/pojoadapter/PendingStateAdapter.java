@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContext;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
@@ -61,7 +61,7 @@ public class PendingStateAdapter extends AdapterBase {
   public Optional<AccountAdapter> getAccount(
       final DataFetchingEnvironment dataFetchingEnvironment) {
     final BlockchainQueries blockchainQuery =
-        ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getBlockchainQueries();
+        dataFetchingEnvironment.getGraphQlContext().get(GraphQLContextType.BLOCKCHAIN_QUERIES);
     final Address addr = dataFetchingEnvironment.getArgument("address");
     final Long blockNumber = dataFetchingEnvironment.getArgument("blockNumber");
     final long latestBlockNumber = blockchainQuery.latestBlock().get().getHeader().getNumber();
@@ -92,7 +92,7 @@ public class PendingStateAdapter extends AdapterBase {
 
     final BlockchainQueries query = getBlockchainQueries(environment);
     final ProtocolSchedule protocolSchedule =
-        ((GraphQLDataFetcherContext) environment.getContext()).getProtocolSchedule();
+        environment.getGraphQlContext().get(GraphQLContextType.PROTOCOL_SCHEDULE);
 
     final TransactionSimulator transactionSimulator =
         new TransactionSimulator(

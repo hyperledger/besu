@@ -99,10 +99,10 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
   }
 
   @Override
-  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
-
+  public PrecompileContractResult computePrecompile(
+      final Bytes input, final MessageFrame messageFrame) {
     if (skipContractExecution(messageFrame)) {
-      return Bytes.EMPTY;
+      return NO_RESULT;
     }
 
     final Hash pmtHash = messageFrame.getContextVariable(KEY_TRANSACTION_HASH);
@@ -114,7 +114,7 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
       receiveResponse = getReceiveResponse(key);
     } catch (final EnclaveClientException e) {
       LOG.debug("Can not fetch private transaction payload with key {}", key, e);
-      return Bytes.EMPTY;
+      return NO_RESULT;
     }
 
     final BytesValueRLPInput bytesValueRLPInput =
@@ -127,12 +127,12 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
 
     final Bytes privateFrom = privateTransaction.getPrivateFrom();
     if (!privateFromMatchesSenderKey(privateFrom, receiveResponse.getSenderKey())) {
-      return Bytes.EMPTY;
+      return NO_RESULT;
     }
 
     final Optional<Bytes> maybeGroupId = privateTransaction.getPrivacyGroupId();
     if (maybeGroupId.isEmpty()) {
-      return Bytes.EMPTY;
+      return NO_RESULT;
     }
 
     final Bytes32 privacyGroupId = Bytes32.wrap(maybeGroupId.get());
@@ -168,7 +168,7 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
         disposablePrivateState,
         privateWorldStateUpdater,
         privateFrom)) {
-      return Bytes.EMPTY;
+      return NO_RESULT;
     }
 
     final TransactionProcessingResult result =
@@ -183,7 +183,7 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
 
       privateMetadataUpdater.putTransactionReceipt(pmtHash, new PrivateTransactionReceipt(result));
 
-      return Bytes.EMPTY;
+      return NO_RESULT;
     }
 
     sendParticipantRemovedEvent(privateTransaction);
@@ -197,7 +197,8 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
           pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
     }
 
-    return result.getOutput();
+    return new PrecompileContractResult(
+        result.getOutput(), true, MessageFrame.State.CODE_EXECUTING, Optional.empty());
   }
 
   private void sendParticipantRemovedEvent(final PrivateTransaction privateTransaction) {
