@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContext;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
@@ -196,7 +196,7 @@ public class BlockAdapterBase extends AdapterBase {
 
     final BlockchainQueries query = getBlockchainQueries(environment);
     final ProtocolSchedule protocolSchedule =
-        ((GraphQLDataFetcherContext) environment.getContext()).getProtocolSchedule();
+        environment.getGraphQlContext().get(GraphQLContextType.PROTOCOL_SCHEDULE);
     final long bn = header.getNumber();
 
     final TransactionSimulator transactionSimulator =

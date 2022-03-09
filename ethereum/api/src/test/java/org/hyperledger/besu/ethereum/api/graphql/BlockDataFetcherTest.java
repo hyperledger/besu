@@ -51,8 +51,8 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
     when(environment.getArgument(ArgumentMatchers.eq("number"))).thenReturn(1L);
     when(environment.getArgument(ArgumentMatchers.eq("hash"))).thenReturn(null);
 
-    when(environment.getContext()).thenReturn(context);
-    when(context.getBlockchainQueries()).thenReturn(query);
+    when(environment.getGraphQlContext()).thenReturn(graphQLContext);
+    when(graphQLContext.get(GraphQLContextType.BLOCKCHAIN_QUERIES)).thenReturn(query);
     when(query.blockByNumber(ArgumentMatchers.anyLong()))
         .thenReturn(Optional.of(new BlockWithMetadata<>(null, null, null, null, 0)));
 
@@ -68,8 +68,8 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
     when(environment.getArgument(ArgumentMatchers.eq("number"))).thenReturn(1L);
     when(environment.getArgument(ArgumentMatchers.eq("hash"))).thenReturn(null);
 
-    when(environment.getContext()).thenReturn(context);
-    when(context.getBlockchainQueries()).thenReturn(query);
+    when(environment.getGraphQlContext()).thenReturn(graphQLContext);
+    when(graphQLContext.get(GraphQLContextType.BLOCKCHAIN_QUERIES)).thenReturn(query);
     when(query.blockByNumber(ArgumentMatchers.anyLong()))
         .thenReturn(Optional.of(new BlockWithMetadata<>(header, null, null, null, 0)));
     when(header.getCoinbase()).thenReturn(testAddress);

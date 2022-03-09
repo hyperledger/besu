@@ -40,6 +40,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.annotations.VisibleForTesting;
@@ -88,7 +89,8 @@ public class GraphQLHttpService {
 
   private final GraphQL graphQL;
 
-  private final GraphQLDataFetcherContext dataFetcherContext;
+  private final Map<GraphQLContextType, Object> graphQlContextMap;
+
   private final EthScheduler scheduler;
 
   /**
@@ -98,7 +100,7 @@ public class GraphQLHttpService {
    * @param dataDir The data directory where requests can be buffered
    * @param config Configuration for the rpc methods being loaded
    * @param graphQL GraphQL engine
-   * @param dataFetcherContext DataFetcherContext required by GraphQL to finish it's job
+   * @param graphQlContextMap GraphQlContext Map
    * @param scheduler {@link EthScheduler} used to trigger timeout on backend queries
    */
   public GraphQLHttpService(
@@ -106,7 +108,7 @@ public class GraphQLHttpService {
       final Path dataDir,
       final GraphQLConfiguration config,
       final GraphQL graphQL,
-      final GraphQLDataFetcherContextImpl dataFetcherContext,
+      final Map<GraphQLContextType, Object> graphQlContextMap,
       final EthScheduler scheduler) {
     this.dataDir = dataDir;
 
@@ -114,7 +116,7 @@ public class GraphQLHttpService {
     this.config = config;
     this.vertx = vertx;
     this.graphQL = graphQL;
-    this.dataFetcherContext = dataFetcherContext;
+    this.graphQlContextMap = graphQlContextMap;
     this.scheduler = scheduler;
   }
 
@@ -393,14 +395,17 @@ public class GraphQLHttpService {
 
   private GraphQLResponse process(
       final String requestJson, final String operationName, final Map<String, Object> variables) {
+    Map<GraphQLContextType, Object> contextMap = new ConcurrentHashMap<>();
+    contextMap.putAll(graphQlContextMap);
+    contextMap.put(
+        GraphQLContextType.IS_ALIVE_HANDLER,
+        new IsAliveHandler(scheduler, config.getHttpTimeoutSec()));
     final ExecutionInput executionInput =
         ExecutionInput.newExecutionInput()
             .query(requestJson)
             .operationName(operationName)
             .variables(variables)
-            .context(
-                new GraphQLDataFetcherContextImpl(
-                    dataFetcherContext, new IsAliveHandler(scheduler, config.getHttpTimeoutSec())))
+            .graphQLContext(contextMap)
             .build();
     final ExecutionResult result = graphQL.execute(executionInput);
     final Map<String, Object> toSpecificationResult = result.toSpecification();
