@@ -83,12 +83,11 @@ public class BackwardsSyncContext {
                 GetBodiesFromPeerTask.forHeaders(
                         protocolSchedule, ethContext, headers.getResult(), metricsSystem)
                     .run()
-                    .thenCompose(blocks -> syncBackwardsUntil(blocks.getResult().get(0))))
         .exceptionally(
             ex -> {
               LOG.error("Failed to fetch block by hash " + newBlockhash.toHexString(), ex);
               throw new BackwardSyncException(ex);
-            });
+            }).thenCompose(blocks -> syncBackwardsUntil(blocks.getResult().get(0))));
   }
 
   public CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
