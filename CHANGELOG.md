@@ -8,7 +8,7 @@
   - Adds JWT authentication to Engine APIs
 - Tracing APIs 
   - new API methods: trace_rawTransaction, trace_get, trace_callMany
-  - added revertReason to trace_call, trace_callMany and trace_get
+  - added revertReason to trace_call, trace_callMany, trace_rawTransaction and trace_get
 - Allow mining beneficiary to transition at specific blocks for ibft2 and qbft consensus mechanisms.  [#3115](https://github.com/hyperledger/besu/issues/3115)
 
 ### Bug Fixes
