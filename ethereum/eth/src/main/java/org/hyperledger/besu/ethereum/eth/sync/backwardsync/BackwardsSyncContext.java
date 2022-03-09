@@ -69,11 +69,12 @@ public class BackwardsSyncContext {
   }
 
   public CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockhash) {
-    if (getCurrentChain().isPresent() && getCurrentChain().get().knowsSuccessor(newBlockhash)) {
+    final Optional<BackwardChain> chain = getCurrentChain();
+    if (chain.isPresent() && chain.get().knowsSuccessor(newBlockhash)) {
       debugLambda(
           LOG,
           "not fetching and appending hash {} to backwards sync since it is present in successors",
-          () -> newBlockhash.toHexString());
+          newBlockhash::toHexString);
       return CompletableFuture.completedFuture(null);
     }
 
@@ -173,7 +174,9 @@ public class BackwardsSyncContext {
                 throw new BackwardSyncException(throwable);
               }
               if (((BackwardSyncException) throwable).shouldRestart()) {
-                LOG.warn("A backward sync task failed, restarting... Reason: {}", throwable.getMessage());
+                LOG.warn(
+                    "A backward sync task failed, restarting... Reason: {}",
+                    throwable.getMessage());
                 return null;
               }
               throw (BackwardSyncException) throwable;
