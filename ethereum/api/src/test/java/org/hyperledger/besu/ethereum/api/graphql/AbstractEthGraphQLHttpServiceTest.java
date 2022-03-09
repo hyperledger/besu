@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -175,14 +176,6 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final GraphQLConfiguration config = GraphQLConfiguration.createDefault();
 
     config.setPort(0);
-    final GraphQLDataFetcherContextImpl dataFetcherContext =
-        new GraphQLDataFetcherContextImpl(
-            blockchainQueries,
-            PROTOCOL_SCHEDULE,
-            transactionPoolMock,
-            miningCoordinatorMock,
-            synchronizerMock);
-
     final GraphQLDataFetchers dataFetchers = new GraphQLDataFetchers(supportedCapabilities);
     final GraphQL graphQL = GraphQLProvider.buildGraphQL(dataFetchers);
 
@@ -192,7 +185,17 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
             folder.newFolder().toPath(),
             config,
             graphQL,
-            dataFetcherContext,
+            Map.of(
+                GraphQLContextType.BLOCKCHAIN_QUERIES,
+                blockchainQueries,
+                GraphQLContextType.PROTOCOL_SCHEDULE,
+                PROTOCOL_SCHEDULE,
+                GraphQLContextType.TRANSACTION_POOL,
+                transactionPoolMock,
+                GraphQLContextType.MINING_COORDINATOR,
+                miningCoordinatorMock,
+                GraphQLContextType.SYNCHRONIZER,
+                synchronizerMock),
             Mockito.mock(EthScheduler.class));
     service.start().join();
 
