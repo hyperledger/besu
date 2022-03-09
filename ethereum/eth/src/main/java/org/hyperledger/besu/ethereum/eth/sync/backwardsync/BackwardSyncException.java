@@ -22,4 +22,8 @@ public class BackwardSyncException extends RuntimeException {
   public BackwardSyncException(final Throwable error) {
     super(error);
   }
+
+  public boolean shouldRestart() {
+    return false;
+  }
 }

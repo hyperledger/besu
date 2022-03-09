@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -42,7 +43,8 @@ public class ForwardSyncStep extends BackwardSyncTask {
   }
 
   @Override
-  public CompletableFuture<Void> executeOneStep() {
+  public CompletableFuture<Void> executeBatchStep() {
+    //    public CompletableFuture<Void> executeOneStep() {
     return CompletableFuture.supplyAsync(() -> processKnownAncestors(null))
         .thenCompose(this::possibleRequestBlock)
         .thenApply(this::processKnownAncestors)
@@ -50,7 +52,8 @@ public class ForwardSyncStep extends BackwardSyncTask {
   }
 
   @Override
-  public CompletableFuture<Void> executeBatchStep() {
+  public CompletableFuture<Void> executeOneStep() {
+    //    public CompletableFuture<Void> executeBatchStep() {
     return CompletableFuture.supplyAsync(() -> returnFirstNUnknownHeaders(null))
         .thenCompose(this::possibleRequestBodies)
         .thenApply(this::processKnownAncestors)
@@ -216,10 +219,21 @@ public class ForwardSyncStep extends BackwardSyncTask {
       LOG.debug("The sync is done...");
       return CompletableFuture.completedFuture(null);
     }
-    debugLambda(
+    if (context.getProtocolContext().getBlockchain().contains(firstUnsynced.getParentHash())) {
+      debugLambda(
+          LOG,
+          "Block {} is not yet imported, we need to run another step of ForwardSync",
+          () -> firstUnsynced.getHash().toString().substring(0, 20));
+      return completableFuture.thenCompose(this::executeAsync);
+    }
+
+    warnLambda(
         LOG,
-        "Block {} is not yet imported, we need to run another step of ForwardSync",
-        () -> firstUnsynced.getHash().toString().substring(0, 20));
-    return completableFuture.thenCompose(this::executeAsync);
+        "Block {} is not yet imported but its parent {} is not imported either... "
+            + "This should not normally happen and indicates a wrong behaviour somewhere...",
+        () -> firstUnsynced.getHash().toHexString(),
+        () -> firstUnsynced.getParentHash().toHexString());
+    return completableFuture.thenCompose(
+        new BackwardSyncStep(context, backwardChain)::executeAsync);
   }
 }
