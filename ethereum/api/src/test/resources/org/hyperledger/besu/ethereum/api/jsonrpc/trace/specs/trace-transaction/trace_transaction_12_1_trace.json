@@ -2,13 +2,13 @@
   "comment" : "Revert. Note revertReason has been manually added to the response because OpenEthereum does not include it.",
   "request" : {
     "jsonrpc" : "2.0",
-    "method" : "trace_get",
-    "params" : [ "0xc388baa0e55e6b73e850b22dc7e9853700f6b995fd55d95dd6ccd5a13d63c566", [ ] ],
-    "id" : 276
+    "method" : "trace_transaction",
+    "params" : [ "0xc388baa0e55e6b73e850b22dc7e9853700f6b995fd55d95dd6ccd5a13d63c566" ],
+    "id" : 155
   },
   "response" : {
     "jsonrpc" : "2.0",
-    "result" : {
+    "result" : [ {
       "action" : {
         "callType" : "call",
         "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
@@ -26,8 +26,8 @@
       "transactionHash" : "0xc388baa0e55e6b73e850b22dc7e9853700f6b995fd55d95dd6ccd5a13d63c566",
       "transactionPosition" : 1,
       "type" : "call"
-    },
-    "id" : 276
+    } ],
+    "id" : 155
   },
   "statusCode" : 200
 }
