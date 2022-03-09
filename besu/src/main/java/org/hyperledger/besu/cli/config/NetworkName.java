@@ -23,7 +23,7 @@ public enum NetworkName {
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
   GOERLI("/goerli.json", BigInteger.valueOf(5)),
   KILN("/kiln.json", BigInteger.valueOf(1337802), false),
-  DEV("/dev.json", BigInteger.valueOf(2018)),
+  DEV("/dev.json", BigInteger.valueOf(2018), false),
   CLASSIC("/classic.json", BigInteger.valueOf(1)),
   KOTTI("/kotti.json", BigInteger.valueOf(6)),
   MORDOR("/mordor.json", BigInteger.valueOf(7)),
