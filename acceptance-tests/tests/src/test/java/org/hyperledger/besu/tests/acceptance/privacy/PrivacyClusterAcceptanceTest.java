@@ -220,7 +220,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=",
             new ArrayList<>(
                 Collections.singletonList("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")),
-            null,
+            "DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=",
             "0x1",
             null);
 
