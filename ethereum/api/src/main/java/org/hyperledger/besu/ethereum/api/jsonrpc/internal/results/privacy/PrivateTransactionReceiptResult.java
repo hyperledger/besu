@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptLogResult;
+import org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
@@ -91,7 +92,10 @@ public class PrivateTransactionReceiptResult {
         privateFor != null
             ? privateFor.stream().map(Bytes::toBase64String).collect(Collectors.toList())
             : null;
-    this.privacyGroupId = privacyGroupId != null ? privacyGroupId.toBase64String() : null;
+    this.privacyGroupId =
+        privacyGroupId != null
+            ? privacyGroupId.toBase64String()
+            : PrivacyGroupUtil.calculateEeaPrivacyGroupId(privateFrom, privateFor).toBase64String();
     this.revertReason = revertReason != null ? revertReason.toString() : null;
     this.status = status;
     this.logs = logReceipts(logs, blockNumber, commitmentHash, blockHash, txIndex);
