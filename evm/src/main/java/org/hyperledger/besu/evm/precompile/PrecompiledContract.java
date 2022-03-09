@@ -73,7 +73,7 @@ public interface PrecompiledContract {
    * @return the output of the pre-compiled contract.
    * @deprecated Migrate to use {@link #computePrecompile(Bytes, MessageFrame)}.
    */
-  @Deprecated(since="22.1.2")
+  @Deprecated(since = "22.1.2")
   default Bytes compute(final Bytes input, final @Nonnull MessageFrame messageFrame) {
     return computePrecompile(input, messageFrame).getOutput();
   }
