@@ -1,5 +1,5 @@
 {
-  "comment" : "Revert.",
+  "comment" : "Revert. Note revertReason has been manually added to the response because OpenEthereum does not include it.",
   "request" : {
     "jsonrpc" : "2.0",
     "method" : "trace_call",
@@ -28,6 +28,7 @@
           "value" : "0x0"
         },
         "error" : "Reverted",
+        "revertReason" : "0x7d88c1856cc95352",
         "subtraces" : 0,
         "traceAddress" : [ ],
         "type" : "call"
