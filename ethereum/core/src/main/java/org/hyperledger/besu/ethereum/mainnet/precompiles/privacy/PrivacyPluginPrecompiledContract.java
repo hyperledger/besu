@@ -44,10 +44,10 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
   }
 
   @Override
-  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
-
+  public PrecompileContractResult computePrecompile(
+      final Bytes input, final MessageFrame messageFrame) {
     if (skipContractExecution(messageFrame)) {
-      return Bytes.EMPTY;
+      return NO_RESULT;
     }
 
     final Optional<org.hyperledger.besu.plugin.data.PrivateTransaction> pluginPrivateTransaction =
@@ -58,7 +58,7 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
                 messageFrame.getContextVariable(PrivateStateUtils.KEY_TRANSACTION));
 
     if (pluginPrivateTransaction.isEmpty()) {
-      return Bytes.EMPTY;
+      return NO_RESULT;
     }
 
     final PrivateTransaction privateTransaction =
@@ -101,7 +101,7 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
 
       privateMetadataUpdater.putTransactionReceipt(pmtHash, new PrivateTransactionReceipt(result));
 
-      return Bytes.EMPTY;
+      return NO_RESULT;
     }
 
     if (messageFrame.getContextVariable(PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
@@ -113,6 +113,7 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
           pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
     }
 
-    return result.getOutput();
+    return new PrecompileContractResult(
+        result.getOutput(), true, MessageFrame.State.CODE_EXECUTING, Optional.empty());
   }
 }

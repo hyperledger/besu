@@ -15,8 +15,10 @@
 package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
+import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -52,5 +54,90 @@ public interface PrecompiledContract {
    * @param messageFrame context for this message
    * @return the output of the pre-compiled contract.
    */
-  Bytes compute(Bytes input, @Nonnull MessageFrame messageFrame);
+  @SuppressWarnings("deprecation")
+  default PrecompileContractResult computePrecompile(
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+    final Bytes result = compute(input, messageFrame);
+    if (result == null) {
+      return PrecompileContractResult.halt(null, Optional.of(ExceptionalHaltReason.NONE));
+    } else {
+      return PrecompileContractResult.success(result);
+    }
+  }
+
+  /**
+   * Executes the pre-compiled contract.
+   *
+   * @param input the input for the pre-compiled contract.
+   * @param messageFrame context for this message
+   * @return the output of the pre-compiled contract.
+   * @deprecated Migrate to use {@link #computePrecompile(Bytes, MessageFrame)}.
+   */
+  @Deprecated(since = "22.1.2")
+  default Bytes compute(final Bytes input, final @Nonnull MessageFrame messageFrame) {
+    return computePrecompile(input, messageFrame).getOutput();
+  }
+
+  class PrecompileContractResult {
+    private final Bytes output;
+    private final boolean refundGas;
+    private final MessageFrame.State state;
+    private final Optional<ExceptionalHaltReason> haltReason;
+
+    /**
+     * Encapsulated result of precompiled contract.
+     *
+     * @param output output if successfull
+     * @param refundGas Should we charge the gasRequirement?
+     * @param state state of the EVM after execution (for format errors this would be
+     *     ExceptionalHalt)
+     * @param haltReason the exceptional halt reason
+     */
+    // TOO JDK17 use a record
+    public PrecompileContractResult(
+        final Bytes output,
+        final boolean refundGas,
+        final MessageFrame.State state,
+        final Optional<ExceptionalHaltReason> haltReason) {
+      this.output = output;
+      this.refundGas = refundGas;
+      this.state = state;
+      this.haltReason = haltReason;
+    }
+
+    public static PrecompileContractResult success(final Bytes output) {
+      return new PrecompileContractResult(
+          output, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
+    }
+
+    public static PrecompileContractResult revert(final Bytes output) {
+      return new PrecompileContractResult(
+          output, false, MessageFrame.State.REVERT, Optional.empty());
+    }
+
+    public static PrecompileContractResult halt(
+        final Bytes output, final Optional<ExceptionalHaltReason> haltReason) {
+      if (haltReason.isEmpty()) {
+        throw new IllegalArgumentException("Halt reason cannot be empty");
+      }
+      return new PrecompileContractResult(
+          output, false, MessageFrame.State.EXCEPTIONAL_HALT, haltReason);
+    }
+
+    public Bytes getOutput() {
+      return output;
+    }
+
+    public boolean isRefundGas() {
+      return refundGas;
+    }
+
+    public MessageFrame.State getState() {
+      return state;
+    }
+
+    public Optional<ExceptionalHaltReason> getHaltReason() {
+      return haltReason;
+    }
+  }
 }
