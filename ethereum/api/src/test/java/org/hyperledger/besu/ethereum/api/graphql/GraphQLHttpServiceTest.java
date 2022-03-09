@@ -70,7 +70,6 @@ public class GraphQLHttpServiceTest {
   protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
   private static BlockchainQueries blockchainQueries;
   private static GraphQL graphQL;
-  //  private static GraphQLDataFetcherContextImpl dataFetcherContext;
   private static Map<GraphQLContextType, Object> graphQlContextMap;
   private static PoWMiningCoordinator miningCoordinatorMock;
 
