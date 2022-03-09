@@ -1812,7 +1812,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     syncMode =
         Optional.ofNullable(syncMode)
             .orElse(
-                genesisFile == null && !isPrivacyEnabled && network != NetworkName.DEV
+                genesisFile == null && !isPrivacyEnabled && network.canFastSync()
                     ? SyncMode.FAST
                     : SyncMode.FULL);
 
