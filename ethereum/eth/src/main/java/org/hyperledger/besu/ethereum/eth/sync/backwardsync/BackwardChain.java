@@ -24,9 +24,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -37,6 +39,7 @@ public class BackwardChain { // TODO: this class now stores everything in memory
 
   private final List<BlockHeader> ancestors = new ArrayList<>();
   private final List<Block> successors = new ArrayList<>();
+  private final Set<Hash> successorsHashes = new HashSet<>();
   private final Map<Hash, Block> trustedBlocks = new HashMap<>();
 
   public BackwardChain(final Block pivot) {
@@ -130,6 +133,7 @@ public class BackwardChain { // TODO: this class now stores everything in memory
 
   public void appendExpectedBlock(final Block newPivot) {
     successors.add(newPivot);
+    successorsHashes.add(newPivot.getHash());
     trustedBlocks.put(newPivot.getHash(), newPivot);
   }
 
@@ -143,5 +147,9 @@ public class BackwardChain { // TODO: this class now stores everything in memory
 
   public Block getTrustedBlock(final Hash hash) {
     return trustedBlocks.get(hash);
+  }
+
+  public boolean knowsSuccessor(final Hash blockHash) {
+    return successorsHashes.contains(blockHash);
   }
 }

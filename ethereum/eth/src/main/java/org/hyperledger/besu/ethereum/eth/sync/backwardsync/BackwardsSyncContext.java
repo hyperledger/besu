@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -25,15 +28,10 @@ import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 public class BackwardsSyncContext {
   private static final Logger LOG = LoggerFactory.getLogger(BackwardsSyncContext.class);
@@ -68,18 +66,11 @@ public class BackwardsSyncContext {
   }
 
   public CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockhash) {
-    if (getCurrentChain()
-        .flatMap(
-            chain ->
-                chain.getSuccessors().stream()
-                    .map(Block::getHash)
-                    .filter(hash -> hash.equals(newBlockhash))
-                    .findAny())
-        .isPresent()) {
+    if (getCurrentChain().isPresent() && getCurrentChain().get().knowsSuccessor(newBlockhash)) {
       debugLambda(
-          LOG,
-          "not fetching and appending hash {} to backwards sync since it is present in successors",
-          () -> newBlockhash.toHexString());
+              LOG,
+              "not fetching and appending hash {} to backwards sync since it is present in successors",
+              () -> newBlockhash.toHexString());
       return CompletableFuture.completedFuture(null);
     }
 
@@ -165,6 +156,7 @@ public class BackwardsSyncContext {
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFuture(final BackwardChain backwardChain) {
+    LOG.info("Starting Backward Sync with pivot {}", backwardChain.getPivot().getHash().toHexString());
     return new BackwardSyncStep(this, backwardChain)
         .executeAsync(null)
         .thenCompose(new ForwardSyncStep(this, backwardChain)::executeAsync)
