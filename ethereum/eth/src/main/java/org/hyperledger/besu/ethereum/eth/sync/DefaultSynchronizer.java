@@ -223,8 +223,6 @@ public class DefaultSynchronizer implements Synchronizer {
   }
 
   private Void finalizeSync(final Void unused) {
-    LOG.info("Clearing the sync target.");
-    syncState.clearSyncTarget();
     LOG.info("Stopping block propagation.");
     blockPropagationManager.stop();
     LOG.info("Stopping the pruner.");
