@@ -54,7 +54,7 @@ public interface PrecompiledContract {
    * @param messageFrame context for this message
    * @return the output of the pre-compiled contract.
    */
-  @SuppressWarnings("deprecated")
+  @SuppressWarnings("deprecation")
   default PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
     final Bytes result = compute(input, messageFrame);
