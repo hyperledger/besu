@@ -22,7 +22,8 @@ public enum NetworkName {
   ROPSTEN("/ropsten.json", BigInteger.valueOf(3)),
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
   GOERLI("/goerli.json", BigInteger.valueOf(5)),
-  DEV("/dev.json", BigInteger.valueOf(2018)),
+  KILN("/kiln.json", BigInteger.valueOf(1337802), false),
+  DEV("/dev.json", BigInteger.valueOf(2018), false),
   CLASSIC("/classic.json", BigInteger.valueOf(1)),
   KOTTI("/kotti.json", BigInteger.valueOf(6)),
   MORDOR("/mordor.json", BigInteger.valueOf(7)),
@@ -31,10 +32,18 @@ public enum NetworkName {
 
   private final String genesisFile;
   private final BigInteger networkId;
+  private final boolean canFastSync;
 
   NetworkName(final String genesisFile, final BigInteger networkId) {
     this.genesisFile = genesisFile;
     this.networkId = networkId;
+    this.canFastSync = true;
+  }
+
+  NetworkName(final String genesisFile, final BigInteger networkId, final boolean canFastSync) {
+    this.genesisFile = genesisFile;
+    this.networkId = networkId;
+    this.canFastSync = canFastSync;
   }
 
   public String getGenesisFile() {
@@ -43,5 +52,9 @@ public enum NetworkName {
 
   public BigInteger getNetworkId() {
     return networkId;
+  }
+
+  public boolean canFastSync() {
+    return canFastSync;
   }
 }
