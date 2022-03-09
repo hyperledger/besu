@@ -1,5 +1,5 @@
 {
-  "comment" : "'Memory Read.', 'Revert.'",
+  "comment" : "'Memory Read.', 'Revert.' Note revertReason has been manually added to the response because OpenEthereum does not include it.",
   "request" : {
     "method" : "trace_callMany",
     "params" : [ [ [ {
@@ -54,6 +54,7 @@
           "value" : "0x0"
         },
         "error" : "Reverted",
+        "revertReason" : "0x7d88c1856cc95352",
         "subtraces" : 0,
         "traceAddress" : [ ],
         "type" : "call"

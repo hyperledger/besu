@@ -1,5 +1,5 @@
 {
-  "comment" : "Revert.",
+  "comment" : "Revert. Note revertReason has been manually added to the response because OpenEthereum does not include it.",
   "request" : {
     "jsonrpc" : "2.0",
     "method" : "trace_get",
@@ -20,6 +20,7 @@
       "blockHash" : "0x220bc13dc4f1ed38dcca927a5be15eca16497d279f4c40d7b8fe9704eadf1464",
       "blockNumber" : 18,
       "error" : "Reverted",
+      "revertReason" : "0x7d88c1856cc95352",
       "subtraces" : 0,
       "traceAddress" : [ ],
       "transactionHash" : "0xc388baa0e55e6b73e850b22dc7e9853700f6b995fd55d95dd6ccd5a13d63c566",
