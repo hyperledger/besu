@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.S
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.MixInIgnoreRevertReason;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -80,8 +79,6 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
       final TransactionTrace transactionTrace,
       final Block block) {
     final TraceCallResult.Builder builder = TraceCallResult.builder();
-    // The trace_call specification does not output the revert reason, so we have to remove it
-    mapper.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
 
     transactionTrace
         .getResult()
