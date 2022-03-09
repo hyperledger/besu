@@ -49,20 +49,27 @@ public class Amount {
     return unit;
   }
 
+  public Amount add(final Amount other) {
+    final BigDecimal weiResult =
+        Convert.toWei(value, unit).add(Convert.toWei(other.value, other.unit));
+
+    final Unit denomination = getMostPreciseUnit(unit, other.unit);
+    final BigDecimal result = Convert.fromWei(weiResult, denomination);
+
+    return new Amount(result, denomination);
+  }
+
   public Amount subtract(final Amount subtracting) {
+    final BigDecimal weiResult =
+        Convert.toWei(value, unit).subtract(Convert.toWei(subtracting.value, subtracting.unit));
 
-    final Unit denominator;
-    if (unit.getWeiFactor().compareTo(subtracting.unit.getWeiFactor()) < 0) {
-      denominator = unit;
-    } else {
-      denominator = subtracting.unit;
-    }
+    final Unit denomination = getMostPreciseUnit(unit, subtracting.unit);
+    final BigDecimal result = Convert.fromWei(weiResult, denomination);
 
-    final BigDecimal result =
-        Convert.fromWei(
-            Convert.toWei(value, unit).subtract(Convert.toWei(subtracting.value, subtracting.unit)),
-            denominator);
+    return new Amount(result, denomination);
+  }
 
-    return new Amount(result, denominator);
+  private Unit getMostPreciseUnit(final Unit a, final Unit b) {
+    return a.getWeiFactor().compareTo(b.getWeiFactor()) < 0 ? a : b;
   }
 }

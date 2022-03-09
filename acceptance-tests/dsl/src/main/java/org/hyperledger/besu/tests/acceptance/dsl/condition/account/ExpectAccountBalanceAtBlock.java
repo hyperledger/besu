@@ -52,6 +52,11 @@ public class ExpectAccountBalanceAtBlock implements Condition {
     WaitUtils.waitFor(
         () ->
             assertThat(node.execute(eth.getBalanceAtBlock(account, block)))
+                .withFailMessage(
+                    () ->
+                        String.format(
+                            "Expected address %s at block %s to have balance %s",
+                            account.getAddress(), block.toString(10), expectedBalance.toString(10)))
                 .isEqualTo(expectedBalance));
   }
 }

@@ -126,6 +126,7 @@ public class BftBlockCreatorTest {
 
     final BftBlockCreator blockCreator =
         new BftBlockCreator(
+            forksSchedule,
             initialValidatorList.get(0),
             () -> Optional.of(10_000_000L),
             parent ->
@@ -142,7 +143,6 @@ public class BftBlockCreatorTest {
             Wei.ZERO,
             0.8,
             parentHeader,
-            initialValidatorList.get(0),
             bftExtraDataEncoder);
 
     final int secondsBetweenBlocks = 1;

@@ -49,7 +49,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
 
   private final BftEventHandler eventHandler;
   private final BftProcessor bftProcessor;
-  private final BftBlockCreatorFactory blockCreatorFactory;
+  private final BftBlockCreatorFactory<?> blockCreatorFactory;
   protected final Blockchain blockchain;
   private final BftEventQueue eventQueue;
   private final BftExecutors bftExecutors;
@@ -61,7 +61,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
       final BftExecutors bftExecutors,
       final BftEventHandler eventHandler,
       final BftProcessor bftProcessor,
-      final BftBlockCreatorFactory blockCreatorFactory,
+      final BftBlockCreatorFactory<?> blockCreatorFactory,
       final Blockchain blockchain,
       final BftEventQueue eventQueue) {
     this.bftExecutors = bftExecutors;
