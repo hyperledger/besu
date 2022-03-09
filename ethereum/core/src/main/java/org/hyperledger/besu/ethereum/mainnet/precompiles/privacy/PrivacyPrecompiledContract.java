@@ -66,7 +66,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivacyPrecompiledContract.class);
 
-  static PrecompileContractResult NO_RESULT =
+  static final PrecompileContractResult NO_RESULT =
       new PrecompileContractResult(
           Bytes.EMPTY, true, MessageFrame.State.CODE_EXECUTING, Optional.empty());
 

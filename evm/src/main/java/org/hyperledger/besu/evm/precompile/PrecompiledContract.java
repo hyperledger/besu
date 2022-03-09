@@ -54,6 +54,7 @@ public interface PrecompiledContract {
    * @param messageFrame context for this message
    * @return the output of the pre-compiled contract.
    */
+  @SuppressWarnings("deprecated")
   default PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
     final Bytes result = compute(input, messageFrame);
@@ -64,7 +65,15 @@ public interface PrecompiledContract {
     }
   }
 
-  @Deprecated
+  /**
+   * Executes the pre-compiled contract.
+   *
+   * @param input the input for the pre-compiled contract.
+   * @param messageFrame context for this message
+   * @return the output of the pre-compiled contract.
+   * @deprecated Migrate to use {@link #computePrecompile(Bytes, MessageFrame)}.
+   */
+  @Deprecated(since="22.1.2")
   default Bytes compute(final Bytes input, final @Nonnull MessageFrame messageFrame) {
     return computePrecompile(input, messageFrame).getOutput();
   }
