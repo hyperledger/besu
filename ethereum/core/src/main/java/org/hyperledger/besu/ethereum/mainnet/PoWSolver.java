@@ -109,8 +109,11 @@ public class PoWSolver {
     currentJobs.put(
         job.getInputs().getPrePowHash(), job, System.currentTimeMillis() + powJobTimeToLive);
     if (stratumMiningEnabled) {
+      LOG.debug(
+          "solving with stratum miner for {} observers", ethHashObservers.getSubscriberCount());
       ethHashObservers.forEach(observer -> observer.newJob(job.inputs));
     } else {
+      LOG.debug("solving with cpu miner");
       findValidNonce();
     }
     return job.getSolution();
