@@ -1978,6 +1978,21 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void engineApiAuthOptions() {
+    parseCommand(
+        "--rpc-http-enabled",
+        "--Xmerge-support",
+        "true",
+        "--engine-jwt-enabled",
+        "--engine-jwt-secret",
+        "/tmp/fakeKey.hex");
+    verify(mockRunnerBuilder).engineJsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().isAuthenticationEnabled()).isTrue();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void rpcHttpNoAuthApiMethodsCannotBeInvalid() {
     parseCommand("--rpc-http-enabled", "--rpc-http-api-method-no-auth", "invalid");
 

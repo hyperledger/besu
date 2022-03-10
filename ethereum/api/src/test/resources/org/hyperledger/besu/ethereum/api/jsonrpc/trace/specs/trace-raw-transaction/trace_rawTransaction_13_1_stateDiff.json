@@ -1,0 +1,60 @@
+{
+  "comment" : "call the prior contract then call log contract 00a0..00.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8908081ef83fffff28080b84260006000600060006000738f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f5af1600060006000600060007300a00000000000000000000000000000000000005af11ba0289116cd7bd226e6cc31cbd20382b9632ac9aca596f03be9927240957cca3b13a021ec53811de779577040a16c294d920fc5d3056c6cc3dd87763b2cf16fa2d3cf", [ "stateDiff" ] ],
+    "id" : 26
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18385c0b29e",
+              "to" : "0x393f0f183868ca7b7"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x3d49d1ef2ade060a33c6e6aa213513a7ee9a6241" : {
+          "balance" : {
+            "+" : "0x0"
+          },
+          "code" : {
+            "+" : "0x"
+          },
+          "nonce" : {
+            "+" : "0x1"
+          },
+          "storage" : { }
+        },
+        "0x627306090abab3a6e1400e9345bc60c78a8bef57" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xefffffffffffe28d07a0be63b",
+              "to" : "0xefffffffffffe28d0793ff122"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x17",
+              "to" : "0x18"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    },
+    "id" : 26
+  },
+  "statusCode" : 200
+}

@@ -50,6 +50,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.Hash;
 
 import java.util.Base64;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -64,6 +65,10 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   PrivateTransactionProcessor privateTransactionProcessor;
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivacyPrecompiledContract.class);
+
+  static final PrecompileContractResult NO_RESULT =
+      new PrecompileContractResult(
+          Bytes.EMPTY, true, MessageFrame.State.CODE_EXECUTING, Optional.empty());
 
   public PrivacyPrecompiledContract(
       final GasCalculator gasCalculator,
@@ -103,10 +108,11 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   }
 
   @Override
-  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
+  public PrecompileContractResult computePrecompile(
+      final Bytes input, final MessageFrame messageFrame) {
 
     if (skipContractExecution(messageFrame)) {
-      return Bytes.EMPTY;
+      return NO_RESULT;
     }
 
     final org.hyperledger.besu.plugin.data.Hash pmtHash =
@@ -118,7 +124,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       receiveResponse = getReceiveResponse(key);
     } catch (final EnclaveClientException e) {
       LOG.debug("Can not fetch private transaction payload with key {}", key, e);
-      return Bytes.EMPTY;
+      return NO_RESULT;
     }
 
     final BytesValueRLPInput bytesValueRLPInput =
@@ -129,7 +135,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     final Bytes privateFrom = privateTransaction.getPrivateFrom();
     if (!privateFromMatchesSenderKey(privateFrom, receiveResponse.getSenderKey())) {
-      return Bytes.EMPTY;
+      return NO_RESULT;
     }
 
     final Bytes32 privacyGroupId =
@@ -141,11 +147,11 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
               .retrievePrivacyGroup(privacyGroupId.toBase64String())
               .getMembers()
               .contains(privateFrom.toBase64String())) {
-        return Bytes.EMPTY;
+        return NO_RESULT;
       }
     } catch (final EnclaveClientException e) {
       // This exception is thrown when the privacy group can not be found
-      return Bytes.EMPTY;
+      return NO_RESULT;
     } catch (final EnclaveServerException e) {
       throw new IllegalStateException(
           "Enclave is responding with an error, perhaps it has a misconfiguration?", e);
@@ -184,7 +190,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
       privateMetadataUpdater.putTransactionReceipt(pmtHash, new PrivateTransactionReceipt(result));
 
-      return Bytes.EMPTY;
+      return NO_RESULT;
     }
 
     if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
@@ -195,7 +201,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
     }
 
-    return result.getOutput();
+    return new PrecompileContractResult(
+        result.getOutput(), true, MessageFrame.State.CODE_EXECUTING, Optional.empty());
   }
 
   protected void maybeApplyGenesisToPrivateWorldState(

@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.datatypes.Address;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -34,7 +37,7 @@ public class MutableBftConfigOptions implements BftConfigOptions {
   private int duplicateMessageLimit;
   private int futureMessagesLimit;
   private int futureMessageMaxDistance;
-  private Optional<String> miningBeneficiary;
+  private Optional<Address> miningBeneficiary;
   private BigInteger blockRewardWei;
 
   public MutableBftConfigOptions(final BftConfigOptions bftConfigOptions) {
@@ -91,7 +94,7 @@ public class MutableBftConfigOptions implements BftConfigOptions {
   }
 
   @Override
-  public Optional<String> getMiningBeneficiary() {
+  public Optional<Address> getMiningBeneficiary() {
     return miningBeneficiary;
   }
 
@@ -137,7 +140,8 @@ public class MutableBftConfigOptions implements BftConfigOptions {
     this.futureMessageMaxDistance = futureMessageMaxDistance;
   }
 
-  public void setMiningBeneficiary(final Optional<String> miningBeneficiary) {
+  public void setMiningBeneficiary(final Optional<Address> miningBeneficiary) {
+    checkNotNull(miningBeneficiary);
     this.miningBeneficiary = miningBeneficiary;
   }
 

@@ -21,13 +21,22 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Optional;
 
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.JWTOptions;
+import io.vertx.ext.auth.User;
 import org.junit.Test;
 
 public class AuthenticationServiceTest {
   private final Vertx vertx = Vertx.vertx();
+  private static final String INVALID_TOKEN_WITHOUT_EXP =
+      "ewogICJhbGciOiAibm9uZSIsCiAgInR5cCI6ICJKV1QiCn"
+          + "0.eyJpYXQiOjE1MTYyMzkwMjIsInBlcm1pc3Npb25zIjpbIm5ldDpwZWVyQ291bnQiXX0";
 
   @Test
   public void authenticationServiceNotCreatedWhenRpcAuthenticationDisabledAndHasCredentialsFile() {
@@ -36,7 +45,7 @@ public class AuthenticationServiceTest {
     jsonRpcConfiguration.setAuthenticationCredentialsFile("some/file/path");
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, jsonRpcConfiguration);
+        DefaultAuthenticationService.create(vertx, jsonRpcConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -49,7 +58,7 @@ public class AuthenticationServiceTest {
     jsonRpcConfiguration.setAuthenticationPublicKeyFile(publicKeyFile);
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, jsonRpcConfiguration);
+        DefaultAuthenticationService.create(vertx, jsonRpcConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -64,7 +73,7 @@ public class AuthenticationServiceTest {
     jsonRpcConfiguration.setAuthenticationCredentialsFile("some/file/path");
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, jsonRpcConfiguration);
+        DefaultAuthenticationService.create(vertx, jsonRpcConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -75,7 +84,7 @@ public class AuthenticationServiceTest {
     webSocketConfiguration.setAuthenticationCredentialsFile("some/file/path");
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, webSocketConfiguration);
+        DefaultAuthenticationService.create(vertx, webSocketConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -88,7 +97,7 @@ public class AuthenticationServiceTest {
     webSocketConfiguration.setAuthenticationPublicKeyFile(publicKeyFile);
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, webSocketConfiguration);
+        DefaultAuthenticationService.create(vertx, webSocketConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -103,7 +112,7 @@ public class AuthenticationServiceTest {
     webSocketConfiguration.setAuthenticationCredentialsFile("some/file/path");
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, webSocketConfiguration);
+        DefaultAuthenticationService.create(vertx, webSocketConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -114,7 +123,7 @@ public class AuthenticationServiceTest {
     jsonRpcConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.RS256);
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, jsonRpcConfiguration);
+        DefaultAuthenticationService.create(vertx, jsonRpcConfiguration);
     assertThat(authenticationService).isEmpty();
   }
 
@@ -125,7 +134,57 @@ public class AuthenticationServiceTest {
     webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.RS256);
 
     final Optional<AuthenticationService> authenticationService =
-        AuthenticationService.create(vertx, webSocketConfiguration);
+        DefaultAuthenticationService.create(vertx, webSocketConfiguration);
     assertThat(authenticationService).isEmpty();
+  }
+
+  @Test
+  public void getUserFailsIfTokenDoesNotHaveExpiryClaim() {
+    final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
+    webSocketConfiguration.setAuthenticationEnabled(true);
+    final AuthenticationService authenticationService =
+        DefaultAuthenticationService.create(vertx, webSocketConfiguration).get();
+    final StubUserHandler handler = new StubUserHandler();
+
+    authenticationService.authenticate(INVALID_TOKEN_WITHOUT_EXP, handler);
+
+    assertThat(handler.getEvent()).isEmpty();
+  }
+
+  @Test
+  public void getUserSucceedsWithValidToken() {
+    final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
+    webSocketConfiguration.setAuthenticationEnabled(true);
+    webSocketConfiguration.setAuthenticationPublicKeyFile(null);
+    final AuthenticationService authenticationService =
+        DefaultAuthenticationService.create(vertx, webSocketConfiguration).get();
+    final StubUserHandler handler = new StubUserHandler();
+    final JsonObject jwtContents =
+        new JsonObject()
+            .put("permissions", new JsonArray(Arrays.asList("net:peerCount")))
+            .put("username", "successKid");
+    final JWTOptions options = new JWTOptions().setExpiresInMinutes(5).setAlgorithm("RS256");
+    final String token =
+        authenticationService.getJwtAuthProvider().generateToken(jwtContents, options);
+    authenticationService.authenticate(token, handler);
+
+    User successKid = handler.getEvent().get();
+    assertThat(successKid.attributes().getLong("exp")).isNotNull();
+    assertThat(successKid.attributes().getLong("iat")).isNotNull();
+    assertThat(successKid.principal().getJsonArray("permissions").getString(0))
+        .isEqualTo("net:peerCount");
+  }
+
+  private static class StubUserHandler implements Handler<Optional<User>> {
+    private Optional<User> event;
+
+    @Override
+    public void handle(final Optional<User> event) {
+      this.event = event;
+    }
+
+    public Optional<User> getEvent() {
+      return event;
+    }
   }
 }

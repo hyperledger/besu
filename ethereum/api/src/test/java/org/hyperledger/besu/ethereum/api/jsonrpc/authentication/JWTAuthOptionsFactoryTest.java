@@ -109,7 +109,7 @@ public class JWTAuthOptionsFactoryTest {
     try {
       final JWTAuthOptions jwtAuthOptions =
           jwtAuthOptionsFactory.createForExternalPublicKeyWithAlgorithm(
-              enclavePublicKeyFile, "ES256");
+              enclavePublicKeyFile, JwtAlgorithm.ES256);
       assertThat(jwtAuthOptions.getPubSecKeys()).hasSize(1);
       final PubSecKeyOptions pubSecKeyOptions = jwtAuthOptions.getPubSecKeys().get(0);
       assertThat(pubSecKeyOptions.getAlgorithm()).isEqualTo("ES256");
@@ -146,5 +146,13 @@ public class JWTAuthOptionsFactoryTest {
             () -> jwtAuthOptionsFactory.createForExternalPublicKey(enclavePublicKeyFile.toFile()))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Authentication RPC public key file format is invalid");
+  }
+
+  @Test
+  public void createsEphemeralHmacOptions() {
+    final JWTAuthOptionsFactory factory = new JWTAuthOptionsFactory();
+    JWTAuthOptions engineOptions = factory.engineApiJWTOptions(JwtAlgorithm.HS256);
+    byte[] publicKey = engineOptions.getPubSecKeys().get(0).getBuffer().getBytes();
+    assertThat(publicKey.length).isEqualTo(32);
   }
 }

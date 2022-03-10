@@ -35,6 +35,7 @@ public class CompleteTaskStep {
   private final RunnableCounter completedRequestsCounter;
   private final Counter retriedRequestsCounter;
   private final LongSupplier worldStatePendingRequestsCurrentSupplier;
+  private long lastLogAt = System.currentTimeMillis();
 
   public CompleteTaskStep(
       final WorldStateStorage worldStateStorage,
@@ -75,10 +76,14 @@ public class CompleteTaskStep {
   }
 
   private void displayWorldStateSyncProgress() {
-    LOG.info(
-        "Downloaded {} world state nodes. At least {} nodes remaining.",
-        getCompletedRequests(),
-        worldStatePendingRequestsCurrentSupplier.getAsLong());
+    final long now = System.currentTimeMillis();
+    if (now - lastLogAt > 10 * 1000L) {
+      LOG.info(
+          "Downloaded {} world state nodes. At least {} nodes remaining.",
+          getCompletedRequests(),
+          worldStatePendingRequestsCurrentSupplier.getAsLong());
+      lastLogAt = now;
+    }
   }
 
   long getCompletedRequests() {

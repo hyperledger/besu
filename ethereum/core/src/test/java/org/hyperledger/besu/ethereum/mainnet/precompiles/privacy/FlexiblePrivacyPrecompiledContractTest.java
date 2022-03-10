@@ -54,6 +54,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -166,7 +167,9 @@ public class FlexiblePrivacyPrecompiledContractTest {
         .when(contractSpy)
         .canExecute(any(), any(), any(), any(), any(), any(), any(), any());
 
-    final Bytes actual = contractSpy.compute(privateTransactionLookupId, messageFrame);
+    final PrecompiledContract.PrecompileContractResult result =
+        contractSpy.computePrecompile(privateTransactionLookupId, messageFrame);
+    final Bytes actual = result.getOutput();
 
     assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
   }
@@ -178,8 +181,11 @@ public class FlexiblePrivacyPrecompiledContractTest {
 
     when(enclave.receive(any(String.class))).thenThrow(EnclaveClientException.class);
 
-    final Bytes expected = contract.compute(privateTransactionLookupId, messageFrame);
-    assertThat(expected).isEqualTo(Bytes.EMPTY);
+    final PrecompiledContract.PrecompileContractResult result =
+        contract.computePrecompile(privateTransactionLookupId, messageFrame);
+    final Bytes actual = result.getOutput();
+
+    assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
 
   @Test(expected = RuntimeException.class)
@@ -189,7 +195,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
 
     when(enclave.receive(any(String.class))).thenThrow(new RuntimeException());
 
-    contract.compute(privateTransactionLookupId, messageFrame);
+    contract.computePrecompile(privateTransactionLookupId, messageFrame);
   }
 
   @Test
@@ -205,7 +211,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
     when(enclave.receive(eq(privateTransactionLookupId.toBase64String())))
         .thenReturn(responseWithoutSenderKey);
 
-    assertThatThrownBy(() -> contract.compute(privateTransactionLookupId, messageFrame))
+    assertThatThrownBy(() -> contract.computePrecompile(privateTransactionLookupId, messageFrame))
         .isInstanceOf(EnclaveConfigurationException.class)
         .hasMessage("Incompatible Orion version. Orion version must be 1.6.0 or greater.");
   }
@@ -224,8 +230,11 @@ public class FlexiblePrivacyPrecompiledContractTest {
     when(enclave.receive(eq(privateTransactionLookupId.toBase64String())))
         .thenReturn(responseWithWrongSenderKey);
 
-    final Bytes expected = contract.compute(privateTransactionLookupId, messageFrame);
-    assertThat(expected).isEqualTo(Bytes.EMPTY);
+    final PrecompiledContract.PrecompileContractResult result =
+        contract.computePrecompile(privateTransactionLookupId, messageFrame);
+    final Bytes actual = result.getOutput();
+
+    assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
@@ -282,7 +291,9 @@ public class FlexiblePrivacyPrecompiledContractTest {
         new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, privateFrom);
     when(enclave.receive(any(String.class))).thenReturn(response);
 
-    final Bytes actual = contractSpy.compute(privateTransactionLookupId, messageFrame);
+    final PrecompiledContract.PrecompileContractResult result =
+        contractSpy.computePrecompile(privateTransactionLookupId, messageFrame);
+    final Bytes actual = result.getOutput();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
@@ -319,7 +330,9 @@ public class FlexiblePrivacyPrecompiledContractTest {
 
     when(enclave.receive(any(String.class))).thenReturn(response);
 
-    final Bytes actual = contractSpy.compute(privateTransactionLookupId, messageFrame);
+    final PrecompiledContract.PrecompileContractResult result =
+        contractSpy.computePrecompile(privateTransactionLookupId, messageFrame);
+    final Bytes actual = result.getOutput();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }

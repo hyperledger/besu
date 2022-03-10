@@ -24,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes32;
 
 @JsonPropertyOrder({
-  "blockHash",
   "parentHash",
   "feeRecipient",
   "stateRoot",
@@ -37,6 +36,7 @@ import org.apache.tuweni.bytes.Bytes32;
   "timestamp",
   "extraData",
   "baseFeePerGas",
+  "blockHash",
   "transactions"
 })
 public class EngineGetPayloadResult {

@@ -1,0 +1,36 @@
+{
+  "comment" : "Log output with LOG2.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8618081ef83fffff29400b000000000000000000000000000000000000080801ca0f0f0940cb847f877c7ff97f008ee5765c274ca1c6e96fd7f47f333aadf9f3047a00611937b19b220c7e81c80b372e8338fde6ab792e15aebd631cb0110b7bf0f09", [ "trace" ] ],
+    "id" : 71
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : null,
+      "trace" : [ {
+        "action" : {
+          "callType" : "call",
+          "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas" : "0xffadea",
+          "input" : "0x",
+          "to" : "0x00b0000000000000000000000000000000000000",
+          "value" : "0x0"
+        },
+        "result" : {
+          "gasUsed" : "0x485",
+          "output" : "0x"
+        },
+        "subtraces" : 0,
+        "traceAddress" : [ ],
+        "type" : "call"
+      } ],
+      "vmTrace" : null
+    },
+    "id" : 71
+  },
+  "statusCode" : 200
+}

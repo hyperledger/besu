@@ -1,0 +1,35 @@
+{
+  "comment" : "Proxy call to another contract - 1 level deep. Using DELEGATECALL.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0x6f77512ee9d43474a884c0703c86712fb98dca772fa6e12252786e3e23f196c1", [ "0x0" ] ],
+    "id" : 237
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "callType" : "delegatecall",
+        "from" : "0x0060000000000000000000000000000000000000",
+        "gas" : "0xfbab38",
+        "input" : "0xf000000000000000000000000000000000000000000000000000000000000001",
+        "to" : "0x0030000000000000000000000000000000000000",
+        "value" : "0x0"
+      },
+      "blockHash" : "0x61bfd9fcaa09a2a9df0276acce68b5212d42bebab67034aa6603cc6dfbb70db5",
+      "blockNumber" : 11,
+      "result" : {
+        "gasUsed" : "0x1b",
+        "output" : "0xf000000000000000000000000000000000000000000000000000000000000002"
+      },
+      "subtraces" : 0,
+      "traceAddress" : [ 0 ],
+      "transactionHash" : "0x6f77512ee9d43474a884c0703c86712fb98dca772fa6e12252786e3e23f196c1",
+      "transactionPosition" : 0,
+      "type" : "call"
+    },
+    "id" : 237
+  },
+  "statusCode" : 200
+}

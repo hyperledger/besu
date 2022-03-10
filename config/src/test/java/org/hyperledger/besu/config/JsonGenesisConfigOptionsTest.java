@@ -16,6 +16,8 @@ package org.hyperledger.besu.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Address;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -156,9 +158,8 @@ public class JsonGenesisConfigOptionsTest {
 
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
-    assertThat(configOptions.getBftConfigOptions().getMiningBeneficiary()).isNotEmpty();
-    assertThat(configOptions.getBftConfigOptions().getMiningBeneficiary().get())
-        .isEqualTo("0x1234567890123456789012345678901234567890");
+    assertThat(configOptions.getBftConfigOptions().getMiningBeneficiary().map(Address::toHexString))
+        .contains("0x1234567890123456789012345678901234567890");
     assertThat(configOptions.getBftConfigOptions().getBlockRewardWei()).isEqualTo(21);
   }
 

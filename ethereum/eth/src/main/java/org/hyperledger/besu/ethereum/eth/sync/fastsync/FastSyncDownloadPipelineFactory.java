@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.sync.DownloadBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -105,7 +106,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             ethContext.getScheduler(),
             target.peer(),
             target.commonAncestor(),
-            syncConfig.getDownloaderCheckpointTimeoutsPermitted());
+            syncConfig.getDownloaderCheckpointTimeoutsPermitted(),
+            SyncTerminationCondition.never());
     final DownloadHeadersStep downloadHeadersStep =
         new DownloadHeadersStep(
             protocolSchedule,

@@ -62,11 +62,10 @@ public class QbftBlockCreatorFactoryTest {
             mock(AbstractPendingTransactionsSorter.class),
             mock(ProtocolContext.class),
             mock(ProtocolSchedule.class),
+            forksSchedule,
             miningParams,
             mock(Address.class),
-            mock(Address.class),
-            extraDataCodec,
-            forksSchedule);
+            extraDataCodec);
   }
 
   @Test

@@ -1,0 +1,35 @@
+{
+  "comment" : "Transaction to test refund_CallToSuicideTwice_d0g0v0_Istanbul",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0xbc7cedf9a139bc6a16959e1463a56ef5bdc07731e384d2a1c27e7828b563d594", [ ] ],
+    "id" : 377
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "callType" : "call",
+        "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+        "gas" : "0x9843e0",
+        "input" : "0x00000000000000000000000000000000000000000000000000000000000001f4",
+        "to" : "0x0160000000000000000000000000000000000000",
+        "value" : "0xa"
+      },
+      "blockHash" : "0xc016f949a0b11bb4e3151f9eca519f105f764d5f3a9fd71d6b24eacab731906a",
+      "blockNumber" : 30,
+      "result" : {
+        "gasUsed" : "0xcb3",
+        "output" : "0x"
+      },
+      "subtraces" : 2,
+      "traceAddress" : [ ],
+      "transactionHash" : "0xbc7cedf9a139bc6a16959e1463a56ef5bdc07731e384d2a1c27e7828b563d594",
+      "transactionPosition" : 0,
+      "type" : "call"
+    },
+    "id" : 377
+  },
+  "statusCode" : 200
+}

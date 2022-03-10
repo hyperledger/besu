@@ -35,27 +35,23 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 
 /** Supports contract based voters and validators in extra data */
-public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
-  private final ForksSchedule<QbftConfigOptions> forksSchedule;
-
+public class QbftBlockCreatorFactory extends BftBlockCreatorFactory<QbftConfigOptions> {
   public QbftBlockCreatorFactory(
       final AbstractPendingTransactionsSorter pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
+      final ForksSchedule<QbftConfigOptions> forksSchedule,
       final MiningParameters miningParams,
       final Address localAddress,
-      final Address miningBeneficiary,
-      final BftExtraDataCodec bftExtraDataCodec,
-      final ForksSchedule<QbftConfigOptions> forksSchedule) {
+      final BftExtraDataCodec bftExtraDataCodec) {
     super(
         pendingTransactions,
         protocolContext,
         protocolSchedule,
+        forksSchedule,
         miningParams,
         localAddress,
-        miningBeneficiary,
         bftExtraDataCodec);
-    this.forksSchedule = forksSchedule;
   }
 
   @Override

@@ -23,17 +23,21 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIV
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContextImpl;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetchers;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.ReadinessCheck;
@@ -121,6 +125,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -533,17 +538,24 @@ public class RunnerBuilder {
 
     final MiningParameters miningParameters = besuController.getMiningParameters();
     Optional<StratumServer> stratumServer = Optional.empty();
+
     if (miningParameters.isStratumMiningEnabled()) {
+      var powMiningCoordinator = miningCoordinator;
+      if (miningCoordinator instanceof TransitionCoordinator) {
+        LOG.debug("fetching powMiningCoordinator from TransitionCoordinator");
+        powMiningCoordinator = ((TransitionCoordinator) miningCoordinator).getPreMergeObject();
+      }
       stratumServer =
           Optional.of(
               new StratumServer(
                   vertx,
-                  miningCoordinator,
+                  powMiningCoordinator,
                   miningParameters.getStratumPort(),
                   miningParameters.getStratumNetworkInterface(),
                   miningParameters.getStratumExtranonce(),
                   metricsSystem));
       miningCoordinator.addEthHashObserver(stratumServer.get());
+      LOG.debug("added ethash observer: {}", stratumServer.get());
     }
 
     sanitizePeers(network, staticNodes)
@@ -610,7 +622,7 @@ public class RunnerBuilder {
                   new HealthService(new LivenessCheck()),
                   new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
 
-      if (engineJsonRpcConfiguration.isPresent()) {
+      if (engineJsonRpcConfiguration.isPresent() && engineJsonRpcConfiguration.get().isEnabled()) {
         final Map<String, JsonRpcMethod> engineMethods =
             jsonRpcMethods(
                 protocolSchedule,
@@ -636,6 +648,15 @@ public class RunnerBuilder {
                 dataDir,
                 rpcEndpointServiceImpl);
 
+        Optional<AuthenticationService> authToUse =
+            engineJsonRpcConfiguration.get().isAuthenticationEnabled()
+                ? Optional.of(
+                    new EngineAuthService(
+                        vertx,
+                        Optional.ofNullable(
+                            engineJsonRpcConfiguration.get().getAuthenticationPublicKeyFile()),
+                        dataDir))
+                : Optional.empty();
         engineJsonRpcHttpService =
             Optional.of(
                 new JsonRpcHttpService(
@@ -645,6 +666,7 @@ public class RunnerBuilder {
                     metricsSystem,
                     natService,
                     engineMethods,
+                    authToUse,
                     new HealthService(new LivenessCheck()),
                     new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
       }
@@ -655,13 +677,12 @@ public class RunnerBuilder {
       final GraphQLDataFetchers fetchers =
           new GraphQLDataFetchers(
               supportedCapabilities, privacyParameters.getGoQuorumPrivacyParameters());
-      final GraphQLDataFetcherContextImpl dataFetcherContext =
-          new GraphQLDataFetcherContextImpl(
-              blockchainQueries,
-              protocolSchedule,
-              transactionPool,
-              miningCoordinator,
-              synchronizer);
+      final Map<GraphQLContextType, Object> graphQlContextMap = new ConcurrentHashMap<>();
+      graphQlContextMap.putIfAbsent(GraphQLContextType.BLOCKCHAIN_QUERIES, blockchainQueries);
+      graphQlContextMap.putIfAbsent(GraphQLContextType.PROTOCOL_SCHEDULE, protocolSchedule);
+      graphQlContextMap.putIfAbsent(GraphQLContextType.TRANSACTION_POOL, transactionPool);
+      graphQlContextMap.putIfAbsent(GraphQLContextType.MINING_COORDINATOR, miningCoordinator);
+      graphQlContextMap.putIfAbsent(GraphQLContextType.SYNCHRONIZER, synchronizer);
       final GraphQL graphQL;
       try {
         graphQL = GraphQLProvider.buildGraphQL(fetchers);
@@ -676,7 +697,7 @@ public class RunnerBuilder {
                   dataDir,
                   graphQLConfiguration,
                   graphQL,
-                  dataFetcherContext,
+                  graphQlContextMap,
                   besuController.getProtocolManager().ethContext().getScheduler()));
     }
 
@@ -731,11 +752,13 @@ public class RunnerBuilder {
                   webSocketsJsonRpcMethods,
                   privacyParameters,
                   protocolSchedule,
-                  blockchainQueries));
+                  blockchainQueries,
+                  DefaultAuthenticationService.create(vertx, webSocketConfiguration)));
 
       createPrivateTransactionObserver(subscriptionManager, privacyParameters);
 
-      if (engineWebSocketConfiguration.isPresent()) {
+      if (engineWebSocketConfiguration.isPresent()
+          && engineWebSocketConfiguration.get().isEnabled()) {
         final Map<String, JsonRpcMethod> engineMethods =
             jsonRpcMethods(
                 protocolSchedule,
@@ -761,6 +784,16 @@ public class RunnerBuilder {
                 dataDir,
                 rpcEndpointServiceImpl);
 
+        Optional<AuthenticationService> authToUse =
+            engineWebSocketConfiguration.get().isAuthenticationEnabled()
+                ? Optional.of(
+                    new EngineAuthService(
+                        vertx,
+                        Optional.ofNullable(
+                            engineWebSocketConfiguration.get().getAuthenticationPublicKeyFile()),
+                        dataDir))
+                : Optional.empty();
+
         engineWebSocketService =
             Optional.of(
                 createWebsocketService(
@@ -770,7 +803,8 @@ public class RunnerBuilder {
                     engineMethods,
                     privacyParameters,
                     protocolSchedule,
-                    blockchainQueries));
+                    blockchainQueries,
+                    authToUse));
       }
     }
 
@@ -1067,7 +1101,8 @@ public class RunnerBuilder {
       final Map<String, JsonRpcMethod> jsonRpcMethods,
       final PrivacyParameters privacyParameters,
       final ProtocolSchedule protocolSchedule,
-      final BlockchainQueries blockchainQueries) {
+      final BlockchainQueries blockchainQueries,
+      final Optional<AuthenticationService> authenticationService) {
 
     final WebSocketMethodsFactory websocketMethodsFactory =
         new WebSocketMethodsFactory(subscriptionManager, jsonRpcMethods);
@@ -1092,7 +1127,8 @@ public class RunnerBuilder {
             besuController.getProtocolManager().ethContext().getScheduler(),
             webSocketConfiguration.getTimeoutSec());
 
-    return new WebSocketService(vertx, configuration, websocketRequestHandler);
+    return new WebSocketService(
+        vertx, configuration, websocketRequestHandler, authenticationService);
   }
 
   private Optional<MetricsService> createMetricsService(

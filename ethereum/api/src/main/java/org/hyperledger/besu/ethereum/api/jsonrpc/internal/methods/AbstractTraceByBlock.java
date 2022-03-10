@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceCallResult;
@@ -23,7 +25,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.S
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.MixInIgnoreRevertReason;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -59,6 +60,18 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
     this.transactionSimulator = transactionSimulator;
   }
 
+  @Override
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
+    final Optional<BlockParameter> maybeBlockParameter =
+        request.getOptionalParameter(2, BlockParameter.class);
+
+    if (maybeBlockParameter.isPresent()) {
+      return maybeBlockParameter.get();
+    }
+
+    return BlockParameter.LATEST;
+  }
+
   protected JsonNode getTraceCallResult(
       final ProtocolSchedule protocolSchedule,
       final Set<TraceTypeParameter.TraceType> traceTypes,
@@ -66,8 +79,6 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
       final TransactionTrace transactionTrace,
       final Block block) {
     final TraceCallResult.Builder builder = TraceCallResult.builder();
-    // The trace_call specification does not output the revert reason, so we have to remove it
-    mapper.addMixIn(FlatTrace.class, MixInIgnoreRevertReason.class);
 
     transactionTrace
         .getResult()
