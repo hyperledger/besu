@@ -22,13 +22,21 @@ import java.util.List;
 import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CheckpointRangeHeaders {
+  private static final Logger LOG = LoggerFactory.getLogger(CheckpointRangeHeaders.class);
+
   private final CheckpointRange checkpointRange;
   private final List<BlockHeader> headersToImport;
 
   public CheckpointRangeHeaders(
       final CheckpointRange checkpointRange, final List<BlockHeader> headersToImport) {
+    if (headersToImport.isEmpty()) {
+      LOG.debug(
+          String.format("Headers list empty. CheckpointRange: %s", checkpointRange.toString()));
+    }
     checkArgument(!headersToImport.isEmpty(), "Must have at least one header to import");
     this.checkpointRange = checkpointRange;
     this.headersToImport = headersToImport;
