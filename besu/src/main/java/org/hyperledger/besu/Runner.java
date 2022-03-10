@@ -140,6 +140,7 @@ public class Runner implements AutoCloseable {
       transactionPoolEvictionService.start();
 
       LOG.info("Ethereum main loop is up.");
+      // we write these values to disk to be able to access them during the acceptance tests
       writeBesuPortsToFile();
       writeBesuNetworksToFile();
       writePidFile();
@@ -267,6 +268,10 @@ public class Runner implements AutoCloseable {
     port = getMetricsPort();
     if (port.isPresent()) {
       properties.setProperty("metrics", String.valueOf(port.get()));
+    }
+    port = getEngineJsonRpcPort();
+    if (port.isPresent()) {
+      properties.setProperty("engine-json-rpc", String.valueOf(port.get()));
     }
     // create besu.ports file
     createBesuFile(

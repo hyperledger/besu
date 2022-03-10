@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
@@ -181,7 +182,9 @@ public class PrivacyPluginPrecompiledContractTest {
 
     when(messageFrame.getContextVariable(KEY_TRANSACTION)).thenReturn(transaction);
 
-    final Bytes actual = contract.compute(payload, messageFrame);
+    final PrecompiledContract.PrecompileContractResult result =
+        contract.computePrecompile(payload, messageFrame);
+    final Bytes actual = result.getOutput();
 
     assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
   }

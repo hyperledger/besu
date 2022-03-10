@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import graphql.GraphQL;
@@ -73,14 +74,16 @@ public class GraphQLHttpServiceHostWhitelistTest {
 
     final PoWMiningCoordinator miningCoordinatorMock = Mockito.mock(PoWMiningCoordinator.class);
 
-    final GraphQLDataFetcherContextImpl dataFetcherContext =
-        Mockito.mock(GraphQLDataFetcherContextImpl.class);
-    Mockito.when(dataFetcherContext.getBlockchainQueries()).thenReturn(blockchainQueries);
-    Mockito.when(dataFetcherContext.getMiningCoordinator()).thenReturn(miningCoordinatorMock);
-
-    Mockito.when(dataFetcherContext.getTransactionPool())
-        .thenReturn(Mockito.mock(TransactionPool.class));
-    Mockito.when(dataFetcherContext.getSynchronizer()).thenReturn(synchronizer);
+    final Map<GraphQLContextType, Object> graphQLContextMap =
+        Map.of(
+            GraphQLContextType.BLOCKCHAIN_QUERIES,
+            blockchainQueries,
+            GraphQLContextType.TRANSACTION_POOL,
+            Mockito.mock(TransactionPool.class),
+            GraphQLContextType.MINING_COORDINATOR,
+            miningCoordinatorMock,
+            GraphQLContextType.SYNCHRONIZER,
+            synchronizer);
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
@@ -93,7 +96,7 @@ public class GraphQLHttpServiceHostWhitelistTest {
         folder.newFolder().toPath(),
         graphQLConfig,
         graphQL,
-        dataFetcherContext,
+        graphQLContextMap,
         Mockito.mock(EthScheduler.class));
   }
 
